@@ -21,7 +21,6 @@
     "silk-sdk": "/pub/sdk",
     "eslint-config-silk": "/pub/eslint-config",
     "silk-log": "/pub/log",
-    "silk-flow-bin": "/pub/flow-bin",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps"
   },

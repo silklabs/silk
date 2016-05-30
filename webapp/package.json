@@ -9,7 +9,6 @@
     "silk-config": "/config",
     "silk-core-version": "/pub/version",
     "silk-docs": "/docs",
-    "silk-flow-bin": "/flow-bin",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-rtc": "/rtc",

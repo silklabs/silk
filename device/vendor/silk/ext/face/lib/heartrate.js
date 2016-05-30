@@ -4,14 +4,15 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import HeartRateAnalyzer from './heartrate_analyzer';
 import CBuffer from 'CBuffer';
-import safeRoi from './safe_roi.js';
-import silkcv from 'silk-cv';
 import movingAverage from 'moving-average';
+import silkcv from 'silk-cv';
 
-import type { Env, Camera, Timeline, Log } from 'silk-sdk-glue/interface/env';
-import type { Face } from 'face';
+import HeartRateAnalyzer from './heartrate_analyzer';
+import safeRoi from './safe_roi.js';
+
+import type { Env, Camera, Timeline, Log } from 'silk-exttest/interface/env';
+import type { Face } from './face';
 
 let log: Log;
 let camera: Camera;

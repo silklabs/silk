@@ -7,9 +7,9 @@
  */
 
 import pocketsphinx from 'pocketsphinx';
-import events from 'events';
+import { EventEmitter } from 'events';
 
-import type { Env, Log } from 'silk-sdk-glue/interface/env';
+import type { Env, Log } from 'silk-exttest/interface/env';
 
 let ps = pocketsphinx.ps;
 let log: Log;
@@ -32,7 +32,7 @@ type MicDataCallback = (pkt: MicData) => void;
  * receives mic data and recognizes it using Pocketsphinx engine. Recognition
  * events are passed to a client using events.
  */
-export default class SpeechRecognizer extends events.EventEmitter {
+export default class SpeechRecognizer extends EventEmitter {
 
   _env: Env;
   _decoder: any;

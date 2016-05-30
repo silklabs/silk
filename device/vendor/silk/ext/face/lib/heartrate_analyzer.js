@@ -4,10 +4,12 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import type { Log } from 'silk-sdk-glue/interface/env';
-import silkcv from 'silk-cv';
-import bandPassFilter from './bandpass_filter';
 import regression from 'regression';
+import silkcv from 'silk-cv';
+
+import bandPassFilter from './bandpass_filter';
+
+import type { Log } from 'silk-exttest/interface/env';
 
 // Constants used to compute the Blackman windowing function below.
 // See WebAudio specification, section 2.23.3 "FFT Windowing and

@@ -5,14 +5,13 @@
   "scripts": {
     "canceloldprs": "DEBUG=silk-*,-silk-*:debug babel-node lib/cancelOldPRs.js",
     "lint": "eslint lib test",
-    "flow": "flow check",
     "mocha": "DEBUG=*,-babel mocha $(find ./test -name '*test.js')",
     "preinstall": "./bin/preinstall",
     "postinstall": "../npm_postinstall && npm run build",
     "build": "webpack --progress",
     "start": "DEBUG=*,-babel babel-node lib/server/main.js production",
     "dev": "webpack-dev-server --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",
-    "test": "./test/sanity.sh && npm run lint && npm run flow && npm run mocha",
+    "test": "./test/sanity.sh && npm run lint && npm run mocha",
     "buildtrigger": "DEBUG=silk-*,-silk-*:debug babel-node lib/build-trigger.js",
     "issuemover": "DEBUG=silk-* babel-node lib/issue-mover.js",
     "upliftall": "DEBUG=silk-* babel-node lib/github-uplifter.js"
@@ -22,7 +21,6 @@
     "eslint-config-silk": "/pub/eslint-config",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/pub/version",
-    "silk-flow-bin": "/flow-bin",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-babel-run": "/babel-run",

@@ -8,7 +8,7 @@
  */
 
 import { spawn } from 'child_process';
-import events from 'events';
+import { EventEmitter } from 'events';
 import createLog from './log';
 
 // Workaround https://phabricator.babeljs.io/T2877.
@@ -35,7 +35,7 @@ const log = createLog('sysutils');
  * via an event if the specified property has changed
  * @memberof sysutils
  */
-class PropWatcher extends events.EventEmitter {
+class PropWatcher extends EventEmitter {
   /**
    * Property changed event. This event is emiited when the property being
    * watched has changed.

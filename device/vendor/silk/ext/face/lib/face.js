@@ -6,8 +6,9 @@
 
 import movingAverage from 'moving-average';
 import HeartRate from './heartrate';
-import type { Env, Log } from 'silk-sdk-glue/interface/env';
 import * as config from './face_config';
+
+import type { Env, Log } from 'silk-exttest/interface/env';
 
 export type Matrix = any;
 export type Eye = [number, number]; // center x,y

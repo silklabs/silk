@@ -6,8 +6,7 @@
   "scripts": {
     "test": "mocha $(find test -name '*_test.js')",
     "lint": "eslint lib test",
-    "flow": "flow check",
-    "pretest": "npm run lint && npm run flow",
+    "pretest": "npm run lint",
     "clean": "rm -rf node_modules silk-device-main.js silk-device-main.js.map"
   },
   "symlinkDependencies": {
@@ -16,7 +15,6 @@
     "silk-audio": "/audio",
     "silk-babeldeps": "/babeldeps",
     "silk-config": "/config",
-    "silk-flow-bin": "/flow-bin",
     "silk-log": "/pub/log",
     "silk-rtc": "/rtc",
     "silk-api": "/api",

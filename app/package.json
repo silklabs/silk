@@ -3,7 +3,6 @@
     "eslint-config-silk": "/pub/eslint-config",
     "silk-api": "/api",
     "silk-core-version": "/pub/version",
-    "silk-flow-bin": "/flow-bin",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-streams": "/streams"
@@ -49,13 +48,12 @@
   "private": true,
   "scripts": {
     "bundle": "./tools/rnws bundle --no-android --iosBundlePath ios/Silk/main.jsbundle",
-    "flow": "flow check",
     "lint": "eslint src",
     "localbundle": "./tools/local_bundle",
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall && ./tools/postinstall",
     "start": "./tools/rnws start",
-    "test": "npm run lint && npm run flow",
+    "test": "npm run lint",
     "update": "./tools/update.internal.sh"
   },
   "version": "0.16.0"

@@ -45,4 +45,21 @@
            remote="github"
            revision="refs/tags/0.1.13" clone-depth="1"/>
 
+  <project name="libusb/libusb"
+           path="external/libusb1.0"
+           revision="refs/tags/v1.0.20"
+           remote="github" clone-depth="1" />
+
+  <!-- node-hid 0.5.1 -->
+  <project name="node-hid/node-hid"
+           path="external/node-hid"
+           revision="35d830b7810c87d32484d0a346621568c4849441"
+           upstream="master"
+           remote="github" />
+  <project name="signal11/hidapi"
+           path="external/node-hid/hidapi"
+           revision="b5b2e1779b6cd2edda3066bbbf0921a2d6b1c3c0"
+           upstream="master"
+           remote="github" />
+
 </manifest>

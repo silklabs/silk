@@ -1,0 +1,89 @@
+From 9d0e545374c1aa8345f680bba7e3b3c85a80443c Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 29 May 2016 19:46:18 -0700
+Subject: [PATCH] Androidify
+
+---
+ Android.mk  |  8 ++++++++
+ binding.gyp | 19 ++++++++-----------
+ nodehid.js  |  6 +-----
+ 3 files changed, 17 insertions(+), 16 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..65851ee
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++LOCAL_SHARED_LIBRARIES := libusb1.0
++LOCAL_SDK_VERSION := 19
++LOCAL_NDK_STL_VARIANT := gnustl_static
++LOCAL_CPPFLAGS += -fexceptions -Wno-sign-promo
++include $(BUILD_NODE_MODULE)
+diff --git a/binding.gyp b/binding.gyp
+index fd7aed4..c37cb75 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -13,6 +13,9 @@
+             '/usr/include/libusb-1.0/'
+           ]
+         }],
++        [ 'OS=="android"', {
++            'sources': [ 'hidapi/libusb/hid.c' ]
++        }],
+         [ 'OS=="linux"', {
+           'conditions': [
+             [ 'driver=="libusb"', {
+@@ -64,6 +67,11 @@
+         '_FILE_OFFSET_BITS=64',
+       ],
+       'conditions': [
++        [ 'OS=="android"', {
++          'libraries': [
++            '<!(echo $Android_mk__LIBRARIES)'
++          ]
++        }],
+         [ 'OS=="mac"', {
+               'LDFLAGS': [
+             '-framework IOKit',
+@@ -107,16 +115,5 @@
+       'cflags': ['-g', '-exceptions'],
+       'cflags_cc': ['-g', '-exceptions']
+     },
+-    {
+-        "target_name": "action_after_build",
+-        "type": "none",
+-        "dependencies": [ "<(module_name)" ],
+-        "copies": [
+-        {
+-            "files": [ "<(PRODUCT_DIR)/<(module_name).node" ],
+-            "destination": "<(module_path)"
+-        }
+-      ]
+-    }
+   ]
+ }
+diff --git a/nodehid.js b/nodehid.js
+index d1caa3c..882e719 100644
+--- a/nodehid.js
++++ b/nodehid.js
+@@ -2,11 +2,7 @@ var EventEmitter = require("events").EventEmitter,
+ 	util = require("util");
+ 
+ //Load C++ binding
+-//var binding = require("./build/Release/HID.node");
+-var binary = require('node-pre-gyp');
+-var path = require('path');
+-var binding_path = binary.find(path.resolve(path.join(__dirname,'./package.json')));
+-var binding = require(binding_path);
++var binding = require('./build/Release/HID.node');
+ 
+ //This class is a wrapper for `binding.HID` class
+ function HID() {
+-- 
+2.7.0
+

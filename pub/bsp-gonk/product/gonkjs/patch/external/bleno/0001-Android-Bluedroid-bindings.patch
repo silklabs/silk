@@ -25,7 +25,7 @@ index 0000000..cb2d54e
 +
 +include $(CLEAR_VARS)
 +LOCAL_MODULE_TAGS := optional
-+LOCAL_NODE_MODULE_TYPE := file
++
 +LOCAL_MODULE_PATH := $(TARGET_OUT)/silk/node_modules
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp

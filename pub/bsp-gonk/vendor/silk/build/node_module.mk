@@ -43,20 +43,6 @@ ifeq (,$(strip $(LOCAL_MODULE_TAGS)))
 LOCAL_MODULE_TAGS := optional
 endif
 
-ifeq (,$(strip $(LOCAL_NODE_MODULE_TYPE)))
-LOCAL_NODE_MODULE_TYPE := folder
-endif
-LOCAL_NODE_MODULE_TYPE := $(strip $(LOCAL_NODE_MODULE_TYPE))
-
-ifneq (1,$(words $(filter file folder,$(LOCAL_NODE_MODULE_TYPE))))
-$(error Error: Invalid LOCAL_NODE_MODULE_TYPE: $(LOCAL_NODE_MODULE_TYPE))
-endif
-
-ifneq (folder,$(LOCAL_NODE_MODULE_TYPE))
-# LOCAL_NODE_MODULE_TYPE is deprecated, please don't use it
-$(warning $(LOCAL_MODULE) is using LOCAL_NODE_MODULE_TYPE)
-endif
-
 ifeq ($(strip $(LOCAL_MODULE_PATH)),)
 # Global node module by default
 LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)

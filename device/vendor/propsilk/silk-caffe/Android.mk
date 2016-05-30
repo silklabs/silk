@@ -13,7 +13,6 @@ include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := optional
-LOCAL_NODE_MODULE_TYPE := file
 
 LOCAL_STATIC_LIBRARIES := \
  libopenblas \

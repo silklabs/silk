@@ -23,7 +23,7 @@ index 0000000..30ccb67
 +
 +include $(CLEAR_VARS)
 +LOCAL_MODULE_TAGS := optional
-+LOCAL_NODE_MODULE_TYPE := file
++
 +include external/opencv3/opencv.mk
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp

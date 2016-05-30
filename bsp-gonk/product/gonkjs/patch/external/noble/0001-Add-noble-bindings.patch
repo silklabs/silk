@@ -22,7 +22,7 @@ index 0000000..f8275e2
 +
 +include $(CLEAR_VARS)
 +LOCAL_MODULE_TAGS := optional
-+LOCAL_NODE_MODULE_TYPE := file
++
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644

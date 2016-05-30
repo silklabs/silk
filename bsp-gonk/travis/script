@@ -3,7 +3,14 @@
 source build/envsetup.sh force
 make -j2
 
-# We place this in script to ensure that when it fails it turns the build red.
-./travis/artifacts
+(
+  set -x
+  $PREBUILT_CCACHE -s
+)
+
+if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
+  # We place this in script to ensure that when it fails it turns the build red.
+  ./travis/artifacts
+fi
 
 exit 0

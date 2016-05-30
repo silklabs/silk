@@ -27,27 +27,30 @@ ensure_version
 channel=${SILK_CHANNEL:-commit}
 branch=$TRAVIS_BRANCH
 os=$(uname | tr '[:upper:]' '[:lower:]')
-artifact_path=$os/$branch
 version=$(get_version)
-
-upload_path=$channel/$SILK_BOARD/$os/$branch/$version
+target_upload_path=$channel/$SILK_BOARD/$os/$branch/$version
 
 rm -rf artifacts
 mkdir -p artifacts
-
 ./archive dist
 tar -czf artifacts/target.tar.gz dist
 
-# Do not upload on pull requests...
-if [[ $TRAVIS_PULL_REQUEST != "false" ]]; then
-  echo "TRAVIS_PULL_REQUEST is not equal to false.. aborting"
-  exit 0
-fi
+# Build ccache tarball
+pushd $HOME/.ccache/
+mkdir -p $HOME/ccache_dist/
+tar -czf $HOME/ccache_dist/ccache.tar.gz *
+popd
 
 if [[ -d ../../s3-artifacts ]]; then
   ../../s3-artifacts/bin/upload \
     silk-sos-release \
-    $upload_path \
+    $target_upload_path \
     $PWD/artifacts \
+    --credentials sos_release
+
+  ../../s3-artifacts/bin/upload \
+    silk-sos-release \
+    $CCACHE_PATH \
+    $HOME/ccache_dist \
     --credentials sos_release
 fi

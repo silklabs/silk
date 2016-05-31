@@ -32,6 +32,7 @@ export default class ParentSocketSession extends DuplexTransform {
   // Set to true once the 'end' or 'error' event is emitted.
   _ended: boolean = false;
 
+  _rssiValue: number = 0;
   _rssiUpdatesEnabled: boolean = false;
   _rssiUpdatesKilled: boolean = false;
 
@@ -59,6 +60,7 @@ export default class ParentSocketSession extends DuplexTransform {
       log.verbose(`Received`, data);
     });
     const msgpackOldWrite = msgpackStream.write;
+    // $FlowFixMe: Flow doesn't like it when we replace functions.
     msgpackStream.write = (data, ...args) => {
       log.verbose(`Sending`, data);
       return msgpackOldWrite.call(msgpackStream, data, ...args);
@@ -77,7 +79,7 @@ export default class ParentSocketSession extends DuplexTransform {
       this._receivedBytes += data.length;
     });
     const socketOldWrite = socketStream.write;
-    // $FlowFixMe No idea why but Flow doesn't see the 'write' method here.
+    // $FlowFixMe: Flow doesn't like it when we replace functions.
     socketStream.write = (data, ...args) => {
       if (data) {
         this._sentBytes += data.length;

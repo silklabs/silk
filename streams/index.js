@@ -36,3 +36,9 @@ export {
   MessagePackEncodeStream,
   MessagePackDuplexStream,
 } from './src/msgpack';
+
+export type {
+  ReadableStreamOptions,
+  WritableStreamOptions,
+  DuplexStreamOptions,
+} from './src/types';

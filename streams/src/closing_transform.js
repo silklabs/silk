@@ -2,10 +2,14 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import makeLog from 'silk-log';
 import { Transform } from 'stream';
+
+import type { DuplexStreamOptions } from './types';
 
 const EVENT_NAME_CLOSE = `close`;
 const EVENT_NAME_END = `end`;
@@ -15,10 +19,10 @@ const log = makeLog(`streams:closing_transform`);
 
 export default class ClosingTransform extends Transform {
 
-  __constructorName = ``;
-  __finalEventName = '';
+  __constructorName: string = ``;
+  __finalEventName: string = '';
 
-  constructor(options) {
+  constructor(options: DuplexStreamOptions) {
     super(options);
 
     this.__constructorName = this.constructor.name;
@@ -34,7 +38,7 @@ export default class ClosingTransform extends Transform {
     this.addListener(EVENT_NAME_ERROR, emitClose);
   }
 
-  emit(eventName, ...args) {
+  emit(eventName: string, ...args:Array<any>): boolean {
     switch (eventName) {
     case EVENT_NAME_END:
     case EVENT_NAME_ERROR:

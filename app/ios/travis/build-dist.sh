@@ -16,6 +16,7 @@ mkdir -p build
 xctool \
   -project ios/$PROJECT.xcodeproj \
   -scheme $PROJECT \
+  -configuration $CONFIGURATION \
   -sdk iphoneos \
   EXFILTRATED_DSYM_ZIP=$(pwd)/dsym.zip \
   archive -archivePath build/$PROJECT.xcarchive \

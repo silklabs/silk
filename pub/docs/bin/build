@@ -20,6 +20,7 @@ mkdir -p build
 for f in ../sdk/interface/*.js.flow; do
   cp -f $f build/$(basename $f .flow)
 done
+sed -i.orig 's/declare export/declare/g' build/*
 APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
   build/silk-alog.js \
   build/silk-movie.js \

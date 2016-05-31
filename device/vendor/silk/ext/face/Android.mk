@@ -6,10 +6,7 @@ LOCAL_INSTALLED_MODULE_STEM := shape_predictor_68_face_landmarks.dat
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_MEDIA)
-
-LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/shape_predictor_68_face_landmarks.dat
-$(LOCAL_PREBUILT_MODULE_FILE): vendor/propsilk/dlib/shape_predictor_68_face_landmarks.dat
-	ln $< $@
+LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/node_modules/silk-external-dlib/shape_predictor_68_face_landmarks.dat
 
 include $(BUILD_PREBUILT)
 

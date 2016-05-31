@@ -74,8 +74,10 @@ $SILK_WEBRTC/webrtc/build/gyp_webrtc \
   -Dbuild_libvpx=1 \
   -Dbuild_libyuv=1 \
   -Dclang_use_chrome_plugins=0 \
+  -Drtc_use_h264=1 \
+  -Duse_openh264=1 \
   -Dmac_deployment_target="10.9" \
-  -Drelease_extra_cflags="-Wno-unused-value -Wno-tautological-compare -Wno-parentheses-equality -Wno-deprecated-declarations" \
+  -Drelease_extra_cflags="-Wno-unused-value -Wno-tautological-compare -Wno-parentheses-equality -Wno-deprecated-declarations -Wno-pointer-bool-conversion" \
   -Drestrict_webrtc_logging=0 \
   -R node-webrtc
 

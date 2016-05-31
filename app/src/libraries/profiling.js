@@ -8,6 +8,7 @@ import { Systrace } from 'react-native';
 import { RssiSmoother } from 'silk-api';
 import BLEStream from 'silk-app-sdk/src/ble/stream';
 import DeviceSession from 'silk-app-sdk/src/ble/device_session';
+import SocketSession from 'silk-app-sdk/src/ble/socket_session';
 import {Socket, SocketManager} from 'silk-ble-socket';
 import * as CryptoModule from 'silk-crypto';
 import HttpClient from 'silk-http-client';
@@ -126,10 +127,17 @@ if (__DEV__) {
     streamMethods.filter((methodName) => !!BLEStream.prototype[methodName])
   );
 
+  Systrace.measureMethods(
+    SocketSession.prototype,
+    'ble.SocketSession',
+    streamMethods.filter((methodName) => !!SocketSession.prototype[methodName])
+  );
+
   [
     BLEStream,
     Socket,
     SocketManager,
+    SocketSession,
     DeviceSession,
   ].forEach(instrumentEventEmitterEmit);
 
@@ -137,5 +145,11 @@ if (__DEV__) {
     AsyncComponent.prototype,
     'AsyncComponent',
     ['setState', 'setStateAsync']
+  );
+
+  Systrace.measureMethods(
+    DeviceSession.prototype,
+    'ble.DeviceSession',
+    ['_onDataImpl', '_validateData']
   );
 }

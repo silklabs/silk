@@ -552,9 +552,7 @@ class Env extends EventEmitter {
        * @memberof Env.util
        * @instance
        */
-      playSound: fileName => {
-        util.playSound(fileName);
-      },
+      playSound: fileName => util.playSound(fileName),
 
       /**
        * Get value of an android property as boolean

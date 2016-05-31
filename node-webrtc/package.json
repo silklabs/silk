@@ -1,0 +1,40 @@
+{
+  "name": "node-webrtc",
+  "version": "1.4.0",
+  "description": "WebRTC for NodeJS",
+  "homepage": "https://github.com/vmolsa/webrtc-native",
+  "author": "https://github.com/vmolsa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vmolsa/webrtc-native.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vmolsa/webrtc-native/issues"
+  },
+  "keywords": [
+    "webrtc",
+    "p2p",
+    "streaming",
+    "dtls",
+    "srtp",
+    "rtp",
+    "capture",
+    "datachannel"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "install": "./bin/build.sh",
+    "test": "node test/all.js"
+  },
+  "dependencies": {
+    "request": "^2.58.0"
+  },
+  "devDependencies": {
+    "nan": "^2.1.0",
+    "node-gyp": "^3.0.3",
+    "minimist": "^1.1.1",
+    "simple-peer": "^5.11.5",
+    "tape": "^4.0.0"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "silk-simulator",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Silk Device Simulator",
   "scripts": {
     "preinstall": "test -n \"$SILK_CAFFE_PATCH_TREE\" || { echo Please \"|source ../setup|\" first; false; }",

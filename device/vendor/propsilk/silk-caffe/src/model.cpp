@@ -19,9 +19,12 @@
 #include <iosfwd>
 #include <memory>
 #include <utility>
-#include <opencv2/imgproc.hpp>
 #include <chrono>
 #include <cblas.h>
+
+#if CV_MAJOR_VERSION >= 3
+#include <opencv2/imgproc.hpp>
+#endif
 
 #include "model.h"
 #include "caffe/layers/memory_data_layer.hpp"

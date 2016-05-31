@@ -169,13 +169,23 @@ $repo init \
   $repo_init_version \
   -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-manta,$repo_init_host \
 
+function postsync() {
+  synctype=$1
+  for what in board/$board product/$product; do
+    if [[ -x $what/postsync ]]; then
+      ( set -x; $what/postsync $synctype )
+    fi
+  done
+}
 
 if $sync_n; then
   ./repocache fetch $board $product
   $repo sync -n $repo_sync_j --quiet --current-branch --no-tags
+  postsync -n
 fi
 if $sync_l; then
   $repo sync -l --quiet
+  postsync -l
   touch .repo/lastsync
 
   # Force re-patching on next build/envsetup.sh

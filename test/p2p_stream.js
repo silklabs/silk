@@ -1,6 +1,6 @@
 var WEBRTC = require('../');
 
-WEBRTC.setDebug(true);
+//WEBRTC.setDebug(true);
 
 var config = {
   iceServers: [
@@ -57,12 +57,16 @@ var bob = new WEBRTC.RTCPeerConnection(config, constraints);
 
 alice.onicecandidate = function (event) {
   var candidate = event.candidate || event;
-  bob.addIceCandidate(candidate);
+  if (candidate.candidate) {
+    bob.addIceCandidate(candidate);
+  }
 };
 
 bob.onicecandidate = function (event) {
   var candidate = event.candidate || event;
-  alice.addIceCandidate(candidate);
+  if (candidate.candidate) {
+    alice.addIceCandidate(candidate);
+  }
 };
 
 alice.onnegotiationneeded = function () {
@@ -114,8 +118,6 @@ bob.onremovestream = function(stream) {
 };
 
 WEBRTC.getSources(function (inputs) {
-  console.log(inputs);
-
   WEBRTC.getUserMedia(constraints, function(stream) {
     if (stream) {
       alice.addStream(stream);

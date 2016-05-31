@@ -1,0 +1,3 @@
+#! /bin/bash -e
+
+exec ../babel-run/babel-node bin/copy.js "$@"

@@ -1,10 +1,11 @@
 var WebRTC = require('../');
 
-WebRTC.setDebug(true);
+//WebRTC.setDebug(true);
 
 function onSuccess(stream) {
   var video_list = stream.getVideoTracks();
-    
+  console.log('xfoo', stream.getVideoTracks());
+  console.log('xfoo', stream.getAudioTracks());
   video_list.forEach(function (track) {
     console.log('Video Track');
   });
@@ -13,7 +14,6 @@ function onSuccess(stream) {
 var constraints = {
   audio: false,
   video: true,
-/*
   audio: {
     optional: [
       {
@@ -53,7 +53,6 @@ var constraints = {
     OfferToReceiveAudio: true,
     OfferToReceiveVideo: true,
   },
-*/
 };
 
 WebRTC.getUserMedia(constraints, onSuccess);

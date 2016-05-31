@@ -1,5 +1,5 @@
 {
-  "name": "webrtc-native",
+  "name": "node-webrtc",
   "version": "1.4.0",
   "description": "WebRTC for NodeJS",
   "homepage": "https://github.com/vmolsa/webrtc-native",
@@ -24,7 +24,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "install": "node scripts/install.js",
+    "install": "./bin/build.sh",
     "test": "node test/all.js"
   },
   "dependencies": {

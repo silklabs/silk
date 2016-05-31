@@ -1,0 +1,4 @@
+export STAGING=build-staging
+export WEBRTC=$STAGING/chromium-webrtc
+export SILK_WEBRTC=$STAGING/silk-webrtc
+export SILK_WEBRTC_SRC=git@github.com:silklabs/silk-webrtc.git

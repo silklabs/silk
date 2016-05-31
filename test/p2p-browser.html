@@ -26,10 +26,10 @@ function P2P(alice, bob) {
                 }
               });
             });
-          });
+          }, console.error);
         });  
       });
-    });
+    }, console.error);
   };
 
   bob.onnegotiationneeded = function(callback) {
@@ -44,12 +44,12 @@ function P2P(alice, bob) {
                 if (callback) {
                   callback();
                 }
-              });
-            });
+              }, console.error);
+            }, console.error);
           });
         });  
       });
-    });
+    }, console.error);
   };
 }
 

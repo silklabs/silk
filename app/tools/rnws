@@ -1,8 +1,0 @@
-#!/bin/bash -ex
-
-node_modules/.bin/rnws \
-  "$@" \
-  --port 8082 \
-  --packagerPort 8081 \
-  --webpackPort 8083 \
-  --assetRoots ios/Silk/Images.xcassets

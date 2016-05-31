@@ -21,35 +21,30 @@
  * @class
  * @memberof silk-movie
  */
-export class Movie {
-  constructor() {
-    debugger;
-  }
+declare export class Movie {
+
   /**
    * Starts a new animation sequence using the provided file
    *
    * @memberof silk-movie.Movie
    * @instance
    */
-  run (animationFile: string): void {
-    debugger;
-  }
+  run (animationFile: string): void;
+
   /**
    * Stops the movie, leaving it visible
    *
    * @memberof silk-movie.Movie
    * @instance
    */
-  stop(): void {
-    debugger;
-  }
+  stop(): void;
+
   /**
    * Stops the movie and hides it
    *
    * @memberof silk-movie.Movie
    * @instance
    */
-  hide(): void {
-    debugger;
-  }
+  hide(): void;
+
 }

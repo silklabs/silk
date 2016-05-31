@@ -9,13 +9,17 @@ import com.android.build.OutputFile
  * bundle directly from the development server.
  */
 project.ext.react = [
-  bundleAssetName: "index.android.bundle",
+  entryFile: "src/index.js",
   bundleInDebug: true,
   bundleInRelease: true,
-  inputExcludes: ["android/**", "ios/**", "node_modules/**"]
+  inputExcludes: ["android/**", "ios/**", "node_modules/**"],
+  // Need to supply absolute path here because of
+  // https://github.com/facebook/react-native/pull/7857
+  extraPackagerArgs: ["--transformer", file("../../src/transforms/transformer.js"), "--verbose"]
 ]
 
 apply from: "react.gradle"
+apply from: "mse.gradle"
 
 /**
  * Set this to true to create three separate APKs instead of one:

@@ -82,6 +82,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
       log.verbose(`Received`, data);
     });
     const msgpackOldWrite = msgpackStream.write;
+    // $FlowFixMe: Flow doesn't like it when we replace functions.
     msgpackStream.write = (data, ...args) => {
       log.verbose(`Sending`, data);
       return msgpackOldWrite.call(msgpackStream, data, ...args);

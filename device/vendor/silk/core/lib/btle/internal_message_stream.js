@@ -22,11 +22,11 @@ import type {Duplex} from 'stream';
 
 const log = createLog(`btle-internal-message-stream`);
 
-class InterrnalMessageReadTransform extends ClosingTransform {
+class InternalMessageReadTransform extends ClosingTransform {
   _transform(
-    message: Object,
+    message: any,
     encoding: string,
-    callback: (error: ?Error, data?: Object) => void,
+    callback: (error: ?Error, data?: any) => void,
   ): void {
     if (isInternalMessage(message)) {
       log.debug(`Received internal message`, message);
@@ -49,7 +49,7 @@ export default class InternalMessageFilterStream extends DuplexTransform {
       objectMode: true,
     };
 
-    const reader = new InterrnalMessageReadTransform(options);
+    const reader = new InternalMessageReadTransform(options);
     const writer = new ClosingPassThrough(options);
 
     super(stream, stream, reader, writer, options);
@@ -65,7 +65,7 @@ export default class InternalMessageFilterStream extends DuplexTransform {
     message: Object,
     encoding: string,
     callback: (error: ?Error, data?: Object) => void,
-  ): void {
+  ): boolean {
     if (isInternalMessage(message)) {
       log.error(`Internal message not allowed`, message);
 
@@ -73,10 +73,10 @@ export default class InternalMessageFilterStream extends DuplexTransform {
         new Error(`Not allowed to write() internal messages, use ` +
                   `writeInternal()`);
       callback(error);
-      return;
+      return false;
     }
 
-    super._write(message, encoding, callback);
+    return super._write(message, encoding, callback);
   }
 
   writeInternal(message: Object, ...args: Array<any>): boolean {

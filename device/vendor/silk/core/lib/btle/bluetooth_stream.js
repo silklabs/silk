@@ -15,24 +15,7 @@ import makeLog from '../log';
 import * as Metrics from '../metrics/btle';
 
 import type { Peripheral, Characteristic } from 'noble';
-
-// It'd be nice if we could import these from Flow's interface definitions
-// rather than having to copy them here.
-type ReadableStreamOptions = {
-  highWaterMark?: number,
-  encoding?: ?string,
-  objectMode?: boolean
-};
-type WritableStreamOptions = {
-  highWaterMark?: number,
-  decodeString?: boolean,
-  objectMode?: boolean
-};
-type DuplexStreamOptions = WritableStreamOptions & ReadableStreamOptions & {
-  allowHalfOpen?: boolean,
-  readableObjectMode?: boolean,
-  writableObjectMode?: boolean
-};
+import type { DuplexStreamOptions } from 'silk-streams';
 
 const log = makeLog(`btle-stream`);
 

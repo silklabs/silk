@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import msgpack from 'msgpack-lite';
@@ -9,6 +11,9 @@ import makeLog from 'silk-log';
 
 import ClosingTransform from './closing_transform';
 import DuplexTransform from './duplex_transform';
+
+import type { Duplex } from 'stream';
+import type { DuplexStreamOptions } from './types';
 
 const EVENT_NAME_CLOSE = `close`;
 const EVENT_NAME_END = `end`;
@@ -48,13 +53,20 @@ export class MessagePackEncodeStream extends ClosingTransform {
     });
   }
 
-  _transform(chunk, encoding, callback) {
+  _transform(
+    chunk: Buffer | string,
+    encoding: string,
+    callback: (error: ?Error, data?: Buffer | string) => void
+  ) {
     callback(null, msgpack.encode(chunk));
   }
 }
 
 export class MessagePackDuplexStream extends DuplexTransform {
-  constructor(stream, options = { }) {
+  constructor(
+    stream: Duplex,
+    options: DuplexStreamOptions = {}
+  ) {
     log.debug(`MessagePackDuplexStream()`);
 
     const decoder = new MessagePackDecodeStream();

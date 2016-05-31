@@ -2,12 +2,18 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
-import assert from 'assert';
-import ClosingPassThrough from './closing_passthrough';
-import { Duplex } from 'stream';
+import invariant from 'assert';
 import makeLog from 'silk-log';
+import { Duplex } from 'stream';
+
+import ClosingPassThrough from './closing_passthrough';
+
+import type { Readable, Writable, Transform } from 'stream';
+import type { DuplexStreamOptions } from './types';
 
 const log = makeLog(`streams:duplex-transform`);
 
@@ -22,31 +28,35 @@ export default class DuplexTransform extends Duplex {
 
   // This class can be subclassed, so all members are prefixed with double
   // underscores to make it less likely that subclasses will use the same names.
-  __name = ``;
+  __name: string = ``;
 
-  __readable = null;
-  __writable = null;
-  __readableTransform = null;
-  __writableTransform = null;
+  __closed: boolean = false;
 
-  __readableClosed = false;
-  __writableClosed = false;
-  __readableTransformClosed = false;
-  __writableTransformClosed = false;
+  __readable: Readable;
+  __writable: Writable | Duplex;
+  __readableTransform: Transform;
+  __writableTransform: Transform;
 
-  __error = null;
-  __errorEmitted = false;
+  __readableClosed: boolean = false;
+  __writableClosed: boolean = false;
+  __readableTransformClosed: boolean = false;
+  __writableTransformClosed: boolean = false;
 
-  __endEventAllowed = true;
-  __finishEventAllowed = false;
+  __error: ?Error = null;
+  __errorEmitted: boolean = false;
 
-  __autoClose = true;
+  __endEventAllowed: boolean = true;
+  __finishEventAllowed: boolean = false;
 
-  constructor(readable,
-              writable,
-              readableTransform,
-              writableTransform,
-              options = { }) {
+  __autoClose: boolean = true;
+
+  constructor(
+    readable: Readable | Duplex,
+    writable: Writable | Duplex,
+    readableTransform: ?Transform,
+    writableTransform: ?Transform,
+    options: DuplexStreamOptions = {}
+  ) {
     log.debug(`DuplexTransform()`);
 
     options = Object.assign({}, options);
@@ -59,8 +69,12 @@ export default class DuplexTransform extends Duplex {
       this.__autoClose = options.autoClose;
     }
 
+    if (!writable) {
+      invariant(readable instanceof Duplex);
+      writable = readable;
+    }
     this.__readable = readable;
-    this.__writable = writable || readable;
+    this.__writable = writable;
     this.__readableTransform = readableTransform ||
                                new ClosingPassThrough(options);
     this.__writableTransform = writableTransform ||
@@ -130,10 +144,10 @@ export default class DuplexTransform extends Duplex {
         emitter.removeListener(EVENT_NAME_ERROR, errorEventListener);
         emitter.removeListener(finalEventName, finalEventListener);
 
-        assert(!closed);
+        invariant(!closed);
         closed = true;
 
-        assert(timeout);
+        invariant(timeout);
         timeout = null;
 
         callback();
@@ -148,7 +162,7 @@ export default class DuplexTransform extends Duplex {
       emitter.removeListener(EVENT_NAME_ERROR, errorEventListener);
       emitter.removeListener(finalEventName, finalEventListener);
 
-      assert(!closed);
+      invariant(!closed);
       closed = true;
 
       if (timeout) {
@@ -183,13 +197,16 @@ export default class DuplexTransform extends Duplex {
     emitter.addListener(finalEventName, finalEventListener);
   }
 
-  end(chunk, encoding, callback) {
+  end(
+    chunk?: any, // would love to use generics here, but Flow is too anal
+    encodingOrCallback?: string | Function,
+    callback?: Function
+  ) {
     log.debug(`[${this.__name}] DuplexTransform.end()`);
-
-    return super.end(chunk, encoding, callback);
+    return super.end(chunk, encodingOrCallback, callback);
   }
 
-  emit(eventName, ...args) {
+  emit(eventName: string, ...args:Array<any>): boolean {
     const ret = this.listenerCount(eventName) !== 0;
 
     switch (eventName) {
@@ -199,7 +216,7 @@ export default class DuplexTransform extends Duplex {
         log.debug(`[${this.__name}] Blocked the '${eventName}' event`);
         return ret;
       }
-      assert(!this.__error);
+      invariant(!this.__error);
       log.debug(`[${this.__name}] Emitting the '${eventName}' event`);
       break;
 
@@ -215,7 +232,7 @@ export default class DuplexTransform extends Duplex {
         }
         return ret;
       }
-      assert(!this.__error);
+      invariant(!this.__error);
       log.debug(`[${this.__name}] Emitting the '${eventName}' event`);
       break;
 
@@ -240,23 +257,27 @@ export default class DuplexTransform extends Duplex {
     // |__onReadTransformData()|.
   }
 
-  _write(data, encoding, callback) {
+  _write(
+    chunk: any, // would love to use generics here, but Flow is too anal
+    encoding: string,
+    callback: (error: ?Error, data?: any) => void
+  ): boolean {
     if (this.__error) {
       log.warn(`Cannot write due to previous error`);
       callback(this.__error);
-      return;
+      return false;
     }
 
-    this.__writableTransform.write(data, encoding, callback);
+    return this.__writableTransform.write(chunk, encoding, callback);
   }
 
-  __cleanupAfterError(error) {
+  __cleanupAfterError(error: Error) {
     log.debug(`[${this.__name}] DuplexTransform.__cleanupAfterError(` +
               `'${error.toString()}')`);
 
     if (this.__error) {
-      assert(!this.__endEventAllowed);
-      assert(!this.__finishEventAllowed);
+      invariant(!this.__endEventAllowed);
+      invariant(!this.__finishEventAllowed);
       return;
     }
 
@@ -309,7 +330,7 @@ export default class DuplexTransform extends Duplex {
   __maybeEmitClose() {
     log.debug(`[${this.__name}] DuplexTransform.__maybeEmitClose()`);
 
-    assert(!this.__closed);
+    invariant(!this.__closed);
 
     if (this.__autoClose &&
         this.__readableClosed &&
@@ -325,7 +346,7 @@ export default class DuplexTransform extends Duplex {
     }
   }
 
-  __onReadableEnd = () => {
+  __onReadableEnd: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableEnd()`);
 
     this.__readable.removeListener(EVENT_NAME_END, this.__onReadableEnd);
@@ -333,32 +354,32 @@ export default class DuplexTransform extends Duplex {
     // If the pipe is intact then there is nothing we need to do here.
   };
 
-  __onReadableError = (error) => {
+  __onReadableError: ((error: Error) => void) = (error) => {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableError(` +
               `'${error.toString()}')`);
 
     this.__cleanupAfterError(error);
   };
 
-  __onReadableClose = () => {
+  __onReadableClose: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableClose()`);
 
     this.__readable.removeListener(EVENT_NAME_END, this.__onReadableEnd);
     this.__readable.removeListener(EVENT_NAME_ERROR, this.__onReadableError);
 
-    assert(!this.__readableClosed);
+    invariant(!this.__readableClosed);
     this.__readableClosed = true;
 
     this.__maybeEmitClose();
   };
 
-  __onReadableTransformData = data => {
-    assert(!this.__error);
+  __onReadableTransformData: ((data: any) => void) = (data) => {
+    invariant(!this.__error);
 
     this.push(data);
   };
 
-  __onReadableTransformEnd = () => {
+  __onReadableTransformEnd: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableTransformEnd()`);
 
     this.__readableTransform.removeListener(EVENT_NAME_DATA,
@@ -373,14 +394,14 @@ export default class DuplexTransform extends Duplex {
     this.push(null);
   };
 
-  __onReadableTransformError = (error) => {
+  __onReadableTransformError: (() => void) = (error) => {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableTransformError(` +
               `'${error.toString()}')`);
 
     this.__cleanupAfterError(error);
   };
 
-  __onReadableTransformClose = () => {
+  __onReadableTransformClose: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onReadableTransformClose()`);
 
     this.__readableTransform.removeListener(EVENT_NAME_DATA,
@@ -390,13 +411,13 @@ export default class DuplexTransform extends Duplex {
     this.__readableTransform.removeListener(EVENT_NAME_ERROR,
                                             this.__onReadableTransformError);
 
-    assert(!this.__readableTransformClosed);
+    invariant(!this.__readableTransformClosed);
     this.__readableTransformClosed = true;
 
     this.__maybeEmitClose();
   };
 
-  __onWritableFinish = () => {
+  __onWritableFinish: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableFinish()`);
 
     this.__writable.removeListener(EVENT_NAME_FINISH, this.__onWritableFinish);
@@ -407,26 +428,26 @@ export default class DuplexTransform extends Duplex {
     }
   };
 
-  __onWritableError = (error) => {
+  __onWritableError: (() => void) = (error) => {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableError(` +
               `'${error.toString()}')`);
 
     this.__cleanupAfterError(error);
   };
 
-  __onWritableClose = () => {
+  __onWritableClose: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableClose()`);
 
     this.__writable.removeListener(EVENT_NAME_ERROR, this.__onWritableError);
     this.__writable.removeListener(EVENT_NAME_FINISH, this.__onWritableFinish);
 
-    assert(!this.__writableClosed);
+    invariant(!this.__writableClosed);
     this.__writableClosed = true;
 
     this.__maybeEmitClose();
   };
 
-  __onWritableTransformEnd = () => {
+  __onWritableTransformEnd: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableTransformEnd()`);
 
     this.__writableTransform.removeListener(EVENT_NAME_END,
@@ -437,14 +458,14 @@ export default class DuplexTransform extends Duplex {
     // need to do here.
   };
 
-  __onWritableTransformError = (error) => {
+  __onWritableTransformError: ((error: Error) => void) = (error) => {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableTransformError(` +
               `'${error.toString()}')`);
 
     this.__cleanupAfterError(error);
   };
 
-  __onWritableTransformClose = () => {
+  __onWritableTransformClose: (() => void) = () => {
     log.debug(`[${this.__name}] DuplexTransform.__onWritableTransformClose()`);
 
     this.__writableTransform.removeListener(EVENT_NAME_END,
@@ -452,7 +473,7 @@ export default class DuplexTransform extends Duplex {
     this.__writableTransform.removeListener(EVENT_NAME_ERROR,
                                             this.__onWritableTransformError);
 
-    assert(!this.__writableTransformClosed);
+    invariant(!this.__writableTransformClosed);
     this.__writableTransformClosed = true;
 
     this.__maybeEmitClose();

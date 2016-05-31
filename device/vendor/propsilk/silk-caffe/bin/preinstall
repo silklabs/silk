@@ -5,12 +5,6 @@ if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
   exit 1
 fi
 
-UNAMESTR=`uname`
-if [[ "$UNAMESTR" != 'Darwin' ]]; then
-  echo "Caffe installation is only supported on Darwin"
-  exit 1
-fi
-
 PATCH_TREE=$SILK_CAFFE_PATCH_TREE
 
 if [[ -z $PATCH_TREE ]]; then
@@ -40,7 +34,7 @@ if [[ ! -d protobuf ]]; then
   git clone --depth 1 https://github.com/google/protobuf -b v2.6.1
   pushd protobuf
   ./autogen.sh
-  ./configure --disable-shared
+  ./configure CXXFLAGS='-fPIC' CFLAGS='-fPIC' --disable-shared
   make $J
   popd
 fi

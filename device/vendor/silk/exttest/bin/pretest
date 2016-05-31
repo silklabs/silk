@@ -33,6 +33,7 @@ modules=(
   opencv
   silk-capture
   silk-cv
+  silk-caffe
 )
 
 for module in "${modules[@]}"; do

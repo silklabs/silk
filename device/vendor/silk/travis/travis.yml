@@ -32,6 +32,7 @@ install:
   - source ../../../pub/travis/common_before_install.sh
   - source ../../../setup
   - core/install.sh
+  - ../../../install.sh # Install caffe dependencies
 
 script:
   - ./travis/script

@@ -223,9 +223,9 @@ export class SocketManager extends RobustEventEmitter {
   enableRssiUpdates(id: number, enable: boolean) {
     log.debug(`SocketManager.updateRssi(${id}, ${String(enable)})`);
 
-    invariant(this._sockets.has(id));
-
-    BLESocketManager.enableRssiUpdates(id, enable);
+    if (this._sockets.has(id)) {
+      BLESocketManager.enableRssiUpdates(id, enable);
+    }
   }
 
   finish(id: number) {

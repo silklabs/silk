@@ -4,7 +4,7 @@
   "description": "Silk documentation",
   "scripts": {
     "build": "bin/build",
-    "install": "npm run build"
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "documentation": "documentationjs/documentation#bb41619c734e59ef3fbc3648610032efcfdaaace",

@@ -31,6 +31,7 @@ node_modules/fbjs/flow/lib/
 .*/dist/.*
 .*/device/out/.*
 .*/device/external/.*
+.*/pub/docs/build/.*
 
 # Ignore browserify reimplementations of core node modules.
 .*/node_modules/events/.*

@@ -3,10 +3,11 @@
   "version": "0.16.0",
   "description": "Heroku shim and nothing more",
   "scripts": {
+    "flow": "./pub/flow-bin/flow check",
     "issue793": "find . -name .__silk_npm_lock -exec rm {} \\; -print",
     "heroku-prebuild": "./tools/heroku/deploy.sh",
     "reboot": "npm run zest ; npm run warmup",
-    "warmup": "set -ex; source ./setup; for d in server sim webapp; do ( cd $d; npm install ); done",
+    "warmup": "set -ex; source ./setup; for d in sim webapp; do ( cd $d; ./install.sh ); done",
     "zest": "./zest.sh"
   },
   "repository": {

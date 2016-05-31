@@ -17,3 +17,10 @@ if [[ ! -f dlib/.patched ]]; then
   cd ..
   touch dlib/.patched
 fi
+
+if [[ ! -f shape_predictor_68_face_landmarks.dat ]]; then
+  rm -f shape_predictor_68_face_landmarks.dat.bz2
+  wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
+  bzip2 -d shape_predictor_68_face_landmarks.dat.bz2
+fi
+

@@ -18,6 +18,7 @@
     "fast-image-size": "/external-fast-image-size",
     "eslint-config-silk": "/pub/eslint-config",
     "silk-babeldeps": "/babeldeps",
+    "silk-external-dlib": "/external-dlib",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-log": "/pub/log"
   },

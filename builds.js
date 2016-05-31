@@ -155,7 +155,7 @@ const builds = {
   // Push and PR builds
   'flow': {
     travis_yml: '.flowtravis.yml',
-    files: ['**/*.js', '**/*.json'],
+    files: ['.flowconfig', '**/*.js', '**/*.json'],
     events: ['push', 'pr'],
     branches: ['master', 'next', 'release'],
   },

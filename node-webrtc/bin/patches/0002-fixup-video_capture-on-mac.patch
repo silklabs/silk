@@ -1,47 +1,26 @@
-From 9302bc5f68408d470e9f7f1ac737d1c7125e71e0 Mon Sep 17 00:00:00 2001
+From b3967d5478d0208adba11da41c5164ede1e41fd0 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
-Date: Thu, 26 May 2016 16:22:20 -0700
-Subject: [PATCH] Hack mac video capture to use ios tooling.
+Date: Tue, 31 May 2016 14:03:10 -0700
+Subject: [PATCH 2/2] fixup video_capture on mac
 
-The built in mac video capture is completely useless since it rejects
-any and all media types. This reworks a few paths and adds some ifdef
-statements to get the ios code building on mac.
-
-NOTE: The renaming of files is very intentional as anything ending in
-_ios.<ext> will not get picked up if on mac.
 ---
- webrtc/modules/video_capture/ios/device_info.h     |  60 +++++
- webrtc/modules/video_capture/ios/device_info.mm    | 184 ++++++++++++++
- webrtc/modules/video_capture/ios/device_info_ios.h |  60 -----
- .../modules/video_capture/ios/device_info_ios.mm   | 178 --------------
+ webrtc/modules/video_capture/ios/device_info.mm    |   8 +-
  .../video_capture/ios/device_info_ios_objc.mm      |   2 +
  .../video_capture/ios/rtc_video_capture_ios_objc.h |   6 +-
- .../ios/rtc_video_capture_ios_objc.mm              |  21 +-
- webrtc/modules/video_capture/ios/video_capture.h   |  44 ++++
- webrtc/modules/video_capture/ios/video_capture.mm  | 103 ++++++++
- .../modules/video_capture/ios/video_capture_ios.h  |  44 ----
- .../modules/video_capture/ios/video_capture_ios.mm | 103 --------
+ .../ios/rtc_video_capture_ios_objc.mm              |  20 +-
  webrtc/modules/video_capture/mac                   |   1 +
- .../video_capture/mac/qtkit/video_capture_qtkit.h  |  79 ------
- .../video_capture/mac/qtkit/video_capture_qtkit.mm | 211 ----------------
- .../mac/qtkit/video_capture_qtkit_info.h           |  93 -------
+ .../video_capture/mac/qtkit/video_capture_qtkit.h  |  79 -------
+ .../video_capture/mac/qtkit/video_capture_qtkit.mm | 211 -----------------
+ .../mac/qtkit/video_capture_qtkit_info.h           |  93 --------
  .../mac/qtkit/video_capture_qtkit_info.mm          | 125 ----------
- .../mac/qtkit/video_capture_qtkit_info_objc.h      |  67 -----
+ .../mac/qtkit/video_capture_qtkit_info_objc.h      |  67 ------
  .../mac/qtkit/video_capture_qtkit_info_objc.mm     | 191 ---------------
  .../mac/qtkit/video_capture_qtkit_objc.h           |  61 -----
- .../mac/qtkit/video_capture_qtkit_objc.mm          | 260 --------------------
+ .../mac/qtkit/video_capture_qtkit_objc.mm          | 260 ---------------------
  .../mac/qtkit/video_capture_qtkit_utility.h        |  36 ---
- .../modules/video_capture/mac/video_capture_mac.mm | 271 ---------------------
+ .../modules/video_capture/mac/video_capture_mac.mm | 252 --------------------
  webrtc/modules/video_capture/video_capture.gypi    |  30 +--
- 23 files changed, 434 insertions(+), 1796 deletions(-)
- create mode 100644 webrtc/modules/video_capture/ios/device_info.h
- create mode 100644 webrtc/modules/video_capture/ios/device_info.mm
- delete mode 100644 webrtc/modules/video_capture/ios/device_info_ios.h
- delete mode 100644 webrtc/modules/video_capture/ios/device_info_ios.mm
- create mode 100644 webrtc/modules/video_capture/ios/video_capture.h
- create mode 100644 webrtc/modules/video_capture/ios/video_capture.mm
- delete mode 100644 webrtc/modules/video_capture/ios/video_capture_ios.h
- delete mode 100644 webrtc/modules/video_capture/ios/video_capture_ios.mm
+ 16 files changed, 49 insertions(+), 1393 deletions(-)
  create mode 120000 webrtc/modules/video_capture/mac
  delete mode 100644 webrtc/modules/video_capture/mac/qtkit/video_capture_qtkit.h
  delete mode 100644 webrtc/modules/video_capture/mac/qtkit/video_capture_qtkit.mm
@@ -54,512 +33,36 @@ _ios.<ext> will not get picked up if on mac.
  delete mode 100644 webrtc/modules/video_capture/mac/qtkit/video_capture_qtkit_utility.h
  delete mode 100644 webrtc/modules/video_capture/mac/video_capture_mac.mm
 
-diff --git a/webrtc/modules/video_capture/ios/device_info.h b/webrtc/modules/video_capture/ios/device_info.h
-new file mode 100644
-index 0000000..6af7c33
---- /dev/null
-+++ b/webrtc/modules/video_capture/ios/device_info.h
-@@ -0,0 +1,60 @@
-+/*
-+ *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-+ *
-+ *  Use of this source code is governed by a BSD-style license
-+ *  that can be found in the LICENSE file in the root of the source
-+ *  tree. An additional intellectual property rights grant can be found
-+ *  in the file PATENTS.  All contributing project authors may
-+ *  be found in the AUTHORS file in the root of the source tree.
-+ */
-+
-+#ifndef WEBRTC_MODULES_VIDEO_CAPTURE_IOS_DEVICE_INFO_IOS_H_
-+#define WEBRTC_MODULES_VIDEO_CAPTURE_IOS_DEVICE_INFO_IOS_H_
-+
-+#include "webrtc/modules/video_capture/device_info_impl.h"
-+
-+#include <map>
-+
-+namespace webrtc {
-+namespace videocapturemodule {
-+class DeviceInfoIos : public DeviceInfoImpl {
-+ public:
-+  explicit DeviceInfoIos(const int32_t device_id);
-+  virtual ~DeviceInfoIos();
-+
-+  // Implementation of DeviceInfoImpl.
-+  int32_t Init() override;
-+  uint32_t NumberOfDevices() override;
-+  int32_t GetDeviceName(uint32_t deviceNumber,
-+                        char* deviceNameUTF8,
-+                        uint32_t deviceNameLength,
-+                        char* deviceUniqueIdUTF8,
-+                        uint32_t deviceUniqueIdUTF8Length,
-+                        char* productUniqueIdUTF8 = 0,
-+                        uint32_t productUniqueIdUTF8Length = 0) override;
-+
-+  int32_t NumberOfCapabilities(const char* deviceUniqueIdUTF8) override;
-+
-+  int32_t GetCapability(const char* deviceUniqueIdUTF8,
-+                        const uint32_t deviceCapabilityNumber,
-+                        VideoCaptureCapability& capability) override;
-+
-+  int32_t DisplayCaptureSettingsDialogBox(const char* deviceUniqueIdUTF8,
-+                                          const char* dialogTitleUTF8,
-+                                          void* parentWindow,
-+                                          uint32_t positionX,
-+                                          uint32_t positionY) override;
-+
-+  int32_t GetOrientation(const char* deviceUniqueIdUTF8,
-+                         VideoRotation& orientation) override;
-+
-+  int32_t CreateCapabilityMap(const char* device_unique_id_utf8) override;
-+
-+ private:
-+  std::map<std::string, VideoCaptureCapabilities> _capabilitiesMap;
-+};
-+
-+}  // namespace videocapturemodule
-+}  // namespace webrtc
-+
-+#endif  // WEBRTC_MODULES_VIDEO_CAPTURE_IOS_DEVICE_INFO_IOS_H_
 diff --git a/webrtc/modules/video_capture/ios/device_info.mm b/webrtc/modules/video_capture/ios/device_info.mm
-new file mode 100644
-index 0000000..092bb54
---- /dev/null
+index 307e5d3..092bb54 100644
+--- a/webrtc/modules/video_capture/ios/device_info.mm
 +++ b/webrtc/modules/video_capture/ios/device_info.mm
-@@ -0,0 +1,184 @@
-+/*
-+ *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-+ *
-+ *  Use of this source code is governed by a BSD-style license
-+ *  that can be found in the LICENSE file in the root of the source
-+ *  tree. An additional intellectual property rights grant can be found
-+ *  in the file PATENTS.  All contributing project authors may
-+ *  be found in the AUTHORS file in the root of the source tree.
-+ */
-+
-+#if !defined(__has_feature) || !__has_feature(objc_arc)
-+#error "This file requires ARC support."
-+#endif
-+
-+#include <AVFoundation/AVFoundation.h>
-+
-+#include <string>
-+
+@@ -16,7 +16,7 @@
+ 
+ #include <string>
+ 
+-#include "webrtc/modules/video_capture/ios/device_info_ios.h"
 +#include "webrtc/modules/video_capture/ios/device_info.h"
-+#include "webrtc/modules/video_capture/ios/device_info_ios_objc.h"
-+#include "webrtc/modules/video_capture/video_capture_impl.h"
-+#include "webrtc/system_wrappers/include/trace.h"
-+
-+using namespace webrtc;
-+using namespace videocapturemodule;
-+
+ #include "webrtc/modules/video_capture/ios/device_info_ios_objc.h"
+ #include "webrtc/modules/video_capture/video_capture_impl.h"
+ #include "webrtc/system_wrappers/include/trace.h"
+@@ -24,10 +24,16 @@
+ using namespace webrtc;
+ using namespace videocapturemodule;
+ 
 +#if defined(WEBRTC_IOS)
-+static NSArray *camera_presets = @[AVCaptureSessionPreset352x288,
-+                                   AVCaptureSessionPreset640x480,
-+                                   AVCaptureSessionPreset1280x720,
-+                                   AVCaptureSessionPreset1920x1080];
+ static NSArray *camera_presets = @[AVCaptureSessionPreset352x288,
+                                    AVCaptureSessionPreset640x480,
+                                    AVCaptureSessionPreset1280x720,
+                                    AVCaptureSessionPreset1920x1080];
 +#else
 +static NSArray *camera_presets = @[AVCaptureSessionPreset352x288,
 +                                   AVCaptureSessionPreset640x480,
 +                                   AVCaptureSessionPreset1280x720];
 +#endif
-+
-+
-+#define IOS_UNSUPPORTED()                                  \
-+  WEBRTC_TRACE(kTraceError,                                \
-+               kTraceVideoCapture,                         \
-+               _id,                                        \
-+               "%s is not supported on the iOS platform.", \
-+               __FUNCTION__);                              \
-+  return -1;
-+
-+VideoCaptureModule::DeviceInfo* VideoCaptureImpl::CreateDeviceInfo(
-+    const int32_t device_id) {
-+  return new DeviceInfoIos(device_id);
-+}
-+
-+DeviceInfoIos::DeviceInfoIos(const int32_t device_id)
-+    : DeviceInfoImpl(device_id) {
-+  this->Init();
-+}
-+
-+DeviceInfoIos::~DeviceInfoIos() {}
-+
-+int32_t DeviceInfoIos::Init() {
-+  // Fill in all device capabilities.
-+
-+  int deviceCount = [DeviceInfoIosObjC captureDeviceCount];
-+
-+  for (int i = 0; i < deviceCount; i++) {
-+    AVCaptureDevice *avDevice = [DeviceInfoIosObjC captureDeviceForIndex:i];
-+    VideoCaptureCapabilities capabilityVector;
-+
-+    for (NSString *preset in camera_presets) {
-+      BOOL support = [avDevice supportsAVCaptureSessionPreset:preset];
-+      if (support) {
-+        VideoCaptureCapability capability =
-+            [DeviceInfoIosObjC capabilityForPreset:preset];
-+        capabilityVector.push_back(capability);
-+      }
-+    }
-+
-+    char deviceNameUTF8[256];
-+    char deviceId[256];
-+    this->GetDeviceName(i, deviceNameUTF8, 256, deviceId, 256);
-+    std::string deviceIdCopy(deviceId);
-+    std::pair<std::string, VideoCaptureCapabilities> mapPair =
-+        std::pair<std::string, VideoCaptureCapabilities>
-+            (deviceIdCopy, capabilityVector);
-+    _capabilitiesMap.insert(mapPair);
-+  }
-+
-+  return 0;
-+}
-+
-+uint32_t DeviceInfoIos::NumberOfDevices() {
-+  return [DeviceInfoIosObjC captureDeviceCount];
-+}
-+
-+int32_t DeviceInfoIos::GetDeviceName(uint32_t deviceNumber,
-+                                     char* deviceNameUTF8,
-+                                     uint32_t deviceNameUTF8Length,
-+                                     char* deviceUniqueIdUTF8,
-+                                     uint32_t deviceUniqueIdUTF8Length,
-+                                     char* productUniqueIdUTF8,
-+                                     uint32_t productUniqueIdUTF8Length) {
-+  NSString* deviceName = [DeviceInfoIosObjC deviceNameForIndex:deviceNumber];
-+
-+  NSString* deviceUniqueId =
-+      [DeviceInfoIosObjC deviceUniqueIdForIndex:deviceNumber];
-+
-+  strncpy(deviceNameUTF8, [deviceName UTF8String], deviceNameUTF8Length);
-+  deviceNameUTF8[deviceNameUTF8Length - 1] = '\0';
-+
-+  strncpy(deviceUniqueIdUTF8,
-+          [deviceUniqueId UTF8String],
-+          deviceUniqueIdUTF8Length);
-+  deviceUniqueIdUTF8[deviceUniqueIdUTF8Length - 1] = '\0';
-+
-+  if (productUniqueIdUTF8) {
-+    productUniqueIdUTF8[0] = '\0';
-+  }
-+
-+  return 0;
-+}
-+
-+int32_t DeviceInfoIos::NumberOfCapabilities(const char* deviceUniqueIdUTF8) {
-+  int32_t numberOfCapabilities = 0;
-+  std::string deviceUniqueId(deviceUniqueIdUTF8);
-+  std::map<std::string, VideoCaptureCapabilities>::iterator it =
-+      _capabilitiesMap.find(deviceUniqueId);
-+
-+  if (it != _capabilitiesMap.end()) {
-+    numberOfCapabilities = it->second.size();
-+  }
-+  return numberOfCapabilities;
-+}
-+
-+int32_t DeviceInfoIos::GetCapability(const char* deviceUniqueIdUTF8,
-+                                     const uint32_t deviceCapabilityNumber,
-+                                     VideoCaptureCapability& capability) {
-+  std::string deviceUniqueId(deviceUniqueIdUTF8);
-+  std::map<std::string, VideoCaptureCapabilities>::iterator it =
-+      _capabilitiesMap.find(deviceUniqueId);
-+
-+  if (it != _capabilitiesMap.end()) {
-+    VideoCaptureCapabilities deviceCapabilities = it->second;
-+
-+    if (deviceCapabilityNumber < deviceCapabilities.size()) {
-+      VideoCaptureCapability cap;
-+      cap = deviceCapabilities[deviceCapabilityNumber];
-+      capability = cap;
-+      return 0;
-+    }
-+  }
-+
-+  return -1;
-+}
-+
-+int32_t DeviceInfoIos::DisplayCaptureSettingsDialogBox(
-+    const char* deviceUniqueIdUTF8,
-+    const char* dialogTitleUTF8,
-+    void* parentWindow,
-+    uint32_t positionX,
-+    uint32_t positionY) {
-+  IOS_UNSUPPORTED();
-+}
-+
-+int32_t DeviceInfoIos::GetOrientation(const char* deviceUniqueIdUTF8,
-+                                      VideoRotation& orientation) {
-+  if (strcmp(deviceUniqueIdUTF8, "Front Camera") == 0) {
-+    orientation = kVideoRotation_0;
-+  } else {
-+    orientation = kVideoRotation_90;
-+  }
-+  return orientation;
-+}
-+
-+int32_t DeviceInfoIos::CreateCapabilityMap(const char* deviceUniqueIdUTF8) {
-+  std::string deviceName(deviceUniqueIdUTF8);
-+  std::map<std::string, std::vector<VideoCaptureCapability>>::iterator it =
-+      _capabilitiesMap.find(deviceName);
-+  VideoCaptureCapabilities deviceCapabilities;
-+  if (it != _capabilitiesMap.end()) {
-+    _captureCapabilities = it->second;
-+    return 0;
-+  }
-+
-+  return -1;
-+}
-diff --git a/webrtc/modules/video_capture/ios/device_info_ios.h b/webrtc/modules/video_capture/ios/device_info_ios.h
-deleted file mode 100644
-index 6af7c33..0000000
---- a/webrtc/modules/video_capture/ios/device_info_ios.h
-+++ /dev/null
-@@ -1,60 +0,0 @@
--/*
-- *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-- *
-- *  Use of this source code is governed by a BSD-style license
-- *  that can be found in the LICENSE file in the root of the source
-- *  tree. An additional intellectual property rights grant can be found
-- *  in the file PATENTS.  All contributing project authors may
-- *  be found in the AUTHORS file in the root of the source tree.
-- */
--
--#ifndef WEBRTC_MODULES_VIDEO_CAPTURE_IOS_DEVICE_INFO_IOS_H_
--#define WEBRTC_MODULES_VIDEO_CAPTURE_IOS_DEVICE_INFO_IOS_H_
--
--#include "webrtc/modules/video_capture/device_info_impl.h"
--
--#include <map>
--
--namespace webrtc {
--namespace videocapturemodule {
--class DeviceInfoIos : public DeviceInfoImpl {
-- public:
--  explicit DeviceInfoIos(const int32_t device_id);
--  virtual ~DeviceInfoIos();
--
--  // Implementation of DeviceInfoImpl.
--  int32_t Init() override;
--  uint32_t NumberOfDevices() override;
--  int32_t GetDeviceName(uint32_t deviceNumber,
--                        char* deviceNameUTF8,
--                        uint32_t deviceNameLength,
--                        char* deviceUniqueIdUTF8,
--                        uint32_t deviceUniqueIdUTF8Length,
--                        char* productUniqueIdUTF8 = 0,
--                        uint32_t productUniqueIdUTF8Length = 0) override;
--
--  int32_t NumberOfCapabilities(const char* deviceUniqueIdUTF8) override;
--
--  int32_t GetCapability(const char* deviceUniqueIdUTF8,
--                        const uint32_t deviceCapabilityNumber,
--                        VideoCaptureCapability& capability) override;
--
--  int32_t DisplayCaptureSettingsDialogBox(const char* deviceUniqueIdUTF8,
--                                          const char* dialogTitleUTF8,
--                                          void* parentWindow,
--                                          uint32_t positionX,
--                                          uint32_t positionY) override;
--
--  int32_t GetOrientation(const char* deviceUniqueIdUTF8,
--                         VideoRotation& orientation) override;
--
--  int32_t CreateCapabilityMap(const char* device_unique_id_utf8) override;
--
-- private:
--  std::map<std::string, VideoCaptureCapabilities> _capabilitiesMap;
--};
--
--}  // namespace videocapturemodule
--}  // namespace webrtc
--
--#endif  // WEBRTC_MODULES_VIDEO_CAPTURE_IOS_DEVICE_INFO_IOS_H_
-diff --git a/webrtc/modules/video_capture/ios/device_info_ios.mm b/webrtc/modules/video_capture/ios/device_info_ios.mm
-deleted file mode 100644
-index 307e5d3..0000000
---- a/webrtc/modules/video_capture/ios/device_info_ios.mm
-+++ /dev/null
-@@ -1,178 +0,0 @@
--/*
-- *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-- *
-- *  Use of this source code is governed by a BSD-style license
-- *  that can be found in the LICENSE file in the root of the source
-- *  tree. An additional intellectual property rights grant can be found
-- *  in the file PATENTS.  All contributing project authors may
-- *  be found in the AUTHORS file in the root of the source tree.
-- */
--
--#if !defined(__has_feature) || !__has_feature(objc_arc)
--#error "This file requires ARC support."
--#endif
--
--#include <AVFoundation/AVFoundation.h>
--
--#include <string>
--
--#include "webrtc/modules/video_capture/ios/device_info_ios.h"
--#include "webrtc/modules/video_capture/ios/device_info_ios_objc.h"
--#include "webrtc/modules/video_capture/video_capture_impl.h"
--#include "webrtc/system_wrappers/include/trace.h"
--
--using namespace webrtc;
--using namespace videocapturemodule;
--
--static NSArray *camera_presets = @[AVCaptureSessionPreset352x288,
--                                   AVCaptureSessionPreset640x480,
--                                   AVCaptureSessionPreset1280x720,
--                                   AVCaptureSessionPreset1920x1080];
--
--
--#define IOS_UNSUPPORTED()                                  \
--  WEBRTC_TRACE(kTraceError,                                \
--               kTraceVideoCapture,                         \
--               _id,                                        \
--               "%s is not supported on the iOS platform.", \
--               __FUNCTION__);                              \
--  return -1;
--
--VideoCaptureModule::DeviceInfo* VideoCaptureImpl::CreateDeviceInfo(
--    const int32_t device_id) {
--  return new DeviceInfoIos(device_id);
--}
--
--DeviceInfoIos::DeviceInfoIos(const int32_t device_id)
--    : DeviceInfoImpl(device_id) {
--  this->Init();
--}
--
--DeviceInfoIos::~DeviceInfoIos() {}
--
--int32_t DeviceInfoIos::Init() {
--  // Fill in all device capabilities.
--
--  int deviceCount = [DeviceInfoIosObjC captureDeviceCount];
--
--  for (int i = 0; i < deviceCount; i++) {
--    AVCaptureDevice *avDevice = [DeviceInfoIosObjC captureDeviceForIndex:i];
--    VideoCaptureCapabilities capabilityVector;
--
--    for (NSString *preset in camera_presets) {
--      BOOL support = [avDevice supportsAVCaptureSessionPreset:preset];
--      if (support) {
--        VideoCaptureCapability capability =
--            [DeviceInfoIosObjC capabilityForPreset:preset];
--        capabilityVector.push_back(capability);
--      }
--    }
--
--    char deviceNameUTF8[256];
--    char deviceId[256];
--    this->GetDeviceName(i, deviceNameUTF8, 256, deviceId, 256);
--    std::string deviceIdCopy(deviceId);
--    std::pair<std::string, VideoCaptureCapabilities> mapPair =
--        std::pair<std::string, VideoCaptureCapabilities>
--            (deviceIdCopy, capabilityVector);
--    _capabilitiesMap.insert(mapPair);
--  }
--
--  return 0;
--}
--
--uint32_t DeviceInfoIos::NumberOfDevices() {
--  return [DeviceInfoIosObjC captureDeviceCount];
--}
--
--int32_t DeviceInfoIos::GetDeviceName(uint32_t deviceNumber,
--                                     char* deviceNameUTF8,
--                                     uint32_t deviceNameUTF8Length,
--                                     char* deviceUniqueIdUTF8,
--                                     uint32_t deviceUniqueIdUTF8Length,
--                                     char* productUniqueIdUTF8,
--                                     uint32_t productUniqueIdUTF8Length) {
--  NSString* deviceName = [DeviceInfoIosObjC deviceNameForIndex:deviceNumber];
--
--  NSString* deviceUniqueId =
--      [DeviceInfoIosObjC deviceUniqueIdForIndex:deviceNumber];
--
--  strncpy(deviceNameUTF8, [deviceName UTF8String], deviceNameUTF8Length);
--  deviceNameUTF8[deviceNameUTF8Length - 1] = '\0';
--
--  strncpy(deviceUniqueIdUTF8,
--          [deviceUniqueId UTF8String],
--          deviceUniqueIdUTF8Length);
--  deviceUniqueIdUTF8[deviceUniqueIdUTF8Length - 1] = '\0';
--
--  if (productUniqueIdUTF8) {
--    productUniqueIdUTF8[0] = '\0';
--  }
--
--  return 0;
--}
--
--int32_t DeviceInfoIos::NumberOfCapabilities(const char* deviceUniqueIdUTF8) {
--  int32_t numberOfCapabilities = 0;
--  std::string deviceUniqueId(deviceUniqueIdUTF8);
--  std::map<std::string, VideoCaptureCapabilities>::iterator it =
--      _capabilitiesMap.find(deviceUniqueId);
--
--  if (it != _capabilitiesMap.end()) {
--    numberOfCapabilities = it->second.size();
--  }
--  return numberOfCapabilities;
--}
--
--int32_t DeviceInfoIos::GetCapability(const char* deviceUniqueIdUTF8,
--                                     const uint32_t deviceCapabilityNumber,
--                                     VideoCaptureCapability& capability) {
--  std::string deviceUniqueId(deviceUniqueIdUTF8);
--  std::map<std::string, VideoCaptureCapabilities>::iterator it =
--      _capabilitiesMap.find(deviceUniqueId);
--
--  if (it != _capabilitiesMap.end()) {
--    VideoCaptureCapabilities deviceCapabilities = it->second;
--
--    if (deviceCapabilityNumber < deviceCapabilities.size()) {
--      VideoCaptureCapability cap;
--      cap = deviceCapabilities[deviceCapabilityNumber];
--      capability = cap;
--      return 0;
--    }
--  }
--
--  return -1;
--}
--
--int32_t DeviceInfoIos::DisplayCaptureSettingsDialogBox(
--    const char* deviceUniqueIdUTF8,
--    const char* dialogTitleUTF8,
--    void* parentWindow,
--    uint32_t positionX,
--    uint32_t positionY) {
--  IOS_UNSUPPORTED();
--}
--
--int32_t DeviceInfoIos::GetOrientation(const char* deviceUniqueIdUTF8,
--                                      VideoRotation& orientation) {
--  if (strcmp(deviceUniqueIdUTF8, "Front Camera") == 0) {
--    orientation = kVideoRotation_0;
--  } else {
--    orientation = kVideoRotation_90;
--  }
--  return orientation;
--}
--
--int32_t DeviceInfoIos::CreateCapabilityMap(const char* deviceUniqueIdUTF8) {
--  std::string deviceName(deviceUniqueIdUTF8);
--  std::map<std::string, std::vector<VideoCaptureCapability>>::iterator it =
--      _capabilitiesMap.find(deviceName);
--  VideoCaptureCapabilities deviceCapabilities;
--  if (it != _capabilitiesMap.end()) {
--    _captureCapabilities = it->second;
--    return 0;
--  }
--
--  return -1;
--}
+ 
+ 
+ #define IOS_UNSUPPORTED()                                  \
 diff --git a/webrtc/modules/video_capture/ios/device_info_ios_objc.mm b/webrtc/modules/video_capture/ios/device_info_ios_objc.mm
 index 818f862..1d2e7dd 100644
 --- a/webrtc/modules/video_capture/ios/device_info_ios_objc.mm
@@ -599,16 +102,15 @@ index 2653958..07323f8 100644
  // The following class listens to a notification with name:
  // 'StatusBarOrientationDidChange'.
 diff --git a/webrtc/modules/video_capture/ios/rtc_video_capture_ios_objc.mm b/webrtc/modules/video_capture/ios/rtc_video_capture_ios_objc.mm
-index e36c83b..4ced0e7 100644
+index e36c83b..0d7bb99 100644
 --- a/webrtc/modules/video_capture/ios/rtc_video_capture_ios_objc.mm
 +++ b/webrtc/modules/video_capture/ios/rtc_video_capture_ios_objc.mm
 @@ -12,7 +12,9 @@
  #error "This file requires ARC support."
  #endif
  
--#import <UIKit/UIKit.h>
 +#if defined(WEBRTC_IOS)
-+  #import <UIKit/UIKit.h>
+ #import <UIKit/UIKit.h>
 +#endif
  
  #import "webrtc/modules/video_capture/ios/device_info_ios_objc.h"
@@ -617,8 +119,9 @@ index e36c83b..4ced0e7 100644
                     __LINE__);
      }
  
+-    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 +#if defined(WEBRTC_IOS)
-     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
++     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 +#endif
  
      NSNotificationCenter* notify = [NSNotificationCenter defaultCenter];
@@ -671,16 +174,15 @@ index e36c83b..4ced0e7 100644
  
    // begin configuration for the AVCaptureSession
    [_captureSession beginConfiguration];
-@@ -247,6 +261,8 @@ using namespace webrtc::videocapturemodule;
+@@ -247,6 +261,7 @@ using namespace webrtc::videocapturemodule;
      return;
    }
  
-+
 +#if defined(WEBRTC_IOS)
    switch ([UIDevice currentDevice].orientation) {
      case UIDeviceOrientationPortrait:
        _connection.videoOrientation =
-@@ -273,6 +289,7 @@ using namespace webrtc::videocapturemodule;
+@@ -273,6 +288,7 @@ using namespace webrtc::videocapturemodule;
        }
        break;
    }
@@ -688,7 +190,7 @@ index e36c83b..4ced0e7 100644
  }
  
  - (void)onVideoError:(NSNotification*)notification {
-@@ -288,7 +305,9 @@ using namespace webrtc::videocapturemodule;
+@@ -288,7 +304,9 @@ using namespace webrtc::videocapturemodule;
  }
  
  - (BOOL)stopCapture {
@@ -698,324 +200,6 @@ index e36c83b..4ced0e7 100644
    _orientationHasChanged = NO;
    [self waitForCaptureChangeToFinish];
    [self directOutputToNil];
-diff --git a/webrtc/modules/video_capture/ios/video_capture.h b/webrtc/modules/video_capture/ios/video_capture.h
-new file mode 100644
-index 0000000..1afcbad
---- /dev/null
-+++ b/webrtc/modules/video_capture/ios/video_capture.h
-@@ -0,0 +1,44 @@
-+/*
-+ *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-+ *
-+ *  Use of this source code is governed by a BSD-style license
-+ *  that can be found in the LICENSE file in the root of the source
-+ *  tree. An additional intellectual property rights grant can be found
-+ *  in the file PATENTS.  All contributing project authors may
-+ *  be found in the AUTHORS file in the root of the source tree.
-+ */
-+
-+#ifndef WEBRTC_MODULES_VIDEO_CAPTURE_IOS_VIDEO_CAPTURE_IOS_H_
-+#define WEBRTC_MODULES_VIDEO_CAPTURE_IOS_VIDEO_CAPTURE_IOS_H_
-+
-+#include "webrtc/modules/video_capture/video_capture_impl.h"
-+
-+@class RTCVideoCaptureIosObjC;
-+
-+namespace webrtc {
-+namespace videocapturemodule {
-+class VideoCaptureIos : public VideoCaptureImpl {
-+ public:
-+  explicit VideoCaptureIos(const int32_t capture_id);
-+  virtual ~VideoCaptureIos();
-+
-+  static VideoCaptureModule* Create(const int32_t capture_id,
-+                                    const char* device_unique_id_utf8);
-+
-+  // Implementation of VideoCaptureImpl.
-+  int32_t StartCapture(const VideoCaptureCapability& capability) override;
-+  int32_t StopCapture() override;
-+  bool CaptureStarted() override;
-+  int32_t CaptureSettings(VideoCaptureCapability& settings) override;
-+
-+ private:
-+  RTCVideoCaptureIosObjC* capture_device_;
-+  bool is_capturing_;
-+  int32_t id_;
-+  VideoCaptureCapability capability_;
-+};
-+
-+}  // namespace videocapturemodule
-+}  // namespace webrtc
-+
-+#endif  // WEBRTC_MODULES_VIDEO_CAPTURE_IOS_VIDEO_CAPTURE_IOS_H_
-diff --git a/webrtc/modules/video_capture/ios/video_capture.mm b/webrtc/modules/video_capture/ios/video_capture.mm
-new file mode 100644
-index 0000000..ae9b7e0
---- /dev/null
-+++ b/webrtc/modules/video_capture/ios/video_capture.mm
-@@ -0,0 +1,103 @@
-+/*
-+ *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-+ *
-+ *  Use of this source code is governed by a BSD-style license
-+ *  that can be found in the LICENSE file in the root of the source
-+ *  tree. An additional intellectual property rights grant can be found
-+ *  in the file PATENTS.  All contributing project authors may
-+ *  be found in the AUTHORS file in the root of the source tree.
-+ */
-+
-+#if !defined(__has_feature) || !__has_feature(objc_arc)
-+#error "This file requires ARC support."
-+#endif
-+
-+#include "webrtc/modules/video_capture/ios/device_info_ios_objc.h"
-+#include "webrtc/modules/video_capture/ios/rtc_video_capture_ios_objc.h"
-+#include "webrtc/system_wrappers/include/ref_count.h"
-+#include "webrtc/system_wrappers/include/trace.h"
-+
-+using namespace webrtc;
-+using namespace videocapturemodule;
-+
-+VideoCaptureModule* VideoCaptureImpl::Create(const int32_t capture_id,
-+                                             const char* deviceUniqueIdUTF8) {
-+  return VideoCaptureIos::Create(capture_id, deviceUniqueIdUTF8);
-+}
-+
-+VideoCaptureIos::VideoCaptureIos(const int32_t capture_id)
-+    : VideoCaptureImpl(capture_id), is_capturing_(false), id_(capture_id) {
-+  capability_.width = kDefaultWidth;
-+  capability_.height = kDefaultHeight;
-+  capability_.maxFPS = kDefaultFrameRate;
-+  capture_device_ = nil;
-+}
-+
-+VideoCaptureIos::~VideoCaptureIos() {
-+  if (is_capturing_) {
-+    [capture_device_ stopCapture];
-+    capture_device_ = nil;
-+  }
-+}
-+
-+VideoCaptureModule* VideoCaptureIos::Create(const int32_t capture_id,
-+                                            const char* deviceUniqueIdUTF8) {
-+  if (!deviceUniqueIdUTF8[0]) {
-+    return NULL;
-+  }
-+
-+  RefCountImpl<VideoCaptureIos>* capture_module =
-+      new RefCountImpl<VideoCaptureIos>(capture_id);
-+
-+  const int32_t name_length = strlen(deviceUniqueIdUTF8);
-+  if (name_length > kVideoCaptureUniqueNameLength)
-+    return NULL;
-+
-+  capture_module->_deviceUniqueId = new char[name_length + 1];
-+  strncpy(capture_module->_deviceUniqueId, deviceUniqueIdUTF8, name_length + 1);
-+  capture_module->_deviceUniqueId[name_length] = '\0';
-+
-+  capture_module->capture_device_ =
-+      [[RTCVideoCaptureIosObjC alloc] initWithOwner:capture_module
-+                                          captureId:capture_module->id_];
-+  if (!capture_module->capture_device_) {
-+    return NULL;
-+  }
-+
-+  if (![capture_module->capture_device_ setCaptureDeviceByUniqueId:[
-+              [NSString alloc] initWithCString:deviceUniqueIdUTF8
-+                                      encoding:NSUTF8StringEncoding]]) {
-+    return NULL;
-+  }
-+  return capture_module;
-+}
-+
-+int32_t VideoCaptureIos::StartCapture(
-+    const VideoCaptureCapability& capability) {
-+  capability_ = capability;
-+
-+  if (![capture_device_ startCaptureWithCapability:capability]) {
-+    return -1;
-+  }
-+
-+  is_capturing_ = true;
-+
-+  return 0;
-+}
-+
-+int32_t VideoCaptureIos::StopCapture() {
-+  if (![capture_device_ stopCapture]) {
-+    return -1;
-+  }
-+
-+  is_capturing_ = false;
-+  return 0;
-+}
-+
-+bool VideoCaptureIos::CaptureStarted() { return is_capturing_; }
-+
-+int32_t VideoCaptureIos::CaptureSettings(VideoCaptureCapability& settings) {
-+  settings = capability_;
-+  settings.rawType = kVideoNV12;
-+  return 0;
-+}
-diff --git a/webrtc/modules/video_capture/ios/video_capture_ios.h b/webrtc/modules/video_capture/ios/video_capture_ios.h
-deleted file mode 100644
-index 1afcbad..0000000
---- a/webrtc/modules/video_capture/ios/video_capture_ios.h
-+++ /dev/null
-@@ -1,44 +0,0 @@
--/*
-- *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-- *
-- *  Use of this source code is governed by a BSD-style license
-- *  that can be found in the LICENSE file in the root of the source
-- *  tree. An additional intellectual property rights grant can be found
-- *  in the file PATENTS.  All contributing project authors may
-- *  be found in the AUTHORS file in the root of the source tree.
-- */
--
--#ifndef WEBRTC_MODULES_VIDEO_CAPTURE_IOS_VIDEO_CAPTURE_IOS_H_
--#define WEBRTC_MODULES_VIDEO_CAPTURE_IOS_VIDEO_CAPTURE_IOS_H_
--
--#include "webrtc/modules/video_capture/video_capture_impl.h"
--
--@class RTCVideoCaptureIosObjC;
--
--namespace webrtc {
--namespace videocapturemodule {
--class VideoCaptureIos : public VideoCaptureImpl {
-- public:
--  explicit VideoCaptureIos(const int32_t capture_id);
--  virtual ~VideoCaptureIos();
--
--  static VideoCaptureModule* Create(const int32_t capture_id,
--                                    const char* device_unique_id_utf8);
--
--  // Implementation of VideoCaptureImpl.
--  int32_t StartCapture(const VideoCaptureCapability& capability) override;
--  int32_t StopCapture() override;
--  bool CaptureStarted() override;
--  int32_t CaptureSettings(VideoCaptureCapability& settings) override;
--
-- private:
--  RTCVideoCaptureIosObjC* capture_device_;
--  bool is_capturing_;
--  int32_t id_;
--  VideoCaptureCapability capability_;
--};
--
--}  // namespace videocapturemodule
--}  // namespace webrtc
--
--#endif  // WEBRTC_MODULES_VIDEO_CAPTURE_IOS_VIDEO_CAPTURE_IOS_H_
-diff --git a/webrtc/modules/video_capture/ios/video_capture_ios.mm b/webrtc/modules/video_capture/ios/video_capture_ios.mm
-deleted file mode 100644
-index ae9b7e0..0000000
---- a/webrtc/modules/video_capture/ios/video_capture_ios.mm
-+++ /dev/null
-@@ -1,103 +0,0 @@
--/*
-- *  Copyright (c) 2013 The WebRTC project authors. All Rights Reserved.
-- *
-- *  Use of this source code is governed by a BSD-style license
-- *  that can be found in the LICENSE file in the root of the source
-- *  tree. An additional intellectual property rights grant can be found
-- *  in the file PATENTS.  All contributing project authors may
-- *  be found in the AUTHORS file in the root of the source tree.
-- */
--
--#if !defined(__has_feature) || !__has_feature(objc_arc)
--#error "This file requires ARC support."
--#endif
--
--#include "webrtc/modules/video_capture/ios/device_info_ios_objc.h"
--#include "webrtc/modules/video_capture/ios/rtc_video_capture_ios_objc.h"
--#include "webrtc/system_wrappers/include/ref_count.h"
--#include "webrtc/system_wrappers/include/trace.h"
--
--using namespace webrtc;
--using namespace videocapturemodule;
--
--VideoCaptureModule* VideoCaptureImpl::Create(const int32_t capture_id,
--                                             const char* deviceUniqueIdUTF8) {
--  return VideoCaptureIos::Create(capture_id, deviceUniqueIdUTF8);
--}
--
--VideoCaptureIos::VideoCaptureIos(const int32_t capture_id)
--    : VideoCaptureImpl(capture_id), is_capturing_(false), id_(capture_id) {
--  capability_.width = kDefaultWidth;
--  capability_.height = kDefaultHeight;
--  capability_.maxFPS = kDefaultFrameRate;
--  capture_device_ = nil;
--}
--
--VideoCaptureIos::~VideoCaptureIos() {
--  if (is_capturing_) {
--    [capture_device_ stopCapture];
--    capture_device_ = nil;
--  }
--}
--
--VideoCaptureModule* VideoCaptureIos::Create(const int32_t capture_id,
--                                            const char* deviceUniqueIdUTF8) {
--  if (!deviceUniqueIdUTF8[0]) {
--    return NULL;
--  }
--
--  RefCountImpl<VideoCaptureIos>* capture_module =
--      new RefCountImpl<VideoCaptureIos>(capture_id);
--
--  const int32_t name_length = strlen(deviceUniqueIdUTF8);
--  if (name_length > kVideoCaptureUniqueNameLength)
--    return NULL;
--
--  capture_module->_deviceUniqueId = new char[name_length + 1];
--  strncpy(capture_module->_deviceUniqueId, deviceUniqueIdUTF8, name_length + 1);
--  capture_module->_deviceUniqueId[name_length] = '\0';
--
--  capture_module->capture_device_ =
--      [[RTCVideoCaptureIosObjC alloc] initWithOwner:capture_module
--                                          captureId:capture_module->id_];
--  if (!capture_module->capture_device_) {
--    return NULL;
--  }
--
--  if (![capture_module->capture_device_ setCaptureDeviceByUniqueId:[
--              [NSString alloc] initWithCString:deviceUniqueIdUTF8
--                                      encoding:NSUTF8StringEncoding]]) {
--    return NULL;
--  }
--  return capture_module;
--}
--
--int32_t VideoCaptureIos::StartCapture(
--    const VideoCaptureCapability& capability) {
--  capability_ = capability;
--
--  if (![capture_device_ startCaptureWithCapability:capability]) {
--    return -1;
--  }
--
--  is_capturing_ = true;
--
--  return 0;
--}
--
--int32_t VideoCaptureIos::StopCapture() {
--  if (![capture_device_ stopCapture]) {
--    return -1;
--  }
--
--  is_capturing_ = false;
--  return 0;
--}
--
--bool VideoCaptureIos::CaptureStarted() { return is_capturing_; }
--
--int32_t VideoCaptureIos::CaptureSettings(VideoCaptureCapability& settings) {
--  settings = capability_;
--  settings.rawType = kVideoNV12;
--  return 0;
--}
 diff --git a/webrtc/modules/video_capture/mac b/webrtc/modules/video_capture/mac
 new file mode 120000
 index 0000000..d99afd6
@@ -2203,10 +1387,10 @@ index 5ef0b96..0000000
 -#endif  // WEBRTC_MODULES_VIDEO_CAPTURE_MAIN_SOURCE_MAC_QTKIT_VIDEO_CAPTURE_QTKIT_UTILITY_H_
 diff --git a/webrtc/modules/video_capture/mac/video_capture_mac.mm b/webrtc/modules/video_capture/mac/video_capture_mac.mm
 deleted file mode 100644
-index a9dab96..0000000
+index 08b2aeb..0000000
 --- a/webrtc/modules/video_capture/mac/video_capture_mac.mm
 +++ /dev/null
-@@ -1,271 +0,0 @@
+@@ -1,252 +0,0 @@
 -/*
 - *  Copyright (c) 2012 The WebRTC project authors. All Rights Reserved.
 - *
@@ -2224,10 +1408,11 @@ index a9dab96..0000000
 -
 -#include <QuickTime/QuickTime.h>
 -
+-#include "webrtc/base/refcount.h"
+-#include "webrtc/base/scoped_ref_ptr.h"
 -#include "webrtc/modules/video_capture/device_info_impl.h"
 -#include "webrtc/modules/video_capture/video_capture_config.h"
 -#include "webrtc/modules/video_capture/video_capture_impl.h"
--#include "webrtc/system_wrappers/include/ref_count.h"
 -#include "webrtc/system_wrappers/include/trace.h"
 -
 -// 10.4 support must be decided runtime. We will just decide which framework to
@@ -2318,25 +1503,23 @@ index a9dab96..0000000
 - *                             version buffer
 - */
 -
--VideoCaptureModule* VideoCaptureImpl::Create(
--    const int32_t id, const char* deviceUniqueIdUTF8)
--{
--
--    if (webrtc::videocapturemodule::CheckOSVersion() == false)
--    {
+-rtc::scoped_refptr<VideoCaptureModule> VideoCaptureImpl::Create(
+-    const int32_t id,
+-    const char* deviceUniqueIdUTF8) {
+-    if (!CheckOSVersion()) {
 -        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, id,
 -                     "OS version is too old. Could not create video capture "
 -                     "module. Returning NULL");
--        return NULL;
+-        return nullptr;
 -    }
 -
 -#if __MAC_OS_X_VERSION_MIN_REQUIRED == __MAC_10_4 // QuickTime version
--    if (webrtc::videocapturemodule::CheckQTVersion() == false)
+-    if (!CheckQTVersion())
 -    {
 -        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, id,
 -                     "QuickTime version is too old. Could not create video "
 -                     "capture module. Returning NULL");
--        return NULL;
+-        return nullptr;
 -    }
 -
 -    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, id,
@@ -2344,17 +1527,8 @@ index a9dab96..0000000
 -                 "QuickTime framework to capture video",
 -                 __FILE__, __LINE__);
 -
--    RefCountImpl<videocapturemodule::VideoCaptureMacQuickTime>*
--        newCaptureModule =
--            new RefCountImpl<videocapturemodule::VideoCaptureMacQuickTime>(id);
--
--    if (!newCaptureModule)
--    {
--        WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, id,
--                     "could not Create for unique device %s, !newCaptureModule",
--                     deviceUniqueIdUTF8);
--        return NULL;
--    }
+-    rtc::scoped_refptr<VideoCaptureMacQuickTime> newCaptureModule(
+-        new rtc::RefCountedObject<VideoCaptureMacQuickTime>(id));
 -
 -    if (newCaptureModule->Init(id, deviceUniqueIdUTF8) != 0)
 -    {
@@ -2362,8 +1536,7 @@ index a9dab96..0000000
 -                     "could not Create for unique device %s, "
 -                     "newCaptureModule->Init()!=0",
 -                     deviceUniqueIdUTF8);
--        delete newCaptureModule;
--        return NULL;
+-        return nullptr;
 -    }
 -
 -    // Successfully created VideoCaptureMacQuicktime. Return it
@@ -2378,23 +1551,15 @@ index a9dab96..0000000
 -    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, id,
 -                 "Using QTKit framework to capture video", id);
 -
--    RefCountImpl<videocapturemodule::VideoCaptureMacQTKit>* newCaptureModule =
--        new RefCountImpl<videocapturemodule::VideoCaptureMacQTKit>(id);
+-    rtc::scoped_refptr<VideoCaptureMacQTKit> newCaptureModule(
+-        new rtc::RefCountedObject<VideoCaptureMacQTKit>(id));
 -
--    if(!newCaptureModule)
--    {
--        WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, id,
--                     "could not Create for unique device %s, !newCaptureModule",
--                     deviceUniqueIdUTF8);
--        return NULL;
--    }
 -    if(newCaptureModule->Init(id, deviceUniqueIdUTF8) != 0)
 -    {
 -        WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, id,
 -                     "could not Create for unique device %s, "
 -                     "newCaptureModule->Init()!=0", deviceUniqueIdUTF8);
--        delete newCaptureModule;
--        return NULL;
+-        return nullptr;
 -    }
 -
 -    // Successfully created VideoCaptureMacQuicktime. Return it

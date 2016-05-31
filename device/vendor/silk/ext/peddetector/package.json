@@ -17,7 +17,6 @@
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
-    "silk-flow-bin": "/pub/flow-bin",
     "silk-log": "/pub/log"
   },
   "private": true,

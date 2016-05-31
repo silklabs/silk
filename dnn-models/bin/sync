@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+if [[ ! -d silk-dnn ]]; then
+  git clone git@github.com:silklabs/silk-dnn.git silk-dnn
+  pushd silk-dnn
+  git checkout 4b8b18f24319f75eabe6733f9985e90d85830936
+  popd
+fi

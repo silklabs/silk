@@ -16,6 +16,7 @@ pwd
 npm build node_modules/silk-core-version
 npm build node_modules/node-webrtc
 npm build node_modules/silk-external-dlib
+npm build node_modules/silk-dnn-models
 
 if [[ "$(uname)" == "Darwin" && -z $GET_OFF_MY_LAWN ]]; then
   # Following packages are needed by caffe module

@@ -7,7 +7,7 @@
 . bin/setup
 
 build_type=${1:-Release}
-build_version=${2:-50}
+build_version=${2:-51}
 build_dest=build-staging
 # XXX: We should not be pinned to an internal version here...
 chromium_dest=$build_dest/chromium

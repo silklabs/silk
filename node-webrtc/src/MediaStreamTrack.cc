@@ -219,9 +219,9 @@ void MediaStreamTrack::Clone(const Nan::FunctionCallbackInfo<Value> &info) {
 
 void MediaStreamTrack::Stop(const Nan::FunctionCallbackInfo<Value> &info) {
   LOG(LS_INFO) << __PRETTY_FUNCTION__;
-
-  MediaStreamTrack *self = RTCWrap::Unwrap<MediaStreamTrack>(info.This(), "MediaStreamTrack");
-  info.GetReturnValue().Set(Nan::New(self->_track->set_state(webrtc::MediaStreamTrackInterface::kEnded)));
+  // TODO: We could in theory implement this by type casting to the correct
+  // audio/video source and calling .Stop on that but we don't need this yet.
+  Nan::ThrowError(".Stop is not implemented yet ...");
 }
 
 void MediaStreamTrack::GetEnabled(Local<String> property, const Nan::PropertyCallbackInfo<Value> &info) {
@@ -401,14 +401,14 @@ void MediaStreamTrack::CheckState() {
   webrtc::MediaSourceInterface::SourceState new_source = _source->state();
   
   if (_track_state != new_state) {
-    if (new_state == webrtc::MediaStreamTrackInterface::kEnded || new_state == webrtc::MediaStreamTrackInterface::kFailed) {
+    if (new_state == webrtc::MediaStreamTrackInterface::kEnded) {
       Local<Function> callback = Nan::New<Function>(_onended);
       Local<Value> argv[1];
 
       if (!callback.IsEmpty() && callback->IsFunction()) {
         callback->Call(RTCWrap::This(), 0, argv);
       }
-    } else if (_track_state == webrtc::MediaStreamTrackInterface::kInitializing && new_state == webrtc::MediaStreamTrackInterface::kLive) {
+    } else if (new_state == webrtc::MediaStreamTrackInterface::kLive) {
       Local<Function> callback = Nan::New<Function>(_onstarted);
       Local<Value> argv[1];
 

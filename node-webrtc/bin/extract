@@ -15,6 +15,8 @@ export_gonk() {
     -DOS=android \
     -Dclang=1 \
     -D_toolset=true \
+    -Drtc_use_h264=1 \
+    -Duse_openh264=1 \
     -Dinclude_opus=1 \
     -Dbuild_libvpx=1 \
     -Denable_protobuf=0 \
@@ -24,7 +26,6 @@ export_gonk() {
     -Dbuild_with_chromium=0 \
     -Dandroid_toolchain=$gcc_bin \
     $WEBRTC/src/third_party/node-webrtc/binding.gyp \
-    -R node-webrtc-js \
     -R node-webrtc \
     --no-parallel
 
@@ -48,6 +49,8 @@ export_host() {
     -DOS=$host_os \
     -Dclang=1 \
     -Denable_protobuf=0 \
+    -Drtc_use_h264=1 \
+    -Duse_openh264=1 \
     -Ddesktop_capture_supported=0 \
     -Dinclude_tests=0 \
     -Dchromium_code=0 \

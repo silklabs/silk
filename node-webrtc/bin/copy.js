@@ -40,9 +40,11 @@ const EXTRA_DIR_INCLUDES = [
   'chromium/src/third_party/opus',
   'chromium/src/third_party/libyuv',
   'chromium/src/third_party/libjpeg_turbo',
-  'chromium/src/third_party/libvpx_new',
   'chromium/src/third_party/expat',
   'chromium/src/third_party/libsrtp',
+  'chromium/src/third_party/ffmpeg',
+  'chromium/src/third_party/libvpx',
+  'chromium/src/third_party/openh264',
   // For Mac:
   // XXX: Sadly this is 15mb of stuff ...
   'chromium/src/third_party/yasm',
@@ -164,7 +166,9 @@ function main(argv) {
   for (const extra of EXTRA_DIR_INCLUDES) {
     const absSource = path.resolve(path.join(source, extra));
     const absDest = path.resolve(path.join(absTarget, extra));
-    copy(absSource, absDest);
+    if (fs.existsSync(absSource)) {
+      copy(absSource, absDest);
+    }
   }
 }
 

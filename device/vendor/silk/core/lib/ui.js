@@ -38,8 +38,10 @@ class Ui extends events.EventEmitter {
     input.on('up', e => {
       this._pokeBacklight();
       switch(e.keyId) {
-      case 'volumeup':
       case 'volumedown':
+        this.emit('key', 'volumedown', 'up');
+        break;
+      case 'volumeup':
         if (volumeKeysPressed > 0) {
           volumeKeysPressed--;
           cancelVolumeKeys();
@@ -62,8 +64,10 @@ class Ui extends events.EventEmitter {
         return;
       }
       switch(e.keyId) {
-      case 'volumeup':
       case 'volumedown':
+        this.emit('key', 'volumedown', 'down');
+        break;
+      case 'volumeup':
         volumeKeysPressed++;
         log.info(`down - volumeKeysPressed: ${volumeKeysPressed}`);
         if (volumeKeysPressed === 2) {

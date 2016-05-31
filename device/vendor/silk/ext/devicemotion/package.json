@@ -6,13 +6,12 @@
   "scripts": {
     "postinstall": "./bin/postinstall",
     "clean": "rm -rf node_modules",
-    "posttest": "eslint test lib && flow check",
+    "posttest": "eslint test lib",
     "test": "echo \"\""
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-exttest": "/device/vendor/silk/exttest",
-    "silk-flow-bin": "/flow-bin",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-log": "/pub/log"
   },

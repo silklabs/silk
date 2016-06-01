@@ -72,7 +72,7 @@ function makeConfig(platform) {
     config.babel.plugins.push(require('./src/transforms/__DEV__-to-false'));
     config.babel.plugins.push(require('./src/transforms/remove-logging'));
     config.plugins.push(new webpack.optimize.DedupePlugin());
-    config.plugins.push(new webpack.optimize.UglifyJsPlugin());
+    config.plugins.push(new webpack.optimize.UglifyJsPlugin({mangle: false}));
   } else {
     config.babel.plugins.push(require('./src/transforms/assert-messages'));
   }

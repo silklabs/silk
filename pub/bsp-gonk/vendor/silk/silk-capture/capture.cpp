@@ -36,12 +36,13 @@
 class State {
 public:
 #ifdef ANDROID
-  libpreview::vtable const *preview;
+  libpreview::Client *client;
   libpreview::FrameFormat frameFormat;
   uv_mutex_t frameDataLock;
   int frameWidth;
   int frameHeight;
   void *frameBuffer;
+  libpreview::FrameOwner frameOwner;
 #else
   cv::VideoCapture cap;
 #endif
@@ -56,10 +57,8 @@ public:
     uv_mutex_init(&newState->frameDataLock);
     newState->frameWidth = newState->frameHeight = 0;
     newState->frameBuffer = NULL;
-    newState->preview = libpreview::load();
-    if (newState->preview != NULL) {
-      ok = newState->preview->open( OnFrameCallback, OnAbandonedCallback, newState);
-    }
+    newState->client = libpreview::open(OnFrameCallback, OnAbandonedCallback, newState);
+    ok = newState->client != NULL;
 #else
     newState->cap.open(deviceId);
     ok = newState->cap.isOpened();
@@ -73,29 +72,27 @@ public:
 
   ~State() {
 #ifdef ANDROID
-    if (preview != NULL) {
-      // Null preview while holding frameDataLock, to ensure that another thread
+    if (client != NULL) {
+      // Null client while holding frameDataLock, to ensure that another thread
       // isn't sitting in OnFrameCallback() when libpreview is closed
       uv_mutex_lock(&frameDataLock);
-      libpreview::vtable const *localpreview = preview;
-      preview = NULL;
+      auto localclient = client;
+      client = NULL;
       uv_mutex_unlock(&frameDataLock);
 
       // Release the current frameBuffer
       uv_mutex_lock(&frameDataLock);
       if (frameBuffer != NULL) {
-        localpreview->releaseFrame(frameBuffer);
+        localclient->releaseFrame(frameOwner);
+        frameBuffer = NULL;
       }
       uv_mutex_unlock(&frameDataLock);
 
       // Shutdown calls to OnFrameCallback and/or OnAbandonedCallback
-      localpreview->close();
-      localpreview = NULL;
+      delete localclient;
 
       // Grab then release frameDataLock again, to ensure that a thread didn't
-      // sneak into OnFrameCallback() before preview->close() really executed
-      // above.  Once preview->close() really executes, OnFrameCallback will
-      // never be called again.
+      // sneak into OnFrameCallback() before localclient was really deleted.
       uv_mutex_lock(&frameDataLock);
       uv_mutex_unlock(&frameDataLock);
     }
@@ -117,7 +114,8 @@ private:
                               void* buffer,
                               libpreview::FrameFormat format,
                               size_t width,
-                              size_t height);
+                              size_t height,
+                              libpreview::FrameOwner frameOwner);
 #endif
 };
 
@@ -409,7 +407,10 @@ NAN_METHOD(VideoCapture::Close) {
 void State::OnAbandonedCallback(void *userData) {
   State *state = static_cast<State*>(userData);
   uv_mutex_lock(&state->frameDataLock);
-  state->frameBuffer = NULL;
+  if (state->frameBuffer != NULL) {
+    state->client->releaseFrame(state->frameOwner);
+    state->frameBuffer = NULL;
+  }
   uv_mutex_unlock(&state->frameDataLock);
 }
 
@@ -417,21 +418,20 @@ void State::OnFrameCallback(void *userData,
                             void* buffer,
                             libpreview::FrameFormat format,
                             size_t width,
-                            size_t height) {
-
+                            size_t height,
+                            libpreview::FrameOwner frameOwner) {
   State *state = static_cast<State *>(userData);
-  void *lastFrameBuffer = NULL;
 
   uv_mutex_lock(&state->frameDataLock);
-  if (state->preview) {
-    lastFrameBuffer = state->frameBuffer;
+  if (state->client) {
+    if (state->frameBuffer != NULL) {
+      state->client->releaseFrame(state->frameOwner);
+    }
     state->frameBuffer = buffer;
+    state->frameOwner = frameOwner;
     state->frameFormat = format;
     state->frameWidth = width;
     state->frameHeight = height;
-    if (lastFrameBuffer) {
-      state->preview->releaseFrame(lastFrameBuffer);
-    }
   }
   uv_mutex_unlock(&state->frameDataLock);
 }

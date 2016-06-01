@@ -325,7 +325,9 @@ const builds = {
   //'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
   //  files: ['**/package.json']
   //}),
-
+  'node-webrtc': npmPackageBuild('node-webrtc', {
+    travis_yml: 'node-webrtc/travis/travis_linux.yml',
+  }),
   // Push open source changes immediately on committing to silk-core
   // Only master branch is pushed currently
   'releng-shipit-pub-push': {

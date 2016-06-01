@@ -1,8 +1,10 @@
 'use strict';
 
 var tape = require('tape');
-var SimplePeer = require('simple-peer');
-var wrtc = require('..');
+const SimplePeer = require('simple-peer');
+const wrtc = require('..');
+
+const TEST_TIMEOUT = 40 * 1000;
 
 //wrtc.setDebug(true);
 
@@ -70,7 +72,7 @@ function connect(callback) {
       peer2.destroy();
 
       callback(new Error("Timeout"));
-    }, 10000);
+    }, TEST_TIMEOUT);
 
     // when peer1 has signaling data, give it to peer2, and vice versa
     peer1.on('signal', function(data) {

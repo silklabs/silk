@@ -6,6 +6,8 @@
 
 . bin/setup
 
+function join { local IFS="$1"; shift; echo "$*"; }
+
 build_type=${1:-Release}
 build_version=${2:-51}
 build_dest=build-staging
@@ -44,7 +46,7 @@ if [[ ! -d $SILK_WEBRTC ]]; then
 fi
 
 # Place ourselves inside the right directory ...
-ln -sf $PWD $nodewebrtc_dest
+ln -sf $PWD $SILK_WEBRTC/third_party/
 
 # We need the node development headers to build ... node-gyp will helpfully
 # download them and provide us a way to figure out where they live..
@@ -63,21 +65,35 @@ echo $clang_path
 export CXX="ccache $clang_path/clang++ -Qunused-arguments"
 export CC="ccache $clang_path/clang -Qunused-arguments"
 
+
+cflags=(
+  -Wno-unused-value
+  -Wno-tautological-compare
+  -Wno-parentheses-equality
+  -Wno-deprecated-declarations
+  -Wno-pointer-bool-conversion
+  -Wno-array-bounds
+)
+
+
 # Build the gyp tree ...
 $SILK_WEBRTC/webrtc/build/gyp_webrtc \
   $nodewebrtc_dest/binding.gyp \
   -Dnode_root_dir=$node_dir \
+  -Dbuild_with_chromium=0 \
   -Drestrict_webrtc_logging=0 \
   -Denable_protobuf=0 \
   -Dinclude_tests=0 \
   -Ddesktop_capture_supported=1 \
   -Dbuild_libvpx=1 \
   -Dbuild_libyuv=1 \
+  -Duse_sysroot=0 \
+  -Dclang=1 \
   -Dclang_use_chrome_plugins=0 \
   -Drtc_use_h264=1 \
   -Duse_openh264=1 \
   -Dmac_deployment_target="10.9" \
-  -Drelease_extra_cflags="-Wno-unused-value -Wno-tautological-compare -Wno-parentheses-equality -Wno-deprecated-declarations -Wno-pointer-bool-conversion" \
+  -Drelease_extra_cflags="$(join ' ' "${cflags[@]}")" \
   -Drestrict_webrtc_logging=0 \
   -R node-webrtc
 

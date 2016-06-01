@@ -13,7 +13,7 @@ import type { Env, Util, Say, Log } from 'silk-exttest/interface/env';
 
 let log: Log;
 
-const MODEL_DIR = '/system/silk/media/pocketsphinx/';
+const MODEL_DIR = path.join(__dirname, '..', 'model');
 
 // Named searches allow to quickly reconfigure the decoder
 const HOTKEY_SEARCH = 'wakeup';
@@ -69,9 +69,11 @@ class OkSilk {
     // en-us-8khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
     // Default configuration options are documented at:
     //   https://github.com/watsonbox/pocketsphinx-ruby/wiki/Default-Pocketsphinx-Configuration
-    this._speechRecognizer.setAcousticModel(MODEL_DIR + 'en-us-ptm-8khz');
+    this._speechRecognizer.setAcousticModel(
+        path.join(MODEL_DIR, 'en-us-ptm-8khz'));
 
-    this._speechRecognizer.setDictionary(MODEL_DIR + 'cmudict-en-us.dict');
+    this._speechRecognizer.setDictionary(
+        path.join(MODEL_DIR, 'cmudict-en-us.dict'));
 
     // Audio from capture process is recorded at 8khz samling rate so set
     // the speechrecognizer's sample rate accordingly
@@ -102,7 +104,8 @@ class OkSilk {
     this._speechRecognizer.addKeyphraseSearch(HOTKEY_SEARCH, KEYPHRASE);
 
     // Add grammar-based search for selection between demos
-    this._speechRecognizer.addGrammarSearch(SILK_COMMANDS, MODEL_DIR + 'silk.gram');
+    this._speechRecognizer.addGrammarSearch(SILK_COMMANDS,
+        path.join(MODEL_DIR, 'silk.gram'));
 
     // Setup listeners
     this._speechRecognizer.on('result', hypothesis => {
@@ -212,7 +215,7 @@ class OkSilk {
    * Play a sound when hot keyword is detected
    */
   _playHotKeywordSound() {
-    this._util.playSound(path.join(__dirname, '../hotkeyword_detected.mp3'));
+    this._util.playSound(path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3'));
   }
 }
 

@@ -2,14 +2,23 @@
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
-import silkcv from 'silk-cv';
+import * as silkcv from 'silk-cv';
 import cv from 'opencv';
 
-export default class Mog2Subtractor {
+import type { Env, Timeline } from 'silk-exttest/interface/env';
+import type { SubtractorCallbackType, Mog2Subtractor } from 'silk-cv';
+import type { Matrix } from 'opencv';
 
-  constructor(env) {
+export default class MogSubtractor {
+  mat: Matrix;
+  timeline: Timeline;
+  subtractor: Mog2Subtractor;
+
+  constructor(env: Env) {
     this.mat = new cv.Matrix(); // a Matrix passed into silkcv.Mog2Subtractor
                                 // for fetching data since it can't create its
                                 // own Matrix objects
@@ -24,7 +33,7 @@ export default class Mog2Subtractor {
    * Apply the subtractor over the provided image, and return the motion
    * diff via the callback function
    */
-  apply(when, image, cb) {
+  apply(when: number, image: Matrix, cb: SubtractorCallbackType) {
     if (this.timeline.diagFrameEnabled('mog2_bg')) {
       this.subtractor.getBackground(this.mat);
       this.timeline.addDiagFrame('mog2_bg', when, this.mat);

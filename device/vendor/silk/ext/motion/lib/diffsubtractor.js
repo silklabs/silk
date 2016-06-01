@@ -2,9 +2,14 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import cv from 'opencv';
+import type { Env } from 'silk-exttest/interface/env';
+import type { SubtractorCallbackType } from 'silk-cv';
+import type { Matrix } from 'opencv';
 
 /**
  * The DiffSubtractor works by comparing three consecutive frames by diffing
@@ -13,11 +18,12 @@ import cv from 'opencv';
  * Reference: https://kerberos.io/
  */
 export default class DiffSubtractor {
-  prevFrame = null;
-  currentFrame = null;
-  nextFrame = null;
+  prevFrame: Matrix = null;
+  currentFrame: Matrix = null;
+  nextFrame: Matrix = null;
+  env: Env;
 
-  constructor(env) {
+  constructor(env: Env) {
     this.env = env;
   }
 
@@ -25,7 +31,7 @@ export default class DiffSubtractor {
    * Apply the subtractor over the provided image, and return the motion
    * diff via the callback function
    */
-  apply(when, image, cb) {
+  apply(when: number, image: Matrix, cb: SubtractorCallbackType) {
     const imageWidth = image.width();
     const imageHeight = image.height();
 

@@ -68,6 +68,11 @@ node_modules/fbjs/flow/lib/
 .*/tools/node_modules_cache/.*
 .*/device/vendor/silk/ext/oksilk/.*
 
+# Ignore the native modules whose interface
+# files are present in top level flow-interfaces
+.*/device/vendor/propsilk/silk-caffe/.*
+.*/device/vendor/propsilk/silk-cv/.*
+
 [options]
 unsafe.enable_getters_and_setters=true
 module.system=haste

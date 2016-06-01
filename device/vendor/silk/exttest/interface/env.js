@@ -10,9 +10,9 @@ import { EventEmitter } from 'events';
 
 declare export class Util {
   playSound(fileName: string): void;
-  getboolprop(prop: string, defaultValue: boolean): boolean;
-  getintprop(prop: string, defaultValue: number): number;
-  getprop(prop: string, defaultValue: string): string;
+  getboolprop(prop: string, defaultValue?: boolean): boolean;
+  getintprop(prop: string, defaultValue?: number): number;
+  getprop(prop: string, defaultValue?: string): string;
   setprop(prop: string, value: string): void;
 }
 
@@ -29,11 +29,13 @@ declare export class Log {
 }
 
 type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'highgray' | 'gray' | 'grayeq' | 'rgb' | 'lowgray';
+type CameraFrameSize = 'low' | 'normal' | 'high' | 'full';
 type CameraCallback = (err: boolean, image: any) => void;
 
 declare export class Camera extends EventEmitter {
   getFrame(when: number,
       formats: Array<CameraFrameFormat>): Promise<Array<any>>;
+  getFrameSize(frameSize?: CameraFrameSize): {width: number, height: number};
 }
 
 type TimelineEventObject = {

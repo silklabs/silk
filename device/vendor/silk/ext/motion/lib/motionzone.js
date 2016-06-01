@@ -2,19 +2,35 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import fs from 'mz/fs';
 import cv from 'opencv';
 
+import type { Env, Log } from 'silk-exttest/interface/env';
+import type { Matrix } from 'opencv';
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+type Size = {width: number, height: number};
+
 const MOTION_ZONES_FILE = 'data/silk/opencv/motion_zones.json';
-let log;
+let log: Log;
 
 /**
  * This class provides utility functions to implement motion zones
  */
 export default class MotionZone {
-  constructor(env, size) {
+  _env: Env;
+  _ignoredZones: Array<Rect>;
+  _ignoredZoneMask: Matrix;
+
+  constructor(env: Env, size: Size) {
     this._env = env;
     log = this._env.log;
     this._ignoredZones = [];
@@ -40,7 +56,7 @@ export default class MotionZone {
    * Applies the ignore mask to the provided matrix returning a new matrix.
    * Pixels that are within the boundaries of the ignore mask will be set to 0.
    */
-  applyIgnoreMask(im) {
+  applyIgnoreMask(im: Matrix): Matrix {
     let maskedIm = new cv.Matrix();
     im.copyWithMask(maskedIm, this._ignoredZoneMask);
     return maskedIm;
@@ -52,7 +68,7 @@ export default class MotionZone {
    * @param array of rectangles to be merged
    * @returns none does inplace merges
    */
-  groupRectangles(array) {
+  groupRectangles(array: Array<Rect>) {
     let didMerge;
 
     /**
@@ -108,7 +124,7 @@ export default class MotionZone {
    * @param r2 rectangle 2 to check for intersection
    * @returns true if rectangles intersect with each other false otherwise
    */
-  _intersects(r1, r2) {
+  _intersects(r1: Rect, r2: Rect) {
     return !((r2.x > r1.x + r1.width)
         || (r2.x + r2.width < r1.x)
         || (r2.y > r1.y + r1.height)
@@ -122,7 +138,7 @@ export default class MotionZone {
    * @param r2
    * @returns true if r1 contains r2 false otherwise
    */
-  _contains(r1, r2) {
+  _contains(r1: Rect, r2: Rect) {
     return ((r1.x <= r2.x) && ((r1.x + r1.width) >= (r2.x + r2.width)) &&
             (r1.y <= r2.y) && ((r1.y + r1.height) >= (r2.y + r2.height)));
   }
@@ -134,7 +150,7 @@ export default class MotionZone {
    * @param r2 rectangle 2 to be merged
    * @returns merged rectangle
    */
-  _merge(r1, r2) {
+  _merge(r1: Rect, r2: Rect) {
     let minx = Math.min(r1.x, r2.x);
     let miny = Math.min(r1.y, r2.y);
     return {

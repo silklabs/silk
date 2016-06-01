@@ -78,9 +78,6 @@ bool PreviewFrameGrabber::open(FrameCallback frameCallback,
                                AbandonedCallback abandonedCallback,
                                void *userData)
 {
-  sp<ProcessState> ps = ProcessState::self();
-  ps->startThreadPool();
-
   if (sPreviewFrameGrabber != NULL) {
     ALOGE("EUSERS");
     return false;
@@ -266,12 +263,26 @@ sp<PreviewFrameGrabber> PreviewFrameGrabber::sPreviewFrameGrabber = NULL;
 
 }
 
-extern "C" {
+namespace libpreview {
 
-vtable vtable = {
-  .open = PreviewFrameGrabber::open,
-  .close = PreviewFrameGrabber::close,
-  .releaseFrame = PreviewFrameGrabber::releaseFrame,
-};
+bool open(FrameCallback frameCallback,
+          AbandonedCallback abandonedCallback,
+          void *userData)
+{
+  sp<ProcessState> ps = ProcessState::self();
+  ps->startThreadPool();
+
+  return PreviewFrameGrabber::open(frameCallback, abandonedCallback, userData);
+}
+
+void close()
+{
+  PreviewFrameGrabber::close();
+}
+
+void releaseFrame(void *frameBuffer)
+{
+  PreviewFrameGrabber::releaseFrame(frameBuffer);
+}
 
 }

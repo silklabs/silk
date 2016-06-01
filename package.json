@@ -135,7 +135,9 @@
     "minimatch": "3.0.0",
     "xpc-connection": "0.1.4",
     "react-addons-pure-render-mixin": "15.0.2",
-    "wav-decoder": "1.1.0"
+    "wav-decoder": "1.1.0",
+    "simple-peer": "5.11.5",
+    "tape": "4.0.0"
   },
   "engines": {
     "node": "^4.1.2",

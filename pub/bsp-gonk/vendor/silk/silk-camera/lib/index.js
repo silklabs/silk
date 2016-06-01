@@ -140,6 +140,7 @@ const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
 
 const AUDIO_HW_ENABLED = util.getboolprop('ro.silk.audio.hw.enabled', true);
 const CAMERA_HW_ENABLED = util.getboolprop('ro.silk.camera.hw.enabled', true);
+const CAMERA_VIDEO_ENABLED = util.getboolprop('ro.silk.camera.video', true);
 
 //
 // Constants
@@ -515,7 +516,8 @@ export default class Camera extends EventEmitter {
 
       this._buffer = '';
       const cmdData = {
-        camera: CAMERA_HW_ENABLED,
+        frames: CAMERA_HW_ENABLED,
+        video: CAMERA_HW_ENABLED && CAMERA_VIDEO_ENABLED,
         audio: AUDIO_HW_ENABLED,
         frameIntervalMs: DURATION_MS,
         width: WIDTH,
@@ -544,7 +546,7 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _tagMonitor = () => {
-    if ( (this._videoTagReceived || !CAMERA_HW_ENABLED) &&
+    if ( (this._videoTagReceived || !CAMERA_VIDEO_ENABLED) &&
          (this._micTagReceived || !AUDIO_HW_ENABLED) ) {
       this._videoTagReceived = this._micTagReceived = null;
       this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);

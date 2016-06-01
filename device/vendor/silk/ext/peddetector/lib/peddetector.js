@@ -10,15 +10,16 @@
 // Load the regnerator polyfill manually so we don't need to also load all the
 import caffe from 'silk-caffe';
 import fs from 'mz/fs';
+import path from 'path';
 
 import type { Env, Log } from 'silk-exttest/interface/env';
 
 let log: Log;
 
-const MODEL_PROTO = 'system/silk/media/dnn/model/ped/deploy.prototxt';
-const MODEL_BIN = 'system/silk/media/dnn/model/ped/caltech10x_warp_finetune_train_iter_100000';
-const MODEL_DICTIONARY = 'system/silk/media/dnn/model/ped/labels.txt';
-const MODEL_MEAN = 'system/silk/media/dnn/model/imagenet_mean.binaryproto';
+const MODEL_PROTO = path.join(__dirname, '../model', 'deploy.prototxt');
+const MODEL_BIN = path.join(__dirname, '../model', 'caltech10x_warp_finetune_train_iter_100000');
+const MODEL_DICTIONARY = path.join(__dirname, '../model', 'labels.txt');
+const MODEL_MEAN = path.join(__dirname, '../model', 'imagenet_mean.binaryproto');
 
 /**
  * This class listens for motion events and uses Silk-Caffe RCNN to predict

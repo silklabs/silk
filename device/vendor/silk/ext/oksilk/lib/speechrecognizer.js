@@ -244,7 +244,7 @@ export default class SpeechRecognizer extends EventEmitter {
       // Stop listening after the provided timeout
       this._listenTimeout = setTimeout(() => {
         this._stopListening();
-        this.emit('timeout');
+        this.emit('speech_timeout');
       }, timeout);
       return true;
     }
@@ -287,11 +287,6 @@ export default class SpeechRecognizer extends EventEmitter {
       return false;
     }
 
-    // Clear timeout if exists
-    if (this._listenTimeout) {
-      clearTimeout(this._listenTimeout);
-      this._listenTimeout = null;
-    }
     this._decoder.endUtt(); // End utterance processing
     this._listening = false;
     this._env.camera.removeListener('mic-data', this._onMicData);
@@ -333,23 +328,30 @@ export default class SpeechRecognizer extends EventEmitter {
     let [when, pcmData] = this._pcmDataQueue.shift();
     this._pcmDataQueueSizeInBytes -= pcmData.length;
 
+    let start = Date.now();
     this._decoder.processRaw(pcmData, false, false);
     if (this._inSpeech !== this._decoder.getInSpeech()) {
       this._inSpeech = this._decoder.getInSpeech();
 
       if (this._inSpeech) {
         log.debug('===== Begin speech');
-        this.emit('beginningOfSpeech');
+        this.emit('speech_start', when);
+
+        // Clear voice activity timeout if exists
+        if (this._listenTimeout) {
+          clearTimeout(this._listenTimeout);
+          this._listenTimeout = null;
+        }
       } else {
         log.debug('===== End speech');
-        this.emit('endOfSpeech');
+        this.emit('speech_stop', when);
       }
     }
 
     // Get hypothesis string and path score
     let hypothesis = this._decoder.hyp();
     this.emit('partialResult', hypothesis);
-    log.debug(`Done processing mic data ${when}`);
+    log.debug(`Done processing mic data ${when} in ${Date.now() - start}ms`);
     this._processingInProgress = true;
 
     // Process next sample

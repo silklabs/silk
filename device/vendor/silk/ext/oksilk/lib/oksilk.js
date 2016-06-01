@@ -9,15 +9,23 @@
 import path from 'path';
 import config from 'silk-config';
 import SpeechRecognizer from './speechrecognizer';
-import type { Env, Util, Say, Log } from 'silk-exttest/interface/env';
+import type { Env, Util, Say, Log, Timeline } from 'silk-exttest/interface/env';
 
 let log: Log;
+let util: Util;
+let timeline: Timeline;
+
+// Enable or disable keyword spotting mode. With kws disabled the extension
+// only does the voice activity detection and no voice recognition
+const KWS_ENABLED_PROP = 'persist.silk.oksilk.kws.enabled';
 
 const MODEL_DIR = path.join(__dirname, '..', 'model');
+const LISTEN_TIMEOUT = 3000; // In activity timeout after keyword is detected
 
 // Named searches allow to quickly reconfigure the decoder
-const HOTKEY_SEARCH = 'wakeup';
+const HOTKEY_SEARCH = 'default';
 const SILK_COMMANDS = 'commands';
+const VAD_SEARCH = 'vad';
 
 // Keyword we are looking for to activate menu
 const KEYPHRASE = 'ok sense';
@@ -27,15 +35,20 @@ const KEYPHRASE = 'ok sense';
  */
 class OkSilk {
   _env: Env;
-  _util: Util;
   _say: Say;
   _speechRecognizer: SpeechRecognizer;
+  _kwsEnabled: boolean;
+  _onSpeechStart: (when: number) => void;
+  _onSpeechStop: (when: number) => void;
+  _onSpeechTimeout: () => void;
 
   constructor(env) {
     this._env = env;
-    this._util = env.util;
-    this._say = env.say;
+    util = env.util;
+    timeline = this._env.timeline;
     log = this._env.log;
+    this._say = env.say;
+    this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, false);
     this._setupRecognizer();
   }
 
@@ -47,11 +60,9 @@ class OkSilk {
       this._speechRecognizer.cancel();
       this._speechRecognizer.removeAllListeners('result');
       this._speechRecognizer.removeAllListeners('partialResult');
-      this._speechRecognizer.removeAllListeners('beginningOfSpeech');
-      this._speechRecognizer.removeAllListeners('endOfSpeech');
-      this._speechRecognizer.removeAllListeners('timeout');
       this._speechRecognizer.willUnload();
     }
+    this._stopVoiceActivityDetection();
   }
 
   /**
@@ -88,7 +99,7 @@ class OkSilk {
     // for mobile
     this._speechRecognizer.setBoolean('-allphone_ci', true);
 
-    // Enable voice activity detection (VAD)
+    // Enable voice activity detection
     this._speechRecognizer.setBoolean('-remove_silence', true);
     this._speechRecognizer.setBoolean('-remove_noise', true);
 
@@ -100,50 +111,94 @@ class OkSilk {
 
     this._speechRecognizer.finishSetup();
 
-    // Add keyword-activation search for hotkeyword listening
-    this._speechRecognizer.addKeyphraseSearch(HOTKEY_SEARCH, KEYPHRASE);
+    // Add model searches
+    if (this._kwsEnabled) {
+      // Add keyphrase search
+      this._speechRecognizer.addKeyphraseSearch(HOTKEY_SEARCH, KEYPHRASE);
 
-    // Add grammar-based search for selection between demos
-    this._speechRecognizer.addGrammarSearch(SILK_COMMANDS,
-        path.join(MODEL_DIR, 'silk.gram'));
+      // Add grammar-based search for selection between demos
+      this._speechRecognizer.addGrammarSearch(SILK_COMMANDS,
+          path.join(MODEL_DIR, 'silk.gram'));
+    } else {
+      // TODO: Patch pocketsphinx to not required a search to be set to run
+      // vad detection. For now keyphrase search seems to be taking the least
+      // amount of time from among the other type of searches available
+      this._speechRecognizer.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
+    }
 
     // Setup listeners
-    this._speechRecognizer.on('result', hypothesis => {
-      this._handleResult(hypothesis);
-    });
+    this._onSpeechStart = (when) => {
+      this._handleBeginningOfSpeech(when);
+    };
 
-    this._speechRecognizer.on('partialResult', hypothesis => {
-      this._handlePartialResult(hypothesis);
-    });
+    this._onSpeechStop = (when) => {
+      this._handleEndOfSpeech(when);
+    };
 
-    this._speechRecognizer.on('beginningOfSpeech', () => {
-      this._handleBeginningOfSpeech();
-    });
-
-    this._speechRecognizer.on('endOfSpeech', () => {
-      this._handleEndOfSpeech();
-    });
-
-    this._speechRecognizer.on('timeout', () => {
+    this._onSpeechTimeout = () => {
       this._handleTimeout();
-    });
+    };
 
-    // Start listening for the hot keyword
-    this._switchSearch(HOTKEY_SEARCH);
+    if (this._kwsEnabled) {
+      this._startVoiceActivityDetection();
+
+      this._speechRecognizer.on('result', hypothesis => {
+        this._handleResult(hypothesis);
+      });
+
+      this._speechRecognizer.on('partialResult', hypothesis => {
+        this._handlePartialResult(hypothesis);
+      });
+
+      this._switchSearch(HOTKEY_SEARCH); // Start listening for the hot keyword
+    } else {
+      // If kws is disabled then register for keyword event from timeline
+      timeline.on('keyword', () => {
+        // Start voice activity detection when keyword is detected
+        this._startVoiceActivityDetection();
+        this._switchSearch(VAD_SEARCH);
+      });
+    }
   }
 
   /**
-   * Switch between hotkeyword listening mode and grammar search with silk
+   * Register for VAD events
+   */
+  _startVoiceActivityDetection() {
+    log.debug(`start vad`);
+    this._speechRecognizer.on('speech_start', this._onSpeechStart);
+    this._speechRecognizer.on('speech_stop', this._onSpeechStop);
+    this._speechRecognizer.on('speech_timeout', this._onSpeechTimeout);
+  }
+
+  /**
+   * Unregister for VAD events
+   */
+  _stopVoiceActivityDetection() {
+    log.debug(`stop vad`);
+    if (this._onSpeechStart) {
+      this._speechRecognizer.removeListener('speech_start', this._onSpeechStart);
+    }
+    if (this._onSpeechStop) {
+      this._speechRecognizer.removeListener('speech_stop', this._onSpeechStop);
+    }
+    if (this._onSpeechTimeout) {
+      this._speechRecognizer.removeListener('speech_timeout', this._onSpeechTimeout);
+    }
+  }
+
+  /**
+   * Switch between default or hotkeyword listening mode and grammar search with silk
    * commands
    */
   _switchSearch(searchName) {
     this._speechRecognizer.stop();
 
-    // If we are not spotting, start listening with timeout (5 seconds)
+    // If we are not spotting, start listening with timeout
     if (searchName === HOTKEY_SEARCH) {
       this._speechRecognizer.startListening(searchName);
     } else {
-      this._speechRecognizer.startListeningTimeout(searchName, 5000);
+      this._speechRecognizer.startListeningTimeout(searchName, LISTEN_TIMEOUT);
     }
     log.debug(`Switching to search ${searchName}`);
   }
@@ -188,34 +243,63 @@ class OkSilk {
     }
   }
 
-  _handleBeginningOfSpeech() {
+  /**
+   * Handle start of speech event
+   */
+  _handleBeginningOfSpeech(when) {
     log.debug(`Speech begin`);
+    timeline.addObjects([{
+      source: 'oksilk',
+      tag: 'speech_start',
+      when,
+    }]);
   }
 
   /**
-   * We stop recognizer here to get a final result
+   * Handle end of speech event
    */
-  _handleEndOfSpeech() {
+  _handleEndOfSpeech(when) {
     log.debug(`Speech end`);
-    if (this._speechRecognizer.getSearchName() !== HOTKEY_SEARCH) {
-      log.debug(`Current search: ${this._speechRecognizer.getSearchName()}`);
-      this._switchSearch(HOTKEY_SEARCH);
+    timeline.addObjects([{
+      source: 'oksilk',
+      tag: 'speech_stop',
+      when,
+    }]);
+
+    if (this._kwsEnabled) {
+      if (this._speechRecognizer.getSearchName() !== HOTKEY_SEARCH) {
+        log.debug(`Current search: ${this._speechRecognizer.getSearchName()}`);
+        this._switchSearch(HOTKEY_SEARCH);
+      }
+    } else {
+      // Wait for next keyword to be spotted before starting VAD again
+      this._stopVoiceActivityDetection();
     }
   }
 
   /**
-   * No text spoken within the given time so reset back to keyword search
+   * No text spoken within the given time
    */
-  _handleTimeout() {
-    log.debug(`Timeout`);
-    this._switchSearch(HOTKEY_SEARCH);
+  _handleTimeout(when) {
+    log.debug(`speech timeout`);
+    timeline.addObjects([{
+      source: 'oksilk',
+      tag: 'speech_timeout',
+      when: Date.now(),
+    }]);
+
+    if (this._kwsEnabled) {
+      this._switchSearch(HOTKEY_SEARCH);
+    } else {
+      this._stopVoiceActivityDetection();
+    }
   }
 
   /**
    * Play a sound when hot keyword is detected
    */
   _playHotKeywordSound() {
-    this._util.playSound(path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3'));
+    util.playSound(path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3'));
   }
 }
 

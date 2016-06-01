@@ -6,7 +6,8 @@
   "scripts": {
     "postinstall": "../../../../../npm_postinstall",
     "posttest": "eslint test lib",
-    "test": "echo \"\""
+    "pretest": "pretest",
+    "test": "runtest"
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
@@ -21,7 +22,8 @@
   },
   "devDependencies": {
     "copy-webpack-plugin": "2.1.5",
-    "eslint": "1.10.3"
+    "eslint": "1.10.3",
+    "wav-decoder": "1.1.0"
   },
   "private": true
 }

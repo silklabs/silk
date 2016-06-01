@@ -102,7 +102,9 @@ include $(BUILD_SYSTEM)/binary.mk
 
 
 npm_node_dir = $(abspath external/node)
-buildjs_dir = $(abspath ../buildjs)
+
+this_mkfile_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+buildjs_dir := $(abspath $(this_mkfile_dir)/../../../../buildjs)
 
 npm_has_silk_build := $(shell node -e "$(CHECK_FOR_SILK_BUILD)")
 ifeq (1,$(npm_has_silk_build))

@@ -1,6 +1,7 @@
 SHELL=/bin/bash
 
--include ../version/branch
+this_mkfile_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+-include $(this_mkfile_dir)/../version/branch
 BRANCH ?= unknown
 export BRANCH
 

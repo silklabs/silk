@@ -65,12 +65,12 @@ class OkSilk {
     // properties must match the audio properties set in camera
     this._speechRecognizer = new SpeechRecognizer(this._env, config.deviceMic);
 
-    // Bandwidth of Audio recorded from capture process is 8khz so use
-    // en-us-8khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
+    // Bandwidth of Audio recorded from capture process is 16khz so use
+    // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
     // Default configuration options are documented at:
     //   https://github.com/watsonbox/pocketsphinx-ruby/wiki/Default-Pocketsphinx-Configuration
     this._speechRecognizer.setAcousticModel(
-        path.join(MODEL_DIR, 'en-us-ptm-8khz'));
+        path.join(MODEL_DIR, 'en-us-ptm-16khz'));
 
     this._speechRecognizer.setDictionary(
         path.join(MODEL_DIR, 'cmudict-en-us.dict'));

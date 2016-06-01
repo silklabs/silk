@@ -1,6 +1,6 @@
 -lowerf 130
--upperf 3700
--nfilt 20
+-upperf 6800
+-nfilt 25
 -transform dct
 -lifter 22
 -feat 1s_c_d_dd
@@ -8,5 +8,5 @@
 -agc none
 -cmn current
 -varnorm no
--cmninit 40,3,-1
 -model ptm
+-cmninit 40,3,-1

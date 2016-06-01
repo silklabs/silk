@@ -1,5 +1,5 @@
 {
-  "name": "profiler",
+  "name": "silk-profiler",
   "version": "0.0.1",
   "description": "Device v8 profiler",
   "scripts": {

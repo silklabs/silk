@@ -13,7 +13,7 @@
     "test": "echo \"\""
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
+    "eslint-config-silk": "/pub/eslint-config",
     "kissfft": "/external-node-kissfft",
     "silk-battery": "/pub/bsp-gonk/vendor/silk/silk-battery",
     "silk-camera": "/pub/bsp-gonk/vendor/silk/silk-camera",
@@ -23,7 +23,7 @@
     "silk-external-dlib": "/external-dlib",
     "silk-external-jade": "/external-jade",
     "silk-input": "/pub/bsp-gonk/vendor/silk/silk-input",
-    "silk-log": "/log",
+    "silk-log": "/pub/log",
     "silk-ntp": "/pub/bsp-gonk/vendor/silk/silk-ntp",
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
     "silk-vibrator": "/pub/bsp-gonk/vendor/silk/silk-vibrator",

@@ -12,7 +12,7 @@
     "dbEval": "./dbEval.js"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint"
+    "eslint-config-silk": "/pub/eslint-config"
   },
   "dependencies": {
     "readdir": "0.0.13",

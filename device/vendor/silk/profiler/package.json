@@ -8,7 +8,7 @@
     "lint": "eslint ."
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
+    "eslint-config-silk": "/pub/eslint-config",
     "silk-babeldeps": "/babeldeps"
   },
   "dependencies": {

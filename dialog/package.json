@@ -9,9 +9,9 @@
     "lint": "eslint lib demo"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
+    "eslint-config-silk": "/pub/eslint-config",
     "silk-config": "/config",
-    "silk-log": "/log"
+    "silk-log": "/pub/log"
   },
   "dependencies": {
     "uuid": "2.0.2"

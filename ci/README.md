@@ -17,6 +17,6 @@ before_install:
 
 after_script:
  - ../ci/ccache_push.sh
-
+```
 
 Each has additional options (use --help to see them).

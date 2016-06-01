@@ -1,0 +1,10 @@
+{
+  "name": "dnn-models",
+  "description": "Repository for silk-dnn models",
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "./bin/sync",
+    "silk-sync-gonk": "bin/sync"
+  },
+  "private": true
+}

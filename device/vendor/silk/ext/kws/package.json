@@ -1,0 +1,29 @@
+{
+  "name": "kws",
+  "version": "0.0.1",
+  "description": "Keyword spotting using neural networks",
+  "main": "./lib/kws.js",
+  "scripts": {
+    "postinstall": "../../../../../npm_postinstall",
+    "posttest": "eslint test lib",
+    "pretest": "pretest",
+    "test": "runtest"
+  },
+  "symlinkDependencies": {
+    "silk-babeldeps": "/babeldeps",
+    "silk-config": "/config",
+    "silk-exttest": "/device/vendor/silk/exttest",
+    "silk-log": "/pub/log"
+  },
+  "dependencies": {
+    "babel-runtime": "6.9.0",
+    "CBuffer": "1.1.0",
+    "mz": "2.4.0"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "2.1.5",
+    "eslint": "1.10.3",
+    "wav-decoder": "1.1.0"
+  },
+  "private": true
+}

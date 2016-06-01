@@ -75,6 +75,7 @@ SILK_EXT := \
   peddetector \
   dnn-pedestrian-proto \
   dnn-pedestrian-dictionary \
+  kws \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

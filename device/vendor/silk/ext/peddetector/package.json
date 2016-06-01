@@ -5,7 +5,6 @@
   "main": "./lib/peddetector.js",
   "scripts": {
     "postinstall": "./bin/postinstall",
-    "clean": "rm -rf node_modules peddetector.js peddetector.js.map",
     "posttest": "eslint test lib",
     "test": "echo \"\""
   },
@@ -21,6 +20,7 @@
   },
   "private": true,
   "devDependencies": {
+    "copy-webpack-plugin": "2.1.5",
     "eslint": "1.10.3",
     "babel-eslint": "6.0.4"
   }

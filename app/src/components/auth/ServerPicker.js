@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import Config from '../../libraries/Config';
+import Config from '../../libraries/config';
 
 import { FormStyles, LayoutStyles, TitleBarStyles } from '../CommonStyles';
 

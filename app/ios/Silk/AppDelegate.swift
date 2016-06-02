@@ -10,7 +10,7 @@ class AppDelegate : UIResponder,
                     RegionMonitorDelegate,
                     RCTBridgeDelegate {
 
-  var config: Config?
+  var config: SLKConfig?
   var regionMonitor: RegionMonitor?
   var bleSocketPeripheral: BLESocketPeripheral?
   var window: UIWindow?
@@ -20,32 +20,13 @@ class AppDelegate : UIResponder,
     super.init()
   }
 
-  func loadConfig() -> Config {
-    if let config = self.config {
-      return config
-    }
-
-    var data: NSData? = nil
-    let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
-    if let url = url {
-      data = NSData(contentsOfURL: url)
-    }
-    let (config, err) = LoadConfig.load(data)
-    if err != nil {
-      // This is on boot and should only be in the development path so raise...
-      NSException.raise("Exception", format:"Error: %@", arguments:getVaList([err!]))
-    }
-    self.config = config
-    return config!
-  }
-
   func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
     CrashReporter.start();
-    let config = self.loadConfig()
+    self.config = SLKConfig()
 
     // Configuring logging
-    DebugLog.enable(config.debug)
-    log.info("Logging level %@", config.debug)
+    DebugLog.enable(self.config!.debug)
+    log.info("Logging level %@", self.config!.debug)
 
     // Make sure we wait until DebugLog is set up before we load any code that
     // uses it.
@@ -56,8 +37,7 @@ class AppDelegate : UIResponder,
 
     // This must not be created until *after* ReactNative has loaded all its
     // modules during the |RCTBridge| initializer.
-    self.bleSocketPeripheral =
-      BLESocketPeripheral(regionMonitor: self.regionMonitor!)
+    self.bleSocketPeripheral = BLESocketPeripheral(regionMonitor: self.regionMonitor!)
 
     self.regionMonitor!.start()
 
@@ -138,11 +118,12 @@ class AppDelegate : UIResponder,
   // RCTBridgeDelegate
 
   func sourceURLForBridge(bridge: RCTBridge!) -> NSURL! {
-    return self.loadConfig().bundleURL!
+    return self.config!.jsBundleURL!
   }
 
   func extraModulesForBridge(bridge: RCTBridge!) -> [AnyObject]! {
     return [
+      self.config!,
       // We're overriding React Native's WebSocket module by the same name.
       SLKWebSocketModule(),
       // Explicitly init this here rather than letting React Native init it

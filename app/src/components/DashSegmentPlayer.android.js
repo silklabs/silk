@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import createLog from 'silk-log';
 
-import Config from '../libraries/Config';
+import Config from '../libraries/config';
 import { blobURI } from '../libraries/Util';
 
 const MSEPlayer = requireNativeComponent('SilkMSEPlayer');

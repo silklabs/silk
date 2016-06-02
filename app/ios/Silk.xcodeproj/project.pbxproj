@@ -22,6 +22,8 @@
 		35C1A5621C5042B400551FC6 /* DashSegmentPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1A55E1C5042B400551FC6 /* DashSegmentPlayerManager.swift */; };
 		35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35DABDA41C5045FB005F479F /* VBPlayer.a */; };
 		35DEE2D01C5069E6000BBF61 /* DashSegmentPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35DEE2CF1C5069E6000BBF61 /* DashSegmentPlayback.swift */; };
+		35F768331CFFDF8A003EAF4D /* SLKConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */; };
+		35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 35F768351CFFE290003EAF4D /* SLKConfig.m */; };
 		3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */; };
 		3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */; };
 		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; };
@@ -31,8 +33,7 @@
 		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
 		5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0811B59FC2500F9376C /* OverlayModalManager.m */; };
 		5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0821B59FC2500F9376C /* OverlayModalManager.swift */; };
-		5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* LoadConfig.swift */; };
-		5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */; };
+		5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* SLKConfig.swift */; };
 		5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0EB1B5A206F00F9376C /* ViewController.swift */; };
 		5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302C01ABCB91800DB3ED1 /* libRCTImage.a */; };
@@ -334,6 +335,8 @@
 		35DABDA41C5045FB005F479F /* VBPlayer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = VBPlayer.a; sourceTree = "<group>"; };
 		35DABDA51C5045FB005F479F /* VBPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBPlayer.h; sourceTree = "<group>"; };
 		35DEE2CF1C5069E6000BBF61 /* DashSegmentPlayback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashSegmentPlayback.swift; sourceTree = "<group>"; };
+		35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfigTest.swift; sourceTree = "<group>"; };
+		35F768351CFFE290003EAF4D /* SLKConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKConfig.m; sourceTree = "<group>"; };
 		3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketPeripheral.swift; sourceTree = "<group>"; };
 		3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketManager.swift; sourceTree = "<group>"; };
 		3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
@@ -344,8 +347,7 @@
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
 		5741E0811B59FC2500F9376C /* OverlayModalManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OverlayModalManager.m; sourceTree = "<group>"; };
 		5741E0821B59FC2500F9376C /* OverlayModalManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModalManager.swift; sourceTree = "<group>"; };
-		5741E0BF1B5A108D00F9376C /* LoadConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfig.swift; sourceTree = "<group>"; };
-		5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadConfigTest.swift; sourceTree = "<group>"; };
+		5741E0BF1B5A108D00F9376C /* SLKConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfig.swift; sourceTree = "<group>"; };
 		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		5758F23A1B5EFE7600C18E5D /* Sync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
@@ -580,13 +582,14 @@
 			path = lib;
 			sourceTree = "<group>";
 		};
-		35C03E921CC03307008EF119 /* LoadConfig */ = {
+		35C03E921CC03307008EF119 /* SLKConfig */ = {
 			isa = PBXGroup;
 			children = (
-				5741E0BF1B5A108D00F9376C /* LoadConfig.swift */,
-				5741E0C11B5A109F00F9376C /* LoadConfigTest.swift */,
+				35F768351CFFE290003EAF4D /* SLKConfig.m */,
+				5741E0BF1B5A108D00F9376C /* SLKConfig.swift */,
+				35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */,
 			);
-			path = LoadConfig;
+			path = SLKConfig;
 			sourceTree = "<group>";
 		};
 		35C03E931CC03357008EF119 /* SLKUtil */ = {
@@ -675,11 +678,11 @@
 				3CFBF22B1BBF41ED00A7AF67 /* BLE */,
 				577396131BA28FCC00F900C6 /* AppCrypto */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
-				35C03E921CC03307008EF119 /* LoadConfig */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
 				57BCE10B1B69910C0047088B /* BlobManager */,
 				5741E07F1B59FC2500F9376C /* OverlayModal */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
+				35C03E921CC03307008EF119 /* SLKConfig */,
 				35C03E931CC03357008EF119 /* SLKUtil */,
 				57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
@@ -1121,7 +1124,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */,
-				5741E0C21B5A109F00F9376C /* LoadConfigTest.swift in Sources */,
+				35F768331CFFDF8A003EAF4D /* SLKConfigTest.swift in Sources */,
 				5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1148,9 +1151,10 @@
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
+				35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */,
 				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
 				57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */,
-				5741E0C01B5A108D00F9376C /* LoadConfig.swift in Sources */,
+				5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */,
 				5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */,
 				3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */,
 				577396171BA2921400F900C6 /* AppCrypto.swift in Sources */,

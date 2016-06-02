@@ -275,6 +275,9 @@ export default class Camera extends EventEmitter {
 
   _liveDiag: bool;
   _audioMute: bool;
+  _frameCaptureEnabled: bool = false;
+  _fastFrameCaptureEnabled: bool = false;
+  _fastFrameCount: number = 0;
 
   constructor(config) {
     super();
@@ -294,7 +297,6 @@ export default class Camera extends EventEmitter {
     this._dataSocket = null;
     this._frameQueue = []; // Queue of pending camera frame requests
     this._noFrameCount = 0;
-    this.fastFrameCount = 0;
 
     this._liveDiag = false;
     this._audioMute = false;
@@ -310,6 +312,21 @@ export default class Camera extends EventEmitter {
     log.verbose('Active frame sizes:');
     for (let frameSize in FRAME_SIZE) {
       log.verbose(`  ${frameSize}: ${JSON.stringify(FRAME_SIZE[frameSize])}`);
+    }
+
+    this.on('removeListener', this._onListenerChange);
+    this.on('newListener', () => process.nextTick(this._onListenerChange));
+  }
+
+  _onListenerChange = () => {
+    const frameCaptureEnabled = this.listenerCount('frame') > 0;
+    const fastFrameCaptureEnabled = this.listenerCount('fast-frame') > 0;
+
+    if (frameCaptureEnabled != this._frameCaptureEnabled ||
+        fastFrameCaptureEnabled != this._fastFrameCaptureEnabled) {
+      this._frameCaptureEnabled = frameCaptureEnabled;
+      this._fastFrameCaptureEnabled = fastFrameCaptureEnabled;
+      this._scheduleNextFrameCapture();
     }
   }
 
@@ -493,12 +510,12 @@ export default class Camera extends EventEmitter {
       // The capture process is currently gonk only.  For other platforms only initialize
       // OpenCV video capture.
       process.nextTick(() => {
+        this._startMicCapture();
+        this._initComplete();
         if (CAMERA_HW_ENABLED) {
           this._initCVVideoCapture();
           this._scheduleNextFrameCapture();
         }
-        this._startMicCapture();
-        this._initComplete();
       });
       return;
     }
@@ -593,13 +610,13 @@ export default class Camera extends EventEmitter {
       if (captureEvent.eventName === 'error') {
         log.warn('Camera command errored out'); // Not much to do here really
       } else if (captureEvent.eventName === 'initialized') {
+        this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
+        this._initComplete();
+
         if (CAMERA_HW_ENABLED) {
           this._command({cmdName: 'setParameter', name: 'focus-mode', value: FOCUS_MODE});
           this._scheduleNextFrameCapture();
         }
-        this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
-        this._initComplete();
-
       } else if (captureEvent.eventName === 'getParameter') {
         if (this._getParameterCallback) {
           this._getParameterCallback.resolve(captureEvent.data);
@@ -691,25 +708,39 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _scheduleNextFrameCapture() {
-    // Fast camera frames are scheduled every FAST_FRAME_DELAY_MS wall clock
-    const spilloverMs = Date.now() % FAST_FRAME_DELAY_MS;
+    if (!this._ready || this.__frameTimeout) {
+      return;
+    }
 
-    // Reduce FAST_FRAME_DELAY_MS by the spillover to get the next frame as close
-    // as possible to +FAST_FRAME_DELAY_MS.
+    let delayMs;
+    if (this._fastFrameCaptureEnabled) {
+      delayMs = FAST_FRAME_DELAY_MS;
+    } else if (this._frameCaptureEnabled) {
+      delayMs = FRAME_DELAY_MS;
+    } else {
+      return;
+    }
+
+    const spilloverMs = Date.now() % delayMs;
+
+    // Reduce delayMs by the spillover to get the next frame as close
+    // as possible to +delayMs
     // (+5 to ensure the timeout doesn't fire early by ~1ms)
-    const requestedDelayMs = FAST_FRAME_DELAY_MS - spilloverMs + 5;
+    const requestedDelayMs = delayMs - spilloverMs + 5;
 
     this.__frameTimeout = setTimeout(async () => {
       this.__frameTimeout = null;
-      this.fastFrameCount++;
-      let grabPreview = false;
-
-      // Grab preview frame if it's time to do so
-      if (this.fastFrameCount >= GRAB_PREVIEW_FRAME_AFTER) {
-        this.fastFrameCount = 0;
-        grabPreview = true;
+      let isFastFrame = false;
+      if (this._fastFrameCaptureEnabled) {
+        this._fastFrameCount++;
+        // Grab preview frame if it's time to do so
+        if (this._fastFrameCount >= GRAB_PREVIEW_FRAME_AFTER) {
+          this._fastFrameCount = 0;
+        } else {
+          isFastFrame = true;
+        }
       }
-      this._captureFrame(grabPreview);
+      this._captureFrame(isFastFrame);
       this._scheduleNextFrameCapture();
     }, requestedDelayMs);
   }
@@ -717,16 +748,15 @@ export default class Camera extends EventEmitter {
   /**
    * Read the next frame
    *
-   * @param grabPreview: If true grab the preview frame else only grab the raw
-   *                     frame
+   * @param fastFrameOnly : Only emit the fast frame data if true, false for the full * frame data
    * @private
    */
-  _captureFrame(grabPreview) {
+  _captureFrame(fastFrameOnly) {
     if (!this._cvVideoCapture || !this._recording) {
       return;
     }
     if (this._cvVideoCaptureBusy) {
-      if (grabPreview) {
+      if (!fastFrameOnly) {
         this._noFrameCount++;
         log.warn(`Waiting for camera frame: ` +
                  `${this._noFrameCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
@@ -736,32 +766,32 @@ export default class Camera extends EventEmitter {
       }
       return;
     }
-    if (grabPreview) {
+    if (!fastFrameOnly) {
       this._noFrameCount = 0;
     }
     this._cvVideoCaptureBusy = true;
     let when = Date.now();
 
     let im = new cv.Matrix();
-    if (grabPreview) {
+    if (fastFrameOnly) {
+      this._cvVideoCapture.read(im, (err) => {
+        if (err) {
+          log.warn(`Unable to fetch frame: err=${err}`);
+        } else {
+          this._handleNextFastFrame(when, im);
+        }
+        this._cvVideoCaptureBusy = false;
+      });
+    } else {
       let imRGB = new cv.Matrix();
       let imGray = new cv.Matrix();
       let imScaledGray = new cv.Matrix();
       this._cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
         if (err) {
-          log.error(`Unable to fetch frame: err=${err}`);
+          log.warn(`Unable to fetch frame: err=${err}`);
         } else {
           this._handleNextFastFrame(when, im);
           this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
-        }
-        this._cvVideoCaptureBusy = false;
-      });
-    } else {
-      this._cvVideoCapture.read(im, (err) => {
-        if (err) {
-          log.error(`Unable to fetch frame: err=${err}`);
-        } else {
-          this._handleNextFastFrame(when, im);
         }
         this._cvVideoCaptureBusy = false;
       });

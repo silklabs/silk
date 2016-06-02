@@ -9,6 +9,7 @@
     "silk-config": "/config",
     "silk-core-version": "/pub/version",
     "silk-docs": "/docs",
+    "silk-mse-player": "/mse-player",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-rtc": "/rtc",

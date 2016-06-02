@@ -1,6 +1,8 @@
 /**
  * Like `MSEPlayer`, but provides statistics about video streaming and
  * playback via the an `onStatsUpdate` callback.
+ *
+ * @flow
  */
 
 import React from 'react';
@@ -9,6 +11,18 @@ import createLog from 'silk-log';
 import MSEPlayer from './MSEPlayer';
 
 import type { Segment } from 'silk-cam';
+
+type Stats = {
+  elapsedMs: number;
+  playbackMs: number;
+  deviceToClientLagMs: ?number,
+  totalDroppedMs: number;
+  totalStalledMs: number;
+  totalOutOfBufferMs: number;
+  totalOutOfBufferCompensatedMs: number;
+  totalBufferedMs: number;
+  reloadCount: number;
+};
 
 const log = createLog('MSEPlayerStats');
 
@@ -21,7 +35,7 @@ const MIN_SEGMENT_DURATION_MS = 100;
 const KETCHUP_BEHIND_THRESHOLD_MS = 200;
 const KETCHUP_PLAYBACK_RATE = 2;
 
-const initialStats = {
+const initialStats: Stats = {
   elapsedMs: 0,
   playbackMs: 0,
   deviceToClientLagMs: null,
@@ -35,7 +49,7 @@ const initialStats = {
 
 export default class MSEPlayerWithStats extends React.Component {
 
-  stats = null;
+  stats: Stats = Object.assign({}, initialStats);
 
   // Note: make sure you account for new members in `_init()` below!
   videoStartTimestamp: ?number;
@@ -50,6 +64,7 @@ export default class MSEPlayerWithStats extends React.Component {
 
   outOfBufferTimer: ?number;
   updateTimer: ?number;
+  ketchupTimer: ?number;
 
   static propTypes = {
     onStatsUpdate: React.PropTypes.func,
@@ -66,16 +81,14 @@ export default class MSEPlayerWithStats extends React.Component {
     this._dispatchStatsUpdate();
   }
 
-  _dispatchStatsUpdate = () => {
+  _dispatchStatsUpdate: (() => void) = () => {
     if (!this.props.onStatsUpdate) {
       return;
     }
 
     // Consumer can specify that they want to be updated every X ms or more often.
-    if (this.updateTimer) {
-      clearTimeout(this.updateTimer);
-      this.updateTimer = null;
-    }
+    clearTimeout(this.updateTimer);
+    this.updateTimer = null;
     if (this.props.maxStatsUpdateIntervalMs) {
       this.updateTimer = setTimeout(
         this._dispatchStatsUpdate,
@@ -93,9 +106,8 @@ export default class MSEPlayerWithStats extends React.Component {
   };
 
   componentWillUnmount() {
-    if (this.outOfBufferTimer) {
-      clearTimeout(this.outOfBufferTimer);
-    }
+    clearTimeout(this.outOfBufferTimer);
+    clearTimeout(this.ketchupTimer);
   }
 
   feedSegmentData(segmentData: ArrayBuffer, deviceTimestamp: number): Segment {
@@ -107,7 +119,7 @@ export default class MSEPlayerWithStats extends React.Component {
     // segment should have. We record any discrepancies.
     this.stats.deviceToClientLagMs = Date.now() - deviceTimestamp;
     let delta = 0;
-    if (this.expectNextSegmentTimestamp !== null) {
+    if (this.expectNextSegmentTimestamp) {
       delta = deviceTimestamp - this.expectNextSegmentTimestamp;
     }
     if (delta >= MIN_SEGMENT_DURATION_MS) {
@@ -124,9 +136,8 @@ export default class MSEPlayerWithStats extends React.Component {
   }
 
   _init() {
-    if (this.outOfBufferTimer) {
-      clearTimeout(this.outOfBufferTimer);
-    }
+    clearTimeout(this.outOfBufferTimer);
+    clearTimeout(this.ketchupTimer);
 
     this.stats = Object.assign({}, initialStats);
 
@@ -140,17 +151,18 @@ export default class MSEPlayerWithStats extends React.Component {
     this.previousSegmentEndTimeMs = null;
   }
 
-  _onVideoStalledOrResumed(event) {
+  _onVideoStalledOrResumed(event: Event) {
     log.debug(`Video playback ${event.type}`);
     if (event.type === 'playing') {
       if (this.videoStartTimestamp === null) {
         this.videoStartTimestamp = Date.now();
       }
-      if (this.lastStalledTimestamp === null) {
+      const lastStalledTimestamp = this.lastStalledTimestamp;
+      if (!lastStalledTimestamp) {
         log.debug(`Video resuming, but no previously recorded stall. Ignoring.`);
         return;
       }
-      const delta = Date.now() - this.lastStalledTimestamp;
+      const delta = Date.now() - lastStalledTimestamp;
       log.debug(`Video resuming after ${delta} ms stall.`);
 
       this.lastStalledTimestamp = null;
@@ -167,7 +179,7 @@ export default class MSEPlayerWithStats extends React.Component {
     this.lastStalledTimestamp = Date.now();
   }
 
-  _onSegmentEnqueued = (segment) => {
+  _onSegmentEnqueued: ((segment: Segment) => void) = (segment) => {
     // Are we getting a segment having been out of buffered data? If
     // so, record the time we presumably spent without having any
     // buffered data.
@@ -220,15 +232,29 @@ export default class MSEPlayerWithStats extends React.Component {
     this.props.onSegmentEnqueued && this.props.onSegmentEnqueued(segment);
   };
 
-  _playKetchup(durationMs) {
+  _playKetchup(durationMs: number) {
+    const videoElement = this.videoElement;
+    if (!videoElement) {
+      log.warn(`No video element found.`);
+      return;
+    }
     log.debug(`Going to catch up ${durationMs}ms.`);
     this.ketchupStartTimestamp = Date.now();
-    this.videoElement.playbackRate = KETCHUP_PLAYBACK_RATE;
-    setTimeout(this._endKetchup, durationMs / KETCHUP_PLAYBACK_RATE);
+    videoElement.playbackRate = KETCHUP_PLAYBACK_RATE;
+    this.ketchupTimer = setTimeout(
+      this._endKetchup,
+      durationMs / KETCHUP_PLAYBACK_RATE
+    );
   }
 
-  _endKetchup = () => {
-    this.videoElement.playbackRate = 1.0;
+  _endKetchup: (() => void) = () => {
+    const videoElement = this.videoElement;
+    if (!videoElement) {
+      log.warn(`No video element found.`);
+      return;
+    }
+
+    videoElement.playbackRate = 1.0;
     const actualKetchupDurationMs = Date.now() - this.ketchupStartTimestamp;
     this.ketchupStartTimestamp = null;
     log.debug(`Managed to catch up ${actualKetchupDurationMs}ms`);
@@ -237,7 +263,7 @@ export default class MSEPlayerWithStats extends React.Component {
     this._dispatchStatsUpdate();
   };
 
-  _onReload = () => {
+  _onReload: (() => void) = () => {
     log.debug('Video element reloaded');
     const reloadCount = this.stats.reloadCount;
     this._init();
@@ -246,23 +272,23 @@ export default class MSEPlayerWithStats extends React.Component {
     this.props.onReload && this.props.onReload();
   };
 
-  _onOutOfBuffer = () => {
+  _onOutOfBuffer: (() => void) = () => {
     log.debug(`Expecting <video> element to be out of buffered data at this point.`);
     this.outOfBuffer = true;
   };
 
 
-  _onStalled = (event) => {
+  _onStalled: ((event: Event) => void) = (event) => {
     this._onVideoStalledOrResumed(event);
     this.props.onStalled && this.props.onStalled(event);
   };
 
-  _onWaiting = (event) => {
+  _onWaiting: ((event: Event) => void) = (event) => {
     this._onVideoStalledOrResumed(event);
     this.props.onWaiting && this.props.onWaiting(event);
   };
 
-  _onPlaying = (event) => {
+  _onPlaying: ((event: Event) => void) = (event) => {
     this._onVideoStalledOrResumed(event);
     this.props.onPlaying && this.props.onPlaying(event);
   };

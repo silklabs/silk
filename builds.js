@@ -187,6 +187,7 @@ const builds = {
     'cli-npm',
     'cli-plugin-internal',
     'http',
+    'mse-player',
     'pub/log',
     'pub/version',
     // TODO: bring this back once we have a solution that doesn't involve

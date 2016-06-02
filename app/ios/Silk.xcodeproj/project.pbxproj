@@ -23,6 +23,7 @@
 		35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35DABDA41C5045FB005F479F /* VBPlayer.a */; };
 		35DEE2D01C5069E6000BBF61 /* DashSegmentPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35DEE2CF1C5069E6000BBF61 /* DashSegmentPlayback.swift */; };
 		35F768331CFFDF8A003EAF4D /* SLKConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */; };
+		35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 35F768351CFFE290003EAF4D /* SLKConfig.m */; };
 		3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */; };
 		3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */; };
 		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; };
@@ -335,6 +336,7 @@
 		35DABDA51C5045FB005F479F /* VBPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBPlayer.h; sourceTree = "<group>"; };
 		35DEE2CF1C5069E6000BBF61 /* DashSegmentPlayback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashSegmentPlayback.swift; sourceTree = "<group>"; };
 		35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfigTest.swift; sourceTree = "<group>"; };
+		35F768351CFFE290003EAF4D /* SLKConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKConfig.m; sourceTree = "<group>"; };
 		3CAF32F71BE3E9AF00C7049E /* BLESocketPeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketPeripheral.swift; sourceTree = "<group>"; };
 		3CFBF22C1BBF486000A7AF67 /* BLESocketManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketManager.swift; sourceTree = "<group>"; };
 		3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
@@ -583,6 +585,7 @@
 		35C03E921CC03307008EF119 /* SLKConfig */ = {
 			isa = PBXGroup;
 			children = (
+				35F768351CFFE290003EAF4D /* SLKConfig.m */,
 				5741E0BF1B5A108D00F9376C /* SLKConfig.swift */,
 				35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */,
 			);
@@ -675,11 +678,11 @@
 				3CFBF22B1BBF41ED00A7AF67 /* BLE */,
 				577396131BA28FCC00F900C6 /* AppCrypto */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
-				35C03E921CC03307008EF119 /* SLKConfig */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
 				57BCE10B1B69910C0047088B /* BlobManager */,
 				5741E07F1B59FC2500F9376C /* OverlayModal */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
+				35C03E921CC03307008EF119 /* SLKConfig */,
 				35C03E931CC03357008EF119 /* SLKUtil */,
 				57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
@@ -1148,6 +1151,7 @@
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
+				35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */,
 				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
 				57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */,

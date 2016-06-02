@@ -1,8 +1,6 @@
-import {
-  AsyncStorage,
-} from 'react-native';
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
+import { AsyncStorage, NativeModules } from 'react-native';
 import createLog from 'silk-log';
 
 const log = createLog('Config');
@@ -53,19 +51,7 @@ class Config extends EventEmitter {
 
   constructor() {
     super();
-    this._loadBuildConfig();
-  }
-
-  _loadBuildConfig() {
-    let config;
-    try {
-      // Note: that to resolve this path correctly it must be passed as string
-      // literal
-      config = require('../../config.local.json');
-    } catch (e) {
-      config = {};
-    }
-    this._buildConfig = merge({}, DEFAULT, config);
+    this._buildConfig = merge({}, DEFAULT, NativeModules.SLKConfig);
   }
 
   async _loadUserConfig() {

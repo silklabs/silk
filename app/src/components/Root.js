@@ -18,7 +18,7 @@ import '../libraries/BrowserShims';
 import '../libraries/CryptoSign';
 import '../libraries/profiling';
 
-import Config from '../libraries/Config';
+import Config from '../libraries/config';
 import { genRandomBytes } from '../libraries/Crypto';
 import loadUserState from '../libraries/UserState';
 

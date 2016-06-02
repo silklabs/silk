@@ -1,43 +1,74 @@
 let DEBUG_DEFAULT = "silk*"
 
-public struct Config {
-  public var bundleURL: NSURL? = nil
+@objc(SLKConfig)
+public class SLKConfig : NSObject, RCTBridgeModule  {
+
+  // RCTBridgeModule
+
+  public class func moduleName() -> String {
+    return "SLKConfig"
+  }
+
+  public func constantsToExport() -> [String: AnyObject] {
+    if (self.json != nil) {
+      return self.json!
+    }
+    return [:]
+  }
+
+  // API
+
+  public var jsBundleURL: NSURL? = NSBundle.mainBundle().URLForResource("main", withExtension: "jsbundle")
   public var debug: String = DEBUG_DEFAULT
-}
+  public var json: Dictionary<String, AnyObject>? = nil
 
-public class SLKConfig {
+  // Internal
 
-  static public func load(data: NSData?) -> (result: Config?, err: NSError?) {
-    var debug = DEBUG_DEFAULT
-    var bundleURL = NSBundle.mainBundle().URLForResource("main", withExtension: "jsbundle")
+  override init() {
+    super.init()
+    var data: NSData? = nil
+    let url = NSBundle.mainBundle().URLForResource("config.local.json", withExtension: "")
+    if let url = url {
+      data = NSData(contentsOfURL: url)
+    }
+    self.load(data)
+  }
 
-    if let data = data {
-      let result: AnyObject?
-      do {
-        result = try NSJSONSerialization.JSONObjectWithData(
-          data,
-          options: []
-        )
-      } catch let error as NSError {
-        return (nil, error)
-      }
+  // For tests
+  public init(data: NSData?) {
+    super.init()
+    self.load(data)
+  }
 
-      if let jsonDict = result {
-        if let reactNative = jsonDict["react-native"] as? Dictionary<String, String> {
-          let bundleType = reactNative["type"]
-          if bundleType == "remote" {
-            let url = reactNative["url"]!
-            NSLog("Using remote JS bundle: \(url)")
-            bundleURL = NSURL(string: url)
-          }
-        }
+  public func load(data: NSData?) {
+    guard let data = data else {
+      return
+    }
 
-        if let debugStr = jsonDict["debug"] as? String {
-          debug = debugStr
-        }
+    var json: AnyObject? = nil
+    do {
+      json = try NSJSONSerialization.JSONObjectWithData(data, options: [])
+    } catch {
+      return
+    }
+
+    guard let config = json else {
+      return
+    }
+
+    self.json = config as? Dictionary<String, AnyObject>
+
+    if let reactNative = config["react-native"] as? Dictionary<String, String> {
+      let bundleType = reactNative["type"]
+      if bundleType == "remote" {
+        let url = reactNative["url"]!
+        NSLog("Using remote JS bundle: \(url)")
+        self.jsBundleURL = NSURL(string: url)
       }
     }
-    let config = Config(bundleURL: bundleURL, debug: debug)
-    return (config, nil)
+
+    if let debugStr = config["debug"] as? String {
+      self.debug = debugStr
+    }
   }
 }

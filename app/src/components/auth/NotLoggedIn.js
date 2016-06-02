@@ -12,7 +12,7 @@ import {
 import { SilkApi } from 'silk-api';
 import createLog from 'silk-log';
 
-import Config from '../../libraries/Config';
+import Config from '../../libraries/config';
 import { UserState } from '../../libraries/UserState';
 
 import AsyncComponent from '../abstract/AsyncComponent';

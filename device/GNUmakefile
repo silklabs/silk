@@ -3,12 +3,13 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 LOCALGOALS += \
-  update \
-  fut \
   demo \
-  qemu \
-  emu \
   dist \
+  emu \
+  fut \
+  qemu \
+  time \
+  update \
 
 include ../pub/bsp-gonk/GNUmakefile
 
@@ -59,20 +60,6 @@ emu: qemu
 dist: | .repo/manifest.xml
 	$(call ENVSETUP,clean) # <-- drop all local patches before archiving
 	$(call ENVSETUP,np) && ./travis/build_device_archive.sh $(TARGET_PRODUCT)-$(shell date +%F_%H%M%S) dist
-
-# Manipulate the silk service on device:
-#
-#  make silk-start
-#  make silk-stop
-#  make silk-restart
-silk_service_targets := $(addprefix silk-, start stop restart)
-.PHONY: $(silk_service_targets)
-$(silk_service_targets):
-	$(ENVSETUP) && \
-  adb root && \
-  adb wait-for-device && \
-  adb shell setprop ctl.$(subst silk-,,$@) silk
-
 
 # Set the device time
 .PHONY: time

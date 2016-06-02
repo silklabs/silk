@@ -4,7 +4,6 @@ import Selector from './Selector';
 import WifiNetworkIcon from './WifiNetworkIcon';
 
 const deviceNetworkPropType = React.PropTypes.shape({
-  bssid: React.PropTypes.string.isRequired,
   ssid: React.PropTypes.string.isRequired,
   psk: React.PropTypes.bool.isRequired,
   level: React.PropTypes.number.isRequired,
@@ -26,10 +25,12 @@ export default class WifiNetworkSelector extends React.Component {
 
   _renderRow = (network) => {
     const { selectedNetwork } = this.props;
-    const selected = !!selectedNetwork && network.bssid === selectedNetwork.bssid;
+    const key = `${network.ssid}\0${network.psk}`;
+    const selected = !!selectedNetwork && network.ssid === selectedNetwork.ssid
+      && network.psk === selectedNetwork.psk;
     return (
       <Selector.Item
-        key={network.bssid}
+        key={key}
         label={network.ssid}
         selected={selected}
         onSelect={() => this.props.onSelectNetwork(network)}

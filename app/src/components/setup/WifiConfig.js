@@ -172,13 +172,6 @@ export default class WifiConfig extends React.Component {
     }
 
     let selectedDeviceNetwork =
-      deviceNetworks.find((network) => network.bssid === localWifiInfo.BSSID);
-    if (selectedDeviceNetwork) {
-      log.debug('Found match based on BSSID:', selectedDeviceNetwork);
-      return selectedDeviceNetwork;
-    }
-
-    selectedDeviceNetwork =
       deviceNetworks.find((network) => network.ssid === localWifiInfo.SSID);
     if (selectedDeviceNetwork) {
       log.debug('Found match based on SSID:', selectedDeviceNetwork);

@@ -245,7 +245,7 @@ class WpaMonitor extends EventEmitter {
           }
           break;
         default:
-          log.warn(`(ignored) ${cmd} | ${extra}`);
+          log.debug(`(ignored) ${cmd} | ${extra}`);
           break;
         }
         continue;

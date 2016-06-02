@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 import { configureLog } from 'silk-log';
-import Config from './Config';
+import Config from './config';
 
 /**
  * Configure debug prior to entrypoint so it is ready for other modules.

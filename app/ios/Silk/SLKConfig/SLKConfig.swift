@@ -5,7 +5,7 @@ public struct Config {
   public var debug: String = DEBUG_DEFAULT
 }
 
-public class LoadConfig {
+public class SLKConfig {
 
   static public func load(data: NSData?) -> (result: Config?, err: NSError?) {
     var debug = DEBUG_DEFAULT

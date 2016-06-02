@@ -30,7 +30,7 @@ class AppDelegate : UIResponder,
     if let url = url {
       data = NSData(contentsOfURL: url)
     }
-    let (config, err) = LoadConfig.load(data)
+    let (config, err) = SLKConfig.load(data)
     if err != nil {
       // This is on boot and should only be in the development path so raise...
       NSException.raise("Exception", format:"Error: %@", arguments:getVaList([err!]))
@@ -56,8 +56,7 @@ class AppDelegate : UIResponder,
 
     // This must not be created until *after* ReactNative has loaded all its
     // modules during the |RCTBridge| initializer.
-    self.bleSocketPeripheral =
-      BLESocketPeripheral(regionMonitor: self.regionMonitor!)
+    self.bleSocketPeripheral = BLESocketPeripheral(regionMonitor: self.regionMonitor!)
 
     self.regionMonitor!.start()
 

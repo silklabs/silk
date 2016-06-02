@@ -1,11 +1,11 @@
 import Silk
 import XCTest
 
-class LoadConfigTest: XCTestCase {
+class SLKConfigTest: XCTestCase {
 
   func testEmptyConfig() {
     let data: NSData? = nil
-    let (config, err) = LoadConfig.load(data)
+    let (config, err) = SLKConfig.load(data)
     XCTAssert(err == nil, "Should successfully load...")
     XCTAssert(config!.bundleURL!.absoluteString.hasSuffix("/main.jsbundle"), "defaults to packaged JS bundle")
   }
@@ -13,7 +13,7 @@ class LoadConfigTest: XCTestCase {
   func testRemoteBundle() {
     let bundleURL = "http://localhost/path/to/remote/js.bundle"
     let config_json = "{\"react-native\": {\"type\": \"remote\", \"url\": \"\(bundleURL)\"}}"
-    let (config, err) = LoadConfig.load(config_json.dataUsingEncoding(NSUTF8StringEncoding)!)
+    let (config, err) = SLKConfig.load(config_json.dataUsingEncoding(NSUTF8StringEncoding)!)
 
     XCTAssert(err == nil, "Should successfully load...")
     XCTAssert(config!.bundleURL!.absoluteString == bundleURL, "Uses specified bundle URL")
@@ -22,7 +22,7 @@ class LoadConfigTest: XCTestCase {
   func testLocalBundle() {
     let bundleURL = "http://localhost/path/to/local/js.bundle"
     let config_json = "{\"react-native\": {\"type\": \"local\", \"url\": \"\(bundleURL)\"}}"
-    let (config, err) = LoadConfig.load(config_json.dataUsingEncoding(NSUTF8StringEncoding)!)
+    let (config, err) = SLKConfig.load(config_json.dataUsingEncoding(NSUTF8StringEncoding)!)
 
     XCTAssert(err == nil, "Should successfully load...")
     XCTAssert(config!.bundleURL!.absoluteString.hasSuffix("/main.jsbundle"), "local JS bundle gets packaged")

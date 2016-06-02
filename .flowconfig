@@ -82,7 +82,6 @@ esproposal.class_static_fields=ignore
 suppress_type=$FlowIssue
 suppress_type=$FlowFixMe
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
-suppress_comment= \\(.\\|\n\\)*\\$FlowWTF
 
 [version]
 0.26.0

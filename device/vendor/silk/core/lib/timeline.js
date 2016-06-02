@@ -114,6 +114,7 @@ type ConfigLiveStreamArgs = {
 export default class Timeline extends EventEmitter {
   outbox: Outbox;
   server: Server;
+  camera: any;
 
   // Keep track of all objects that are classified in the video stream.
   objects: CBuffer<TimelineEventObject> = new CBuffer(100);
@@ -193,12 +194,10 @@ export default class Timeline extends EventEmitter {
       });
     });
 
-    camera.on('frame', (when, imRGB) => {
-      this.addCameraFrame(when, imRGB);
-    });
-    camera.on('fast-frame', (when, imRGB) => {
-      this.addCameraFastFrame(when, imRGB);
-    });
+    camera.on('frame', this.addCameraFrame);
+    this.on('removeListener', this._onListenerChange);
+    this.on('newListener', () => process.nextTick(this._onListenerChange));
+
     camera.on('face', (when, faces) => {
       this.addFace(when, faces, 'hal');
     });
@@ -213,7 +212,15 @@ export default class Timeline extends EventEmitter {
         captureRestart: restartCaptureProcess
       }));
     });
+    this.camera = camera;
   }
+
+  _onListenerChange: (() => void) = () => {
+    this.camera.removeListener('fast-frame', this.addCameraFastFrame);
+    if (this.listenerCount('preview-fast') > 0) {
+      this.camera.on('fast-frame', this.addCameraFastFrame);
+    }
+  };
 
   /**
    * @private
@@ -310,21 +317,21 @@ export default class Timeline extends EventEmitter {
    * @param when    Timestamp of when the preview frame was generated
    * @param preview OpenCV RGB matrix containing the full resolution camera frame
    */
-  addCameraFrame(when: number, imRGB: any) {
+  addCameraFrame: ((when: number, imRGB: any) => void) = (when, imRGB) => {
     this._maybePushPreview(when, imRGB);
     this.emit('preview', when);
-  }
+  };
 
   /**
-   * Add a new camera frame. Note that the fast frame cadence is higher
+   * Add a new fast camera frame. Note that the fast frame cadence is higher
    * than the regular preview frame.
    *
    * @param when    Timestamp of when the preview frame was generated
    * @param raw frame OpenCV raw matrix containing the full resolution camera frame
    */
-  addCameraFastFrame(when: number, imRaw: any) {
+  addCameraFastFrame: ((when: number, imRaw: any) => void) = (when, imRaw) => {
     this.emit('preview-fast', when, imRaw);
-  }
+  };
 
   /**
    * Checks if a diag frame for the given id is enabled.

@@ -20,3 +20,17 @@ after_script:
 ```
 
 Each has additional options (use --help to see them).
+
+
+## Native node modules
+
+It's often useful to build and push native modules for creating
+prebuilts for linux or darwin.
+
+This will create an archive with the build/Release directory and any
+.node files contained within.
+
+```yml
+after_script:
+ - ../ci/native_node_build_push.sh
+```

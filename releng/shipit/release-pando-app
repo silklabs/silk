@@ -26,6 +26,7 @@ WHITELIST=$(cat <<-EOF
   http
   jsonwebtoken
   log
+  node_modules
   npm_postinstall
   npm_preinstall
   pub

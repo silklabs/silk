@@ -154,7 +154,14 @@ export let run = ensureSetup({
     await api.pushModule(pkg.name, args.source);
     await api.activate(pkg.name);
     await api.restart();
-    const logcat = api.logcat(['-T1', '-v', 'time', '-s', 'silk-init:*', 'node:*']);
+    const tags = [
+      'node:*',         // console.log()
+      'silk-init:*',
+      'silk-camera:*',
+      'silk-wifi:*',
+      'silk-ntp:*',
+    ];
+    const logcat = api.logcat(['-T1', '-v', 'time', '-s', ...tags]);
     logcat.stdout.pipe(process.stdout);
     logcat.stderr.pipe(process.stdout);
   },

@@ -10,4 +10,4 @@ npm --version
 echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
 export NODE_DEBUG=http
-./gradlew assembleRelease
+./gradlew assembleRelease --debug --console=plain

@@ -1,5 +1,5 @@
 {
-  "name": "profiler",
+  "name": "silk-profiler",
   "version": "0.0.1",
   "description": "Device v8 profiler",
   "scripts": {
@@ -8,7 +8,7 @@
     "lint": "eslint ."
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint",
+    "eslint-config-silk": "/pub/eslint-config",
     "silk-babeldeps": "/babeldeps"
   },
   "dependencies": {

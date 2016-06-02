@@ -12,9 +12,9 @@
     "test": "npm run lint && npm run flow"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/eslint-config",
-    "silk-flow-bin": "/flow-bin",
-    "silk-sdk": "/sdk"
+    "eslint-config-silk": "../eslint-config",
+    "silk-flow-bin": "../flow-bin",
+    "silk-sdk": "../sdk"
   },
   "devDependencies": {
     "babel-eslint": "6.0.4",

@@ -21,6 +21,9 @@
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
 
+
+node_modules_mk_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
 LOCAL_MODULE_CLASS := NPM
 my_prefix := TARGET_
 
@@ -102,9 +105,7 @@ include $(BUILD_SYSTEM)/binary.mk
 
 
 npm_node_dir = $(abspath external/node)
-
-this_mkfile_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-buildjs_dir := $(abspath $(this_mkfile_dir)/../../../../buildjs)
+buildjs_dir := $(abspath $(node_modules_mk_dir)/../../../../buildjs)
 
 npm_has_silk_build := $(shell node -e "$(CHECK_FOR_SILK_BUILD)")
 ifeq (1,$(npm_has_silk_build))

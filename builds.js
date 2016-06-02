@@ -328,6 +328,12 @@ const builds = {
   'node-webrtc': npmPackageBuild('node-webrtc', {
     travis_yml: 'node-webrtc/travis/travis_linux.yml',
   }),
+  'node-webrtc-linux-prebuilt': npmPackageBuild('node-webrtc', {
+    travis_yml: 'node-webrtc/travis/travis_prebuilt_linux.yml',
+  }),
+  'node-webrtc-darwin-prebuilt': npmPackageBuild('node-webrtc', {
+    travis_yml: 'node-webrtc/travis/travis_prebuilt_darwin.yml',
+  }),
   // Push open source changes immediately on committing to silk-core
   // Only master branch is pushed currently
   'releng-shipit-pub-push': {

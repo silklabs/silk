@@ -325,7 +325,7 @@ const builds = {
   //'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
   //  files: ['**/package.json']
   //}),
-  'node-webrtc': npmPackageBuild('node-webrtc', {
+  'node-webrtc-linux-build': npmPackageBuild('node-webrtc', {
     travis_yml: 'node-webrtc/travis/travis_linux.yml',
   }),
   'node-webrtc-linux-prebuilt': npmPackageBuild('node-webrtc', {

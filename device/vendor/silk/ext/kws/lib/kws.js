@@ -14,6 +14,7 @@ import {EventEmitter} from 'events';
 import config from 'silk-config';
 import caffe from 'silk-caffe';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
+import Vibrator from 'silk-vibrator';
 
 import type { Env, Util, Log, Timeline, Camera } from 'silk-exttest/interface/env';
 
@@ -73,6 +74,8 @@ class KeywordSpotting extends EventEmitter {
   _backlogMinSizeInBytes: number;
   _suspended: boolean;
   _onSpeechStop: (when: number) => void;
+  _onSpeechTimeout: (when: number) => void;
+  _vib: Vibrator;
 
   constructor(env: Env) {
     super();
@@ -85,6 +88,7 @@ class KeywordSpotting extends EventEmitter {
     this._predicting = false;
     this._init();
     this._lastWhen = 0;
+    this._vib = new Vibrator();
 
     this._sampleRate = config.deviceMic.sampleRate;
     this._bytesPerSample = config.deviceMic.bytesPerSample;
@@ -110,6 +114,9 @@ class KeywordSpotting extends EventEmitter {
     this._onSpeechStop = when => {
       this._resumeSpotting(when);
     };
+    this._onSpeechTimeout = when => {
+      this._handleTimeout(when);
+    };
   }
 
   /**
@@ -118,7 +125,7 @@ class KeywordSpotting extends EventEmitter {
   willUnload() {
     camera.removeListener('mic-data', this._onMicData);
     timeline.removeListener('speech_stop', this._onSpeechStop);
-    timeline.removeListener('speech_timeout', this._onSpeechStop);
+    timeline.removeListener('speech_timeout', this._onSpeechTimeout);
   }
 
   get MEL_COEFFS() {
@@ -349,6 +356,14 @@ class KeywordSpotting extends EventEmitter {
   }
 
   /**
+   * Handle speech timeout
+   */
+  _handleTimeout(when) {
+    log.warn(`No speech detected within the timeout time`);
+    this._resumeSpotting(when);
+  }
+
+  /**
    * Stop listening for the keyword
    */
   _pauseSpotting() {
@@ -359,7 +374,7 @@ class KeywordSpotting extends EventEmitter {
 
     // Register for `speech` events
     timeline.on('speech_stop', this._onSpeechStop);
-    timeline.on('speech_timeout', this._onSpeechStop);
+    timeline.on('speech_timeout', this._onSpeechTimeout);
   }
 
   /**
@@ -367,10 +382,11 @@ class KeywordSpotting extends EventEmitter {
    */
   _resumeSpotting(when) {
     log.debug(`Resume spotting ${when}`);
+    this._vib.pattern(50);
     this._suspended = false;
     camera.on('mic-data', this._onMicData);
     timeline.removeListener('speech_stop', this._onSpeechStop);
-    timeline.removeListener('speech_timeout', this._onSpeechStop);
+    timeline.removeListener('speech_timeout', this._onSpeechTimeout);
   }
 }
 

@@ -24,6 +24,7 @@ const audioParams = silkconfig.deviceMic;
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3');
 const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.mp3');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp3');
+const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
 
 class Dialog {
   constructor(env) {
@@ -45,11 +46,25 @@ class Dialog {
       throw err;
     });
 
-    this._ui.on('key', (key, type) => {
-      if (key === 'volumedown' && type === 'down') {
-        this._onKeyPress();
-      }
-    });
+    this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, false);
+
+    if (this._kwsEnabled) {
+      this._timeline.on('keyword', () => {
+        this._onSpeechStart();
+      });
+      this._timeline.on('speech_stop', () => {
+        this._onSpeechStop();
+      });
+      this._timeline.on('speech_timeout', () => {
+        this._onSpeechStop();
+      });
+    } else {
+      this._ui.on('key', (key, type) => {
+        if (key === 'volumedown' && type === 'down') {
+          this._onKeyPress();
+        }
+      });
+    }
 
     log.info(`Dialog initialized`);
   }
@@ -85,6 +100,8 @@ class Dialog {
         .then(() => {
           if (!isLast) {
             this._onSpeechStart();
+          } else {
+            this._onDialogDone();
           }
         })
         .catch(err => {
@@ -102,22 +119,31 @@ class Dialog {
       return;
     }
 
+    this._onDialogStart();
+
     // TODO: maybe start mic after playSound finishes.
-    util.playSound(KEYWORD_DETECTED_SOUND_FILE);
+    if (!this._kwsEnabled) {
+      util.playSound(KEYWORD_DETECTED_SOUND_FILE);
+    }
 
     this._speechToText = createSpeechToText(audioParams, (error, json) => {
       let text = '';
 
       if (error) {
         log.error(error);
-        util.playSound(ERROR_SOUND_FILE)
-        .then(() => {
+        this._onDialogDone();
+        if (this._kwsEnabled) {
           this._listeningState = 'ready';
-        })
-        .catch(err => {
-          log.error(error);
-          this._listeningState = 'ready';
-        });
+        } else {
+          util.playSound(ERROR_SOUND_FILE)
+          .then(() => {
+            this._listeningState = 'ready';
+          })
+          .catch(err => {
+            log.error(error);
+            this._listeningState = 'ready';
+          });
+        }
         return;
       }
 
@@ -147,9 +173,27 @@ class Dialog {
     this._camera.removeListener('mic-data', this._onMicData);
     this._speechToText.finish();
 
-    util.playSound(SPEECH_END_SOUND_FILE);
+    if (!this._kwsEnabled) {
+      util.playSound(SPEECH_END_SOUND_FILE);
+    }
 
     this._listeningState = 'ready';
+  }
+
+  _onDialogStart() {
+    this._timeline.addObjects([{
+      source: 'dialog',
+      tag: 'dialog_start',
+      when: Date.now(),
+    }]);
+  }
+
+  _onDialogDone() {
+    this._timeline.addObjects([{
+      source: 'dialog',
+      tag: 'dialog_stop',
+      when: Date.now(),
+    }]);
   }
 
   _onKeyPress() {

@@ -141,8 +141,6 @@ class OkSilk {
     };
 
     if (this._kwsEnabled) {
-      this._startVoiceActivityDetection();
-
       this._speechRecognizer.on('result', hypothesis => {
         this._handleResult(hypothesis);
       });
@@ -151,13 +149,13 @@ class OkSilk {
         this._handlePartialResult(hypothesis);
       });
 
-      this._switchSearch(HOTKEY_SEARCH); // Start listening for the hot keyword
+      // Start listening for the hot keyword
+      this._startVoiceActivityDetection(HOTKEY_SEARCH);
     } else {
-      // If kws is disabled then register for keyword event from timeline
-      timeline.on('keyword', () => {
+      // If kws is disabled then start VAD when a dialog has started
+      timeline.on('dialog_start', () => {
         // Start voice activity detection when keyword is detected
-        this._startVoiceActivityDetection();
-        this._switchSearch(VAD_SEARCH);
+        this._startVoiceActivityDetection(VAD_SEARCH);
       });
     }
   }
@@ -165,11 +163,12 @@ class OkSilk {
   /**
    * Register for VAD events
    */
-  _startVoiceActivityDetection(): void {
+  _startVoiceActivityDetection(search): void {
     log.debug(`start vad`);
     this._speechRecognizer.on('speech_start', this._onSpeechStart);
     this._speechRecognizer.on('speech_stop', this._onSpeechStop);
     this._speechRecognizer.on('speech_timeout', this._onSpeechTimeout);
+    this._switchSearch(search);
   }
 
   /**

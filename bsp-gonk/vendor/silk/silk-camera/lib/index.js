@@ -370,7 +370,7 @@ export default class Camera extends EventEmitter {
     }
 
     log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
-    this.emit('restart', why, restartCaptureProcess);
+    this._throwyEmit('restart', why, restartCaptureProcess);
     this._ready = false;
 
     if (this._initTimeout) {
@@ -430,7 +430,7 @@ export default class Camera extends EventEmitter {
     this._initTimeout = null;
 
     this._ready = true;
-    this.emit('ready');
+    this._throwyEmit('ready');
   }
 
   _startMicCapture() {
@@ -444,13 +444,28 @@ export default class Camera extends EventEmitter {
     });
     let micInput = simMic.getAudioStream();
     micInput.on('data', (data) => {
-      this.emit('mic-data', { when: Date.now(), frames: data });
+      this._throwyEmit('mic-data', { when: Date.now(), frames: data });
     });
     micInput.on('error', (error) => {
       // TODO: what should we do on errors ...
       log.error(`Sim mic error: ${error}`);
     });
     simMic.start();
+  }
+
+  /**
+   * Emit an event, and re-throw any exceptions to the process once the current call stack is
+   * unwound
+   */
+  _throwyEmit(eventName, ...args) {
+    try {
+      this.emit(eventName, ...args);
+    } catch (err) {
+      process.nextTick(() => {
+        util.processthrow(err.stack || err);
+      });
+    }
+
   }
 
   /**
@@ -735,20 +750,20 @@ export default class Camera extends EventEmitter {
       this._cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
         if (err) {
           log.error(`Unable to fetch frame: err=${err}`);
-          this._cvVideoCaptureBusy = false;
         } else {
           this._handleNextFastFrame(when, im);
           this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
         }
+        this._cvVideoCaptureBusy = false;
       });
     } else {
       this._cvVideoCapture.read(im, (err) => {
         if (err) {
           log.error(`Unable to fetch frame: err=${err}`);
-          this._cvVideoCaptureBusy = false;
         } else {
           this._handleNextFastFrame(when, im);
         }
+        this._cvVideoCaptureBusy = false;
       });
     }
   }
@@ -772,9 +787,7 @@ export default class Camera extends EventEmitter {
     });
 
     log.debug(`Grab time: ${Date.now() - when}ms`);
-    this._cvVideoCaptureBusy = false;
-
-    this.emit('frame', when, imRGB);
+    this._throwyEmit('frame', when, imRGB);
 
     // Only emit the latest set of HAL-detected faces
     // (HAL can return multiple faces per preview, but it's not helpful to show
@@ -783,7 +796,7 @@ export default class Camera extends EventEmitter {
       if (this.faces.length > 0) {
         log.info(`Detected face=${this.faces.length}`);
       }
-      this.emit('faces', when, this.faces);
+      this._throwyEmit('faces', when, this.faces);
     }
   }
 
@@ -792,8 +805,7 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _handleNextFastFrame(when, im) {
-    this.emit('fast-frame', when, im);
-    this._cvVideoCaptureBusy = false;
+    this._throwyEmit('fast-frame', when, im);
   }
 
   /**
@@ -838,7 +850,7 @@ export default class Camera extends EventEmitter {
         log.debug(`socketDuration: ${socketDuration}`);
 
         if (this._recording) {
-          this.emit('video-segment', when, durationMs, pkt);
+          this._throwyEmit('video-segment', when, durationMs, pkt);
         }
         break;
       case TAG_FACES:
@@ -851,7 +863,7 @@ export default class Camera extends EventEmitter {
         log.debug(`TAG_MIC ${when}`, tagInfo);
         this._micTagReceived = true;
         if (this._recording) {
-          this.emit('mic-data', {when: when, frames: pkt});
+          this._throwyEmit('mic-data', {when: when, frames: pkt});
         }
         break;
       default:

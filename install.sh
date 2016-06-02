@@ -63,9 +63,17 @@ if [[ "$(uname)" == "Linux" && -z $GET_OFF_MY_LAWN ]]; then
   package_exists libtool
 fi
 
+
+
 # Hacks to ensure that native modules are built on your platform ...
-for module_gyp in $(find -L node_modules -name 'binding.gyp') ; do
+for module_gyp in $(find -L node_modules -name 'binding.gyp' ) ; do
   module=$(dirname $module_gyp)
+
+  if [[ $module == 'node_modules/node-webrtc' ]]; then
+    echo "Skipping node-webrtc (uses prebuilts)"
+    continue
+  fi
+
   if [[ -z $(find $module -name '*.node') ]] ; then
     JOBS=MAX npm build $module
   fi

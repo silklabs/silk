@@ -1,9 +1,0 @@
-#! /bin/bash -e
-
-. bin/setup
-
-echo "WebRTC Releases:"
-git -C $WEBRTC/src branch -r | \
-  grep branch-heads | \
-  sed 's/branch-heads\///' | \
-  sed 's/  //'

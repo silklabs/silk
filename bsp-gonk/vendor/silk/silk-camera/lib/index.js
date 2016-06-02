@@ -727,19 +727,17 @@ export default class Camera extends EventEmitter {
     this._cvVideoCaptureBusy = true;
     let when = Date.now();
 
-    // Use cvVideoCapture grab()/retrieve() as read() will only return the BRG
-    // image
     let im = new cv.Matrix();
-    let imRGB = new cv.Matrix();
-    let imGray = new cv.Matrix();
-    let imScaledGray = new cv.Matrix();
-
     if (grabPreview) {
+      let imRGB = new cv.Matrix();
+      let imGray = new cv.Matrix();
+      let imScaledGray = new cv.Matrix();
       this._cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
         if (err) {
           log.error(`Unable to fetch frame: err=${err}`);
           this._cvVideoCaptureBusy = false;
         } else {
+          this._handleNextFastFrame(when, im);
           this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
         }
       });

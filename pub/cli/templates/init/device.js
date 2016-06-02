@@ -6,6 +6,13 @@ const wifi = require('silk-wifi').default;
 const Input = require('silk-input').default;
 const util = require('silk-sysutils');
 
+function bail(err) {
+  log.error(err.stack || err);
+  process.abort();
+}
+process.on('unhandledRejection', bail);
+process.on('uncaughtException', bail);
+
 module.exports = {
   init: () => {
     /**

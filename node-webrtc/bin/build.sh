@@ -95,7 +95,7 @@ $SILK_WEBRTC/webrtc/build/gyp_webrtc \
   -Dmac_deployment_target="10.9" \
   -Drelease_extra_cflags="$(join ' ' "${cflags[@]}")" \
   -Drestrict_webrtc_logging=0 \
-  -R node-webrtc
+  -R node-webrtc-all
 
 pushd $chromium_build_dir
 ninja

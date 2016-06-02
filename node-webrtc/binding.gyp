@@ -128,11 +128,20 @@
       ],
     },
     {
-      'target_name': 'All',
+      'target_name': 'node-webrtc-all',
       'type': 'none',
       'dependencies': [
         'node-webrtc',
       ],
+      'actions': [{
+        'action_name': 'copy',
+        'inputs': [],
+        'outputs': ['node-webrtc.node'],
+        'action': [
+          './bin/copy_out.sh',
+          '<(PRODUCT_DIR)',
+        ]
+      }]
     },
   ],
 }

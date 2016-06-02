@@ -38,4 +38,9 @@ before_install:
 script:
   - ./bin/build.sh && npm test
 
-after_script: ../ci/ccache_push.sh
+after_script:
+  - ../ci/ccache_push.sh
+  - ../ci/native_node_build_push.sh
+
+
+

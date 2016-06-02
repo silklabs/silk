@@ -3,7 +3,6 @@
 import * as native from '../build/Release/node-webrtc.node';
 
 import {EventEmitter} from 'events';
-import EventTarget from 'event-target-shim';
 
 // Re-export the things that do not need extra wrapping ...
 export {

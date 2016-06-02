@@ -11,10 +11,6 @@ cd $ROOT
 
 pwd
 
-# TODO: This should go away once we make version loadable without a pre-install
-# step.
-npm build node_modules/silk-core-version
-npm build node_modules/node-webrtc
 npm build node_modules/silk-external-dlib
 npm build node_modules/silk-dnn-models
 

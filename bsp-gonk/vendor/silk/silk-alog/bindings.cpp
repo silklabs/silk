@@ -30,6 +30,9 @@ RealLog(Nan::NAN_METHOD_ARGS_TYPE info, android_LogPriority priority)
   if (!argc) {
     return;
   }
+  if (argc > 2) {
+    return Nan::ThrowTypeError("No more than two arguments allowed");
+  }
 
   Nan::HandleScope scope;
 

@@ -169,34 +169,26 @@ export class DeviceSession extends RobustEventEmitter {
     this._metrics = metrics;
   }
 
-  _validateData(data: MessageData): boolean {
+  _validateData(data: MessageData): ?Error {
     log.debug(`DeviceSession._validateData()`, data.name);
 
     if (!data || (typeof data !== `object`)) {
-      return false;
+      return new Error(`Data must be an object`);
     }
 
     if (!(`name` in data)) {
-      log.warn(`Data has no 'name' proptery`);
-      return false;
+      return new Error(`Data has no 'name' property`);
     }
 
     if (!(data.name in SCHEMA)) {
-      log.warn(`Data has unexpected 'name' property: '${data.name}'`);
-      return false;
+      return new Error(`Data has unexpected 'name' property: '${data.name}'`);
     }
 
-    let error;
+    let error = null;
     Joi.validate(data, SCHEMA[data.name], (err, val) => {
       error = err;
     });
-
-    if (error) {
-      log.warn(`Data failed validation`, error);
-      return false;
-    }
-
-    return true;
+    return error;
   }
 
   _forceDisconnect() {
@@ -268,8 +260,11 @@ export class DeviceSession extends RobustEventEmitter {
   _onDataImpl(data: MessageData) {
     log.debug(`DeviceSession._onData()`, data.name);
 
-    if (!this._validateData(data)) {
+    const validationError = this._validateData(data);
+    if (validationError) {
+      log.warn(`Data validation failed`, validationError);
       this._forceDisconnect();
+      this.emit(`error`, validationError);
       return;
     }
 

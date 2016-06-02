@@ -325,10 +325,9 @@ export default class Devices extends AsyncComponent {
       this.setStateAsync({devices});
     });
 
-    let bleSessionError;
-    bleDeviceSession.on('error', (error) => bleSessionError = error);
+    const onErrorOrDisconnect = (error) => {
+      error = error || new Error('BLE socket disconnected.');
 
-    bleDeviceSession.on('disconnect', () => {
       log.debug('BLE socket disconnected. Cleaning up.');
       bleDeviceSession.removeAllListeners();
 
@@ -359,10 +358,11 @@ export default class Devices extends AsyncComponent {
       }
 
       if (isCurrentConfiguringDevice) {
-        let error = bleSessionError || new Error('BLE socket disconnected.');
         this._abortConfig(bleDeviceSession, error);
       }
-    });
+    };
+    bleDeviceSession.on('disconnect', onErrorOrDisconnect);
+    bleDeviceSession.on('error', onErrorOrDisconnect);
   };
 
   configureDevice = async (bleDeviceSession) => {
@@ -374,14 +374,16 @@ export default class Devices extends AsyncComponent {
       return;
     }
 
+    this.configuringDevice = {
+      bleDeviceSession,
+      deviceId: null,
+      name: null,
+    };
+
     bleDeviceSession.once('secret', (deviceSecret) => {
       let { deviceId } = deviceSecret;
       log.debug('And now kiththth! Received device ID', deviceId);
-      this.configuringDevice = {
-        bleDeviceSession,
-        deviceId,
-        name: null,
-      };
+      this.configuringDevice.deviceId = deviceId;
     });
 
     log.debug('Launching device setup UI.');

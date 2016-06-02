@@ -20,7 +20,6 @@ export default class DeviceTouch extends AsyncComponent {
 
   state = {
     touched: false,
-    deviceSecret: null,
     rssi: null,
   };
 
@@ -31,6 +30,12 @@ export default class DeviceTouch extends AsyncComponent {
     let { bleDeviceSession } = this.props;
     bleDeviceSession.on('secret', this._onDeviceTouch);
     bleDeviceSession.on('rssiUpdate', this._onRSSI);
+  }
+
+  componentDidMount() {
+    if (this.props.bleDeviceSession.deviceId) {
+      this._advance();
+    }
   }
 
   componentWillUnmount() {
@@ -56,22 +61,22 @@ export default class DeviceTouch extends AsyncComponent {
     }
 
     this.setStateAsync({
-      deviceSecret,
       touched: true,
     });
     setTimeout(() => {
       if (!this.mounted) {
         return;
       }
-      this.props.navigator.pushAsync({
-        name: 'WifiConfig',
-        props: {
-          ...this.props,
-          deviceSecret: this.state.deviceSecret,
-        },
-      });
+      this._advance();
     }, AFTER_TOUCH_WAIT_MS);
   };
+
+  _advance() {
+    this.props.navigator.pushAsync({
+      name: 'WifiConfig',
+      props: this.props,
+    });
+  }
 
   render() {
     let phone;

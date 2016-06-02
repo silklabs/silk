@@ -387,8 +387,9 @@ export default class Devices extends AsyncComponent {
     });
 
     log.debug('Launching device setup UI.');
+    const screen = bleDeviceSession.deviceId ? 'DeviceTouch' : 'WifiConfig';
     this.props.navigator.pushAsync({
-      name: 'DeviceTouch',
+      name: screen,
       props: {
         bleDeviceSession,
         onCancel: () => this._abortConfig(bleDeviceSession),
@@ -409,7 +410,7 @@ export default class Devices extends AsyncComponent {
         registrationToken,
       } = await this.props.userState.registerDevice(
         config.name,
-        config.deviceId
+        bleDeviceSession.deviceId
       );
       if (!success) {
         throw new Error('Could not register device with the server.');

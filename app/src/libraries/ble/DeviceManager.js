@@ -316,7 +316,6 @@ export class DeviceSession extends RobustEventEmitter {
       invariant(this._socketSession.authenticated);
 
       this._isRegistered = true;
-      this._deviceId = data.deviceId;
       this._state = DeviceSession.STATE_REGISTERED;
       this._emitConnect();
       this._emitRegistered();

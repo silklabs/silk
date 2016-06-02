@@ -1,26 +1,26 @@
 {
-  "name": "silk-dialog",
+  "name": "silk-dialog-engine",
   "version": "0.17.1",
   "description": "Silk voice dialog engine",
-  "main": "./lib/index.js",
+  "main": "lib/index.js",
   "scripts": {
+    "flow": "flow check",
     "lint": "eslint lib demo"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
+    "silk-babel-run": "/babel-run",
     "silk-config": "/config",
-    "silk-log": "/pub/log"
+    "silk-log": "/pub/log",
+    "silk-streams": "/streams"
   },
   "dependencies": {
-    "redux": "3.5.2",
-    "redux-logger": "2.6.1",
-    "redux-saga": "0.10.4",
-    "redux-thunk": "2.1.0",
     "uuid": "2.0.1"
   },
   "devDependencies": {
     "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
+    "flow-bin": "0.25.0",
     "mic": "2.0.1",
     "speaker": "0.3.0",
     "play-sound": "0.0.9"

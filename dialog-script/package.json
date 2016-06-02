@@ -2,14 +2,18 @@
   "name": "silk-dialog-script",
   "version": "0.17.1",
   "description": "Customizable dialog script",
-  "main": "./lib/index.js",
+  "main": "lib/index.js",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint lib",
     "silk-build": "silk-buildjs .",
     "test": "npm run lint"
   },
   "dependencies": {
     "babel-preset-silk-node4": "^0.17.0",
+    "redux": "3.5.2",
+    "redux-logger": "2.6.1",
+    "redux-saga": "0.10.4",
+    "redux-thunk": "2.1.0",
     "silk": "^0.17.0",
     "silk-buildjs": "^0.17.0",
     "silk-log": "^0.17.0"

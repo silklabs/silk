@@ -3,12 +3,13 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 LOCALGOALS += \
-  update \
-  fut \
   demo \
-  qemu \
-  emu \
   dist \
+  emu \
+  fut \
+  qemu \
+  time \
+  update \
 
 include ../pub/bsp-gonk/GNUmakefile
 

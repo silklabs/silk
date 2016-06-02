@@ -308,6 +308,12 @@ const builds = {
     events: ['pr', 'push', 'nightly'],
   }),
   'releng': npmPackageBuild('releng'),
+  'rtc': npmPackageBuild('rtc', {
+    files: [
+      'rtc/**',
+      'node-webrtc/**',
+    ],
+  }),
   'server': npmPackageBuild('server'),
   'webapp-pr': npmPackageBuild('webapp', {
     events: ['pr'],

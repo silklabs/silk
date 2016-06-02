@@ -1,2 +1,4 @@
-'use strict';
-module.exports = require('./build/Release/node-webrtc.node');
+import * as WebRTC from './lib';
+
+// Provide es5 exports ...
+module.exports = WebRTC;

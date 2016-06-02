@@ -153,9 +153,15 @@ void DataChannel::Send(const Nan::FunctionCallbackInfo<Value> &info) {
   bool retval = false;
 
   if (socket) {
+    // NOTE: Order is important here Buffer is an ArrayBuffer but lays out it's
+    // internal memory very differently.
     if(info[0]->IsString()) {
       std::string data(*Nan::Utf8String(info[0]));
       webrtc::DataBuffer buffer(data);
+      retval = socket->Send(buffer);
+    } else if (node::Buffer::HasInstance(info[0])) {
+      rtc::CopyOnWriteBuffer data(node::Buffer::Data(info[0]), node::Buffer::Length(info[0]));
+      webrtc::DataBuffer buffer(data, true);
       retval = socket->Send(buffer);
     } else {
       node::ArrayBuffer *container = node::ArrayBuffer::New(info[0]);

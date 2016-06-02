@@ -1,0 +1,14 @@
+/**
+ * @providesModule pocketsphinx
+ * @flow
+ */
+
+export type Hypothesis = {
+  hypstr: string;
+  best_score: number;
+  prob: number;
+};
+
+declare export var ps: {
+  Decoder: any;
+}

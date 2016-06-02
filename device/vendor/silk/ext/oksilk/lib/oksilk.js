@@ -10,6 +10,7 @@ import path from 'path';
 import config from 'silk-config';
 import SpeechRecognizer from './speechrecognizer';
 import type { Env, Util, Say, Log, Timeline } from 'silk-exttest/interface/env';
+import type { Hypothesis } from 'pocketsphinx';
 
 let log: Log;
 let util: Util;
@@ -42,7 +43,7 @@ class OkSilk {
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
 
-  constructor(env) {
+  constructor(env: Env) {
     this._env = env;
     util = env.util;
     timeline = this._env.timeline;
@@ -69,7 +70,7 @@ class OkSilk {
    * Configure the recognizer to perform multiple searches of different kind and
    * switch between them
    */
-  _setupRecognizer() {
+  _setupRecognizer(): void {
     log.info(`Setting up speech recognizer`);
 
     // Configure with audio properties of the input data from mic. These
@@ -164,7 +165,7 @@ class OkSilk {
   /**
    * Register for VAD events
    */
-  _startVoiceActivityDetection() {
+  _startVoiceActivityDetection(): void {
     log.debug(`start vad`);
     this._speechRecognizer.on('speech_start', this._onSpeechStart);
     this._speechRecognizer.on('speech_stop', this._onSpeechStop);
@@ -174,7 +175,7 @@ class OkSilk {
   /**
    * Unregister for VAD events
    */
-  _stopVoiceActivityDetection() {
+  _stopVoiceActivityDetection(): void {
     log.debug(`stop vad`);
     if (this._onSpeechStart) {
       this._speechRecognizer.removeListener('speech_start', this._onSpeechStart);
@@ -191,7 +192,7 @@ class OkSilk {
    * Switch between default or hotkeyword listening mode and grammar search with silk
    * commands
    */
-  _switchSearch(searchName) {
+  _switchSearch(searchName): void {
     this._speechRecognizer.stop();
 
     // If we are not spotting, start listening with timeout
@@ -207,7 +208,7 @@ class OkSilk {
    * This callback is called when we stop the recognizer. This is where we
    * act on the commands
    */
-  _handleResult(hypothesis) {
+  _handleResult(hypothesis: Hypothesis): void {
     if (hypothesis !== null) {
       let text = hypothesis.hypstr;
       log.info(`Received result hypothesis: ${text}`);
@@ -229,7 +230,7 @@ class OkSilk {
    * keyword spotting mode we can react here, in other modes we need to wait
    * for final result in onResult.
    */
-  _handlePartialResult(hypothesis) {
+  _handlePartialResult(hypothesis: Hypothesis): void {
     if (hypothesis === null) {
       return;
     }
@@ -246,7 +247,7 @@ class OkSilk {
   /**
    * Handle start of speech event
    */
-  _handleBeginningOfSpeech(when) {
+  _handleBeginningOfSpeech(when: number): void {
     log.debug(`Speech begin`);
     timeline.addObjects([{
       source: 'oksilk',
@@ -258,7 +259,7 @@ class OkSilk {
   /**
    * Handle end of speech event
    */
-  _handleEndOfSpeech(when) {
+  _handleEndOfSpeech(when: number): void {
     log.debug(`Speech end`);
     timeline.addObjects([{
       source: 'oksilk',
@@ -280,7 +281,7 @@ class OkSilk {
   /**
    * No text spoken within the given time
    */
-  _handleTimeout(when) {
+  _handleTimeout(): void {
     log.debug(`speech timeout`);
     timeline.addObjects([{
       source: 'oksilk',
@@ -298,7 +299,7 @@ class OkSilk {
   /**
    * Play a sound when hot keyword is detected
    */
-  _playHotKeywordSound() {
+  _playHotKeywordSound(): void {
     util.playSound(path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3'));
   }
 }

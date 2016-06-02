@@ -13,6 +13,7 @@ module.exports = function(options) {
     throw new TypeError('must provide a \'secret\' option');
 
   return bodyParser.json({
+    limit: options.limit, // Uses body-parse default if null
     verify: function(req, res, buffer) {
       if (!req.headers['x-hub-signature'])
         throw new Error('No X-Hub-Signature found on request');

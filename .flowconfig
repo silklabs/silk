@@ -72,6 +72,11 @@ node_modules/fbjs/flow/lib/
 .*/device/vendor/propsilk/silk-caffe/.*
 .*/device/vendor/propsilk/silk-cv/.*
 
+# Ignore huge projects with minimal or no JS.
+.*/node-webrtc/build-staging/.*
+.*/svm/models/.*
+
+
 [options]
 unsafe.enable_getters_and_setters=true
 module.system=haste

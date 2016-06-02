@@ -25,7 +25,6 @@ import ParentSocketSession from './parent_socket_session';
 import validateMessage from './validate_process_message';
 
 import type {ChildProcess} from 'child_process';
-// $FlowWTF: "Named import from module `net`. This module has no named export called `Server`."
 import type {Server, Socket} from 'net';
 
 import type {Deferred} from '../deferred';

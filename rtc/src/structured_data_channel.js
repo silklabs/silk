@@ -115,7 +115,6 @@ export default class StructuredDataChannel extends EventEmitter {
 
     this._channel = channel;
     if (channel) {
-      channel.binaryType = 'arraybuffer';
       channel.addEventListener('close', this._onClose);
       channel.addEventListener('error', this._onError);
       channel.addEventListener('message', this._onMessage);

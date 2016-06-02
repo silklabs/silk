@@ -5,7 +5,7 @@ import timeout from 'silk-utils/timeout';
 import toJSON from 'silk-utils/calltojson';
 import invariant from 'assert';
 
-import WebRTC from './webrtc';
+import * as WebRTC from './webrtc';
 import Peer from './peer';
 import {
   peerConnectionStateObserver,
@@ -13,8 +13,10 @@ import {
   waitForIce,
   waitForDataChannels,
 } from './utils';
+import TransportEmitter from './transport_emitter';
 
 import type { Duplex } from 'stream';
+
 import type { Logger } from 'silk-log';
 
 import type { RTCPeerConnection } from '../interface/webrtc';
@@ -29,17 +31,21 @@ export class Recipient extends Peer {}
 async function _answer(
   log: Logger,
   peerConnection: RTCPeerConnection,
-  transport: Duplex,
+  transport: TransportEmitter,
   options?: Object
 ): Promise<Recipient> {
-  peerConnectionStateObserver(log, 'recipient', peerConnection);
 
-  log.info('recipient waiting for offer ...');
+  // We cannot set candidates before remote description is set but we may still
+  // get candidates because of trickle ice. We "hold" the event emitter until
+  // we have done this so we still get the events but do not handle them.
+  transport.holdIncomingEvent('icecandidate');
+
+  peerConnectionStateObserver(log, 'recipient', peerConnection);
 
   let offer;
   try {
     offer = await Promise.race([
-      eventToPromise(transport, 'data'),
+      eventToPromise(transport, 'offer'),
       timeout(OFFER_TIMEOUT, new Error('Timed out while waiting for offer...')),
     ]);
   } catch (err) {
@@ -88,15 +94,17 @@ async function _answer(
   );
 
   log.info('answer sent');
-  transport.write(toJSON(answer));
+  transport.emit('answer', toJSON(answer));
 
+  const iceComplete = waitForIce(log, 'recipient', peerConnection, transport);
+  transport.releaseIncomingEvent('icecandidate');
   await Promise.race([
-    waitForIce(log, 'recipient', peerConnection, transport),
+    iceComplete,
     transportError,
   ]);
 
   log.info('ICE done, sending "done" ack');
-  transport.write(toJSON({ done: true }));
+  transport.emit('done');
 
   let dataChannels;
   try {
@@ -128,7 +136,9 @@ export async function answer(
   const peerConnection = new WebRTC.RTCPeerConnection({});
 
   try {
-    return await _answer(log, peerConnection, transport, options);
+    return await _answer(
+      log, peerConnection, new TransportEmitter(transport), options
+    );
   } catch (err) {
     log.error(`Failed to answer rtc call ${err.stack}`);
     // Ensure we always close the peerConnection.

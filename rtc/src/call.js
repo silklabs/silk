@@ -18,11 +18,8 @@ import {
   webrtcPromise,
 } from './utils';
 
-import WebRTC from './webrtc';
-
-import type {
-  Duplex,
-} from 'stream';
+import * as WebRTC from './webrtc';
+import TransportEmitter from './transport_emitter';
 
 import type {
   RTCDataChannel,
@@ -30,6 +27,8 @@ import type {
   RTCDataChannelInit,
   RTCPeerConnectionIceEvent,
 } from '../interface/webrtc';
+
+import type { Duplex } from 'stream';
 
 const log = createLog('rtc');
 
@@ -58,14 +57,14 @@ export type CallOptions = {
 type Caller = [RTCPeerConnection, Map<string, RTCDataChannel>,
                MediaStreamsPair];
 
-function _peer(caller: Caller, transport: Duplex): Promise<void> {
+function _peer(caller: Caller, transport: TransportEmitter): Promise<void> {
   const [peerConnection] = caller;
 
   const onIceCandidate = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate) {
       log.verbose('caller sending candidate', event.candidate);
       try {
-        transport.write(toJSON(event.candidate));
+        transport.emit('icecandidate', toJSON(event.candidate));
       } catch (err) {
         log.warn(`Failed to write candidate to stream: ${err.stack}`);
       }
@@ -86,8 +85,15 @@ function _peer(caller: Caller, transport: Duplex): Promise<void> {
   ]);
 }
 
-async function _call(caller: Caller, transport: Duplex): Promise<void> {
+async function _call(caller: Caller, transport: TransportEmitter): Promise<void> {
   const [peerConnection, dataChannels, mediaStreams] = caller;
+
+  // We cannot set candidates before remote description is set but we may still
+  // get candidates because of trickle ice. We "hold" the event emitter until
+  // we have done this so we still get the events but do not handle them.
+  transport.holdIncomingEvent('icecandidate');
+  // The done event may come in at any time so buffer it until we are listening.
+  transport.holdIncomingEvent('done');
 
   log.info('creating offer...');
   let desc = await webrtcPromise(peerConnection, 'createOffer');
@@ -98,8 +104,7 @@ async function _call(caller: Caller, transport: Duplex): Promise<void> {
   );
 
   // initiate the peer ...
-  // $FlowFixMe: Hard to express that our specific transport can accept objects.
-  transport.write({
+  transport.emit('offer', {
     // Most important thing is obviously the offer itself...
     sdp: toJSON(desc),
     // We also send along the list of expected data channels so we can await
@@ -110,7 +115,7 @@ async function _call(caller: Caller, transport: Duplex): Promise<void> {
   });
 
   let answer = await Promise.race([
-    eventToPromise(transport, 'data'),
+    eventToPromise(transport, 'answer'),
     timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for answer')),
   ]);
 
@@ -129,24 +134,23 @@ async function _call(caller: Caller, transport: Duplex): Promise<void> {
     new WebRTC.RTCSessionDescription(answer)
   );
 
-  await waitForIce(log, 'caller', peerConnection, transport);
+  const iceComplete = waitForIce(log, 'caller', peerConnection, transport);
+  transport.releaseIncomingEvent('icecandidate');
+  await iceComplete;
+
   log.info('ICE done, waiting for peer ack ...');
-  while (true) {  // eslint-disable-line no-constant-condition
-    let message = await Promise.race([
-      eventToPromise(transport, 'data'),
-      timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for "done" ack')),
-    ]);
-    if (message.done) {
-      log.info('  received "done" ack, closing transport');
-      break;
-    }
-  }
+  const doneAck = eventToPromise(transport, 'done');
+  transport.releaseIncomingEvent('done');
+  await Promise.race([
+    doneAck,
+    timeout(ANSWER_TIMEOUT, new Error('Timed out waiting for "done" ack')),
+  ]);
   transport.end();
 }
 
 export async function peer(caller: Caller, transport: Duplex): Promise<void> {
   try {
-    return await _peer(caller, transport);
+    return await _peer(caller, new TransportEmitter(transport));
   } catch (err) {
     log.error(`Failed to peer connection: ${err.stack}`);
     // Ensure we always close the peerConnection.

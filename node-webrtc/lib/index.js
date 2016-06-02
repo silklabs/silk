@@ -1,6 +1,6 @@
 // All the various native stuff we need ...
 
-import * as native from '../build/Release/node-webrtc.node';
+import * as native from './native';
 
 import {EventEmitter} from 'events';
 
@@ -12,7 +12,7 @@ export {
   RTCSessionDescription,
   RTCIceCandidate,
   setDebug
-} from '../build/Release/node-webrtc.node';
+} from './native';
 
 function assignGetters(constructor, list) {
   for (let propertyName of list) {

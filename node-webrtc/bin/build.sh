@@ -18,18 +18,6 @@ chromium_build_dir=$SILK_WEBRTC/out/$build_type
 nodewebrtc_dest=$SILK_WEBRTC/third_party/node-webrtc
 node_ver=$(node -p -e 'process.versions.node')
 node_dir="$HOME/.node-gyp/$node_ver"
-prebuilt="build-$(./bin/arch)"
-echo $prebuilt
-
-## If we are on darwin use the prebuilt version.
-if [[ -d $prebuilt && $build_version != "HEAD" ]]; then
-  echo "Using prebuilt: $prebuilt"
-  if [[ -L build ]]; then
-    rm build
-  fi
-  ln -fs $prebuilt build
-  exit 0
-fi
 
 ## Chromium exports ...
 export GYP_GENERATORS='ninja';

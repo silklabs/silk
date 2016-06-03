@@ -469,7 +469,7 @@ void DataChannel::On(Event *event) {
   }
   
   if (!callback.IsEmpty() && callback->IsFunction()) {
-    callback->Call(RTCWrap::This(), argc, argv);
+    Nan::Callback(callback).Call(RTCWrap::This(), argc, argv);
   } else if (isError) {
     Nan::ThrowError(argv[0]);
   }

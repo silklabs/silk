@@ -9,10 +9,10 @@ import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
 import fs from 'mz/fs';
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 
 const log = createLog('TestFramework');
-const env = new Framework('detectcat');
+const env = new Env('detectcat');
 const timeline = env.timeline;
 const camera = env.camera;
 

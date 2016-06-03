@@ -13,7 +13,7 @@ import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
 import MogSubtractor from './mogsubtractor';
 
-import type { Env, Log, Util, Camera, Timeline } from 'silk-exttest/interface/env';
+import type { Env, Log, Util, Camera, Timeline } from 'silk-exttest';
 type PreviewType = (when: number) => void;
 
 let camera: Camera;

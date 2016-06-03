@@ -7,7 +7,7 @@
 'use strict';
 
 import FaceDetector from '../lib/face_detector';
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 import cv from 'opencv';
 import path from 'path';
 import fs from 'fs';
@@ -15,7 +15,7 @@ import mkdirp from 'mkdirp';
 import imageSize from 'fast-image-size';
 import eventToPromise from 'event-to-promise';
 
-const env = new Framework('face');
+const env = new Env('face');
 const camera = env.camera;
 
 const HAAR = '../../../../../../sim/system/silk/media/opencv/haarcascade_frontalface_alt2.xml';

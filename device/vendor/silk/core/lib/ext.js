@@ -333,12 +333,6 @@ class Env extends EventEmitter {
        * @instance
        */
       this.timeline.addObjects = (objs) => {
-        objs.forEach((obj) => {
-          if (!(`source` in obj)) {
-            obj.source = this._name;
-          }
-          log.debug(obj);
-        });
         timeline.addObjects(objs);
       };
 

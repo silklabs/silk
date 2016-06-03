@@ -7,7 +7,7 @@
  */
 
 import cv from 'opencv';
-import type { Env } from 'silk-exttest/interface/env';
+import type { Env } from 'silk-exttest';
 import type { SubtractorCallbackType } from 'silk-cv';
 import type { Matrix } from 'opencv';
 

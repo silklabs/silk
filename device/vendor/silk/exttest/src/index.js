@@ -2,6 +2,7 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ * @flow
  */
 
 import createOutbox from 'silk-core/lib/outbox';
@@ -17,18 +18,54 @@ import opencv from 'opencv';
 import fs from 'fs';
 import path from 'path';
 
+import type { Outbox } from 'silk-core/lib/outbox/manager';
+import type Sensors from 'silk-sensors';
+import type Connections from 'silk-core/lib/connections'; 
+
 const log = createLog('TestFramework');
+
+export type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+class Say {
+  speak(text: string): void {
+  }
+}
+
+export type Log = typeof log;
+export type Util = typeof util;
+export type { Camera };
+export type { Sensors };
+export type { Timeline };
+export type { Say };
 
 /**
  * Dummy environment class
  */
-export default class Framework {
-  constructor(name) {
+export default class Env {
+  _name: string;
+  camera: Camera;
+  server: Server;
+  outbox: Outbox;
+  timeline: Timeline;
+  sensors: Sensors;
+  say: Say;
+  util: typeof util;
+  _previewCount: number;
+  _previewTimeout: number | null;
+  _log: Log;
+  connections: Connections; 
+
+  constructor(name: string) {
     this._name = name;
-    this.networkStatus = new NetworkStatus(wifi);
     this.camera = new Camera();
-    this.server = new Server(wifi);
-    this.outbox = createOutbox(this.networkStatus);
+    let networkStatus = new NetworkStatus(wifi);
+    this.server = new Server(this.connections);
+    this.outbox = createOutbox(networkStatus);
     this.timeline = new Timeline(this.server, this.outbox, this.camera);
     this.util = util;
 
@@ -46,7 +83,7 @@ export default class Framework {
   /**
    * Load a preview frame to the camera pipeline
    */
-  _loadPreviewFrame(when, file) {
+  _loadPreviewFrame(when: number, file: string) {
     return new Promise(resolve => {
       opencv.readImage(file, (err, im) => {
         invariant(err === null, err);
@@ -84,7 +121,7 @@ export default class Framework {
    * @param callback: This callback is called when done emiting all the
    *                  previews images
    */
-  _startPlayback(clipDirectory, rate, callback) {
+  _startPlayback(clipDirectory: string, rate: string, callback?: any) {
     if (!fs.existsSync(clipDirectory)) {
       log.error(`${clipDirectory} does not exist`);
       return;
@@ -102,7 +139,7 @@ export default class Framework {
   /**
    *
    */
-  _playback(clipDirectory, rate, delayMs, previews, callback) {
+  _playback(clipDirectory: string, rate: string, delayMs: number, previews: Array<string>, callback?: any) {
     const spilloverMs = Date.now() % delayMs;
     const requestedDelayMs = delayMs - spilloverMs + 5;
 
@@ -132,10 +169,13 @@ export default class Framework {
     }, requestedDelayMs);
   }
 
-  get log() {
+  get log(): Log {
     if (!this._log) {
       this._log = createLog(this._name);
     }
     return this._log;
   }
 }
+
+export type { Env };
+

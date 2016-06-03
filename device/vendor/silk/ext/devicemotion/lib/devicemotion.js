@@ -6,7 +6,7 @@
  * @flow
  */
 
-import type { Env, Log, Timeline, Sensors } from 'silk-exttest/interface/env';
+import type { Env, Log, Timeline, Sensors } from 'silk-exttest';
 type AccelerometerType = (x: number, y: number, z: number) => void;
 
 let log: Log;

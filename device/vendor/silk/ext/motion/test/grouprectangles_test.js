@@ -6,9 +6,9 @@
 
 import assert from 'assert';
 import MotionZone from '../lib/motionzone';
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 
-const env = new Framework('motion');
+const env = new Env('motion');
 
 suite('Motion zone', () => {
   test('group rectangles', () => {

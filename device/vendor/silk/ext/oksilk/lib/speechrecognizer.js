@@ -9,7 +9,7 @@
 import * as pocketsphinx from 'pocketsphinx';
 import { EventEmitter } from 'events';
 
-import type { Env, Log } from 'silk-exttest/interface/env';
+import type { Env, Log } from 'silk-exttest';
 
 let ps = pocketsphinx.ps;
 let log: Log;

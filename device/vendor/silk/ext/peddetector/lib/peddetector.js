@@ -12,7 +12,7 @@ import caffe from 'silk-caffe';
 import fs from 'mz/fs';
 import path from 'path';
 
-import type { Env, Log } from 'silk-exttest/interface/env';
+import type { Env, Log } from 'silk-exttest';
 
 let log: Log;
 

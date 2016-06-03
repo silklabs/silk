@@ -6,7 +6,7 @@
 
 import assert from 'assert';
 import createLog from 'silk-log';
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
 import fs from 'fs';
@@ -15,7 +15,7 @@ import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import removeSilence from './remove-silence';
 
 const log = createLog('TestFramework');
-const env = new Framework('kws');
+const env = new Env('kws');
 const timeline = env.timeline;
 
 let kws = null;

@@ -52,6 +52,21 @@ import type { Outbox } from './outbox/manager';
 import type Server from './server.js';
 
 /**
+ * Type representing an object rectangle
+ *
+ * @property {number} x x co-ordinate of the object rectangle
+ * @property {number} y y co-ordinate of the object rectangle
+ * @property {number} width width of the object rectangle
+ * @property {number} height height of the object rectangle
+ */
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/**
  * Type representing a timeline event object
  *
  * @property {string} tag Name of the object
@@ -63,7 +78,11 @@ import type Server from './server.js';
 export type TimelineEventObject = {
   tag: string;
   when: number;
-  [arbitraryKeys: string]: any;
+  id?: number;
+  source?: string;
+  name?: string;
+  durationMs?: number;
+  rects?: Array<Rect>;
 };
 
 type DiagJpegFrame = {
@@ -79,21 +98,6 @@ type DiagJpegFrame = {
  * @property {number} height preiview image height
  */
 type Size = {
-  width: number;
-  height: number;
-};
-
-/**
- * Type representing an object rectangle
- *
- * @property {number} x x co-ordinate of the object rectangle
- * @property {number} y y co-ordinate of the object rectangle
- * @property {number} width width of the object rectangle
- * @property {number} height height of the object rectangle
- */
-type Rect = {
-  x: number;
-  y: number;
   width: number;
   height: number;
 };

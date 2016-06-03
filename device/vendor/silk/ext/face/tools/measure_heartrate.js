@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 import path from 'path';
 import fs from 'fs';
 import eventToPromise from 'event-to-promise';
@@ -12,7 +12,7 @@ import eventToPromise from 'event-to-promise';
 import FaceDetector from '../lib/face_detector';
 import {Face} from '../lib/face';
 
-const env = new Framework('silk-face');
+const env = new Env('silk-face');
 const camera = env.camera;
 
 const HAAR = '../../../../../../sim/system/silk/media/opencv/haarcascade_frontalface_alt2.xml';

@@ -78,8 +78,8 @@ type Rect = {
 export type TimelineEventObject = {
   tag: string;
   when: number;
+  source: string;
   id?: number;
-  source?: string;
   name?: string;
   durationMs?: number;
   rects?: Array<Rect>;
@@ -430,19 +430,6 @@ export default class Timeline extends EventEmitter {
   addFace(when: number, faces: Array<Rect>, source: string) {
     // Run facial recognition on the detected faces before recording the event
     this.emit('face', when, faces, source);
-  }
-
-  /**
-   * Add a clap object to timeline
-   * @param count of number of claps heard
-   */
-  addClap(count: number) {
-    this.emit('clap', count);
-    this.eventTracker.record({
-      tag: 'clap',
-      when: Date.now(),
-      count,
-    });
   }
 
   /**

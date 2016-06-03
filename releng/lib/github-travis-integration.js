@@ -62,7 +62,7 @@ import {
   getPullRequestInfoWithMergeability,
 } from './github';
 import {
-  checkPullRequestForPublicChanges,
+  checkPullRequestForExportableChanges,
 } from './github-pr-automation';
 import {
   genTravis,
@@ -430,7 +430,7 @@ async function triggerBuildsForPullRequest(
 
   // While we're at it and have all the information handy, check
   // whether the commit touches public files.
-  await checkPullRequestForPublicChanges(pr, filesChanged);
+  await checkPullRequestForExportableChanges(pr, filesChanged);
 
   if (triggeredBuilds.length === 0) {
     return 0;

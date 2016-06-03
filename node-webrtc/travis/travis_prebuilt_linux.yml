@@ -1,0 +1,9 @@
+language: node_js
+node_js: 4.4
+dist: trusty
+
+os:
+  - linux
+
+install: true
+script: npm test

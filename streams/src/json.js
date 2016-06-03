@@ -22,7 +22,8 @@ export class JSONDecodeStream extends ClosingTransform {
   _transform(chunk, encoding, callback) {
     try {
       const parsed = JSON.parse(chunk.toString());
-      callback(null, parsed);
+      // Do not run the callback in the same tick as we parse the json.
+      setImmediate(callback, null, parsed);
     } catch (err) {
       callback(err);
     }
@@ -39,7 +40,7 @@ export class JSONEncodeStream extends ClosingTransform {
   }
 
   _transform(chunk, encoding, callback) {
-    callback(null, JSON.stringify(chunk));
+    setImmediate(callback, null, JSON.stringify(chunk));
   }
 }
 

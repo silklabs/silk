@@ -23,18 +23,19 @@
   ],
   "license": "MIT",
   "main": "index.js",
+  "browser": {
+    "index.js": "./browser.js"
+  },
   "scripts": {
     "install": "./bin/build.sh",
     "test": "node test/all.js"
   },
-  "dependencies": {
-    "request": "^2.58.0"
-  },
   "devDependencies": {
-    "nan": "^2.1.0",
-    "node-gyp": "^3.0.3",
-    "minimist": "^1.1.1",
-    "simple-peer": "^5.11.5",
-    "tape": "^4.0.0"
+    "mocha": "2.4.5",
+    "nan": "2.3.3",
+    "node-gyp": "3.3.1",
+    "minimist": "1.2.0",
+    "simple-peer": "5.11.5",
+    "tape": "4.0.0"
   }
 }

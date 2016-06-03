@@ -7,11 +7,11 @@
 import eventToPromise from 'event-to-promise';
 import toJSON from 'silk-utils/calltojson';
 
+import * as WebRTC from './webrtc';
 import StructuredDataChannel from './structured_data_channel';
-import WebRTC from './webrtc';
 
-import type { Duplex } from 'stream';
 import type { Logger } from 'silk-log';
+import type TransportEmitter from './transport_emitter';
 
 import type {
   RTCPeerConnection,
@@ -113,7 +113,7 @@ export async function waitForIce(
   log: any,
   type: PeerTypes,
   peerConnection: RTCPeerConnection,
-  transport: Duplex,
+  transport: TransportEmitter,
 ): Promise<void> {
 
   // When we are notified of a local ice candidate to transmit.
@@ -121,7 +121,7 @@ export async function waitForIce(
     if (event.candidate) {
       let { candidate } = event;
       log.info(`(${type}) Sending ice candidate`, candidate);
-      transport.write(toJSON(candidate));
+      transport.emit('icecandidate', toJSON(candidate));
     } else {
       log.warn(`Got peer candidate without details...`);
     }
@@ -142,13 +142,13 @@ export async function waitForIce(
     log.info(`(${type}) ICE connection state: "${peerConnection.iceConnectionState}" cleaning up`);
 
     // ICE is done one way or another ... We should cleanup...
-    transport.removeListener('data', remoteCandidateListener);
+    transport.removeListener('icecandidate', remoteCandidateListener);
     peerConnection.removeEventListener('icecandidate', localCandidateListener);
     peerConnection.removeEventListener('iceconnectionstatechange', cleanupListeners);
   }
 
   // TODO: Measure the number and frequency of candidates.
-  transport.on(`data`, remoteCandidateListener);
+  transport.on('icecandidate', remoteCandidateListener);
   peerConnection.addEventListener('icecandidate', localCandidateListener);
   peerConnection.addEventListener('iceconnectionstatechange', cleanupListeners);
 

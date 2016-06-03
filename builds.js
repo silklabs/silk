@@ -307,6 +307,12 @@ const builds = {
     events: ['pr', 'push', 'nightly'],
   }),
   'releng': npmPackageBuild('releng'),
+  'rtc': npmPackageBuild('rtc', {
+    files: [
+      'rtc/**',
+      'node-webrtc/**',
+    ],
+  }),
   'server': npmPackageBuild('server'),
   'webapp-pr': npmPackageBuild('webapp', {
     events: ['pr'],
@@ -324,7 +330,15 @@ const builds = {
   //'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
   //  files: ['**/package.json']
   //}),
-
+  'node-webrtc-linux-build': npmPackageBuild('node-webrtc', {
+    travis_yml: 'node-webrtc/travis/travis_linux.yml',
+  }),
+  'node-webrtc-linux-prebuilt': npmPackageBuild('node-webrtc', {
+    travis_yml: 'node-webrtc/travis/travis_prebuilt_linux.yml',
+  }),
+  'node-webrtc-darwin-prebuilt': npmPackageBuild('node-webrtc', {
+    travis_yml: 'node-webrtc/travis/travis_prebuilt_darwin.yml',
+  }),
   // Push open source changes immediately on committing to silk-core
   // Only master branch is pushed currently
   'releng-shipit-pub-push': {

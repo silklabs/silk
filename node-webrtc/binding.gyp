@@ -46,7 +46,9 @@
         'LOCAL_MODULE_SUFFIX': '.node'
       },
       'dependencies': [
-        '<(webrtc_root)/webrtc.gyp:webrtc_all'
+        '<(webrtc_root)/webrtc.gyp:webrtc',
+        '<(webrtc_root)/api/api.gyp:*',
+        '<(webrtc_root)/system_wrappers/system_wrappers.gyp:field_trial_default',
       ],
       'include_dirs': [
         "<(DEPTH)/third_party/jsoncpp/source/include",
@@ -126,11 +128,21 @@
       ],
     },
     {
-      'target_name': 'All',
+      'target_name': 'node-webrtc-all',
       'type': 'none',
       'dependencies': [
         'node-webrtc',
       ],
+      'actions': [{
+        'action_name': 'copy',
+        'inputs': [],
+        'outputs': ['node-webrtc.node'],
+        'action': [
+          './bin/copy_out.sh',
+          '<(PRODUCT_DIR)',
+        ]
+      }]
     },
   ],
 }
+

@@ -153,14 +153,19 @@ void DataChannel::Send(const Nan::FunctionCallbackInfo<Value> &info) {
   bool retval = false;
 
   if (socket) {
+    // NOTE: Order is important here Buffer is an ArrayBuffer but lays out it's
+    // internal memory very differently.
     if(info[0]->IsString()) {
       std::string data(*Nan::Utf8String(info[0]));
       webrtc::DataBuffer buffer(data);
       retval = socket->Send(buffer);
+    } else if (node::Buffer::HasInstance(info[0])) {
+      rtc::CopyOnWriteBuffer data(node::Buffer::Data(info[0]), node::Buffer::Length(info[0]));
+      webrtc::DataBuffer buffer(data, true);
+      retval = socket->Send(buffer);
     } else {
       node::ArrayBuffer *container = node::ArrayBuffer::New(info[0]);
-      rtc::Buffer data(reinterpret_cast<uint8_t*>(container->Data()), container->Length());
-      //rtc::CopyOnWriteBuffer data(reinterpret_cast<uint8_t*>(container->Data()), container->Length());
+      rtc::CopyOnWriteBuffer data(reinterpret_cast<uint8_t*>(container->Data()), container->Length());
       webrtc::DataBuffer buffer(data, true);
       retval = socket->Send(buffer);
     }
@@ -450,7 +455,7 @@ void DataChannel::On(Event *event) {
     }
   } else {
     callback = Nan::New<Function>(_onmessage);
-    rtc::Buffer buffer = event->Unwrap<rtc::Buffer>();
+    rtc::CopyOnWriteBuffer buffer = event->Unwrap<rtc::CopyOnWriteBuffer>();
     Local<Object> container = Nan::New<Object>();
     argv[0] = container;
     argc = 1;
@@ -464,7 +469,7 @@ void DataChannel::On(Event *event) {
   }
   
   if (!callback.IsEmpty() && callback->IsFunction()) {
-    callback->Call(RTCWrap::This(), argc, argv);
+    Nan::Callback(callback).Call(RTCWrap::This(), argc, argv);
   } else if (isError) {
     Nan::ThrowError(argv[0]);
   }

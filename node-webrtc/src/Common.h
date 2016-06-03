@@ -54,7 +54,6 @@
 #include "webrtc/api/test/fakeconstraints.h"
 #include "webrtc/api/datachannelinterface.h"
 
-#include "webrtc/api/videosourceinterface.h"
 #include "webrtc/media/base/videosourceinterface.h"
 #include "webrtc/media/engine/webrtcvideocapturerfactory.h"
 #include "webrtc/modules/video_capture/video_capture_factory.h"

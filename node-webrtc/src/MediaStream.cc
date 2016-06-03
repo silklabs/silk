@@ -442,6 +442,10 @@ void MediaStream::SetOnRemoveTrack(Local<String> property, Local<Value> value, c
 }
 
 void MediaStream::CheckState() {
+  // XXX: NOTE this method uses Nan::Callback to invoke callbacks but this
+  // method is also called directly from JS. This is only safe because the
+  // callbacks will always be empty when JS call it (in new).
+
   _active = false;
   _ended = true;
   
@@ -461,7 +465,7 @@ void MediaStream::CheckState() {
       };
 
       if (!callback.IsEmpty() && callback->IsFunction()) {
-        callback->Call(RTCWrap::This(), 1, argv);
+        Nan::Callback(callback).Call(RTCWrap::This(), 1, argv);
       }
     }
   }
@@ -484,7 +488,7 @@ void MediaStream::CheckState() {
       };
 
       if (!callback.IsEmpty() && callback->IsFunction()) {
-        callback->Call(RTCWrap::This(), 1, argv);
+        Nan::Callback(callback).Call(RTCWrap::This(), 1, argv);
       }
     }
   }
@@ -502,7 +506,7 @@ void MediaStream::CheckState() {
       };
 
       if (!callback.IsEmpty() && callback->IsFunction()) {
-        callback->Call(RTCWrap::This(), 1, argv);
+        Nan::Callback(callback).Call(RTCWrap::This(), 1, argv);
       }
     }
   }
@@ -525,7 +529,7 @@ void MediaStream::CheckState() {
       };
 
       if (!callback.IsEmpty() && callback->IsFunction()) {
-        callback->Call(RTCWrap::This(), 1, argv);
+        Nan::Callback(callback).Call(RTCWrap::This(), 1, argv);
       }
     }
   }

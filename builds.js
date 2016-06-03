@@ -217,12 +217,11 @@ const builds = {
       'app/ios/**',
       'webapp/install.sh',
     ],
+    events: ['pr', 'push', 'nightly'],
   }),
   'app-ios-release': npmPackageBuild('app', {
-    // Always build and upload a release version of app on a branch
-    // push, no matter what changed.
     travis_yml: 'app/ios/travis/release.yml',
-    events: ['push'],
+    events: ['push', 'nightly'],
   }),
   'app-android-pr': npmPackageBuild('app', {
     // On PRs only build the entire Android app if relevant files changed.

@@ -70,6 +70,7 @@ const externals = [
   'silk-wifi',
   'v8-profiler',
   'kissfft',
+  'silk-caffe',
   /\.node$/,
   (context, request, callback) => {
     if (resolve.isCore(request)) {

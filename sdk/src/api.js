@@ -10,6 +10,7 @@ import which from 'which';
 import fs from 'mz/fs';
 
 const SILK_MODULE_ROOT = '/system/silk/node_modules';
+const DATA_MODULE_ROOT = '/data/node_modules';
 const ACTIVATE_PROP = 'persist.silk.main';
 const WIFI_SETUP_SCRIPT = 'wifi_setup.sh';
 
@@ -97,14 +98,15 @@ export default class API {
     });
   }
 
-  async pushModule(name, directory) {
-    // XXX: Right now we let you push wherever.
-    const dest = path.join(SILK_MODULE_ROOT, name);
-
-    await this.adb('remount');
+  async pushModule(name, directory, system) {
+    const dest = path.join(system ? SILK_MODULE_ROOT : DATA_MODULE_ROOT, name);
+    if (system) {
+      await this.adb('remount');
+    }
 
     // XXX: This potentially makes things slower but ensures we don't leave
     // around files between pushes which is a common source of bugs.
+    console.log('Updating', dest);
     await this.adb(`shell rm -rf ${dest}`);
     await this.adb(`push ${directory} ${dest}`, /*timeout = */ 60 * 1000);
   }

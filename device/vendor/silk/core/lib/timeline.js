@@ -433,19 +433,6 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
-   * Add a clap object to timeline
-   * @param count of number of claps heard
-   */
-  addClap(count: number) {
-    this.emit('clap', count);
-    this.eventTracker.record({
-      tag: 'clap',
-      when: Date.now(),
-      count,
-    });
-  }
-
-  /**
    * Inject objects into the video stream.
    *
    * @param objects List of objects to be added to the timeline

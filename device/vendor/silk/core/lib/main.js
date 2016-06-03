@@ -81,6 +81,10 @@ api.metrics.add(new JSStartup({
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 45 * 1000;
 
+// If true, don't attempt to get configured or connect with the Silk server but
+// otherwise try to be a functional as possible.
+const DEV_NO_SERVER_CONNECT = util.getboolprop('persist.silk.dev.no_server', false);
+
 let battery = new Battery();
 let id = null;
 let btle = null;
@@ -263,14 +267,20 @@ function main() {
         });
       }
 
-      log.info('Load configuration');
-      return config.init(server);
+      if (!DEV_NO_SERVER_CONNECT) {
+        log.info('Load configuration');
+        return config.init(server);
+      }
     })
     .then(maybeAbortBoot)
     .then(() => {
-      assert(api.accessToken, 'must have access token');
-      connections.start();
-      log.info('main completed device has been booted.');
+      if (DEV_NO_SERVER_CONNECT) {
+        onConfigured();
+      } else {
+        assert(api.accessToken, 'must have access token');
+        connections.start();
+      }
+      log.info('boot complete.');
       util.setprop('silk.boot_completed',
                    1 + parseInt(util.getprop('silk.boot_completed', 0)));
     }).
@@ -399,7 +409,8 @@ config.on('unconfigured', () => {
   }
 });
 
-config.on('configured', async () => {
+config.on('configured', onConfigured);
+async function onConfigured() {
   if (!ui.goto('connecting')) {
     return;
   }
@@ -426,15 +437,17 @@ config.on('configured', async () => {
   await wifi.online();
   ext = await extPromise;
 
-  log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
-  server.connect();
+  if (!DEV_NO_SERVER_CONNECT) {
+    log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
+    server.connect();
+  }
 
   // Yield a pinch of time since updates don't need to start immediately,
   // |update.start()| is currently a little main thread heavy, and there's lots
   // of other activity as the server connection is being established.
   await util.timeout(200);
   update.start();
-});
+}
 
 function shutdown(finalPromiseFactory) {
   if (shutdownPromise) {
@@ -591,8 +604,8 @@ function runGC() {
     gcStop = Date.now();
   } while (!gcDone && (gcStop - gcStart < GC_MAX_RUN_TIME));
 
-  log.info(`GC ran for ${gcStop - gcStart}ms | ` +
-           `iterations=${gcIterations} done=${gcDone}`);
+  log.verbose(`GC ran for ${gcStop - gcStart}ms | ` +
+              `iterations=${gcIterations} done=${gcDone}`);
 
   // Look for new garbage in 20s if v8 says it's done, otherwise continue
   // collection after 5 seconds.

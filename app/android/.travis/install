@@ -7,13 +7,6 @@ nvm install 4.2
 npm config set spin=false
 ./install.sh
 
-# We need the webapp for the Android webview, but we can't list it as
-# a symlinkDependecy in package.json because it trips up Flow on Linux
-# somehow. Plus, that would mean longer iOS build times for no good reason.
-pushd ../webapp
-./install.sh
-popd
-
 # "Install" Android SDK. We're using a `language: java` build instead
 # of `language: android` so we can be on Travis's new container infrastructure,
 # because the React Native packager faceplants on the old infrastructure.

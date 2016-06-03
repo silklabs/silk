@@ -13,7 +13,6 @@ var config = {
   devtool: "source-map",
   entry: {
     bundle: './src/index',
-    android: './src/android/index',
   },
   output: {
     path: 'public/js',

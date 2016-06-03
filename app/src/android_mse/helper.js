@@ -4,6 +4,8 @@
  * @flow
  */
 
+/* eslint-env browser */
+
 import { EventEmitter } from 'events';
 import createLog from 'silk-log';
 

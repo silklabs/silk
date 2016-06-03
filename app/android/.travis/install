@@ -14,5 +14,16 @@ pushd ../webapp
 ./install.sh
 popd
 
-# "Install" Android SDK
+# "Install" Android SDK. We're using a `language: java` build instead
+# of `language: android` so we can be on Travis's new container infrastructure,
+# because the React Native packager faceplants on the old infrastructure.
+# This tarball was created by doing the following:
+# 1. Download and extract https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
+# 2. Run tools/android from the resulting directory
+# 3. Select only the following packages to be installed:
+#    - Android SDK Tools 25.1.6 (update)
+#    - Android SDK Platform-tools 23.1
+#    - Android SDK Build-tools 23.0.3
+#    - SDK Platform 23rev3
+#    - Android Support REpository rev32
 curl https://s3.amazonaws.com/silk-releng-us-east-1/master/build-tools/android-sdk-linux.tgz | tar xzf -

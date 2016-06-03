@@ -1,0 +1,18 @@
+#!/bin/bash -ex
+
+cd $(dirname $0)/..
+
+APIDOC_SOURCE_FILES=" \
+  ../api/foo.js
+"
+
+./node_modules/.bin/documentation \
+  build \
+  $APIDOC_SOURCE_FILES \
+  --project-version master \
+  -f html \
+  -o dist/dialog-script-api \
+  -t node_modules/documentation-theme-default \
+  --name silk-dialog-script-api
+
+du -hs dist/dialog-script-api

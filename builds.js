@@ -28,6 +28,29 @@ function npmPackageBuild(dir, overrides) {
 }
 
 /**
+ * Most of our in-tree npm packages only need to have 'npm test'
+ * run. Here, the time to spin up a new Travis build often outweighs
+ * the runtime of the linter and unit tests, so we might as well run
+ * them all in one build. Plus, that means we can save individual
+ * .travis.yml files for a lot of these packages.
+ */
+function runNpmTestForPackages(dirs) {
+  return {
+    travis_yml: '.npmtravis.yml',
+    travis_config: {
+      env: {
+        global: [
+          'NPM_PACKAGE_DIRS="' + dirs.join(' ') + '"',
+        ]
+      },
+    },
+    files: dirs.map((dir) => path.join(dir, '**')),
+    events: ['push', 'pr'],
+    branches: ['master', 'next', 'release'],
+  };
+}
+
+/**
  * Define a nightly build for Travis configuration file at
  * `<dir>/.travis.yml` which should assume that the CWD during the
  * build is `<dir>/`. The build is run for the master branch by
@@ -159,11 +182,25 @@ const builds = {
     events: ['push', 'pr'],
     branches: ['master', 'next', 'release'],
   },
+  'npm-test': runNpmTestForPackages([
+    'azure-storage',
+    'api-schema',
+    'cam',
+    'cli-npm',
+    'cli-plugin-internal',
+    'http',
+    'pub/log',
+    'pub/version',
+    // TODO: bring this back once we have a solution that doesn't involve
+    // checking exclusively OS X binaries for node-webrtc into the tree.
+    //'rtc',
+    'streams',
+    'tools/mp4dash',
+    'utils',
+  ]),
   // TODO: bring back api CI tests once we workaround issues related to
   // interdeps with the server.
   //'api': npmPackageBuild('api'),
-  'api-schema': npmPackageBuild('api-schema'),
-  'azure-storage': npmPackageBuild('azure-storage'),
   'app-js-lint': npmPackageBuild('app', {
     // Always run lint when JS files change.
     travis_yml: 'app/.travis-lint.yml',
@@ -205,12 +242,7 @@ const builds = {
     travis_yml: 'app/android/.travis.yml',
     events: ['push'],
   }),
-  'cam': npmPackageBuild('cam'),
   'cli': npmPackageBuild('pub/cli'),
-  'cli-npm': npmPackageBuild('cli-npm'),
-  'cli-plugin-internal': npmPackageBuild('cli-plugin-internal'),
-  'http': npmPackageBuild('http'),
-  'log': npmPackageBuild('pub/log'),
   'sim': npmPackageBuild('sim', {
     files: [
       'device/**',
@@ -279,8 +311,6 @@ const builds = {
   }),
   'releng': npmPackageBuild('releng'),
   'server': npmPackageBuild('server'),
-  'streams': npmPackageBuild('streams'),
-  'utils': npmPackageBuild('utils'),
   'webapp-pr': npmPackageBuild('webapp', {
     events: ['pr'],
   }),
@@ -297,8 +327,6 @@ const builds = {
   //'node_modules_cache': npmPackageBuild('tools/node_modules_cache', {
   //  files: ['**/package.json']
   //}),
-  'mp4dash': npmPackageBuild('tools/mp4dash'),
-  'silk-core-version': npmPackageBuild('pub/version'),
 
   // Push open source changes immediately on committing to silk-core
   // Only master branch is pushed currently

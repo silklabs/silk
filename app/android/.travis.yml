@@ -1,13 +1,6 @@
-language: android
-
-android:
-  components:
-    - tools
-    - platform-tools
-    - build-tools-23.0.2
-    - android-23
-    - extra-android-m2repository
-    - extra-android-support
+language: java
+sudo: required
+dist: trusty
 
 addons:
   apt:
@@ -15,17 +8,16 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-4.8
+      - lib32stdc++6
+      - lib32z1
 
 env:
   global:
     - JAVA_OPTS=-Xmx512m
     - CXX=g++-4.8
 
-install:
-  - android/.travis/install
-
-script:
-  - cd android && .travis/script
+install: android/.travis/install
+script: android/.travis/script
 
 deploy:
   provider: s3

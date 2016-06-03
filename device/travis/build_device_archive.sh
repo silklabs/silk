@@ -67,8 +67,6 @@ mkdir -p $archiveDir/$TARGET_PRODUCT
 
 ./repo manifest -r -o - > $archiveDir/$TARGET_PRODUCT/versioned.xml
 
-cp -r $ANDROID_PRODUCT_OUT/{system/,data/} $archiveDir/$TARGET_PRODUCT
-
 if [[ -f $ANDROID_PRODUCT_OUT/boot.img ]]; then
   # This is a full device build
 
@@ -162,12 +160,12 @@ EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_demo.sh
 
-  cp -r $ANDROID_PRODUCT_OUT/{*.img,root/,recovery/} $archiveDir/$TARGET_PRODUCT
+  cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$TARGET_PRODUCT
 
 elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then
   # This is a qemu full device build
 
-  cp -r $ANDROID_PRODUCT_OUT/{*.img,root/} $archiveDir/$TARGET_PRODUCT
+  cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$TARGET_PRODUCT
 
   cat > $archiveDir/$TARGET_PRODUCT/run.sh <<'EOF'
 #/bin/sh
@@ -180,6 +178,7 @@ EOF
 
 else
   # This is a base (partial) build
+  cp -r $ANDROID_PRODUCT_OUT/{system/,data/} $archiveDir/$TARGET_PRODUCT
 
   cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<EOF
 #/bin/sh

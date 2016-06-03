@@ -30,7 +30,7 @@
     "chart.js": "1.0.2",
     "eslint": "1.10.3",
     "eslint-plugin-react": "3.16.1",
-    "event-to-promise": "0.5.0",
+    "event-to-promise": "0.7.0",
     "express": "4.13.3",
     "filer": "0.0.44",
     "json-loader": "0.5.4",

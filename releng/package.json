@@ -35,7 +35,7 @@
     "babel-preset-stage-0": "6.3.13",
     "body-parser": "1.14.2",
     "debug": "2.2.0",
-    "event-to-promise": "0.5.0",
+    "event-to-promise": "0.7.0",
     "express": "4.13.3",
     "github-webhook-middleware": "mvines/github-webhook-middleware#e13af62f0898df054a5cfec8b2274a29c4ace61f",
     "json-loader": "0.5.4",

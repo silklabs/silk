@@ -28,7 +28,7 @@
   "dependencies": {
     "dockerode": "^2.2.9",
     "dockerode-promise-es6": "1.0.0",
-    "event-to-promise": "0.5.0",
+    "event-to-promise": "0.7.0",
     "mocha": "2.4.5",
     "tar-fs": "1.11.1"
   }

@@ -15,12 +15,11 @@
            remote="github"
            revision="v2.2" clone-depth="1"/>
 
-  <project name="intel-tbb/intel-tbb"
+  <project name="silklabs/intel-tbb"
            path="external/intel-tbb"
            remote="github"
-           revision="3260c82d3b9382939f53e6398135962ccf8adb03"
-           upstream="master"
-           clone-depth="42"/>
+           revision="master"
+           clone-depth="1"/>
   <project name="Itseez/opencv"
            path="external/opencv3"
            remote="github"

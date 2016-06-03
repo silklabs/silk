@@ -12,6 +12,7 @@
  *   https://github.com/BVLC/caffe/blob/master/examples/images/cat.jpg to data/media
  *   on the device before the test is run.
  * - Push this file to /system/silk on the device
+ * - Push dnn.js file to /system/silk on the device
  */
 
 'use strict';
@@ -19,10 +20,10 @@
 
 const Dnn = require('./dnn');
 
-const MODEL_PROTO = 'system/silk/media/dnn/model/googlenet/deploy.prototxt';
-const MODEL_BIN = 'system/silk/media/dnn/model/googlenet/bvlc_googlenet.caffemodel';
-const MODEL_DICTIONARY = 'system/silk/media/dnn/model/imagenet_dictionary.txt';
-const MODEL_MEAN = 'system/silk/media/dnn/model/imagenet_mean.binaryproto';
+const MODEL_PROTO = 'system/silk/ext/dnn/model/deploy.prototxt';
+const MODEL_BIN = 'system/silk/ext/dnn/model/bvlc_googlenet.caffemodel';
+const MODEL_DICTIONARY = 'system/silk/ext/dnn/model/synset_words.txt';
+const MODEL_MEAN = 'system/silk/ext/dnn/model/imagenet_mean.binaryproto';
 const TOPK = 5; // Return top K predictions for the given image
 
 const TEST_IMAGE = 'data/media/cat.jpg';

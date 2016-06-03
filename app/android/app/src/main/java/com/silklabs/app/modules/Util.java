@@ -18,10 +18,10 @@ import android.os.Build;
 import java.util.Map;
 import java.util.HashMap;
 
-public class SLKUtil extends ReactContextBaseJavaModule {
+public class Util extends ReactContextBaseJavaModule {
   private ReactContext mReactContext;
 
-  public SLKUtil(ReactApplicationContext reactContext) {
+  public Util(ReactApplicationContext reactContext) {
     super(reactContext);
     mReactContext = reactContext;
   }

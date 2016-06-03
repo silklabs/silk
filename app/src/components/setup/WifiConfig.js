@@ -30,9 +30,6 @@ export default class WifiConfig extends React.Component {
 
   static propTypes = {
     bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
-    deviceSecret: React.PropTypes.shape({
-      deviceId: React.PropTypes.string.isRequired,
-    }).isRequired,
     onSave: React.PropTypes.func.isRequired,
     onCancel: React.PropTypes.func.isRequired,
   };
@@ -429,7 +426,6 @@ export default class WifiConfig extends React.Component {
       this.state.selectedDeviceNetwork;
     const {manufacturer, model} = this.props.bleDeviceSession;
     this.props.onSave({
-      deviceId: this.props.deviceSecret.deviceId,
       name: `${manufacturer} ${model}`,
       ssid: network.ssid,
       secret: network.psk ? this.state.secret : null,

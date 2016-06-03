@@ -23,6 +23,9 @@
   ],
   "license": "MIT",
   "main": "index.js",
+  "browser": {
+    "index.js": "./browser.js"
+  },
   "scripts": {
     "install": "./bin/build.sh",
     "test": "node test/all.js"

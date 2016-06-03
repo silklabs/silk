@@ -1,0 +1,45 @@
+def webappRoot = file("../../../webapp")
+
+void runBefore(String dependentTaskName, Task task) {
+    Task dependentTask = tasks.findByPath(dependentTaskName);
+    if (dependentTask != null) {
+        dependentTask.dependsOn task
+    }
+}
+
+gradle.projectsEvaluated {
+    def productFlavors = android.productFlavors.collect { flavor -> flavor.name }
+    productFlavors.each { productFlavorName ->
+        buildTypes.each { buildTypeName ->
+            // Create variant and target names
+            def targetName = "${productFlavorName.capitalize()}${buildTypeName.capitalize()}"
+            def copyMSEWebViewTaskName = "copyMSEWebView${targetName}Js"
+
+            def jsBundleDirConfigName = "jsBundleDir${targetName}"
+            def jsBundleDir = elvisFile(config."$jsBundleDirConfigName") ?:
+                    file("$buildDir/intermediates/assets/${targetPath}")
+
+            // TODO: we'll need a solution here that gets us a
+            // minified and optimized bundle for release builds
+            def currentCopyTask = tasks.create(
+                    name: copyMSEWebViewTaskName,
+                    type: Copy) {
+                group = "react"
+                doFirst {
+                    jsBundleDir.mkdirs()
+                }
+                from "$webappRoot/public/js/android.js"
+                into jsBundleDir
+                rename "android.js", "mse.js"
+            }
+
+            def bundleJsAndAssetsTaskName = "bundle${targetName}JsAndAssets"
+            currentCopyTask.dependsOn(bundleJsAndAssetTaskNmae)
+
+            runBefore("processArmeabi-v7a${targetName}Resources", currentCopyTask)
+            runBefore("processX86${targetName}Resources", currentCopyTask)
+            runBefore("processUniversal${targetName}Resources", currentCopyTask)
+            runBefore("process${targetName}Resources", currentCopyTask)
+        }
+    }
+}

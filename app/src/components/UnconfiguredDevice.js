@@ -25,7 +25,7 @@ export default class UnconfiguredDevice extends React.Component {
           New Device Found
         </Text>
         <Image
-          source={require('image!hub_small')}
+          source={require('../assets/hub_small.png')}
           style={styles.hubImage}
         />
         <View style={styles.buttonRow}>

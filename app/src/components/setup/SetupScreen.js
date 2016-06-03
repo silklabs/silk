@@ -40,7 +40,7 @@ export default class SetupScreen extends AsyncComponent {
         alwaysBounceVertical={false}
         scrollable={false}>
         <Image
-          source={require('image!setup_background_pattern')}
+          source={require('../../assets/setup_background_pattern.png')}
           style={styles.pattern}
         />
         <View style={LayoutStyles.statusBarPlaceholder} />

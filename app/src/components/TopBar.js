@@ -22,7 +22,7 @@ export default class TopBar extends React.Component {
     return (
       <View style={styles.navBar}>
         <Image
-          source={require('image!menu_pattern')}
+          source={require('../assets/menu_pattern.png')}
           style={styles.pattern}
         />
         <View style={styles.titleContainer}>
@@ -30,7 +30,7 @@ export default class TopBar extends React.Component {
             <TouchableOpacity onPress={this._openSettings}>
               <View style={styles.settings}>
                 <Image
-                  source={require('image!gear')}
+                  source={require('../assets/gear.png')}
                   style={styles.gear}
                 />
               </View>

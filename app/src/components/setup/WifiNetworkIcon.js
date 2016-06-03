@@ -12,21 +12,21 @@ import {
 // We can't perform the require() programmatically, so we need to
 // build this list ahead of time.
 const WIFI_NETWORK_ICONS = {
-  weak_light_small: require('image!wifi_signal_weak_light_small'),
-  medium_light_small: require('image!wifi_signal_medium_light_small'),
-  strong_light_small: require('image!wifi_signal_strong_light_small'),
+  weak_light_small: require('../../assets/wifi_signal_weak_light_small.png'),
+  medium_light_small: require('../../assets/wifi_signal_medium_light_small.png'),
+  strong_light_small: require('../../assets/wifi_signal_strong_light_small.png'),
 
-  weak_dark_small: require('image!wifi_signal_weak_dark_small'),
-  medium_dark_small: require('image!wifi_signal_medium_dark_small'),
-  strong_dark_small: require('image!wifi_signal_strong_dark_small'),
+  weak_dark_small: require('../../assets/wifi_signal_weak_dark_small.png'),
+  medium_dark_small: require('../../assets/wifi_signal_medium_dark_small.png'),
+  strong_dark_small: require('../../assets/wifi_signal_strong_dark_small.png'),
 
-  weak_light_large: require('image!wifi_signal_weak_light_large'),
-  medium_light_large: require('image!wifi_signal_medium_light_large'),
-  strong_light_large: require('image!wifi_signal_strong_light_large'),
+  weak_light_large: require('../../assets/wifi_signal_weak_light_large.png'),
+  medium_light_large: require('../../assets/wifi_signal_medium_light_large.png'),
+  strong_light_large: require('../../assets/wifi_signal_strong_light_large.png'),
 
-  secured_light_small: require('image!wifi_secured_light_small'),
-  secured_dark_small: require('image!wifi_secured_dark_small'),
-  secured_light_large: require('image!wifi_secured_light_large'),
+  secured_light_small: require('../../assets/wifi_secured_light_small.png'),
+  secured_dark_small: require('../../assets/wifi_secured_dark_small.png'),
+  secured_light_large: require('../../assets/wifi_secured_light_large.png'),
 };
 
 /* eslint-enable camelcase */

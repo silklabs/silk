@@ -71,7 +71,6 @@
 		F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */; };
 		F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */; };
 		F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = F9E92CD71B3864A100C10C24 /* SLKUtil.m */; };
-		F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */ = {isa = PBXBuildFile; fileRef = F9E92CF71B3900C200C10C24 /* main.jsbundle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1041,7 +1040,6 @@
 				351329491CDD1C2300805844 /* DINRoundPro-Regular.otf in Resources */,
 				F91A54F51B8B9D48009C75C9 /* OpenSans-Bold.ttf in Resources */,
 				351329471CDD1C2300805844 /* DINRoundPro-Black.otf in Resources */,
-				F9E92CF81B3900C200C10C24 /* main.jsbundle in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				F91A54F91B8B9D48009C75C9 /* OpenSans-Italic.ttf in Resources */,
 				F91A54F61B8B9D48009C75C9 /* OpenSans-BoldItalic.ttf in Resources */,
@@ -1086,7 +1084,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -x\nno_optimize=--no-optimize\nif [[ \"$CONFIGURATION\" == \"Release\" ]]; then\n  no_optimize=\nfi\n\nbundle_type=\"$(../tools/bundle_type)\"\n\nif [[ \"$bundle_type\" == \"bundle\" ]]; then\n  npm run bundle -- $no_optimize\nelif [[ \"$bundle_type\" == \"local\" ]]; then\n  npm run localbundle\nelse\n  # Ensure bundle file exists. It's packaged, even if it isn't being used.\n  touch Silk/main.jsbundle\nfi";
+			shellScript = ../tools/xcode_bundle.sh;
 		};
 		6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */ = {
 			isa = PBXShellScriptBuildPhase;

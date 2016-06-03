@@ -202,7 +202,7 @@ export default class WifiConfig extends React.Component {
           />
           <TouchableWithoutFeedback onPress={this._chooseFromList}>
             <Image
-              source={require('image!wifi_return_to_list')}
+              source={require('../../assets/wifi_return_to_list.png')}
               style={styles.icon}
             />
           </TouchableWithoutFeedback>
@@ -265,7 +265,7 @@ export default class WifiConfig extends React.Component {
         <TouchableWithoutFeedback
           onPress={() => this.setState({secretShown: !this.state.secretShown})}>
           <Image
-            source={require('image!visible')}
+            source={require('../../assets/visible.png')}
             style={[styles.icon, secretShown ? null : styles.disabledIcon]}
           />
         </TouchableWithoutFeedback>

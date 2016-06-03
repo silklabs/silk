@@ -1,15 +1,5 @@
 #!/bin/bash -ex
 
-# Upgrade webpack's eventual dependency crypto-browserify because we need the
-# functionality it provides for the BLE socket encryption.
-# See also https://github.com/webpack/webpack/issues/1568.
-rm -rf node_modules/crypto-browserify
-rm -rf node_modules/node-libs-browser/node_modules/crypto-browserify
-npm install crypto-browserify@~3.10.0
-rm -rf node_modules/node-libs-browser/node_modules/crypto-browserify
-mv node_modules/crypto-browserify node_modules/node-libs-browser/node_modules/
-touch node_modules/node-libs-browser/.updated.crypto-browserify
-
 # Apply patches to react-native and other dependencies.
 patches=( tools/patches/*.patch )
 for patch in ${patches[@]};

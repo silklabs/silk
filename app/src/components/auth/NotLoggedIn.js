@@ -281,7 +281,7 @@ export default class NotLoggedIn extends AsyncComponent {
         alwaysBounceVertical={false}
         scrollable={false}>
         <Image
-          source={require('image!background_pattern')}
+          source={require('../../assets/background_pattern.png')}
           style={styles.pattern}
         />
         <View style={LayoutStyles.statusBarPlaceholder} />

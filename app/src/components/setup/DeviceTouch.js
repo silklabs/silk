@@ -84,7 +84,7 @@ export default class DeviceTouch extends AsyncComponent {
       phone = (
         <Image
           key="phone_green"
-          source={require('image!phone_green')}
+          source={require('../../assets/phone_green.png')}
           style={[styles.phoneImage, styles.phoneImageTouched]}
         />
       );
@@ -92,7 +92,7 @@ export default class DeviceTouch extends AsyncComponent {
       phone = (
         <Image
           key="phone_red"
-          source={require('image!phone_red')}
+          source={require('../../assets/phone_red.png')}
           style={[styles.phoneImage, styles.phoneImageTooFar]}
         />
       );
@@ -120,7 +120,7 @@ export default class DeviceTouch extends AsyncComponent {
         }>
         <View style={styles.content}>
           <Image
-            source={require('image!hub_large')}
+            source={require('../../assets/hub_large.png')}
             style={styles.hubImage}
           />
           {phone}

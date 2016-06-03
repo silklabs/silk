@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @flow
  */
 
 import events from 'events';
@@ -19,7 +20,15 @@ const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
 const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
 
+type UiState = 'bootanimation' | 'setup' | 'connecting' | 'online' | 'charging' | 'powerdown';
+
 class Ui extends events.EventEmitter {
+
+  movie: Movie;
+  vib: Vibrator;
+  currentState: UiState;
+  currentMovieName: UiState;
+  backlightTimer: ?number = null;
 
   constructor() {
     super();
@@ -123,7 +132,7 @@ class Ui extends events.EventEmitter {
     return off; // return true if the backlight was just enabled
   }
 
-  goto(state) {
+  goto(state: UiState) {
     if (state === this.currentState || this.currentState === 'powerdown') {
       return false;
     }

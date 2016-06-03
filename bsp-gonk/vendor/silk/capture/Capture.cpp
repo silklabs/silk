@@ -214,14 +214,18 @@ int CaptureCommand::capture_init(Value& cmdData) {
   if (!cmdData["frames"].isNull()) {
     sInitCameraFrames = cmdData["frames"].asBool();
     ALOGV("sInitCameraFrames %d", sInitCameraFrames);
-    LOG_ERROR(!sInitAudio, "Must init audio for camera frames"); // TODO: Relax this
+    if (sInitCameraFrames) {
+      LOG_ERROR(!sInitAudio, "Must init audio for camera frames"); // TODO: Relax this
+    }
   }
 
   if (!cmdData["video"].isNull()) {
     sInitCameraVideo = cmdData["video"].asBool();
     ALOGV("sInitCameraVideo %d", sInitCameraVideo);
-    LOG_ERROR(!sInitCameraFrames,
-      "Must init camera frames for camera video"); // TODO: Relax this
+    if (sInitCameraVideo) {
+      LOG_ERROR(!sInitCameraFrames,
+        "Must init camera frames for camera video"); // TODO: Relax this
+    }
   }
 
   if (!cmdData["width"].isNull()) {

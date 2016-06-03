@@ -3,4 +3,4 @@ node_js: 4.1
 sudo: required
 dist: trusty
 install: true
-script: ./.npmtravis.sh
+script: cd $NPM_PACKAGE_DIR && npm test

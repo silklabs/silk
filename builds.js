@@ -39,9 +39,7 @@ function runNpmTestForPackages(dirs) {
     travis_yml: '.npmtravis.yml',
     travis_config: {
       env: {
-        global: [
-          'NPM_PACKAGE_DIRS="' + dirs.join(' ') + '"',
-        ]
+        matrix: dirs.map((dir) => 'NPM_PACKAGE_DIR="' + dir + '"'),
       },
     },
     files: dirs.map((dir) => path.join(dir, '**')),

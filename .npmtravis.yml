@@ -2,4 +2,5 @@ language: node_js
 node_js: 4.1
 sudo: required
 dist: trusty
-install: echo ""
+install: true
+script: ./.npmtravis.sh

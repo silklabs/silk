@@ -103,6 +103,7 @@ class Clapper {
           util.playSound(TWO_CLAPS_FILENAME);
         }
         this._env.timeline.addObjects([{
+          source: 'clapper',
           tag,
           when: Date.now(),
           durationMs: 1000,
@@ -138,6 +139,7 @@ class Clapper {
     this._onLoudSound = () => {
       log.info('loud sound detected');
       this._env.timeline.addObjects([{
+        source: 'clapper',
         tag: 'loud-sound',
         when: Date.now(),
         durationMs: 1000,

@@ -78,8 +78,8 @@ type Rect = {
 export type TimelineEventObject = {
   tag: string;
   when: number;
+  source: string;
   id?: number;
-  source?: string;
   name?: string;
   durationMs?: number;
   rects?: Array<Rect>;

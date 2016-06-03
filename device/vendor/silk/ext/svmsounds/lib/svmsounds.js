@@ -66,6 +66,7 @@ class SoundRecognizer {
       // timeline tracker.
       let emitEventPing = () => {
         this.timeline.addObjects([{
+          source: 'svmsounds',
           id: event.eventId,
           tag: 'sound',
           name: e.soundClass,

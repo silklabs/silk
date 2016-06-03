@@ -32,7 +32,6 @@ WHITELIST=$(cat <<-EOF
   raygun
   silknpm.json
   streams
-  version
 EOF
 )
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -55,7 +54,7 @@ if [[ $(uname -s) != "Darwin" ]]; then
   exit 1
 fi
 
-source version/branch
+source pub/version/branch
 COMMIT=$(git rev-parse HEAD)
 echo Shipping $COMMIT from $BRANCH
 

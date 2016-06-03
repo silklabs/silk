@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   StyleSheet,
+  UIManager,
   View,
   findNodeHandle,
   requireNativeComponent,
@@ -40,24 +41,24 @@ export default class DashSegmentPlayer extends React.Component {
   }
 
   enqueue(blob) {
-    React.UIManager.dispatchViewManagerCommand(
+    UIManager.dispatchViewManagerCommand(
       this.getNativeHandle(),
-      React.UIManager.SilkMSEPlayer.Commands.enqueueSegment,
+      UIManager.SilkMSEPlayer.Commands.enqueueSegment,
       [blobURI(blob)]
     );
   }
 
   play() {
-    React.UIManager.dispatchViewManagerCommand(
+    UIManager.dispatchViewManagerCommand(
       this.getNativeHandle(),
-      React.UIManager.SilkMSEPlayer.Commands.play
+      UIManager.SilkMSEPlayer.Commands.play
     );
   }
 
   pause() {
-    React.UIManager.dispatchViewManagerCommand(
+    UIManager.dispatchViewManagerCommand(
       this.getNativeHandle(),
-      React.UIManager.SilkMSEPlayer.Commands.pause
+      UIManager.SilkMSEPlayer.Commands.pause
     );
   }
 

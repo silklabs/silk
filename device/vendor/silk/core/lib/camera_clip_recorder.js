@@ -1,5 +1,6 @@
 /**
  * @private
+ * @flow
  */
 
 import * as util from 'silk-sysutils';
@@ -12,6 +13,7 @@ import mkdirp from 'mkdirp-promise';
 import path from 'path';
 import type Server from './server.js';
 import wrapNoEntity from './fs/wrap_no_entity';
+import type { Camera } from 'silk-camera';
 
 const log = createLog('camera_cr');
 
@@ -60,6 +62,8 @@ function CameraClipFrameImagesRelease(item: CameraClipFrameImages): void {
 export default class CameraClipRecorder {
   state: CameraClipRecorderState;
   _server: Server;
+  _camera: Camera;
+  _liveDiag: bool;
 
   _frames: CBuffer<CameraClipFrameImages>;
   _framePosition: number;
@@ -83,7 +87,7 @@ export default class CameraClipRecorder {
     this._loadAvailableClips();
   }
 
-  _onStateChange = () => {
+  _onStateChange: (() => void) = () => {
     if (!this._liveDiag) {
       return;
     }
@@ -175,9 +179,10 @@ export default class CameraClipRecorder {
     }
   }
 
-  async _loadAvailableClips(): void {
+  async _loadAvailableClips() {
     this.state.availableClips = [];
     const files = await wrapNoEntity(fs.readdir(CAMERA_CLIP_DIRECTORY), []);
+    invariant(files);
     for (const file of files) {
       const ext = path.extname(file);
       if (ext === '.json') {
@@ -205,7 +210,7 @@ export default class CameraClipRecorder {
   /*
    * Loads a clip
    */
-  async load(name: string): void {
+  async load(name: string) {
     const clipMetadataFile = path.join(CAMERA_CLIP_DIRECTORY, name + '.json');
     if (!await fs.exists(clipMetadataFile)) {
       log.warn('Clip metadata does not exist:', clipMetadataFile);
@@ -246,7 +251,7 @@ export default class CameraClipRecorder {
   /*
    * Saves the current clip
    */
-  async save(name: string): void {
+  async save(name: string) {
     if (this.state.mode !== 'pause' && this.state.mode !== 'play') {
       this._onStateChange();
       return;

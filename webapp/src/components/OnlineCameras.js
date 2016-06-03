@@ -80,8 +80,8 @@ export class OnlineCamera extends React.Component {
     this.speakText = e.target.value;
   };
 
-  onSpeak = (e, ttsEngine) => {
-    this.props.camera.speak(ttsEngine, this.speakText);
+  onSpeak = (eventKey) => {
+    this.props.camera.speak(eventKey, this.speakText);
   };
 
   onToggleIntercom = (e) => {

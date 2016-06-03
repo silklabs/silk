@@ -14,10 +14,13 @@ import {EventEmitter} from 'events';
 import config from 'silk-config';
 import caffe from 'silk-caffe';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
+import Vibrator from 'silk-vibrator';
 
-import type { Env, Util, Log } from 'silk-exttest/interface/env';
+import type { Env, Util, Log, Timeline, Camera } from 'silk-exttest/interface/env';
 
 let log: Log;
+let timeline: Timeline;
+let camera: Camera;
 
 const MODEL_PROTO = path.join(__dirname, '..', 'model', 'keyword.prototxt');
 const MODEL_BIN = path.join(__dirname, '..', 'model', 'keyword.caffemodel');
@@ -48,8 +51,6 @@ type MicData = {
   frames: Buffer;
 };
 
-type MicDataCallback = (pkt: MicData) => void;
-
 /**
  * This class receives mic data stream and tries to detect a specific keyword
  * using keyword spotting with neural networks
@@ -60,7 +61,7 @@ class KeywordSpotting extends EventEmitter {
   _netCaffe: caffe.Model;
   _processing: bool;
   _predicting: bool;
-  _onMicData: MicDataCallback;
+  _onMicData: (pkt: MicData) => void;
   _extractor: MelFeatureExtractor;
   _framer: Framer;
   _output: Array<Float32Array>;
@@ -71,16 +72,23 @@ class KeywordSpotting extends EventEmitter {
   _pcmDataQueue: Array<Float32Array>;
   _pcmDataQueueSizeInBytes: number;
   _backlogMinSizeInBytes: number;
+  _suspended: boolean;
+  _onSpeechStop: (when: number) => void;
+  _onSpeechTimeout: (when: number) => void;
+  _vib: Vibrator;
 
   constructor(env: Env) {
     super();
     this._env = env;
     this._util = env.util;
     log = this._env.log;
+    timeline = this._env.timeline;
+    camera = this._env.camera;
     this._processing = false;
     this._predicting = false;
     this._init();
     this._lastWhen = 0;
+    this._vib = new Vibrator();
 
     this._sampleRate = config.deviceMic.sampleRate;
     this._bytesPerSample = config.deviceMic.bytesPerSample;
@@ -97,15 +105,27 @@ class KeywordSpotting extends EventEmitter {
     this._backlogMinSizeInBytes = 1 * this._sampleRate * this._bytesPerSample;
 
     this._output = [];
+    this._suspended = false;
+
+    // Setup listener for handing mic data and speech
+    this._onMicData = pkt => {
+      this._handleMicData(pkt.when, pkt.frames);
+    };
+    this._onSpeechStop = when => {
+      this._resumeSpotting(when);
+    };
+    this._onSpeechTimeout = when => {
+      this._handleTimeout(when);
+    };
   }
 
   /**
    *
    */
   willUnload() {
-    if (this._onMicData) {
-      this._env.camera.removeListener('mic-data', this._onMicData);
-    }
+    camera.removeListener('mic-data', this._onMicData);
+    timeline.removeListener('speech_stop', this._onSpeechStop);
+    timeline.removeListener('speech_timeout', this._onSpeechTimeout);
   }
 
   get MEL_COEFFS() {
@@ -167,18 +187,21 @@ class KeywordSpotting extends EventEmitter {
             let diff = Date.now() - this._lastWhen;
             this._lastWhen = Date.now();
             if (diff < NUM_SAMPLES * 8) {
-              log.debug(`Ignore ${HOT_KEYWORD} potentially from the same utterance?`);
+              log.debug(`Ignore ${HOT_KEYWORD} potentially from the same utterance ${confidence}%?`);
               resolve();
               return;
             }
-            log.info(`${label} spotted with conidence: ${confidence}%`);
-            this._env.timeline.addObjects([{
+            log.info(`${label} spotted with confidence: ${confidence}%`);
+            timeline.addObjects([{
               source: 'kws',
               tag: label,
               when: Date.now(),
             }]);
             if (label === HOT_KEYWORD) {
               this._playHotKeywordSound();
+
+              // Pause spotting in anticipation of a dialog
+              this._pauseSpotting();
             }
           }
           resolve();
@@ -221,12 +244,7 @@ class KeywordSpotting extends EventEmitter {
       return;
     }
     this.emit('ready');
-
-    // Setup listener for handing mic data
-    this._onMicData = pkt => {
-      this._handleMicData(pkt.when, pkt.frames);
-    };
-    this._env.camera.on('mic-data', this._onMicData);
+    camera.on('mic-data', this._onMicData);
   }
 
   /**
@@ -285,6 +303,9 @@ class KeywordSpotting extends EventEmitter {
    * @private
    */
   _detectKeyword(signal) {
+    if (this._suspended) {
+      return;
+    }
     assert(signal.length === FFT_SIZE);
 
     // Extract mel features
@@ -332,6 +353,40 @@ class KeywordSpotting extends EventEmitter {
   _playHotKeywordSound() {
     return this._util.playSound(path.join(__dirname, '..', 'media',
         'hotkeyword_detected.mp3'));
+  }
+
+  /**
+   * Handle speech timeout
+   */
+  _handleTimeout(when) {
+    log.warn(`No speech detected within the timeout time`);
+    this._resumeSpotting(when);
+  }
+
+  /**
+   * Stop listening for the keyword
+   */
+  _pauseSpotting() {
+    log.debug(`Pause spotting`);
+    camera.removeListener('mic-data', this._onMicData);
+    this._output = []; // Clear the queue
+    this._suspended = true; // Suspend any framer activity
+
+    // Register for `speech` events
+    timeline.on('speech_stop', this._onSpeechStop);
+    timeline.on('speech_timeout', this._onSpeechTimeout);
+  }
+
+  /**
+   * Start listening for the keyword
+   */
+  _resumeSpotting(when) {
+    log.debug(`Resume spotting ${when}`);
+    this._vib.pattern(50);
+    this._suspended = false;
+    camera.on('mic-data', this._onMicData);
+    timeline.removeListener('speech_stop', this._onSpeechStop);
+    timeline.removeListener('speech_timeout', this._onSpeechTimeout);
   }
 }
 

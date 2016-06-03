@@ -76,6 +76,7 @@ SILK_EXT := \
   dnn-pedestrian-proto \
   dnn-pedestrian-dictionary \
   kws \
+  dialog \
 
 PRODUCT_PACKAGES += $(SILK_EXT)
 

@@ -6,7 +6,7 @@
  * @flow
  */
 
-import pocketsphinx from 'pocketsphinx';
+import * as pocketsphinx from 'pocketsphinx';
 import { EventEmitter } from 'events';
 
 import type { Env, Log } from 'silk-exttest/interface/env';
@@ -81,7 +81,7 @@ export default class SpeechRecognizer extends EventEmitter {
   /**
    * Called when extension is about to be unloaded
    */
-  willUnload() {
+  willUnload(): void {
     if (this._onMicData) {
       this._env.camera.removeListener('mic-data', this._onMicData);
     }
@@ -90,14 +90,14 @@ export default class SpeechRecognizer extends EventEmitter {
   /**
    * Set loction of directory containing acoustic model files
    */
-  setAcousticModel(model: string) {
+  setAcousticModel(model: string): void {
     this._config.setString('-hmm', model);
   }
 
   /**
    * Set location of main pronunciation dictionary (lexicon) input file
    */
-  setDictionary(dictionary: string) {
+  setDictionary(dictionary: string): void {
     this._config.setString('-dict', dictionary);
   }
 
@@ -105,42 +105,42 @@ export default class SpeechRecognizer extends EventEmitter {
    * Set sampling rate option. Sample rate of the recognizer should match
    * the sample rate of the incoming audio
    */
-  setSampleRate(rate: number) {
+  setSampleRate(rate: number): void {
     this._config.setFloat('-samprate', rate);
   }
 
   /**
    * Set threshold for p(hyp)/p(alternatives) ratio
    */
-  setKeywordThreshold(threshold: number) {
+  setKeywordThreshold(threshold: number): void {
     this._config.setFloat('-kws_threshold', threshold);
   }
 
   /**
    * Set configuration option as boolean
    */
-  setBoolean(key: string, value: boolean) {
+  setBoolean(key: string, value: boolean): void {
     this._config.setBoolean(key, value);
   }
 
   /**
    * Set configuration option as integer
    */
-  setInteger(key: string, value: number) {
+  setInteger(key: string, value: number): void {
     this._config.setInt(key, value);
   }
 
   /**
    * Set configuration option as float
    */
-  setFloat(key: string, value: number) {
+  setFloat(key: string, value: number): void {
     this._config.setFloat(key, value);
   }
 
   /**
    * This needs to be called before any this._decoder functions are invoked
    */
-  finishSetup() {
+  finishSetup(): void {
     this._decoder = new ps.Decoder(this._config);
 
     const sampleRate = this._decoder.getConfig().getFloat('-samprate');
@@ -162,7 +162,7 @@ export default class SpeechRecognizer extends EventEmitter {
    * @param name search name
    * @param phrase search phrase
    */
-  addKeyphraseSearch(name: string, phrase: string) {
+  addKeyphraseSearch(name: string, phrase: string): void {
     this._decoder.setKeyphrase(name, phrase);
   }
 
@@ -178,7 +178,7 @@ export default class SpeechRecognizer extends EventEmitter {
    *        how do you do /1e-10/
    *        </code>
    */
-  addKeywordSearch(name: string, file: string) {
+  addKeywordSearch(name: string, file: string): void {
     log.verbose(`Load keytword file ${file}`);
     this._decoder.setKws(name, file);
   }
@@ -189,7 +189,7 @@ export default class SpeechRecognizer extends EventEmitter {
    * @param name search name
    * @param file JSGF file
    */
-  addGrammarSearch(name: string, file: string) {
+  addGrammarSearch(name: string, file: string): void {
     log.verbose(`Load JSGF file ${file}`);
     this._decoder.setJsgfFile(name, file);
   }
@@ -200,7 +200,7 @@ export default class SpeechRecognizer extends EventEmitter {
    * @param name search name
    * @param file N-gram model file
    */
-  addNgramSearch(name: string, file: string) {
+  addNgramSearch(name: string, file: string): void {
     log.verbose(`Load N-gram model ${file}`);
     this._decoder.setLmFile(name, file);
   }
@@ -244,7 +244,7 @@ export default class SpeechRecognizer extends EventEmitter {
       // Stop listening after the provided timeout
       this._listenTimeout = setTimeout(() => {
         this._stopListening();
-        this.emit('timeout');
+        this.emit('speech_timeout');
       }, timeout);
       return true;
     }
@@ -255,7 +255,7 @@ export default class SpeechRecognizer extends EventEmitter {
    * Stops recognition. All listeners should receive final result if there is
    * any. Does nothing if recognition is not active.
    */
-  stop() {
+  stop(): void {
     if (!this._stopListening()) {
       return;
     }
@@ -272,7 +272,7 @@ export default class SpeechRecognizer extends EventEmitter {
    * Cancels recognition. Listeners do not receive final result. Does nothing
    * if recognition is not active.
    */
-  cancel() {
+  cancel(): void {
     if (!this._stopListening()) {
       return;
     }
@@ -287,11 +287,6 @@ export default class SpeechRecognizer extends EventEmitter {
       return false;
     }
 
-    // Clear timeout if exists
-    if (this._listenTimeout) {
-      clearTimeout(this._listenTimeout);
-      this._listenTimeout = null;
-    }
     this._decoder.endUtt(); // End utterance processing
     this._listening = false;
     this._env.camera.removeListener('mic-data', this._onMicData);
@@ -301,7 +296,7 @@ export default class SpeechRecognizer extends EventEmitter {
   /**
    * Receive  mic data and buffer it to be processed at a later time
    */
-  _handleMicData(when: number, pcmData: Buffer) {
+  _handleMicData(when: number, pcmData: Buffer): void {
     this._pcmDataQueue.push([when, pcmData]);
     this._pcmDataQueueSizeInBytes += pcmData.length;
 
@@ -325,7 +320,7 @@ export default class SpeechRecognizer extends EventEmitter {
   /**
    * Process next mic data from the queue
    */
-  _processNextSample() {
+  _processNextSample(): void {
     if (this._pcmDataQueue.length === 0) {
       this._processingInProgress = false; // Need more pcm data
       return;
@@ -333,23 +328,30 @@ export default class SpeechRecognizer extends EventEmitter {
     let [when, pcmData] = this._pcmDataQueue.shift();
     this._pcmDataQueueSizeInBytes -= pcmData.length;
 
+    let start = Date.now();
     this._decoder.processRaw(pcmData, false, false);
     if (this._inSpeech !== this._decoder.getInSpeech()) {
       this._inSpeech = this._decoder.getInSpeech();
 
       if (this._inSpeech) {
         log.debug('===== Begin speech');
-        this.emit('beginningOfSpeech');
+        this.emit('speech_start', when);
+
+        // Clear voice activity timeout if exists
+        if (this._listenTimeout) {
+          clearTimeout(this._listenTimeout);
+          this._listenTimeout = null;
+        }
       } else {
         log.debug('===== End speech');
-        this.emit('endOfSpeech');
+        this.emit('speech_stop', when);
       }
     }
 
     // Get hypothesis string and path score
     let hypothesis = this._decoder.hyp();
     this.emit('partialResult', hypothesis);
-    log.debug(`Done processing mic data ${when}`);
+    log.debug(`Done processing mic data ${when} in ${Date.now() - start}ms`);
     this._processingInProgress = true;
 
     // Process next sample

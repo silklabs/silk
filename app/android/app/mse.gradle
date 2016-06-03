@@ -1,4 +1,9 @@
-def webappRoot = file("../../../webapp")
+def config = project.hasProperty("react") ? project.react : [];
+
+// because elvis operator
+def elvisFile(thing) {
+    return thing ? file(thing) : null;
+}
 
 void runBefore(String dependentTaskName, Task task) {
     Task dependentTask = tasks.findByPath(dependentTaskName);
@@ -8,38 +13,58 @@ void runBefore(String dependentTaskName, Task task) {
 }
 
 gradle.projectsEvaluated {
+    // Grab all build types and product flavors
+    def buildTypes = android.buildTypes.collect { type -> type.name }
     def productFlavors = android.productFlavors.collect { flavor -> flavor.name }
+
+    // When no product flavors defined, use empty
+    if (!productFlavors) productFlavors.add('')
+
     productFlavors.each { productFlavorName ->
         buildTypes.each { buildTypeName ->
             // Create variant and target names
             def targetName = "${productFlavorName.capitalize()}${buildTypeName.capitalize()}"
-            def copyMSEWebViewTaskName = "copyMSEWebView${targetName}Js"
+            def targetPath = productFlavorName ?
+                    "${productFlavorName}/${buildTypeName}" :
+                    "${buildTypeName}"
 
+            // React js bundle directories
             def jsBundleDirConfigName = "jsBundleDir${targetName}"
             def jsBundleDir = elvisFile(config."$jsBundleDirConfigName") ?:
                     file("$buildDir/intermediates/assets/${targetPath}")
 
-            // TODO: we'll need a solution here that gets us a
-            // minified and optimized bundle for release builds
-            def currentCopyTask = tasks.create(
-                    name: copyMSEWebViewTaskName,
-                    type: Copy) {
+            def repoRoot = file("../../../")
+            def appRoot = file("../../")
+            def androidDir = file("../")
+
+            def generateMSEWebViewTaskName = "generateMSEWebView${targetName}Js"
+
+            def currentTask = tasks.create(
+                    name: generateMSEWebViewTaskName,
+                    type: Exec) {
                 group = "react"
+                description = "bundle MSE webview JS for ${targetName}."
+
                 doFirst {
                     jsBundleDir.mkdirs()
                 }
-                from "$webappRoot/public/js/android.js"
-                into jsBundleDir
-                rename "android.js", "mse.js"
+
+                workingDir androidDir
+                commandLine "$repoRoot/node_modules/.bin/webpack", "--output-path", jsBundleDir
+
+                if (targetName.toLowerCase().contains("release")) {
+                  environment CONFIGURATION: "Release"
+                }
+
+                enabled true
             }
 
-            def bundleJsAndAssetsTaskName = "bundle${targetName}JsAndAssets"
-            currentCopyTask.dependsOn(bundleJsAndAssetTaskNmae)
+            currentTask.dependsOn("merge${targetName}Assets")
 
-            runBefore("processArmeabi-v7a${targetName}Resources", currentCopyTask)
-            runBefore("processX86${targetName}Resources", currentCopyTask)
-            runBefore("processUniversal${targetName}Resources", currentCopyTask)
-            runBefore("process${targetName}Resources", currentCopyTask)
+            runBefore("processArmeabi-v7a${targetName}Resources", currentTask)
+            runBefore("processX86${targetName}Resources", currentTask)
+            runBefore("processUniversal${targetName}Resources", currentTask)
+            runBefore("process${targetName}Resources", currentTask)
         }
     }
 }

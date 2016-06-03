@@ -2,9 +2,8 @@
 import merge from 'lodash.merge';
 
 // Default configuration...
-let DEFAULT = {
+const DEFAULT = {
   'debug': 'silk-*,-silk-*:debug',
-  'dashSegmenter': true,
 };
 
 function load() {

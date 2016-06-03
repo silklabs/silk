@@ -3,9 +3,6 @@
   "env": {
     "browser": true
   },
-  "globals": {
-    "SourceBuffer": false
-  },
   "rules": {
     "no-console": 0
   }

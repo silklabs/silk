@@ -7,9 +7,9 @@
  * set up.
  */
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import React from 'react';
-import MSEPlayer from '../components/MSEPlayer';
+import { MSEPlayer } from 'silk-mse-player';
 
 export default class WebviewMSEPlayer extends React.Component {
 

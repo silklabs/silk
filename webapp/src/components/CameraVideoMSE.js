@@ -3,9 +3,9 @@ import React from 'react';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { Input, ButtonInput } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
+import { MSEPlayerWithStats } from 'silk-mse-player';
 import createLog from 'silk-log';
 
-import MSEPlayerWithStats from './MSEPlayerWithStats';
 import Cameras from '../libraries/Cameras';
 import * as CanvasUtils from '../libraries/CanvasUtils';
 

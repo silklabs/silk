@@ -6,6 +6,8 @@
  * through. Call the `feedSegment()` method to provide segments coming
  * in from the camera to the video playback. Use the `videoElement`
  * property to access the underlyhing HTMLVideoElement instance.
+ *
+ * @flow
  */
 
 import invariant from 'assert';
@@ -15,6 +17,15 @@ import { VideoPlayback } from 'silk-cam';
 import createLog from 'silk-log';
 
 import type { Segment } from 'silk-cam';
+
+type Props = {
+  onSegmentEnqueued: (segment: Segment) => any;
+  onReload: () => any;
+};
+
+type State = {
+  videoKey: string;
+};
 
 const log = createLog('MSEPlayer');
 
@@ -31,7 +42,9 @@ export default class MSEPlayer extends React.Component {
     onReload: React.PropTypes.func,
   };
 
-  state = {
+  props: Props;
+
+  state: State = {
     videoKey: Date.now().toString(),
   };
 
@@ -45,10 +58,12 @@ export default class MSEPlayer extends React.Component {
   }
 
   setUpVideoElement() {
-    this.mediaSource = new MediaSource();
-    this.mediaSource.addEventListener('error', this._onError);
-    this.videoElement = ReactDOM.findDOMNode(this.refs.video);
-    this.videoElement.src = URL.createObjectURL(this.mediaSource);
+    const mediaSource = this.mediaSource = new MediaSource();
+    mediaSource.addEventListener('error', this._onError);
+
+    const videoElement = this.videoElement = ReactDOM.findDOMNode(this.refs.video);
+    invariant(videoElement);
+    videoElement.src = URL.createObjectURL(mediaSource);
   }
 
   setUpSegmentQueue() {
@@ -57,16 +72,22 @@ export default class MSEPlayer extends React.Component {
   }
 
   cleanUpVideoElementAndSegmentQueue() {
-    this.mediaSource.removeEventListener('sourceopen', this._feedPlayer);
-    this.mediaSource.removeEventListener('error', this._onError);
-
-    if (this.sourceBuffer) {
-      this.sourceBuffer.removeEventListener('updateend', this._feedPlayer);
-      this.sourceBuffer.removeEventListener('error', this._onError);
-      this.sourceBuffer.abort();
+    const mediaSource = this.mediaSource;
+    if (mediaSource) {
+      mediaSource.removeEventListener('sourceopen', this._feedPlayer);
+      mediaSource.removeEventListener('error', this._onError);
     }
 
-    URL.revokeObjectURL(this.videoElement.src);
+    const sourceBuffer = this.sourceBuffer;
+    if (sourceBuffer) {
+      sourceBuffer.removeEventListener('updateend', this._feedPlayer);
+      sourceBuffer.removeEventListener('error', this._onError);
+      sourceBuffer.abort();
+    }
+
+    if (this.videoElement) {
+      URL.revokeObjectURL(this.videoElement.src);
+    }
 
     this.videoElement = null;
     this.mediaSource = null;
@@ -76,7 +97,10 @@ export default class MSEPlayer extends React.Component {
   }
 
   feedSegmentData(segmentData: ArrayBuffer): Segment {
+    invariant(this.playback);
     const segment = this.playback.processSegment(segmentData);
+
+    invariant(this.segmentQueue);
     this.segmentQueue.push(segment);
     if (this.videoElement) {
       this._feedPlayer();
@@ -84,7 +108,7 @@ export default class MSEPlayer extends React.Component {
     return segment;
   }
 
-  _feedPlayer = (event = null) => {
+  _feedPlayer: ((event?: Event) => void) = (event = null) => {
     invariant(this.videoElement);
     invariant(!this.videoElement.error);
     invariant(this.mediaSource);
@@ -167,13 +191,13 @@ export default class MSEPlayer extends React.Component {
 
       // And finally try to feed any segments that we received during the
       // re-render.
-      if (this.segmentQueue.length) {
+      if (this.segmentQueue && this.segmentQueue.length) {
         this._feedPlayer();
       }
     });
   }
 
-  _onError = (event) => {
+  _onError: ((event: Event) => void) = (event) => {
     log.error(`'${event.target.constructor.name}' received an ` +
               `'${event.type}' event`,
               event,

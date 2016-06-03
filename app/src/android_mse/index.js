@@ -1,9 +1,15 @@
+/**
+ * @flow
+ */
+
+/* eslint-env browser */
+
 import React from 'react'; // eslint-disable-line no-unused-vars
 import ReactDOM from 'react-dom';
 import { default as createLog, configureLog } from 'silk-log';
 
-import Config from '../libraries/Config';
-import AndroidJSHelper from './AndroidJSHelper';
+import Config from './config';
+import AndroidJSHelper from './helper';
 import WebviewMSEPlayer from './WebviewMSEPlayer';
 
 configureLog(Config.debug);
@@ -16,7 +22,7 @@ window.silkJSHelper = new AndroidJSHelper();
 
 document.addEventListener('DOMContentLoaded', () => {
   log.debug('DOM loaded, rendering MSEPlayer.');
-  document.body.style.margin = 0;
+  document.body.style.margin = '0';
   document.body.style.width = '100%';
   document.body.style.height = '100%';
   let div = document.createElement('div');

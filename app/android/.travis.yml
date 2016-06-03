@@ -27,7 +27,7 @@ deploy:
   region: us-west-2
   skip_cleanup: true
   acl: public_read
-  local-dir: app/build/outputs/apk/
+  local-dir: android/app/build/outputs/apk/
   upload-dir: $TRAVIS_BRANCH/latest
   on:
     all_branches: true

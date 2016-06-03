@@ -1,5 +1,5 @@
 {
-  "name": "motion",
+  "name": "silkext-motion",
   "version": "0.0.1",
   "description": "OpenCV extension to track objects",
   "main": "./lib/motion.js",

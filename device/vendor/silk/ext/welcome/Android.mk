@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := welcome-config
+LOCAL_MODULE := silkext-welcome-config
 LOCAL_INSTALLED_MODULE_STEM := config.json
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC

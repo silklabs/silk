@@ -1,5 +1,5 @@
 {
-  "name": "samsungtv",
+  "name": "silkext-samsungtv",
   "version": "0.0.1",
   "description": "Audio development assistant",
   "main": "./lib/samsungtv.js",

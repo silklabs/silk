@@ -1,5 +1,5 @@
 {
-  "name": "dnn",
+  "name": "silkext-dnn",
   "version": "0.0.1",
   "description": "Deep neural network example",
   "main": "./lib/dnn.js",

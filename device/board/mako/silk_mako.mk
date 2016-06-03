@@ -14,7 +14,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.bt.socket.max_simul=1 \
 
 # Keep the default mako build slim by excluding all extensions.  Currently
-# /system/silk/ext/ brings the mako system.img up around 370MB, which exceeds
+# the extensions bring the mako system.img up around 370MB, which exceeds
 # the fastboot limit for .img file sizes)
 PRODUCT_PACKAGES := $(filter-out $(SILK_EXT),$(PRODUCT_PACKAGES))
 

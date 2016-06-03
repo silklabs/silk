@@ -15,11 +15,11 @@ import * as util from './sysutils';
 import wrapNoEntity from './fs/wrap_no_entity';
 
 const log = createLog('ext');
-const extDirs = [ 'system/silk/ext', 'data/silk/ext' ];
+const extDirs = [ 'system/silk/node_modules' ];
 
 const RELOAD_EXT_PROP = 'silk.reload-ext';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
-const IGNORED_NAMES = new Set(['.gitignore']);
+const SILKEXT_MODULE_PREFIX = 'silkext-';
 
 /**
  * Webpack works by replacing require with a specialized version which loads
@@ -765,7 +765,10 @@ class Extensions {
     }
     let modulePath = this._getModulePath(file);
     const moduleBasename = path.basename(modulePath);
-    if (IGNORED_NAMES.has(moduleBasename) || !this._isEnabled(moduleBasename)) {
+    if (!moduleBasename.startsWith(SILKEXT_MODULE_PREFIX)) {
+      return false;
+    }
+    if (!this._isEnabled(moduleBasename)) {
       log.verbose(`Module ${file} is disabled`);
       return false;
     }
@@ -843,9 +846,9 @@ class Extensions {
       }
       namespaces = split[i].replace(/\*/g, '.*?');
       if (namespaces[0] === '-') {
-        this._disabledList.push(new RegExp('^' + namespaces.substr(1) + '$'));
+        this._disabledList.push(new RegExp('^silkext-' + namespaces.substr(1) + '$'));
       } else {
-        this._enabledList.push(new RegExp('^' + namespaces + '$'));
+        this._enabledList.push(new RegExp('^silkext-' + namespaces + '$'));
       }
     }
   }

@@ -7,7 +7,7 @@ cd $(dirname $0)/..
 source ../tools/gnu.sh
 
 # Populate the simulator with test /data
-cp -rav test/data .
+cp -rav test/{data,system} .
 
 rm -rf data/tombstones
 

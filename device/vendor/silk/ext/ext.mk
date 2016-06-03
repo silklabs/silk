@@ -5,6 +5,5 @@
 define RENDER_EXTENSION_MK
 LOCAL_PATH:=$(1)
 include $(CLEAR_VARS)
-LOCAL_MODULE_PATH := $(TARGET_OUT)/silk/ext
 include $(BUILD_NODE_MODULE)
 endef

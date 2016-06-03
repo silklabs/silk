@@ -1,5 +1,5 @@
 {
-  "name": "oksilk",
+  "name": "silkext-oksilk",
   "version": "0.0.1",
   "description": "Continous voice recognition using PocketSphinx",
   "main": "./lib/oksilk.js",

@@ -1,5 +1,5 @@
 {
-  "name": "face",
+  "name": "silkext-face",
   "version": "0.0.1",
   "description": "Face",
   "main": "./lib/main.js",

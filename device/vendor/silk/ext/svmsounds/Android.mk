@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := svmsounds-babycry
+LOCAL_MODULE := silkext-svmsounds-babycry
 LOCAL_INSTALLED_MODULE_STEM := babycry-svm.raw
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
@@ -10,7 +10,7 @@ LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/model/babycry-svm.raw
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := svmsounds-clap
+LOCAL_MODULE := silkext-svmsounds-clap
 LOCAL_INSTALLED_MODULE_STEM := clap-svm.raw
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
@@ -19,7 +19,7 @@ LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/model/clap-svm.raw
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := svmsounds-firealarm
+LOCAL_MODULE := silkext-svmsounds-firealarm
 LOCAL_INSTALLED_MODULE_STEM := firealarm-svm.raw
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
@@ -28,7 +28,7 @@ LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/model/firealarm-svm.raw
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := svmsounds-glassbreak
+LOCAL_MODULE := silkext-svmsounds-glassbreak
 LOCAL_INSTALLED_MODULE_STEM := glassbreak-svm.raw
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC

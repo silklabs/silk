@@ -1,5 +1,5 @@
 {
-  "name": "svmsounds",
+  "name": "silkext-svmsounds",
   "version": "0.0.1",
   "description": "Demo of sound recognition with SVMs",
   "main": "./lib/svmsounds.js",

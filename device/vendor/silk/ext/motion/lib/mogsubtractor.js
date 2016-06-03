@@ -9,7 +9,7 @@
 import * as silkcv from 'silk-cv';
 import cv from 'opencv';
 
-import type { Env, Timeline } from 'silk-exttest/interface/env';
+import type { Env, Timeline } from 'silk-exttest';
 import type { SubtractorCallbackType, Mog2Subtractor } from 'silk-cv';
 import type { Matrix } from 'opencv';
 

@@ -6,12 +6,12 @@
 
 import assert from 'assert';
 import createLog from 'silk-log';
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
 
 const log = createLog('TestFramework');
-const env = new Framework('dnn');
+const env = new Env('dnn');
 const timeline = env.timeline;
 const camera = env.camera;
 

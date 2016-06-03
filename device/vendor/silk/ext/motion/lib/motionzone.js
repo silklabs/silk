@@ -9,7 +9,7 @@
 import fs from 'mz/fs';
 import cv from 'opencv';
 
-import type { Env, Log } from 'silk-exttest/interface/env';
+import type { Env, Log } from 'silk-exttest';
 import type { Matrix } from 'opencv';
 type Rect = {
   x: number;

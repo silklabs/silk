@@ -9,7 +9,7 @@
 import path from 'path';
 import config from 'silk-config';
 import SpeechRecognizer from './speechrecognizer';
-import type { Env, Util, Say, Log, Timeline } from 'silk-exttest/interface/env';
+import type { Env, Util, Say, Log, Timeline } from 'silk-exttest';
 import type { Hypothesis } from 'pocketsphinx';
 
 let log: Log;

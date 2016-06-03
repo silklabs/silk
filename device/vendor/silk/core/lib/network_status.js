@@ -18,7 +18,7 @@ import createLog from './log';
 import checkOnline from 'is-online';
 import { EventEmitter } from 'events';
 
-import type { Wifi } from 'silk-wifi';
+import type { Wifi, StubWifi } from 'silk-wifi';
 import type Server from './server';
 
 const log = createLog('network_status');
@@ -54,7 +54,7 @@ const IS_ONLINE = (): Promise<bool> => {
 export default class NetworkStatus extends EventEmitter {
 
   // wifi module...
-  _wifi: Wifi;
+  _wifi: Wifi | StubWifi;
   // function to check if we are online or not ...
   _isOnlineFn: () => Promise<bool>;
 
@@ -94,7 +94,7 @@ export default class NetworkStatus extends EventEmitter {
   }
 
   constructor(
-    wifi: Wifi,
+    wifi: Wifi | StubWifi,
     isOnlineFn: () => Promise<bool> = IS_ONLINE,
     checkInterval: number = CHECK_INTERVAL_MS
   ) {

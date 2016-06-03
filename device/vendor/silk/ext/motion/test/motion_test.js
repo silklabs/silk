@@ -8,10 +8,10 @@ import assert from 'assert';
 import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import path from 'path';
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 
 const log = createLog('TestFramework');
-const env = new Framework('motion');
+const env = new Env('motion');
 const timeline = env.timeline;
 const camera = env.camera;
 

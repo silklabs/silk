@@ -6,8 +6,8 @@
  * @flow
  */
 
-import type { Env, Log, Timeline } from 'silk-exttest/interface/env';
-type DetectCatsCallback = (rects: Array<number>) => void;
+import type { Env, Log, Timeline, Rect } from 'silk-exttest';
+type DetectCatsCallback = (rects: Array<Rect>) => void;
 
 let log: Log;
 let timeline: Timeline;

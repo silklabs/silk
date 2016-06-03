@@ -5,10 +5,10 @@
  */
 
 import assert from 'assert';
-import Framework from 'silk-exttest';
+import Env from 'silk-exttest';
 import HeartRateAnalyzer from '../lib/heartrate_analyzer';
 
-const env = new Framework('fft');
+const env = new Env('fft');
 
 const SAMPLE_RATE = 12;
 const FFT_SIZE = 128;

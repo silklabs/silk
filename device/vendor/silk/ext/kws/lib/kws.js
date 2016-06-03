@@ -16,7 +16,7 @@ import caffe from 'silk-caffe';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import Vibrator from 'silk-vibrator';
 
-import type { Env, Util, Log, Timeline, Camera } from 'silk-exttest/interface/env';
+import type { Env, Util, Log, Timeline, Camera } from 'silk-exttest';
 
 let log: Log;
 let timeline: Timeline;

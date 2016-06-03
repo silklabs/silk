@@ -74,7 +74,6 @@ class KeywordSpotting extends EventEmitter {
   _backlogMinSizeInBytes: number;
   _suspended: boolean;
   _onSpeechStop: (when: number) => void;
-  _onSpeechTimeout: (when: number) => void;
   _vib: Vibrator;
 
   constructor(env: Env) {
@@ -114,9 +113,6 @@ class KeywordSpotting extends EventEmitter {
     this._onSpeechStop = when => {
       this._resumeSpotting(when);
     };
-    this._onSpeechTimeout = when => {
-      this._handleTimeout(when);
-    };
   }
 
   /**
@@ -124,8 +120,7 @@ class KeywordSpotting extends EventEmitter {
    */
   willUnload() {
     camera.removeListener('mic-data', this._onMicData);
-    timeline.removeListener('speech_stop', this._onSpeechStop);
-    timeline.removeListener('speech_timeout', this._onSpeechTimeout);
+    timeline.removeListener('dialog_stop', this._onSpeechStop);
   }
 
   get MEL_COEFFS() {
@@ -356,14 +351,6 @@ class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Handle speech timeout
-   */
-  _handleTimeout(when) {
-    log.warn(`No speech detected within the timeout time`);
-    this._resumeSpotting(when);
-  }
-
-  /**
    * Stop listening for the keyword
    */
   _pauseSpotting() {
@@ -373,8 +360,7 @@ class KeywordSpotting extends EventEmitter {
     this._suspended = true; // Suspend any framer activity
 
     // Register for `speech` events
-    timeline.on('speech_stop', this._onSpeechStop);
-    timeline.on('speech_timeout', this._onSpeechTimeout);
+    timeline.on('dialog_stop', this._onSpeechStop);
   }
 
   /**
@@ -385,8 +371,7 @@ class KeywordSpotting extends EventEmitter {
     this._vib.pattern(50);
     this._suspended = false;
     camera.on('mic-data', this._onMicData);
-    timeline.removeListener('speech_stop', this._onSpeechStop);
-    timeline.removeListener('speech_timeout', this._onSpeechTimeout);
+    timeline.removeListener('dialog_stop', this._onSpeechStop);
   }
 }
 

@@ -7,10 +7,12 @@
     "postinstall": "../../../../../npm_postinstall",
     "posttest": "eslint test lib",
     "pretest": "pretest",
+    "silk-build": "silk-buildjs .",
     "test": "runtest"
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
+    "silk-buildjs": "/pub/buildjs",
     "silk-config": "/config",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-log": "/pub/log"

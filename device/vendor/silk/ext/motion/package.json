@@ -8,6 +8,7 @@
     "pretest": "pretest",
     "test": "runtest",
     "clean": "rm -rf node_modules",
+    "silk-build": "silk-buildjs .",
     "posttest": "eslint test lib"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
+    "silk-buildjs": "/pub/buildjs",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-log": "/pub/log"

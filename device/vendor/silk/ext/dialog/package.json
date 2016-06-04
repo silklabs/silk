@@ -6,9 +6,11 @@
   "scripts": {
     "postinstall": "./bin/postinstall",
     "posttest": "eslint test lib",
+    "silk-build": "silk-buildjs .",
     "test": "echo \"\""
   },
   "symlinkDependencies": {
+    "silk-buildjs": "/pub/buildjs",
     "silk-config": "/config",
     "silk-dialog": "/dialog",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"

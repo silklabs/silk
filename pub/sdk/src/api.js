@@ -99,7 +99,7 @@ export default class API {
     });
   }
 
-  async pushModule(name, directory, system) {
+  async pushModule(name, directory, system = false) {
     const dest = path.join(system ? SILK_MODULE_ROOT : DATA_MODULE_ROOT, name);
     if (system) {
       await this.adb('remount');

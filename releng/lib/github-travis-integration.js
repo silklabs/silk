@@ -12,7 +12,7 @@
  *
  * -- Implementation --
  *
- * 1. We get notified or PRs and pushes to silk-core. We analyze the
+ * 1. We get notified on PRs and pushes to silk-core. We analyze the
  *    changes identify which projects were modified and need Travis
  *    builds kicked off.
  *

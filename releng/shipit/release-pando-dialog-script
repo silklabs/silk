@@ -20,10 +20,10 @@ cd $(dirname $(readlink -f $0))/../../
 
 git fetch --unshallow
 
-# Push latest pub/ commits to master branch
+# Push latest dialog-script/ commits to master branch
 git subtree split --prefix dialog-script -b release-pando-dialog-script
 git remote add pando git@github.com:silklabs/release-pando-dialog-script
-git push pando release-pando-dialog-script:master
+git push -f pando release-pando-dialog-script:master # TODO: remove -f
 
 # Rebuild API documentation
 cd dialog-script/docs ; npm install ; cd ../..

@@ -23,7 +23,7 @@ git fetch --unshallow
 # Push latest dialog-script/ commits to master branch
 git subtree split --prefix dialog-script -b release-pando-dialog-script
 git remote add pando git@github.com:silklabs/release-pando-dialog-script
-git push -f pando release-pando-dialog-script:master # TODO: remove -f
+git push pando release-pando-dialog-script:master
 
 # Rebuild API documentation
 cd dialog-script/docs ; npm install ; cd ../..

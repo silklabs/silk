@@ -30,6 +30,13 @@ function findPackageRoot() {
   return _pkgRoot;
 }
 
+function systemModuleArg() {
+  return [['--system', '-s'], {
+    action: 'storeTrue',
+    help: `This is a /system/silk/node_module`,
+  }];
+}
+
 function sourceArgDefaultValue() {
   const dir = findPackageRoot();
   const pkg = require(path.join(dir, 'package.json'));
@@ -156,12 +163,13 @@ export let run = ensureSetup({
   help: 'Run package on device as the main module.',
   arguments: [
     sourceArg(),
+    systemModuleArg(),
   ],
   main: async (api, args) => {
     await checkDevices(api, args.device);
     const pkg = require(path.join(findPackageRoot(), 'package.json'));
     await silkBuild(pkg, args.source);
-    await api.pushModule(pkg.name, args.source);
+    await api.pushModule(pkg.name, args.source, args.system);
     await api.activate(pkg.name);
     await api.restart();
     const tags = [
@@ -192,11 +200,12 @@ export let push = ensureSetup({
   help: `Push files without restarting the main module`,
   arguments: [
     sourceArg(),
+    systemModuleArg(),
   ],
   main: async (api, args) => {
     await checkDevices(api, args.device);
     const pkg = require(path.join(findPackageRoot(), 'package.json'));
-    await api.pushModule(pkg.name, args.source);
+    await api.pushModule(pkg.name, args.source, args.system);
   }
 });
 

@@ -1,0 +1,41 @@
+#!/bin/bash -e
+#
+# Ships the dialog script for the Pando project
+#
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo You have a dirty tree.
+  exit 1
+fi
+
+if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
+  echo "You don't know what you're doing."
+  exit 1
+fi
+
+
+shopt -s nullglob
+set -x
+cd $(dirname $(readlink -f $0))/../../
+
+git fetch --unshallow
+
+# Push latest pub/ commits to master branch
+git subtree split --prefix dialog-script -b release-pando-dialog-script
+git remote add pando git@github.com:silklabs/release-pando-dialog-script
+git push pando release-pando-dialog-script:master
+
+# Rebuild API documentation
+cd dialog-script/docs ; npm install ; cd ../..
+
+# Recreate gh-pages branch and publish it
+mkdir gh-pages
+cp -ra dialog-script/docs/dist gh-pages/master
+if [ -d dialog-script/docs/public_html ]; then
+  cp -ra dialog-script/docs/public_html/* gh-pages/master
+fi
+git add gh-pages
+git commit -m "Automated doc update"
+git subtree split --prefix gh-pages -b gh-pages
+git push -f pando gh-pages:gh-pages
+

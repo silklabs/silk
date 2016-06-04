@@ -233,7 +233,27 @@ export function handlePullRequestAction(
 }
 
 
-export async function checkPullRequestForPublicChanges(
+type ExportedSubtreeInfo = {
+  dir: string;
+  label: string;
+  message: string;
+};
+
+// TODO: Move this into /builds.js or somewhere more central?
+const exportedSubtrees: Array<ExportedSubtreeInfo> = [
+  {
+    dir: 'pub/',
+    label: 'PUBLIC',
+    message: ':earth_americas: This PR contains changes to public files. Once it\'s merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
+  },
+  {
+    dir: 'dialog-script/',
+    label: 'release-pando-dialog-script',
+    message: ':passenger_ship: This PR contains changes to dialog-script/. Once it\'s merged these changes will be shipped to partners/customers along with the corresponding commit messages. Make sure neither contain confidential information',
+  },
+];
+
+export async function checkPullRequestForExportableChanges(
   pr: PullRequestInfo,
   filesChanged: Array<string>
 ): Promise<void> {
@@ -241,29 +261,29 @@ export async function checkPullRequestForPublicChanges(
   const repo_name = pr.base.repo.name;
   const repo = getOctokat().repos(owner_name, repo_name);
   const log = makeGitHubLog(LOG_PREFIX, owner_name, repo_name, pr.number);
-  log.info(`Checking PR for public changes.`);
+  log.info(`Checking PR for exportable changes.`);
 
   const issue = await repo.issues(pr.number).fetch();
-  const hasPublicLabel = issue.labels.find((label) => label.name === 'PUBLIC');
+  exportedSubtrees.forEach(async (tree) => {
+    const hasLabel = issue.labels.find((label) => label.name === tree.label);
 
-  if (!filesChanged.some((filename) => filename.startsWith('pub/'))) {
-    log.info(`No changes to public files detected.`);
-    if (hasPublicLabel) {
-      log.info(`Removing PUBLIC label.`);
-      await repo.issues(pr.number).labels('PUBLIC').remove();
+    if (!filesChanged.some((filename) => filename.startsWith(tree.dir))) {
+      log.info(`No changes to ${tree.dir} files detected.`);
+      if (hasLabel) {
+        log.info(`Removing ${tree.label} label.`);
+        await repo.issues(pr.number).labels(tree.label).remove();
+      }
+      return;
     }
-    return;
-  }
 
-  // Nothing to do if we already added the PUBLIC label.
-  if (hasPublicLabel) {
-    log.info(`PR already has PUBLIC label, nothing to be done here.`);
-    return;
-  }
+    // Nothing to do if we already added the PUBLIC label.
+    if (hasLabel) {
+      log.info(`PR already has ${tree.label}, nothing to be done here.`);
+      return;
+    }
 
-  log.info(`Adding PUBLIC label to the PR.`);
-  await repo.issues(pr.number).comments.create({
-    body: ':earth_americas: This PR contains changes to public files. Once it\'s merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
+    log.info(`Adding ${tree.label} label to the PR.`);
+    await repo.issues(pr.number).comments.create({ body: tree.message });
+    await repo.issues(pr.number).labels.create([tree.label]);
   });
-  await repo.issues(pr.number).labels.create(['PUBLIC']);
 }

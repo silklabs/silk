@@ -360,6 +360,12 @@ const builds = {
     //branches: ['master', 'next', 'release'],
     branches: ['master', 'next'],
   },
+  'releng-shipit-pando-dialog-script': {
+    title: 'Pando dialog script release',
+    travis_yml: 'releng/shipit/travis.release-pando-dialog-script.yml',
+    events: ['nightly'],
+    branches: ['master'],
+  },
 
   // Nightly device builds
   'device-qemu-nightly': nightlyBuild('device', {

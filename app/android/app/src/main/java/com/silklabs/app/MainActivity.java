@@ -1,10 +1,10 @@
 package com.silklabs.app;
 
-import com.silklabs.app.SilkReactPackage;
-
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
+
+import com.thirdparty.app.ThirdPartyReactPackage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,7 +47,8 @@ public class MainActivity extends ReactActivity {
   protected List<ReactPackage> getPackages() {
     return Arrays.<ReactPackage>asList(
       new MainReactPackage(),
-      new SilkReactPackage());
+      new SilkReactPackage(),
+      new ThirdPartyReactPackage());
   }
 
 }

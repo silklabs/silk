@@ -16,12 +16,19 @@ import { UserState } from '../libraries/UserState';
 import AsyncComponent from './abstract/AsyncComponent';
 import { FormStyles, LayoutStyles, TitleBarStyles } from './CommonStyles';
 
+import HelloWorldView from '../3rdparty/HelloWorldView';
+
 const MIN_CONTENT_INSET_BOTTOM = 20;
 
 export default class WifiSettings extends AsyncComponent {
 
   static propTypes = {
     userState: React.PropTypes.instanceOf(UserState).isRequired,
+  };
+
+  state = {
+    nativeButtonPresses: 0,
+    lastNativeButtonPress: null,
   };
 
   _renderTitleBar() {
@@ -82,6 +89,38 @@ export default class WifiSettings extends AsyncComponent {
     );
   }
 
+  _renderThirdPartyNativeDemo() {
+    const { nativeButtonPresses, lastNativeButtonPress } = this.state;
+
+    let lastPress = null;
+    if (lastNativeButtonPress) {
+      const formattedDate = new Date(lastNativeButtonPress).toLocaleString();
+      lastPress = ` It was last pressed ${formattedDate}.`;
+    }
+    return (
+      <View>
+        <Text style={styles.nativeViewLabel}>
+          The following view and the button within are rendered by a native implementation.
+        </Text>
+        <HelloWorldView
+          style={styles.nativeView}
+          onButtonPress={this._onNativeButtonPress}
+        />
+        <Text style={styles.nativeViewLabel}>
+          The button has been pressed {nativeButtonPresses} times.
+          {lastPress}
+        </Text>
+      </View>
+    );
+  }
+
+  _onNativeButtonPress = (event) => {
+    this.setState({
+      nativeButtonPresses: this.state.nativeButtonPresses + 1,
+      lastNativeButtonPress: event.nativeEvent.timestampMs,
+    });
+  };
+
   render() {
     return (
       <View style={styles.container}>
@@ -96,6 +135,8 @@ export default class WifiSettings extends AsyncComponent {
           {this._renderAccountSettings()}
           <Text style={FormStyles.formHeader}>VERSION</Text>
           {this._renderVersion()}
+          <Text style={FormStyles.formHeader}>NATIVE THIRD-PARTY DEMO</Text>
+          {this._renderThirdPartyNativeDemo()}
         </ScrollView>
       </View>
     );
@@ -130,5 +171,13 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     paddingRight: 8,
     paddingVertical: 12,
+  },
+  nativeViewLabel: {
+    margin: 8,
+  },
+  nativeView: {
+    height: 50,
+    left: 0,
+    right: 0,
   },
 });

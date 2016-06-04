@@ -52,6 +52,7 @@ const babelRC = {
   presets: [require('babel-preset-react-native')],
   plugins: [
     [require('babel-plugin-module-alias').default, aliases],
+    require('./require-non-literal-throws'),
   ],
 };
 

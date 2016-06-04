@@ -30,10 +30,19 @@ function findPackageRoot() {
   return _pkgRoot;
 }
 
+function sourceArgDefaultValue() {
+  const dir = findPackageRoot();
+  const pkg = require(path.join(dir, 'package.json'));
+  if (pkg.scripts && pkg.scripts[SILK_SCRIPT_BUILD]) {
+    return path.join(dir, '.silkslug');
+  }
+  return dir;
+}
+
 function sourceArg() {
   return [['--source'], {
     help: `Source of the files `,
-    defaultValue: findPackageRoot(),
+    defaultValue: sourceArgDefaultValue(),
     type: (value) => path.resolve(value),
   }];
 }
@@ -103,7 +112,7 @@ async function runBuild(pkg, cmd, dest) {
   }
 
   buildEnv.SILK_OUT = dest;
-  // TODO: This would be good place to boostrap the system to handle things like
+  // TODO: This would be good place to bootstrap the system to handle things like
   // building native modules.
 
   console.log(' > silk-build: ', cmd);
@@ -121,7 +130,7 @@ async function runBuild(pkg, cmd, dest) {
 
 async function silkBuild(pkg, dest) {
   if (pkg.scripts && pkg.scripts[SILK_SCRIPT_BUILD]) {
-    await runBuild(pkg, pkg.scripts[SILK_SCRIPT_BUILD]);
+    await runBuild(pkg, pkg.scripts[SILK_SCRIPT_BUILD], dest);
   }
 }
 

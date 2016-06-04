@@ -7,6 +7,7 @@
     "postinstall": "./bin/postinstall",
     "clean": "rm -rf node_modules dnn.js dnn.js.map",
     "pretest": "pretest",
+    "silk-build": "silk-buildjs .",
     "test": "runtest",
     "posttest": "eslint test lib"
   },
@@ -16,6 +17,7 @@
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
+    "silk-buildjs": "/pub/buildjs",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-log": "/pub/log"

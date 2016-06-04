@@ -7,6 +7,7 @@
     "test": "mocha $(find test -name '*_test.js')",
     "lint": "eslint lib test",
     "pretest": "npm run lint",
+    "silk-build": "silk-buildjs .",
     "clean": "rm -rf node_modules silk-device-main.js silk-device-main.js.map"
   },
   "symlinkDependencies": {
@@ -14,6 +15,7 @@
     "babel-core": "/pub/babel-core",
     "silk-audio": "/audio",
     "silk-babeldeps": "/babeldeps",
+    "silk-buildjs": "/pub/buildjs",
     "silk-config": "/config",
     "silk-log": "/pub/log",
     "silk-rtc": "/rtc",

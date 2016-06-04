@@ -244,12 +244,12 @@ const exportedSubtrees: Array<ExportedSubtreeInfo> = [
   {
     dir: 'pub/',
     label: 'PUBLIC',
-    message: ':earth_americas: This PR contains changes to public files. Once it\'s merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
+    message: ':earth_americas: This PR contains changes to `pub/`. Once it\'s merged, these changes will be made public along with the corresponding commit messages. Make sure neither contain confidential information!',
   },
   {
     dir: 'dialog-script/',
     label: 'release-pando-dialog-script',
-    message: ':passenger_ship: This PR contains changes to dialog-script/. Once it\'s merged these changes will be shipped to partners/customers along with the corresponding commit messages. Make sure neither contain confidential information',
+    message: ':ship: This PR contains changes to `dialog-script/`. Once it\'s merged these changes will be shipped to partners/customers along with the corresponding commit messages. Make sure neither contain confidential information',
   },
 ];
 

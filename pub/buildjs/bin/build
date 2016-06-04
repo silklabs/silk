@@ -1,4 +1,4 @@
-#! /bin/bash -ex
+#! /bin/bash -e
 
 # Resolve to realpath....
 SOURCE="${BASH_SOURCE[0]}"
@@ -23,9 +23,18 @@ if [[ ! -d $1 ]]; then
 fi
 
 PATH=$ROOT/../../node_modules/.bin:$PATH
+source $ROOT/../../tools/gnu.sh
 
-export SILK_BUILDJS_SOURCE=$1
-export SILK_BUILDJS_DEST=${2:-$1/.silkslug}
+export SILK_BUILDJS_SOURCE=$(readlink -f $1)
+if [[ -z $2 ]]; then
+  if [[ -z $SILK_OUT ]]; then
+    help
+    exit 1
+  fi
+  export SILK_BUILDJS_DEST=$SILK_OUT
+else
+  export SILK_BUILDJS_DEST=$(readlink -f $2)
+fi
 
 if [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   ## Exports for the node-gyp build system ...
@@ -40,9 +49,10 @@ if [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   popd
 fi
 
+set -x
 mkdir -p $SILK_BUILDJS_DEST
 rm -f $SILK_BUILDJS_DEST/package.json
 cp $SILK_BUILDJS_SOURCE/package.json $SILK_BUILDJS_DEST
 
 
-exec webpack --config $ROOT/../webpack.config.js
+exec webpack --progress --config $ROOT/../webpack.config.js

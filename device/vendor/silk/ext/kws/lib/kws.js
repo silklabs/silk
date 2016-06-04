@@ -46,6 +46,9 @@ const SKIP_SAMPLES = 10; // Skip these many samples
 // the threshold to lower value to catch far utterances too.
 const THRESHOLD = 50; // Ignore predictions with probability lower than threshold
 
+// Allow continuous keyword spotting if this android property is turned off
+const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
+
 type MicData = {
   when: number;
   frames: Buffer;
@@ -75,6 +78,7 @@ class KeywordSpotting extends EventEmitter {
   _suspended: boolean;
   _onSpeechStop: (when: number) => void;
   _vib: Vibrator;
+  _kwsEnabled: boolean;
 
   constructor(env: Env) {
     super();
@@ -113,6 +117,8 @@ class KeywordSpotting extends EventEmitter {
     this._onSpeechStop = when => {
       this._resumeSpotting(when);
     };
+
+    this._kwsEnabled = this._util.getboolprop(KWS_ENABLED_PROP, false);
   }
 
   /**
@@ -354,13 +360,15 @@ class KeywordSpotting extends EventEmitter {
    * Stop listening for the keyword
    */
   _pauseSpotting() {
-    log.debug(`Pause spotting`);
-    camera.removeListener('mic-data', this._onMicData);
-    this._output = []; // Clear the queue
-    this._suspended = true; // Suspend any framer activity
+    if (this._kwsEnabled) {
+      log.debug(`Pause spotting`);
+      camera.removeListener('mic-data', this._onMicData);
+      this._output = []; // Clear the queue
+      this._suspended = true; // Suspend any framer activity
 
-    // Register for `speech` events
-    timeline.on('dialog_stop', this._onSpeechStop);
+      // Register for `speech` events
+      timeline.on('dialog_stop', this._onSpeechStop);
+    }
   }
 
   /**

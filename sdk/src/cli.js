@@ -112,6 +112,7 @@ async function runBuild(pkg, cmd, dest) {
   }
 
   buildEnv.SILK_OUT = dest;
+  buildEnv.PATH = buildEnv.PATH + ':' + path.join(findPackageRoot(), 'node_modules', '.bin');
   // TODO: This would be good place to bootstrap the system to handle things like
   // building native modules.
 

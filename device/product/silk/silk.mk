@@ -85,9 +85,7 @@ SILK_INIT := \
   silk-props-json \
 
 SILK_GONK_PROGIES := \
-  silk-bledroid \
   silk-dash \
-  libpreview \
   silk-ir \
   silk-tts \
   tts-cereproc-heather-license \

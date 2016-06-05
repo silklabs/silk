@@ -137,7 +137,8 @@
     "react-addons-pure-render-mixin": "15.0.2",
     "wav-decoder": "1.1.0",
     "simple-peer": "5.11.5",
-    "tape": "4.0.0"
+    "tape": "4.0.0",
+    "wav": "1.0.0"
   },
   "engines": {
     "node": "^4.1.2",

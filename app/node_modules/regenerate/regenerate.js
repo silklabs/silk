@@ -1,4 +1,4 @@
-/*! https://mths.be/regenerate v1.3.0 by @mathias | MIT license */
+/*! https://mths.be/regenerate v1.3.1 by @mathias | MIT license */
 ;(function(root) {
 
 	// Detect free variables `exports`.
@@ -1060,7 +1060,7 @@
 		return (new regenerate).add(value);
 	};
 
-	regenerate.version = '1.3.0';
+	regenerate.version = '1.3.1';
 
 	var proto = regenerate.prototype;
 	extend(proto, {
@@ -1160,6 +1160,12 @@
 				options ? options.bmpOnly : false,
 				options ? options.hasUnicodeFlag : false
 			);
+			if (!result) {
+				// For an empty set, return something that can be inserted `/here/` to
+				// form a valid regular expression. Avoid `(?:)` since that matches the
+				// empty string.
+				return '[]';
+			}
 			// Use `\0` instead of `\x00` where possible.
 			return result.replace(regexNull, '\\0$1');
 		},

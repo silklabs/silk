@@ -1,0 +1,43 @@
+From d324a726416474f10e54a8e938bc5c6b1c639414 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 5 Jun 2016 18:50:21 -0700
+Subject: [PATCH] Permit CC/CXX env variables to override gcc/g++
+
+---
+ core/combo/HOST_darwin-x86.mk    | 4 ++--
+ core/combo/HOST_darwin-x86_64.mk | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/core/combo/HOST_darwin-x86.mk b/core/combo/HOST_darwin-x86.mk
+index 1140614..4eb384c 100644
+--- a/core/combo/HOST_darwin-x86.mk
++++ b/core/combo/HOST_darwin-x86.mk
+@@ -43,8 +43,8 @@ host_toolchain_header := $($(combo_2nd_arch_prefix)HOST_TOOLCHAIN_ROOT)/lib/gcc/
+ $(combo_2nd_arch_prefix)HOST_GLOBAL_CFLAGS += -isystem $(host_toolchain_header)
+ endif
+ else
+-$(combo_2nd_arch_prefix)HOST_CC := gcc
+-$(combo_2nd_arch_prefix)HOST_CXX := g++
++$(combo_2nd_arch_prefix)HOST_CC := $(or $(CC),gcc)
++$(combo_2nd_arch_prefix)HOST_CXX := $(or $(CXX),g++)
+ endif # $(HOST_TOOLCHAIN_PREFIX)-gcc exists
+ 
+ # gcc location for clang; to be updated when clang is updated
+diff --git a/core/combo/HOST_darwin-x86_64.mk b/core/combo/HOST_darwin-x86_64.mk
+index a776a69..611dda5 100644
+--- a/core/combo/HOST_darwin-x86_64.mk
++++ b/core/combo/HOST_darwin-x86_64.mk
+@@ -43,8 +43,8 @@ host_toolchain_header := $(HOST_TOOLCHAIN_ROOT)/lib/gcc/i686-apple-darwin$(gcc_d
+ HOST_GLOBAL_CFLAGS += -isystem $(host_toolchain_header)
+ endif
+ else
+-HOST_CC := gcc
+-HOST_CXX := g++
++HOST_CC := $(or $(CC),gcc)
++HOST_CXX := $(or $(CXX),g++)
+ endif # $(HOST_TOOLCHAIN_PREFIX)-gcc exists
+ 
+ # gcc location for clang; to be updated when clang is updated
+-- 
+2.7.4 (Apple Git-66)
+

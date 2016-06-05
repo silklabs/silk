@@ -1,6 +1,6 @@
 # Silk App
 
-The Silk app is written with React Native.  To install the React Native toolchain, [see these instructions](http://facebook.github.io/react-native/docs/getting-started.html#content).
+The Silk app is written with React Native.  To install the toolchain necessary for React Native development, [see relevant instructions](https://facebook.github.io/react-native/docs/getting-started.html).
 
 ## Installing and running the app
 
@@ -73,11 +73,6 @@ Then start the packager normally and run a Debug build on your device. Invoke th
 
 ### Setting up a development environment
 
-**BEFORE OPENING THE PROJECT IN XCODE**, install the npm module dependencies:
-```
-./install.sh
-```
-
 To develop the app, open `ios/Silk.xcodeproj` in Xcode.  You can do most development in the iOS simulators.  A physical device is only required for Bluetooth development, performance testing, and touch-tap testing.
 
 ### Development cycle
@@ -125,26 +120,13 @@ By leaving an instance of the packager server running and using it to generate u
 
 ### Setting up a development environment
 
-Ensure that you have installed everything needed for React Native for Android development, as [outlined by the React Native documentation](https://facebook.github.io/react-native/docs/android-setup.html).
-
-As with iOS, before you can perform any further steps, ensure you have installed the npm module dependencies via:
-```
-./install.sh
-```
-
-The Android app also pulls in some code from the webapp, so before proceeding, you'll want to build the webapp as well:
-```
-cd ../webapp
-./install.sh
-```
-
-For developing the native Java part of the app, any Android-capable IDE will work well. Android Studio can import the Gradle configuration as a project, just point it at `android/build.gradle`.
+For developing the native Java part of the app, any Android-capable IDE will work. Android Studio works very well as it can import the Gradle configuration as a project. Just point it at `android/build.gradle`.
 
 ### Development cycle
 
-Start the packaging server like on iOS, optionally telling webpack not to build iOS bundles for quicker startup:
+Start the packaging server like on iOS:
 ```
-npm start -- --no-ios
+npm start
 ```
 
 Build, install, and run the Android app on a connected Android phone or emulator:
@@ -152,13 +134,22 @@ Build, install, and run the Android app on a connected Android phone or emulator
 react-native run-android
 ```
 
+You can also call the `gradle` script manually, e.g. if you need to debug the build:
+```
+cd android
+./gradlew installDebug --debug
+```
+
 #### Video player webview
 
-Normally 
-
+Video playback on Android is handled by using the MSE player inside a Webview. Normally the JS for the Webview is generated at build time and shipped as part of the Android APK as an asset file. But it's also possible to load it on the fly so that changes to any files are picked up instantly without the need for a whole Android app rebuild. Start the Webpack dev server serving the relevant files like so:
+```
+npm run webview-dev-server
+```
+and tell the app to load the Webview contents from the Webpack dev server rather than the assset file in the APK by adding the following to `config.local.json`:
 ```json
 {
-  "mseWebviewUrl": "http://192.168.1.13:8000/js/android"
+  "mseWebviewUrl": "http://192.168.1.13:8000/mse.html"
 }
 ```
 

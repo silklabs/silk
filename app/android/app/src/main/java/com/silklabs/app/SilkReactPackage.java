@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class SilkReactPackage implements ReactPackage {
+public class SilkReactPackage implements ReactPackage {
 
   @Override
   public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {

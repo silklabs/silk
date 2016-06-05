@@ -21,11 +21,8 @@ WHITELIST=$(cat <<-EOF
   babeldeps
   cam
   config
-  eslint
-  flow-bin
   http
   jsonwebtoken
-  log
   mse-player
   node_modules
   npm_postinstall

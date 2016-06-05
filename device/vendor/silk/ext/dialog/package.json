@@ -1,5 +1,5 @@
 {
-  "name": "dialog",
+  "name": "silkext-dialog",
   "version": "0.0.1",
   "description": "Dialog engine extension",
   "main": "./lib/dialog.js",

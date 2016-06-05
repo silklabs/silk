@@ -12,6 +12,7 @@ import fs from 'mz/fs';
 const SILK_MODULE_ROOT = '/system/silk/node_modules';
 const DATA_MODULE_ROOT = '/data/node_modules';
 const ACTIVATE_PROP = 'persist.silk.main';
+const MODULE_PUSH_PROP = 'silk.module.push';
 const WIFI_SETUP_SCRIPT = 'wifi_setup.sh';
 
 async function execWithPaths(
@@ -98,7 +99,7 @@ export default class API {
     });
   }
 
-  async pushModule(name, directory, system) {
+  async pushModule(name, directory, system = false) {
     const dest = path.join(system ? SILK_MODULE_ROOT : DATA_MODULE_ROOT, name);
     if (system) {
       await this.adb('remount');
@@ -109,6 +110,7 @@ export default class API {
     console.log('Updating', dest);
     await this.adb(`shell rm -rf ${dest}`);
     await this.adb(`push ${directory} ${dest}`, /*timeout = */ 60 * 1000);
+    this.setprop(MODULE_PUSH_PROP, dest);
   }
 
   async setprop(key, value) {

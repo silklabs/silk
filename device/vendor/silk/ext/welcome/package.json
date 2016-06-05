@@ -1,5 +1,5 @@
 {
-  "name": "welcome",
+  "name": "silkext-welcome",
   "version": "0.0.1",
   "description": "Welcome. Personalized home setting when person seen",
   "main": "./lib/welcome.js",

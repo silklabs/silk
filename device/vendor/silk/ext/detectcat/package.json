@@ -1,5 +1,5 @@
 {
-  "name": "detectcat",
+  "name": "silkext-detectcat",
   "version": "0.0.1",
   "description": "Cat detector",
   "main": "./lib/detectcat.js",

@@ -177,7 +177,7 @@ export default function(baseDirectory = process.env.BASEDIR) {
 
   function restartExt() {
     return printExec(
-      `adb shell setprop silk.reload-ext ${pkg.name}`
+      `adb shell setprop silk.module.push /system/silk/node_modules/${pkg.name}`
     );
   }
 

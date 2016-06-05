@@ -1,5 +1,5 @@
 {
-  "name": "devicemotion",
+  "name": "silkext-devicemotion",
   "version": "0.0.1",
   "description": "Detects device motion using the accelerometer",
   "main": "./lib/devicemotion.js",

@@ -20,10 +20,10 @@
 
 const Dnn = require('./dnn');
 
-const MODEL_PROTO = 'system/silk/ext/dnn/model/deploy.prototxt';
-const MODEL_BIN = 'system/silk/ext/dnn/model/bvlc_googlenet.caffemodel';
-const MODEL_DICTIONARY = 'system/silk/ext/dnn/model/synset_words.txt';
-const MODEL_MEAN = 'system/silk/ext/dnn/model/imagenet_mean.binaryproto';
+const MODEL_PROTO = 'system/silk/node_modules/silkext-dnn/model/deploy.prototxt';
+const MODEL_BIN = 'system/silk/node_modules/silkext-dnn/model/bvlc_googlenet.caffemodel';
+const MODEL_DICTIONARY = 'system/silk/node_modules/silkext-dnn/model/synset_words.txt';
+const MODEL_MEAN = 'system/silk/node_modules/silkext-dnn/model/imagenet_mean.binaryproto';
 const TOPK = 5; // Return top K predictions for the given image
 
 const TEST_IMAGE = 'data/media/cat.jpg';

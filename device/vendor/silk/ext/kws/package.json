@@ -1,5 +1,5 @@
 {
-  "name": "kws",
+  "name": "silkext-kws",
   "version": "0.0.1",
   "description": "Keyword spotting using neural networks",
   "main": "./lib/kws.js",

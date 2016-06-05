@@ -46,8 +46,10 @@ qemu:
 # However for all other gonks, the latest emulator build is downloaded from \
 # storage.
 	@if [[ $$SILK_BOARD != qemu ]]; then \
-    $(MAKE) --no-print-directory update.qemu; \
     export ANDROID_PRODUCT_OUT=out/prebuilt/qemu/aosp_arm; \
+    if [[ ! -d $$ANDROID_PRODUCT_OUT ]]; then \
+      SILK_BOARD=qemu $(MAKE) --no-print-directory update; \
+    fi; \
   fi; \
   exec ./run-emulator
 

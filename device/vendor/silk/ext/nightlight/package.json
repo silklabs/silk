@@ -1,5 +1,5 @@
 {
-  "name": "nightlight",
+  "name": "silkext-nightlight",
   "version": "0.0.1",
   "description": "Example nightlight extension",
   "main": "./lib/nightlight.js",

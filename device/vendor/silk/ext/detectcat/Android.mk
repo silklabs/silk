@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := detectcat-cascade
+LOCAL_MODULE := silkext-detectcat-cascade
 LOCAL_INSTALLED_MODULE_STEM := lbpcascade_cat.xml
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC

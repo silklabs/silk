@@ -1,5 +1,5 @@
 {
-  "name": "peddetector",
+  "name": "silkext-peddetector",
   "version": "0.0.1",
   "description": "Pedestrian detector using RCNN",
   "main": "./lib/peddetector.js",

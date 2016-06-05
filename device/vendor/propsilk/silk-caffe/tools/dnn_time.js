@@ -24,7 +24,7 @@ if (process.platform === 'android') {
 
 const fs = require('fs');
 
-const MODEL = 'system/silk/ext/dnn/model/deploy.prototxt';
+const MODEL = 'system/silk/node_modules/silkext-dnn/model/deploy.prototxt';
 const ITERATIONS = 10;
 
 /* Parse command line arguments */

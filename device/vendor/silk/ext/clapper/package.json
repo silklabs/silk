@@ -1,5 +1,5 @@
 {
-  "name": "clapper",
+  "name": "silkext-clapper",
   "version": "0.0.1",
   "description": "Clap sample extension",
   "main": "./lib/clapper.js",

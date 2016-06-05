@@ -22,7 +22,6 @@
   "devDependencies": {
     "babel-core": "6.8.0",
     "babel-eslint": "6.0.4",
-    "babel-plugin-module-alias": "1.4.0",
     "eslint": "1.10.3",
     "eslint-plugin-react": "3.16.1"
   },

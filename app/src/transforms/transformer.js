@@ -5,7 +5,7 @@
 const path = require('path');
 const babel = require('babel-core');
 
-const nodeShims = {
+const aliases = {
   constants: 'constants-browserify',
   crypto: 'crypto-browserify',
   dns: 'node-libs-browser/mock/dns',
@@ -36,23 +36,19 @@ const nodeShims = {
   'node-fetch': 'node-libs-browser/mock/empty',
 };
 
-const aliases = [];
-for (let expose in nodeShims) {
-  let src = nodeShims[expose];
-  if (!src) {
-    continue;
-  }
-  if (!path.isAbsolute(src)) {
-    src = 'npm:' + src;
-  }
-  aliases.push({src, expose});
-}
+const rootDir = path.resolve(__dirname, '../../..');
 
 const babelRC = {
   presets: [require('babel-preset-react-native')],
   plugins: [
-    [require('babel-plugin-module-alias').default, aliases],
-    require('./require-non-literal-throws'),
+    [require('./module-aliases'), {
+      aliases: aliases,
+      throwForMissingFiles: [
+        path.join(rootDir, 'app', 'config.local.json'),
+        path.join(rootDir, 'raygun', 'config.internal.json'),
+      ],
+      throwForNonStringLiteral: true,
+    }],
   ],
 };
 

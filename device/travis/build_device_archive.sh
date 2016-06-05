@@ -165,7 +165,7 @@ EOF
 elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then
   # This is a qemu full device build
 
-  cp -r $ANDROID_PRODUCT_OUT/{*.img $archiveDir/$TARGET_PRODUCT
+  cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$TARGET_PRODUCT
   mkdir -p $archiveDir/$TARGET_PRODUCT/system
   cp -r $ANDROID_PRODUCT_OUT/system/build.prop $archiveDir/$TARGET_PRODUCT/system
 

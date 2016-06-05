@@ -13,27 +13,13 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import * as util from './sysutils';
 import wrapNoEntity from './fs/wrap_no_entity';
+import modwatcher from 'silk-modwatcher';
 
 const log = createLog('ext');
 const extDirs = [ 'system/silk/node_modules' ];
 
-const RELOAD_EXT_PROP = 'silk.module.push';
 const ENABLED_SILK_EXTENSIONS = util.getprop('persist.silk.extensions', '*');
 const SILKEXT_MODULE_PREFIX = 'silkext-';
-
-/**
- * Webpack works by replacing require with a specialized version which loads
- * from the bundle. For extensions (at least for now) we rely on nodes require
- * implementation to load the files. We use the below evaluation to get the correct
- * require regardless of browserify/webpack.
- */
-const moduleRequire = ((() => {
-  try {
-    return __non_webpack_require__;  //eslint-disable-line
-  } catch (err) {
-    return require;
-  }
-})());
 
 let nextObjectId = 0;
 
@@ -617,7 +603,7 @@ class Env extends EventEmitter {
       },
 
       /**
-       * Get an instance of property wathcer
+       * Get an instance of property watcher
        *
        * @property {PropWatcher} propWatcher
        * @memberof Env.util
@@ -695,7 +681,11 @@ class Extensions {
         }
       }
     }
-    util.propWatcher.on(RELOAD_EXT_PROP, this._onReloadRequested);
+    extDirs.forEach(dir => {
+      modwatcher.monitor(path.join(dir, SILKEXT_MODULE_PREFIX + '*'),
+                         this._extModulePush);
+    });
+
   }
 
   /**
@@ -710,18 +700,10 @@ class Extensions {
   /**
    * @private
    */
-  _onReloadRequested = async () => {
-    // When reload prop changes to non empty string, reload specified ext
-    const extName = util.getprop(RELOAD_EXT_PROP);
-    if (!extName) {
-      return;
-    }
-    log.info(`Reload requsted: ${extName}`);
+  _extModulePush = async (extName) => {
+    log.info(`Reload requsted: ${extName})`);
     await this._unloadExtension(extName);
     await this._loadExtension(extName);
-
-    // Set prop to empty string to indicate done
-    util.setprop(RELOAD_EXT_PROP, '');
   };
 
   /**
@@ -773,27 +755,23 @@ class Extensions {
       } else {
         log.info(`Loading ${modulePath}`);
         let env = new Env(moduleBasename, this._deviceObjects);
-        this._loaded[modulePath] = { env: env, mod: moduleRequire(modulePath)(env) };
+        let mod = modwatcher.require(modulePath);
+        this._loaded[modulePath] = {
+          env,
+          // Old-style extensions want an Env object.
+          // New-style extensions are on their own.
+          mod: typeof mod === 'function' ? mod(env) : mod,
+        };
       }
     } catch (e) {
       // Failed to load, delete from cache to force next load from disk
-      this._removeExtensionFromCache(file);
+      modwatcher.flush(modulePath);
       log.error(`Extension failed to load: ${modulePath}`);
       log.error(e);
     }
     return true;
   }
 
-  /**
-   * @private
-   */
-  _removeExtensionFromCache(file) {
-    if (moduleRequire.cache === undefined) {
-      // require.cache alias not present for some reason, let's add it
-      moduleRequire.cache = require('module')._cache; // eslint-disable-line import/no-require
-    }
-    delete moduleRequire.cache[file];
-  }
 
   /**
    * @private
@@ -805,17 +783,18 @@ class Extensions {
     if (!module) {
       log.info(`Nothing to unload, module not loaded: ${modulePath}`);
       return Promise.resolve();
-    } else if (!module.mod || !module.mod.willUnload) {
-      log.warn(`Cannot unload, prepareUnload() not supported ${modulePath}`);
-      return Promise.reject();
     } else {
       log.info(`Unloading ${modulePath}`);
 
       return Promise.resolve()
-      .then(() => module.mod.willUnload())
+      .then(() => {
+        // Deal with old-style extensions
+        if (module.mod.willUnload) {
+          module.mod.willUnload();
+        }
+      })
       .then(() => module.env.cleanup())
       .then(() => {
-        this._removeExtensionFromCache(file);
         delete this._loaded[modulePath];
         return Promise.resolve();
       })

@@ -9,6 +9,7 @@
 #include <media/openmax/OMX_IVCommon.h>
 #include <system/camera.h>
 #include <utils/Log.h>
+#include <utils/Vector.h>
 #include <utils/String16.h>
 
 #include "IOpenCVCameraCapture.h"
@@ -16,22 +17,30 @@
 
 #include "libpreview.h"
 
+
+namespace libpreview {
+
 using namespace android;
 
-namespace {
-using namespace libpreview;
-
-class PreviewFrameGrabber: public ConsumerBase::FrameAvailableListener {
+class ClientImpl;
+class CaptureFrameGrabber: public ConsumerBase::FrameAvailableListener {
 public:
-  static bool open(FrameCallback frameCallback,
-                   AbandonedCallback abandonedCallback,
-                   void *userData);
-  static void close();
-  static void releaseFrame(void *frameBuffer);
+  static sp<CaptureFrameGrabber> create();
 
-  size_t framewidth;
-  size_t frameheight;
-  FrameFormat frameformat;
+  void registerClient(ClientImpl *client) {
+    Mutex::Autolock autolock(mClientsMutex);
+    mClients.push(client);
+  }
+  void unregisterClient(ClientImpl *client) {
+    Mutex::Autolock autolock(mClientsMutex);
+    for (size_t i = 0; i < mClients.size(); i++) {
+      ClientImpl *c = mClients.itemAt(i);
+      if (c == client) {
+        mClients.removeAt(i);
+        return;
+      }
+    }
+  }
 
 #ifdef CAF_CPUCONSUMER
   virtual void onFrameAvailable();
@@ -40,120 +49,153 @@ public:
 #endif
 
 private:
-  PreviewFrameGrabber(FrameCallback frameCallback,
-                      AbandonedCallback abandonedCallback,
-                      void *userData,
-                      sp<IOpenCVCameraCapture> capture);
-  ~PreviewFrameGrabber();
+  Vector<ClientImpl*> mClients;
+  mutable Mutex mClientsMutex; // Acquire before using mClients
+
+  CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture);
+  ~CaptureFrameGrabber();
+
+  class LockedFrame: public RefBase {
+  public:
+    LockedFrame(void *frame, sp<CaptureFrameGrabber> grabber)
+        : frame(frame), mGrabber(grabber) {}
+    ~LockedFrame() {
+      CpuConsumer::LockedBuffer img;
+      img.data = static_cast<uint8_t*>(frame);
+
+      status_t err = mGrabber->mCpuConsumer->unlockBuffer(img);
+      if (err != 0) {
+        ALOGE("Unable to unlock buffer, err=%d", err);
+    }
+  }
+  private:
+    void *frame;
+    sp<CaptureFrameGrabber> mGrabber;
+  };
 
   class DeathRecipient: public IBinder::DeathRecipient {
   public:
-    DeathRecipient(PreviewFrameGrabber *pfg) : mPFG(pfg) {}
+    DeathRecipient(CaptureFrameGrabber *grabber) : mGrabber(grabber) {}
 
     ~DeathRecipient() {
-      mPFG = NULL; // No delete/unref
+      mGrabber = NULL; // No delete/unref
     }
 
     virtual void binderDied(const wp<IBinder>& who __unused) {
       ALOGI("DeathRecipient::binderDied");
-      mPFG->binderDied();
+      mGrabber->binderDied();
     }
   private:
-    PreviewFrameGrabber *mPFG;
+    CaptureFrameGrabber *mGrabber;
   };
   void binderDied();
 
   sp<CpuConsumer> mCpuConsumer;
   sp<IGraphicBufferProducer> mProducer;
-  FrameCallback mFrameCallback;
-  AbandonedCallback mAbandonedCallback;
-  mutable Mutex mFrameCallbackMutex; // Acquire before using mFrameCallback/mAbandonedCallback
-  void *mUserData;
   sp<IOpenCVCameraCapture> mCapture;
   sp<DeathRecipient> mDeathRecipient;
-  static sp<PreviewFrameGrabber> sPreviewFrameGrabber;
+  static wp<CaptureFrameGrabber> sCaptureFrameGrabber;
 };
 
-bool PreviewFrameGrabber::open(FrameCallback frameCallback,
-                               AbandonedCallback abandonedCallback,
-                               void *userData)
-{
-  if (sPreviewFrameGrabber != NULL) {
-    ALOGE("EUSERS");
-    return false;
+
+class ClientImpl : public Client {
+public:
+  ClientImpl(FrameCallback frameCallback,
+             AbandonedCallback abandonedCallback,
+             void *userData,
+             sp<CaptureFrameGrabber> grabber)
+      : mFrameCallback(frameCallback),
+        mAbandonedCallback(abandonedCallback),
+        mUserData(userData),
+        mGrabber(grabber) {
+    mGrabber->registerClient(this);
   }
 
-  sp<IServiceManager> sm = defaultServiceManager();
-  sp<IBinder> binder = sm->getService(
-    String16(OpenCVCameraCapture::getServiceName()));
-  if (binder == NULL) {
-    ALOGE("Unable to connect with capture preview service");
-    return false;
-  }
-
-  sp<IOpenCVCameraCapture> capture =
-    interface_cast<IOpenCVCameraCapture>(binder);
-
-  sp<PreviewFrameGrabber> pfg = new PreviewFrameGrabber(
-    frameCallback,
-    abandonedCallback,
-    userData,
-    capture
-  );
-
-  status_t err = capture->initCamera(0, pfg->mProducer);
-  if (err != OK) {
-    ALOGW("IOpenCVCameraCapture::init failed: %d", err);
-    return false;
-  }
-
-  sPreviewFrameGrabber = pfg;
-  return true;
-}
-
-void PreviewFrameGrabber::close()
-{
-  if (sPreviewFrameGrabber != NULL) {
+  ~ClientImpl() {
+    mGrabber->unregisterClient(this);
     {
-      Mutex::Autolock autolock(sPreviewFrameGrabber->mFrameCallbackMutex);
-      sPreviewFrameGrabber->mFrameCallback = NULL;
-      sPreviewFrameGrabber->mAbandonedCallback = NULL;
+      Mutex::Autolock autolock(mFrameCallbackMutex);
+      mFrameCallback = NULL;
+      mAbandonedCallback = NULL;
     }
-    sPreviewFrameGrabber = NULL;
-  }
-}
-
-void PreviewFrameGrabber::releaseFrame(void *frameBuffer) {
-  if (sPreviewFrameGrabber == NULL) {
-    ALOGE("ENODEV");
-    return;
   }
 
-  CpuConsumer::LockedBuffer img;
-  img.data = static_cast<uint8_t*>(frameBuffer);
-
-  status_t err = sPreviewFrameGrabber->mCpuConsumer->unlockBuffer(img);
-  if (err != 0) {
-    ALOGE("Unable to unlock buffer, err=%d", err);
+  void releaseFrame(FrameOwner frameOwner) {
+    if (frameOwner != NULL) {
+      RefBase *ref = (RefBase *) frameOwner;
+      ref->decStrong(NULL);
+    }
   }
-}
+
+  void frameCallback(void *frame,
+                     FrameFormat format,
+                     size_t width,
+                     size_t height,
+                     FrameOwner owner) {
+    Mutex::Autolock autolock(mFrameCallbackMutex);
+    if (mFrameCallback != NULL) {
+      mFrameCallback(mUserData, frame, format, width, height, owner);
+    }
+  }
+
+  void abandoned() {
+    Mutex::Autolock autolock(mFrameCallbackMutex);
+    if (mAbandonedCallback != NULL) {
+      mAbandonedCallback(mUserData);
+      mAbandonedCallback = NULL;
+    }
+    mFrameCallback = NULL;
+  }
+
+private:
+  mutable Mutex mFrameCallbackMutex; // Acquire before using mFrameCallback/mAbandonedCallback
+  FrameCallback mFrameCallback;
+  AbandonedCallback mAbandonedCallback;
+
+  void *mUserData;
+  sp<CaptureFrameGrabber> mGrabber;
+};
 
 
-PreviewFrameGrabber::PreviewFrameGrabber(FrameCallback frameCallback,
-                                         AbandonedCallback abandonedCallback,
-                                         void *userData,
-                                         sp<IOpenCVCameraCapture> capture)
-    : mFrameCallback(frameCallback),
-      mAbandonedCallback(abandonedCallback),
-      mUserData(userData),
-      mCapture(capture)
+sp<CaptureFrameGrabber> CaptureFrameGrabber::create()
 {
-  frameformat = FRAMEFORMAT_INVALID;
+  sp<ProcessState> ps = ProcessState::self();
+  ps->startThreadPool();
 
+  sp<CaptureFrameGrabber> grabber = sCaptureFrameGrabber.promote();
+  if (grabber == NULL) {
+    sp<IServiceManager> sm = defaultServiceManager();
+    sp<IBinder> binder = sm->getService(
+      String16(OpenCVCameraCapture::getServiceName()));
+    if (binder == NULL) {
+      ALOGE("Unable to connect with capture preview service");
+      return NULL;
+    }
+
+    sp<IOpenCVCameraCapture> capture =
+      interface_cast<IOpenCVCameraCapture>(binder);
+
+    grabber = new CaptureFrameGrabber(capture);
+
+    status_t err = capture->initCamera(0, grabber->mProducer);
+    if (err != OK) {
+      ALOGW("IOpenCVCameraCapture::init failed: %d", err);
+      return NULL;
+    }
+
+    sCaptureFrameGrabber = grabber;
+  }
+  return grabber;
+}
+
+
+CaptureFrameGrabber::CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture)
+    : mCapture(capture)
+{
   sp<IGraphicBufferConsumer> consumer;
   BufferQueue::createBufferQueue(&mProducer, &consumer);
-  mCpuConsumer = new CpuConsumer(consumer, MAX_UNLOCKED_FRAMEBUFFERS + 1, true);
-  mCpuConsumer->setName(String8("OpenCVCpuConsumer"));
+  mCpuConsumer = new CpuConsumer(consumer, MAX_UNLOCKED_FRAMES + 1, true);
+  mCpuConsumer->setName(String8("LibPreviewCpuConsumer"));
   mCpuConsumer->setFrameAvailableListener(this);
 
   mDeathRecipient = new DeathRecipient(this);
@@ -164,7 +206,8 @@ PreviewFrameGrabber::PreviewFrameGrabber(FrameCallback frameCallback,
 #endif
 }
 
-PreviewFrameGrabber::~PreviewFrameGrabber() {
+
+CaptureFrameGrabber::~CaptureFrameGrabber() {
   binderDied();
 #ifdef TARGET_GE_MARSHMALLOW
   IInterface::asBinder(mCapture)->unlinkToDeath(mDeathRecipient);
@@ -174,29 +217,33 @@ PreviewFrameGrabber::~PreviewFrameGrabber() {
   mCapture->closeCamera();
 }
 
-void PreviewFrameGrabber::binderDied()
+
+void CaptureFrameGrabber::binderDied()
 {
-  ALOGV("PreviewFrameGrabber::binderDied");
+  ALOGV("CaptureFrameGrabber::binderDied");
   mCpuConsumer->abandon();
+
   {
-    Mutex::Autolock autolock(mFrameCallbackMutex);
-    if (mAbandonedCallback != NULL) {
-      mAbandonedCallback(mUserData);
-      mAbandonedCallback = NULL;
+    Mutex::Autolock autolock(mClientsMutex);
+    for (size_t i = 0; i < mClients.size(); i++) {
+      ClientImpl *client = mClients.itemAt(i);
+      client->abandoned();
     }
-    mFrameCallback = NULL;
+    mClients.clear();
   }
 }
 
+
 #ifdef CAF_CPUCONSUMER
-void PreviewFrameGrabber::onFrameAvailable()
+void CaptureFrameGrabber::onFrameAvailable()
 #else
-void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
+void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
 #endif
 {
-  ALOGV("PreviewFrameGrabber::onFrameAvailable");
-  Mutex::Autolock autolock(mFrameCallbackMutex);
-  if (mFrameCallback == NULL) {
+  ALOGV("CaptureFrameGrabber::onFrameAvailable");
+  Mutex::Autolock autolock(mClientsMutex);
+  if (mClients.size() == 0) {
+    ALOGW("No clients onFrameAvailable");
     return;
   }
 
@@ -206,7 +253,7 @@ void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
     err = mCpuConsumer->lockNextBuffer(&img);
     if (err) {
       if (err != BAD_VALUE) { // BAD_VALUE == No more buffers, not an error
-        ALOGE("PreviewFrameGrabber: error %d from lockNextBuffer", err);
+        ALOGE("CaptureFrameGrabber: error %d from lockNextBuffer", err);
       }
       continue;
     }
@@ -225,64 +272,60 @@ void PreviewFrameGrabber::onFrameAvailable(const BufferItem& item)
     ALOGV("Frame: frameNumber=%lld, timestamp=%lld",
       img.frameNumber, img.timestamp);
 
-    if (frameformat == FRAMEFORMAT_INVALID) {
-      framewidth = img.width;
-      frameheight = img.height;
+    FrameFormat frameformat = FRAMEFORMAT_INVALID;
+    switch (img.format) {
+    case HAL_PIXEL_FORMAT_RGBA_8888: // QEmu
+      frameformat = FRAMEFORMAT_RGB;
+      break;
 
-      //
-      // Note that OpenCV currently only supports yvu420sp/yuv420sp...
-      //
-      switch (img.format) {
-      case HAL_PIXEL_FORMAT_RGBA_8888: // QEmu
-        frameformat = FRAMEFORMAT_RGB;
-        break;
-
-      case HAL_PIXEL_FORMAT_YCrCb_420_SP: // Nexus 4
-        frameformat = FRAMEFORMAT_YVU420SP;
-        break;
+    case HAL_PIXEL_FORMAT_YCrCb_420_SP: // Nexus 4
+      frameformat = FRAMEFORMAT_YVU420SP;
+      break;
 
 #ifndef CAF_CPUCONSUMER // "flexFormat" is in AOSP but not CAF
-      case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED: // Nexus 5
-        if (img.flexFormat == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-          frameformat = FRAMEFORMAT_YVU420SP;
-          break;
-        }
-#endif
-        //fall through
-      default:
-        ALOGW("Unsupported preview format: 0x%x", img.format);
+    case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED: // Nexus 5
+      if (img.flexFormat == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+        frameformat = FRAMEFORMAT_YVU420SP;
         break;
       }
+#endif
+      //fall through
+    default:
+      ALOGW("Unsupported preview format: 0x%x", img.format);
+      break;
     }
 
-    mFrameCallback(mUserData, img.data, frameformat, framewidth, frameheight);
+    RefBase *lockedFrame = new LockedFrame(img.data, this);
+    for (size_t i = 0; i < mClients.size(); i++) {
+      ClientImpl *client = mClients.itemAt(i);
+      lockedFrame->incStrong(NULL);
+      client->frameCallback(img.data,
+                            frameformat,
+                            img.width,
+                            img.height,
+                            (FrameOwner) lockedFrame);
+    }
   }
 }
 
-sp<PreviewFrameGrabber> PreviewFrameGrabber::sPreviewFrameGrabber = NULL;
+wp<CaptureFrameGrabber> CaptureFrameGrabber::sCaptureFrameGrabber = NULL;
 
+Client::~Client() {};
 }
 
-namespace libpreview {
-
-bool open(FrameCallback frameCallback,
-          AbandonedCallback abandonedCallback,
-          void *userData)
-{
-  sp<ProcessState> ps = ProcessState::self();
-  ps->startThreadPool();
-
-  return PreviewFrameGrabber::open(frameCallback, abandonedCallback, userData);
+using namespace libpreview;
+extern "C" Client *libpreview_open(FrameCallback frameCallback,
+                                   AbandonedCallback abandonedCallback,
+                                   void *userData) {
+  sp<CaptureFrameGrabber> grabber = CaptureFrameGrabber::create();
+  if (grabber == NULL) {
+    return NULL;
+  }
+  return new ClientImpl(frameCallback,
+                        abandonedCallback,
+                        userData,
+                        grabber);
 }
 
-void close()
-{
-  PreviewFrameGrabber::close();
-}
-
-void releaseFrame(void *frameBuffer)
-{
-  PreviewFrameGrabber::releaseFrame(frameBuffer);
-}
-
-}
+// Ensure the signature of libpreview_open matches the type libpreview::OpenFunc
+static OpenFunc staticTypeCheck = libpreview_open;

@@ -25,7 +25,7 @@ PRODUCT_PACKAGES += silk-player silk-volume
 PRODUCT_PACKAGES += silk-bledroid-daemon
 
 # vendor/silk/capture/
-PRODUCT_PACKAGES += silk-capture-daemon
+PRODUCT_PACKAGES += silk-capture-daemon libpreview
 
 # vendor/silk/dhcputil/
 PRODUCT_PACKAGES += silk-dhcputil

@@ -215,7 +215,7 @@ export default class SpeechRecognizer extends EventEmitter {
       return false;
     }
 
-    log.debug(`Start recognition ${searchName}`);
+    log.debug(`Start search ${searchName}`);
     this._decoder.setSearch(searchName);
 
     // Setup listener for handing mic data
@@ -326,7 +326,6 @@ export default class SpeechRecognizer extends EventEmitter {
     let [when, pcmData] = this._pcmDataQueue.shift();
     this._pcmDataQueueSizeInBytes -= pcmData.length;
 
-    let start = Date.now();
     this._decoder.processRaw(pcmData, false, false);
     if (this._inSpeech !== this._decoder.getInSpeech()) {
       this._inSpeech = this._decoder.getInSpeech();
@@ -346,7 +345,6 @@ export default class SpeechRecognizer extends EventEmitter {
       }
     }
 
-    log.debug(`Done processing mic data ${when} in ${Date.now() - start}ms`);
     this._processingInProgress = true;
 
     // Process next sample

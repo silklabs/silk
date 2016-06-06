@@ -24,6 +24,11 @@ const VAD_SEARCH = 'vad';
 // Keyword we are looking for to activate menu
 const KEYPHRASE = 'ok sense';
 
+//Allow continuous keyword spotting if dialog is disabled
+const DIALOG_ENABLED_PROP = 'persist.silk.dialog.enabled';
+
+type VadMode = 'continuous' | 'dialog';
+
 /**
  * This class adds voice recognition functionality to silk devices
  */
@@ -34,6 +39,11 @@ class OkSilk {
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
+  _onDialogStart: () => void;
+  _onDialogStop: () => void;
+  _onKeyword: () => void;
+  _dialogEnabled: boolean;
+  _vadMode: VadMode;
 
   constructor(env: Env) {
     this._env = env;
@@ -42,6 +52,7 @@ class OkSilk {
     log = this._env.log;
     this._say = env.say;
     this._setupRecognizer();
+    this._dialogEnabled = util.getboolprop(DIALOG_ENABLED_PROP, false);
   }
 
   /**
@@ -55,6 +66,10 @@ class OkSilk {
       this._speechRecognizer.willUnload();
     }
     this._stopVoiceActivityDetection();
+    if (timeline) {
+      timeline.removeListener('dialog_start', this._onDialogStart);
+      timeline.removeListener('dialog_stop', this._onDialogStop);
+    }
   }
 
   /**
@@ -104,9 +119,6 @@ class OkSilk {
     this._speechRecognizer.finishSetup();
 
     // Add model searches
-    // TODO: Patch pocketsphinx to not required a search to be set to run
-    // vad detection. For now keyphrase search seems to be taking the least
-    // amount of time from among the other type of searches available
     this._speechRecognizer.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
 
     // Setup listeners
@@ -122,22 +134,61 @@ class OkSilk {
       this._handleTimeout();
     };
 
-    // Start VAD when a dialog has started
-    timeline.on('dialog_start', () => {
-      // Start voice activity detection when keyword is detected
-      this._startVoiceActivityDetection(VAD_SEARCH);
-    });
+    // Start VAD when dialog starts and stop when end of speech
+    // is detected
+    this._onDialogStart = () => {
+      this._startVoiceActivityDetection();
+    };
+
+    // Switch back to continuous mode when the dialog stops
+    this._onDialogStop = () => {
+      this._setVadMode('continuous');
+    };
+
+    this._onKeyword = () => {
+      // Go in a dialog mode when keyword is detected
+      this._setVadMode('dialog');
+    };
+
+    // Start the continuous mode
+    this._setVadMode('continuous');
+  }
+
+  /**
+   * The extension can be in continuous or dialog mode. In continuous mode
+   * we continue to run VAD to be able to spot the keyword. Once the keyword is
+   * spotted we switch to the dialog mode so we only run VAD at the beginning of
+   * a dialog and stop at end of speech to prevent VAD from interfering with
+   * the dialog's voice interaction (text-to-speech).
+   */
+  _setVadMode(mode) {
+    log.info(`Switching to ${mode} mode`);
+    this._vadMode = mode;
+
+    if (this._vadMode === 'continuous') {
+      timeline.on('keyword', this._onKeyword);
+      timeline.removeListener('dialog_start', this._onDialogStart);
+      timeline.removeListener('dialog_stop', this._onDialogStop);
+      this._startVoiceActivityDetection();
+    } else if (this._vadMode === 'dialog') {
+      this._stopVoiceActivityDetection();
+      timeline.removeListener('keyword', this._onKeyword);
+      timeline.on('dialog_start', this._onDialogStart);
+      timeline.on('dialog_stop', this._onDialogStop);
+    } else {
+      log.warn(`Unknown VAD mode: ${mode}`);
+    }
   }
 
   /**
    * Register for VAD events
    */
-  _startVoiceActivityDetection(search): void {
+  _startVoiceActivityDetection(): void {
     log.debug(`start vad`);
     this._speechRecognizer.on('speech_start', this._onSpeechStart);
     this._speechRecognizer.on('speech_stop', this._onSpeechStop);
     this._speechRecognizer.on('speech_timeout', this._onSpeechTimeout);
-    this._switchSearch(search);
+    this._startSearch(VAD_SEARCH);
   }
 
   /**
@@ -145,6 +196,7 @@ class OkSilk {
    */
   _stopVoiceActivityDetection(): void {
     log.debug(`stop vad`);
+    this._speechRecognizer.stop();
     if (this._onSpeechStart) {
       this._speechRecognizer.removeListener('speech_start', this._onSpeechStart);
     }
@@ -157,12 +209,22 @@ class OkSilk {
   }
 
   /**
-   * Switch between default or hotkeyword listening mode and grammar search with silk
-   * commands
+   * Start the search
+   *
+   * TODO: Patch pocketsphinx to not required a search to be set to run
+   * vad detection. For now keyphrase search seems to be taking the least
+   * amount of time from among the other type of searches available
    */
-  _switchSearch(searchName): void {
+  _startSearch(): void {
     this._speechRecognizer.stop();
-    this._speechRecognizer.startListeningTimeout(searchName, LISTEN_TIMEOUT);
+
+    if (this._vadMode === 'dialog') {
+      // Wait for LISTEN_TIMEOUT time for VAD start in a dialog mode
+      this._speechRecognizer.startListeningTimeout(VAD_SEARCH, LISTEN_TIMEOUT);
+    } else {
+      // Continue to wait for VAD start in a continuous mode
+      this._speechRecognizer.startListening(VAD_SEARCH);
+    }
   }
 
   /**
@@ -188,8 +250,11 @@ class OkSilk {
       when,
     }]);
 
-    // Wait for next keyword to be spotted before starting VAD again
-    this._stopVoiceActivityDetection();
+    // Suspend VAD activity if in a dialog mode until the next dialog_start
+    // event is received
+    if (this._vadMode === 'dialog') {
+      this._stopVoiceActivityDetection();
+    }
   }
 
   /**
@@ -203,7 +268,9 @@ class OkSilk {
       when: Date.now(),
     }]);
 
-    this._stopVoiceActivityDetection();
+    if (this._vadMode === 'dialog') {
+      this._stopVoiceActivityDetection();
+    }
   }
 
   /**

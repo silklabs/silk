@@ -10,22 +10,15 @@ import path from 'path';
 import config from 'silk-config';
 import SpeechRecognizer from './speechrecognizer';
 import type { Env, Util, Say, Log, Timeline } from 'silk-exttest';
-import type { Hypothesis } from 'pocketsphinx';
 
 let log: Log;
 let util: Util;
 let timeline: Timeline;
 
-// Enable or disable keyword spotting mode. With kws disabled the extension
-// only does the voice activity detection and no voice recognition
-const KWS_ENABLED_PROP = 'persist.silk.oksilk.kws.enabled';
-
 const MODEL_DIR = path.join(__dirname, '..', 'model');
 const LISTEN_TIMEOUT = 3000; // In activity timeout after keyword is detected
 
 // Named searches allow to quickly reconfigure the decoder
-const HOTKEY_SEARCH = 'default';
-const SILK_COMMANDS = 'commands';
 const VAD_SEARCH = 'vad';
 
 // Keyword we are looking for to activate menu
@@ -38,7 +31,6 @@ class OkSilk {
   _env: Env;
   _say: Say;
   _speechRecognizer: SpeechRecognizer;
-  _kwsEnabled: boolean;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
@@ -49,7 +41,6 @@ class OkSilk {
     timeline = this._env.timeline;
     log = this._env.log;
     this._say = env.say;
-    this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, false);
     this._setupRecognizer();
   }
 
@@ -113,19 +104,10 @@ class OkSilk {
     this._speechRecognizer.finishSetup();
 
     // Add model searches
-    if (this._kwsEnabled) {
-      // Add keyphrase search
-      this._speechRecognizer.addKeyphraseSearch(HOTKEY_SEARCH, KEYPHRASE);
-
-      // Add grammar-based search for selection between demos
-      this._speechRecognizer.addGrammarSearch(SILK_COMMANDS,
-          path.join(MODEL_DIR, 'silk.gram'));
-    } else {
-      // TODO: Patch pocketsphinx to not required a search to be set to run
-      // vad detection. For now keyphrase search seems to be taking the least
-      // amount of time from among the other type of searches available
-      this._speechRecognizer.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
-    }
+    // TODO: Patch pocketsphinx to not required a search to be set to run
+    // vad detection. For now keyphrase search seems to be taking the least
+    // amount of time from among the other type of searches available
+    this._speechRecognizer.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
 
     // Setup listeners
     this._onSpeechStart = (when) => {
@@ -140,24 +122,11 @@ class OkSilk {
       this._handleTimeout();
     };
 
-    if (this._kwsEnabled) {
-      this._speechRecognizer.on('result', hypothesis => {
-        this._handleResult(hypothesis);
-      });
-
-      this._speechRecognizer.on('partialResult', hypothesis => {
-        this._handlePartialResult(hypothesis);
-      });
-
-      // Start listening for the hot keyword
-      this._startVoiceActivityDetection(HOTKEY_SEARCH);
-    } else {
-      // If kws is disabled then start VAD when a dialog has started
-      timeline.on('dialog_start', () => {
-        // Start voice activity detection when keyword is detected
-        this._startVoiceActivityDetection(VAD_SEARCH);
-      });
-    }
+    // Start VAD when a dialog has started
+    timeline.on('dialog_start', () => {
+      // Start voice activity detection when keyword is detected
+      this._startVoiceActivityDetection(VAD_SEARCH);
+    });
   }
 
   /**
@@ -193,54 +162,7 @@ class OkSilk {
    */
   _switchSearch(searchName): void {
     this._speechRecognizer.stop();
-
-    // If we are not spotting, start listening with timeout
-    if (searchName === HOTKEY_SEARCH) {
-      this._speechRecognizer.startListening(searchName);
-    } else {
-      this._speechRecognizer.startListeningTimeout(searchName, LISTEN_TIMEOUT);
-    }
-    log.debug(`Switching to search ${searchName}`);
-  }
-
-  /**
-   * This callback is called when we stop the recognizer. This is where we
-   * act on the commands
-   */
-  _handleResult(hypothesis: Hypothesis): void {
-    if (hypothesis !== null) {
-      let text = hypothesis.hypstr;
-      log.info(`Received result hypothesis: ${text}`);
-
-      if (text.match(new RegExp(`on lights`, 'i'))) {
-        this._say.speak(`turning lights on`);
-      } else if (text.match(new RegExp(`off lights`, 'i'))) {
-        this._say.speak(`turning lights off`);
-      } else if (text.match(new RegExp(`dim lights`, 'i'))) {
-        this._say.speak(`dimming the lights`);
-      } else if (text.match(new RegExp(`bright lights`, 'i'))) {
-        this._say.speak(`brightning the lights`);
-      }
-    }
-  }
-
-  /**
-   * In partial result we get quick updates about current hypothesis. In
-   * keyword spotting mode we can react here, in other modes we need to wait
-   * for final result in onResult.
-   */
-  _handlePartialResult(hypothesis: Hypothesis): void {
-    if (hypothesis === null) {
-      return;
-    }
-
-    let text = hypothesis.hypstr;
-    log.info(`Received partial result hypothesis: ${text}`);
-
-    if (text.match(new RegExp(`${KEYPHRASE}`, 'i'))) {
-      this._playHotKeywordSound();
-      this._switchSearch(SILK_COMMANDS);
-    }
+    this._speechRecognizer.startListeningTimeout(searchName, LISTEN_TIMEOUT);
   }
 
   /**
@@ -266,15 +188,8 @@ class OkSilk {
       when,
     }]);
 
-    if (this._kwsEnabled) {
-      if (this._speechRecognizer.getSearchName() !== HOTKEY_SEARCH) {
-        log.debug(`Current search: ${this._speechRecognizer.getSearchName()}`);
-        this._switchSearch(HOTKEY_SEARCH);
-      }
-    } else {
-      // Wait for next keyword to be spotted before starting VAD again
-      this._stopVoiceActivityDetection();
-    }
+    // Wait for next keyword to be spotted before starting VAD again
+    this._stopVoiceActivityDetection();
   }
 
   /**
@@ -288,11 +203,7 @@ class OkSilk {
       when: Date.now(),
     }]);
 
-    if (this._kwsEnabled) {
-      this._switchSearch(HOTKEY_SEARCH);
-    } else {
-      this._stopVoiceActivityDetection();
-    }
+    this._stopVoiceActivityDetection();
   }
 
   /**

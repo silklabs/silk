@@ -260,8 +260,6 @@ export default class SpeechRecognizer extends EventEmitter {
       return;
     }
     log.debug(`Stop recognition`);
-    let hypothesis = this._decoder.hyp();
-    this.emit('result', hypothesis);
 
     // Clear the queue to remove any stale data there might be
     this._pcmDataQueue.length = 0;
@@ -348,9 +346,6 @@ export default class SpeechRecognizer extends EventEmitter {
       }
     }
 
-    // Get hypothesis string and path score
-    let hypothesis = this._decoder.hyp();
-    this.emit('partialResult', hypothesis);
     log.debug(`Done processing mic data ${when} in ${Date.now() - start}ms`);
     this._processingInProgress = true;
 

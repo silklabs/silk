@@ -57,11 +57,23 @@ class Env extends EventEmitter {
    * @private
    */
   _addEvents(deviceName, device, extDevice, events) {
-    events.forEach(event => {
-      let listener = (...args) => extDevice.emit(event, ...args);
-      device.on(event, listener);
-      this._saveListener(device, event, listener);
-    });
+    let newListener = (eventName) => {
+      if (events.indexOf(eventName) === -1) {
+        log.warn(`Unknown event ${deviceName}/${eventName}`);
+        return;
+      }
+      log.debug(`Adding ${deviceName}/${eventName} listener`);
+      let listener = (...args) => extDevice.emit(eventName, ...args);
+      device.on(eventName, listener);
+      this._saveListener(device, eventName, listener);
+    };
+
+    // Don't bother the real object until an extension actually registers a
+    // listener on the extension-specific doppelganger object
+    //
+    // TODO: Listeners are not yet removed from the real object to match a
+    //       doppelganger removal (eg, 'preview-fast')
+    extDevice.on('newListener', newListener);
   }
 
   /**
@@ -87,7 +99,7 @@ class Env extends EventEmitter {
     let sensors = deviceObjects.sensors;
     if (sensors) {
       /**
-       * Light event. This event is emiited when light sensor level is available
+       * Light event. This event is emitted when light sensor level is available
        *
        * @event light
        * @memberof Env.sensors
@@ -271,7 +283,7 @@ class Env extends EventEmitter {
        */
 
       /**
-       * Motion event. This event is emiited when motion is detected by the device
+       * Motion event. This event is emitted when motion is detected by the device
        *
        * @event motion
        * @memberof Env.timeline
@@ -282,7 +294,7 @@ class Env extends EventEmitter {
        */
 
       /**
-       * No motion event. This event is emiited when no motion is detected in
+       * No motion event. This event is emitted when no motion is detected in
        * the last preview frame
        *
        * @event no-motion

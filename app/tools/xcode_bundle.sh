@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Bundle React Native app's code and image assets.
 # This script is supposed to be invoked as part of Xcode build process
@@ -17,6 +17,7 @@ case "$CONFIGURATION" in
     ;;
 esac
 
+source $(dirname $0)/../../tools/gnu.sh
 APP_DIR="$(realpath $(dirname $0)/..)"
 REACT_NATIVE_DIR="$APP_DIR/node_modules/react-native"
 

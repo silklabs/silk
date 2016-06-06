@@ -4,9 +4,6 @@
   "bin": {
     "silk-buildjs": "./bin/build"
   },
-  "scripts": {
-    "postinstall": "../npm_postinstall"
-  },
   "symlinkDependencies": {
     "babel-core": "../babel-core",
     "babel-preset-silk-node4": "../babel-preset-silk-node4"

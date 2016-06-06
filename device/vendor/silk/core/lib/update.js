@@ -29,7 +29,7 @@ const DEVICE_PROP = 'ro.boot.hardware';
 const POLL_HOURS_PROP = 'ro.silk.update.poll_hours';
 const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
-const UPDATE_FILE_PATH = '/cache/update.zip';
+const UPDATE_FILE_PATH = '/data/update.zip';
 
 const DEVICE = util.getprop(DEVICEOVERRIDE_PROP, util.getprop(DEVICE_PROP));
 const FINGERPRINT = util.getprop('ro.build.fingerprint');

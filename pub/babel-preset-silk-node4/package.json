@@ -37,8 +37,12 @@
     "preset",
     "babel-plugin",
     "babel-preset",
-    "node4"
+    "node4",
+    "silk"
   ],
   "author": "Silk Labs",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/silklabs/silk/issues"
+  }
 }

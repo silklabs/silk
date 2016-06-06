@@ -1,12 +1,12 @@
 # Silk App
 
-The Silk app is written with React Native.  To install the toolchain necessary for React Native development, [see relevant instructions](https://facebook.github.io/react-native/docs/getting-started.html).
+## Prerequisites
 
-## Installing and running the app
+The Silk app is written with React Native.  To install the toolchain necessary for React Native development, [see the React Native Getting Started docs](https://facebook.github.io/react-native/docs/getting-started.html).
 
-First install the module dependencies:
-```
-./install.sh
+If you're developing on OS X, you will also need to install the GNU coreutils:
+```sh
+brew install coreutils
 ```
 
 ## General notes
@@ -73,7 +73,12 @@ Then start the packager normally and run a Debug build on your device. Invoke th
 
 ### Setting up a development environment
 
-To develop the app, open `ios/Silk.xcodeproj` in Xcode.  You can do most development in the iOS simulators.  A physical device is only required for Bluetooth development, performance testing, and touch-tap testing.
+First install and build the module dependencies:
+```
+./install.sh
+```
+
+To run and develop the app, open `ios/Silk.xcodeproj` in Xcode.  You can do most development in the iOS simulators.  A physical device is only required for Bluetooth development, performance testing, and touch-tap testing.
 
 ### Development cycle
 
@@ -120,22 +125,27 @@ By leaving an instance of the packager server running and using it to generate u
 
 ### Setting up a development environment
 
+First install and build the module dependencies:
+```sh
+./install.sh
+```
+
 For developing the native Java part of the app, any Android-capable IDE will work. Android Studio works very well as it can import the Gradle configuration as a project. Just point it at `android/build.gradle`.
 
 ### Development cycle
 
 Start the packaging server like on iOS:
-```
+```sh
 npm start
 ```
 
 Build, install, and run the Android app on a connected Android phone or emulator:
-```
+```sh
 react-native run-android
 ```
 
 You can also call the `gradle` script manually, e.g. if you need to debug the build:
-```
+```sh
 cd android
 ./gradlew installDebug --debug
 ```

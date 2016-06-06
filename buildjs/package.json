@@ -4,6 +4,14 @@
   "bin": {
     "silk-buildjs": "./bin/build"
   },
+  "author": "Silk Labs Inc.",
+  "license": "MIT",
+  "keywords": [
+    "silk"
+  ],
+  "bugs": {
+    "url": "https://github.com/silklabs/silk/issues"
+  },
   "symlinkDependencies": {
     "babel-core": "../babel-core",
     "babel-preset-silk-node4": "../babel-preset-silk-node4"

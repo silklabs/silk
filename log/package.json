@@ -6,12 +6,18 @@
   "scripts": {
     "test": "DEBUG=silk-log* mocha --ui tdd --timeout 45000 --require test/setup.js test/index_test.js test/device_test.js"
   },
-  "author": "Ben Turner",
+  "author": "Silk Labs Inc.",
+  "license": "MIT",
+  "keywords": [
+    "silk"
+  ],
+  "bugs": {
+    "url": "https://github.com/silklabs/silk/issues"
+  },
   "dependencies": {
     "debug": "2.2.0"
   },
   "devDependencies": {
     "mocha": "2.4.5"
-  },
-  "private": true
+  }
 }

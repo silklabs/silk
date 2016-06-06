@@ -56,7 +56,7 @@ sed -e "s/\/[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\//\/$SILK_CORE_VERSION\//" -i 
 for package in $(find . -maxdepth 2 -name package.json) \
                $(find pub -maxdepth 2 -name package.json); do
   case $package in
-  *external-*|*babel-core*|*babelcompile*|*babel-register*|pub/sdk/*|pub/cli/*)
+  *external-*|*babel-core*|*babelcompile*|*babel-register*)
     echo "skipped $package"
     ;;
   *)

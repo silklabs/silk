@@ -260,7 +260,7 @@ export default class WifiConfig extends React.Component {
           placeholder="Enter Wi-Fi password"
           value={this.state.secret}
           style={styles.textInput}
-          onChangeText={secret => this.setState({secret})}
+          onChangeText={(secret) => this.setState({secret})}
         />
         <TouchableWithoutFeedback
           onPress={() => this.setState({secretShown: !this.state.secretShown})}>
@@ -280,9 +280,11 @@ export default class WifiConfig extends React.Component {
         <View>
           <View style={styles.secretRow}>
             <TouchableWithoutFeedback onPress={this._showAuthTypeModal}>
-              <Text style={styles.ssidLabel}>
-                {manualNetwork && manualNetwork.psk ? 'WPA' : 'Open'}
-              </Text>
+              <View>
+                <Text style={styles.ssidLabel}>
+                  {manualNetwork && manualNetwork.psk ? 'WPA' : 'Open'}
+                </Text>
+              </View>
             </TouchableWithoutFeedback>
           </View>
           {manualNetwork && manualNetwork.psk ? this._renderSecretInputRow() : null}
@@ -299,7 +301,7 @@ export default class WifiConfig extends React.Component {
     }
     return (
       <View style={styles.secretRow}>
-        <Text>
+        <Text style={styles.noPskLabel}>
           None
         </Text>
       </View>
@@ -488,17 +490,24 @@ const styles = StyleSheet.create({
   ssidRow: {
     flexDirection: 'row',
     alignSelf: 'stretch',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     marginVertical: 8,
     paddingVertical: 8,
     borderBottomWidth: 3,
     borderBottomColor: 'white',
   },
   ssidLabel: {
-    fontFamily: 'Open Sans',
+    fontFamily: 'OpenSans',
     fontSize: 18,
     color: 'white',
     flex: 1,
+    backgroundColor: 'transparent',
+  },
+  noPskLabel: {
+    fontFamily: 'OpenSans-Italic',
+    fontSize: 18,
+    height: 32,
+    color: 'white',
     backgroundColor: 'transparent',
   },
   secretRow: {
@@ -542,7 +551,7 @@ const styles = StyleSheet.create({
   textInput: {
     color: 'white',
     height: 32,
-    fontFamily: 'Open Sans',
+    fontFamily: 'OpenSans',
     fontSize: 18,
     flex: 1,
   },

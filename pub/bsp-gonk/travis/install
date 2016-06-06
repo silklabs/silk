@@ -10,9 +10,15 @@ echo PRODUCT: $PRODUCT
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
   export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
+  export CC=/usr/bin/gcc CXX=/usr/bin/g++
   export FULL_SERVICE=1
   export CI_IGNORE_CASE_INSENSITIVE_FS=please
   source ./travis/osx_setup
+
+  # shell_session_update is missing from OSX host environment somehow which breaks stuff...
+  shell_session_update() {
+    :
+  }
 else
   export PREBUILT_CCACHE=prebuilts/misc/linux-x86/ccache/ccache
   export CXX="g++-4.8" CC="gcc-4.8"

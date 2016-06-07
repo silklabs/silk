@@ -1,1 +1,0 @@
-../pub/tools/gnu.sh

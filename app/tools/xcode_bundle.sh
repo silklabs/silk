@@ -17,7 +17,7 @@ case "$CONFIGURATION" in
     ;;
 esac
 
-source $(dirname $0)/../../tools/gnu.sh
+source $(dirname $0)/../../pub/tools/gnu.sh
 APP_DIR="$(realpath $(dirname $0)/..)"
 REACT_NATIVE_DIR="$APP_DIR/node_modules/react-native"
 

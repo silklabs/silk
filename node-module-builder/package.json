@@ -1,6 +1,6 @@
 {
   "name": "node-module-builder",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "Tool to build, load and compile native node modules on linux and OSX.",
   "main": "index.js",
   "scripts": {

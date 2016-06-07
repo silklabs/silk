@@ -57,8 +57,8 @@ let SENSOR_TYPE = {
  * sensors.on('initialize', () => {
  *  sensors.activate(sensors.SENSOR_TYPE.LIGHT, 250);
  * });
- * sesnors.on('data', (sensorEvent) => {
- *  log.info('Sensor type: ', + sensorEvent.sensorType);
+ * sensors.on('data', (sensorEvent) => {
+ *  log.info('Sensor type: ' + sensorEvent.sensorType);
  *  log.info('Sensor values: + sensorEvent.values');
  * });
  */

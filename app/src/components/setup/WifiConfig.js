@@ -16,15 +16,9 @@ import WifiNetworkSelector from './WifiNetworkSelector';
 import Selector from './Selector';
 import SetupScreen from './SetupScreen';
 import Spinner from '../Spinner';
-import { getWifiInfo } from '../../libraries/Util';
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
-import type { DeviceWifiNetwork } from '../../libraries/ble/DeviceManager';
-import type { WifiInfo } from '../../libraries/Util.js';
-
 const log = createLog('WifiConfig');
-
-const SENTINEL = {};
 
 export default class WifiConfig extends React.Component {
 
@@ -32,163 +26,49 @@ export default class WifiConfig extends React.Component {
     bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
     onSave: React.PropTypes.func.isRequired,
     onCancel: React.PropTypes.func.isRequired,
+
+    localWifiInfo: React.PropTypes.object,
+    deviceNetworks: WifiNetworkSelector.propTypes.deviceNetworks,
+    attemptedWifiMatch: React.PropTypes.bool.isRequired,
+    selectedDeviceNetwork: WifiNetworkSelector.propTypes.selectedNetwork,
+    manualEntry: React.PropTypes.bool.isRequired,
+    manualNetwork: React.PropTypes.object,
+    secret: React.PropTypes.string.isRequired,
+
+    clearState: React.PropTypes.func.isRequired,
+    getLocalWifiInfo: React.PropTypes.func.isRequired,
+    onDeviceWifiScan: React.PropTypes.func.isRequired,
+    onDeviceNetworkSelected: React.PropTypes.func.isRequired,
+    onSelectEnterManually: React.PropTypes.func.isRequired,
+    onSelectChooseFromDeviceList: React.PropTypes.func.isRequired,
+    onSecretChange: React.PropTypes.func.isRequired,
+    onManualNetworkSSIDChange: React.PropTypes.func.isRequired,
+    onManualNetworkPSKChange: React.PropTypes.func.isRequired,
   };
 
   state = {
-    /**
-     * Possible values:
-     * - SENTINEL: we don't have that info yet
-     * - null: the phone is connected to Wifi
-     * - WifiInfo object
-     */
-    localWifiInfo: SENTINEL,
-
-    /**
-     * An array of DeviceWifiNetwork objects, or null if we don't have that info yet.
-     */
-    deviceNetworks: null,
-
-    /**
-     * Whether or not we've attempted to match the phone's local WiFi
-     * info yet with any of the networks seen by the device.
-     */
-    attemptedWifiMatch: false,
-
-    /**
-     * Whether the user is picking the network from the
-     * device-generated list or entering it manually.
-     */
-    manualEntry: false,
-
-    /**
-     * DeviceWifiNetwork network that's been automatically matched or
-     * picked by the user from the `deviceNetworks` list.
-     */
-    selectedDeviceNetwork: null,
-
-    /**
-     * Network info manually entered by the user.
-     */
-    manualNetwork: null,
-
-    /**
-     * Wi-Fi passphrase, and whether it's visible or not.
-     */
-    secret: null,
     secretShown: false,
-
     wifiModalShown: false,
     authTypeModalShown: false,
   };
 
-  mounted = false;
-
   componentWillMount() {
-    this.mounted = true;
-
     let { bleDeviceSession } = this.props;
-    bleDeviceSession.on('wifiscan', this._onDeviceNetworks);
+    bleDeviceSession.on('wifiscan', this.props.onDeviceWifiScan);
     log.debug('Initial device networks:', bleDeviceSession.wifiNetworks);
-    this._onDeviceNetworks(bleDeviceSession.wifiNetworks);
-
-    getWifiInfo().then(this._onLocalWifiInfo);
-  }
-
-  _onLocalWifiInfo: ((localWifiInfo: WifiInfo) => void) = (localWifiInfo) => {
-    log.debug('Local device WiFi connection', localWifiInfo);
-    this._reconcileWifiSources(this.state.deviceNetworks, localWifiInfo);
-  };
-
-  _onDeviceNetworks: ((deviceNetworks: ?Array<DeviceWifiNetwork>) => void) = (deviceNetworks) => {
-    if (!this.mounted) {
-      return;
-    }
-    if (!deviceNetworks) {
-      return;
-    }
-
-    // Sort alphabetically by SSID.
-    deviceNetworks = deviceNetworks
-      .slice()
-      .sort((a, b) => a.ssid.localeCompare(b.ssid));
-    this._reconcileWifiSources(deviceNetworks, this.state.localWifiInfo);
-  };
-
-  _reconcileWifiSources(
-    deviceNetworks: ?Array<DeviceWifiNetwork>,
-    localWifiInfo: ?WifiInfo,
-  ) {
-    // If we have gotten a match before, or a manual entry, or if we
-    // don't have all info yet, don't try to do any matching. But do
-    // set newer values for either device or local WiFi info.
-    if (this.state.attemptedWifiMatch ||
-        this.state.selectedDeviceNetwork !== null ||
-        localWifiInfo === SENTINEL ||
-        deviceNetworks === null) {
-      if (this.state.localWifiInfo !== localWifiInfo ||
-          this.state.deviceNetworks !== deviceNetworks) {
-        this.setState({localWifiInfo, deviceNetworks});
-      }
-      return;
-    }
-
-    // We're trying to find the best match between local and device
-    // WiFi info (for the first and only time.) Even if there's no
-    // match we want to set newer values for either device or local
-    // WiFi info and update the UI to indicate that we're done trying
-    // to figure out the best match.
-    const match = this._findBestWifiMatch(deviceNetworks, localWifiInfo);
-    if (!match) {
-      log.debug('Could not find a match for WiFi networks.');
-      this.setState({deviceNetworks, localWifiInfo, attemptedWifiMatch: true});
-      return;
-    }
-
-    log.debug('Found a match for the WiFi network:', match.ssid);
-    this.setState({
-      deviceNetworks,
-      localWifiInfo,
-      attemptedWifiMatch: true,
-      selectedDeviceNetwork: match,
-    });
-  }
-
-  _findBestWifiMatch(
-    deviceNetworks: Array<DeviceWifiNetwork>,
-    localWifiInfo: ?WifiInfo,
-  ): ?DeviceWifiNetwork {
-    if (!deviceNetworks.length) {
-      return null;
-    }
-
-    // Return strongest WiFi seen by device if the phone isn't
-    // connected to any WiFi network.
-    if (!localWifiInfo) {
-      log.debug('No WiFi information from local device.');
-      return deviceNetworks.slice().sort((a, b) => b.level - a.level)[0];
-    }
-
-    let selectedDeviceNetwork =
-      deviceNetworks.find((network) => network.ssid === localWifiInfo.SSID);
-    if (selectedDeviceNetwork) {
-      log.debug('Found match based on SSID:', selectedDeviceNetwork);
-      return selectedDeviceNetwork;
-    }
-
-    selectedDeviceNetwork = deviceNetworks.slice().sort((a, b) => b.level - a.level)[0];
-    log.debug('Resorting to WiFi with strongest RSSI:', selectedDeviceNetwork);
-    return selectedDeviceNetwork;
+    this.props.onDeviceWifiScan(bleDeviceSession.wifiNetworks);
+    this.props.getLocalWifiInfo();
   }
 
   componentWillUnmount() {
-    this.mounted = false;
     let { bleDeviceSession } = this.props;
-    bleDeviceSession.removeListener('wifiscan', this._onDeviceNetworks);
+    bleDeviceSession.removeListener('wifiscan', this.props.onDeviceWifiScan);
+    this.props.clearState();
   }
 
   _renderSSIDControls() {
-    if (this.state.manualEntry) {
-      const { manualNetwork } = this.state;
+    if (this.props.manualEntry) {
+      const { manualNetwork } = this.props;
       return (
         <View style={styles.ssidRow}>
           <TextInput
@@ -198,7 +78,7 @@ export default class WifiConfig extends React.Component {
             autoCapitalize="none"
             value={manualNetwork.ssid}
             style={styles.textInput}
-            onChangeText={(ssid) => this.setState({manualNetwork: {...manualNetwork, ssid}})}
+            onChangeText={this.props.onManualNetworkSSIDChange}
           />
           <TouchableWithoutFeedback onPress={this._chooseFromList}>
             <Image
@@ -210,7 +90,7 @@ export default class WifiConfig extends React.Component {
       );
     }
 
-    if (!this.state.attemptedWifiMatch) {
+    if (!this.props.attemptedWifiMatch) {
       return (
         <View style={styles.ssidRow}>
           <Text style={styles.ssidLabel}>Scanning...</Text>
@@ -225,7 +105,7 @@ export default class WifiConfig extends React.Component {
         </Text>
       </View>
     );
-    const { selectedDeviceNetwork } = this.state;
+    const { selectedDeviceNetwork } = this.props;
     if (selectedDeviceNetwork) {
       ssidRow = (
         <View style={styles.ssidRow}>
@@ -258,9 +138,9 @@ export default class WifiConfig extends React.Component {
           autoCorrect={false}
           autoCapitalize="none"
           placeholder="Enter Wi-Fi password"
-          value={this.state.secret}
+          value={this.props.secret}
           style={styles.textInput}
-          onChangeText={(secret) => this.setState({secret})}
+          onChangeText={this.props.onSecretChange}
         />
         <TouchableWithoutFeedback
           onPress={() => this.setState({secretShown: !this.state.secretShown})}>
@@ -274,8 +154,8 @@ export default class WifiConfig extends React.Component {
   }
 
   _renderSecretControls() {
-    if (this.state.manualEntry) {
-      const { manualNetwork } = this.state;
+    if (this.props.manualEntry) {
+      const { manualNetwork } = this.props;
       return (
         <View>
           <View style={styles.secretRow}>
@@ -292,7 +172,7 @@ export default class WifiConfig extends React.Component {
       );
     }
 
-    const { selectedDeviceNetwork } = this.state;
+    const { selectedDeviceNetwork } = this.props;
     if (!selectedDeviceNetwork) {
       return null;
     }
@@ -317,11 +197,8 @@ export default class WifiConfig extends React.Component {
   };
 
   _selectNetwork = (network) => {
-    this.setState({
-      selectedDeviceNetwork: network,
-      wifiModalShown: false,
-      secret: null,
-    });
+    this.props.onDeviceNetworkSelected(network);
+    this._dismissWifiModal();
   };
 
   _scrollToSelectedWifiRow = () => {
@@ -330,28 +207,20 @@ export default class WifiConfig extends React.Component {
 
   _enterManually = () => {
     log.debug('Entering Wi-Fi information manually.');
-    this.setState({
-      wifiModalShown: false,
-      manualEntry: true,
-      manualNetwork: {
-        ssid: null,
-        psk: true,
-      },
-      secret: null,
-    });
+    this.props.onSelectEnterManually();
+    this._dismissWifiModal();
   };
 
   _chooseFromList = () => {
     log.debug('Going back to choosing from a list.');
-    this.setState({
-      wifiModalShown: true,
-      manualEntry: false,
-      manualNetwork: null,
-      secret: null,
-    });
-  }
+    this.props.onSelectChooseFromDeviceList();
+    this._showWifiModal();
+  };
 
   _renderWifiModal() {
+    if (!this.state.wifiModalShown) {
+      return null;
+    }
     return (
       <Modal
         animationType="none"
@@ -364,8 +233,8 @@ export default class WifiConfig extends React.Component {
         </TouchableWithoutFeedback>
         <WifiNetworkSelector
           ref="wifiNetworkSelector"
-          deviceNetworks={this.state.deviceNetworks}
-          selectedNetwork={this.state.selectedDeviceNetwork}
+          deviceNetworks={this.props.deviceNetworks}
+          selectedNetwork={this.props.selectedDeviceNetwork}
           onSelectNetwork={this._selectNetwork}
           onSelectManually={this._enterManually}
           style={styles.wifiSelector}
@@ -383,16 +252,14 @@ export default class WifiConfig extends React.Component {
   };
 
   _onSelectAuthType = (psk) => {
-    this.setState({
-      manualNetwork: {
-        ...this.state.manualNetwork,
-        psk,
-      },
-      authTypeModalShown: false,
-    });
+    this.props.onManualNetworkPSKChange(psk);
+    this._dismissAuthTypeModal();
   };
 
   _renderAuthTypeModal() {
+    if (!this.state.authTypeModalShown) {
+      return null;
+    }
     const { manualNetwork } = this.state;
     return (
       <Modal
@@ -423,14 +290,14 @@ export default class WifiConfig extends React.Component {
   }
 
   _handleSave = () => {
-    const network = this.state.manualEntry ?
-      this.state.manualNetork :
-      this.state.selectedDeviceNetwork;
+    const network = this.props.manualEntry ?
+      this.props.manualNetwork :
+      this.props.selectedDeviceNetwork;
     const {manufacturer, model} = this.props.bleDeviceSession;
     this.props.onSave({
       name: `${manufacturer} ${model}`,
       ssid: network.ssid,
-      secret: network.psk ? this.state.secret : null,
+      secret: network.psk ? this.props.secret : null,
     });
     this.props.navigator.pushAsync({
       name: 'DeviceStatus',
@@ -439,14 +306,13 @@ export default class WifiConfig extends React.Component {
   };
 
   render() {
-    const network = this.state.manualEntry ?
-      this.state.manualNetwork :
-      this.state.selectedDeviceNetwork;
+    const network = this.props.manualEntry ?
+      this.props.manualNetwork :
+      this.props.selectedDeviceNetwork;
     const saveButtonDisabled =
       !network ||
       !network.ssid ||
-      (network.psk && !this.state.secret) ||
-      (network.psk && this.state.secret.length < 8);
+      (network.psk && this.props.secret.length < 8);
 
     return (
       <SetupScreen

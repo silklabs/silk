@@ -8,15 +8,16 @@
 
 import path from 'path';
 import config from 'silk-config';
-import SpeechRecognizer from './speechrecognizer';
-import type { Env, Util, Say, Log, Timeline } from 'silk-exttest';
+import createLog from 'silk-log/device';
+import * as util from 'silk-sysutils';
 
-let log: Log;
-let util: Util;
-let timeline: Timeline;
+import SpeechRecognizer from './speechrecognizer';
+import type { Camera, Timeline } from 'silk-exttest';
+
+const log = createLog('vad');
 
 const MODEL_DIR = path.join(__dirname, '..', 'model');
-const LISTEN_TIMEOUT = 3000; // In activity timeout after keyword is detected
+const LISTEN_TIMEOUT = 5000; // In activity timeout after keyword is detected
 
 // Named searches allow to quickly reconfigure the decoder
 const VAD_SEARCH = 'vad';
@@ -24,17 +25,18 @@ const VAD_SEARCH = 'vad';
 // Keyword we are looking for to activate menu
 const KEYPHRASE = 'ok sense';
 
-//Allow continuous keyword spotting if dialog is disabled
+// Allow continuous keyword spotting if dialog is disabled
 const DIALOG_ENABLED_PROP = 'persist.silk.dialog.enabled';
 
-type VadMode = 'continuous' | 'dialog';
+export type VadMode = 'continuous' | 'dialog';
 
 /**
  * This class adds voice recognition functionality to silk devices
  */
-class OkSilk {
-  _env: Env;
-  _say: Say;
+export default class VoiceActivityDetector {
+
+  _timeline: Timeline;
+  _camera: Camera;
   _speechRecognizer: SpeechRecognizer;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
@@ -45,31 +47,11 @@ class OkSilk {
   _dialogEnabled: boolean;
   _vadMode: VadMode;
 
-  constructor(env: Env) {
-    this._env = env;
-    util = env.util;
-    timeline = this._env.timeline;
-    log = this._env.log;
-    this._say = env.say;
+  constructor(timeline: Timeline, camera: Camera) {
+    this._timeline = timeline;
+    this._camera = camera;
     this._setupRecognizer();
     this._dialogEnabled = util.getboolprop(DIALOG_ENABLED_PROP, false);
-  }
-
-  /**
-   * Called when extension is about to be unloaded
-   */
-  willUnload() {
-    if (this._speechRecognizer) {
-      this._speechRecognizer.cancel();
-      this._speechRecognizer.removeAllListeners('result');
-      this._speechRecognizer.removeAllListeners('partialResult');
-      this._speechRecognizer.willUnload();
-    }
-    this._stopVoiceActivityDetection();
-    if (timeline) {
-      timeline.removeListener('dialog_start', this._onDialogStart);
-      timeline.removeListener('dialog_stop', this._onDialogStop);
-    }
   }
 
   /**
@@ -81,7 +63,7 @@ class OkSilk {
 
     // Configure with audio properties of the input data from mic. These
     // properties must match the audio properties set in camera
-    this._speechRecognizer = new SpeechRecognizer(this._env, config.deviceMic);
+    this._speechRecognizer = new SpeechRecognizer(config.deviceMic, this._camera);
 
     // Bandwidth of Audio recorded from capture process is 16khz so use
     // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
@@ -155,26 +137,28 @@ class OkSilk {
   }
 
   /**
-   * The extension can be in continuous or dialog mode. In continuous mode
+   * VAD can be in continuous or dialog mode. In continuous mode
    * we continue to run VAD to be able to spot the keyword. Once the keyword is
    * spotted we switch to the dialog mode so we only run VAD at the beginning of
    * a dialog and stop at end of speech to prevent VAD from interfering with
    * the dialog's voice interaction (text-to-speech).
    */
-  _setVadMode(mode) {
+  _setVadMode(mode: VadMode) {
     log.info(`Switching to ${mode} mode`);
     this._vadMode = mode;
 
     if (this._vadMode === 'continuous') {
-      timeline.on('keyword', this._onKeyword);
-      timeline.removeListener('dialog_start', this._onDialogStart);
-      timeline.removeListener('dialog_stop', this._onDialogStop);
+      if (this._dialogEnabled) {
+        this._timeline.on('keyword', this._onKeyword);
+      }
+      this._timeline.removeListener('dialog_start', this._onDialogStart);
+      this._timeline.removeListener('dialog_stop', this._onDialogStop);
       this._startVoiceActivityDetection();
     } else if (this._vadMode === 'dialog') {
       this._stopVoiceActivityDetection();
-      timeline.removeListener('keyword', this._onKeyword);
-      timeline.on('dialog_start', this._onDialogStart);
-      timeline.on('dialog_stop', this._onDialogStop);
+      this._timeline.removeListener('keyword', this._onKeyword);
+      this._timeline.on('dialog_start', this._onDialogStart);
+      this._timeline.on('dialog_stop', this._onDialogStop);
     } else {
       log.warn(`Unknown VAD mode: ${mode}`);
     }
@@ -232,8 +216,8 @@ class OkSilk {
    */
   _handleBeginningOfSpeech(when: number): void {
     log.debug(`Speech begin`);
-    timeline.addObjects([{
-      source: 'oksilk',
+    this._timeline.addObjects([{
+      source: 'silk-vad',
       tag: 'speech_start',
       when,
     }]);
@@ -244,8 +228,8 @@ class OkSilk {
    */
   _handleEndOfSpeech(when: number): void {
     log.debug(`Speech end`);
-    timeline.addObjects([{
-      source: 'oksilk',
+    this._timeline.addObjects([{
+      source: 'silk-vad',
       tag: 'speech_stop',
       when,
     }]);
@@ -262,8 +246,8 @@ class OkSilk {
    */
   _handleTimeout(): void {
     log.debug(`speech timeout`);
-    timeline.addObjects([{
-      source: 'oksilk',
+    this._timeline.addObjects([{
+      source: 'silk-vad',
       tag: 'speech_timeout',
       when: Date.now(),
     }]);
@@ -272,13 +256,4 @@ class OkSilk {
       this._stopVoiceActivityDetection();
     }
   }
-
-  /**
-   * Play a sound when hot keyword is detected
-   */
-  _playHotKeywordSound(): void {
-    util.playSound(path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3'));
-  }
 }
-
-module.exports = (env: Env): any => new OkSilk(env);

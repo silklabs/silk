@@ -8,11 +8,11 @@
 
 import * as pocketsphinx from 'pocketsphinx';
 import { EventEmitter } from 'events';
+import createLog from 'silk-log/device';
+import type { Log, Camera } from 'silk-exttest';
 
-import type { Env, Log } from 'silk-exttest';
-
+const log = createLog('vad');
 let ps = pocketsphinx.ps;
-let log: Log;
 
 type Config = {
   sampleRate: number;
@@ -28,13 +28,13 @@ type MicData = {
 type MicDataCallback = (pkt: MicData) => void;
 
 /**
- * Implementattion of speech recognition library using pocketsphinx. This class
- * receives mic data and recognizes it using Pocketsphinx engine. Recognition
- * events are passed to a client using events.
+ * Implementattion of voice activity detection using pocketsphinx. This class
+ * receives mic data and rus voice activity detection on it using Pocketsphinx
+ * engine.
  */
 export default class SpeechRecognizer extends EventEmitter {
 
-  _env: Env;
+  _camera: Camera;
   _decoder: any;
   _config: any;
   _onMicData: MicDataCallback;
@@ -50,10 +50,9 @@ export default class SpeechRecognizer extends EventEmitter {
   _listening: boolean;
   _listenTimeout: ?number;
 
-  constructor(env: Env, cfg: Config) {
+  constructor(cfg: Config, camera: Camera) {
     super();
-    this._env = env;
-    log = env.log;
+    this._camera = camera;
     this._decoder = null;
     this._listening = false;
 
@@ -76,15 +75,6 @@ export default class SpeechRecognizer extends EventEmitter {
         this._numChannels;
 
     this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
-  }
-
-  /**
-   * Called when extension is about to be unloaded
-   */
-  willUnload(): void {
-    if (this._onMicData) {
-      this._env.camera.removeListener('mic-data', this._onMicData);
-    }
   }
 
   /**
@@ -226,7 +216,7 @@ export default class SpeechRecognizer extends EventEmitter {
     this._decoder.startUtt(); // Start utterance processing
     this._inSpeech = this._decoder.getInSpeech();
     this._listening = true;
-    this._env.camera.on('mic-data', this._onMicData);
+    this._camera.on('mic-data', this._onMicData);
     return true;
   }
 
@@ -287,7 +277,7 @@ export default class SpeechRecognizer extends EventEmitter {
 
     this._decoder.endUtt(); // End utterance processing
     this._listening = false;
-    this._env.camera.removeListener('mic-data', this._onMicData);
+    this._camera.removeListener('mic-data', this._onMicData);
     return true;
   }
 

@@ -10,7 +10,7 @@ done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 help() {
-  echo 'silk-buildjs <source directory> [target directory]'
+  echo 'silk-buildjs <source directory> [target directory] [--no-native]'
   echo
   echo 'This program is a helper to build a JS module into a single file and'
   echo 'potentially compile additional native modules if a binding.gyp is present.'
@@ -39,8 +39,10 @@ if [[ -z $2 ]]; then
 else
   export SILK_BUILDJS_DEST=$(readlink -f $2)
 fi
+export SILK_BUILDJS_DEST=${2:-$1/.silkslug}
+no_native=$3
 
-if [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
+if [[ "$no_native" != "--no-native" && -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   ## Exports for the node-gyp build system ...
   export builddir_name=$SILK_BUILDJS_DEST/build
   export srcdir=$SILK_BUILDJS_SOURCE

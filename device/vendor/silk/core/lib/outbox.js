@@ -15,7 +15,7 @@ import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import PapertrailOp from './outbox/papertrail_operation';
 import APICallOp from './outbox/api_call_operation';
 
-import type NetworkStatus from './network_status';
+import type { NetworkStatus } from 'silk-netstatus';
 import type { Outbox } from './outbox/manager';
 
 const STORAGE_PATH = path.join('data', 'outbox');

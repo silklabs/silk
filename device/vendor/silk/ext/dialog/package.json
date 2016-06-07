@@ -1,0 +1,23 @@
+{
+  "name": "silkext-dialog",
+  "version": "0.0.1",
+  "description": "Dialog extension",
+  "main": "./lib/index.js",
+  "scripts": {
+    "clean": "rm -rf node_modules",
+    "lint": "eslint .",
+    "silk-build": "silk-buildjs .",
+    "test": "npm run lint"
+  },
+  "symlinkDependencies": {
+    "silk-babeldeps": "/babeldeps",
+    "silk-buildjs": "/pub/buildjs",
+    "silk-exttest": "/device/vendor/silk/exttest"
+  },
+  "devDependencies": {
+    "mocha": "2.4.5",
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
+  },
+  "private": true
+}

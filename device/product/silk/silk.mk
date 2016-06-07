@@ -36,9 +36,10 @@ endif
 # vendor/silk/core/...
 SILK_CORE := \
   silk-device-core \
+  silk-caffe \
   silk-cv \
   silk-gc1 \
-  silk-caffe \
+  silk-modwatcher \
 
 PRODUCT_PACKAGES += $(SILK_CORE)
 

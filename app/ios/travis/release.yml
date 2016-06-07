@@ -8,6 +8,7 @@ before_install:
   - brew update; brew update
 
 install:
+  - export FULL_SERVICE=1
   - ios/travis/install
 
 env:

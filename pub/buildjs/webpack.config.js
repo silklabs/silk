@@ -50,6 +50,7 @@ const externals = [
   'bleno',
   'mic',
   'noble',
+  'node-hid',
   'node-webrtc',
   'opencv',
   'segfault-handler',

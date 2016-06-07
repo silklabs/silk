@@ -26,7 +26,15 @@ shopt -s nullglob
 set -x
 cd $(dirname $(readlink -f $0))/../../pub
 
-PACKAGES="sdk cli sdk-emulator"
+PACKAGES="\
+  babel-preset-silk-node4 \
+  buildjs \
+  cli \
+  eslint-config \
+  log \
+  sdk \
+  sdk-emulator \
+"
 
 for dir in $PACKAGES; do
   pushd $dir

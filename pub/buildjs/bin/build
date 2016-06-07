@@ -23,7 +23,11 @@ if [[ ! -d $1 ]]; then
 fi
 
 PATH=$ROOT/../../node_modules/.bin:$PATH
-source $ROOT/../../tools/gnu.sh
+if [[ -r $ROOT/../gnu.sh ]]; then
+  source $ROOT/../gnu.sh # Placed by |npm publish|
+elif [[ -r $ROOT/../../tools/gnu.sh ]]; then
+  source $ROOT/../../tools/gnu.sh
+fi
 
 export SILK_BUILDJS_SOURCE=$(readlink -f $1)
 if [[ -z $2 ]]; then

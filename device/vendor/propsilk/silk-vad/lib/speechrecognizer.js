@@ -38,7 +38,7 @@ export default class SpeechRecognizer extends EventEmitter {
   _decoder: any;
   _config: any;
   _onMicData: MicDataCallback;
-  _listening: boolean;
+  _listening: boolean = false;
   _sampleRate:number;
   _bytesPerSample: number;
   _numChannels: number;
@@ -47,14 +47,12 @@ export default class SpeechRecognizer extends EventEmitter {
   _processingInProgress: boolean;
   _backlogMinSizeInBytes: number;
   _inSpeech: boolean;
-  _listening: boolean;
   _listenTimeout: ?number;
 
   constructor(cfg: Config, camera: Camera) {
     super();
     this._camera = camera;
     this._decoder = null;
-    this._listening = false;
 
     let params = ['sampleRate', 'bytesPerSample', 'numChannels'];
     params.forEach(param => {
@@ -75,6 +73,15 @@ export default class SpeechRecognizer extends EventEmitter {
         this._numChannels;
 
     this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
+
+    // Setup listener for handing mic data
+    this._onMicData = pkt => {
+      if (this._listening) {
+        this._handleMicData(pkt.when, pkt.frames);
+      }
+    };
+
+    this._camera.on('mic-data', this._onMicData);
   }
 
   /**
@@ -208,15 +215,9 @@ export default class SpeechRecognizer extends EventEmitter {
     log.debug(`Start search ${searchName}`);
     this._decoder.setSearch(searchName);
 
-    // Setup listener for handing mic data
-    this._onMicData = pkt => {
-      this._handleMicData(pkt.when, pkt.frames);
-    };
-
     this._decoder.startUtt(); // Start utterance processing
     this._inSpeech = this._decoder.getInSpeech();
     this._listening = true;
-    this._camera.on('mic-data', this._onMicData);
     return true;
   }
 
@@ -277,7 +278,8 @@ export default class SpeechRecognizer extends EventEmitter {
 
     this._decoder.endUtt(); // End utterance processing
     this._listening = false;
-    this._camera.removeListener('mic-data', this._onMicData);
+    this._pcmDataQueue.length = 0;
+    this._pcmDataQueueSizeInBytes = 0;
     return true;
   }
 
@@ -293,10 +295,7 @@ export default class SpeechRecognizer extends EventEmitter {
     if (this._pcmDataQueueSizeInBytes >= this._backlogMinSizeInBytes) {
       const backlogMs = this._pcmDataQueueSizeInBytes /
           this._sampleRate * this._bytesPerSample * this._numChannels;
-      log.warn(`Warning: PCM data backlog of ${backlogMs}secs; clearing queue`);
-
-      this._pcmDataQueue.length = 0;
-      this._pcmDataQueueSizeInBytes = 0;
+      log.warn(`Warning: PCM data backlog of ${backlogMs}secs`);
     }
 
     if (!this._processingInProgress) {

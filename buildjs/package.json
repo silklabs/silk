@@ -4,6 +4,9 @@
   "bin": {
     "silk-buildjs": "./bin/build"
   },
+  "scripts": {
+    "prepublish": "cp ../tools/gnu.sh ."
+  },
   "author": "Silk Labs Inc.",
   "license": "MIT",
   "keywords": [

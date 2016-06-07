@@ -3,7 +3,7 @@
 cd $(dirname $0)/..
 
 APIDOC_SOURCE_FILES=" \
-  ../api/foo.js
+  ../../bsp-gonk/vendor/propsilk/silk-netstatus/lib/index.js \
 "
 
 ./node_modules/.bin/documentation \

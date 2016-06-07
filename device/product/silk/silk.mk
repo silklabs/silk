@@ -34,14 +34,16 @@ PRODUCT_PACKAGES += silk-base-version
 endif
 
 # vendor/silk/core/...
-SILK_CORE := \
+PRODUCT_PACKAGES += \
   silk-device-core \
+
+# vendor/propsilk/...
+PRODUCT_PACKAGES += \
   silk-caffe \
   silk-cv \
   silk-gc1 \
   silk-modwatcher \
-
-PRODUCT_PACKAGES += $(SILK_CORE)
+  silk-netstatus \
 
 # vendor/silk/ext/...
 SILK_EXT := \

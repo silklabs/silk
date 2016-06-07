@@ -1,7 +1,7 @@
 import assert from 'assert';
 import eventToPromise from 'event-to-promise';
 import EventEmitter from 'events';
-import NetworkStatus from '../lib/network_status';
+import { NetworkStatus } from '..';
 
 suite('network_status', () => {
 
@@ -20,7 +20,8 @@ suite('network_status', () => {
       return Promise.resolve(state.isOnline);
     };
 
-    state.subject = new NetworkStatus(state.wifi, isOnlineFn, interval);
+    state.subject = new NetworkStatus(state.wifi);
+    state.subject.start(isOnlineFn, interval);
     return state;
   }
 
@@ -71,7 +72,7 @@ suite('network_status', () => {
     // The hint socket should reset the timeout when it emits connect.
     let socket = new EventEmitter();
     state.isOnline = true;
-    state.subject.hintSocket = socket;
+    socket.on('connect', state.subject.check);
     let online = eventToPromise(state.subject, 'online');
     socket.emit('connect');
     await online;

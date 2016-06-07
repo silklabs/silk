@@ -6,7 +6,7 @@
  */
 
 import createOutbox from 'silk-core/lib/outbox';
-import NetworkStatus from 'silk-core/lib/network_status';
+import netstatus from 'silk-netstatus';
 import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
 import createLog from 'silk-log/device';
@@ -20,7 +20,7 @@ import path from 'path';
 
 import type { Outbox } from 'silk-core/lib/outbox/manager';
 import type Sensors from 'silk-sensors';
-import type Connections from 'silk-core/lib/connections'; 
+import type Connections from 'silk-core/lib/connections';
 
 const log = createLog('TestFramework');
 
@@ -58,14 +58,13 @@ export default class Env {
   _previewCount: number;
   _previewTimeout: number | null;
   _log: Log;
-  connections: Connections; 
+  connections: Connections;
 
   constructor(name: string) {
     this._name = name;
     this.camera = new Camera();
-    let networkStatus = new NetworkStatus(wifi);
     this.server = new Server(this.connections);
-    this.outbox = createOutbox(networkStatus);
+    this.outbox = createOutbox(netstatus);
     this.timeline = new Timeline(this.server, this.outbox, this.camera);
     this.util = util;
 

@@ -61,7 +61,7 @@ import Diag from './diag';
 import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
-import NetworkStatus from './network_status';
+import netstatus from 'silk-netstatus';
 import isReachable from 'is-reachable';
 import Logcat from './logcat';
 import Timeline from './timeline';
@@ -97,7 +97,6 @@ let connections = null;
 let shutdownPromise = null;
 let crashreporter;
 let outbox;
-let networkStatus;
 let logcat;
 let ext;
 let diag;
@@ -132,12 +131,12 @@ async function readLogo() {
  * @private
  */
 function main() {
-  connections = new Connections(networkStatus);
+  connections = new Connections();
   server = new Server(connections);
 
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
-  networkStatus = new NetworkStatus(wifi,
+  netstatus.start(
     () => {
       // Instead of using the default "Internet available test", tell
       // NetworkStatus to only report online if the configured server is
@@ -164,16 +163,17 @@ function main() {
       });
     }
   );
-  networkStatus.hintSocket = server;
-  networkStatus.on('online', () => connections.reconnect());
-  outbox = initOutbox(networkStatus);
+  server.on('connect', netstatus.check);
+  server.on('disconnect', netstatus.check);
+  netstatus.on('online', () => connections.reconnect());
+  outbox = initOutbox(netstatus);
 
   crashreporter = makeCrashReporter(outbox);
   jsErrors(crashreporter);
 
   // Init metrics...
-  networkStatus.on('online', api.metrics.onConnectivityChange);
-  networkStatus.on('offline', api.metrics.onConnectivityChange);
+  netstatus.on('online', api.metrics.onConnectivityChange);
+  netstatus.on('offline', api.metrics.onConnectivityChange);
   api.metrics.start();
 
   startCollectingProcessMetrics();

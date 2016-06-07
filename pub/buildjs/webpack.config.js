@@ -64,6 +64,7 @@ const externals = [
   'silk-lights',
   'silk-modwatcher',
   'silk-movie',
+  'silk-netstatus',
   'silk-ntp',
   'silk-properties',
   'silk-sensors',

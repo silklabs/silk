@@ -2,10 +2,8 @@
   "name": "silk-dialog",
   "version": "0.17.1",
   "description": "Silk voice dialog engine",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
-    "preinstall": "../npm_preinstall",
-    "postinstall": "../npm_postinstall",
     "lint": "eslint lib demo"
   },
   "symlinkDependencies": {
@@ -14,7 +12,11 @@
     "silk-log": "/pub/log"
   },
   "dependencies": {
-    "uuid": "2.0.2"
+    "redux": "3.5.2",
+    "redux-logger": "2.6.1",
+    "redux-saga": "0.10.4",
+    "redux-thunk": "2.1.0",
+    "uuid": "2.0.1"
   },
   "devDependencies": {
     "babel-eslint": "6.0.4",

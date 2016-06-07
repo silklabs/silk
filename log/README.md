@@ -6,7 +6,7 @@ Common conventions around using the debug module for logging.
 
 ```js
 
-let log = require('./log')('coolfeature');
+let log = require('silk-log')('coolfeature');
 
 log.debug('assert(1+1=3)');
 log.verbose('useless');

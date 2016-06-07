@@ -4,9 +4,10 @@
   "description": "Monitors for module changes on device",
   "main": "./lib/index.js",
   "scripts": {
-    "build": "silk-buildjs",
+    "build": "npm run silk-build",
+    "silk-build": "silk-buildjs .",
     "lint": "eslint lib",
-    "postinstall": "../../../../npm_postinstall && silk-buildjs",
+    "postinstall": "../../../../npm_postinstall && npm run silk-build",
     "test": "npm run lint"
   },
   "dependencies": {

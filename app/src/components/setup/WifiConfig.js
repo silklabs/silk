@@ -337,8 +337,10 @@ export default class WifiConfig extends React.Component {
         }>
         {this._renderSSIDControls()}
         {this._renderSecretControls()}
-        {this._renderWifiModal()}
-        {this._renderAuthTypeModal()}
+        <View>
+          {this._renderWifiModal()}
+          {this._renderAuthTypeModal()}
+        </View>
       </SetupScreen>
     );
   }

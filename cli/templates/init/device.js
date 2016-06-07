@@ -36,14 +36,14 @@ module.exports = {
     input.on('down', e => {
       vib.pattern(50);
       switch (e.keyId) {
-        case 'power':
-          log.warn('Powering down');
-          util.setprop('sys.powerctl', 'shutdown');
-          break;
-        default:
-          log.verbose(`Unhandled key: ${JSON.stringify(e)}`);
-          break;
+      case 'power':
+        log.warn('Powering down');
+        util.setprop('sys.powerctl', 'shutdown');
+        break;
+      default:
+        log.verbose(`Unhandled key: ${JSON.stringify(e)}`);
+        break;
       }
     });
-  }
+  },
 };

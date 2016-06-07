@@ -48,7 +48,7 @@ const WINDOW_SIZE_IN_BYTES = NUM_SAMPLES * STEP_SIZE * 2;
 // Kenzo seems to produce results with lower confidence than with Mako for some
 // reason. Also further away the device is lower the confidence is. Keeping
 // the threshold to lower value to catch far utterances too.
-const THRESHOLD = 50; // Ignore predictions with probability lower than threshold
+const THRESHOLD = 80; // Ignore predictions with probability lower than threshold
 
 // Allow continuous keyword spotting if this android property is turned off
 const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';

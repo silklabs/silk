@@ -1,6 +1,6 @@
 {
   "name": "silk-core-version",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "Holds the silk-core version number",
   "main": "index.js",
   "browser": {

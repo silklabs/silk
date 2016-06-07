@@ -1,6 +1,6 @@
 {
   "name": "silk-mse-player",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "Silk MSE video player",
   "scripts": {
     "lint": "eslint src",

@@ -28,11 +28,11 @@ esac
 
 cd $(dirname $(readlink -f $0))/..
 
-cd version
+cd pub/version
 npm version --no-git-tag-version $versionBumpType
-cd ..
+cd ../..
 
-SILK_CORE_VERSION=$(node -p "require('./version/package.json').version")
+SILK_CORE_VERSION=$(node -p "require('./pub/version/package.json').version")
 
 # Update the version in Info.plist to match the new silk-core version
 source pub/tools/gnu.sh # <-- need GNU sed on OS X

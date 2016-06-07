@@ -1,6 +1,6 @@
 {
   "name": "silk-dialog",
-  "version": "0.1.1",
+  "version": "0.17.1",
   "description": "Silk voice dialog engine",
   "main": "index.js",
   "scripts": {

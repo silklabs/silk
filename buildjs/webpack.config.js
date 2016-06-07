@@ -12,12 +12,19 @@ const mkdirp = require('mkdirp');
 // We must place our files in a special folder for integration /w the android
 // build system.
 const destination = process.env.SILK_BUILDJS_DEST;
-const babelCache = path.join(destination, '../.babelcache');
 const modulePath = findPackage(process.env.SILK_BUILDJS_SOURCE);
 const pkg = require(path.join(modulePath, 'package.json'));
 const localWebpack = path.join(modulePath, 'webpack.config.js');
 
-mkdirp.sync(babelCache);
+
+let babelCache;
+if (!process.env.BABEL_CACHE || process.env.BABEL_CACHE === '1') {
+  babelCache = path.join(destination, '../.babelcache');
+  mkdirp.sync(babelCache);
+} else {
+  console.log('~ babel cache has been disabled ~');
+  babelCache = false;
+}
 
 const name = pkg.name;
 let main = pkg.main || './index.js';

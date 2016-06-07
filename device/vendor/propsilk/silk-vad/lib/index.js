@@ -96,7 +96,7 @@ export default class VoiceActivityDetector {
     // value of 2.0 is not sufficient as mic data on the phones are pretty
     // sensitive in picking up stray noise like clock ticking, person breathing
     // and so on.
-    this._speechRecognizer.setFloat('-vad_threshold', 3.7);
+    this._speechRecognizer.setFloat('-vad_threshold', 3.2);
 
     this._speechRecognizer.finishSetup();
 

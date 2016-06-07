@@ -472,7 +472,8 @@ export default class Camera extends EventEmitter {
 
   /**
    * Emit an event, and re-throw any exceptions to the process once the current call stack is
-   * unwound
+   * unwound.
+   * @private
    */
   _throwyEmit(eventName, ...args) {
     try {

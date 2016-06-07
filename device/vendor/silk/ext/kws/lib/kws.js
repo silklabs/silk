@@ -16,7 +16,9 @@ import caffe from 'silk-caffe';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import Vibrator from 'silk-vibrator';
 import wav from 'wav';
+import VoiceActivityDetector from 'silk-vad';
 
+import type { VadMode } from 'silk-vad';
 import type { Env, Util, Log, Timeline, Camera } from 'silk-exttest';
 
 let log: Log;
@@ -63,8 +65,6 @@ type MicData = {
   frames: Buffer;
 };
 
-type VadMode = 'continuous' | 'dialog';
-
 /**
  * This class receives mic data stream and tries to detect a specific keyword
  * using keyword spotting with neural networks
@@ -95,6 +95,7 @@ class KeywordSpotting extends EventEmitter {
   _speechStartWhen: number;
   _speechStopWhen: number;
   _waitingForPcmData: boolean = false;
+  _voiceActivityDetector: VoiceActivityDetector;
 
   constructor(env: Env) {
     super();
@@ -105,6 +106,7 @@ class KeywordSpotting extends EventEmitter {
     camera = this._env.camera;
     this._init();
     this._vib = new Vibrator();
+    this._voiceActivityDetector = new VoiceActivityDetector(timeline, camera);
 
     this._sampleRate = config.deviceMic.sampleRate;
     this._bytesPerSample = config.deviceMic.bytesPerSample;
@@ -264,6 +266,7 @@ class KeywordSpotting extends EventEmitter {
   _setVadMode(mode) {
     log.info(`Switching to ${mode} mode`);
     this._vadMode = mode;
+    this._voiceActivityDetector.setMode(mode);
 
     if (this._vadMode === 'continuous') {
       this._vib.pattern(50);

@@ -42,8 +42,6 @@ export default class VoiceActivityDetector {
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
   _onDialogStart: () => void;
-  _onDialogStop: () => void;
-  _onKeyword: () => void;
   _dialogEnabled: boolean;
   _vadMode: VadMode;
 
@@ -121,19 +119,6 @@ export default class VoiceActivityDetector {
     this._onDialogStart = () => {
       this._startVoiceActivityDetection();
     };
-
-    // Switch back to continuous mode when the dialog stops
-    this._onDialogStop = () => {
-      this._setVadMode('continuous');
-    };
-
-    this._onKeyword = () => {
-      // Go in a dialog mode when keyword is detected
-      this._setVadMode('dialog');
-    };
-
-    // Start the continuous mode
-    this._setVadMode('continuous');
   }
 
   /**
@@ -143,22 +128,16 @@ export default class VoiceActivityDetector {
    * a dialog and stop at end of speech to prevent VAD from interfering with
    * the dialog's voice interaction (text-to-speech).
    */
-  _setVadMode(mode: VadMode) {
+  setMode(mode: VadMode) {
     log.info(`Switching to ${mode} mode`);
     this._vadMode = mode;
 
     if (this._vadMode === 'continuous') {
-      if (this._dialogEnabled) {
-        this._timeline.on('keyword', this._onKeyword);
-      }
       this._timeline.removeListener('dialog_start', this._onDialogStart);
-      this._timeline.removeListener('dialog_stop', this._onDialogStop);
       this._startVoiceActivityDetection();
     } else if (this._vadMode === 'dialog') {
       this._stopVoiceActivityDetection();
-      this._timeline.removeListener('keyword', this._onKeyword);
       this._timeline.on('dialog_start', this._onDialogStart);
-      this._timeline.on('dialog_stop', this._onDialogStop);
     } else {
       log.warn(`Unknown VAD mode: ${mode}`);
     }

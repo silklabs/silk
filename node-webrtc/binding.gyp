@@ -89,7 +89,31 @@
         'WEBRTC_POSIX=1'
       ],
       'conditions': [
+        ['OS=="android"', {
+          'actions': [{
+            'action_name': 'buildjs',
+            'inputs': [],
+            'outputs': [
+              '<(nodewebrtc_js_dest)/index.js',
+              '<(nodewebrtc_js_dest)/package.json'
+            ],
+            'action': [
+              '/bin/bash',
+              '-c',
+              'BABEL_CACHE=0 ../pub/buildjs/bin/build <(node_webrtc_root_dir) <(nodewebrtc_js_dest) --no-native',
+            ]
+          }]
+        }],
         ['OS=="linux"', {
+          'actions': [{
+            'action_name': 'copy',
+            'inputs': [],
+            'outputs': ['node-webrtc.node'],
+            'action': [
+              './bin/copy_out.sh',
+              '<(PRODUCT_DIR)',
+            ]
+          }],
           'cflags': [
             '-Wno-deprecated-declarations',
             '-Wno-unused-variable',
@@ -137,40 +161,6 @@
           ],
         }],
       ],
-    },
-    {
-      'target_name': 'node-webrtc-all',
-      'type': 'none',
-      'conditions': [
-        # On linux we need to deal with the fact that our .node file ends up in
-        # Release/lib
-        ['OS=="linux"', {
-          'dependencies': [
-            'node-webrtc',
-          ],
-          'actions': [{
-            'action_name': 'copy',
-            'inputs': [],
-            'outputs': ['node-webrtc.node'],
-            'action': [
-              './bin/copy_out.sh',
-              '<(PRODUCT_DIR)',
-            ]
-          }]
-        }],
-        ['OS=="android"', {
-          'actions': [{
-            'action_name': 'buildjs',
-            'inputs': [],
-            'outputs': ['<(nodewebrtc_js_dest)/index.js'],
-            'action': [
-              '/bin/bash',
-              '-c',
-              'BABEL_CACHE=0 ../pub/buildjs/bin/build <(node_webrtc_root_dir) <(nodewebrtc_js_dest) --no-native',
-            ]
-          }]
-        }],
-      ]
     },
   ],
 }

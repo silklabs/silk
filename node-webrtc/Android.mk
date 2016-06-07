@@ -67,16 +67,14 @@ $(webrtc_makefile): $(nodewebrtc)
 	-Ddebug_extra_cflags=$(cflag_overrides) \
 	-Drelease_extra_cflags=$(cflag_overrides) \
 	-Dmodule_name=node-webrtc \
-  -Drtc_use_h264=1 \
-  -Duse_openh264=1 \
+	-Drtc_use_h264=1 \
+	-Duse_openh264=1 \
 	-Dinclude_tests=0 \
 	-Dchromium_code=0 \
 	-Dbuild_with_chromium=0 \
 	--no-parallel \
 	third_party/node-webrtc/binding.gyp \
-	-R node-webrtc \
-	-R node-webrtc-all
-
+	-R node-webrtc
 
 $(LOCAL_BUILT_MODULE): $(webrtc_makefile)
 LOCAL_2ND_ARCH_VAR_PREFIX :=

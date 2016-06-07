@@ -19,13 +19,15 @@
     "babel-core": "../babel-core",
     "babel-preset-silk-node4": "../babel-preset-silk-node4"
   },
+  "peerDependencies": {
+    "webpack": "1.13.0"
+  },
   "dependencies": {
     "babel-core": "6.8.0",
     "babel-loader": "6.2.0",
     "babel-preset-silk-node4": ">=0.13.0 <1.0.0",
     "copy-webpack-plugin": "2.1.5",
     "json-loader": "0.5.4",
-    "webpack": "1.13.0",
     "node-gyp": "3.3.1",
     "resolve": "1.1.7",
     "mkdirp": "0.5.1"

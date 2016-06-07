@@ -20,9 +20,9 @@
       'variables': {
         # Due to gyp magic the paths we use to include other .gyp files may be
         # different than the absolute path to the project so we need this var.
-        'nodewebrtc_gyp_webrtc_root%': '<(DEPTH)/build-staging/silk-webrtc',
+        'nodewebrtc_gyp_webrtc_root%': '<(DEPTH)/webrtc',
         # Absolute path to the webrtc root (silk-webrtc)
-        'nodewebrtc_webrtc_root%': '<(DEPTH)/build-staging/silk-webrtc',
+        'nodewebrtc_webrtc_root%': '<(DEPTH)',
         'libwebrtc_out%': '<(DEPTH)/out/$(BUILDTYPE)/obj',
       },
       'sources': [

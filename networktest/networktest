@@ -1,4 +1,4 @@
 #! /usr/bin/env node
 
-require('../babel-run/node')();
+require('../pub/babel-run/node')();
 require('./lib/main');

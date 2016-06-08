@@ -1,4 +1,4 @@
-#! /usr/bin/env ../babel-run/babel-node
+#! /usr/bin/env ../pub/babel-run/babel-node
 /**
 Helper utility for sending emails because of the #! above this may only work on
 OSX and some more common versions of linux.

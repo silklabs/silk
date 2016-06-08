@@ -7,11 +7,11 @@
     "postinstall": "../../npm_postinstall",
     "lint": "eslint src",
     "test": "npm run lint",
-    "start": "DEBUG=silk-* ../../babel-run/babel-node ./src/server.js",
-    "cat": "DEBUG=silk-* ../../babel-run/babel-node ./src/file_writer.js cat",
-    "file": "DEBUG=silk-* ../../babel-run/babel-node ./src/file_writer.js cat",
-    "segments": "DEBUG=silk-* ../../babel-run/babel-node ./src/file_writer.js segments",
-    "combine": "DEBUG=silk-* ../../babel-run/babel-node ./src/m4s_combinator.js"
+    "start": "DEBUG=silk-* ../../pub/babel-run/babel-node ./src/server.js",
+    "cat": "DEBUG=silk-* ../../pub/babel-run/babel-node ./src/file_writer.js cat",
+    "file": "DEBUG=silk-* ../../pub/babel-run/babel-node ./src/file_writer.js cat",
+    "segments": "DEBUG=silk-* ../../pub/babel-run/babel-node ./src/file_writer.js segments",
+    "combine": "DEBUG=silk-* ../../pub/babel-run/babel-node ./src/m4s_combinator.js"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",

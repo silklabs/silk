@@ -13,4 +13,4 @@ if [[ ! -d ../node_modules ]]; then
   npm install
 fi
 
-exec ../babel-run/babel-node ./bin/upload.js "$@"
+exec ../pub/babel-run/babel-node ./bin/upload.js "$@"

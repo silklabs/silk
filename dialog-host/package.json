@@ -8,7 +8,7 @@
     "lint": "eslint lib"
   },
   "symlinkDependencies": {
-    "silk-babel-run": "/babel-run",
+    "silk-babel-run": "/pub/babel-run",
     "silk-config": "/config",
     "silk-log": "/pub/log",
     "silk-streams": "/streams"

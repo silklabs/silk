@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @flow
+ * @private
  */
 
 import createLog from 'silk-log';

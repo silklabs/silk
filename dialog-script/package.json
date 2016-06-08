@@ -4,9 +4,10 @@
   "description": "Customizable dialog script",
   "main": "lib/index.js",
   "scripts": {
+    "flow": "flow check",
     "lint": "eslint .",
     "silk-build": "silk-buildjs .",
-    "test": "npm run lint"
+    "test": "npm run lint && npm run flow"
   },
   "dependencies": {
     "babel-preset-silk-node4": "^0.17.0",
@@ -21,7 +22,8 @@
   "devDependencies": {
     "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
-    "eslint-config-silk": "^0.17.0"
+    "eslint-config-silk": "^0.17.0",
+    "flow-bin": "0.25.0"
   },
   "private": true
 }

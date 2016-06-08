@@ -15,6 +15,10 @@
     "silk-streams": "/streams"
   },
   "dependencies": {
+    "babel-preset-silk-node4": "^0.17.0",
+    "silk-config": "^0.17.0",
+    "silk-log": "^0.17.0",
+    "silk-streams": "^0.17.0",
     "uuid": "2.0.1"
   },
   "devDependencies": {

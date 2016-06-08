@@ -1,7 +1,7 @@
 {
-  "name": "silk-dialog-demo",
+  "name": "silk-dialog-host",
   "version": "0.17.1",
-  "description": "Silk voice dialog demo",
+  "description": "Silk dialog host",
   "main": "lib/index.js",
   "scripts": {
     "flow": "flow check",
@@ -10,6 +10,8 @@
   "symlinkDependencies": {
     "silk-babel-run": "/pub/babel-run",
     "silk-config": "/config",
+    "silk-dialog-engine": "/dialog-engine",
+    "silk-dialog-script": "/dialog-script",
     "silk-log": "/pub/log",
     "silk-streams": "/streams"
   },
@@ -21,6 +23,7 @@
   "devDependencies": {
     "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
+    "eslint-config-silk": "^0.17.0",
     "flow-bin": "0.25.0"
   },
   "license": "proprietary",

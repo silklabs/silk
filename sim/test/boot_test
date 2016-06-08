@@ -11,13 +11,14 @@ cp -rav test/{data,system} .
 
 rm -rf data/tombstones
 
-timeout 60s npm run start
+TIMEOUT=120s
+timeout $TIMEOUT npm run start
 err=$?
 echo Simulator terminated with exit code $err
 
 if [ $err -ne 0 ]; then
   if [ $err -eq 124 ]; then
-    echo Timeout
+    echo Simulator failed to cleanly exit after $TIMEOUT
   fi
   echo
   echo Error: non-zero exit code

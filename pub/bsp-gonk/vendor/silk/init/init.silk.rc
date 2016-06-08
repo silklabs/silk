@@ -28,6 +28,12 @@ service silk-volume /system/silk/bin/volume
     group audio
     oneshot
 
+on property:persist.silk.volume.mute=*
+    start silk-volume
+
+on property:persist.silk.volume.level=*
+    start silk-volume
+
 service silk-wpad /system/silk/bin/debug-wrapper /system/silk/bin/wpad
     class late_start
     user root

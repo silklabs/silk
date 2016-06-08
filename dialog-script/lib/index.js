@@ -15,25 +15,43 @@ import {
   interpretEnd,
 } from './actions';
 
-import type {DialogEngine} from 'silk-dialog-engine/lib/dialogEngine';
+import type {DialogEngine} from 'silk-dialog-engine';
+import getDialogEngine from 'silk-dialog-engine';
 
 const log = createLog('dialog-script');
 
-log.info('Greetings');
-export function silkWillUnload() {
-  log.info('Farewell');
+class Script{
+  constructor(dialogEngine: DialogEngine) {
+    log.info(`Starting script`);
+    log.debug(`Initial state`, store.getState());
+    store.runSaga(saga, dialogEngine);
+
+    dialogEngine.on(`interpret-begin`, this.onInterpretBegin);
+    dialogEngine.on(`interpret-end`, this.onInterpretEnd);
+    dialogEngine.on(`speak-begin`, this.onSpeakEnd);
+    dialogEngine.on(`speak-end`, this.onSpeakEnd);
+  }
+
+  onInterpretBegin: (() => void) = () => store.dispatch(interpretBegin());
+  onInterpretEnd: (() => void) = () => store.dispatch(interpretEnd());
+  onSpeakBegin: ((text: string) => void) = (text: string) => store.dispatch(speakBegin(text));
+  onSpeakEnd: (() => void) = () => store.dispatch(speakEnd());
+
+  willUnload() {
+    dialogEngine.removeListener(`interpret-begin`, this.onInterpretBegin);
+    dialogEngine.removeListener(`interpret-end`, this.onInterpretEnd);
+    dialogEngine.removeListener(`speak-begin`, this.onSpeakBegin);
+    dialogEngine.removeListener(`speak-end`, this.onSpeakEnd);
+  }
 }
 
-export default function runScript(dialogEngine: DialogEngine) {
-  invariant(dialogEngine);
-  log.info(`Starting script`);
-  log.debug(`Initial state`, store.getState());
+let dialogEngine = getDialogEngine();
+invariant(dialogEngine);
+let script = new Script(dialogEngine);
 
-  dialogEngine.on(`interpret-begin`, () => store.dispatch(interpretBegin()));
-  dialogEngine.on(`interpret-end`, () => store.dispatch(interpretEnd()));
-
-  dialogEngine.on(`speak-begin`, (text) => store.dispatch(speakBegin(text)));
-  dialogEngine.on(`speak-end`, () => store.dispatch(speakEnd()));
-
-  store.runSaga(saga, dialogEngine);
+export function silkWillUnload() {
+  log.info('Farewell');
+  invariant(script);
+  script.willUnload();
+  script = null;
 }

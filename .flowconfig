@@ -76,6 +76,9 @@ node_modules/fbjs/flow/lib/
 .*/node-webrtc/build-staging/.*
 .*/svm/models/.*
 
+.*/dialog-engine/*
+.*/dialog-host/*
+.*/dialog-script/*
 
 [options]
 unsafe.enable_getters_and_setters=true

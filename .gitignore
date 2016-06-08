@@ -19,3 +19,6 @@ npm-debug.log
 
 # silk-buildjs droppings
 .babelcache
+
+# Nobody likes slugs
+.silkslug

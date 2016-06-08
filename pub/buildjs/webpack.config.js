@@ -59,6 +59,7 @@ const externals = [
   'silk-camera',
   'silk-core-version',
   'silk-cv',
+  'silk-dialog-engine',
   'silk-gc1',
   'silk-input',
   'silk-kws',

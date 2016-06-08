@@ -9,8 +9,8 @@
 import modwatcher from 'silk-modwatcher';
 import type { ModulePushCallback } from 'silk-modwatcher';
 
-import { createDialogEngine } from 'silk-dialog-engine/lib/dialogEngine';
-import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine/lib/dialogEngine';
+import { createDialogEngine } from 'silk-dialog-engine';
+import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
 
 import path from 'path';
 import createLog from 'silk-log/device';

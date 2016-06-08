@@ -6,8 +6,9 @@
   "scripts": {
     "flow": "flow check",
     "lint": "eslint .",
+    "mocha": "DEBUG='test:*' NODE_ENV=production mocha $(find test -name '*_test.js')",
     "silk-build": "silk-buildjs .",
-    "test": "npm run lint && npm run flow"
+    "test": "npm run lint && npm run mocha"
   },
   "dependencies": {
     "babel-preset-silk-node4": "^0.17.0",
@@ -23,7 +24,11 @@
     "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
     "eslint-config-silk": "^0.17.0",
-    "flow-bin": "0.25.0"
+    "event-to-promise": "0.7.0",
+    "flow-bin": "0.26.0",
+    "mocha": "2.4.5",
+    "silk-babel-run": "^0.17.0",
+    "webpack": "1.13.0"
   },
   "private": true
 }

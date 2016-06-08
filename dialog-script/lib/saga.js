@@ -19,6 +19,10 @@ import type {DialogEngine} from '../../lib/dialogEngine';
 
 const log = createLog(`dialog-fuhu-saga`);
 
+export const unknownText =
+  `Sorry, I'm not understanding you. Please check out the app for example ` +
+  `requests and questions and try again.`;
+
 export default function* (
   dialogEngine: DialogEngine,
 ): Generator<any, any, any> {                    // eslint-disable-line no-undef
@@ -54,10 +58,7 @@ export default function* (
       break;
     default:
       log.warn(`Unknown intent`, intent, entities);
-      yield call(speak,
-                 `Sorry, I'm not understanding you. Please check out the ` +
-                 `app for example requests and questions and try again.`,
-                 true);
+      yield call(speak, unknownText, true);
     }
   }
 }

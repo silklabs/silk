@@ -45,12 +45,15 @@ export class DialogEngine extends EventEmitter {
    * This event is emitted when the speaker starts talking
    *
    * @event speak-begin
+   * @param text Text that is about to be spoken.
    * @memberof silk-dialog-engine.DialogEngine
    */
   /**
    * This event is emitted when the speaker finishes talking
    *
    * @event speak-end
+   * @param text Text that was spoken.
+   * @param error Non-null if an error was generated during speech.
    * @memberof silk-dialog-engine.DialogEngine
    */
   /**
@@ -69,12 +72,15 @@ export class DialogEngine extends EventEmitter {
    * This event is emitted after speech-to-text has run and we have a text result.
    *
    * @event text
+   * @param text Text that was interpreted.
    * @memberof silk-dialog-engine.DialogEngine
    */
   /**
    * This event is emitted once the text result has been run though intent analysis.
    *
    * @event indent
+   * @param intent Intent that was inferred from the text.
+   * @param entities A list of entities that were inferred from the text.
    * @memberof silk-dialog-engine.DialogEngine
    */
 
@@ -121,12 +127,21 @@ export class DialogEngine extends EventEmitter {
     const tts = new TextToSpeech(text);
     const stream = new ClosingPassThrough();
 
-    tts.addListener(`error`, (error) => stream.emit(`error`, error));
+    let ttsError: ?Error = null;
+
+    tts.addListener(`error`, (error) => {
+      log.warn(`TTS error`, error);
+      if (!ttsError) {
+        ttsError = error;
+        stream.emit(`error`, error);
+      }
+    });
     tts.addListener(`data`, (data) => stream.write(data));
     tts.addListener(`end`, () => stream.end());
+
     stream.addListener(`close`, () => {
-      log.debug(`Finished speaking`, text);
-      this.emit(`speak-end`, text);
+      log.debug(`Finished speaking`, text, ttsError);
+      this.emit(`speak-end`, text, ttsError);
     });
 
     process.nextTick(() => this.emit(`speech`, stream, finished));
@@ -156,7 +171,7 @@ export class DialogEngine extends EventEmitter {
 
       if (error) {
         log.error(`Speech stream error`, error);
-        this.emit(`interpret-end`);
+        this.emit(`interpret-end`, error);
         return;
       }
 
@@ -164,8 +179,8 @@ export class DialogEngine extends EventEmitter {
         log.debug(`No speech detected`);
         this.emit(`text`, text);
         process.nextTick(() => {
-          this.emit(`intent`, text, []);
-          this.emit(`interpret-end`);
+          this.emit(`intent`, ``, []);
+          this.emit(`interpret-end`, error);
         });
         return;
       }
@@ -176,7 +191,7 @@ export class DialogEngine extends EventEmitter {
       this._getIntention(text).then((intention: Intention) => {
         log.debug(`Interpretation finished`, intention);
         this.emit(`intent`, intention.intent, intention.entities);
-        this.emit(`interpret-end`);
+        this.emit(`interpret-end`, error);
       });
     };
 

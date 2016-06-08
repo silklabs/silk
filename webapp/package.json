@@ -16,7 +16,7 @@
     "silk-svm": "/svm"
   },
   "dependencies": {
-    "chart-stacked-bar-js": "1.0.3",
+    "chart-stackedbar-js": "1.0.3",
     "ansi_up": "1.3.0",
     "babel-cli": "6.9.0",
     "babel-eslint": "6.0.4",

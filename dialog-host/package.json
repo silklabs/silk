@@ -1,0 +1,28 @@
+{
+  "name": "silk-dialog-demo",
+  "version": "0.17.1",
+  "description": "Silk voice dialog demo",
+  "main": "lib/index.js",
+  "scripts": {
+    "flow": "flow check",
+    "lint": "eslint lib"
+  },
+  "symlinkDependencies": {
+    "silk-babel-run": "/babel-run",
+    "silk-config": "/config",
+    "silk-log": "/pub/log",
+    "silk-streams": "/streams"
+  },
+  "dependencies": {
+    "mic": "2.0.1",
+    "play-sound": "0.0.9",
+    "speaker": "0.3.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "6.0.4",
+    "eslint": "1.10.3",
+    "flow-bin": "0.25.0"
+  },
+  "license": "proprietary",
+  "private": true
+}

@@ -1,0 +1,83 @@
+/**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
+ */
+
+import createLog from 'silk-log';
+import * as https from 'https';
+import uuid from 'uuid';
+
+export const CLIENT_ID = 'silk';
+export const CLIENT_SECRET = '110e7213c3cc420ab03dea71fae35a53';
+export const SPEECH_HOST = 'speech.platform.bing.com';
+export const SPEECH_URL = 'https://' + SPEECH_HOST;
+
+// unique id for this app (can be anyyhing we choose)
+export const APP_ID = 'D4D52672-91D7-4C74-8AD8-42B1D98141A5';
+export const APP_ID_NO_DASH = APP_ID.replace(/-/g, '');
+
+export const INSTANCE_ID = uuid.v4();
+export const INSTANCE_ID_NO_DASH = INSTANCE_ID.replace(/-/g, '');
+
+const log = createLog(`dialog-token`);
+
+let accessTokenPromise: ?Promise<Object> = null;
+
+export function urlEncode(obj: Object): string {
+  const list = [];
+  Object.keys(obj).forEach(key => {
+    list.push(`${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`);
+  });
+  return list.join(`&`);
+}
+
+export async function getAccessToken(): Promise<Object> {
+  if (accessTokenPromise) {
+    log.info(`Returning cached access token promise`);
+    return accessTokenPromise;
+  }
+
+  const data = urlEncode({
+    'grant_type': `client_credentials`,
+    'client_id': CLIENT_ID,
+    'client_secret': CLIENT_SECRET,
+    scope: SPEECH_URL,
+  });
+
+  const opts = {
+    hostname: `oxford-speech.cloudapp.net`,
+    port: 443,
+    path: `/token/issueToken`,
+    method: `POST`,
+    headers: {
+      'Content-Type': `application/x-www-form-urlencoded`,
+      'Content-Length': data.length,
+    },
+  };
+
+  accessTokenPromise = new Promise((resolve, reject) => {
+    log.info(`Issuing access token request`);
+
+    const req = https.request(opts, (res) => {
+      let json = ``;
+      res.on(`error`, (error) => reject(error));
+      res.on(`data`, (chunk) => json += chunk);
+      res.on(`end`, () => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`Access token request failed with status code ` +
+                           `${res.statusCode}`));
+          return;
+        }
+        resolve(JSON.parse(json));
+      });
+    });
+
+    req.write(data);
+    req.end();
+  });
+
+  return accessTokenPromise;
+}

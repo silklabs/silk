@@ -22,7 +22,7 @@ export default class ClosingTransform extends Transform {
   __constructorName: string = ``;
   __finalEventName: string = '';
 
-  constructor(options: DuplexStreamOptions) {
+  constructor(options?: DuplexStreamOptions) {
     super(options);
 
     this.__constructorName = this.constructor.name;

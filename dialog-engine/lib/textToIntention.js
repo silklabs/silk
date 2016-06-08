@@ -1,4 +1,5 @@
-{
+/* eslint-disable */
+module.exports = {
   "start feeding":               { "intent": "startFeeding", "entities": ["baby"] },
   "i'm feeding the baby":        { "intent": "startFeeding", "entities": ["baby"] },
   "i'm nursing":                 { "intent": "startNursing", "entities": [] },
@@ -21,4 +22,5 @@
   "100 milliliters":             { "intent": "confirm", "entities": ["100 milliliters"] },
   "register my baby":            { "intent": "register","entities": ["baby"] },
   "rename my baby":              { "intent": "rename","entities": ["baby"] }
-}
+};
+/* eslint-enable */

@@ -19,8 +19,7 @@ layer {
   }
   convolution_param {
     num_output: 32
-    kernel_w: 5
-    kernel_h: 5
+    kernel_size: 7
     stride: 1
     pad: 0
     weight_filler {

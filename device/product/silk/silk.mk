@@ -44,6 +44,7 @@ PRODUCT_PACKAGES += \
   silk-gc1 \
   silk-modwatcher \
   silk-netstatus \
+  silk-vad \
 
 # vendor/silk/ext/...
 SILK_EXT := \
@@ -67,10 +68,6 @@ SILK_EXT := \
   silkext-motion \
   silkext-motion-sound \
   silkext-nightlight \
-  silkext-oksilk \
-  silkext-oksilk-hotkeyword-sound \
-  silkext-oksilk-pocketsphinx-dict \
-  silkext-oksilk-pocketsphinx-grammar \
   silkext-peddetector \
   silkext-samsungtv \
   silkext-svmsounds \

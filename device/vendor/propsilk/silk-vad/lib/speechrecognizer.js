@@ -8,11 +8,11 @@
 
 import * as pocketsphinx from 'pocketsphinx';
 import { EventEmitter } from 'events';
+import createLog from 'silk-log/device';
+import type { Log, Camera } from 'silk-exttest';
 
-import type { Env, Log } from 'silk-exttest';
-
+const log = createLog('vad');
 let ps = pocketsphinx.ps;
-let log: Log;
 
 type Config = {
   sampleRate: number;
@@ -28,17 +28,17 @@ type MicData = {
 type MicDataCallback = (pkt: MicData) => void;
 
 /**
- * Implementattion of speech recognition library using pocketsphinx. This class
- * receives mic data and recognizes it using Pocketsphinx engine. Recognition
- * events are passed to a client using events.
+ * Implementattion of voice activity detection using pocketsphinx. This class
+ * receives mic data and rus voice activity detection on it using Pocketsphinx
+ * engine.
  */
 export default class SpeechRecognizer extends EventEmitter {
 
-  _env: Env;
+  _camera: Camera;
   _decoder: any;
   _config: any;
   _onMicData: MicDataCallback;
-  _listening: boolean;
+  _listening: boolean = false;
   _sampleRate:number;
   _bytesPerSample: number;
   _numChannels: number;
@@ -47,15 +47,12 @@ export default class SpeechRecognizer extends EventEmitter {
   _processingInProgress: boolean;
   _backlogMinSizeInBytes: number;
   _inSpeech: boolean;
-  _listening: boolean;
   _listenTimeout: ?number;
 
-  constructor(env: Env, cfg: Config) {
+  constructor(cfg: Config, camera: Camera) {
     super();
-    this._env = env;
-    log = env.log;
+    this._camera = camera;
     this._decoder = null;
-    this._listening = false;
 
     let params = ['sampleRate', 'bytesPerSample', 'numChannels'];
     params.forEach(param => {
@@ -76,15 +73,15 @@ export default class SpeechRecognizer extends EventEmitter {
         this._numChannels;
 
     this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
-  }
 
-  /**
-   * Called when extension is about to be unloaded
-   */
-  willUnload(): void {
-    if (this._onMicData) {
-      this._env.camera.removeListener('mic-data', this._onMicData);
-    }
+    // Setup listener for handing mic data
+    this._onMicData = pkt => {
+      if (this._listening) {
+        this._handleMicData(pkt.when, pkt.frames);
+      }
+    };
+
+    this._camera.on('mic-data', this._onMicData);
   }
 
   /**
@@ -215,18 +212,12 @@ export default class SpeechRecognizer extends EventEmitter {
       return false;
     }
 
-    log.debug(`Start recognition ${searchName}`);
+    log.debug(`Start search ${searchName}`);
     this._decoder.setSearch(searchName);
-
-    // Setup listener for handing mic data
-    this._onMicData = pkt => {
-      this._handleMicData(pkt.when, pkt.frames);
-    };
 
     this._decoder.startUtt(); // Start utterance processing
     this._inSpeech = this._decoder.getInSpeech();
     this._listening = true;
-    this._env.camera.on('mic-data', this._onMicData);
     return true;
   }
 
@@ -260,8 +251,6 @@ export default class SpeechRecognizer extends EventEmitter {
       return;
     }
     log.debug(`Stop recognition`);
-    let hypothesis = this._decoder.hyp();
-    this.emit('result', hypothesis);
 
     // Clear the queue to remove any stale data there might be
     this._pcmDataQueue.length = 0;
@@ -289,7 +278,8 @@ export default class SpeechRecognizer extends EventEmitter {
 
     this._decoder.endUtt(); // End utterance processing
     this._listening = false;
-    this._env.camera.removeListener('mic-data', this._onMicData);
+    this._pcmDataQueue.length = 0;
+    this._pcmDataQueueSizeInBytes = 0;
     return true;
   }
 
@@ -305,10 +295,7 @@ export default class SpeechRecognizer extends EventEmitter {
     if (this._pcmDataQueueSizeInBytes >= this._backlogMinSizeInBytes) {
       const backlogMs = this._pcmDataQueueSizeInBytes /
           this._sampleRate * this._bytesPerSample * this._numChannels;
-      log.warn(`Warning: PCM data backlog of ${backlogMs}secs; clearing queue`);
-
-      this._pcmDataQueue.length = 0;
-      this._pcmDataQueueSizeInBytes = 0;
+      log.warn(`Warning: PCM data backlog of ${backlogMs}secs`);
     }
 
     if (!this._processingInProgress) {
@@ -328,7 +315,6 @@ export default class SpeechRecognizer extends EventEmitter {
     let [when, pcmData] = this._pcmDataQueue.shift();
     this._pcmDataQueueSizeInBytes -= pcmData.length;
 
-    let start = Date.now();
     this._decoder.processRaw(pcmData, false, false);
     if (this._inSpeech !== this._decoder.getInSpeech()) {
       this._inSpeech = this._decoder.getInSpeech();
@@ -348,10 +334,6 @@ export default class SpeechRecognizer extends EventEmitter {
       }
     }
 
-    // Get hypothesis string and path score
-    let hypothesis = this._decoder.hyp();
-    this.emit('partialResult', hypothesis);
-    log.debug(`Done processing mic data ${when} in ${Date.now() - start}ms`);
     this._processingInProgress = true;
 
     // Process next sample

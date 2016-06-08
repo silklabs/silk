@@ -66,10 +66,16 @@ class Dialog {
       });
     }
 
+    // Start mic-data
+    this._camera.on('mic-data', this._onMicData);
+
     log.info(`Dialog initialized`);
   }
 
   _onMicData = (pkt) => {
+    if (this._listeningState !== 'listening') {
+      return;
+    }
     const { when, frames } = pkt;
     log.debug(`mic-data: ${frames.length} bytes at ${when}`);
 
@@ -111,7 +117,7 @@ class Dialog {
     });
   }
 
-  _onSpeechStart() {
+  async _onSpeechStart() {
     log.info(`onSpeechStart`);
 
     if (this._listeningState !== 'ready') {
@@ -119,12 +125,9 @@ class Dialog {
       return;
     }
 
-    this._onDialogStart();
+    await util.playSound(KEYWORD_DETECTED_SOUND_FILE);
 
-    // TODO: maybe start mic after playSound finishes.
-    if (!this._kwsEnabled) {
-      util.playSound(KEYWORD_DETECTED_SOUND_FILE);
-    }
+    this._onDialogStart();
 
     this._speechToText = createSpeechToText(audioParams, (error, json) => {
       let text = '';
@@ -158,7 +161,6 @@ class Dialog {
       this._dialogEngine.processUtterance(text);
     });
 
-    this._camera.on('mic-data', this._onMicData);
     this._listeningState = 'listening';
   }
 
@@ -170,12 +172,10 @@ class Dialog {
       return;
     }
 
-    this._camera.removeListener('mic-data', this._onMicData);
+    log.debug(`Stopping mic-data`);
     this._speechToText.finish();
 
-    if (!this._kwsEnabled) {
-      util.playSound(SPEECH_END_SOUND_FILE);
-    }
+    util.playSound(SPEECH_END_SOUND_FILE);
 
     this._listeningState = 'ready';
   }

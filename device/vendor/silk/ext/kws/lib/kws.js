@@ -16,7 +16,9 @@ import caffe from 'silk-caffe';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import Vibrator from 'silk-vibrator';
 import wav from 'wav';
+import VoiceActivityDetector from 'silk-vad';
 
+import type { VadMode } from 'silk-vad';
 import type { Env, Util, Log, Timeline, Camera } from 'silk-exttest';
 
 let log: Log;
@@ -28,7 +30,6 @@ const MODEL_BIN = path.join(__dirname, '..', 'model', 'keyword.caffemodel');
 const MODEL_DICTIONARY = path.join(__dirname, '..', 'model', 'keyword.labels');
 const TOPK = 3; // Return top K predictions
 const HOT_KEYWORD = 'keyword';
-const CRY = 'cry';
 
 const MEL_COEFFS = 26;
 const FFT_SIZE = 512;
@@ -41,17 +42,21 @@ const NUM_SAMPLES = 70; // Each sample is 16ms
 // to delay between the uterrance and the detection. So choosing 10 as it seems
 // to be the common denominator
 const SKIP_SAMPLES = 10; // Skip these many samples
-const RAW_BYTES_TO_SKIP = SKIP_SAMPLES * STEP_SIZE * 2;
 
+const RAW_BYTES_TO_SKIP = SKIP_SAMPLES * STEP_SIZE * 2;
 const WINDOW_SIZE_IN_BYTES = NUM_SAMPLES * STEP_SIZE * 2;
+
+const PCM_BUFFER_SECS = 1000; // How many seconds worth of data to buffer
+// Reference: vendor/silk/capture/AudioSourceEmitter.cpp#L17
+const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG_MIC packet
 
 // Kenzo seems to produce results with lower confidence than with Mako for some
 // reason. Also further away the device is lower the confidence is. Keeping
 // the threshold to lower value to catch far utterances too.
-const THRESHOLD = 50; // Ignore predictions with probability lower than threshold
+const THRESHOLD = 80; // Ignore predictions with probability lower than threshold
 
-// Allow continuous keyword spotting if this android property is turned off
-const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
+// Allow continuous keyword spotting if dialog is disabled
+const DIALOG_ENABLED_PROP = 'persist.silk.dialog.enabled';
 
 const SAVE_KEYWORD_WAV = 'persist.silk.kws.save';
 
@@ -68,8 +73,8 @@ class KeywordSpotting extends EventEmitter {
   _env: Env;
   _util: Util;
   _netCaffe: caffe.Model;
-  _processing: bool;
-  _predicting: bool;
+  _spotting: bool = false;
+  _predicting: bool = false;
   _onMicData: (pkt: MicData) => void;
   _extractor: MelFeatureExtractor;
   _framer: Framer;
@@ -77,16 +82,20 @@ class KeywordSpotting extends EventEmitter {
   _sampleRate:number;
   _bytesPerSample: number;
   _numChannels: number;
-  _lastWhen: number;
-  _wavDataQueue: Array<Float32Array>;
-  _wavDataQueueSizeInBytes: number;
-  _backlogMinSizeInBytes: number;
-  _suspended: boolean;
-  _onSpeechStop: (when: number) => void;
+  _pcmDataArray: Array<[number, Buffer]>;
+  _pcmDataSizeInBytes: number;
   _vib: Vibrator;
-  _kwsEnabled: boolean;
-  _pcmDataQueue: Buffer;
+  _dialogEnabled: boolean;
+  _wavDataBuffer: Buffer;
   _saveEnabled: boolean;
+  _onSpeechStart: (when: number) => void;
+  _onSpeechStop: (when: number) => void;
+  _onDialogStop: () => void;
+  _vadMode: VadMode;
+  _speechStartWhen: number;
+  _speechStopWhen: number;
+  _waitingForPcmData: boolean = false;
+  _voiceActivityDetector: VoiceActivityDetector;
 
   constructor(env: Env) {
     super();
@@ -95,11 +104,9 @@ class KeywordSpotting extends EventEmitter {
     log = this._env.log;
     timeline = this._env.timeline;
     camera = this._env.camera;
-    this._processing = false;
-    this._predicting = false;
     this._init();
-    this._lastWhen = 0;
     this._vib = new Vibrator();
+    this._voiceActivityDetector = new VoiceActivityDetector(timeline, camera);
 
     this._sampleRate = config.deviceMic.sampleRate;
     this._bytesPerSample = config.deviceMic.bytesPerSample;
@@ -110,29 +117,26 @@ class KeywordSpotting extends EventEmitter {
       this._detectKeyword(signal);
     });
 
-    this._wavDataQueue = []; // Array of wavData
-    this._wavDataQueueSizeInBytes = STEP_SIZE; // Size of all the pcmData buffers in the queue
-    // Initialize wav data with STEP_SIZE values so number of samples are always
-    // a multiple of (FFT_SIZE / STEP_SIZE)
-    this._wavDataQueue.push(new Float32Array(STEP_SIZE));
-
-    // Calculate backlog size for 1 second worth of data
-    this._backlogMinSizeInBytes = 1 * this._sampleRate * this._bytesPerSample;
-
+    this._pcmDataArray = []; // Array of [when, pcmData] tuples
+    this._pcmDataSizeInBytes = STEP_SIZE; // Size of all the pcmData buffers in the queue
     this._output = [];
-    this._suspended = false;
-
-    this._pcmDataQueue = new Buffer(0); // Array of raw pcmData
+    this._wavDataBuffer = new Buffer(0); // Array of raw pcmData
 
     // Setup listener for handing mic data and speech
     this._onMicData = pkt => {
       this._handleMicData(pkt.when, pkt.frames);
     };
-    this._onSpeechStop = when => {
+    this._onSpeechStart = when => {
       this._resumeSpotting(when);
     };
+    this._onSpeechStop = when => {
+      this._pauseSpotting(when);
+    };
+    this._onDialogStop = () => {
+      this._setVadMode('continuous');
+    };
 
-    this._kwsEnabled = this._util.getboolprop(KWS_ENABLED_PROP, false);
+    this._dialogEnabled = this._util.getboolprop(DIALOG_ENABLED_PROP, false);
     this._saveEnabled = this._util.getboolprop(SAVE_KEYWORD_WAV, false);
   }
 
@@ -140,8 +144,14 @@ class KeywordSpotting extends EventEmitter {
    *
    */
   willUnload() {
-    camera.removeListener('mic-data', this._onMicData);
-    timeline.removeListener('dialog_stop', this._onSpeechStop);
+    if (camera) {
+      camera.removeListener('mic-data', this._onMicData);
+    }
+    if (timeline) {
+      timeline.removeListener('dialog_stop', this._onSpeechStop);
+      timeline.removeListener('speech_start', this._onSpeechStart);
+      timeline.removeListener('speech_stop', this._onSpeechStop);
+    }
   }
 
   get MEL_COEFFS() {
@@ -198,22 +208,9 @@ class KeywordSpotting extends EventEmitter {
           const confidence = parseInt((predictions[0].confidence * 100).toFixed(2));
 
           // Add object to timeline if a successful keyword is spottted
-          if (((label === CRY) || (label === HOT_KEYWORD)) &&
-              (confidence >= THRESHOLD)) {
-            let diff = Date.now() - this._lastWhen;
-            this._lastWhen = Date.now();
-            if (diff < NUM_SAMPLES * 8) {
-              log.debug(`Ignore ${HOT_KEYWORD} potentially from the same utterance ${confidence}%?`);
-              resolve(null);
-            } else {
-              log.info(`${label} spotted with confidence: ${confidence}%`);
-              timeline.addObjects([{
-                source: 'kws',
-                tag: label,
-                when: Date.now(),
-              }]);
-              resolve(label);
-            }
+          if ((label === HOT_KEYWORD) && (confidence >= THRESHOLD)) {
+            log.info(`${label} spotted with confidence: ${confidence}%`);
+            resolve(label);
           } else {
             resolve(null);
           }
@@ -256,7 +253,33 @@ class KeywordSpotting extends EventEmitter {
       return;
     }
     this.emit('ready');
+
     camera.on('mic-data', this._onMicData);
+
+    // Start the continuous mode
+    this._setVadMode('continuous');
+  }
+
+  /**
+   *
+   */
+  _setVadMode(mode) {
+    log.info(`Switching to ${mode} mode`);
+    this._vadMode = mode;
+    this._voiceActivityDetector.setMode(mode);
+
+    if (this._vadMode === 'continuous') {
+      this._vib.pattern(50);
+      timeline.on('speech_start', this._onSpeechStart);
+      timeline.on('speech_stop', this._onSpeechStop);
+      timeline.removeListener('dialog_stop', this._onDialogStop);
+    } else if (this._vadMode === 'dialog') {
+      timeline.removeListener('speech_start', this._onSpeechStart);
+      timeline.removeListener('speech_stop', this._onSpeechStop);
+      timeline.on('dialog_stop', this._onDialogStop);
+    } else {
+      log.warn(`Unknown VAD mode: ${mode}`);
+    }
   }
 
   /**
@@ -264,9 +287,48 @@ class KeywordSpotting extends EventEmitter {
    * @private
    */
   _handleMicData(when: number, pcmData: Buffer) {
-    log.debug(`Adding ${pcmData.length} samples to framer`);
+    this._pcmDataArray.push([when, pcmData]);
+    this._pcmDataSizeInBytes += pcmData.length;
+
+    // Keep around PCM_BUFFER_SECS worth of data in the ring buffer
+    if (!this._spotting && (this._pcmDataArray.length > PCM_BUFFER_COUNT)) {
+      while (this._pcmDataArray.length > PCM_BUFFER_COUNT) {
+        this._pcmDataArray.shift();
+        this._pcmDataSizeInBytes -= pcmData.length;
+      }
+    }
+
+    if (this._spotting && this._waitingForPcmData) {
+      process.nextTick(() => this._processNextSample());
+    }
+  }
+
+  /**
+   * Process next mic data from the queue
+   */
+  _processNextSample() {
+    if (!this._spotting) {
+      return;
+    }
+    if (this._pcmDataArray.length === 0) {
+      this._waitingForPcmData = true;
+      return;
+    }
+    this._waitingForPcmData = false;
+
+    // Start processing pcm data
+    let [when, pcmData] = this._pcmDataArray.shift();
+
+    // Stop processing after speech stop
+    if (when >= this._speechStopWhen + PCM_BUFFER_SECS) {
+      log.debug(`Stop processing sample`);
+      this._spotting = false;
+      return;
+    }
 
     // Convert the raw pcm data into Float32Array of [-1, 1]
+    this._pcmDataSizeInBytes -= pcmData.length;
+
     let samples = new Int16Array(pcmData.length / 2);
     for (let i = 0; i < samples.length; ++i) {
       samples[i] = pcmData.readInt16LE(2 * i);
@@ -276,36 +338,10 @@ class KeywordSpotting extends EventEmitter {
       wavData[i] = (samples[i] < 0) ? (samples[i] / 32768) : (samples[i] / 32767);
     }
 
-    this._wavDataQueue.push(wavData);
-    this._wavDataQueueSizeInBytes += wavData.length;
-
     // Store raw PCM data
     if (this._saveEnabled) {
-      this._pcmDataQueue = Buffer.concat([this._pcmDataQueue, pcmData]);
+      this._wavDataBuffer = Buffer.concat([this._wavDataBuffer, pcmData]);
     }
-
-    if (this._wavDataQueueSizeInBytes >= this._backlogMinSizeInBytes) {
-      const backlogMs = this._wavDataQueueSizeInBytes /
-          this._sampleRate * this._bytesPerSample * this._numChannels;
-      log.warn(`Warning: PCM data backlog of ${backlogMs}secs`);
-    }
-
-    if (!this._processing) {
-      this._processing = true;
-      this._processNextSample();
-    }
-  }
-
-  /**
-   * Process next mic data from the queue
-   */
-  _processNextSample() {
-    if (this._wavDataQueue.length === 0) {
-      this._processing = false; // Need more pcm data
-      return;
-    }
-    let wavData = this._wavDataQueue.shift();
-    this._wavDataQueueSizeInBytes -= wavData.length;
 
     this._framer.addData(wavData);
 
@@ -320,9 +356,6 @@ class KeywordSpotting extends EventEmitter {
    * @private
    */
   _detectKeyword(signal) {
-    if (this._suspended) {
-      return;
-    }
     assert(signal.length === FFT_SIZE);
 
     // Extract mel features
@@ -355,21 +388,25 @@ class KeywordSpotting extends EventEmitter {
     output.forEach(features => normalizer.apply(features, features));
 
     try {
-      log.debug(`Running prediction`);
       let label = await this._predictAsync(output);
-      if (label === HOT_KEYWORD) {
-        this._pauseSpotting();
-        this._saveAsWav();
+      if (label && (label === HOT_KEYWORD)) {
         await this._playHotKeywordSound();
+        this._saveAsWav();
+        this._onKeywordDetected();
+        timeline.addObjects([{
+          source: 'kws',
+          tag: label,
+          when: Date.now(),
+        }]);
       }
     } catch (err) {
-      log.error(`Prediction failed err: ${err}`);
+      log.error(`Prediction failed err: ${err.stack}||${err}`);
     }
 
     // Skip a few samples
     this._output.splice(0, SKIP_SAMPLES);
     if (this._saveEnabled) {
-      this._pcmDataQueue = this._pcmDataQueue.slice(RAW_BYTES_TO_SKIP);
+      this._wavDataBuffer = this._wavDataBuffer.slice(RAW_BYTES_TO_SKIP);
     }
 
     process.nextTick(() => this._processNextWindow()); // Process next sample
@@ -379,34 +416,58 @@ class KeywordSpotting extends EventEmitter {
    * Play a sound when hot keyword is detected
    */
   _playHotKeywordSound() {
-    return this._util.playSound(path.join(__dirname, '..', 'media',
-        'hotkeyword_detected.mp3'));
+    if (!this._dialogEnabled) {
+      return this._util.playSound(path.join(__dirname, '..', 'media',
+          'hotkeyword_detected.mp3'));
+    } else {
+      return Promise.resolve();
+    }
   }
 
   /**
-   * Stop listening for the keyword
+   * Stop listening for the keyword once the current buffer is finished
+   * processing or a keyword is detected
    */
-  _pauseSpotting() {
-    if (this._kwsEnabled) {
-      log.debug(`Pause spotting`);
-      camera.removeListener('mic-data', this._onMicData);
-      this._output = []; // Clear the queue
-      this._suspended = true; // Suspend any framer activity
-
-      // Register for `speech` events
-      timeline.on('dialog_stop', this._onSpeechStop);
+  _pauseSpotting(when) {
+    if (!this._spotting) {
+      return;
     }
+    log.debug(`Pause spotting ${when}`);
+    this._speechStopWhen = when;
   }
 
   /**
    * Start listening for the keyword
    */
   _resumeSpotting(when) {
+    if (this._spotting) {
+      return;
+    }
     log.debug(`Resume spotting ${when}`);
-    this._vib.pattern(50);
-    this._suspended = false;
-    camera.on('mic-data', this._onMicData);
-    timeline.removeListener('dialog_stop', this._onSpeechStop);
+    this._waitingForPcmData = false;
+    this._speechStartWhen = when;
+    this._speechStopWhen = Infinity;
+    if (this._spotting) {
+      log.error(`Previous processing in progress`);
+      return;
+    }
+    this._spotting = true;
+
+    this._output = [];
+    this._wavDataBuffer = new Buffer(0);
+    this._processNextSample();
+  }
+
+  /**
+   * Stop processsing data as soon as keyword is detected
+   */
+  _onKeywordDetected() {
+    this._output = []; // Clear buffer to stop predictions right away
+    this._speechStopWhen = 0;
+
+    if (this._dialogEnabled) {
+      this._setVadMode('dialog');
+    }
   }
 
   /**
@@ -414,13 +475,13 @@ class KeywordSpotting extends EventEmitter {
    */
   _saveAsWav() {
     if (this._saveEnabled) {
-      let samples = this._pcmDataQueue.slice(0, WINDOW_SIZE_IN_BYTES);
+      let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
       let writer = new wav.FileWriter(`data/media/kws_${Date.now()}.wav`, {
         sampleRate: this._sampleRate,
         channels: this._numChannels,
         bitDepth: this._bytesPerSample * 8,
       });
-      writer.write(samples);
+      writer.write(wavData);
       writer.end();
     }
   }

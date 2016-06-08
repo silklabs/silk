@@ -9,10 +9,10 @@
 import path from 'path';
 import config from 'silk-config';
 import createLog from 'silk-log/device';
-import * as util from 'silk-sysutils';
+import { EventEmitter } from 'events';
 
 import SpeechRecognizer from './speechrecognizer';
-import type { Camera, Timeline } from 'silk-exttest';
+import type { MicData } from './speechrecognizer';
 
 const log = createLog('vad');
 
@@ -25,31 +25,54 @@ const VAD_SEARCH = 'vad';
 // Keyword we are looking for to activate menu
 const KEYPHRASE = 'ok sense';
 
-// Allow continuous keyword spotting if dialog is disabled
-const DIALOG_ENABLED_PROP = 'persist.silk.dialog.enabled';
-
 export type VadMode = 'continuous' | 'dialog';
 
 /**
  * This class adds voice recognition functionality to silk devices
  */
-export default class VoiceActivityDetector {
+export default class VoiceActivityDetector extends EventEmitter {
 
-  _timeline: Timeline;
-  _camera: Camera;
   _speechRecognizer: SpeechRecognizer;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
-  _onDialogStart: () => void;
-  _dialogEnabled: boolean;
   _vadMode: VadMode;
 
-  constructor(timeline: Timeline, camera: Camera) {
-    this._timeline = timeline;
-    this._camera = camera;
+  constructor() {
+    super();
     this._setupRecognizer();
-    this._dialogEnabled = util.getboolprop(DIALOG_ENABLED_PROP, false);
+  }
+
+  /**
+   * Call this function to add mic-data
+   */
+  addMicData(pkt: MicData) {
+    if (this._speechRecognizer) {
+      this._speechRecognizer.addMicData(pkt);
+    }
+  }
+
+  /**
+   * Start voice activity detection. This is only supported when VAD is in
+   * dialog mode.
+   */
+  startVad() {
+    // Start VAD when dialog starts and stop when end of speech is detected
+    if (this._vadMode === 'dialog') {
+      this._startVoiceActivityDetection();
+    }
+  }
+
+  /**
+   * Stop voice activity detection. This is only supported when VAD is in
+   * dialog mode. In dialog mode voice activity detection is automatically
+   * stopped on speech_stop so there is no need to explicitly call this function.
+   */
+  stoptVad() {
+    // Start VAD when dialog starts and stop when end of speech is detected
+    if (this._vadMode === 'dialog') {
+      this._stopVoiceActivityDetection();
+    }
   }
 
   /**
@@ -61,7 +84,7 @@ export default class VoiceActivityDetector {
 
     // Configure with audio properties of the input data from mic. These
     // properties must match the audio properties set in camera
-    this._speechRecognizer = new SpeechRecognizer(config.deviceMic, this._camera);
+    this._speechRecognizer = new SpeechRecognizer();
 
     // Bandwidth of Audio recorded from capture process is 16khz so use
     // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
@@ -113,12 +136,6 @@ export default class VoiceActivityDetector {
     this._onSpeechTimeout = () => {
       this._handleTimeout();
     };
-
-    // Start VAD when dialog starts and stop when end of speech
-    // is detected
-    this._onDialogStart = () => {
-      this._startVoiceActivityDetection();
-    };
   }
 
   /**
@@ -133,11 +150,10 @@ export default class VoiceActivityDetector {
     this._vadMode = mode;
 
     if (this._vadMode === 'continuous') {
-      this._timeline.removeListener('dialog_start', this._onDialogStart);
       this._startVoiceActivityDetection();
     } else if (this._vadMode === 'dialog') {
+      // Stop current voice activity and wait to be explicitly called to start VAD
       this._stopVoiceActivityDetection();
-      this._timeline.on('dialog_start', this._onDialogStart);
     } else {
       log.warn(`Unknown VAD mode: ${mode}`);
     }
@@ -195,11 +211,7 @@ export default class VoiceActivityDetector {
    */
   _handleBeginningOfSpeech(when: number): void {
     log.debug(`Speech begin`);
-    this._timeline.addObjects([{
-      source: 'silk-vad',
-      tag: 'speech_start',
-      when,
-    }]);
+    this.emit('speech_start', when);
   }
 
   /**
@@ -207,11 +219,7 @@ export default class VoiceActivityDetector {
    */
   _handleEndOfSpeech(when: number): void {
     log.debug(`Speech end`);
-    this._timeline.addObjects([{
-      source: 'silk-vad',
-      tag: 'speech_stop',
-      when,
-    }]);
+    this.emit('speech_stop', when);
 
     // Suspend VAD activity if in a dialog mode until the next dialog_start
     // event is received
@@ -225,14 +233,12 @@ export default class VoiceActivityDetector {
    */
   _handleTimeout(): void {
     log.debug(`speech timeout`);
-    this._timeline.addObjects([{
-      source: 'silk-vad',
-      tag: 'speech_timeout',
-      when: Date.now(),
-    }]);
+    this.emit('speech_timeout');
 
     if (this._vadMode === 'dialog') {
       this._stopVoiceActivityDetection();
     }
   }
 }
+
+export type { VoiceActivityDetector };

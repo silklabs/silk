@@ -45,6 +45,7 @@ PRODUCT_PACKAGES += \
   silk-modwatcher \
   silk-netstatus \
   silk-vad \
+  silk-kws \
 
 # vendor/silk/ext/...
 SILK_EXT := \
@@ -64,7 +65,6 @@ SILK_EXT := \
   silkext-dnn-pedestrian-dictionary \
   silkext-dnn-pedestrian-proto \
   silkext-face \
-  silkext-kws \
   silkext-motion \
   silkext-motion-sound \
   silkext-nightlight \

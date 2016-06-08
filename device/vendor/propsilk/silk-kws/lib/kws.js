@@ -11,19 +11,17 @@ import fs from 'mz/fs';
 import path from 'path';
 import assert from 'assert';
 import {EventEmitter} from 'events';
+import wav from 'wav';
 import config from 'silk-config';
 import caffe from 'silk-caffe';
-import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import Vibrator from 'silk-vibrator';
-import wav from 'wav';
-import VoiceActivityDetector from 'silk-vad';
+import createLog from 'silk-log/device';
+import * as util from 'silk-sysutils';
+import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 
-import type { VadMode } from 'silk-vad';
-import type { Env, Util, Log, Timeline, Camera } from 'silk-exttest';
+import type { VoiceActivityDetector } from 'silk-vad';
 
-let log: Log;
-let timeline: Timeline;
-let camera: Camera;
+const log = createLog('kws');
 
 const MODEL_PROTO = path.join(__dirname, '..', 'model', 'keyword.prototxt');
 const MODEL_BIN = path.join(__dirname, '..', 'model', 'keyword.caffemodel');
@@ -55,9 +53,6 @@ const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG
 // the threshold to lower value to catch far utterances too.
 const THRESHOLD = 80; // Ignore predictions with probability lower than threshold
 
-// Allow continuous keyword spotting if dialog is disabled
-const DIALOG_ENABLED_PROP = 'persist.silk.dialog.enabled';
-
 const SAVE_KEYWORD_WAV = 'persist.silk.kws.save';
 
 type MicData = {
@@ -69,13 +64,10 @@ type MicData = {
  * This class receives mic data stream and tries to detect a specific keyword
  * using keyword spotting with neural networks
  */
-class KeywordSpotting extends EventEmitter {
-  _env: Env;
-  _util: Util;
+export default class KeywordSpotting extends EventEmitter {
   _netCaffe: caffe.Model;
   _spotting: bool = false;
   _predicting: bool = false;
-  _onMicData: (pkt: MicData) => void;
   _extractor: MelFeatureExtractor;
   _framer: Framer;
   _output: Array<Float32Array>;
@@ -90,23 +82,18 @@ class KeywordSpotting extends EventEmitter {
   _saveEnabled: boolean;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
-  _onDialogStop: () => void;
-  _vadMode: VadMode;
   _speechStartWhen: number;
   _speechStopWhen: number;
   _waitingForPcmData: boolean = false;
   _voiceActivityDetector: VoiceActivityDetector;
+  _ready: boolean = false;
 
-  constructor(env: Env) {
+  constructor(voiceActivityDetector: VoiceActivityDetector, dialogEnabled: boolean = true) {
     super();
-    this._env = env;
-    this._util = env.util;
-    log = this._env.log;
-    timeline = this._env.timeline;
-    camera = this._env.camera;
+    this._dialogEnabled = dialogEnabled;
+    this._voiceActivityDetector = voiceActivityDetector;
     this._init();
     this._vib = new Vibrator();
-    this._voiceActivityDetector = new VoiceActivityDetector(timeline, camera);
 
     this._sampleRate = config.deviceMic.sampleRate;
     this._bytesPerSample = config.deviceMic.bytesPerSample;
@@ -117,57 +104,64 @@ class KeywordSpotting extends EventEmitter {
       this._detectKeyword(signal);
     });
 
+    this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, false);
+
     this._pcmDataArray = []; // Array of [when, pcmData] tuples
     this._pcmDataSizeInBytes = STEP_SIZE; // Size of all the pcmData buffers in the queue
     this._output = [];
     this._wavDataBuffer = new Buffer(0); // Array of raw pcmData
 
-    // Setup listener for handing mic data and speech
-    this._onMicData = pkt => {
-      this._handleMicData(pkt.when, pkt.frames);
-    };
     this._onSpeechStart = when => {
       this._resumeSpotting(when);
     };
     this._onSpeechStop = when => {
       this._pauseSpotting(when);
     };
-    this._onDialogStop = () => {
-      this._setVadMode('continuous');
-    };
-
-    this._dialogEnabled = this._util.getboolprop(DIALOG_ENABLED_PROP, false);
-    this._saveEnabled = this._util.getboolprop(SAVE_KEYWORD_WAV, false);
   }
 
-  /**
-   *
-   */
-  willUnload() {
-    if (camera) {
-      camera.removeListener('mic-data', this._onMicData);
-    }
-    if (timeline) {
-      timeline.removeListener('dialog_stop', this._onSpeechStop);
-      timeline.removeListener('speech_start', this._onSpeechStart);
-      timeline.removeListener('speech_stop', this._onSpeechStop);
-    }
-  }
-
-  get MEL_COEFFS() {
+  get MEL_COEFFS(): number {
     return MEL_COEFFS;
   }
 
-  get FFT_SIZE() {
+  get FFT_SIZE(): number {
     return FFT_SIZE;
   }
 
-  get STEP_SIZE() {
+  get STEP_SIZE(): number {
     return STEP_SIZE;
   }
 
-  get NUM_SAMPLES() {
+  get NUM_SAMPLES(): number {
     return NUM_SAMPLES;
+  }
+
+  /**
+   * Call this function to add mic-data
+   */
+  addMicData(pkt: MicData) {
+    this._voiceActivityDetector.addMicData(pkt);
+    this._handleMicData(pkt.when, pkt.frames);
+  }
+
+  /**
+   * Start keyword spotting
+   */
+  start() {
+    log.info(`Starting kws`);
+    this._vib.pattern(50);
+    this._voiceActivityDetector.setMode('continuous');
+    this._voiceActivityDetector.on('speech_start', this._onSpeechStart);
+    this._voiceActivityDetector.on('speech_stop', this._onSpeechStop);
+  }
+
+  /**
+   * Stop keyword spotting
+   */
+  stop() {
+    log.info(`Stopping kws`);
+    this._voiceActivityDetector.setMode('dialog');
+    this._voiceActivityDetector.removeListener('speech_start', this._onSpeechStart);
+    this._voiceActivityDetector.removeListener('speech_stop', this._onSpeechStop);
   }
 
   /**
@@ -194,7 +188,10 @@ class KeywordSpotting extends EventEmitter {
    * Make prediction asynchronously
    * @private
    */
-  _predictAsync(mat) {
+  _predictAsync(mat: Array<Array<number>>) {
+    if (!this._ready) {
+     return Promise.resolve();
+    }
     return new Promise((resolve, reject) => {
       let start = Date.now();
       this._netCaffe.predictTopK(mat, TOPK, (err, predictions) => {
@@ -207,7 +204,7 @@ class KeywordSpotting extends EventEmitter {
           const label = predictions[0].label;
           const confidence = parseInt((predictions[0].confidence * 100).toFixed(2));
 
-          // Add object to timeline if a successful keyword is spottted
+          // Emit event if a successful keyword is spotted
           if ((label === HOT_KEYWORD) && (confidence >= THRESHOLD)) {
             log.info(`${label} spotted with confidence: ${confidence}%`);
             resolve(label);
@@ -252,34 +249,8 @@ class KeywordSpotting extends EventEmitter {
       log.error(`Failed to load caffe model err: ${err}`);
       return;
     }
+    this._ready = true;
     this.emit('ready');
-
-    camera.on('mic-data', this._onMicData);
-
-    // Start the continuous mode
-    this._setVadMode('continuous');
-  }
-
-  /**
-   *
-   */
-  _setVadMode(mode) {
-    log.info(`Switching to ${mode} mode`);
-    this._vadMode = mode;
-    this._voiceActivityDetector.setMode(mode);
-
-    if (this._vadMode === 'continuous') {
-      this._vib.pattern(50);
-      timeline.on('speech_start', this._onSpeechStart);
-      timeline.on('speech_stop', this._onSpeechStop);
-      timeline.removeListener('dialog_stop', this._onDialogStop);
-    } else if (this._vadMode === 'dialog') {
-      timeline.removeListener('speech_start', this._onSpeechStart);
-      timeline.removeListener('speech_stop', this._onSpeechStop);
-      timeline.on('dialog_stop', this._onDialogStop);
-    } else {
-      log.warn(`Unknown VAD mode: ${mode}`);
-    }
   }
 
   /**
@@ -355,7 +326,7 @@ class KeywordSpotting extends EventEmitter {
    *
    * @private
    */
-  _detectKeyword(signal) {
+  _detectKeyword(signal: Float32Array) {
     assert(signal.length === FFT_SIZE);
 
     // Extract mel features
@@ -393,11 +364,7 @@ class KeywordSpotting extends EventEmitter {
         await this._playHotKeywordSound();
         this._saveAsWav();
         this._onKeywordDetected();
-        timeline.addObjects([{
-          source: 'kws',
-          tag: label,
-          when: Date.now(),
-        }]);
+        this.emit(label, Date.now());
       }
     } catch (err) {
       log.error(`Prediction failed err: ${err.stack}||${err}`);
@@ -417,7 +384,7 @@ class KeywordSpotting extends EventEmitter {
    */
   _playHotKeywordSound() {
     if (!this._dialogEnabled) {
-      return this._util.playSound(path.join(__dirname, '..', 'media',
+      return util.playSound(path.join(__dirname, '..', 'media',
           'hotkeyword_detected.mp3'));
     } else {
       return Promise.resolve();
@@ -428,7 +395,7 @@ class KeywordSpotting extends EventEmitter {
    * Stop listening for the keyword once the current buffer is finished
    * processing or a keyword is detected
    */
-  _pauseSpotting(when) {
+  _pauseSpotting(when: number) {
     if (!this._spotting) {
       return;
     }
@@ -439,7 +406,7 @@ class KeywordSpotting extends EventEmitter {
   /**
    * Start listening for the keyword
    */
-  _resumeSpotting(when) {
+  _resumeSpotting(when: number) {
     if (this._spotting) {
       return;
     }
@@ -464,10 +431,6 @@ class KeywordSpotting extends EventEmitter {
   _onKeywordDetected() {
     this._output = []; // Clear buffer to stop predictions right away
     this._speechStopWhen = 0;
-
-    if (this._dialogEnabled) {
-      this._setVadMode('dialog');
-    }
   }
 
   /**
@@ -486,5 +449,3 @@ class KeywordSpotting extends EventEmitter {
     }
   }
 }
-
-module.exports = (env: Env): any => new KeywordSpotting(env);

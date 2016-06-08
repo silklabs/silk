@@ -61,6 +61,7 @@ const externals = [
   'silk-cv',
   'silk-gc1',
   'silk-input',
+  'silk-kws',
   'silk-lights',
   'silk-modwatcher',
   'silk-movie',

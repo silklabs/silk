@@ -69,6 +69,7 @@ const externals = [
   'silk-properties',
   'silk-sensors',
   'silk-sysutils',
+  'silk-vad',
   'silk-vibrator',
   'silk-volume',
   'silk-wifi',

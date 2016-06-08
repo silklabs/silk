@@ -86,6 +86,11 @@ export function mergeDependencies(pkg: PackageJSON): Map<string, string> {
     }
   }
 
+  const symlinkDeps = pkg.symlinkDependencies || {};
+  for (let dep in symlinkDeps) {
+    result.delete(dep);
+  }
+
   return result;
 }
 

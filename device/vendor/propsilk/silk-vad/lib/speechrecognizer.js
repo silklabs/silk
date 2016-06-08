@@ -9,23 +9,15 @@
 import * as pocketsphinx from 'pocketsphinx';
 import { EventEmitter } from 'events';
 import createLog from 'silk-log/device';
-import type { Log, Camera } from 'silk-exttest';
+import config from 'silk-config';
 
 const log = createLog('vad');
 let ps = pocketsphinx.ps;
 
-type Config = {
-  sampleRate: number;
-  bytesPerSample: number;
-  numChannels: number;
-};
-
-type MicData = {
+export type MicData = {
   when: number;
   frames: Buffer;
 };
-
-type MicDataCallback = (pkt: MicData) => void;
 
 /**
  * Implementattion of voice activity detection using pocketsphinx. This class
@@ -34,10 +26,8 @@ type MicDataCallback = (pkt: MicData) => void;
  */
 export default class SpeechRecognizer extends EventEmitter {
 
-  _camera: Camera;
   _decoder: any;
   _config: any;
-  _onMicData: MicDataCallback;
   _listening: boolean = false;
   _sampleRate:number;
   _bytesPerSample: number;
@@ -49,21 +39,13 @@ export default class SpeechRecognizer extends EventEmitter {
   _inSpeech: boolean;
   _listenTimeout: ?number;
 
-  constructor(cfg: Config, camera: Camera) {
+  constructor() {
     super();
-    this._camera = camera;
     this._decoder = null;
 
-    let params = ['sampleRate', 'bytesPerSample', 'numChannels'];
-    params.forEach(param => {
-      if (!(param in cfg)) {
-        throw new Error(`Missing ${param} in cfg`);
-      }
-    });
-
-    this._sampleRate = cfg.sampleRate;
-    this._bytesPerSample = cfg.bytesPerSample;
-    this._numChannels = cfg.numChannels;
+    this._sampleRate = config.deviceMic.sampleRate;
+    this._bytesPerSample = config.deviceMic.bytesPerSample;
+    this._numChannels = config.deviceMic.numChannels;
     this._pcmDataQueue = []; // Array of [when, pcmData] tuples
     this._pcmDataQueueSizeInBytes = 0; // Size of all the pcmData buffers in the queue
     this._processingInProgress = false;
@@ -73,15 +55,13 @@ export default class SpeechRecognizer extends EventEmitter {
         this._numChannels;
 
     this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
+  }
 
-    // Setup listener for handing mic data
-    this._onMicData = pkt => {
-      if (this._listening) {
-        this._handleMicData(pkt.when, pkt.frames);
-      }
-    };
-
-    this._camera.on('mic-data', this._onMicData);
+  /**
+   * Call this function to add mic-data
+   */
+  addMicData(pkt: MicData) {
+    this._handleMicData(pkt.when, pkt.frames);
   }
 
   /**

@@ -106,7 +106,6 @@ class KeywordSpotting extends EventEmitter {
     camera = this._env.camera;
     this._init();
     this._vib = new Vibrator();
-    this._voiceActivityDetector = new VoiceActivityDetector(timeline, camera);
 
     this._sampleRate = config.deviceMic.sampleRate;
     this._bytesPerSample = config.deviceMic.bytesPerSample;
@@ -117,6 +116,10 @@ class KeywordSpotting extends EventEmitter {
       this._detectKeyword(signal);
     });
 
+    this._saveEnabled = this._util.getboolprop(SAVE_KEYWORD_WAV, false);
+    this._dialogEnabled = this._util.getboolprop(DIALOG_ENABLED_PROP, false);
+    this._voiceActivityDetector = new VoiceActivityDetector(this._dialogEnabled);
+
     this._pcmDataArray = []; // Array of [when, pcmData] tuples
     this._pcmDataSizeInBytes = STEP_SIZE; // Size of all the pcmData buffers in the queue
     this._output = [];
@@ -124,6 +127,7 @@ class KeywordSpotting extends EventEmitter {
 
     // Setup listener for handing mic data and speech
     this._onMicData = pkt => {
+      this._voiceActivityDetector.addMicData(pkt);
       this._handleMicData(pkt.when, pkt.frames);
     };
     this._onSpeechStart = when => {
@@ -135,23 +139,6 @@ class KeywordSpotting extends EventEmitter {
     this._onDialogStop = () => {
       this._setVadMode('continuous');
     };
-
-    this._dialogEnabled = this._util.getboolprop(DIALOG_ENABLED_PROP, false);
-    this._saveEnabled = this._util.getboolprop(SAVE_KEYWORD_WAV, false);
-  }
-
-  /**
-   *
-   */
-  willUnload() {
-    if (camera) {
-      camera.removeListener('mic-data', this._onMicData);
-    }
-    if (timeline) {
-      timeline.removeListener('dialog_stop', this._onSpeechStop);
-      timeline.removeListener('speech_start', this._onSpeechStart);
-      timeline.removeListener('speech_stop', this._onSpeechStop);
-    }
   }
 
   get MEL_COEFFS() {
@@ -270,12 +257,12 @@ class KeywordSpotting extends EventEmitter {
 
     if (this._vadMode === 'continuous') {
       this._vib.pattern(50);
-      timeline.on('speech_start', this._onSpeechStart);
-      timeline.on('speech_stop', this._onSpeechStop);
+      this._voiceActivityDetector.on('speech_start', this._onSpeechStart);
+      this._voiceActivityDetector.on('speech_stop', this._onSpeechStop);
       timeline.removeListener('dialog_stop', this._onDialogStop);
     } else if (this._vadMode === 'dialog') {
-      timeline.removeListener('speech_start', this._onSpeechStart);
-      timeline.removeListener('speech_stop', this._onSpeechStop);
+      this._voiceActivityDetector.removeListener('speech_start', this._onSpeechStart);
+      this._voiceActivityDetector.removeListener('speech_stop', this._onSpeechStop);
       timeline.on('dialog_stop', this._onDialogStop);
     } else {
       log.warn(`Unknown VAD mode: ${mode}`);

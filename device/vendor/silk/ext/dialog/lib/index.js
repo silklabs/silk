@@ -9,6 +9,9 @@
 import modwatcher from 'silk-modwatcher';
 import type { ModulePushCallback } from 'silk-modwatcher';
 
+import { createDialogEngine } from 'silk-dialog-engine/lib/dialogEngine';
+import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine/lib/dialogEngine';
+
 import path from 'path';
 import createLog from 'silk-log/device';
 const log = createLog('silkext-dialog');
@@ -19,10 +22,15 @@ const log = createLog('silkext-dialog');
 const DIALOGSCRIPT_MODNAME = 'silk-dialog-script';
 
 class Dialog {
+  _de: DialogEngine;
 
   constructor() {
     this._monitor(true);
 
+    const options: DialogEngineOptions = {
+      // TODO
+    };
+    this._de = createDialogEngine(options);
     this._loadDialogScript();
   }
 

@@ -16,7 +16,7 @@ import SpeechToText from './speechToText';
 import TextToSpeech from './textToSpeech';
 
 // XXX DEMO ONLY Replace with luis
-import textToIntention from '../demo/textToIntention';
+import textToIntention from './textToIntention';
 
 export type DialogEngineOptions = {
   // Nothing for now... Will eventually have luis model access token, etc.

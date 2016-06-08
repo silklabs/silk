@@ -3,6 +3,7 @@
 cd $(dirname $0)/..
 
 APIDOC_SOURCE_FILES=" \
+  ../../dialog-engine/lib/dialogEngine.js \
   ../../bsp-gonk/vendor/propsilk/silk-netstatus/lib/index.js \
   ../../pub/bsp-gonk/vendor/silk/silk-volume/lib/index.js \
 "

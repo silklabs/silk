@@ -1,11 +1,11 @@
 {
   "name": "silk-dialog-engine",
   "version": "0.17.1",
-  "description": "Silk voice dialog engine",
+  "description": "Silk dialog engine",
   "main": "lib/index.js",
   "scripts": {
-    "flow": "flow check",
-    "lint": "eslint lib demo"
+    "lint": "eslint .",
+    "test": "npm run lint"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
@@ -19,11 +19,7 @@
   },
   "devDependencies": {
     "babel-eslint": "6.0.4",
-    "eslint": "1.10.3",
-    "flow-bin": "0.25.0",
-    "mic": "2.0.1",
-    "speaker": "0.3.0",
-    "play-sound": "0.0.9"
+    "eslint": "1.10.3"
   },
   "license": "proprietary",
   "private": true

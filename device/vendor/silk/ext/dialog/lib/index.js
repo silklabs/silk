@@ -19,8 +19,10 @@ const log = createLog('silkext-dialog');
 const DIALOGSCRIPT_MODNAME = 'silk-dialog-script';
 
 class Dialog {
+
   constructor() {
     this._monitor(true);
+
     this._loadDialogScript();
   }
 

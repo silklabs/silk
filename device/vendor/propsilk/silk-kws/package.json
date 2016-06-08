@@ -15,6 +15,7 @@
     "silk-config": "/config",
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-log": "/pub/log",
+    "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils",
     "silk-vibrator": "/pub/bsp-gonk/vendor/silk/silk-vibrator"
   },
   "dependencies": {

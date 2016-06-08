@@ -290,7 +290,7 @@ class Env extends EventEmitter {
        */
       this._addEvents('timeline', timeline, this.timeline,
           ['preview', 'preview-fast', 'face', 'clap', 'motion', 'no-motion',
-           'sound', 'keyword', 'dialog_stop']);
+           'sound']);
 
       /**
        * Add a processed frame

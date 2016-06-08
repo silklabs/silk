@@ -20,7 +20,6 @@ for (let dep of BABEL_DEP_PATHS) {
   const depPath = path.join(dep, 'babeldeps', 'package.json');
   if (fs.existsSync(depPath)) {
     const requirePath = path.join(dep, 'babeldeps');
-    console.log(requirePath);
     babeldeps = require(requirePath);
   }
 }
@@ -33,7 +32,7 @@ const DEFAULT_OPTIONS = {
   only: babeldeps
 };
 
-const REGISTER_PATH = path.join(__dirname, '..', 'babel-register');
+const REGISTER_PATH = path.join(__dirname, 'babel-register', 'register');
 
 module.exports = (options) => {
   options = options || {};

@@ -6,8 +6,8 @@ module.exports = [
     entry: 'babel-register',
     output: {
       libraryTarget: 'commonjs2',
-      path: path.join(__dirname, '../babel-register'),
-      filename: 'index.js'
+      path: path.join(__dirname, '../babel-run/babel-register'),
+      filename: 'register.js'
     },
     module : {
       loaders: [

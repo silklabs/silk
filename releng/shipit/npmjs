@@ -28,6 +28,7 @@ cd $(dirname $(readlink -f $0))/../../pub
 
 PACKAGES="\
   babel-preset-silk-node4 \
+  babel-run \
   buildjs \
   cli \
   eslint-config \

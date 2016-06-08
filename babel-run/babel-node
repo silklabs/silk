@@ -1,0 +1,10 @@
+#! /usr/bin/env node
+
+'use strict';
+
+require('./node')();
+
+let main = require('path').resolve(process.argv[2]);
+let splice = process.argv.splice(2, 1);
+
+require(main);

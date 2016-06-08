@@ -1,0 +1,13 @@
+{
+  "name": "silk-babel-run",
+  "main": "node.js",
+  "symlinkDependencies": {
+    "babel-preset-silk-node4": "../babel-preset-silk-node4"
+  },
+  "dependencies": {
+    "babel-preset-silk-node4": ">=0.13.0 <1.0.0"
+  },
+  "bin": {
+    "babel-node": "./babel-node"
+  }
+}

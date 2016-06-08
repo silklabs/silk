@@ -3,7 +3,7 @@
 // side effect of having StackedBar "attach" itself to chart.js as a
 // "plugin".  (Yes, this is gross.)
 import chartjs from 'chart.js';
-import 'Chart.StackedBar.js';
+import 'chart-stackedbar-js';
 import React from 'react';
 import { createClass as createChartClass } from 'react-chartjs';
 import { Button, ButtonToolbar, Glyphicon,

@@ -15,7 +15,7 @@ import {
   interpretEnd,
 } from './actions';
 
-import type {DialogEngine} from '../../lib/dialogEngine';
+import type {DialogEngine} from 'silk-dialog-engine/lib/dialogEngine';
 
 const log = createLog('dialog-script');
 

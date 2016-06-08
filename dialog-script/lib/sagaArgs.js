@@ -11,7 +11,7 @@ import {eventChannel} from 'redux-saga';
 import {call} from 'redux-saga/effects';
 import invariant from 'assert';
 
-import type {DialogEngine} from '../../lib/dialogEngine';
+import type {DialogEngine} from 'silk-dialog-engine/lib/dialogEngine';
 
 // TODO: Better flow
 export type SagaArgs = {

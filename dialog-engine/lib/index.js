@@ -4,8 +4,21 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @flow
+ * @private
  */
 
 import getDialogEngine from './dialogEngine';
 
+/**
+ * Silk Dialog Engine
+ * @module silk-dialog-engine
+ */
+
+/**
+ * Default dialog engine
+ *
+ * @name default
+ * @memberof silk-dialog-engine
+ * @returns {DialogEngine}
+ */
 export default getDialogEngine;

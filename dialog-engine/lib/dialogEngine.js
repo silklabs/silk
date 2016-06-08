@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @flow
+ * @private
  */
 
 import invariant from 'assert';
@@ -16,7 +17,7 @@ import SpeechToText from './speechToText';
 import TextToSpeech from './textToSpeech';
 
 // XXX DEMO ONLY Replace with luis
-import textToIntention from '../demo/textToIntention';
+import textToIntention from './textToIntention';
 
 export type DialogEngineOptions = {
   // Nothing for now... Will eventually have luis model access token, etc.
@@ -32,6 +33,9 @@ const log = createLog('dialog-engine');
 export const UNKNOWN_INTENT = 'unknownIntent';
 
 /**
+ * Dialog Engine Class
+ * @memberof silk-dialog-engine
+ * @example
  * Events:
  *   - speak-begin: When speaker activates.
  *   - speak-end: When speaker deactivates.
@@ -41,6 +45,7 @@ export const UNKNOWN_INTENT = 'unknownIntent';
  *   - interpret-end: When microphone deactivates.
  *   - text: When speech-to-text has run and we have a text result.
  *   - intent: When text has been run though intent analysis.
+ *
  */
 export class DialogEngine extends EventEmitter {
 

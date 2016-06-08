@@ -109,7 +109,7 @@
     "copy-webpack-plugin": "2.1.5",
     "webpack-dev-server": "1.14.1",
     "webpack-hot-middleware": "2.6.0",
-    "Chart.StackedBar.js": "git@github.com:Regaddi/Chart.StackedBar.js.git#63eb91092266ac16a20bda28cc9ba5c80415513d",
+    "chart-stacked-bar-js": "1.0.3",
     "ansi_up": "1.3.0",
     "babel-preset-es2015-node4": "2.0.2",
     "babel-preset-es2015": "6.3.13",
@@ -138,7 +138,11 @@
     "wav-decoder": "1.1.0",
     "simple-peer": "5.11.5",
     "tape": "4.0.0",
-    "wav": "1.0.0"
+    "wav": "1.0.0",
+    "redux": "3.5.2",
+    "redux-logger": "2.6.1",
+    "redux-saga": "0.10.4",
+    "redux-thunk": "2.1.0"
   },
   "engines": {
     "node": "^4.1.2",

@@ -138,7 +138,11 @@
     "wav-decoder": "1.1.0",
     "simple-peer": "5.11.5",
     "tape": "4.0.0",
-    "wav": "1.0.0"
+    "wav": "1.0.0",
+    "redux": "3.5.2",
+    "redux-logger": "2.6.1",
+    "redux-saga": "0.10.4",
+    "redux-thunk": "2.1.0"
   },
   "engines": {
     "node": "^4.1.2",

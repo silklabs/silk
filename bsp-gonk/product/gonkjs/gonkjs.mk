@@ -10,7 +10,12 @@ BUILD_VERSION_TAGS += $(SILK_PRODUCT)
 
 # Services to start/stop with |adb shell start| and |adb shell stop|
 PRODUCT_PROPERTY_OVERRIDES += \
- ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk
+ ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \
+
+# Volume defaults
+PRODUCT_PROPERTY_OVERRIDES += \
+ persist.silk.volume.level=100 \
+ persist.silk.volume.mute=false \
 
 PRODUCT_PACKAGES += node
 
@@ -85,6 +90,9 @@ PRODUCT_PACKAGES += silk-sysutils
 
 # vendor/silk/silk-vibrator
 PRODUCT_PACKAGES += silk-vibrator
+
+# vendor/silk/silk-volume
+PRODUCT_PACKAGES += silk-volume
 
 # vendor/silk/silk-wifi
 PRODUCT_PACKAGES += silk-wifi

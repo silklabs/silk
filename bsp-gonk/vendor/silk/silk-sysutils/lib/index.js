@@ -237,7 +237,7 @@ export function setprop(prop: string, value: PropTypes): ?Error {
 /**
  * This class provides helper utility to watch an android property and notify
  * via an event if the specified property has changed
- * @memberof sysutils
+ * @memberof silk-sysutils
  */
 class PropWatcher extends EventEmitter {
   /**
@@ -245,7 +245,7 @@ class PropWatcher extends EventEmitter {
    * watched has changed.
    *
    * @event <property_name>
-   * @memberof sysutils.PropWatcher
+   * @memberof silk-sysutils.PropWatcher
    * @type {Object}
    * @property {string} Property value
    */

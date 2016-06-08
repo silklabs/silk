@@ -1,7 +1,0 @@
-{
-  "name": "silk-babel-run",
-  "main": "node.js",
-  "bin": {
-    "babel-node": "./babel-node"
-  }
-}

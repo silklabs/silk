@@ -1,0 +1,20 @@
+{
+  "name": "silk-babel-run",
+  "version": "0.17.1",
+  "description": "Misc utilities for running babel / mocha",
+  "main": "node.js",
+  "author": "Silk Labs Inc.",
+  "license": "MIT",
+  "scripts": {
+    "prepublish": "cd ../babelcompile && npm run compile"
+  },
+  "symlinkDependencies": {
+    "babel-preset-silk-node4": "../babel-preset-silk-node4"
+  },
+  "dependencies": {
+    "babel-preset-silk-node4": ">=0.13.0 <1.0.0"
+  },
+  "bin": {
+    "babel-node": "./babel-node"
+  }
+}

@@ -4,7 +4,7 @@
   "description": "Customizable dialog script",
   "main": "lib/index.js",
   "scripts": {
-    "lint": "eslint lib",
+    "lint": "eslint .",
     "silk-build": "silk-buildjs .",
     "test": "npm run lint"
   },

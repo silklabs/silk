@@ -11,6 +11,7 @@
   },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
+    "silk-dialog-engine": "/dialog-engine",
     "silk-buildjs": "/pub/buildjs",
     "silk-exttest": "/device/vendor/silk/exttest"
   },

@@ -180,6 +180,10 @@ const builds = {
     events: ['push', 'pr'],
     branches: ['master', 'next', 'release'],
   },
+  'npm-dialog-test': runNpmTestForPackages([
+    'dialog-engine',
+    'dialog-script',
+  ]),
   'npm-test': runNpmTestForPackages([
     'azure-storage',
     'api-schema',

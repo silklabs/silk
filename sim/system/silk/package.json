@@ -9,7 +9,7 @@
   },
   "author": "Silk Labs Inc.",
   "symlinkDependencies": {
-    "silk-babel-run": "/babel-run",
+    "silk-babel-run": "/pub/babel-run",
     "silk-init": "/pub/bsp-gonk/vendor/silk/init",
     "silk-caffe": "/device/vendor/propsilk/silk-caffe",
     "silk-camera": "/pub/bsp-gonk/vendor/silk/silk-camera",

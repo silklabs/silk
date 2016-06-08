@@ -23,7 +23,7 @@
     "silk-core-version": "/pub/version",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
-    "silk-babel-run": "/babel-run",
+    "silk-babel-run": "/pub/babel-run",
     "babel-core": "/pub/babel-core"
   },
   "dependencies": {

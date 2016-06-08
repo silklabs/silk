@@ -1,2 +1,2 @@
-require('../../../../babel-run/node')();
+require('../../../../pub/babel-run/node')();
 require('./src/gulpfile');

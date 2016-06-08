@@ -1,4 +1,4 @@
-#! /usr/bin/env ../babel-run/babel-node
+#! /usr/bin/env ../pub/babel-run/babel-node
 
 import loadConfig from '../src/server/config';
 import createDb from '../src/server/db';

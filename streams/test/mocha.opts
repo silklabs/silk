@@ -1,2 +1,2 @@
 --ui tdd
---require ../babel-run/mocha
+--require ../pub/babel-run/mocha

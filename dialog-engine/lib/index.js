@@ -39,19 +39,44 @@ export const UNKNOWN_INTENT = 'unknownIntent';
 /**
  * Dialog Engine Class
  * @memberof silk-dialog-engine
- * @example
- * Events:
- *   - speak-begin: When speaker activates.
- *   - speak-end: When speaker deactivates.
- *   - speech: Internal-ish event for communication with audio helper, passes
- *             audio stream for text-to-speech.
- *   - interpret-begin: When microphone activates.
- *   - interpret-end: When microphone deactivates.
- *   - text: When speech-to-text has run and we have a text result.
- *   - intent: When text has been run though intent analysis.
- *
  */
 export class DialogEngine extends EventEmitter {
+  /**
+   * This event is emitted when the speaker starts talking
+   *
+   * @event speak-begin
+   * @memberof silk-dialog-engine.DialogEngine
+   */
+  /**
+   * This event is emitted when the speaker finishes talking
+   *
+   * @event speak-end
+   * @memberof silk-dialog-engine.DialogEngine
+   */
+  /**
+   * This event is emitted when the microphone activates
+   *
+   * @event interpret-begin
+   * @memberof silk-dialog-engine.DialogEngine
+   */
+  /**
+   * This event is emitted when the microphone deactivates
+   *
+   * @event interpret-end
+   * @memberof silk-dialog-engine.DialogEngine
+   */
+  /**
+   * This event is emitted after speech-to-text has run and we have a text result.
+   *
+   * @event text
+   * @memberof silk-dialog-engine.DialogEngine
+   */
+  /**
+   * This event is emitted once the text result has been run though intent analysis.
+   *
+   * @event indent
+   * @memberof silk-dialog-engine.DialogEngine
+   */
 
   _options: DialogEngineOptions;
 

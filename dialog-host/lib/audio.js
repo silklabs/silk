@@ -3,7 +3,8 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @flow
+ * Flow disabled because `speaker` package isn't normally installed.
+ * @no-flow
  */
 
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
@@ -14,7 +15,7 @@ import {EventEmitter} from 'events';
 import invariant from 'assert';
 import readline from 'readline';
 import Speaker from 'speaker';
-import {TEXT_TO_SPEECH_PARAMS} from '../../lib/textToSpeech';
+import {TEXT_TO_SPEECH_PARAMS} from 'silk-dialog-engine/lib/textToSpeech';
 
 import beep from './beep';
 

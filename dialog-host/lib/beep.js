@@ -3,7 +3,8 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @flow
+ * Flow disabled because `play-sound` package isn't normally installed.
+ * @no-flow
  */
 
 import createPlayer from 'play-sound';
@@ -27,7 +28,7 @@ export default function beep(type: string): Promise<void> {
     throw new Error(`Unknown type ${type}`);
   }
 
-  filename = path.join(`demo`, `media`, filename);
+  filename = path.join(`media`, filename);
   log.info(`playSound`, filename);
 
   return new Promise((resolve, reject) => {

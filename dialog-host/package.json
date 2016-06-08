@@ -5,7 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "flow": "flow check",
-    "lint": "eslint lib"
+    "lint": "eslint lib",
+    "start": "DEBUG='silk-*,-silk-*:debug' node index.js"
   },
   "symlinkDependencies": {
     "silk-babel-run": "/pub/babel-run",

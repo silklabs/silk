@@ -7,4 +7,4 @@
  */
 
 require('silk-babel-run/node')();
-require('./src/index');
+require('./lib/index');

@@ -1,0 +1,38 @@
+From a4eda5daf9d6bc764750701ae68276ad7a02415d Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 8 Jun 2016 21:27:07 -0700
+Subject: [PATCH] De-pie. This breaks linking native .node modules
+
+---
+ common.gypi | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/common.gypi b/common.gypi
+index ed20eda..366053f 100644
+--- a/common.gypi
++++ b/common.gypi
+@@ -70,10 +70,6 @@
+             'cflags': [ '-gxcoff' ],
+             'ldflags': [ '-Wl,-bbigtoc' ],
+           }],
+-          ['OS == "android"', {
+-            'cflags': [ '-fPIE' ],
+-            'ldflags': [ '-fPIE', '-pie' ]
+-          }]
+         ],
+         'msvs_settings': {
+           'VCCLCompilerTool': {
+@@ -107,10 +103,6 @@
+           ['OS!="mac" and OS!="win"', {
+             'cflags': [ '-fno-omit-frame-pointer' ],
+           }],
+-          ['OS == "android"', {
+-            'cflags': [ '-fPIE' ],
+-            'ldflags': [ '-fPIE', '-pie' ]
+-          }]
+         ],
+         'msvs_settings': {
+           'VCCLCompilerTool': {
+-- 
+2.7.4 (Apple Git-66)
+

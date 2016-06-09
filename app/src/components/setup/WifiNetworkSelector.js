@@ -26,8 +26,10 @@ export default class WifiNetworkSelector extends React.Component {
   _renderRow = (network) => {
     const { selectedNetwork } = this.props;
     const key = `${network.ssid}\0${network.psk}`;
-    const selected = !!selectedNetwork && network.ssid === selectedNetwork.ssid
-      && network.psk === selectedNetwork.psk;
+    const selected =
+      !!selectedNetwork &&
+      network.ssid === selectedNetwork.ssid &&
+      network.psk === selectedNetwork.psk;
     return (
       <Selector.Item
         key={key}

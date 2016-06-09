@@ -21,7 +21,7 @@ import {
 import type {State} from './reducers';
 import type {Environment} from '../../environment';
 
-const log = createLog(`dialog-fuhu-food-nursing-saga`);
+const log = createLog(`dialog-script-food-nursing-saga`);
 
 function* queryAlert(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
   const {intentChannel, speak} = environment;

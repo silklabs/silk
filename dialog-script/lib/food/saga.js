@@ -11,7 +11,7 @@ import startBottleFeeding from './bottle/saga';
 import startNursing from './nursing/saga';
 import type {Environment} from '../environment';
 
-const log = createLog(`dialog-fuhu-food-saga`);
+const log = createLog(`dialog-script-food-saga`);
 
 export default function* (
   environment: Environment,

@@ -13,7 +13,7 @@ import {
   bottleAmount,
 } from './actions';
 
-const log = createLog(`dialog-fuhu-food-bottle-saga`);
+const log = createLog(`dialog-script-food-bottle-saga`);
 
 function* queryBottleType(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
   const {intentChannel, speak} = environment;

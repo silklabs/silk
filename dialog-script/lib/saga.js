@@ -11,7 +11,7 @@ import startFeeding from './food/saga';
 
 import type {Environment} from './environment';
 
-const log = createLog(`dialog-fuhu-saga`);
+const log = createLog(`dialog-script-saga`);
 
 export const unknownText =
   `Sorry, I'm not understanding you. Please check out the app for example ` +

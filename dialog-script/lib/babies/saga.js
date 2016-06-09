@@ -12,7 +12,7 @@ import {
 } from './actions';
 import type {Environment} from '../environment';
 
-const log = createLog(`dialog-fuhu-babies-saga`);
+const log = createLog(`dialog-script-babies-saga`);
 
 export const getNextBabyId = (state) => state.nextBabyId;
 export const getBabies = (state) => state.babies.slice();

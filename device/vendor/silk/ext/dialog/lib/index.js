@@ -15,12 +15,14 @@ import * as util from 'silk-sysutils';
 import Input from 'silk-input';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import config from 'silk-config';
+import VoiceActivityDetector from 'silk-vad';
+import KeywordSpotting from 'silk-kws';
 import wav from 'wav';
 
 import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
 import type { Env, Camera } from 'silk-exttest';
+import { Duplex } from 'stream';
 
-type ListeningState = 'ready' | 'listening';
 type MicData = {
    when: number;
   frames: Buffer;
@@ -33,6 +35,7 @@ const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyw
 const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.mp3');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp3');
 const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
+const SAY_FILE_NAME = '/data/say.wav';
 
 const log = createLog('silkext-dialog');
 let camera: Camera;
@@ -43,16 +46,18 @@ let camera: Camera;
 const DIALOGSCRIPT_MODNAME = 'silk-dialog-script';
 
 /**
- *
+ * This extension implements interaction between dialog engine and the end
+ * user.
  */
 class Dialog {
   _dialogEngine: DialogEngine;
-  _listeningState: ListeningState = 'ready';
   _kwsEnabled: boolean;
   _input: Input;
-  _stream: any;
+  _stream: ?Duplex;
   _activeSpeechPromise: Promise = Promise.resolve();
   _activeSpeechCount: number = 0;
+  _vad: VoiceActivityDetector;
+  _kws: KeywordSpotting;
 
   constructor(env: Env) {
     camera = env.camera;
@@ -70,15 +75,40 @@ class Dialog {
     // over to keyword spotting and voice activity modules
     camera.on('mic-data', this._onMicData);
 
-    this._input.on('down', this._onKeyPress);
     this._dialogEngine.on('speech', this._onSay);
+
+    if (this._kwsEnabled) {
+      this._vad = new VoiceActivityDetector();
+      this._kws = new KeywordSpotting(this._vad);
+      this._kws.start();
+
+      this._kws.on('keyword', () => {
+        log.debug(`Keyword detected`);
+        this._kws.stop();
+        this._onSpeechStart();
+      });
+      this._vad.on('speech_stop', () => {
+        this._onSpeechStop();
+      });
+      this._vad.on('speech_timeout', () => {
+        log.debug('Speech timedout');
+        this._onSpeechStop();
+      });
+    } else {
+      this._input.on('down', this._onKeyPress);
+    }
   }
 
   /**
    * Mic-data handler
    */
   _onMicData: MicDataCallback = pkt => {
-    if (this._listeningState !== 'listening') {
+    // Feed mic-data to kws and vad modules
+    if (this._kwsEnabled) {
+      this._kws.addMicData(pkt);
+    }
+
+    if (!this._stream) {
       return;
     }
     const { when, frames } = pkt;
@@ -94,7 +124,7 @@ class Dialog {
       return;
     }
     log.info(`Received key down event ${JSON.stringify(event)}`);
-    if (this._listeningState === 'ready') {
+    if (!this._stream) {
       this._onSpeechStart();
     } else {
       this._onSpeechStop();
@@ -102,11 +132,32 @@ class Dialog {
   };
 
   /**
+   * Write raw pcm data in a wav file
+   */
+  _writeWavFile(pcmSamples: Buffer): Promise {
+    return new Promise((resolve, reject) => {
+      let writer = new wav.FileWriter(SAY_FILE_NAME, {
+        sampleRate: config.deviceMic.sampleRate,
+        channels: config.deviceMic.numChannels,
+        bitDepth: config.deviceMic.bytesPerSample * 8,
+      });
+      writer.on('header', () => {
+        resolve();
+      });
+      writer.on('error', (err) => {
+        reject(err);
+      });
+      writer.write(pcmSamples);
+      writer.end();
+    });
+  }
+
+  /**
    * Handle speech event from dialog engine. Store the stream
    * data in a wav file and play the file at the end of the stream.
    */
   _onSay: SpeechEventCallback = (stream, finished) => {
-    log.debug(`Received stream to speak`);
+    log.debug(`Received stream to speak ${finished}`);
 
     let errorListener: ?Function = null;
     let dataListener: ?Function = null;
@@ -122,6 +173,8 @@ class Dialog {
         this._activeSpeechCount = 0;
         if (!finished) {
           this._onSpeechStart();
+        } else {
+          this._onDialogDone();
         }
       }
     };
@@ -136,28 +189,23 @@ class Dialog {
       pcmSamples = Buffer.concat([pcmSamples, data]);
     };
 
-    endListener = async () => {
+    endListener = () => {
       log.debug('Speech stream ended');
-      let sayFilename = '/data/say.wav';
+      this._activeSpeechCount++;
 
       // Wait for previous playSound to finish before playing another file
       this._activeSpeechPromise = this._activeSpeechPromise.then(() => {
-        this._activeSpeechCount++;
-        let writer = new wav.FileWriter(sayFilename, {
-          sampleRate: config.deviceMic.sampleRate,
-          channels: config.deviceMic.numChannels,
-          bitDepth: config.deviceMic.bytesPerSample * 8,
+        return this._writeWavFile(pcmSamples)
+        .then(() => {
+          return util.playSound(SAY_FILE_NAME);
         });
-        writer.write(pcmSamples);
-        writer.end();
-        return util.playSound(sayFilename);
       })
       .then(() => {
-        log.debug(`Done playing audio, dialog finished: ${finished}`);
+        log.debug(`Done playing audio`);
         finish();
       })
       .catch((err) => {
-        log.error(`cannot play ${sayFilename}, error: ${err}`);
+        log.error(`cannot play ${SAY_FILE_NAME}, error: ${err}`);
         finish();
       });
     };
@@ -175,10 +223,11 @@ class Dialog {
   async _onSpeechStart() {
     log.info(`onSpeechStart`);
 
-    if (this._listeningState !== 'ready') {
+    if (this._stream) {
       log.info(`not ready, skipping speech start`);
       return;
     }
+    this._stream = new ClosingPassThrough();
 
     try {
       await util.playSound(KEYWORD_DETECTED_SOUND_FILE);
@@ -186,9 +235,13 @@ class Dialog {
       log.error(`cannot play ${KEYWORD_DETECTED_SOUND_FILE}, error: ${err}`);
     }
 
-    this._stream = new ClosingPassThrough();
-    this._dialogEngine.interpret(this._stream);
-    this._listeningState = 'listening';
+    if (this._kwsEnabled) {
+      this._vad.startVad();
+    }
+
+    if (this._stream) {
+      this._dialogEngine.interpret(this._stream);
+    }
   }
 
   /**
@@ -198,14 +251,26 @@ class Dialog {
   _onSpeechStop() {
     log.info(`onSpeechStop`);
 
-    if (this._listeningState !== 'listening') {
+    if (!this._stream) {
       log.info(`not listening, skipping speech stop`);
       return;
     }
 
-    this._stream.end();
+    if (this._stream) {
+      this._stream.end();
+      this._stream = null;
+    }
     util.playSound(SPEECH_END_SOUND_FILE);
-    this._listeningState = 'ready';
+  }
+
+  /**
+   * Handle end of dialog event. When an active dialog finishes, start the
+   * keyword spotting again
+   */
+  _onDialogDone() {
+    if (this._kwsEnabled) {
+      this._kws.start();
+    }
   }
 
   /**

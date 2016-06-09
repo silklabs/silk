@@ -58,6 +58,7 @@ SILK_EXT := \
   silkext-detectface-shape_predictor_68_face_landmarks \
   silkext-devicemotion \
   silkext-demodialog \
+  silkext-dialog \
   silkext-dnn \
   silkext-dnn-googlenet-model \
   silkext-dnn-googlenet-proto \

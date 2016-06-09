@@ -22,7 +22,7 @@
   "license": "BSD",
   "dependencies": {
     "bindings": "^1.2.1",
-    "nan": "^2.0.9"
+    "nan": "2.3.5"
   },
   "devDependencies": {
     "fft": "^0.2.1",

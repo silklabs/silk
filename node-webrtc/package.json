@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "mocha": "2.4.5",
-    "nan": "2.3.3",
+    "nan": "2.3.5",
     "node-gyp": "3.3.1",
     "minimist": "1.2.0",
     "simple-peer": "5.11.5",

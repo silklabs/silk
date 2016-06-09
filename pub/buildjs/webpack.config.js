@@ -12,12 +12,19 @@ const mkdirp = require('mkdirp');
 // We must place our files in a special folder for integration /w the android
 // build system.
 const destination = process.env.SILK_BUILDJS_DEST;
-const babelCache = path.join(destination, '../.babelcache');
 const modulePath = findPackage(process.env.SILK_BUILDJS_SOURCE);
 const pkg = require(path.join(modulePath, 'package.json'));
 const localWebpack = path.join(modulePath, 'webpack.config.js');
 
-mkdirp.sync(babelCache);
+
+let babelCache;
+if (!process.env.BABEL_CACHE || process.env.BABEL_CACHE === '1') {
+  babelCache = path.join(destination, '../.babelcache');
+  mkdirp.sync(babelCache);
+} else {
+  console.log('~ babel cache has been disabled ~');
+  babelCache = false;
+}
 
 const name = pkg.name;
 let main = pkg.main || './index.js';
@@ -27,6 +34,15 @@ if (!path.extname(main)) {
 
 if (main.indexOf('./') !== 0) {
   main = `./${main}`;
+}
+
+const absMain = path.resolve(modulePath, main);
+let mainDir;
+
+try {
+  mainDir = fs.realpathSync(path.dirname(absMain));
+} catch (err) {
+  mainDir = path.dirname(absMain);
 }
 
 // XXX: Would be nicer to abort this in the bash script rather than after we
@@ -78,7 +94,6 @@ const externals = [
   'v8-profiler',
   'kissfft',
   'silk-caffe',
-  /\.node$/,
   (context, request, callback) => {
     if (resolve.isCore(request)) {
       callback(null, true);
@@ -96,6 +111,25 @@ const externals = [
         callback(new Error(`${modulePath} has a .main which is missing ...`));
         return;
       }
+    }
+
+    // Handle path rewriting for native modules
+    if (
+      /\.node$/.test(request) ||
+      request.indexOf('build/Release') !== -1
+    ) {
+      if (path.isAbsolute(request)) {
+        callback(null, true);
+        return;
+      }
+
+      const absExternalPath = path.resolve(context, request);
+      let relativeExternalPath = path.relative(mainDir, absExternalPath);
+      if (relativeExternalPath.indexOf('.') !== 0) {
+        relativeExternalPath = `./${relativeExternalPath}`;
+      }
+      callback(null, relativeExternalPath);
+      return;
     }
 
     resolve(request,  {

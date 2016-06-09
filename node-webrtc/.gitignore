@@ -26,3 +26,7 @@ build-staging
 
 config.gypi
 nodejs.gypi
+
+/node-webrtc-all.target.mk
+/node-webrtc.target.mk
+/.babelcache

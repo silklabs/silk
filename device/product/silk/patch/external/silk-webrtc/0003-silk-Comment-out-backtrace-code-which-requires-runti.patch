@@ -1,8 +1,8 @@
-From 478ff0123cd6814560dbe648c36085a9a1b9ed51 Mon Sep 17 00:00:00 2001
+From 85ed91adfc4567ababc047a2d31d35a355260ab8 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Wed, 20 Apr 2016 00:18:04 -0700
-Subject: [PATCH 2/4] Comment out backtrace code which requires runtime support
- missing on Android.
+Subject: [PATCH 03/11] silk: Comment out backtrace code which requires runtime
+ support missing on Android.
 
 ---
  webrtc/base/checks.cc | 58 +++++++++++++++++++++++++--------------------------
@@ -85,5 +85,5 @@ index 49a31f2..1629128 100644
  
  FatalMessage::FatalMessage(const char* file, int line) {
 -- 
-2.4.5
+2.7.3
 

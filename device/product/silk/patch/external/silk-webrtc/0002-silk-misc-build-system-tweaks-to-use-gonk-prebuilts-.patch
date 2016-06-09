@@ -1,8 +1,8 @@
-From 75f4ee2176c0dd4440f8a53a469f5cd3cedbf662 Mon Sep 17 00:00:00 2001
+From 8ca9507cd85936e165544eecc67822cf1572af0c Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Wed, 20 Apr 2016 00:17:26 -0700
-Subject: [PATCH 1/4] misc build system tweaks to use gonk prebuilts and
- disable compiler warnings.
+Subject: [PATCH 02/11] silk: misc build system tweaks to use gonk prebuilts
+ and disable compiler warnings.
 
 ---
  chromium/src/build/android/ndk.gyp |  7 +++--
@@ -33,10 +33,10 @@ index b491db2..495afc7 100644
        'variables': {
          'clang_warning_flags': [
 diff --git a/chromium/src/build/common.gypi b/chromium/src/build/common.gypi
-index 7f976ad..cca8eb1 100644
+index 0e88c8b..1d99f31 100644
 --- a/chromium/src/build/common.gypi
 +++ b/chromium/src/build/common.gypi
-@@ -2506,6 +2506,14 @@
+@@ -2522,6 +2522,14 @@
      'archive_media_router_tests%': 0,
    },
    'target_defaults': {
@@ -51,7 +51,7 @@ index 7f976ad..cca8eb1 100644
      'variables': {
        # The condition that operates on chromium_code is in a target_conditions
        # section, and will not have access to the default fallback value of
-@@ -2703,6 +2711,11 @@
+@@ -2719,6 +2727,11 @@
          # things when their commandline changes). Nothing should ever read this
          # define.
          'defines': ['CR_CLANG_REVISION=<!(python <(DEPTH)/tools/clang/scripts/update.py --print-revision)'],
@@ -63,7 +63,7 @@ index 7f976ad..cca8eb1 100644
        }],
        ['enable_rlz==1', {
          'defines': ['ENABLE_RLZ'],
-@@ -3093,6 +3106,15 @@
+@@ -3104,6 +3117,15 @@
          'variables': { 'clang_warning_flags': ['-Wexit-time-destructors']},
        }],
        ['chromium_code==0', {
@@ -79,7 +79,7 @@ index 7f976ad..cca8eb1 100644
          'variables': {
            'clang_warning_flags': [
              # Lots of third-party libraries have unused variables. Instead of
-@@ -3112,7 +3134,7 @@
+@@ -3123,7 +3145,7 @@
            [ 'os_posix==1 and clang!=1 and OS!="mac" and OS!="ios"', {
              # When we don't control the compiler, don't use -Wall for
              # third-party code either.
@@ -88,7 +88,7 @@ index 7f976ad..cca8eb1 100644
            }],
            # TODO: Fix all warnings on chromeos too.
            [ 'os_posix==1 and OS!="mac" and OS!="ios" and (clang!=1 or chromeos==1)', {
-@@ -3620,7 +3642,7 @@
+@@ -3635,7 +3657,7 @@
      ['os_posix==1 and disable_fatal_linker_warnings==0 and use_evdev_gestures==0 and (chromeos==0 or target_arch!="arm")', {
        'target_defaults': {
          'ldflags': [
@@ -97,7 +97,7 @@ index 7f976ad..cca8eb1 100644
          ],
        },
      }],
-@@ -3671,7 +3693,7 @@
+@@ -3686,7 +3708,7 @@
            '<(werror)',  # See note above about the werror variable.
            '-pthread',
            '-fno-strict-aliasing',  # See http://crbug.com/32204
@@ -106,7 +106,7 @@ index 7f976ad..cca8eb1 100644
            '<(wextra)',
            # Don't warn about unused function params.  We use those everywhere.
            '-Wno-unused-parameter',
-@@ -4815,8 +4837,9 @@
+@@ -4837,8 +4859,9 @@
                # cflags rather than include_dirs because they need to come
                # after include_dirs.
                # The include ordering here is important; change with caution.
@@ -118,7 +118,7 @@ index 7f976ad..cca8eb1 100644
                '-isystem<(android_ndk_root)/sources/android/support/include',
              ],
              'defines': [
-@@ -4832,10 +4855,12 @@
+@@ -4854,10 +4877,12 @@
              ],
              'ldflags': [
                '-Wl,--build-id=sha1',
@@ -133,7 +133,7 @@ index 7f976ad..cca8eb1 100644
                # Don't allow visible symbols from libgcc or libc++ to be
                # re-exported.
                '-Wl,--exclude-libs=libgcc.a',
-@@ -4852,10 +4877,12 @@
+@@ -4874,10 +4899,12 @@
                '-Wl,--exclude-libs=libvpx.a',
              ],
              'libraries': [
@@ -148,7 +148,7 @@ index 7f976ad..cca8eb1 100644
                '-lc',
                '-ldl',
                '-lm',
-@@ -4962,25 +4989,27 @@
+@@ -4984,25 +5011,27 @@
                    '-Wl,--gc-sections',
                    '-Wl,-z,nocopyreloc',
                    '-pie',
@@ -180,7 +180,7 @@ index 7f976ad..cca8eb1 100644
                  ],
                }],
              ],
-@@ -5000,7 +5029,7 @@
+@@ -5022,7 +5051,7 @@
                '-Wl,-O1',
                '-Wl,--as-needed',
                '-Wl,--warn-shared-textrel',
@@ -189,7 +189,7 @@ index 7f976ad..cca8eb1 100644
              ],
            }],
            # Settings for building host targets on mac.
-@@ -6366,5 +6395,5 @@
+@@ -6390,5 +6419,5 @@
      # red "missing file" proxies, the correct path to PROJECT_DERIVED_FILE_DIR,
      # and therefore SYMROOT, needs to be set at the project level.
      'SYMROOT': '<(DEPTH)/xcodebuild',
@@ -197,10 +197,10 @@ index 7f976ad..cca8eb1 100644
 +  }
  }
 diff --git a/webrtc/build/common.gypi b/webrtc/build/common.gypi
-index 3459a55..78304a2 100644
+index 6ec0f1c..e146569 100644
 --- a/webrtc/build/common.gypi
 +++ b/webrtc/build/common.gypi
-@@ -213,6 +213,13 @@
+@@ -219,6 +219,13 @@
      ], # conditions
    },
    'target_defaults': {
@@ -215,5 +215,5 @@ index 3459a55..78304a2 100644
        ['restrict_webrtc_logging==1', {
          'defines': ['WEBRTC_RESTRICT_LOGGING',],
 -- 
-2.4.5
+2.7.3
 

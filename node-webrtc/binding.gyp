@@ -5,6 +5,7 @@
     # since we are using chromium gyp...
     'node_root_dir%': '/usr/local',
     'node_webrtc_root_dir%': './',
+    'nodewebrtc_js_dest%': 'build',
     'module_name': 'node-webrtc',
     '_target_name': 'node-webrtc',
     'module_path': 'build/',
@@ -17,7 +18,11 @@
       'product_prefix': '',
       'type': 'shared_library',
       'variables': {
-        'webrtc_root%': '<(DEPTH)/build-staging/',
+        # Due to gyp magic the paths we use to include other .gyp files may be
+        # different than the absolute path to the project so we need this var.
+        'nodewebrtc_gyp_webrtc_root%': '<(DEPTH)/webrtc',
+        # Absolute path to the webrtc root (silk-webrtc)
+        'nodewebrtc_webrtc_root%': '<(DEPTH)',
         'libwebrtc_out%': '<(DEPTH)/out/$(BUILDTYPE)/obj',
       },
       'sources': [
@@ -36,28 +41,34 @@
         'src/MediaConstraints.cc',
         'src/Stats.cc',
       ],
-      # Node modules rely on various symbols being provided at runtime so we
-      # need to explicitly disable the checks for undefined symbols.
       'aosp_build_settings': {
-        'LOCAL_ALLOW_UNDEFINED_SYMBOLS': 'true',
-        'LOCAL_MODULE_PATH': '$(TARGET_OUT_SILK_NODE_MODULES)',
-         # LOCAL_INSTALLED_MODULE_STEM requires a slash to be part of the value.
-        'LOCAL_INSTALLED_MODULE_STEM': './node-webrtc.node',
+        # We need to explicitly munge the path and suffix here since we do not
+        # have any tooling from node-gyp.
+        'LOCAL_INSTALLED_MODULE_STEM': '../silk/node_modules/node-webrtc/build/Release/node-webrtc.node',
         'LOCAL_MODULE_SUFFIX': '.node'
       },
       'dependencies': [
-        '<(webrtc_root)/webrtc.gyp:webrtc',
-        '<(webrtc_root)/api/api.gyp:*',
-        '<(webrtc_root)/system_wrappers/system_wrappers.gyp:field_trial_default',
+        '<(nodewebrtc_gyp_webrtc_root)/webrtc.gyp:webrtc',
+        '<(nodewebrtc_gyp_webrtc_root)/api/api.gyp:*',
+        '<(nodewebrtc_gyp_webrtc_root)/system_wrappers/system_wrappers.gyp:field_trial_default',
       ],
       'include_dirs': [
-        "<(DEPTH)/third_party/jsoncpp/source/include",
+        "<(nodewebrtc_webrtc_root)/third_party/jsoncpp/source/include",
         '<(node_root_dir)/include/node',
         '<(node_root_dir)/src',
         '<(node_root_dir)/deps/uv/include',
         '<(node_root_dir)/deps/v8/include',
         '<(node_webrtc_root_dir)/node_modules/nan',
       ],
+      'link_settings': {
+        'conditions': [
+          ['OS=="android"', {
+            'ldflags': [
+              '-Wl,--unresolved-symbols=ignore-all',
+            ]
+          }]
+        ],
+      },
       'defines': [
         # We do not use node-gyp so we need to define this ourselves...
         'NODE_GYP_MODULE_NAME=node-webrtc',
@@ -78,7 +89,31 @@
         'WEBRTC_POSIX=1'
       ],
       'conditions': [
+        ['OS=="android"', {
+          'actions': [{
+            'action_name': 'buildjs',
+            'inputs': [],
+            'outputs': [
+              '<(nodewebrtc_js_dest)/index.js',
+              '<(nodewebrtc_js_dest)/package.json'
+            ],
+            'action': [
+              '/bin/bash',
+              '-c',
+              'BABEL_CACHE=0 ../pub/buildjs/bin/build <(node_webrtc_root_dir) <(nodewebrtc_js_dest) --no-native',
+            ]
+          }]
+        }],
         ['OS=="linux"', {
+          'actions': [{
+            'action_name': 'copy',
+            'inputs': [],
+            'outputs': ['node-webrtc.node'],
+            'action': [
+              './bin/copy_out.sh',
+              '<(PRODUCT_DIR)',
+            ]
+          }],
           'cflags': [
             '-Wno-deprecated-declarations',
             '-Wno-unused-variable',
@@ -126,22 +161,6 @@
           ],
         }],
       ],
-    },
-    {
-      'target_name': 'node-webrtc-all',
-      'type': 'none',
-      'dependencies': [
-        'node-webrtc',
-      ],
-      'actions': [{
-        'action_name': 'copy',
-        'inputs': [],
-        'outputs': ['node-webrtc.node'],
-        'action': [
-          './bin/copy_out.sh',
-          '<(PRODUCT_DIR)',
-        ]
-      }]
     },
   ],
 }

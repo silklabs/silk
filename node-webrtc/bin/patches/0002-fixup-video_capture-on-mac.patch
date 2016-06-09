@@ -1,7 +1,7 @@
-From b3967d5478d0208adba11da41c5164ede1e41fd0 Mon Sep 17 00:00:00 2001
+From fc0514ac6f6f6181fee1437b46ae28e0b61d9729 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Tue, 31 May 2016 14:03:10 -0700
-Subject: [PATCH 2/2] fixup video_capture on mac
+Subject: [PATCH 2/3] fixup video_capture on mac
 
 ---
  webrtc/modules/video_capture/ios/device_info.mm    |   8 +-

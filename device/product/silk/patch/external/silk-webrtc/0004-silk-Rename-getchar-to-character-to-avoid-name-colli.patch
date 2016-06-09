@@ -1,14 +1,15 @@
-From d7d56520ac85666c3afb175504c43b976498a637 Mon Sep 17 00:00:00 2001
+From 22c3254c2bfb948fa969bd97006449ea5365df30 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Wed, 20 Apr 2016 09:36:55 -0700
-Subject: [PATCH] Rename getchar to character to avoid name collison
+Subject: [PATCH 04/11] silk: Rename getchar to character to avoid name
+ collison
 
 ---
  .../source/spreadsortlib/spreadsort.hpp            | 76 +++++++++++-----------
  1 file changed, 38 insertions(+), 38 deletions(-)
 
 diff --git a/webrtc/system_wrappers/source/spreadsortlib/spreadsort.hpp b/webrtc/system_wrappers/source/spreadsortlib/spreadsort.hpp
-index b934e3e..7de2b88 100644
+index b934e3e..692122c 100644
 --- a/webrtc/system_wrappers/source/spreadsortlib/spreadsort.hpp
 +++ b/webrtc/system_wrappers/source/spreadsortlib/spreadsort.hpp
 @@ -1023,7 +1023,7 @@ namespace boost {
@@ -303,5 +304,5 @@ index b934e3e..7de2b88 100644
    }
  }
 -- 
-2.4.5
+2.7.3
 

@@ -19,15 +19,10 @@
            remote="github"
            revision="refs/tags/v5.3.2" clone-depth="1"/>
 
-  <project name="node-webrtc"
-           path="external/node-webrtc"
-           remote="silk"
-           revision="master" clone-depth="1"/>
-
   <project name="silk-webrtc"
-           path="external/node-webrtc/build-staging/silk-webrtc"
+           path="external/silk-webrtc"
            remote="silk"
-           revision="release-50" clone-depth="1"/>
+           revision="release-51" clone-depth="1"/>
 
   <project name="cmusphinx/pocketsphinx"
            path="external/pocketsphinx"

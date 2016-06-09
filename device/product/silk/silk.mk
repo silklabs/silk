@@ -118,7 +118,10 @@ PRODUCT_PACKAGES += \
   aprotoc \
   libboost \
   libopenblas \
-  node-webrtc \
+
+# Ugly gyp-generated package name for /node-webrtc
+PRODUCT_PACKAGES += \
+  lib__________node_webrtc_node_webrtc_gyp \
 
 # external/qualcomm-developer-network/...
 PRODUCT_PACKAGES += \

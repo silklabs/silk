@@ -156,7 +156,7 @@ export class DevicePeer extends EventEmitter {
       }
 
       const url = await this._getDeviceServerUrl();
-      const signedUrl = this._api.signSignalingUrl('account', url, {
+      const signedUrl = await this._api.genSignSignalingUrl('account', url, {
         deviceId: this._deviceId,
       });
 

@@ -116,7 +116,7 @@ if (maxDuration) {
 
 async function setupDevice() {
   // Assign the accessToken to the main silk-api instance used by server...
-  api.accessToken = api.id.create();
+  api.accessToken = await AccessToken.gen();
 
   let accessToken = new AccessToken(
     api.devAccount.publicKey,
@@ -128,7 +128,7 @@ async function setupDevice() {
   accountApi.accessToken = accessToken;
 
   // register the device...
-  let token = accountApi.accessToken.sign(api.accessToken.toString());
+  const token = await accountApi.accessToken.genSign(api.accessToken.toString());
   await accountApi.account.registerDevice({
     devicePublicKey: api.accessToken.toString(),
     name: 'testing',

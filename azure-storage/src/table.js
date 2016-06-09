@@ -67,7 +67,7 @@ export class SharedKeyAuth {
     this._auth = connectionString(auth);
   }
 
-  requestTransformer(req: Request): Request {
+  requestTransformer(req: Request): Promise<Request> {
     let [url, options] = req;
     invariant(options.headers);
     let headers = (options.headers : Headers);
@@ -98,7 +98,7 @@ export class SharedKeyAuth {
     headers.set('Authorization', auth);
 
     let formattedUrl = formatURL(parsed);
-    return [this._auth.tableEndpoint + formattedUrl, options];
+    return Promise.resolve([this._auth.tableEndpoint + formattedUrl, options]);
   }
 }
 
@@ -115,7 +115,7 @@ export class SharedAccessTokenAuth {
     }
   }
 
-  requestTransformer(req: Request): Request {
+  requestTransformer(req: Request): Promise<Request> {
     let [url, options] = req;
     let parsed = URL.parse(url);
 
@@ -125,7 +125,7 @@ export class SharedAccessTokenAuth {
     delete parsed.search;
     parsed.query = query;
 
-    return [this._host + formatURL(parsed), options];
+    return Promise.resolve([this._host + formatURL(parsed), options]);
   }
 }
 
@@ -198,10 +198,10 @@ export class TableClient extends HttpClient {
       // XXX: Hack for flow manually set fake requestTransformer here then set
       // it to the real one after the super call to avoid the uninitialized
       // value errors.
-      requestTransformer: (req: Request): Request => req,
+      requestTransformer: (req: Request): Promise<Request> => Promise.resolve(req),
     });
 
-    this.requestTransformer = (req: Request): Request => {
+    this.requestTransformer = (req: Request): Promise<Request> => {
       let [url, options] = req;
       if (!options.headers) {
         options.headers = new Headers();

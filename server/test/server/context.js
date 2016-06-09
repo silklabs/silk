@@ -60,7 +60,7 @@ let testAccountId = 0;
 let uniqueId = uuid.v4();
 
 export async function testAccount(context, overrides = {}) {
-  let id = Id.create();
+  const id = await Id.gen();
   let account = new Accounts(context.db);
   let email = `test.${uniqueId}.${String(testAccountId++)}@example.com`;
   let res = await account.create(Object.assign({}, {
@@ -117,11 +117,11 @@ export async function registeredDevice(ctx, accountAccessToken) {
     },
   });
   let devices = new Devices(ctx.db);
-  let deviceAccessToken = api.id.create();
+  const deviceAccessToken = await api.id.gen();
 
   api.accessToken = accountAccessToken;
 
-  let token = accountAccessToken.sign(deviceAccessToken.toString());
+  const token = await accountAccessToken.genSign(deviceAccessToken.toString());
   await api.account.registerDevice({
     devicePublicKey: deviceAccessToken.toString(),
     name: 'testing',

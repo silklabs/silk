@@ -71,24 +71,10 @@ function verify(
   return verify === 'true';
 }
 
-function sha256(data: ?string): Buffer {
-  return new Buffer(sha256hex(data), 'hex');
-}
-
-function sha256hex(data: ?string): string {
-  const [errorMsg, hash] = global._crypto_sha256_hex(data || '');
-  if (errorMsg) {
-    throw new Error(errorMsg);
-  }
-  return hash;
-}
-
 overrideCryptoSignImplementation({
   encodingLength,
   generateKeyPair,
   publicKeyFromSecret,
   sign,
   verify,
-  sha256,
-  sha256hex,
 });

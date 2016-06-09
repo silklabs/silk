@@ -33,7 +33,7 @@ export default async function connectToSocketIO(): Promise<Socket> {
   );
 
   let entropy = crypto.randomBytes(AccessToken.ENTROPY_BYTES);
-  api.accessToken = AccessToken.create({ entropy });
+  api.accessToken = await AccessToken.gen({ entropy });
 
   log.info('Attempting to authenticate with server.');
   let result;

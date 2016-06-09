@@ -85,14 +85,6 @@ RCT_EXPORT_MODULE()
   // All helpers below return an array of which the first element is an error
   // message and subsequent element(s) are the return value(s).
 
-  [executor addSynchronousHookWithName:@"_crypto_sha256_hex"
-                            usingBlock: ^NSArray<NSString *> *(NSString *value) {
-    const char *inputBytes = [value UTF8String];
-    unsigned char resBytes[CC_SHA256_DIGEST_LENGTH];
-    CC_SHA256(inputBytes, (CC_LONG)strlen(inputBytes), resBytes);
-    return @[[NSNull null], binToNSHexString(resBytes, sizeof(resBytes))];
-  }];
-
   [executor addSynchronousHookWithName:@"_crypto_ed25519_generate_keypair"
                             usingBlock: ^NSArray<NSString *> *() {
     unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];

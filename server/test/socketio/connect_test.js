@@ -8,7 +8,7 @@ suite('secured socket.io connections...', () => {
   test('connect as device', async () => {
     let {device: {api}} = await context.testPair();
 
-    let socketConfig = await api.socketioDeviceConfig();
+    let socketConfig = await api.genSocketioDeviceConfig();
     let socket = createSocketIO(...socketConfig);
     await eventToPromise(socket, 'connect');
   });
@@ -16,7 +16,7 @@ suite('secured socket.io connections...', () => {
   test('connect as account', async () => {
     let {account: {api}} = await context.testPair();
 
-    let socketConfig = await api.socketioAccountConfig();
+    let socketConfig = await api.genSocketioAccountConfig();
     let socket = createSocketIO(...socketConfig);
     await eventToPromise(socket, 'connect');
   });

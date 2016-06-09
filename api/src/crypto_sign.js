@@ -85,24 +85,12 @@ function verify(
   return key.verify(message, Array.from(signature));
 }
 
-function sha256(data: ?string): Buffer {
-  const hasher = crypto.createHash('sha256');
-  hasher.update(data || '');
-  return hasher.digest();
-}
-
-function sha256hex(data: ?string): string {
-  return sha256(data).toString('hex');
-}
-
 const API = {
   encodingLength,
   generateKeyPair,
   publicKeyFromSecret,
   sign,
   verify,
-  sha256,
-  sha256hex,
 };
 export default API;
 

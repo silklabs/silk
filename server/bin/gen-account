@@ -34,7 +34,7 @@ async function main() {
   let vip = new VIP('http://example.com', /* baseUrl: not needed for this */);
 
   let passwordHash = vip.hashPassword(args.email, args.password);
-  let keys = id.create();
+  const keys = await id.gen();
 
   let out = {
     email: args.email,

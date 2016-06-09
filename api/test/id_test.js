@@ -4,8 +4,8 @@ import DeviceID from '../src/access_token';
 
 suite('device id', () => {
 
-  test('.create', () => {
-    const id = DeviceID.create();
+  test('.create', async () => {
+    const id = await DeviceID.gen();
     assert.equal(typeof id.pub, 'string');
     assert.equal(typeof id.priv, 'string');
 
@@ -17,10 +17,10 @@ suite('device id', () => {
     assert.equal(id + '', id.pub);
     assert.equal(id.pub.length, 64);
 
-    assert(id.isValid());
+    assert(await id.genIsValid());
 
-    const signature = id.sign('foo');
-    assert(id.verify('foo', signature));
+    const signature = await id.genSign('foo');
+    assert(await id.genVerify('foo', signature));
   });
 
 });

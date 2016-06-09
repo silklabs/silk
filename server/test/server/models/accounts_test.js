@@ -1,7 +1,7 @@
 import assert from 'assert';
 import Accounts from '../../../src/server/models/accounts';
 import createContext from '../context';
-import id from 'silk-api/src/access_token';
+import AccessToken from 'silk-api/src/access_token';
 
 suite('accounts', () => {
   let context = createContext();
@@ -12,7 +12,7 @@ suite('accounts', () => {
   });
 
   test('#findByPublicKey', async () => {
-    let key = id.create();
+    const key = await AccessToken.gen();
     let input = {
       publicKey: key.toString(),
       email: 'user@example.com',
@@ -29,7 +29,7 @@ suite('accounts', () => {
   });
 
   test('#setBeaconUUIDIfMissing', async () => {
-    let key = id.create();
+    const key = await AccessToken.gen();
     let input = {
       publicKey: key.toString(),
       email: 'user@example.com',
@@ -66,7 +66,7 @@ suite('accounts', () => {
   });
 
   test('#create / #checkPassword', async () => {
-    let key = id.create();
+    const key = await AccessToken.gen();
     let input = {
       publicKey: key.toString(),
       email: 'user@example.com',
@@ -104,7 +104,7 @@ suite('accounts', () => {
   });
 
   test('#signIn', async () => {
-    let key = id.create();
+    const key = await AccessToken.gen();
     let input = {
       publicKey: key.toString(),
       email: 'user@example.com',
@@ -114,7 +114,7 @@ suite('accounts', () => {
 
     let account = await subject.create(input);
     assert.ok(account.id, 'Creates account and returns id');
-    let newKey = id.create();
+    const newKey = await AccessToken.gen();
 
     let signIn = await subject.signIn(Object.assign(
       {},
@@ -186,7 +186,7 @@ suite('accounts', () => {
 
       assert.equal(update.success, true);
 
-      let accessToken = id.create();
+      const accessToken = await AccessToken.gen();
       let auth = await subject.signIn({
         email: account.record.email,
         passwordHash: newPass,

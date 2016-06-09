@@ -462,11 +462,13 @@ export default class Accounts extends Base {
         account.passwordReset.created.valueOf() + PASSWORD_RESET_EXPIRES_MS;
 
       let {pub, priv} = account.passwordReset.accessToken;
+      const accessToken = new AccessToken(pub, priv);
+      const token = await accessToken.genSign(account.passwordReset.secret);
 
       if (previousExpires > Date.now()) {
         return {
           newToken: false,
-          token: new AccessToken(pub, priv).sign(account.passwordReset.secret),
+          token,
           expires: previousExpires,
         };
       }
@@ -476,7 +478,7 @@ export default class Accounts extends Base {
      * Tokens are ed25519 signed uuids this makes it very very difficult for
      * an attacker to guess or craft the token.
      */
-    let accessToken = AccessToken.create();
+    let accessToken = await AccessToken.gen();
     let secret = uuid.v4();
 
     let created = new Date();
@@ -502,9 +504,10 @@ export default class Accounts extends Base {
       throw new Error(`Unexpected error updating account ${account._id}`);
     }
 
+    const token = await accessToken.genSign(secret);
     return {
       newToken: true,
-      token: accessToken.sign(secret),
+      token,
       expires
     };
   }
@@ -529,8 +532,11 @@ export default class Accounts extends Base {
 
     let {pub, priv} = passwordReset.accessToken;
     let accessToken = new AccessToken(pub, priv);
-
-    if (!accessToken.verify(passwordReset.secret, payload.token)) {
+    const isVerified = await accessToken.genVerify(
+      passwordReset.secret,
+      payload.token
+    );
+    if (!isVerified) {
       return this.error('resetPasswordTokenMismatch');
     }
 

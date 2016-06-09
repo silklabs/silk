@@ -36,7 +36,7 @@ suite('connect test', () => {
   test('connect as device', async () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
-    let url = device.api.signSignalingUrl('device', servers[0].host);
+    const url = await device.api.genSignSignalingUrl('device', servers[0].host);
     let ws = new WebSocket(url);
     await eventToPromise(ws, 'open');
 
@@ -53,7 +53,8 @@ suite('connect test', () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
 
-    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    const deviceUrl =
+      await device.api.genSignSignalingUrl('device', servers[0].host);
     let deviceWs = new WebSocket(deviceUrl);
     let deviceWsDuplex = new WebSocketDuplexStream(deviceWs);
     let deviceDemux = new DemuxStream(deviceWsDuplex);
@@ -61,9 +62,11 @@ suite('connect test', () => {
 
     await eventToPromise(deviceWs, 'open');
 
-    let accountUrl = account.api.signSignalingUrl('account', servers[0].host, {
-      deviceId: device.record.accessToken.publicKey,
-    });
+    const accountUrl = await account.api.genSignSignalingUrl(
+      'account',
+      servers[0].host,
+      {deviceId: device.record.accessToken.publicKey}
+    );
     let accountWs = new WebSocketDuplexStream(new WebSocket(accountUrl));
     accountWs.write('ping');
 
@@ -87,7 +90,8 @@ suite('connect test', () => {
     this.timeout('10s');
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
-    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    const deviceUrl =
+      await device.api.genSignSignalingUrl('device', servers[0].host);
     let deviceWs = new WebSocket(deviceUrl);
     await eventToPromise(deviceWs, 'ping');
   });
@@ -96,13 +100,16 @@ suite('connect test', () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
 
-    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    const deviceUrl =
+      await device.api.genSignSignalingUrl('device', servers[0].host);
     let deviceWs = new WebSocket(deviceUrl);
     await eventToPromise(deviceWs, 'open');
 
-    let accountUrl = account.api.signSignalingUrl('account', servers[0].host, {
-      deviceId: device.record.accessToken.publicKey,
-    });
+    const accountUrl = await account.api.genSignSignalingUrl(
+      'account',
+      servers[0].host,
+      {deviceId: device.record.accessToken.publicKey}
+    );
     let accountWs = new WebSocket(accountUrl);
     await eventToPromise(accountWs, 'open');
     deviceWs.close();
@@ -115,13 +122,16 @@ suite('connect test', () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
 
-    let deviceUrl = device.api.signSignalingUrl('device', servers[0].host);
+    const deviceUrl =
+      await device.api.genSignSignalingUrl('device', servers[0].host);
     let deviceWs = new WebSocket(deviceUrl);
     await eventToPromise(deviceWs, 'open');
 
-    let accountUrl = account.api.signSignalingUrl('account', servers[0].host, {
-      deviceId: device.record.accessToken.publicKey,
-    });
+    const accountUrl = await account.api.genSignSignalingUrl(
+      'account',
+      servers[0].host,
+      {deviceId: device.record.accessToken.publicKey}
+    );
     let accountWs = new WebSocket(accountUrl);
     await eventToPromise(accountWs, 'open');
 

@@ -9,7 +9,7 @@ export default async function(config = {}) {
       tags: { },
     },
   });
-  api.accessToken = api.id.create();
+  api.accessToken = await AccessToken.gen();
 
   // Semi-nasty hack where we set the accessToken that the lib code will use.
   realAPI.accessToken = api.accessToken;

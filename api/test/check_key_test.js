@@ -1,38 +1,48 @@
 
 import assert from 'assert';
-import Id from '../src/access_token';
+import AccessToken from '../src/access_token';
+
+async function assertThrows(func, ErrorClass) {
+  let error;
+  try {
+    await func();
+  } catch(ex) {
+    error = ex;
+  }
+  assert(error instanceof ErrorClass);
+}
 
 suite('check key', () => {
 
-  test('valid sig', () => {
+  test('valid sig', async () => {
     const NONCE = '12345';
     const NAME = 'name';
     const TOKEN = NONCE + ' ' + NAME;
 
-    let id = Id.create();
+    const id = await AccessToken.gen();
     let pub = id.pub;
-    let sig = id.sign(TOKEN);
+    let sig = await id.genSign(TOKEN);
 
-    let checkId = Id.importPub(pub);
-    assert(checkId.isValid());
-    assert(checkId.verify(TOKEN, sig));
+    let checkAccessToken = AccessToken.importPub(pub);
+    assert(await checkAccessToken.genIsValid());
+    assert(await checkAccessToken.genVerify(TOKEN, sig));
   });
 
-  test('garbage key', () => {
-    let id = Id.importPub('garbage: no 64 hex chars');
-    assert(!id.isValid(), 'garbage key is not considered valid');
-    assert.throws(() => id.verify('token', 'garbage'), TypeError);
-    assert.throws(
-      () => id.verify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd'),
+  test('garbage key', async () => {
+    let id = AccessToken.importPub('garbage: no 64 hex chars');
+    assert(!(await id.genIsValid()), 'garbage key is not considered valid');
+    await assertThrows(() => id.genVerify('token', 'garbage'), TypeError);
+    await assertThrows(
+      () => id.genVerify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd'),
       assert.AssertionError
     );
   });
 
-  test('garbage signature', () => {
-    let id = Id.importPub('0123401234012340123401234012340123401234012340123401234012340123');
-    assert(id.isValid(), '64 byte hex key is valid');
-    assert.throws(() => id.verify('token', 'garbage'), TypeError);
-    assert(!id.verify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd'));
+  test('garbage signature', async () => {
+    let id = AccessToken.importPub('0123401234012340123401234012340123401234012340123401234012340123');
+    assert(await id.genIsValid(), '64 byte hex key is valid');
+    await assertThrows(() => id.genVerify('token', 'garbage'), TypeError);
+    assert(!(await id.genVerify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd')));
   });
 
 });

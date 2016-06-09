@@ -1,6 +1,6 @@
 
 import assert from 'assert';
-import createApi from 'silk-api';
+import createApi, {AccessToken} from 'silk-api';
 import uuid from 'uuid';
 import SasCompositeTable from 'silk-azure-storage/src/sas_composite_table';
 
@@ -34,8 +34,8 @@ suite('account auth', () => {
   test('/register_device - success', async () => {
     api.accessToken = accountOne.accessToken;
 
-    let deviceAccessToken = api.id.create();
-    let token = accountOne.accessToken.sign(
+    const deviceAccessToken = await AccessToken.gen();
+    const token = await accountOne.accessToken.genSign(
       deviceAccessToken.toString()
     );
 

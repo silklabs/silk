@@ -15,7 +15,7 @@ import type {
 
 // Tuple representing an outgoing request url, options ...
 export type Request = [string, FetchOptions];
-export type RequestTransformerInterface = (request: Request) => Request;
+export type RequestTransformerInterface = (request: Request) => Promise<Request>;
 export type ClientOptions = {
   maxiumRetryDelayMs?: number;
   maxRetries?: number;
@@ -117,7 +117,7 @@ export default class HttpClient {
       //
       // NOTE: We always perform the transform on the _original_ request we
       // where given rather than the one that gets transformed.
-      let transformedReq = this.requestTransformer(req);
+      let transformedReq = await this.requestTransformer(req);
       [url, options] = transformedReq;
       method = options.method;
 

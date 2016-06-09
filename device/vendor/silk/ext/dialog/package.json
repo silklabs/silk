@@ -16,7 +16,7 @@
     "silk-exttest": "/device/vendor/silk/exttest"
   },
   "devDependencies": {
-    "mocha": "2.4.5",
+    "copy-webpack-plugin": "2.1.5",
     "eslint": "1.10.3",
     "babel-eslint": "6.0.4"
   },

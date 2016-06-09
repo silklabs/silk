@@ -9,7 +9,7 @@
     "webpack": "1.13.0",
     "node-gyp": "3.3.1",
     "resolve": "1.1.7",
-    "nan": "2.2.0",
+    "nan": "2.3.5",
     "mz": "2.4.0",
     "babel-runtime": "6.9.0",
     "debug": "2.2.0",

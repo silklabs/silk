@@ -142,7 +142,8 @@
     "redux": "3.5.2",
     "redux-logger": "2.6.1",
     "redux-saga": "0.10.4",
-    "redux-thunk": "2.1.0"
+    "redux-thunk": "2.1.0",
+    "nan": "2.3.5"
   },
   "engines": {
     "node": "^4.1.2",

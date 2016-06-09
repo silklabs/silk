@@ -128,7 +128,7 @@ export default function* (sagaArgs: SagaArgs): Generator<any, any, any> { // esl
   yield call(speak,
              `Based on your previous session, you should start nursing on ` +
              `the ${state.side} side.`,
-             true);
+             false);
 
   const alert = yield call(queryAlert, sagaArgs);
   if (alert) {

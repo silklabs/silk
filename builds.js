@@ -28,11 +28,8 @@ function npmPackageBuild(dir, overrides) {
 }
 
 /**
- * Most of our in-tree npm packages only need to have 'npm test'
- * run. Here, the time to spin up a new Travis build often outweighs
- * the runtime of the linter and unit tests, so we might as well run
- * them all in one build. Plus, that means we can save individual
- * .travis.yml files for a lot of these packages.
+ * Most of our in-tree npm packages only need to have 'npm test' run.
+ * We can save a bunch of boiler plate by re-using the same Travis config.
  */
 function runNpmTestForPackages(dirs) {
   return {
@@ -201,9 +198,22 @@ const builds = {
     'tools/mp4dash',
     'utils',
   ]),
+
   // TODO: bring back api CI tests once we workaround issues related to
   // interdeps with the server.
   //'api': npmPackageBuild('api'),
+
+  // The React Native packager is fairly picky about duplicate packages in the
+  // tree. Verify that the bundle still builds whenever package dependencies.
+  'app-bundle': npmPackageBuild('app', {
+    travis_yml: 'app/.travis-bundle.yml',
+    files: [
+      '**/package.json',
+      'node_modules/**',
+      'app/node_modules/**',
+      'flow-interface/**',
+    ],
+  }),
   'app-js-lint': npmPackageBuild('app', {
     // Always run lint when JS files change.
     travis_yml: 'app/.travis-lint.yml',

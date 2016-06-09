@@ -1,0 +1,28 @@
+From 0a5046a4d1da12e4dae908b2bfab6a4e07713745 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 10 Jun 2016 08:38:52 -0700
+Subject: [PATCH] Disable warn_template_set
+
+nan@2.3.5's Nan::SetPrototypeMethod() is still triggering this warning at
+runtime across a number of native node modules.  Quash the warning until the
+root cause it fixed and/or we upgrade to node 7.
+---
+ deps/v8/src/flag-definitions.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/deps/v8/src/flag-definitions.h b/deps/v8/src/flag-definitions.h
+index 1eb9dd5..ec920b2 100644
+--- a/deps/v8/src/flag-definitions.h
++++ b/deps/v8/src/flag-definitions.h
+@@ -172,7 +172,7 @@ struct MaybeBoolFlag {
+ //
+ #define FLAG FLAG_FULL
+ 
+-DEFINE_BOOL(warn_template_set, true,
++DEFINE_BOOL(warn_template_set, false,
+             "warn on deprecated v8::Template::Set() use")
+ 
+ DEFINE_BOOL(experimental_extras, false,
+-- 
+2.7.4 (Apple Git-66)
+

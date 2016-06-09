@@ -1,19 +1,19 @@
-From 39f8e967e3bceea72872659272c240b5b99d7a89 Mon Sep 17 00:00:00 2001
+From b092c8eb7138f11c4715315c9dca570e75d36eae Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 121 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 121 insertions(+)
+ Android.mk | 123 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 123 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..3668af0
+index 0000000..8c13a59
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,123 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -62,10 +62,7 @@ index 0000000..3668af0
 +endif
 +$(dir $(LOCAL_BUILT_MODULE))/Release/node:
 +	@echo Building: $@
-+	$(hide) rm -rf $(node_BUILD_DIR) $(<D)/{config.gypi,config.mk,icu_config.gypi,node,out}
-+	$(hide) mkdir -p $(node_BUILD_DIR)
-+	$(hide) ln -s $(node_BUILD_DIR) $(<D)/out
-+	$(hide) cd $(<D) && \
++	$(hide) set -e$(if $(SHOW_COMMANDS),x); cd $(<D) && \
 +    _C_INCLUDES="\
 +      $(addprefix -I ,$(abspath $(PRIVATE_C_INCLUDES))) \
 +      $(call __external_node_abs_import_includes,$(shell cat $(PRIVATE_IMPORT_INCLUDES))) \
@@ -116,13 +113,18 @@ index 0000000..3668af0
 +    export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX))" && \
 +    export AR="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))" && \
 +    export RANLIB="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))" && \
-+    ./configure --prefix=/ \
-+                --without-snapshot \
-+                --without-npm \
-+                --with-arm-float-abi=softfp \
-+                --with-arm-fpu=neon \
-+                --dest-cpu=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) \
-+                --dest-os=android && \
++    if [[ ! -r config.gypi ]]; then \
++      mkdir -p $(node_BUILD_DIR); \
++      ln -fs $(node_BUILD_DIR) out; \
++      ./configure --prefix=/ \
++                  --without-snapshot \
++                  --without-npm \
++                  --with-intl=none \
++                  --with-arm-float-abi=softfp \
++                  --with-arm-fpu=neon \
++                  --dest-cpu=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH)) \
++                  --dest-os=android; \
++    fi; \
 +    $(MAKE) V=$(if $(SHOW_COMMANDS),1)
 +
 +$(LOCAL_BUILT_MODULE): PRIVATE_STRIP := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_STRIP)
@@ -136,5 +138,5 @@ index 0000000..3668af0
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-1.9.1
+2.7.4 (Apple Git-66)
 

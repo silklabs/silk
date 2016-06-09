@@ -3,21 +3,21 @@
  */
 
 import createLog from 'silk-log';
+import getDialogEngine from 'silk-dialog-engine';
 import invariant from 'assert';
 
+import createEnvironment from './environment';
 import saga from './saga';
 import store from './store';
-
 import {
   speakBegin,
   speakEnd,
   interpretBegin,
   interpretEnd,
 } from './actions';
+import textToIntention from './textToIntention';
 
 import type {DialogEngine} from 'silk-dialog-engine';
-import getDialogEngine from 'silk-dialog-engine';
-import textToIntention from './textToIntention';
 
 const log = createLog('dialog-script');
 
@@ -25,7 +25,8 @@ class Script{
   constructor(dialogEngine: DialogEngine) {
     log.info(`Starting script`);
     log.debug(`Initial state`, store.getState());
-    store.runSaga(saga, dialogEngine);
+
+    store.runSaga(saga, createEnvironment(dialogEngine));
 
     dialogEngine.on(`interpret-begin`, this.onInterpretBegin);
     dialogEngine.on(`interpret-end`, this.onInterpretEnd);
@@ -46,9 +47,11 @@ class Script{
   }
 }
 
-let dialogEngine = getDialogEngine();
+const dialogEngine = getDialogEngine();
 invariant(dialogEngine);
+
 dialogEngine.configure({textToIntention});
+
 let script = new Script(dialogEngine);
 
 export function silkWillUnload() {

@@ -10,7 +10,7 @@ import {
   addBaby,
   renameBaby,
 } from './actions';
-import type {SagaArgs} from '../saga';
+import type {Environment} from '../environment';
 
 const log = createLog(`dialog-fuhu-babies-saga`);
 
@@ -18,10 +18,10 @@ export const getNextBabyId = (state) => state.nextBabyId;
 export const getBabies = (state) => state.babies.slice();
 
 export function* queryBabyName(
-  sagaArgs: SagaArgs,
+  environment: Environment,
   customQuery?: string,
 ): Generator<any, any, any> {                     // eslint-disable-line no-undef
-  const {textChannel, intentChannel, speak} = sagaArgs;
+  const {textChannel, intentChannel, speak} = environment;
   const query = customQuery || `What is the baby's name?`;
 
   let name = ``;
@@ -53,10 +53,10 @@ export function* queryBabyName(
   return name;
 }
 
-export function* add(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {speak} = sagaArgs;
+export function* add(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  const {speak} = environment;
 
-  const name = yield call(queryBabyName, sagaArgs);
+  const name = yield call(queryBabyName, environment);
   if (!name) {
     return;
   }
@@ -67,8 +67,8 @@ export function* add(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-d
   yield call(speak, `Ok, ${name} is now registered`, true);
 }
 
-export function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {speak} = sagaArgs;
+export function* rename(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  const {speak} = environment;
 
   const babies = yield select(getBabies);
   if (!babies.length) {
@@ -80,7 +80,7 @@ export function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslin
   let id: ?string = null;
 
   if (babies.length === 1) {
-    name = yield call(queryBabyName, sagaArgs);
+    name = yield call(queryBabyName, environment);
     id = babies[0].id;
   } else {
     for (let retryCount = 0; retryCount <= 2; retryCount++) {
@@ -91,7 +91,7 @@ export function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslin
       }
 
       const oldName = yield call(queryBabyName,
-                                 sagaArgs,
+                                 environment,
                                  `What is the name you told me previously?`);
       if (!oldName) {
         return;
@@ -116,7 +116,7 @@ export function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslin
       return;
     }
 
-    name = yield call(queryBabyName, sagaArgs);
+    name = yield call(queryBabyName, environment);
   }
 
   if (!name) {
@@ -129,12 +129,12 @@ export function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslin
 }
 
 export default function* (
-  sagaArgs: SagaArgs,
+  environment: Environment,
   type: 'add' | 'rename',
 ): Generator<any, any, any> {                    // eslint-disable-line no-undef
-  invariant(sagaArgs);
+  invariant(environment);
 
-  const {intentChannel, speak} = sagaArgs;
+  const {intentChannel, speak} = environment;
   invariant(intentChannel);
   invariant(speak);
 
@@ -142,10 +142,10 @@ export default function* (
 
   switch (type) {
   case `add`:
-    yield call(add, sagaArgs);
+    yield call(add, environment);
     break;
   case `rename`:
-    yield call(rename, sagaArgs);
+    yield call(rename, environment);
     break;
   default:
     throw new Error(`Unknown type '${type}'`);

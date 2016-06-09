@@ -19,12 +19,12 @@ import {
 } from './actions';
 
 import type {State} from './reducers';
-import type {SagaArgs} from '../../saga';
+import type {Environment} from '../../environment';
 
 const log = createLog(`dialog-fuhu-food-nursing-saga`);
 
-function* queryAlert(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {intentChannel, speak} = sagaArgs;
+function* queryAlert(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  const {intentChannel, speak} = environment;
 
   let useTimer: ?boolean = null;
 
@@ -50,11 +50,11 @@ function* queryAlert(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-d
 }
 
 function* nursing(
-  sagaArgs: SagaArgs,
+  environment: Environment,
   alert: boolean,
   timePerSideSec: number,
 ): Generator<any, any, any> {                    // eslint-disable-line no-undef
-  const {speak} = sagaArgs;
+  const {speak} = environment;
 
   let timeRemainingSec = timePerSideSec;
   yield [
@@ -100,8 +100,8 @@ function* nursing(
   return true;
 }
 
-function* listenForCancel(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {intentChannel} = sagaArgs;
+function* listenForCancel(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  const {intentChannel} = environment;
   for (;;) {
     const {intent} = yield take(intentChannel);
     if (intent === `cancel`) {
@@ -110,10 +110,10 @@ function* listenForCancel(sagaArgs: SagaArgs): Generator<any, any, any> { // esl
   }
 }
 
-export default function* (sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  invariant(sagaArgs);
+export default function* (environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  invariant(environment);
 
-  const {intentChannel, speak} = sagaArgs;
+  const {intentChannel, speak} = environment;
   invariant(intentChannel);
   invariant(speak);
 
@@ -126,7 +126,7 @@ export default function* (sagaArgs: SagaArgs): Generator<any, any, any> { // esl
              `the ${state.side} side.`,
              false);
 
-  const alert = yield call(queryAlert, sagaArgs);
+  const alert = yield call(queryAlert, environment);
   if (alert) {
     yield call(speak,
                `OK, setting the alert for ${state.timePerSideSec} seconds.`,
@@ -140,8 +140,8 @@ export default function* (sagaArgs: SagaArgs): Generator<any, any, any> { // esl
   }
 
   const winner = yield race({
-    nursing: call(nursing, sagaArgs, alert, state.timePerSideSec),
-    cancel: call(listenForCancel, sagaArgs),
+    nursing: call(nursing, environment, alert, state.timePerSideSec),
+    cancel: call(listenForCancel, environment),
   });
 
   if (winner.cancel) {

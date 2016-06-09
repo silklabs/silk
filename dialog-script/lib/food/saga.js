@@ -9,17 +9,17 @@ import invariant from 'assert';
 import {resetFood} from './actions';
 import startBottleFeeding from './bottle/saga';
 import startNursing from './nursing/saga';
-import type {SagaArgs} from '../saga';
+import type {Environment} from '../environment';
 
 const log = createLog(`dialog-fuhu-food-saga`);
 
 export default function* (
-  sagaArgs: SagaArgs,
+  environment: Environment,
   type: ?('nursing' | 'bottle'),
 ): Generator<any, any, any> {                    // eslint-disable-line no-undef
-  invariant(sagaArgs);
+  invariant(environment);
 
-  const {intentChannel, speak} = sagaArgs;
+  const {intentChannel, speak} = environment;
   invariant(intentChannel);
   invariant(speak);
 
@@ -50,10 +50,10 @@ export default function* (
 
   switch (type) {
   case `bottle`:
-    yield call(startBottleFeeding, sagaArgs);
+    yield call(startBottleFeeding, environment);
     break;
   case `nursing`:
-    yield call(startNursing, sagaArgs);
+    yield call(startNursing, environment);
     break;
   default:
     yield call(speak,

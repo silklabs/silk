@@ -6,7 +6,7 @@ import createLog from 'silk-log';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
 
-import type {SagaArgs} from '../../saga';
+import type {Environment} from '../../environment';
 
 import {
   bottleType,
@@ -15,8 +15,8 @@ import {
 
 const log = createLog(`dialog-fuhu-food-bottle-saga`);
 
-function* queryBottleType(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {intentChannel, speak} = sagaArgs;
+function* queryBottleType(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  const {intentChannel, speak} = environment;
 
   let type: ?string = null;
 
@@ -54,8 +54,8 @@ function* queryBottleType(sagaArgs: SagaArgs): Generator<any, any, any> { // esl
   return type;
 }
 
-function* queryAmount(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {intentChannel, speak} = sagaArgs;
+function* queryAmount(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  const {intentChannel, speak} = environment;
 
   let amount: ?number = null;
 
@@ -91,21 +91,21 @@ function* queryAmount(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-
   return amount;
 }
 
-export default function* (sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  invariant(sagaArgs);
+export default function* (environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  invariant(environment);
 
-  const {intentChannel, speak} = sagaArgs;
+  const {intentChannel, speak} = environment;
   invariant(intentChannel);
   invariant(speak);
 
   log.info(`Starting saga`);
 
-  const type = yield call(queryBottleType, sagaArgs);
+  const type = yield call(queryBottleType, environment);
   if (!type) {
     return;
   }
 
-  const amount = yield call(queryAmount, sagaArgs);
+  const amount = yield call(queryAmount, environment);
   if (!amount) {
     return;
   }

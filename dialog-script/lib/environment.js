@@ -4,20 +4,19 @@
 
 import createLog from 'silk-log';
 import {eventChannel} from 'redux-saga';
-import {call} from 'redux-saga/effects';
 import invariant from 'assert';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
 // TODO: Better flow
-export type SagaArgs = {
+export type Environment = {
   dialogEngine: DialogEngine;
-  textChannel: any;
-  intentChannel: any;
+  textChannel: Object;
+  intentChannel: Object;
   speak: Function;
 };
 
-const log = createLog(`dialog-fuhu-sagaArgs`);
+const log = createLog(`dialog-script-environment`);
 
 export function createTextChannel(dialogEngine: DialogEngine) {
   return eventChannel((push) => {
@@ -69,28 +68,24 @@ export function speak(
   });
 }
 
-export default function* (
+export default function(
   dialogEngine: DialogEngine,
-): Generator<any, SagaArgs, any> {               // eslint-disable-line no-undef
+): Environment {
   invariant(dialogEngine);
 
-  log.debug(`Creating channels`);
+  log.debug(`Creating environment`);
 
-  const textChannel = yield call(createTextChannel, dialogEngine);
-  log.debug(`Got text channel`);
-
-  const intentChannel = yield call(createIntentChannel, dialogEngine);
-  log.debug(`Got intent channel`);
-
+  const textChannel = createTextChannel(dialogEngine);
+  const intentChannel = createIntentChannel(dialogEngine);
   const boundSpeak =
     (text: string, finished: boolean) => speak(dialogEngine, text, finished);
 
-  const sagaArgs: SagaArgs = {
+  const env: Environment = {
     dialogEngine,
     textChannel,
     intentChannel,
     speak: boundSpeak,
   };
 
-  return sagaArgs;
+  return env;
 }

@@ -6,12 +6,10 @@ import createLog from 'silk-log';
 import {call, take} from 'redux-saga/effects';
 import invariant from 'assert';
 
-import createSagaArgs from './sagaArgs';
 import modifyBabies from './babies/saga';
 import startFeeding from './food/saga';
 
-import type {SagaArgs} from './sagaArgs';
-import type {DialogEngine} from '../../lib/dialogEngine';
+import type {Environment} from './environment';
 
 const log = createLog(`dialog-fuhu-saga`);
 
@@ -19,14 +17,12 @@ export const unknownText =
   `Sorry, I'm not understanding you. Please check out the app for example ` +
   `requests and questions and try again.`;
 
-export default function* (
-  dialogEngine: DialogEngine,
-): Generator<any, any, any> {                    // eslint-disable-line no-undef
-  invariant(dialogEngine);
+export default function* (environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+  invariant(environment);
 
   log.info(`Starting saga`);
-  const sagaArgs: SagaArgs = yield call(createSagaArgs, dialogEngine);
-  const {intentChannel, speak} = sagaArgs;
+
+  const {intentChannel, speak} = environment;
 
   log.debug(`Starting dialog loop`);
 
@@ -38,19 +34,19 @@ export default function* (
 
     switch (intent) {
     case `startFeeding`:
-      yield call(startFeeding, sagaArgs, null);
+      yield call(startFeeding, environment, null);
       break;
     case `startNursing`:
-      yield call(startFeeding, sagaArgs, `nursing`);
+      yield call(startFeeding, environment, `nursing`);
       break;
     case `startBottleFeeding`:
-      yield call(startFeeding, sagaArgs, `bottle`);
+      yield call(startFeeding, environment, `bottle`);
       break;
     case `register`:
-      yield call(modifyBabies, sagaArgs, `add`);
+      yield call(modifyBabies, environment, `add`);
       break;
     case `rename`:
-      yield call(modifyBabies, sagaArgs, `rename`);
+      yield call(modifyBabies, environment, `rename`);
       break;
     default:
       log.warn(`Unknown intent`, intent, entities);

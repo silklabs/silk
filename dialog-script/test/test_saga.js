@@ -10,17 +10,13 @@ import {
   default as saga,
   unknownText,
 } from '../lib/saga';
-import {
-  default as createSagaArgs,
-} from '../lib/sagaArgs';
 import modifyBabies from '../lib/babies/saga';
 import startFeeding from '../lib/food/saga';
 
 suite(`saga`, () => {
 
-  const dialogEngine = {};
-  const sagaArgs = {
-    dialogEngine,
+  const environment = {
+    dialogEngine: {},
     textChannel: () => {},
     intentChannel: () => {},
     speak: () => {},
@@ -29,22 +25,19 @@ suite(`saga`, () => {
   let sagaGenerator = null;
 
   setup(() => {
-    sagaGenerator = saga(dialogEngine);
+    sagaGenerator = saga(environment);
     assert(sagaGenerator);
   });
 
   test(`unknown intent`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'garbage', entities: [`more garbage`]},
-        expect: call(sagaArgs.speak, unknownText, true),
+        expect: call(environment.speak, unknownText, true),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -52,15 +45,12 @@ suite(`saga`, () => {
   test(`startFeeding`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'startFeeding', entities: []},
-        expect: call(startFeeding, sagaArgs, null),
+        expect: call(startFeeding, environment, null),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -68,15 +58,12 @@ suite(`saga`, () => {
   test(`startFeeding entities`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'startFeeding', entities: [`foo`, `bar`]},
-        expect: call(startFeeding, sagaArgs, null),
+        expect: call(startFeeding, environment, null),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -84,15 +71,12 @@ suite(`saga`, () => {
   test(`startNursing`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'startNursing', entities: []},
-        expect: call(startFeeding, sagaArgs, `nursing`),
+        expect: call(startFeeding, environment, `nursing`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -100,15 +84,12 @@ suite(`saga`, () => {
   test(`startNursing entities`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'startNursing', entities: [`foo`, `bar`]},
-        expect: call(startFeeding, sagaArgs, `nursing`),
+        expect: call(startFeeding, environment, `nursing`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -116,15 +97,12 @@ suite(`saga`, () => {
   test(`startBottleFeeding`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'startBottleFeeding', entities: []},
-        expect: call(startFeeding, sagaArgs, `bottle`),
+        expect: call(startFeeding, environment, `bottle`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -132,15 +110,12 @@ suite(`saga`, () => {
   test(`startBottleFeeding entities`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'startBottleFeeding', entities: [`foo`, `bar`]},
-        expect: call(startFeeding, sagaArgs, `bottle`),
+        expect: call(startFeeding, environment, `bottle`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -148,15 +123,12 @@ suite(`saga`, () => {
   test(`register`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'register', entities: []},
-        expect: call(modifyBabies, sagaArgs, `add`),
+        expect: call(modifyBabies, environment, `add`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -164,15 +136,12 @@ suite(`saga`, () => {
   test(`register entities`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'register', entities: []},
-        expect: call(modifyBabies, sagaArgs, `add`),
+        expect: call(modifyBabies, environment, `add`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -180,15 +149,12 @@ suite(`saga`, () => {
   test(`rename`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'rename', entities: []},
-        expect: call(modifyBabies, sagaArgs, `rename`),
+        expect: call(modifyBabies, environment, `rename`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });
@@ -196,15 +162,12 @@ suite(`saga`, () => {
   test(`rename entities`, () => {
     testScript(sagaGenerator, [
       {
-        expect: call(createSagaArgs, dialogEngine),
-      }, {
-        provide: sagaArgs,
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       }, {
         provide: {intent: 'rename', entities: []},
-        expect: call(modifyBabies, sagaArgs, `rename`),
+        expect: call(modifyBabies, environment, `rename`),
       }, {
-        expect: take(sagaArgs.intentChannel),
+        expect: take(environment.intentChannel),
       },
     ]);
   });

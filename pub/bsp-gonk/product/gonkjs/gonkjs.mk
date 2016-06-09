@@ -1,6 +1,7 @@
 #
 # Base device environment
 #
+this_mkfile_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 # Add branch name to ro.build.fingerprint
 BUILD_VERSION_TAGS += $(BRANCH)
@@ -20,7 +21,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PACKAGES += node
 
 # Select the device main program
-SILK_DEVICE_MAIN_PATH=$(abspath $(ANDROID_BUILD_TOP)/../device-main)
+SILK_DEVICE_MAIN_PATH := $(abspath $(this_mkfile_dir)/../../../device-main)
 PRODUCT_PACKAGES += silk-device-main
 
 # vendor/silk/audio/

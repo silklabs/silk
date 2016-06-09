@@ -1,0 +1,14 @@
+/**
+ * @providesModule silk-config
+ * @flow
+ */
+
+export type ConfigDeviceMic = {
+  bytesPerSample: number;
+  encoding: string;
+  endian: 'big' | 'little';
+  numChannels: number;
+  sampleRate: number;
+  sampleMin: number;
+  sampleMax: number;
+};

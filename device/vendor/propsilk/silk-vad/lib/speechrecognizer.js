@@ -11,6 +11,8 @@ import { EventEmitter } from 'events';
 import createLog from 'silk-log/device';
 import config from 'silk-config';
 
+import type { ConfigDeviceMic } from 'silk-config';
+
 const log = createLog('vad');
 let ps = pocketsphinx.ps;
 
@@ -27,7 +29,7 @@ export type MicData = {
 export default class SpeechRecognizer extends EventEmitter {
 
   _decoder: any;
-  _config: any;
+  _config: ConfigDeviceMic;
   _listening: boolean = false;
   _sampleRate:number;
   _bytesPerSample: number;

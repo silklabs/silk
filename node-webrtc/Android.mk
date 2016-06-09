@@ -79,4 +79,5 @@ $(webrtc_makefile): $(nodewebrtc)
 $(LOCAL_BUILT_MODULE): $(webrtc_makefile)
 LOCAL_2ND_ARCH_VAR_PREFIX :=
 
-include $(webrtc_makefile)
+# Only include node-webrtc if webrtc is present in the build workspace
+include $(if $(wildcard $(webrtc)),$(webrtc_makefile))

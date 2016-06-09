@@ -198,8 +198,10 @@ export default class SpeechRecognizer extends EventEmitter {
     this._decoder.setSearch(searchName);
 
     this._decoder.startUtt(); // Start utterance processing
-    this._inSpeech = this._decoder.getInSpeech();
+    this._pcmDataQueue.length = 0;
+    this._pcmDataQueueSizeInBytes = 0;
     this._listening = true;
+    this._inSpeech = this._decoder.getInSpeech();
     return true;
   }
 
@@ -216,7 +218,7 @@ export default class SpeechRecognizer extends EventEmitter {
     if (this.startListening(searchName)) {
       // Stop listening after the provided timeout
       this._listenTimeout = setTimeout(() => {
-        this._stopListening();
+        this.stop();
         this.emit('speech_timeout');
       }, timeout);
       return true;
@@ -225,26 +227,11 @@ export default class SpeechRecognizer extends EventEmitter {
   }
 
   /**
-   * Stops recognition. All listeners should receive final result if there is
-   * any. Does nothing if recognition is not active.
-   */
-  stop(): void {
-    if (!this._stopListening()) {
-      return;
-    }
-    log.debug(`Stop recognition`);
-
-    // Clear the queue to remove any stale data there might be
-    this._pcmDataQueue.length = 0;
-    this._pcmDataQueueSizeInBytes = 0;
-  }
-
-  /**
    * Cancels recognition. Listeners do not receive final result. Does nothing
    * if recognition is not active.
    */
   cancel(): void {
-    if (!this._stopListening()) {
+    if (!this.stop()) {
       return;
     }
     log.info(`Cancel recognition`);
@@ -253,22 +240,23 @@ export default class SpeechRecognizer extends EventEmitter {
   /**
    * Stop listening for the utterance
    */
-  _stopListening(): boolean {
+  stop(): void {
     if (!this._listening) {
-      return false;
+      return;
     }
 
-    this._decoder.endUtt(); // End utterance processing
+    log.debug(`Stop recognition`);
     this._listening = false;
-    this._pcmDataQueue.length = 0;
-    this._pcmDataQueueSizeInBytes = 0;
-    return true;
+    this._decoder.endUtt(); // End utterance processing
   }
 
   /**
    * Receive  mic data and buffer it to be processed at a later time
    */
   _handleMicData(when: number, pcmData: Buffer): void {
+    if (!this._listening) {
+      return;
+    }
     this._pcmDataQueue.push([when, pcmData]);
     this._pcmDataQueueSizeInBytes += pcmData.length;
 
@@ -276,7 +264,7 @@ export default class SpeechRecognizer extends EventEmitter {
     // a few seconds later so clear the stale mic data from the queue
     if (this._pcmDataQueueSizeInBytes >= this._backlogMinSizeInBytes) {
       const backlogMs = this._pcmDataQueueSizeInBytes /
-          this._sampleRate * this._bytesPerSample * this._numChannels;
+          (this._sampleRate * this._bytesPerSample * this._numChannels);
       log.warn(`Warning: PCM data backlog of ${backlogMs}secs`);
     }
 

@@ -1,8 +1,4 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- *
  * @no-flow
  */
 
@@ -32,7 +28,7 @@ function* queryAlert(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-d
 
   let useTimer: ?boolean = null;
 
-  for (let retryCount = 0; retryCount < 2; retryCount++) {
+  for (let retryCount = 0; retryCount <= 2; retryCount++) {
     const intro = retryCount ? `Sorry, I didn't get that. ` : ``;
     const query =
       `Would you like me to tell you when it's time to switch sides?`;

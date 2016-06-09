@@ -1,8 +1,4 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- *
  * @flow
  */
 
@@ -23,7 +19,7 @@ export type SagaArgs = {
 
 const log = createLog(`dialog-fuhu-sagaArgs`);
 
-function createTextChannel(dialogEngine: DialogEngine) {
+export function createTextChannel(dialogEngine: DialogEngine) {
   return eventChannel((push) => {
     const listener = (text) => {
       push(text);
@@ -35,7 +31,7 @@ function createTextChannel(dialogEngine: DialogEngine) {
   });
 }
 
-function createIntentChannel(dialogEngine: DialogEngine) {
+export function createIntentChannel(dialogEngine: DialogEngine) {
   return eventChannel((push) => {
     const listener = (intent: string, entities: Array<string>) => {
       push({
@@ -50,7 +46,7 @@ function createIntentChannel(dialogEngine: DialogEngine) {
   });
 }
 
-function speak(
+export function speak(
   dialogEngine: DialogEngine,
   text: string,
   finished: boolean,

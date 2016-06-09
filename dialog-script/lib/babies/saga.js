@@ -1,8 +1,4 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- * Confidential and Proprietary - Silk Labs, Inc.
- *
  * @no-flow
  */
 
@@ -18,7 +14,10 @@ import type {SagaArgs} from '../saga';
 
 const log = createLog(`dialog-fuhu-babies-saga`);
 
-function* queryBabyName(
+export const getNextBabyId = (state) => state.nextBabyId;
+export const getBabies = (state) => state.babies.slice();
+
+export function* queryBabyName(
   sagaArgs: SagaArgs,
   customQuery?: string,
 ): Generator<any, any, any> {                     // eslint-disable-line no-undef
@@ -27,7 +26,7 @@ function* queryBabyName(
 
   let name = ``;
 
-  for (let retryCount = 0; retryCount < 2; retryCount++) {
+  for (let retryCount = 0; retryCount <= 2; retryCount++) {
     const intro = retryCount ? `Sorry, I'll try again. ` : ``;
 
     yield call(speak, intro + query, false);
@@ -54,21 +53,24 @@ function* queryBabyName(
   return name;
 }
 
-function* add(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
+export function* add(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
   const {speak} = sagaArgs;
 
   const name = yield call(queryBabyName, sagaArgs);
+  if (!name) {
+    return;
+  }
 
-  const id = yield select((state) => state.nextBabyId);
+  const id = yield select(getNextBabyId);
   yield put(addBaby(id, name));
 
   yield call(speak, `Ok, ${name} is now registered`, true);
 }
 
-function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
+export function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
   const {speak} = sagaArgs;
 
-  const babies = yield select((state) => state.babies.slice());
+  const babies = yield select(getBabies);
   if (!babies.length) {
     yield call(speak, `You haven't registered any babies yet.`, true);
     return;
@@ -81,7 +83,7 @@ function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disab
     name = yield call(queryBabyName, sagaArgs);
     id = babies[0].id;
   } else {
-    for (let retryCount = 0; retryCount < 2; retryCount++) {
+    for (let retryCount = 0; retryCount <= 2; retryCount++) {
       if (retryCount) {
         yield call(speak,
                    `Sorry, I don't have any baby registered with that name.`,
@@ -108,6 +110,9 @@ function* rename(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disab
     }
 
     if (id === null) {
+      yield call(speak,
+                 `Sorry I'm having trouble. Please try again later.`,
+                 true);
       return;
     }
 

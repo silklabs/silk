@@ -10,10 +10,9 @@ import createLog from 'silk-log';
 import invariant from 'assert';
 
 import Audio from './audio';
-import {createDialogEngine} from '../../lib/dialogEngine';
-import runFuhuScript from '../../scripts/fuhu';
+import {createDialogEngine} from 'silk-dialog-engine';
 
-import type {DialogEngineOptions} from '../../lib/dialogEngine';
+import type {DialogEngineOptions} from 'silk-dialog-engine';
 
 const log = createLog('dialog-demo');
 
@@ -26,7 +25,7 @@ const dialogEngine = createDialogEngine(options);
 invariant(dialogEngine);
 
 log.info(`Initializing dialog script`);
-runFuhuScript(dialogEngine);
+require('silk-dialog-script');
 
 log.info(`Creating audio connection`);
 const audio = new Audio();

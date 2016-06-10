@@ -18,6 +18,7 @@ import config from 'silk-config';
 import VoiceActivityDetector from 'silk-vad';
 import KeywordSpotting from 'silk-kws';
 import wav from 'wav';
+import fs from 'fs';
 
 import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
 import type { Env, Camera } from 'silk-exttest';
@@ -44,6 +45,10 @@ let camera: Camera;
  * Where to search for the dialog engine
  */
 const DIALOGSCRIPT_MODNAME = 'silk-dialog-script';
+
+const dialogScriptSearchDirs = util.getboolprop('ro.debuggable') ?
+  [ 'data/node_modules', 'system/silk/node_modules' ] :
+  [ 'system/silk/node_modules' ];
 
 /**
  * This extension implements interaction between dialog engine and the end
@@ -277,24 +282,32 @@ class Dialog {
    * Try to load DIALOGSCRIPT_MODNAME
    */
   _loadDialogScript(): void {
-    try {
-      modwatcher.require(DIALOGSCRIPT_MODNAME);
-      const modLocation = modwatcher.require.resolve(DIALOGSCRIPT_MODNAME);
-      log.info(`${DIALOGSCRIPT_MODNAME} loaded from ${modLocation}`);
-    } catch (e) {
-      log.warn('Unable to load', DIALOGSCRIPT_MODNAME, ':', e.stack || e);
+    for (const dir of dialogScriptSearchDirs) {
+      let modLocation = null;
+      try {
+        modLocation = fs.realpathSync(path.join(dir, DIALOGSCRIPT_MODNAME));
+      } catch (e) {
+        log.debug(e);
+      };
+
+      if (modLocation !== null) {
+        try {
+          log.info(`Loading ${DIALOGSCRIPT_MODNAME} from ${modLocation}`);
+          modwatcher.require(modLocation);
+        } catch (e) {
+          log.warn('Unable to load', DIALOGSCRIPT_MODNAME, ':', e.stack || e);
+        }
+        return;
+      }
     }
+    log.warn(DIALOGSCRIPT_MODNAME, 'not found');
   }
 
   /**
    * Register/deregister for notifications of DIALOGSCRIPT_MODNAME changes
    */
   _monitor(enable: bool): void {
-    if (!process.env.NODE_PATH) {
-      return;
-    }
-    const monitorDirs: Array<string> = process.env.NODE_PATH.split(path.delimiter);
-    monitorDirs.forEach(dir => {
+    dialogScriptSearchDirs.forEach(dir => {
       modwatcher.monitor(path.join(dir, DIALOGSCRIPT_MODNAME),
                          enable ? this._onModulePush : null);
     });

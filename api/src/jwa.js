@@ -7,6 +7,8 @@
  */
 
 import base64url from 'base64url';
+import crypto from 'crypto';
+
 import cryptoSign from './crypto_sign';
 
 const ALGO = 'ed25519';
@@ -20,11 +22,11 @@ const ALGO = 'ed25519';
  */
 function sign(
   input: string,
-  privateKeyHex: string
+  privateKey: Buffer
 ): string {
   return base64url(cryptoSign.sign(
-    cryptoSign.sha256(input),
-    new Buffer(privateKeyHex, 'hex')
+    crypto.createHash('sha256').update(input).digest(),
+    privateKey
   ));
 }
 
@@ -39,7 +41,7 @@ function sign(
 function verify(
   input: string,
   signatureBase64url: string,
-  publicKeyHex: string
+  publicKey: Buffer
 ): boolean {
   if (!signatureBase64url || typeof signatureBase64url !== 'string') {
     // TODO: Logging.
@@ -47,9 +49,9 @@ function verify(
   }
 
   return cryptoSign.verify(
-    cryptoSign.sha256(input),
+    crypto.createHash('sha256').update(input).digest(),
     base64url.toBuffer(signatureBase64url),
-    new Buffer(publicKeyHex, 'hex')
+    publicKey
   );
 }
 

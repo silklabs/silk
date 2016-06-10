@@ -17,13 +17,13 @@ suite('account auth', () => {
         tags: { },
       },
     });
-    id = api.id.create();
+    id = await AccessToken.gen();
     api.accessToken = id;
   });
 
   test('#createAccount - invalid signature', async () => {
     // Mismatch the public/private keys...
-    let fakeId = api.id.create();
+    const fakeId = await AccessToken.gen();
     id.priv = fakeId.priv;
     try {
       await api.vip.createAccount({});
@@ -46,7 +46,7 @@ suite('account auth', () => {
     assert.equal(record.email, input.email);
 
     // Ensure we use a new key so we don't hit key duplicate errors...
-    api.accessToken = api.id.create();
+    api.accessToken = await AccessToken.gen();
 
     let dup = await api.vip.createAccountWithPassword(input);
     assert.ok(!dup.success);
@@ -126,7 +126,7 @@ suite('account auth', () => {
     });
 
     test('sign in - success', async () => {
-      let newKey = api.id.create();
+      const newKey = await AccessToken.gen();
       api.accessToken = newKey;
       let result = await api.vip.signInWithPassword(Object.assign(
         {},
@@ -136,7 +136,7 @@ suite('account auth', () => {
     });
 
     test('sign in - wrong password', async () => {
-      let newKey = api.id.create();
+      const newKey = await AccessToken.gen();
       api.accessToken = newKey;
       let result = await api.vip.signInWithPassword(Object.assign(
         {},
@@ -175,7 +175,7 @@ suite('account auth', () => {
         // Required so SES will pass...
         email: 'success@simulator.amazonses.com'
       });
-      account.api.accessToken = account.api.id.create();
+      account.api.accessToken = await AccessToken.gen();
     });
 
     test('reset password', async () => {
@@ -192,9 +192,10 @@ suite('account auth', () => {
       let accessToken = new AccessToken(pub, priv);
 
       let password = context.passwordHash('newpass');
+      const token = await accessToken.genSign(passwordReset.secret);
       let useToken = await account.api.vip.usePasswordResetToken({
         email: account.record.email,
-        token: accessToken.sign(passwordReset.secret),
+        token,
         passwordHash: password
       });
       assert(useToken.success);

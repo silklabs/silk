@@ -91,7 +91,7 @@ suite('api call retries', () => {
   });
 
   function buildTestApi(options: Object): Client {
-    let requestTransformer = (req) => {
+    let requestTransformer = async (req) => {
       let [url, options] = req;
       url = URL.resolve(serverUrl, url);
 

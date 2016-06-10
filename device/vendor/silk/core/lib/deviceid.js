@@ -12,13 +12,12 @@
  * @flow
  */
 
-import api from './api';
 import fs from 'mz/fs';
 import mkdirp from 'mkdirp-promise';
 import path from 'path';
-import makeLog from './log';
+import { AccessToken } from 'silk-api';
 
-import type { AccessToken } from 'silk-api';
+import makeLog from './log';
 
 const log = makeLog('deviceid');
 
@@ -40,7 +39,7 @@ export default async function getDeviceId(): Promise<AccessToken> {
 
     log.debug(`'${ID_PATH}' exists and is readable`);
 
-    deviceId = api.id.import(fileContents);
+    deviceId = AccessToken.import(fileContents);
   } catch(e) {
     if (e.code === 'ENOENT') {
       log.debug(`'${ID_PATH}' does not exist`);
@@ -53,7 +52,7 @@ export default async function getDeviceId(): Promise<AccessToken> {
   if (deviceId) {
     actionMessage = 'Loaded';
   } else {
-    let newId = api.id.create();
+    const newId = await AccessToken.gen();
     log.debug(`Attempting to create '${ID_DIR}'`);
     await mkdirp(ID_DIR);
     log.debug(`Attempting to write '${ID_PATH}'`);

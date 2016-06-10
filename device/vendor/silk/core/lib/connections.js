@@ -253,7 +253,7 @@ export default class Connections extends EventEmitter {
     }
 
     log.info(`Connecting to signaling server: ${url}`);
-    const signedUrl = api.signSignalingUrl('device', url);
+    const signedUrl = await api.genSignSignalingUrl('device', url);
     const ws = this._ws = new WebSocket(signedUrl);
 
     ws.on('open', this._onWsOpen);

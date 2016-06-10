@@ -1,18 +1,18 @@
 import assert from 'assert';
-import id from '../src/access_token';
+import AccessToken from '../src/access_token';
 import base64url from 'base64url';
 
 import jwa from '../src/jwa';
 import jwt from 'silk-jsonwebtoken';
 
 suite('jwa via jwt', () => {
-  test('valid', () => {
-    let keys = id.create();
+  test('valid', async () => {
+    const keys = await AccessToken.gen();
     let payload = { foo: true };
 
     let signature = jwt.sign(
       payload,
-      keys.priv,
+      new Buffer(keys.priv, 'hex'),
       {
         algorithm: 'ed25519',
         jwa: jwa
@@ -21,7 +21,7 @@ suite('jwa via jwt', () => {
 
     let result = jwt.verify(
       signature,
-      keys.pub,
+      new Buffer(keys.pub, 'hex'),
       {
         algorithms: ['ed25519'],
         jwa: jwa
@@ -30,12 +30,12 @@ suite('jwa via jwt', () => {
     assert.equal(result.foo, true);
   });
 
-  test('invalid - garbage sig', () => {
-    let keys = id.create();
+  test('invalid - garbage sig', async () => {
+    const keys = await AccessToken.gen();
     assert.throws(() => {
       jwt.verify(
         'garbage',
-        keys.pub,
+        new Buffer(keys.pub, 'hex'),
         {
           algorithms: ['ed25519'],
           jwa: jwa
@@ -44,12 +44,12 @@ suite('jwa via jwt', () => {
     }, /malformed/);
   });
 
-  test('invalid - mismatched sig', () => {
-    let keys = id.create();
+  test('invalid - mismatched sig', async () => {
+    const keys = await AccessToken.gen();
 
     let signature = jwt.sign(
       {},
-      keys.priv,
+      new Buffer(keys.priv, 'hex'),
       {
         algorithm: 'ed25519',
         jwa: jwa
@@ -63,7 +63,7 @@ suite('jwa via jwt', () => {
     assert.throws(() => {
       jwt.verify(
         signatureHacked,
-        keys.pub,
+        new Buffer(keys.pub, 'hex'),
         {
           algorithms: ['ed25519'],
           jwa: jwa

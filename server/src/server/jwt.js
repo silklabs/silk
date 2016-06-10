@@ -131,7 +131,7 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
 
     let verified;
     try {
-      verified = jwt.verify(signature, publicKey, {
+      verified = jwt.verify(signature, new Buffer(publicKey, 'hex'), {
         algorithms: ['ed25519'],
         jwa
       });

@@ -1,5 +1,5 @@
 import assert from 'assert';
-import createApi from 'silk-api';
+import createApi, {AccessToken} from 'silk-api';
 import timekeeper from 'timekeeper';
 import express from 'express';
 import eventToPromise from 'event-to-promise';
@@ -78,7 +78,7 @@ suite('security validation tests', () => {
 
     for (let userKey in users) {
       let user = users[userKey];
-      user.id = api.id.create();
+      user.id = await AccessToken.gen();
       api.accessToken = user.id;
 
       // Create test users...

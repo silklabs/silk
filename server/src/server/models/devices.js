@@ -118,9 +118,13 @@ export default class Devices extends Base {
     })
   };
 
-  registrationTokenValid(registrarPublicKey: string, devicePublicKey: string, token: string): bool {
+  genIsRegistrationTokenValid(
+    registrarPublicKey: string,
+    devicePublicKey: string,
+    token: string
+  ): Promise<bool> {
     let accountAccessToken = AccessToken.importPub(registrarPublicKey);
-    return accountAccessToken.verify(devicePublicKey, token);
+    return accountAccessToken.genVerify(devicePublicKey, token);
   }
 
   /**
@@ -132,7 +136,7 @@ export default class Devices extends Base {
   async register(registrarPublicKey: string, payload: any): any {
     payload = this.validate(payload, 'register');
 
-    let tokenValid = this.registrationTokenValid(
+    const tokenValid = await this.genIsRegistrationTokenValid(
       registrarPublicKey,
       payload.publicKey,
       payload.registrationToken
@@ -217,12 +221,11 @@ export default class Devices extends Base {
       return this.error('unknownDevice');
     }
 
-    let tokenValid = this.registrationTokenValid(
+    const tokenValid = await this.genIsRegistrationTokenValid(
       registrarPublicKey,
       payload.publicKey,
       payload.registrationToken
     );
-
     if (!tokenValid) {
       return this.error('invalidRegistrationToken');
     }

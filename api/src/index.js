@@ -17,10 +17,8 @@ import AccessToken from './access_token';
 import MetricsAgent from './metrics_agent';
 
 import loadConfig from './config';
-import {bodySignature} from './jwt_request_signature';
 import devAccount from './dev_account';
 import fetch from './fetch';
-import {signature} from './jwt_request_signature';
 
 import type {StringToStringDict} from './metric';
 import type {Request} from 'silk-http/src/client';
@@ -66,7 +64,7 @@ class AuthConfig {
    * Request transformer responsible for signing the request and constructing
    * the urls...
    */
-  requestTransformer = (req: Request): Request => {
+  requestTransformer = async (req: Request): Promise<Request> => {
     let [url, options] = req;
 
     // Ensure URL is absolute ...
@@ -79,11 +77,10 @@ class AuthConfig {
       options.body = JSON.stringify(options.body);
     }
 
-    let signature = bodySignature(
-      this.accessToken,
+    const signature = await this.accessToken.genSignRequest(
       options.method,
       parsedUrl.pathname,
-      options.body
+      options.body || ''
     );
 
     options.headers = options.headers || {};
@@ -109,13 +106,14 @@ class AuthConfig {
 
 const log = createLog('api');
 
-function socketioConfig(accessToken: AccessToken, url: string): SocketioConfig {
-  // TODO: remove 'any' type here once
-  // https://github.com/facebook/flow/issues/1173 is resolved.
-  let parsed: any = URL.parse(url, true /* parse query string */);
+async function genSocketioConfig(
+  accessToken: AccessToken,
+  url: string
+): Promise<SocketioConfig> {
+  const parsed = URL.parse(url, /* parse query string */ true);
   invariant(typeof parsed.path === 'string');
 
-  let jwt = signature(accessToken, 'GET', parsed.path);
+  const jwt = await accessToken.genSignRequest('GET', parsed.path);
   invariant(typeof parsed.query === 'object');
   parsed.query.jwt = jwt;
 
@@ -123,6 +121,7 @@ function socketioConfig(accessToken: AccessToken, url: string): SocketioConfig {
   // parse the out and pass them as options. The signature does not
   // include the host so pass only the path+query.
   delete parsed.search;
+  // $FlowFixMe https://github.com/facebook/flow/issues/908
   url = URL.format(parsed);
 
   invariant(typeof parsed.pathname === 'string');
@@ -135,18 +134,16 @@ function socketioConfig(accessToken: AccessToken, url: string): SocketioConfig {
   return [url, options];
 }
 
-function signSignalingUrl(
+async function genSignSignalingUrl(
   url: string,
   type: 'account' | 'device',
   query: {[key: string]: string},
   accessToken: AccessToken,
-): string {
-  // TODO: remove 'any' type here once
-  // https://github.com/facebook/flow/issues/1173 is resolved.
-  let parsed: any = URL.parse(url, true /* parse query string */);
+): Promise<string> {
+  const parsed = URL.parse(url, /* parse query string */ true);
   parsed.pathname = '/' + type;
 
-  let jwt = signature(accessToken, 'GET', parsed.pathname);
+  const jwt = await accessToken.genSignRequest('GET', parsed.pathname);
   parsed.query = Object.assign({}, query, { jwt });
   return URL.format(parsed);
 }
@@ -179,14 +176,14 @@ export class SilkApi {
 
   config: AuthConfig;
 
-  socketioDeviceConfig: (() => Promise<SocketioConfig>) = async () => {
+  genSocketioDeviceConfig: (() => Promise<SocketioConfig>) = async () => {
     let {url} = await this.device.socketioURL();
-    return socketioConfig(this.config.accessToken, url);
+    return await genSocketioConfig(this.config.accessToken, url);
   };
 
-  socketioAccountConfig: (() => Promise<SocketioConfig>) = async () => {
+  genSocketioAccountConfig: (() => Promise<SocketioConfig>) = async () => {
     let {url} = await this.account.socketioURL();
-    return socketioConfig(this.config.accessToken, url);
+    return await genSocketioConfig(this.config.accessToken, url);
   };
 
   /** Deprecated exports */
@@ -244,13 +241,13 @@ export class SilkApi {
     });
   }
 
-  signSignalingUrl(
+  genSignSignalingUrl(
     type: 'device' | 'account',
     url: string,
     query: {[key: string]: string} = {},
-  ): string {
+  ): Promise<string> {
     invariant(this.accessToken, '.accessToken must be set');
-    return signSignalingUrl(url, type, query, this.accessToken);
+    return genSignSignalingUrl(url, type, query, this.accessToken);
   }
 
   /**
@@ -265,13 +262,13 @@ export class SilkApi {
    *   - device  : Uses socket.io url for devices.
    */
   socketioClient(socketFactory: any, type: string, overrides: Object): any {
-    let configFn;
+    let genConfig;
     switch (type) {
     case 'account':
-      configFn = this.socketioAccountConfig;
+      genConfig = this.genSocketioAccountConfig;
       break;
     case 'device':
-      configFn = this.socketioDeviceConfig;
+      genConfig = this.genSocketioDeviceConfig;
       break;
     default:
       throw new Error(`Unknown socket.io client type ${type}`);
@@ -288,7 +285,7 @@ export class SilkApi {
     let superOpen = manager.open;
     manager.open = async (fn) => {
       try {
-        let [uri, opts] = await configFn();
+        let [uri, opts] = await genConfig();
         manager.uri = uri;
         Object.assign(manager.opts, opts);
         superOpen.call(manager, fn);

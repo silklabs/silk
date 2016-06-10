@@ -156,8 +156,8 @@ export class DeviceSession extends RobustEventEmitter {
     super();
 
     invariant(singletonInstance);
-    const privateKey = singletonInstance._privateKey;
-    const publicKeys = singletonInstance._registeredDevicePublicKeys;
+    const privateKey = singletonInstance.privateKey;
+    const publicKeys = singletonInstance.registeredDevicePublicKeys;
 
     const socketSession =
       new SocketSession(socket, privateKey, publicKeys, metrics);
@@ -611,11 +611,11 @@ export class DeviceSession extends RobustEventEmitter {
 
 export class DeviceManager extends RobustEventEmitter {
 
+  privateKey: string;
+  registeredDevicePublicKeys: Array<string> = [];
+
   _devices: Map<Socket, DeviceSession> = new Map();
   _socketManager: EventEmitter;
-  _privateKey: string = ``;
-  _registeredDevicePublicKeys: Array<string> = [ ];
-
   _metrics: MetricsAgent;
 
   constructor(userState: UserState, metrics: MetricsAgent) {
@@ -624,18 +624,21 @@ export class DeviceManager extends RobustEventEmitter {
     invariant(userState);
     invariant(metrics);
 
-    const accessToken = userState.accessToken;
-    invariant(accessToken.priv);
-    invariant(accessToken.isValid());
-
     super();
 
     this._metrics = metrics;
     this._socketManager = getSocketManager();
+
+    invariant(userState.accessToken.priv);
+    this.privateKey = userState.accessToken.priv;
+    this._initialize(userState);
+  }
+
+  async _initialize(userState: UserState) {
+    const isValid = await userState.accessToken.genIsValid();
+    invariant(isValid);
     this._socketManager.on(`connect`, this._onConnect);
     this._socketManager.on(`disconnect`, this._onDisconnect);
-
-    this._privateKey = accessToken.priv;
 
     userState.on(`registered-devices-updated`, this._onRegisteredUpdatedDevices);
     this._onRegisteredUpdatedDevices(userState.registeredDevices);
@@ -665,7 +668,7 @@ export class DeviceManager extends RobustEventEmitter {
 
     invariant(Array.isArray(deviceRecords));
 
-    this._registeredDevicePublicKeys =
+    this.registeredDevicePublicKeys =
       deviceRecords.map((deviceRecord) => deviceRecord.publicKey);
   };
 }

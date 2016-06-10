@@ -1,13 +1,14 @@
 import assert from 'assert';
+import eventToPromise from 'event-to-promise';
 import mkdirp from 'mkdirp-promise';
 import net from 'net';
+import {exec} from 'mz/child_process';
 import fs from 'mz/fs';
 import path from 'path';
+import {AccessToken} from 'silk-api';
+
 import createApi from './api';
-import createDeviceId from './device_id';
 import randomStream from './random_stream';
-import { exec } from 'mz/child_process';
-import eventToPromise from 'event-to-promise';
 import createOutbox from '../lib/outbox/manager';
 import skipOnTravis from './skip-on-travis.js';
 
@@ -207,7 +208,7 @@ suite('crash report', () => {
     });
 
     test('pre existing with device id', async () => {
-      let deviceId = createDeviceId();
+      let deviceId = await AccessToken.gen();
       let { crash, outbox} = create();
       let { buffer } = randomStream();
 
@@ -235,7 +236,7 @@ suite('crash report', () => {
         return;
       }
 
-      let deviceId = createDeviceId();
+      let deviceId = await AccessToken.gen();
       let { crash, outbox} = create();
       let { stream } = randomStream();
 

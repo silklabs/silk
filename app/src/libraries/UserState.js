@@ -131,7 +131,7 @@ export class UserState extends EventEmitter {
   async attemptSignIn(email, password) {
     log.info('Attempting user sign in');
     // Always create a new token when we attempt a sign up...
-    let accessToken = AccessToken.create();
+    const accessToken = await AccessToken.gen();
     this.accessToken = this.api.accessToken = accessToken;
 
     let passwordHash = await pbkdf2KeyDerivation(
@@ -174,7 +174,7 @@ export class UserState extends EventEmitter {
   async attemptSignup(email, password) {
     log.info('Attempting user sign up');
     // Always create a new token when we attempt a sign up...
-    let accessToken = AccessToken.create();
+    const accessToken = await AccessToken.gen();
     this.accessToken = this.api.accessToken = accessToken;
 
     let passwordHash = await pbkdf2KeyDerivation(
@@ -210,7 +210,7 @@ export class UserState extends EventEmitter {
 
   async forgotPassword(email) {
     // XXX: Semi-nasty hacks to ensure we use an access token for password reset.
-    this.api.accessToken = AccessToken.create();
+    this.api.accessToken = await AccessToken.gen();
     let res;
     try {
       res = await this.api.vip.resetPassword({ email });
@@ -229,7 +229,8 @@ export class UserState extends EventEmitter {
     log.info('Registering device', deviceToken);
 
     // Sign the deviceId with the account token...
-    let registrationToken = this.accessToken.sign(deviceToken.toString());
+    const registrationToken =
+      await this.accessToken.genSign(deviceToken.toString());
 
     let {
       success,

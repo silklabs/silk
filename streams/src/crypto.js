@@ -449,6 +449,10 @@ export class DecryptStream extends CryptoStreamBase {
                 `'${this._otherPublicKeyBuffer.toString('hex')}'`);
 
       this._keyPair.genSharedSecret(this._otherPublicKeyBuffer)
+        .catch((error) => {
+          process.nextTick(() => this.emit(`error`, error));
+          throw error;
+        })
         .then((sharedSecret) => {
           this._sharedSecret = sharedSecret;
 
@@ -457,6 +461,9 @@ export class DecryptStream extends CryptoStreamBase {
 
           log.debug(`Got shared secret '${sharedSecret.toString('hex')}'`);
           this.emit(`sharedSecret`, sharedSecret);
+        })
+        .catch((error) => {
+          log.error(`Error generating/dispatching shared secret`, error);
         });
     }
 
@@ -798,9 +805,11 @@ export class CryptoDuplexStream extends DuplexTransform {
       encrypt.setKeyPair(keyPair);
       decrypt.setKeyPair(keyPair);
     }).catch((error) => {
-      log.error(error);
-      this.emit(`error`, error);
-      this.push(null);
+      log.error(`Could not generate key pair`, error);
+      process.nextTick(() => {
+        this.emit(`error`, error);
+        this.push(null);
+      });
     });
 
     decrypt.once(`sharedSecret`, sharedSecret => {

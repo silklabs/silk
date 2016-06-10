@@ -6,7 +6,7 @@
  * @private
  */
 
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import events from 'events';
 import net from 'net';
 import createLog from './log';

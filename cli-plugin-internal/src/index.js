@@ -135,7 +135,7 @@ export let logout = {
 
 export let configure = {
   help: `
-    Register device with server and configure Wi-Fi network
+    Register device with server and configure Wi-Fi network.
 
     |silk login| must have been ran previously.
 
@@ -167,7 +167,7 @@ export let configure = {
 
     if (args.n) {
       // persist new device ID
-      await device.pushDeviceId();
+      await device.pushNewDeviceId();
     } else {
       // use device id from device
       await device.pullDeviceId();
@@ -256,22 +256,24 @@ export let remove = {
     console.log(`Remove device from server ...`);
 
     let account = createAccount(args);
-    let deviceToken;
+    let deviceId;
 
     if (args.interactive) {
       let devices = await account.listDevices();
-      deviceToken = await getDeviceFromPrompt(devices);
+      deviceId = await getDeviceFromPrompt(devices);
     } else {
-      let device = new Device(createAdb(args.deviceSerialNumber));
-      deviceToken = device.accessToken.toString();
+      const adb = createAdb(args.deviceSerialNumber);
+      const device = new Device({serverUrl: dotConfig.serverUrl}, adb);
+      await device.pullDeviceId();
+      deviceId = device.api.accessToken.pub;
     }
 
-    if (deviceToken) {
-      console.log(`Removing ${deviceToken} ...`);
-      let success = await account.unregisterDevice(deviceToken);
+    if (deviceId) {
+      console.log(`Removing ${deviceId} ...`);
+      let success = await account.unregisterDevice(deviceId);
       console.log(`Removal ${success ? 'success' : 'failed'}`);
     } else {
-      console.log(`Bad deviceToken ${deviceToken}, not removing`);
+      console.log(`Bad deviceToken ${deviceId}, not removing`);
     }
   }
 };

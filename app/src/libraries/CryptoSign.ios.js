@@ -13,21 +13,23 @@ const { AppCryptoSync } = NativeModules;
 
 const encodingLength = AppCryptoSync.EncodingLength;
 
-function generateKeyPair(
+function genKeyPair(
   options: {entropy?: Buffer;}
-): [Buffer, Buffer] {
+): Promise<[Buffer, Buffer]> {
   // libsodium can generate its own random seed, so we don't need any
   // entropy passed in.
   const [errorMsg, secretHex, publicKeyHex] = global._crypto_ed25519_generate_keypair();
   if (errorMsg) {
     throw new Error(errorMsg);
   }
-  return [new Buffer(secretHex, 'hex'), new Buffer(publicKeyHex, 'hex')];
+  return Promise.resolve(
+    [new Buffer(secretHex, 'hex'), new Buffer(publicKeyHex, 'hex')]
+  );
 }
 
-function publicKeyFromSecret(
+function genPublicKeyFromSecret(
   secretKey: Buffer
-): Buffer {
+): Promise<Buffer> {
   invariant(secretKey.length === encodingLength);
   const [errorMsg, pubKeyHex] = global._crypto_ed25519_pubkey_from_secret(
     secretKey.toString('hex')
@@ -35,7 +37,7 @@ function publicKeyFromSecret(
   if (errorMsg) {
     throw new Error(errorMsg);
   }
-  return new Buffer(pubKeyHex, 'hex');
+  return Promise.resolve(new Buffer(pubKeyHex, 'hex'));
 }
 
 function sign(
@@ -73,8 +75,8 @@ function verify(
 
 overrideCryptoSignImplementation({
   encodingLength,
-  generateKeyPair,
-  publicKeyFromSecret,
+  genKeyPair,
+  genPublicKeyFromSecret,
   sign,
   verify,
 });

@@ -19,9 +19,11 @@ export default class AccessToken {
   static gen(
     options: {entropy?: Buffer;} = {}
   ): Promise<AccessToken> {
-    const [secretKey, pubKey] = cryptoSign.generateKeyPair(options);
-    return Promise.resolve(
-      new AccessToken(pubKey.toString('hex'), secretKey.toString('hex'))
+    return cryptoSign.genKeyPair(options).then(
+      ([secretKey, pubKey]) => new AccessToken(
+        pubKey.toString('hex'),
+        secretKey.toString('hex')
+      )
     );
   }
 
@@ -53,7 +55,7 @@ export default class AccessToken {
 
   async genIsValid(): Promise<boolean> {
     if (this.priv) {
-      const pubKey = cryptoSign.publicKeyFromSecret(
+      const pubKey = await cryptoSign.genPublicKeyFromSecret(
         new Buffer(this.priv, 'hex')
       );
       if (pubKey.toString('hex') !== this.pub) {

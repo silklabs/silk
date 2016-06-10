@@ -42,24 +42,24 @@ const encodingLength = ed25519.encodingLength;
 /**
  * Generate and return a keypair as tuple (secret key, public key).
  */
-function generateKeyPair(
+function genKeyPair(
   options: {entropy?: Buffer;}
-): [Buffer, Buffer] {
+): Promise<[Buffer, Buffer]> {
   const secret = options.entropy || crypto.randomBytes(encodingLength);
   invariant(Buffer.isBuffer(secret));
   invariant(secret.length === encodingLength);
-  return [secret, publicKeyFromSecret(secret)];
+  return genPublicKeyFromSecret(secret).then((publicKey) => [secret, publicKey]);
 }
 
 /**
  * Compute the public key given a secret key
  */
-function publicKeyFromSecret(
+function genPublicKeyFromSecret(
   secretKey: Buffer
-): Buffer {
+): Promise<Buffer> {
   invariant(secretKey.length === encodingLength);
   const keyPair = ed25519.keyFromSecret(secretKey);
-  return new Buffer(keyPair.getPublic());
+  return Promise.resolve(new Buffer(keyPair.getPublic()));
 }
 
 function sign(
@@ -87,8 +87,8 @@ function verify(
 
 const API = {
   encodingLength,
-  generateKeyPair,
-  publicKeyFromSecret,
+  genKeyPair,
+  genPublicKeyFromSecret,
   sign,
   verify,
 };

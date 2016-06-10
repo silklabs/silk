@@ -40,6 +40,7 @@ PRODUCT_PACKAGES += \
 # vendor/propsilk/...
 PRODUCT_PACKAGES += \
   silk-dialog-engine \
+  silk-dialog-script \
   silk-caffe \
   silk-cv \
   silk-gc1 \

@@ -225,18 +225,18 @@ export class UserState extends EventEmitter {
    * server...
    */
   async registerDevice(name, deviceId, type = 'camera') {
-    let deviceToken = AccessToken.importPub(deviceId);
-    log.info('Registering device', deviceToken);
+    log.info('Registering device', deviceId);
 
     // Sign the deviceId with the account token...
-    const registrationToken =
-      await this.accessToken.genSign(deviceToken.toString());
+    // Ugh, we're signing a hex string (which will be hashed twice
+    // before actually being signed).
+    const registrationToken = await this.accessToken.genSign(deviceId);
 
     let {
       success,
       beaconUUID,
     } = await this.api.account.registerDevice({
-      devicePublicKey: deviceToken.toString(),
+      devicePublicKey: deviceId,
       name,
       type,
       registrationToken,
@@ -251,7 +251,7 @@ export class UserState extends EventEmitter {
 
     return {
       success,
-      registrarPublicKey: this.accessToken.toString(),
+      registrarPublicKey: this.accessToken.pub,
       registrationToken,
     };
   }

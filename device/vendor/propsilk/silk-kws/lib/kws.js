@@ -54,6 +54,7 @@ const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG
 const THRESHOLD = 80; // Ignore predictions with probability lower than threshold
 
 const SAVE_KEYWORD_WAV = 'persist.silk.kws.save';
+const VAD_ENABLED_PROP = 'persist.silk.kws.vad.enabled';
 
 type MicData = {
   when: number;
@@ -87,6 +88,7 @@ export default class KeywordSpotting extends EventEmitter {
   _waitingForPcmData: boolean = false;
   _voiceActivityDetector: VoiceActivityDetector;
   _ready: boolean = false;
+  _vadEnabled: boolean = false;
 
   constructor(voiceActivityDetector: VoiceActivityDetector, dialogEnabled: boolean = true) {
     super();
@@ -105,6 +107,7 @@ export default class KeywordSpotting extends EventEmitter {
     });
 
     this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, false);
+    this._vadEnabled = util.getboolprop(VAD_ENABLED_PROP, false);
 
     this._pcmDataArray = []; // Array of [when, pcmData] tuples
     this._pcmDataSizeInBytes = STEP_SIZE; // Size of all the pcmData buffers in the queue
@@ -149,9 +152,13 @@ export default class KeywordSpotting extends EventEmitter {
   start() {
     log.info(`Starting kws`);
     this._vib.pattern(50);
-    this._voiceActivityDetector.setMode('continuous');
-    this._voiceActivityDetector.on('speech_start', this._onSpeechStart);
-    this._voiceActivityDetector.on('speech_stop', this._onSpeechStop);
+    if (this._vadEnabled) {
+      this._voiceActivityDetector.setMode('continuous');
+      this._voiceActivityDetector.on('speech_start', this._onSpeechStart);
+      this._voiceActivityDetector.on('speech_stop', this._onSpeechStop);
+    } else {
+      this._resumeSpotting(Date.now());
+    }
   }
 
   /**
@@ -160,8 +167,12 @@ export default class KeywordSpotting extends EventEmitter {
   stop() {
     log.info(`Stopping kws`);
     this._voiceActivityDetector.setMode('dialog');
-    this._voiceActivityDetector.removeListener('speech_start', this._onSpeechStart);
-    this._voiceActivityDetector.removeListener('speech_stop', this._onSpeechStop);
+    if (this._vadEnabled) {
+      this._voiceActivityDetector.removeListener('speech_start', this._onSpeechStart);
+      this._voiceActivityDetector.removeListener('speech_stop', this._onSpeechStop);
+    } else {
+      this._pauseSpotting(Date.now());
+    }
   }
 
   /**
@@ -190,7 +201,7 @@ export default class KeywordSpotting extends EventEmitter {
    */
   _predictAsync(mat: Array<Array<number>>) {
     if (!this._ready) {
-     return Promise.resolve();
+      return Promise.resolve();
     }
     return new Promise((resolve, reject) => {
       let start = Date.now();
@@ -392,8 +403,8 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Stop listening for the keyword once the current buffer is finished
-   * processing or a keyword is detected
+   * Stop listening for the keyword once we are finished processing all the
+   * mic-data up to the time when pause was called.
    */
   _pauseSpotting(when: number) {
     if (!this._spotting) {

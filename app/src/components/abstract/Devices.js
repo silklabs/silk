@@ -451,7 +451,7 @@ export default class Devices extends AsyncComponent {
       log.debug('User cancelled. Aborting.');
       return;
     }
-    log.warn('Could not configure device due to error:', error);
+    log.warn('Could not configure device due to error:', error.stack);
     this._showConfigError(error);
   }
 

@@ -13,6 +13,8 @@ import invariant from 'assert';
 import uuid from 'uuid';
 
 import config from 'silk-config';
+import type { ConfigDeviceMic } from 'silk-config';
+
 const audioParams = config.deviceMic;
 
 import {
@@ -24,16 +26,6 @@ import {
 } from './speechAccessToken';
 
 import type {ClientRequest} from 'https';
-
-export type ConfigDeviceMic = {
-  bytesPerSample: number;
-  encoding: string;
-  endian: 'big' | 'little';
-  numChannels: number;
-  sampleRate: number;
-  sampleMin: number;
-  sampleMax: number;
-};
 
 type Callback = (error: ?Error, text?: string) => void;
 

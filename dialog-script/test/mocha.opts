@@ -1,2 +1,2 @@
 --ui tdd
---require ../node_modules/silk-babel-run/mocha
+--require silk-babel-run/mocha

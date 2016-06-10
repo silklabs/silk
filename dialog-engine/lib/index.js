@@ -20,9 +20,6 @@ import {Readable} from 'stream';
 import SpeechToText from './speechToText';
 import TextToSpeech from './textToSpeech';
 
-// XXX DEMO ONLY Replace with luis
-import textToIntention from './textToIntention';
-
 export type DialogEngineOptions = {
   // Nothing for now... Will eventually have luis model access token, etc.
 };
@@ -30,6 +27,10 @@ export type DialogEngineOptions = {
 export type Intention = {
   intent: string;
   entities: Array<string>;
+};
+
+export type DialogScriptOptions = {
+  textToIntention: { [key: string]: Intention };
 };
 
 const log = createLog('dialog-engine');
@@ -85,12 +86,23 @@ export class DialogEngine extends EventEmitter {
    */
 
   _options: DialogEngineOptions;
+  _scriptOptions: DialogScriptOptions;
 
   constructor(options: DialogEngineOptions) {
 
     super();
 
     this._options = options;
+  }
+
+  /**
+   * Configure the Dialog Engine
+   *
+   * @param scriptOptions Configuration options
+   * @memberof silk-dialog-engine.DialogEngine
+   */
+  configure(scriptOptions: DialogScriptOptions) {
+    this._scriptOptions = scriptOptions;
   }
 
   // Returns intention from text (utterance)
@@ -101,8 +113,8 @@ export class DialogEngine extends EventEmitter {
 
     log.debug(`Requesting intention for '${text}'`);
 
-    // XXX DEMO ONLY
-    let {intent, entities} = Object.assign({}, textToIntention[text]);
+    const textToIntention = this._scriptOptions.textToIntention;
+    let {intent, entities} = textToIntention ? textToIntention[text] : {};
 
     if (!intent) {
       log.info(`Did not find intention information for '${text}'`);

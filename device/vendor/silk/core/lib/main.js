@@ -437,7 +437,9 @@ async function onConfigured() {
   await wifi.online();
   ext = await extPromise;
 
-  if (!DEV_NO_SERVER_CONNECT) {
+  if (DEV_NO_SERVER_CONNECT) {
+    ui.goto('online');
+  } else {
     log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
     server.connect();
   }

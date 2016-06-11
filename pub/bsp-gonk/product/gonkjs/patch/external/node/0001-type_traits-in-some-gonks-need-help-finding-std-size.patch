@@ -1,0 +1,24 @@
+From 39be56438d3e2163e8244dfaf26ebc5bd6a035a1 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 11 Jun 2016 08:27:06 -0700
+Subject: [PATCH] <type_traits> in some gonks need help finding std::size_t
+
+---
+ src/util.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/util.h b/src/util.h
+index 034f475..edade97 100644
+--- a/src/util.h
++++ b/src/util.h
+@@ -13,6 +13,7 @@
+ #ifdef __APPLE__
+ #include <tr1/type_traits>
+ #else
++#include <cstddef>
+ #include <type_traits>  // std::remove_reference
+ #endif
+ 
+-- 
+2.7.0
+

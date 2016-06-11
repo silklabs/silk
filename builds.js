@@ -230,7 +230,6 @@ const builds = {
     files: [
       'app/node_modules/**',
       'app/ios/**',
-      'webapp/install.sh',
     ],
     events: ['pr', 'push', 'nightly'],
   }),
@@ -244,8 +243,6 @@ const builds = {
     files: [
       'app/node_modules/**',
       'app/android/**',
-      'webapp/src/android/**',
-      'webapp/install.sh',
     ],
     events: ['pr'],
   }),

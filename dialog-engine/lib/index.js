@@ -114,7 +114,8 @@ export class DialogEngine extends EventEmitter {
     log.debug(`Requesting intention for '${text}'`);
 
     const textToIntention = this._scriptOptions.textToIntention;
-    let {intent, entities} = textToIntention ? textToIntention[text] : {};
+    let {intent, entities} = textToIntention ?
+      Object.assign({}, textToIntention[text]) : {};
 
     if (!intent) {
       log.info(`Did not find intention information for '${text}'`);

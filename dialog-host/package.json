@@ -1,6 +1,6 @@
 {
   "name": "silk-dialog-host",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "Silk dialog host",
   "main": "lib/index.js",
   "scripts": {

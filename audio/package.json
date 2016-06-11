@@ -1,6 +1,6 @@
 {
   "name": "silk-audio",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "Utilities for processing audio",
   "main": "index.js",
   "scripts": {

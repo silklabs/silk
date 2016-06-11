@@ -1,6 +1,6 @@
 {
   "name": "silk-api",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "Silk client API for node js",
   "main": "src/index.js",
   "license": "proprietary",

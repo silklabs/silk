@@ -2,10 +2,13 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 /* eslint-disable no-console */
 
+import invariant from 'assert';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -18,10 +21,19 @@ import Account from './account';
 import Device from './device';
 import API from 'silk-sdk/src/api';
 
+import type {ListDevicesOutputDevices} from 'silk-api/src/gen/account';
+
+type ArgSpec = [Array<string>, {
+  type?: string;
+  help?: string;
+  dest?: string;
+  metavar?: string;
+}];
+
 const DEFAULT_SERVER_URL = 'https://silk-server-master.herokuapp.com';
 const OLD_CONFIG_FILEPATH = path.join(os.homedir(), '/.silk');
 const CONFIG_FILEPATH = path.join(os.homedir(), '/.silk/config.json');
-const COMMON_ARGS = {
+const COMMON_ARGS: {[key: string]: ArgSpec} = {
   serverUrl: [['-u', '--server-url'], {
     help: 'specific server to connect to',
     type: 'string',
@@ -58,10 +70,10 @@ const COMMON_ARGS = {
 
 let dotConfig = new DotConfig(CONFIG_FILEPATH);
 
-function createAccount(args, isNew) {
+function createAccount(args: ?{serverUrl: ?string}, isNew: boolean = false): Account {
   if (isNew) {
     let serverUrl = DEFAULT_SERVER_URL;
-    if (args.serverUrl != null) {
+    if (args && args.serverUrl) {
       serverUrl = args.serverUrl;
     }
     return new Account({serverUrl});
@@ -74,17 +86,24 @@ function createAccount(args, isNew) {
   }
 }
 
-export let create = {
+type LoginOrCreateArgs = {
+  email: string;
+  password: string;
+  serverUrl: ?string;
+};
+
+export const create = {
   help: `
     Creates a new account. Saves login tokens in ~/.silk for subsequent runs.
   `,
   arguments: [
     [['email'], { help: 'email account to create' }],
     [['password'], { help: 'new account password' }],
+    // $FlowFixMe: property `serverUrl`. Missing annotation
     COMMON_ARGS.serverUrl,
   ],
 
-  main: async (args) => {
+  main: async (args: LoginOrCreateArgs) => {
     let account = createAccount(args, true);
 
     console.log(`Creating new account into ${account.serverUrl} with ${args.email} ...`);
@@ -94,17 +113,18 @@ export let create = {
   }
 };
 
-export let login = {
+export const login = {
   help: `
     Logs into account. Saves login tokens in ~/.silk for subsequent runs.
   `,
   arguments: [
     [['email'], { help: 'email account to log into' }],
     [['password'], { help: 'account password' }],
+    // $FlowFixMe: property `serverUrl`. Missing annotation
     COMMON_ARGS.serverUrl,
   ],
 
-  main: async (args) => {
+  main: async (args: LoginOrCreateArgs) => {
     let account = createAccount(args, true);
 
     console.log(`Logging into ${account.serverUrl} with ${args.email} ...`);
@@ -112,8 +132,11 @@ export let login = {
     let success = await account.login(args.email, args.password);
     if (success) {
       // persist login token
-      await dotConfig.updateConfig(account.accessToken, account.serverUrl,
-        account.beaconUUID);
+      await dotConfig.updateConfig(
+        account.accessToken,
+        account.serverUrl,
+        account.beaconUUID
+      );
 
       console.log('Login success');
     } else {
@@ -133,7 +156,15 @@ export let logout = {
   }
 };
 
-export let configure = {
+type ConfigureArgs = {
+  deviceName: string;
+  ssid: string;
+  password: string;
+  deviceSerialNumber?: string;
+  n: boolean;
+};
+
+export const configure = {
   help: `
     Register device with server and configure Wi-Fi network.
 
@@ -151,16 +182,17 @@ export let configure = {
     [['password'], {
       help: 'Wi-Fi network password credential (supply empty string for open networks)',
     }],
+    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
     COMMON_ARGS.deviceSerialNumber,
     [['-n'], {
       help: 'set flag to create a new device id',
       action: 'storeTrue'
     }]
   ],
-  main: async (args) => {
+  main: async (args: ConfigureArgs) => {
     let adb = createAdb(args.deviceSerialNumber);
 
-    let account = createAccount(args);
+    let account = createAccount();
     let device = new Device({serverUrl: dotConfig.serverUrl}, adb);
 
     console.log(`Configuring device ...`);
@@ -185,7 +217,11 @@ export let configure = {
   },
 };
 
-export let unconfig = {
+type UnconfigArgs = {
+  deviceSerialNumber?: string;
+};
+
+export const unconfig = {
   help: `
     Unconfigures the Silk device (locally only, the device is not removed
     from the server).
@@ -195,9 +231,10 @@ export let unconfig = {
     ** Requires |adb shell stop silk; adb shell start silk| to take effect **
   `,
   arguments: [
+    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
     COMMON_ARGS.deviceSerialNumber
   ],
-  main: async (args) => {
+  main: async (args: UnconfigArgs) => {
     let adb = createAdb(args.deviceSerialNumber);
 
     let device = new Device({serverUrl: dotConfig.serverUrl}, adb);
@@ -209,7 +246,9 @@ export let unconfig = {
   },
 };
 
-async function getDeviceFromPrompt(devices) {
+async function getDeviceFromPrompt(
+  devices: Array<ListDevicesOutputDevices>
+): Promise<string> {
   let deviceToken;
   for (let i = 0; i < devices.length; i++) {
     console.log(`  ${i / 10 >= 1 ? '' : ' '}${i}: ` +
@@ -223,6 +262,7 @@ async function getDeviceFromPrompt(devices) {
 
   let getDeviceIdx = () => {
     rl.question('Select device: ', deviceIdx => {
+      deviceIdx = parseInt(deviceIdx, 10);
       if (deviceIdx < devices.length && deviceIdx >= 0) {
         deviceToken = devices[deviceIdx].publicKey.toString();
         rl.close();
@@ -237,7 +277,12 @@ async function getDeviceFromPrompt(devices) {
   return deviceToken;
 }
 
-export let remove = {
+type RemoveArgs = {
+  deviceSerialNumber?: string;
+  interactive: boolean;
+};
+
+export const remove = {
   help: `
     Unregister device from account. Default to device connected via adb.
     Use options to choose other devices.
@@ -245,6 +290,7 @@ export let remove = {
     |silk login| must have been ran previously.
   `,
   arguments: [
+    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
     COMMON_ARGS.deviceSerialNumber,
     [['-i'], {
       dest: 'interactive',
@@ -252,10 +298,10 @@ export let remove = {
       action: 'storeTrue',
     }]
   ],
-  main: async (args) => {
+  main: async (args: RemoveArgs) => {
     console.log(`Remove device from server ...`);
 
-    let account = createAccount(args);
+    let account = createAccount();
     let deviceId;
 
     if (args.interactive) {
@@ -265,6 +311,7 @@ export let remove = {
       const adb = createAdb(args.deviceSerialNumber);
       const device = new Device({serverUrl: dotConfig.serverUrl}, adb);
       await device.pullDeviceId();
+      invariant(device.api.accessToken);
       deviceId = device.api.accessToken.pub;
     }
 
@@ -278,7 +325,7 @@ export let remove = {
   }
 };
 
-export let removeAll = {
+export const removeAll = {
     help: `
       Unregister all devices from account.
       |silk login| must have been ran previously.

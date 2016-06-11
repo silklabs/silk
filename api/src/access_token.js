@@ -34,7 +34,7 @@ export default class AccessToken {
     return new AccessToken(pubKey);
   }
 
-  constructor(pub: string, priv?: string) {
+  constructor(pub: string, priv?: ?string) {
     this.pub = pub;
     this.priv = priv;
   }

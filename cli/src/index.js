@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import {ArgumentParser} from 'argparse';
 
 import loadConfig from './config';
@@ -64,6 +68,7 @@ function loadPlugins(config: Config): {[key: string]: SubCommand} {
   for (let pluginPath of config.plugins) {
     let module;
     try {
+      // $FlowFixMe: Flow wants this to be a literal.
       module = require(pluginPath);
     } catch (err) {
       log.warn(`Failed to load plugin: '${pluginPath}' (${err.message}) ${err.stack}`);

@@ -2,20 +2,47 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 /* eslint-disable no-console */
 
+import invariant from 'assert';
 import crypto from 'crypto';
 import createLog from 'silk-log';
 import { default as createApi, AccessToken } from 'silk-api';
+
+import type {SilkApi} from 'silk-api';
+import type {ListDevicesOutputDevices} from 'silk-api/src/gen/account';
+
+type AccountOptions = {
+  serverUrl?: ?string;
+  accessToken?: ?{pub: string; priv: ?string};
+  beaconUUID?: ?string;
+};
+
+type RegistrationResult = {
+  success: boolean;
+  regToken: ?string;
+  regPublicKey: string;
+};
+
+type AccountDeviceInfo = {
+  publicKey: string;
+};
 
 const log = createLog('account');
 
 const SHA256_KEYLENGTH = 32;
 
 export default class Account {
-  constructor(options) {
+  serverUrl: ?string;
+  api: SilkApi;
+  accessToken: ?AccessToken;
+  beaconUUID: ?string;
+
+  constructor(options: AccountOptions) {
     log.debug(`new account using server: ${options.serverUrl}`);
 
     this.serverUrl = options.serverUrl;
@@ -37,7 +64,7 @@ export default class Account {
     }
   }
 
-  async createAccount(email, password) {
+  async createAccount(email: string, password: string): Promise<boolean> {
     log.debug(`create account using ${email} and ${password}`);
 
     if (this.accessToken || this.api.accessToken) {
@@ -57,7 +84,7 @@ export default class Account {
     return success;
   }
 
-  async login(email, password) {
+  async login(email: string, password: string): Promise<boolean> {
     log.debug(`login using ${email} and ${password}`);
 
     if (!this.accessToken || !this.api.accessToken) {
@@ -85,17 +112,21 @@ export default class Account {
 
     if (!success) {
       this.accessToken = undefined;
-      this.serverUrl = undefined;
       this.beaconUUID = undefined;
     }
     return success;
   }
 
-  async registerDevice(device, deviceName) {
+  async registerDevice(
+    deviceId: string,
+    deviceName: string
+  ): Promise<RegistrationResult> {
     log.debug(`registerDevice as '${deviceName}'`);
 
-    const deviceId = device.accessToken.pub;
-    const regToken = await this.accessToken.genSign(deviceId);
+    const accessToken = this.accessToken;
+    invariant(accessToken);
+
+    const regToken = await accessToken.genSign(deviceId);
 
     let {success} = await this.api.account.registerDevice({
       devicePublicKey: deviceId,
@@ -104,16 +135,16 @@ export default class Account {
       registrationToken: regToken,
     });
 
-    return { success, regToken, regPublicKey: this.accessToken.pub };
+    return { success, regToken, regPublicKey: accessToken.pub };
   }
 
-  async listDevices() {
+  async listDevices(): Promise<Array<ListDevicesOutputDevices>> {
     log.debug(`ListDevices`);
-    let {devices} = await this.api.account.listDevices();
+    let {devices} = await this.api.account.listDevices({});
     return devices;
   }
 
-  async unregisterDevice(deviceId) {
+  async unregisterDevice(deviceId: string): Promise<boolean> {
     log.debug(`UnregisterDevice`);
     await this.api.account.unregisterDevice({devicePublicKey: deviceId});
     return true;

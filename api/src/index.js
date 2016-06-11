@@ -153,7 +153,7 @@ export type Config = {
     size: number,
     callback: (err: ?Error, buffer: Buffer) => void
   ) => void;
-  serverUrl?: string;
+  serverUrl?: ?string;
   metrics: {
     type: 'account' | 'device';
     tags: StringToStringDict;

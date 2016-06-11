@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 /* eslint-disable no-console */
@@ -11,11 +13,17 @@ import fs from 'fs';
 
 const log = createLog('dot-config');
 
-function loadConfig(configPath) {
+type Configs = {
+  accessToken?: ?{pub: string; priv: ?string};
+  serverUrl?: ?string;
+  beaconUUID?: ?string;
+};
+
+function loadConfig(configPath: string): Configs {
   let configs = {};
   if (fs.existsSync(configPath)) {
     try {
-      let json = JSON.parse(fs.readFileSync(configPath));
+      let json = JSON.parse(fs.readFileSync(configPath, {encoding: 'utf-8'}));
       ['accessToken', 'serverUrl', 'beaconUUID'].map(config => {
         if (json[config]) {
           configs[config] = json[config];
@@ -31,7 +39,10 @@ function loadConfig(configPath) {
 }
 
 export default class DotConfig {
-  constructor(configPath) {
+  _configPath: string;
+  _configs: Configs;
+
+  constructor(configPath: string) {
     this._configPath = configPath;
     this._configs = loadConfig(configPath);
   }
@@ -46,24 +57,28 @@ export default class DotConfig {
     } catch(err) {} // eslint-disable-line no-empty
   }
 
-  updateConfig(accessToken, serverUrl, beaconUUID) {
+  updateConfig(
+    accessToken: ?{pub: string; priv: ?string},
+    serverUrl: ?string,
+    beaconUUID: ?string
+  ) {
     this._configs = {accessToken, serverUrl, beaconUUID};
     this.writeConfig();
   }
 
-  get configs() {
+  get configs(): Configs {
     return this._configs;
   }
 
-  get accessToken() {
+  get accessToken(): ?{pub: string; priv: ?string} {
     return this._configs.accessToken;
   }
 
-  get serverUrl() {
+  get serverUrl(): ?string {
     return this._configs.serverUrl;
   }
 
-  get beaconUUID() {
+  get beaconUUID(): ?string {
     return this._configs.beaconUUID;
   }
 }

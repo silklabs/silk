@@ -2,10 +2,12 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import createLog from 'silk-log';
-import childProcess from 'child_process';
+import * as childProcess from 'child_process';
 import fs from 'mz/fs';
 import { statSync } from 'fs';
 import mkdirp from 'mkdirp-promise';
@@ -15,10 +17,11 @@ import tmp from 'tmp';
 const log = createLog('adb');
 
 class Adb {
+  device: ?string;
+  sim: boolean = false;
+  _root: boolean;
 
-  sim: false;
-
-  constructor(device) {
+  constructor(device: ?string) {
     this.device = device;
 
     if (device === 'sim') { // TODO: Don't be so sneaky...
@@ -41,7 +44,7 @@ class Adb {
     this._root = this.sim;
   }
 
-  _spawn(cmd, args) {
+  _spawn(cmd: string, args: Array<string>): Promise<string> {
     let stdout = '';
     let stderr = '';
     log.debug(`_spawn: ${cmd} ${args.join(' ')}`);
@@ -62,7 +65,7 @@ class Adb {
     });
   }
 
-  async cmd(args = []) {
+  async cmd(args: Array<string> = []): Promise<string> {
     if (this.device) {
       args = ['-s', this.device].concat(args);
     }
@@ -70,11 +73,11 @@ class Adb {
     return this._spawn('adb', args);
   }
 
-  async listDevices() {
+  async listDevices(): Promise<Array<string>> {
     let stdout = await this.cmd(['devices']);
 
     let devices = [];
-    let lines = stdout.replace('\r').split('\n');
+    let lines = stdout.replace('\r', '', 'g').split('\n');
     lines.shift();
 
     lines.forEach(line => {
@@ -87,7 +90,7 @@ class Adb {
     return devices;
   }
 
-  async root() {
+  async root(): Promise<void> {
     if (!this._root) {
       await this.cmd(['root']);
       await this.cmd(['wait-for-device']);
@@ -95,7 +98,7 @@ class Adb {
     }
   }
 
-  async shell(args) {
+  async shell(args: Array<string>): Promise<string> {
     if (this.sim) {
       const cmd = args.shift();
       return await this._spawn(cmd, args);
@@ -105,7 +108,7 @@ class Adb {
     return await this.cmd(args);
   }
 
-  async getTmpFilename() {
+  async getTmpFilename(): Promise<string> {
     return new Promise((resolve, reject) => {
       tmp.tmpName((err, path) => {
         if (err) {
@@ -117,7 +120,7 @@ class Adb {
     });
   }
 
-  async push(filepath, data) {
+  async push(filepath: string, data: string): Promise<void> {
     if (this.sim) {
       await mkdirp(path.dirname(filepath));
       await fs.writeFile(filepath, data);
@@ -131,7 +134,7 @@ class Adb {
     await fs.unlink(tmpFilename);
   }
 
-  async pull(filepath) {
+  async pull(filepath: string): Promise<string> {
     if (this.sim) {
       return await fs.readFile(filepath);
     }
@@ -145,7 +148,9 @@ class Adb {
   }
 }
 
-export default function createAdb(device) {
+export type {Adb};
+
+export default function createAdb(device: ?string): Adb {
   return new Adb(device);
 }
 

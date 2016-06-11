@@ -4,6 +4,8 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
+/* eslint-disable no-console */
+
 import crypto from 'crypto';
 import createLog from 'silk-log';
 import { default as createApi, AccessToken } from 'silk-api';
@@ -28,8 +30,6 @@ export default class Account {
     if (options.accessToken) {
       this.api.accessToken = this.accessToken =
         new AccessToken(options.accessToken.pub, options.accessToken.priv);
-    } else {
-      this.api.accessToken = this.accessToken = AccessToken.create();
     }
 
     if (options.beaconUUID) {
@@ -39,6 +39,12 @@ export default class Account {
 
   async createAccount(email, password) {
     log.debug(`create account using ${email} and ${password}`);
+
+    if (this.accessToken || this.api.accessToken) {
+      console.warn('Discarding existing credentials.');
+    }
+
+    this.accessToken = this.api.accessToken = await AccessToken.gen();
 
     let input = {
       userAgent: 'silkcli',
@@ -53,6 +59,10 @@ export default class Account {
 
   async login(email, password) {
     log.debug(`login using ${email} and ${password}`);
+
+    if (!this.accessToken || !this.api.accessToken) {
+      this.accessToken = this.api.accessToken = await AccessToken.gen();
+    }
 
     let passwordHash = crypto.pbkdf2Sync(
       password,
@@ -84,17 +94,17 @@ export default class Account {
   async registerDevice(device, deviceName) {
     log.debug(`registerDevice as '${deviceName}'`);
 
-    let deviceToken = device.accessToken.toString();
-    let regToken = this.accessToken.sign(deviceToken);
+    const deviceId = device.accessToken.pub;
+    const regToken = await this.accessToken.genSign(deviceId);
 
     let {success} = await this.api.account.registerDevice({
-      devicePublicKey: deviceToken,
+      devicePublicKey: deviceId,
       name: deviceName,
       type: 'camera',
       registrationToken: regToken,
     });
 
-    return { success, regToken, regPublicKey: this.accessToken.toString() };
+    return { success, regToken, regPublicKey: this.accessToken.pub };
   }
 
   async listDevices() {
@@ -103,9 +113,9 @@ export default class Account {
     return devices;
   }
 
-  async unregisterDevice(deviceToken) {
+  async unregisterDevice(deviceId) {
     log.debug(`UnregisterDevice`);
-    await this.api.account.unregisterDevice({devicePublicKey: deviceToken});
+    await this.api.account.unregisterDevice({devicePublicKey: deviceId});
     return true;
   }
 }

@@ -28,23 +28,26 @@ export default class Device {
         tags: {},
       },
     });
-    this.api.accessToken = this.accessToken = AccessToken.create();
   }
 
   async pullDeviceId() {
-    let data = await this.adb.pull(SILK_ID_FILEPATH);
-    let token = JSON.parse(data.toString());
-
-    this.api.accessToken = this.accessToken =
-      new AccessToken(token.pub, token.priv);
+    const id = await this.adb.pull(SILK_ID_FILEPATH);
+    this.accessToken = this.api.accessToken = AccessToken.import(id);
   }
 
-  async pushDeviceId() {
-    await this.adb.push(SILK_ID_FILEPATH, JSON.stringify(this.accessToken));
+  async pushNewDeviceId() {
+    this.accessToken = this.api.accessToken = await AccessToken.gen();
+    await this.adb.push(SILK_ID_FILEPATH, this.accessToken.export());
   }
 
   async setupDevice(account, deviceName) {
     log.debug(`setupDevice with ${deviceName}`);
+
+    invariant(
+      this.accessToken && this.api.accessToken,
+      'Need to pull existing device ID or push new one before setting up device'
+    );
+
     let { success, regToken, regPublicKey } =
         await account.registerDevice(this, deviceName);
 

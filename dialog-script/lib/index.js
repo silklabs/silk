@@ -17,6 +17,7 @@ import {
 
 import type {DialogEngine} from 'silk-dialog-engine';
 import getDialogEngine from 'silk-dialog-engine';
+import textToIntention from './textToIntention';
 
 const log = createLog('dialog-script');
 
@@ -47,6 +48,7 @@ class Script{
 
 let dialogEngine = getDialogEngine();
 invariant(dialogEngine);
+dialogEngine.configure({textToIntention});
 let script = new Script(dialogEngine);
 
 export function silkWillUnload() {

@@ -1,0 +1,25 @@
+From 4b58cb197b3c1d2de13dfc5fa2a3704d8f4853bc Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 9 Jun 2016 06:39:22 -0700
+Subject: [PATCH] Locate remove_reference
+
+---
+ src/util.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/util.h b/src/util.h
+index 077b7be..034f475 100644
+--- a/src/util.h
++++ b/src/util.h
+@@ -18,7 +18,7 @@
+ 
+ namespace node {
+ 
+-#ifdef __APPLE__
++#if defined(__APPLE__) || defined(__ANDROID__)
+ template <typename T> using remove_reference = std::tr1::remove_reference<T>;
+ #else
+ template <typename T> using remove_reference = std::remove_reference<T>;
+-- 
+2.7.4 (Apple Git-66)
+

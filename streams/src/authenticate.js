@@ -219,55 +219,56 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
       return;
     }
 
-    this._authError = this._verify(authData);
+    this._genVerify(authData)
+      .then(() => {
+        // No need to hang on to these any more.
+        this._publicKeys = null;
+        this._setAuthenticated(callback);
+      })
+      .catch((error) => {
+        this._authError = error;
+        // No need to hang on to these any more.
+        this._publicKeys = null;
 
-    // No need to hang on to these any more.
-    this._publicKeys = null;
+        log.warn(this._authError);
+        this._discardQueue();
+        callback(this._authError);
 
-    if (this._authError) {
-      log.warn(this._authError);
-      this._discardQueue();
-      callback(this._authError);
-
-      this._metrics.add(new Metrics.AuthFailure(this._authError.toString()));
-      return;
-    }
-
-    this._setAuthenticated(callback);
+        this._metrics.add(new Metrics.AuthFailure(this._authError.toString()));
+      });
   }
 
-  _verify(authData) {
-    log.debug(`AuthenticateReadStream._verify('${authData}')`);
+  _genVerify(authData: string): Promise<void> {
+    log.debug(`AuthenticateReadStream._genVerify('${authData}')`);
 
     assert(!this._authenticated);
     assert(this._publicKeys);
     assert(this._sessionKey);
 
     if (!authData || (typeof authData !== `string`)) {
-      return new Error(`Auth data malformed: ` + JSON.stringify(authData));
+      return Promise.reject(
+        new Error(`Auth data malformed: ` + JSON.stringify(authData))
+      );
     }
 
     if (!this._publicKeys.length) {
-      return new Error(`No public keys available`);
+      return Promise.reject(
+        new Error(`No public keys available`)
+      );
     }
 
-    let verified = false;
-    for (let publicKey of this._publicKeys) {
-      log.debug(`Attempting to verify signature with '${publicKey}'`);
-
-      let id = AccessToken.importPub(publicKey);
-      if (id.verify(this._sessionKey, authData)) {
-        log.debug(`Signature verified`);
-        verified = true;
-        break;
+    // Try to verify the signature against all public keys known to us.
+    return Promise.all(
+      this._publicKeys.map((publicKey) => {
+        log.debug(`Attempting to verify signature with '${publicKey}'`);
+        const id = AccessToken.importPub(publicKey);
+        return id.genVerify(this._sessionKey, authData);
+      })
+    ).then((verifyResults) => {
+      if (!verifyResults.some((result) => result)) {
+        throw new Error(`Auth signature could not be verified`);
       }
-    }
-
-    if (!verified) {
-      return new Error(`Auth signature could not be verified`);
-    }
-
-    return null;
+    });
   }
 
   _onSharedSecret(sharedSecret) {
@@ -292,7 +293,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
 
 export class AuthenticateWriteStream extends AuthenticateStreamBase {
 
-  _privateKey = null;
+  _accessToken: ?AccessToken;
 
   constructor(cryptoStream, privateKey, options) {
     log.debug(`AuthenticateWriteStream()`);
@@ -302,7 +303,7 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
 
     super(cryptoStream, options);
 
-    this._privateKey = new AccessToken(null, privateKey);
+    this._accessToken = new AccessToken(null, privateKey);
   }
 
   _transform(chunk, encoding, callback) {
@@ -316,29 +317,41 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
   _onSharedSecret(sharedSecret) {
     log.debug(`AuthenticateWriteStream._onSharedSecret()`);
 
-    if (!this._privateKey) {
+    if (!this._accessToken) {
       return;
     }
 
     this._sendAuthData(sharedSecret.toString(`hex`));
   }
 
-  _sendAuthData(authData) {
+  _sendAuthData(authData: string) {
     log.debug(`AuthenticateWriteStream._sendAuthData(%j)`, authData);
 
-    assert(this._privateKey);
+    assert(this._accessToken);
 
-    const privateKey = this._privateKey;
-    this._privateKey = null;
+    const accessToken = this._accessToken;
+    this._accessToken = null;
 
     if (this._ending) {
       log.warn(`Cannot send auth data because the stream has ended`);
       return;
     }
 
-    let message = { };
-    message[PROPERTY_NAME] = authData ? privateKey.sign(authData) : null;
-    this.push(message);
+    const message = {};
+    message[PROPERTY_NAME] = null;
+    if (!authData) {
+      this.push(message);
+      return;
+    }
+
+    accessToken.genSign(authData)
+      .then((signature) => {
+        message[PROPERTY_NAME] = signature;
+        this.push(message);
+      })
+      .catch((error) => {
+        process.nextTick(() => this.emit(`error`, error));
+      });
   }
 
   allowUnauthenticated(allow) {
@@ -347,7 +360,7 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
     assert(!this._authenticated);
 
     if (allow) {
-      if (this._privateKey) {
+      if (this._accessToken) {
         log.info(`Sending unauthenticated data`);
         this._sendAuthData(null);
       }

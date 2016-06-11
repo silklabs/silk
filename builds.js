@@ -371,14 +371,13 @@ const builds = {
     title: 'Pando app release',
     travis_yml: 'releng/shipit/travis.release-pando-app.yml',
     events: ['nightly'],
-    //branches: ['master', 'next', 'release'],
-    branches: ['master', 'next'],
+    branches: ['master', 'next', 'release'],
   },
   'releng-shipit-pando-dialog-script': {
     title: 'Pando dialog script release',
     travis_yml: 'releng/shipit/travis.release-pando-dialog-script.yml',
     events: ['nightly'],
-    branches: ['master'],
+    branches: ['master', 'next'],
   },
 
   // Nightly device builds

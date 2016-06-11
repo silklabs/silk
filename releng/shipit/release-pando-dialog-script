@@ -18,12 +18,19 @@ shopt -s nullglob
 set -x
 cd $(dirname $(readlink -f $0))/../../
 
+source pub/version/branch
+
 git fetch --unshallow
 
-# Push latest dialog-script/ commits to master branch
+# Push latest dialog-script/ commits to $BRANCH branch
 git subtree split --prefix dialog-script -b release-pando-dialog-script
 git remote add pando git@github.com:silklabs/release-pando-dialog-script
-git push pando release-pando-dialog-script:master
+git push pando release-pando-dialog-script:$BRANCH
+
+if [[ $BRANCH != master ]]; then
+  echo Skipping API documentation for branch $BRANCH
+  exit 0
+fi
 
 # Rebuild API documentation
 cd dialog-script/docs ; npm install ; cd ../..

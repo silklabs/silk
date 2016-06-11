@@ -91,8 +91,8 @@ updatebranch__silk_core() {
     if [[ $to != release ]]; then
       git checkout $to
     fi
-    # Update version/branch to match the destination branch
-    sed -i version/branch -e s/${from}/${to}/g
+    # Update pub/version/branch to match the destination branch
+    sed -i pub/version/branch -e s/${from}/${to}/g
     local msg="Automated branch update from ${from} to ${to}"
     git commit --all -m "$msg"
 

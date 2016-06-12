@@ -159,7 +159,7 @@ const CAPTURE_RESTART_DELAY_MS = 1000;
 
 // Amount of time to give the capture process to initialize before declaring
 // the attempt as failed and triggering a retry
-const CAPTURE_INIT_TIMEOUT_MS = 10 * 1000;
+const CAPTURE_INIT_TIMEOUT_MS = 30 * 1000;
 
 // If TAG_VIDEO or TAG_MIC is not received in this amount of time assume the
 // capture process is wedged and restart it.

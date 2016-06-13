@@ -10,6 +10,10 @@ import invariant from 'assert';
 import createEnvironment from './environment';
 import modifyBabies from './babies/saga';
 import startFeeding from './food/saga';
+import {
+  timerMonitorTask,
+  modifyTimers,
+} from './timers/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
@@ -46,6 +50,8 @@ const independentIntents: Set<string> = new Set([
 
 const concurrentIntents: Set<string> = new Set([
   `currentTime`,
+  `startTimer`,
+  `cancelTimer`,
 ]);
 
 function* forkTask(
@@ -145,6 +151,10 @@ export default function*(
                                            tasks);
   invariant(taskForwardTextEvents);
 
+  log.debug(`Forking timer task`);
+  const taskTimer = yield fork(timerMonitorTask, environment);
+  invariant(taskTimer);
+
   log.debug(`Starting dialog loop`);
 
   while (true) {                    // eslint-disable-line no-constant-condition
@@ -216,6 +226,14 @@ export default function*(
       switch (intent) {
       case `currentTime`:
         factory = sayCurrentTime;
+        break;
+      case `startTimer`:
+        factory = modifyTimers;
+        args.push(`start`, entities);
+        break;
+      case `cancelTimer`:
+        factory = modifyTimers;
+        args.push(`cancel`, entities);
         break;
       default:
         throw new Error(`All intents in concurrentIntents must be handled!`);

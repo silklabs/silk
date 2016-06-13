@@ -18,6 +18,9 @@ import Vibrator from 'silk-vibrator';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
+import mkdirp from 'mkdirp-promise';
+import netstatus from 'silk-netstatus';
+import SpeechToText from 'silk-dialog-engine/lib/speechToText';
 
 import type { VoiceActivityDetector } from 'silk-vad';
 
@@ -26,8 +29,13 @@ const log = createLog('kws');
 const MODEL_PROTO = path.join(__dirname, '..', 'model', 'keyword.prototxt');
 const MODEL_BIN = path.join(__dirname, '..', 'model', 'keyword.caffemodel');
 const MODEL_DICTIONARY = path.join(__dirname, '..', 'model', 'keyword.labels');
+const KEYWORDS = path.join(__dirname, '..', 'model', 'keywords.txt');
 const TOPK = 3; // Return top K predictions
 const HOT_KEYWORD = 'keyword';
+
+// List of possible texts that SpeechToText service converts the `pando`
+// audio sample to. All of these are considered as positive samples.
+let keywordTexts;
 
 const MEL_COEFFS = 26;
 const FFT_SIZE = 512;
@@ -56,10 +64,15 @@ const THRESHOLD = 80; // Ignore predictions with probability lower than threshol
 const SAVE_KEYWORD_WAV = 'persist.silk.kws.save';
 const VAD_ENABLED_PROP = 'persist.silk.kws.vad.enabled';
 
+const POS_KWS_DIR = 'data/media/kws/pos/';
+const NEG_KWS_DIR = 'data/media/kws/neg/';
+
 type MicData = {
   when: number;
   frames: Buffer;
 };
+
+type SpeechToTextCallback = ((error: ?Error, text?: string) => void);
 
 /**
  * This class receives mic data stream and tries to detect a specific keyword
@@ -253,9 +266,16 @@ export default class KeywordSpotting extends EventEmitter {
         log.error(`${MODEL_DICTIONARY} not available on the device`);
         return;
       }
-
       await this._loadAsync(MODEL_PROTO, MODEL_BIN);
       this._netCaffe.setLabels(MODEL_DICTIONARY);
+
+      exists = fs.exists(KEYWORDS);
+      if (!exists) {
+        log.error(`${KEYWORDS} not available on the device`);
+        return;
+      }
+      let keywordsJson = await fs.readFile(KEYWORDS);
+      keywordTexts = JSON.parse(keywordsJson);
     } catch (err) {
       log.error(`Failed to load caffe model err: ${err}`);
       return;
@@ -447,16 +467,53 @@ export default class KeywordSpotting extends EventEmitter {
   /**
    *
    */
-  _saveAsWav() {
-    if (this._saveEnabled) {
+  async _saveAsWav() {
+    if (this._saveEnabled && netstatus.online) {
+      const stt = new SpeechToText(this._finishSpeechToText);
+      try {
+        await mkdirp(POS_KWS_DIR);
+        await mkdirp(NEG_KWS_DIR);
+      } catch (err) {
+        if (err.code !== 'EEXIST') {
+          log.error(`Failed to create directory, error: ${err}`);
+          return;
+        }
+      }
+
+      log.debug(`Converting keyword to text`);
       let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
-      let writer = new wav.FileWriter(`data/media/kws_${Date.now()}.wav`, {
-        sampleRate: this._sampleRate,
-        channels: this._numChannels,
-        bitDepth: this._bytesPerSample * 8,
-      });
-      writer.write(wavData);
-      writer.end();
+      stt.write(wavData);
+      stt.finish();
     }
+  }
+
+  /**
+   * This is called when speech to text conversion is finished
+   */
+  _finishSpeechToText: SpeechToTextCallback = (error, text = '') => {
+    if (error) {
+      log.error(`Speech stream error ${error}`);
+      return;
+    }
+    if (!text) {
+      log.warn(`No speech detected`);
+      return;
+    }
+
+    log.debug(`Speech to text service detected: ${text}`);
+    let sampleDir;
+    if (keywordTexts.indexOf(text) !== -1) {
+      sampleDir = POS_KWS_DIR;
+    } else {
+      sampleDir = NEG_KWS_DIR;
+    }
+    let writer = new wav.FileWriter(`${sampleDir}/${Date.now()}.wav`, {
+      sampleRate: this._sampleRate,
+      channels: this._numChannels,
+      bitDepth: this._bytesPerSample * 8,
+    });
+    let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
+    writer.write(wavData);
+    writer.end();
   }
 }

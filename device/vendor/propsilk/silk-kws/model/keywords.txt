@@ -1,0 +1,7 @@
+[
+  "pando",
+  "panda",
+  "bender",
+  "bando",
+  "when do"
+]

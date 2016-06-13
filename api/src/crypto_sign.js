@@ -40,26 +40,29 @@ const ed25519 = new EdDSA('ed25519');
 const encodingLength = ed25519.encodingLength;
 
 /**
- * Generate and return a keypair as tuple (secret key, public key).
+ * Generate and return a keypair as tuple (secret key, public key),
+ * encoded as hex strings.
  */
-function generateKeyPair(
+function genKeyPair(
   options: {entropy?: Buffer;}
-): [Buffer, Buffer] {
+): Promise<[string, string]> {
   const secret = options.entropy || crypto.randomBytes(encodingLength);
   invariant(Buffer.isBuffer(secret));
   invariant(secret.length === encodingLength);
-  return [secret, publicKeyFromSecret(secret)];
+  const secretKeyHex = secret.toString('hex');
+  return genPublicKeyFromSecret(secretKeyHex)
+    .then((publicKeyHex) => [secretKeyHex, publicKeyHex]);
 }
 
 /**
- * Compute the public key given a secret key
+ * Compute the public key given a secret key, both encoded as hex strings.
  */
-function publicKeyFromSecret(
-  secretKey: Buffer
-): Buffer {
-  invariant(secretKey.length === encodingLength);
-  const keyPair = ed25519.keyFromSecret(secretKey);
-  return new Buffer(keyPair.getPublic());
+function genPublicKeyFromSecret(
+  secretKeyHex: string
+): Promise<string> {
+  invariant(secretKeyHex.length === 2 * encodingLength);
+  const keyPair = ed25519.keyFromSecret(secretKeyHex);
+  return Promise.resolve(keyPair.getPublic('hex'));
 }
 
 function sign(
@@ -87,8 +90,8 @@ function verify(
 
 const API = {
   encodingLength,
-  generateKeyPair,
-  publicKeyFromSecret,
+  genKeyPair,
+  genPublicKeyFromSecret,
   sign,
   verify,
 };

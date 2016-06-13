@@ -85,45 +85,6 @@ RCT_EXPORT_MODULE()
   // All helpers below return an array of which the first element is an error
   // message and subsequent element(s) are the return value(s).
 
-  [executor addSynchronousHookWithName:@"_crypto_ed25519_generate_keypair"
-                            usingBlock: ^NSArray<NSString *> *() {
-    unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
-    unsigned char secretKeyBytes[crypto_sign_ed25519_SECRETKEYBYTES];
-    int ret = crypto_sign_ed25519_keypair(publicKeyBytes, secretKeyBytes);
-    if (ret != 0) {
-      sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
-      return @[@"Failed to generate keypair."];
-    }
-
-    // Only return the seed part of the secret key.
-    NSString *secretKeyHex = binToNSHexString(secretKeyBytes, crypto_sign_ed25519_SEEDBYTES);
-    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
-    return @[[NSNull null],
-             secretKeyHex,
-             binToNSHexString(publicKeyBytes, sizeof(publicKeyBytes))];
-  }];
-
-  [executor addSynchronousHookWithName:@"_crypto_ed25519_pubkey_from_secret"
-                            usingBlock: ^NSArray<NSString *> *(NSString *seedHex) {
-    // Convert seed (secret) to binary.
-    unsigned char seedBytes[crypto_sign_ed25519_SEEDBYTES];
-    int ret = nsHexStringToBin(seedHex, seedBytes, sizeof(seedBytes));
-    if (ret != 0) {
-      return @[@"Invalid hex string: seed"];
-    }
-
-    // Generate libsodium secret key [seed, public key].
-    unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
-    unsigned char secretKeyBytes[crypto_sign_ed25519_SECRETKEYBYTES];
-    ret = crypto_sign_ed25519_seed_keypair(publicKeyBytes, secretKeyBytes, seedBytes);
-    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
-    if (ret != 0) {
-      return @[@"Failed to generate keypair from seed."];
-    }
-
-    return @[[NSNull null], binToNSHexString(publicKeyBytes, sizeof(publicKeyBytes))];
-  }];
-
   [executor addSynchronousHookWithName:@"_crypto_ed25519_sign_hex"
                             usingBlock: ^NSArray<NSString *> *(NSString *msgHex, NSString *seedHex) {
     int ret;
@@ -213,6 +174,73 @@ RCT_EXPORT_MODULE()
     free(msgBytes);
     return @[[NSNull null], (ret == 0) ? @"true" : @"false"];
   }];
+}
+
+/**
+ * Generate a new Ed25519 key pair.
+ */
+RCT_EXPORT_METHOD(genEd25519KeyPair:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
+  unsigned char secretKeyBytes[crypto_sign_ed25519_SECRETKEYBYTES];
+  int ret = crypto_sign_ed25519_keypair(publicKeyBytes, secretKeyBytes);
+  if (ret != 0) {
+    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_KEY_PAIR_FAILED", @"Failed to generate key pair", error);
+    return;
+  }
+
+  // Only return the seed part of the secret key.
+  NSString *secretKeyHex = binToNSHexString(secretKeyBytes, crypto_sign_ed25519_SEEDBYTES);
+  NSString *publicKeyHex = binToNSHexString(publicKeyBytes, sizeof publicKeyBytes);
+  sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+  sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+  resolve(@[secretKeyHex, publicKeyHex]);
+}
+
+/**
+ * Generate the public key for a given Ed25519 secret key.
+ */
+RCT_EXPORT_METHOD(genEd25519PubKeyFromSecret:(NSString *)seedHex
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  if ([seedHex length] != 2 * crypto_sign_ed25519_SEEDBYTES) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:1 userInfo:nil];
+    reject(@"E_ED25519_INVALID_KEY_LENGTH", @"Failed to generate public key", error);
+    return;
+  }
+
+  // Convert seed (secret) to binary.
+  unsigned char seedBytes[crypto_sign_ed25519_SEEDBYTES];
+  int ret = nsHexStringToBin(seedHex, seedBytes, sizeof(seedBytes));
+  if (ret != 0) {
+    sodium_memzero(seedBytes, sizeof(seedBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_KEY_FORMAT", @"Failed to generate public key", error);
+    return;
+  }
+
+  // Generate libsodium secret key [seed, public key].
+  unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
+  unsigned char secretKeyBytes[crypto_sign_ed25519_SECRETKEYBYTES];
+  ret = crypto_sign_ed25519_seed_keypair(publicKeyBytes, secretKeyBytes, seedBytes);
+  sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+  sodium_memzero(seedBytes, sizeof(seedBytes));
+  if (ret != 0) {
+    sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_PUB_KEY_FAILED", @"Failed to generate public key", error);
+    return;
+  }
+
+  NSString *publicKeyHex = binToNSHexString(publicKeyBytes, sizeof publicKeyBytes);
+  sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+  resolve(publicKeyHex);
 }
 
 @end

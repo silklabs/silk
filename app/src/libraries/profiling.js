@@ -31,12 +31,10 @@ if (__DEV__) {
     CryptoSign,
     'silk-api.CryptoSign',
     [
-      'generateKeyPair',
-      'publicKeyFromSecret',
+      'genKeyPair',
+      'genPublicKeyFromSecret',
       'sign',
       'verify',
-      'sha256',
-      'sha256hex',
     ]
   );
 

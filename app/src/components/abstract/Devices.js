@@ -334,7 +334,7 @@ export default class Devices extends AsyncComponent {
       let { devices, unconfiguredDevices } = this.pendingState;
 
       let { deviceId } = bleDeviceSession;
-      if (deviceId && devices.get(bleDeviceSession.deviceId)) {
+      if (deviceId && devices && devices.get(bleDeviceSession.deviceId)) {
         log.debug(`The disconnected BLE socket belonged to device ID ${deviceId}`);
         devices = devices.setIn([deviceId, 'bleDeviceSession'], null);
       }
@@ -451,7 +451,7 @@ export default class Devices extends AsyncComponent {
       log.debug('User cancelled. Aborting.');
       return;
     }
-    log.warn('Could not configure device due to error:', error);
+    log.warn('Could not configure device due to error:', error.stack);
     this._showConfigError(error);
   }
 

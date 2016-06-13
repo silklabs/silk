@@ -1,5 +1,5 @@
 /**
- * @no-flow
+ * @flow
  */
 
 import createLog from 'silk-log';
@@ -14,13 +14,15 @@ import type {Environment} from '../environment';
 
 const log = createLog(`dialog-script-babies-saga`);
 
-export const getNextBabyId = (state) => state.nextBabyId;
-export const getBabies = (state) => state.babies.slice();
+export const getNextBabyId: ((state: Object) => number) =
+  (state) => state.nextBabyId;
+export const getBabies: ((state: Object) => Object) =
+  (state) => state.babies.slice();
 
 export function* queryBabyName(
   environment: Environment,
   customQuery?: string,
-): Generator<any, any, any> {                     // eslint-disable-line no-undef
+): Generator<Object, string, any> {              // eslint-disable-line no-undef
   const {textChannel, intentChannel, speak} = environment;
   const query = customQuery || `What is the baby's name?`;
 
@@ -36,9 +38,11 @@ export function* queryBabyName(
     }
 
     yield call(speak, `I heard ${text}. Is that correct?`, false);
-    const {intent} = yield take(intentChannel);
 
-    if (intent === `confirm`) {
+    const event = yield take(intentChannel);
+    invariant(event);
+
+    if (event.intent === `confirm`) {
       name = text;
       break;
     }
@@ -53,7 +57,9 @@ export function* queryBabyName(
   return name;
 }
 
-export function* add(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+export function* add(
+  environment: Environment,
+): Generator<Object, void, any> {                // eslint-disable-line no-undef
   const {speak} = environment;
 
   const name = yield call(queryBabyName, environment);
@@ -62,22 +68,28 @@ export function* add(environment: Environment): Generator<any, any, any> { // es
   }
 
   const id = yield select(getNextBabyId);
+  invariant(typeof id === 'number');
+
   yield put(addBaby(id, name));
 
   yield call(speak, `Ok, ${name} is now registered`, true);
 }
 
-export function* rename(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+export function* rename(
+  environment: Environment,
+): Generator<Object, void, any> {                // eslint-disable-line no-undef
   const {speak} = environment;
 
   const babies = yield select(getBabies);
+  invariant(Array.isArray(babies));
+
   if (!babies.length) {
     yield call(speak, `You haven't registered any babies yet.`, true);
     return;
   }
 
   let name = ``;
-  let id: ?string = null;
+  let id: ?number = null;
 
   if (babies.length === 1) {
     name = yield call(queryBabyName, environment);
@@ -122,7 +134,8 @@ export function* rename(environment: Environment): Generator<any, any, any> { //
   if (!name) {
     return;
   }
-  invariant(id !== null);
+
+  invariant(typeof id === 'number');
 
   yield put(renameBaby(id, name));
   yield call(speak, `Ok, I've changed the baby's name to ${name}.`, true);
@@ -131,7 +144,7 @@ export function* rename(environment: Environment): Generator<any, any, any> { //
 export default function* (
   environment: Environment,
   type: 'add' | 'rename',
-): Generator<any, any, any> {                    // eslint-disable-line no-undef
+): Generator<Object, void, any> {                // eslint-disable-line no-undef
   invariant(environment);
 
   const {intentChannel, speak} = environment;

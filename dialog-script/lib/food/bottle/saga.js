@@ -1,5 +1,5 @@
 /**
- * @no-flow
+ * @flow
  */
 
 import createLog from 'silk-log';
@@ -15,7 +15,9 @@ import {
 
 const log = createLog(`dialog-script-food-bottle-saga`);
 
-function* queryBottleType(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+function* queryBottleType(
+  environment: Environment,
+): Generator<Object, ?string, any> {             // eslint-disable-line no-undef
   const {intentChannel, speak} = environment;
 
   let type: ?string = null;
@@ -26,7 +28,11 @@ function* queryBottleType(environment: Environment): Generator<any, any, any> { 
 
     yield call(speak, intro + query, false);
 
-    const {intent, entities} = yield take(intentChannel);
+    const event = yield take(intentChannel);
+    invariant(event);
+
+    const {intent, entities} = event;
+
     if (intent === `confirm`) {
       for (const entity of entities) {
         if (entity === `breast milk`) {
@@ -54,7 +60,9 @@ function* queryBottleType(environment: Environment): Generator<any, any, any> { 
   return type;
 }
 
-function* queryAmount(environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+function* queryAmount(
+  environment: Environment,
+): Generator<Object, ?number, any> {             // eslint-disable-line no-undef
   const {intentChannel, speak} = environment;
 
   let amount: ?number = null;
@@ -65,7 +73,11 @@ function* queryAmount(environment: Environment): Generator<any, any, any> { // e
 
     yield call(speak, intro + query, false);
 
-    const {intent, entities} = yield take(intentChannel);
+    const event = yield take(intentChannel);
+    invariant(event);
+
+    const {intent, entities} = event;
+
     if (intent === `confirm`) {
       for (const entity of entities) {
         const tokens = entity.split(` `);
@@ -91,7 +103,9 @@ function* queryAmount(environment: Environment): Generator<any, any, any> { // e
   return amount;
 }
 
-export default function* (environment: Environment): Generator<any, any, any> { // eslint-disable-line no-undef
+export default function*(
+  environment: Environment
+): Generator<Object, void, any> {                // eslint-disable-line no-undef
   invariant(environment);
 
   const {intentChannel, speak} = environment;

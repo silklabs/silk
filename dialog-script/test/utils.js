@@ -9,6 +9,8 @@ export function testScript(generator, script) {
   assert(Array.isArray(script), `Script is not an array`);
   assert(script.length, `Script is an empty array`);
 
+  let lastError = null;
+
   script.forEach((state, index) => {
     try {
       assert(state, `Script[${index}] is empty`);
@@ -29,9 +31,20 @@ export function testScript(generator, script) {
       assert(!error || !provide,
              `Script[${index}] has both an 'error' and a 'provide' key`);
 
-      const next = error ?
-                   generator.throw(error) :
-                   generator.next(provide);
+      let next;
+      try {
+        next = error ? generator.throw(error) : generator.next(provide);
+      } catch(e) {
+        if (lastError) {
+          assert.strictEqual(e, lastError);
+          lastError = null;
+          next = generator.next(provide);
+        } else {
+          throw e;
+        }
+      }
+      lastError = error;
+
       assert.deepStrictEqual(next.value, expect);
       if (done) {
         assert.strictEqual(next.done, done);

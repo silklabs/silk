@@ -1,5 +1,5 @@
 /**
- * @no-flow
+ * @flow
  */
 
 import createLog from 'silk-log';
@@ -13,10 +13,10 @@ import type {Environment} from '../environment';
 
 const log = createLog(`dialog-script-food-saga`);
 
-export default function* (
+export default function*(
   environment: Environment,
   type: ?('nursing' | 'bottle'),
-): Generator<any, any, any> {                    // eslint-disable-line no-undef
+): Generator<Object, void, any> {                // eslint-disable-line no-undef
   invariant(environment);
 
   const {intentChannel, speak} = environment;
@@ -34,7 +34,11 @@ export default function* (
 
       yield call(speak, intro + query, false);
 
-      const {intent, entities} = yield take(intentChannel);
+      const event = yield take(intentChannel);
+      invariant(event);
+
+      const {intent, entities} = event;
+
       if ((intent === `startNursing`) ||
           (intent === `none` && entities.some((e) => e === `nursing`))) {
         type = 'nursing';
@@ -42,7 +46,7 @@ export default function* (
       }
       if (intent === `confirm` &&
           entities.some((e) => e === `bottle` || e === `formula`)) {
-        type = `bottle`;
+        type = 'bottle';
         break;
       }
     }

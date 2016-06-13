@@ -390,7 +390,7 @@ bool AnimationThread::threadLoop()
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    eglSwapBuffers(display, surface);
+    //eglSwapBuffers(display, surface);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glEnable(GL_TEXTURE_2D);

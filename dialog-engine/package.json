@@ -9,6 +9,7 @@
     "test": "npm run lint"
   },
   "symlinkDependencies": {
+    "babel-preset-silk-node4": "/pub/babel-preset-silk-node4",
     "eslint-config-silk": "/pub/eslint-config",
     "silk-babel-run": "/pub/babel-run",
     "silk-buildjs": "/pub/buildjs",
@@ -17,10 +18,6 @@
     "silk-streams": "/streams"
   },
   "dependencies": {
-    "babel-preset-silk-node4": "^0.17.0",
-    "silk-config": "^0.17.0",
-    "silk-log": "^0.17.0",
-    "silk-streams": "^0.17.0",
     "uuid": "2.0.1"
   },
   "devDependencies": {

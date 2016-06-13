@@ -17,6 +17,7 @@ import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import config from 'silk-config';
 import VoiceActivityDetector from 'silk-vad';
 import KeywordSpotting from 'silk-kws';
+import say from 'silk-say';
 import wav from 'wav';
 import fs from 'fs';
 
@@ -35,8 +36,10 @@ type SpeechEventCallback = (stream: Buffer, finished: boolean) => void;
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3');
 const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.mp3');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp3');
-const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
 const SAY_FILE_NAME = '/data/say.wav';
+
+const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
+const LOCAL_TTS_ENABLED_PROP = 'persist.silk.dialog.tts.enabled';
 
 const log = createLog('silkext-dialog');
 let camera: Camera;
@@ -59,18 +62,20 @@ class Dialog {
   _kwsEnabled: boolean;
   _input: Input;
   _stream: ?Duplex;
-  _activeSpeechPromise: Promise = Promise.resolve();
+  _activePlaySoundPromise: Promise = Promise.resolve();
   _activeSpeechCount: number = 0;
   _vad: VoiceActivityDetector;
   _kws: KeywordSpotting;
+  _localTts: boolean;
 
   constructor(env: Env) {
     camera = env.camera;
     this._monitor(true);
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, false);
+    this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, true);
 
     const options: DialogEngineOptions = {
-      // TODO
+      localTts: this._localTts,
     };
     this._dialogEngine = createDialogEngine(options);
     this._loadDialogScript();
@@ -80,7 +85,14 @@ class Dialog {
     // over to keyword spotting and voice activity modules
     camera.on('mic-data', this._onMicData);
 
-    this._dialogEngine.on('speech', this._onSay);
+    // If TTS on device is used then use silk-say service to generate TTS.
+    // Dialog engine only sends the speak-begin event in that case and expects
+    // to be notified of end of speech after TTS is done playing
+    if (this._localTts) {
+      this._dialogEngine.on('speak-begin', this._onSpeakBegin);
+    } else {
+      this._dialogEngine.on('speech', this._onSpeak);
+    }
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
@@ -158,10 +170,47 @@ class Dialog {
   }
 
   /**
+   * This function handles the generation of text to speech if TTS service
+   * running on the device is used
+   */
+  _onSpeakBegin: Function = (text, finished) => {
+    log.debug(`_onSpeakBegin ${text} ${finished}`);
+
+    const finish = (err) => {
+      if (--this._activeSpeechCount <= 0) {
+        this._activeSpeechCount = 0;
+        if (!finished) {
+          this._onSpeechStart();
+        } else {
+          this._onDialogDone();
+        }
+      }
+    };
+
+    this._activeSpeechCount++;
+    this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
+      // This is a workaround for issue #2032. Ideally this event should only
+      // be called when the TTS is done.
+      this._dialogEngine.endSpeak(text, null);
+
+      return say.speak(text);
+    })
+    .then(() => {
+      log.debug('Finished speaking');
+      finish();
+    })
+    .catch((err) => {
+      log.error(`Failed to speak text: ${err}`);
+      util.playSound(ERROR_SOUND_FILE);
+      finish(err);
+    });
+  };
+
+  /**
    * Handle speech event from dialog engine. Store the stream
    * data in a wav file and play the file at the end of the stream.
    */
-  _onSay: SpeechEventCallback = (stream, finished) => {
+  _onSpeak: SpeechEventCallback = (stream, finished) => {
     log.debug(`Received stream to speak ${finished}`);
 
     let errorListener: ?Function = null;
@@ -199,7 +248,7 @@ class Dialog {
       this._activeSpeechCount++;
 
       // Wait for previous playSound to finish before playing another file
-      this._activeSpeechPromise = this._activeSpeechPromise.then(() => {
+      this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
         return this._writeWavFile(pcmSamples)
         .then(() => {
           return util.playSound(SAY_FILE_NAME);
@@ -265,7 +314,7 @@ class Dialog {
       this._stream.end();
       this._stream = null;
     }
-    util.playSound(SPEECH_END_SOUND_FILE);
+    this._activePlaySoundPromise = util.playSound(SPEECH_END_SOUND_FILE);
   }
 
   /**
@@ -288,7 +337,7 @@ class Dialog {
         modLocation = fs.realpathSync(path.join(dir, DIALOGSCRIPT_MODNAME));
       } catch (e) {
         log.debug(e);
-      };
+      }
 
       if (modLocation !== null) {
         try {
@@ -327,7 +376,8 @@ class Dialog {
 
     camera.removeListener('mic-data', this._onMicData);
     this._input.removeListener('down', this._onKeyPress);
-    this._dialogEngine.removeListener('speech', this._onSay);
+    this._dialogEngine.removeListener('speech', this._onSpeak);
+    this._dialogEngine.removeListener('speak-begin', this._onSpeakBegin);
   }
 }
 

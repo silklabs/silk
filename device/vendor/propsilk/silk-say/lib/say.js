@@ -6,10 +6,10 @@
  * @private
  */
 
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import events from 'events';
 import net from 'net';
-import createLog from './log';
+import createLog from 'silk-log/device';
 
 const log = createLog('say');
 
@@ -18,7 +18,7 @@ const TTS_SOCKET_NAME = '/dev/socket/tts';
 /**
  * This is a text to speech module for silk OS
  */
-export default class Say extends events.EventEmitter {
+class Say extends events.EventEmitter {
   constructor() {
     super();
     util.setprop('ctl.start', 'silk-tts');
@@ -156,3 +156,6 @@ export default class Say extends events.EventEmitter {
     log.verbose(`tts << ${event}`);
   }
 }
+
+let say = new Say();
+export default say;

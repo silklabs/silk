@@ -52,7 +52,7 @@ import infrared from './infrared';
 import Server from './server';
 import Connections from './connections';
 import fs from 'mz/fs';
-import Say from './say';
+import say from 'silk-say';
 
 import getBTLE from './btle/parent';
 import getDeviceId from './deviceid';
@@ -100,7 +100,6 @@ let outbox;
 let logcat;
 let ext;
 let diag;
-let say;
 
 // true once the device has a configuration and is ready for normal operation
 let configured = false;
@@ -213,7 +212,6 @@ function main() {
     .then(maybeAbortBoot)
     .then(() => {
       log.info('Initialize hardware');
-      say = new Say();
 
       assert(outbox, 'must have outbox when initializing timeline');
       camera = new Camera(silkconfig);

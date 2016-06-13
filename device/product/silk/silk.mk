@@ -48,6 +48,7 @@ PRODUCT_PACKAGES += \
   silk-netstatus \
   silk-vad \
   silk-kws \
+  silk-say \
 
 # vendor/silk/ext/...
 SILK_EXT := \

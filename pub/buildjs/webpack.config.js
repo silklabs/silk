@@ -85,6 +85,7 @@ const externals = [
   'silk-netstatus',
   'silk-ntp',
   'silk-properties',
+  'silk-say',
   'silk-sensors',
   'silk-sysutils',
   'silk-vad',

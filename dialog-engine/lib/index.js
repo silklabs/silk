@@ -28,7 +28,7 @@ import type {
 } from './textToIntention';
 
 export type DialogEngineOptions = {
-  // Nothing for now...
+  localTts?: boolean;
 };
 
 export type DialogScriptOptions = {
@@ -122,7 +122,12 @@ export class DialogEngine extends EventEmitter {
     invariant(text);
     log.debug(`Starting to speak`, text);
 
-    process.nextTick(() => this.emit(`speak-begin`, text));
+    process.nextTick(() => this.emit(`speak-begin`, text, finished));
+
+    // Local TTS engine is being used so don't use the cloud based tts stream
+    if (this._options && this._options.localTts) {
+      return;
+    }
 
     const tts = new TextToSpeech(text);
     const stream = new ClosingPassThrough();
@@ -145,6 +150,14 @@ export class DialogEngine extends EventEmitter {
     });
 
     process.nextTick(() => this.emit(`speech`, stream, finished));
+  }
+
+  /**
+   * This function is to be called by an external tts engine when it is done
+   * speaking the provided text
+   */
+  endSpeak(text: string, error: ?Error) {
+    this.emit(`speak-end`, text, error);
   }
 
   interpret(stream: Readable): void {

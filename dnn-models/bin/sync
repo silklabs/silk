@@ -1,8 +1,21 @@
 #!/bin/bash -e
 
+SHA1=1307970787134154e9eac228567ca4d9f2c37f34
+
+if [[ -d silk-dnn ]]; then
+  pushd silk-dnn 2>&1 > /dev/null
+  LATEST=$(git rev-parse HEAD)
+  popd 2>&1 > /dev/null
+
+  if [[ $LATEST != $SHA1 ]]; then
+    echo updating dnn model
+    rm -rf silk-dnn
+  fi
+fi
+
 if [[ ! -d silk-dnn ]]; then
   git clone git@github.com:silklabs/silk-dnn.git silk-dnn
-  pushd silk-dnn
-  git checkout 1307970787134154e9eac228567ca4d9f2c37f34
+  pushd silk-dnn 2>&1 > /dev/null
+  git checkout $SHA1
   popd
 fi

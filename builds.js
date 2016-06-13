@@ -447,6 +447,33 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
+  'repocache-base.msm8909': {
+    title: 'Updating repocache for base.msm8909',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      os: ['linux', 'osx'],
+      env: {
+        global: ['BOARD=base.msm8909'],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
+  'repocache-msm8909': {
+    title: 'Updating repocache for msm8909',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      os: ['linux', 'osx'],
+      env: {
+        global: [
+          'BOARD=msm8909',
+          'BOARD_REPO=gonk-msm8909',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
   'repocache-base.kenzo': {
     title: 'Updating repocache for base.kenzo',
     travis_yml: 'repocache/travis.yml',

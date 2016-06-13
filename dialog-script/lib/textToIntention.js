@@ -23,7 +23,9 @@ module.exports = {
   "100 milliliters":             { "intent": "confirm", "entities": ["100 milliliters"] },
   "register my baby":            { "intent": "register", "entities": ["baby"] },
   "rename my baby":              { "intent": "rename", "entities": ["baby"] },
-  "what time is it":             { "intent": "currentTime", "entities": [] }
+  "what time is it":             { "intent": "currentTime", "entities": [] },
+  "start a timer for 30 seconds":{ "intent": "startTimer", "entities": ["30 seconds"] },
+  "cancel the timer":            { "intent": "cancelTimer", "entities": ["30 seconds"] }
 };
 
 /* eslint-enable */

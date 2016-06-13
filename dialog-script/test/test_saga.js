@@ -20,6 +20,7 @@ import {
 } from '../lib/saga';
 import modifyBabies from '../lib/babies/saga';
 import startFeeding from '../lib/food/saga';
+import {timerMonitorTask} from '../lib/timers/saga';
 
 suite(`saga`, () => {
 
@@ -59,28 +60,29 @@ suite(`saga`, () => {
         provide: environment.intentChannel,
         expect: fork(audioEventTask, dialogEngine),
       }, {
-        provide: task,
+        provide: createMockTask(),
         expect: fork(forwardTextEventsTask, environment.textChannel, tasks),
-      }, {
-        provide: task,
-        expect: take(environment.intentChannel),
       },
     ]);
 
-    const next = sagaGenerator.next({
-      intent: `garbage`,
-      entities: [`more`, `garbage`],
-    });
+    const next = sagaGenerator.next(createMockTask());
     assert(!next.done);
     assert(next.value);
-    assert(typeof next.value.CALL.fn === `function`);
+    assert(typeof next.value.FORK.args[0].speak === `function`);
 
-    environment.speak = next.value.CALL.fn;
+    environment.speak = next.value.FORK.args[0].speak;
     assert.deepStrictEqual(next.value,
-                           call(environment.speak, unknownText, true));
+                           fork(timerMonitorTask, environment));
+
 
     testScript(sagaGenerator, [
       {
+        provide: createMockTask(),
+        expect: take(environment.intentChannel),
+      }, {
+        provide: {intent: `garbage`, entities: [`more`, `garbage`]},
+        expect: call(environment.speak, unknownText, true),
+      }, {
         expect: take(environment.intentChannel),
       },
     ]);

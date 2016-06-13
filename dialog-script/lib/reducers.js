@@ -15,6 +15,7 @@ import {TYPE_ADD as TYPE_BABIES_ADD} from './babies/actions';
 
 import babies from './babies/reducers';
 import food from './food/reducers';
+import timers from './timers/reducers';
 
 import type {Action} from 'redux';
 
@@ -70,4 +71,5 @@ export default combineReducers({
   speaking,
   interpreting,
   food,
+  timers,
 });

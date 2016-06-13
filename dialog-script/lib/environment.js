@@ -141,7 +141,7 @@ export default function*(
 ): Generator<Object | Array<Object>, Environment, any> { // eslint-disable-line no-undef
   invariant(dialogEngine);
 
-  log.debug(`Creating environment`);
+  log.info(`Creating environment`);
 
   log.debug(`Creating text event channel`);
   const textChannel = yield call(createTextEventChannel, dialogEngine);

@@ -49,7 +49,13 @@ class Script{
 const dialogEngine = getDialogEngine();
 invariant(dialogEngine);
 
-dialogEngine.configure({textToIntention});
+dialogEngine.configure({
+  customIntentions: textToIntention,
+  luisOptions: {
+    id: `1049f242-aa89-4ed2-ac4b-5861754818dc`,
+    key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
+  },
+});
 
 let script = new Script(dialogEngine);
 

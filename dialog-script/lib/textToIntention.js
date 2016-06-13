@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable key-spacing, quotes, comma-dangle */
+
 module.exports = {
   "start feeding":               { "intent": "startFeeding", "entities": ["baby"] },
   "i'm feeding the baby":        { "intent": "startFeeding", "entities": ["baby"] },
@@ -24,4 +25,5 @@ module.exports = {
   "rename my baby":              { "intent": "rename", "entities": ["baby"] },
   "what time is it":             { "intent": "currentTime", "entities": [] }
 };
+
 /* eslint-enable */

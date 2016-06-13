@@ -1,9 +1,9 @@
 import assert from 'assert';
-import AccessToken from '../src/access_token';
 import base64url from 'base64url';
-
-import jwa from '../src/jwa';
+import {AccessToken} from 'silk-api';
 import jwt from 'silk-jsonwebtoken';
+
+import jwa from '../../src/server/jwa';
 
 suite('jwa via jwt', () => {
   test('valid', async () => {

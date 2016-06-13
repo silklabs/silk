@@ -1,9 +1,10 @@
 /* @flow */
 
-import jwa from 'silk-api/src/jwa';
 import jwt from 'silk-jsonwebtoken';
 import * as Joi from 'joi';
 import createLog from 'silk-log';
+
+import jwa from './jwa';
 
 import type Nonce from './models/nonce';
 import type { RouteNextFn, MiddlewareFn } from './express_types';

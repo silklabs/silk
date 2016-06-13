@@ -513,6 +513,7 @@ const builds = {
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
+        os: ['linux', 'osx'],
         global: [
           'BOARD=qemu',
           'PRODUCT=gonkjs',

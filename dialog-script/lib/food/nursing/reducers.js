@@ -21,7 +21,7 @@ export type State = {
 
 const initialState: State = {
   side: 'right',
-  timePerSideSec: 10,
+  timePerSideSec: 20,
   timeRemainingSec: null,
 };
 

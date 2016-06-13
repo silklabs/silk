@@ -33,7 +33,7 @@ type BabyState = {
 
 export type State = Array<BabyState>;
 
-const log = createLog(`dialog-fuhu-babies-reducers`);
+const log = createLog(`dialog-script-babies-reducers`);
 
 const initialState: State = [];
 

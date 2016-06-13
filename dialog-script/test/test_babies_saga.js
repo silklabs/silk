@@ -21,9 +21,8 @@ import {
 
 suite(`babies/saga`, () => {
 
-  const dialogEngine = {};
-  const sagaArgs = {
-    dialogEngine,
+  const environment = {
+    dialogEngine: {},
     textChannel: () => {},
     intentChannel: () => {},
     speak: () => {},
@@ -31,7 +30,7 @@ suite(`babies/saga`, () => {
 
   test(`unknown type`, () => {
     const type = `foo`;
-    const sagaGenerator = saga(sagaArgs, type);
+    const sagaGenerator = saga(environment, type);
     assert.throws(
       () => sagaGenerator.next(),
       function(error) {
@@ -41,19 +40,19 @@ suite(`babies/saga`, () => {
   });
 
   test(`add`, () => {
-    const sagaGenerator = saga(sagaArgs, `add`);
+    const sagaGenerator = saga(environment, `add`);
     testScript(sagaGenerator, [
       {
-        expect: call(add, sagaArgs),
+        expect: call(add, environment),
       },
     ]);
   });
 
   test(`rename`, () => {
-    const sagaGenerator = saga(sagaArgs, `rename`);
+    const sagaGenerator = saga(environment, `rename`);
     testScript(sagaGenerator, [
       {
-        expect: call(rename, sagaArgs),
+        expect: call(rename, environment),
       },
     ]);
   });
@@ -63,7 +62,7 @@ suite(`babies/saga`, () => {
     let sagaGenerator = null;
 
     setup(() => {
-      sagaGenerator = queryBabyName(sagaArgs);
+      sagaGenerator = queryBabyName(environment);
       assert(sagaGenerator);
     });
 
@@ -71,16 +70,16 @@ suite(`babies/saga`, () => {
       const name = `jill`;
       testScript(sagaGenerator, [
         {
-          expect: call(sagaArgs.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `confirm`, entities: []},
           expect: name,
@@ -93,23 +92,23 @@ suite(`babies/saga`, () => {
       const name = `jill`;
       testScript(sagaGenerator, [
         {
-          expect: call(sagaArgs.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: ``,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `confirm`, entities: []},
           expect: name,
@@ -122,30 +121,30 @@ suite(`babies/saga`, () => {
       const name = `jill`;
       testScript(sagaGenerator, [
         {
-          expect: call(sagaArgs.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `unknown`, entities: []},
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `confirm`, entities: []},
           expect: name,
@@ -158,37 +157,37 @@ suite(`babies/saga`, () => {
       const name = `jill`;
       testScript(sagaGenerator, [
         {
-          expect: call(sagaArgs.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: ``,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `unknown`, entities: []},
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `confirm`, entities: []},
           expect: name,
@@ -201,40 +200,40 @@ suite(`babies/saga`, () => {
       const name = `jill`;
       testScript(sagaGenerator, [
         {
-          expect: call(sagaArgs.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: ``,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `unknown`, entities: []},
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(sagaArgs.textChannel),
+          expect: take(environment.textChannel),
         }, {
           provide: name,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
         }, {
-          expect: take(sagaArgs.intentChannel),
+          expect: take(environment.intentChannel),
         }, {
           provide: {intent: `unknown`, entities: []},
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry I'm having trouble. Please try again later.`,
                        true),
         }, {
@@ -251,14 +250,14 @@ suite(`babies/saga`, () => {
     let sagaGenerator = null;
 
     setup(() => {
-      sagaGenerator = add(sagaArgs);
+      sagaGenerator = add(environment);
       assert(sagaGenerator);
     });
 
     test(`no name`, () => {
       testScript(sagaGenerator, [
         {
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: ``,
           done: true,
@@ -271,7 +270,7 @@ suite(`babies/saga`, () => {
       const id = 10;
       testScript(sagaGenerator, [
         {
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: name,
           expect: select(getNextBabyId),
@@ -279,7 +278,9 @@ suite(`babies/saga`, () => {
           provide: id,
           expect: put(addBaby(id, name)),
         }, {
-          expect: call(sagaArgs.speak, `Ok, ${name} is now registered`, true),
+          expect: call(environment.speak,
+                       `Ok, ${name} is now registered`,
+                       true),
         }, {
           done: true,
         },
@@ -293,7 +294,7 @@ suite(`babies/saga`, () => {
     let sagaGenerator = null;
 
     setup(() => {
-      sagaGenerator = rename(sagaArgs);
+      sagaGenerator = rename(environment);
       assert(sagaGenerator);
     });
 
@@ -303,7 +304,7 @@ suite(`babies/saga`, () => {
           expect: select(getBabies),
         }, {
           provide: [],
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `You haven't registered any babies yet.`,
                        true),
         }, {
@@ -321,12 +322,12 @@ suite(`babies/saga`, () => {
           expect: select(getBabies),
         }, {
           provide: [{id, name: oldName}],
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: newName,
           expect: put(renameBaby(id, newName)),
         }, {
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
                        true),
         }, {
@@ -343,7 +344,7 @@ suite(`babies/saga`, () => {
           expect: select(getBabies),
         }, {
           provide: [{id, name: oldName}],
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: ``,
           done: true,
@@ -361,16 +362,16 @@ suite(`babies/saga`, () => {
         }, {
           provide: [{id, name: oldName}, {id: 5, name: `john`}],
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: oldName,
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: newName,
           expect: put(renameBaby(id, newName)),
         }, {
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
                        true),
         }, {
@@ -388,11 +389,11 @@ suite(`babies/saga`, () => {
         }, {
           provide: [{id, name: oldName}, {id: 5, name: `john`}],
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: oldName,
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: ``,
           done: true,
@@ -410,25 +411,25 @@ suite(`babies/saga`, () => {
         }, {
           provide: [{id, name: oldName}, {id: 5, name: `john`}],
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: `piper`,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
                        true),
         }, {
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: oldName,
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: newName,
           expect: put(renameBaby(id, newName)),
         }, {
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
                        true),
         }, {
@@ -447,34 +448,34 @@ suite(`babies/saga`, () => {
         }, {
           provide: [{id, name: oldName}, {id: 5, name: `john`}],
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: `piper`,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
                        true),
         }, {
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: `piper`,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
                        true),
         }, {
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: oldName,
-          expect: call(queryBabyName, sagaArgs),
+          expect: call(queryBabyName, environment),
         }, {
           provide: newName,
           expect: put(renameBaby(id, newName)),
         }, {
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
                        true),
         }, {
@@ -492,29 +493,29 @@ suite(`babies/saga`, () => {
         }, {
           provide: [{id, name: oldName}, {id: 5, name: `john`}],
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: `piper`,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
                        true),
         }, {
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: `piper`,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
                        true),
         }, {
           expect: call(queryBabyName,
-                       sagaArgs,
+                       environment,
                        `What is the name you told me previously?`),
         }, {
           provide: `piper`,
-          expect: call(sagaArgs.speak,
+          expect: call(environment.speak,
                        `Sorry I'm having trouble. Please try again later.`,
                        true),
         }, {

@@ -1,5 +1,5 @@
 /**
- * @no-flow
+ * @flow
  */
 
 import createLog from 'silk-log';
@@ -9,17 +9,17 @@ import invariant from 'assert';
 import {resetFood} from './actions';
 import startBottleFeeding from './bottle/saga';
 import startNursing from './nursing/saga';
-import type {SagaArgs} from '../saga';
+import type {Environment} from '../environment';
 
-const log = createLog(`dialog-fuhu-food-saga`);
+const log = createLog(`dialog-script-food-saga`);
 
-export default function* (
-  sagaArgs: SagaArgs,
+export default function*(
+  environment: Environment,
   type: ?('nursing' | 'bottle'),
-): Generator<any, any, any> {                    // eslint-disable-line no-undef
-  invariant(sagaArgs);
+): Generator<Object, void, any> {                // eslint-disable-line no-undef
+  invariant(environment);
 
-  const {intentChannel, speak} = sagaArgs;
+  const {intentChannel, speak} = environment;
   invariant(intentChannel);
   invariant(speak);
 
@@ -34,7 +34,11 @@ export default function* (
 
       yield call(speak, intro + query, false);
 
-      const {intent, entities} = yield take(intentChannel);
+      const event = yield take(intentChannel);
+      invariant(event);
+
+      const {intent, entities} = event;
+
       if ((intent === `startNursing`) ||
           (intent === `none` && entities.some((e) => e === `nursing`))) {
         type = 'nursing';
@@ -42,7 +46,7 @@ export default function* (
       }
       if (intent === `confirm` &&
           entities.some((e) => e === `bottle` || e === `formula`)) {
-        type = `bottle`;
+        type = 'bottle';
         break;
       }
     }
@@ -50,10 +54,10 @@ export default function* (
 
   switch (type) {
   case `bottle`:
-    yield call(startBottleFeeding, sagaArgs);
+    yield call(startBottleFeeding, environment);
     break;
   case `nursing`:
-    yield call(startNursing, sagaArgs);
+    yield call(startNursing, environment);
     break;
   default:
     yield call(speak,

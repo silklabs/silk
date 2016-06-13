@@ -1,22 +1,24 @@
 /**
- * @no-flow
+ * @flow
  */
 
 import createLog from 'silk-log';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
 
-import type {SagaArgs} from '../../saga';
+import type {Environment} from '../../environment';
 
 import {
   bottleType,
   bottleAmount,
 } from './actions';
 
-const log = createLog(`dialog-fuhu-food-bottle-saga`);
+const log = createLog(`dialog-script-food-bottle-saga`);
 
-function* queryBottleType(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {intentChannel, speak} = sagaArgs;
+function* queryBottleType(
+  environment: Environment,
+): Generator<Object, ?string, any> {             // eslint-disable-line no-undef
+  const {intentChannel, speak} = environment;
 
   let type: ?string = null;
 
@@ -26,7 +28,11 @@ function* queryBottleType(sagaArgs: SagaArgs): Generator<any, any, any> { // esl
 
     yield call(speak, intro + query, false);
 
-    const {intent, entities} = yield take(intentChannel);
+    const event = yield take(intentChannel);
+    invariant(event);
+
+    const {intent, entities} = event;
+
     if (intent === `confirm`) {
       for (const entity of entities) {
         if (entity === `breast milk`) {
@@ -54,8 +60,10 @@ function* queryBottleType(sagaArgs: SagaArgs): Generator<any, any, any> { // esl
   return type;
 }
 
-function* queryAmount(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  const {intentChannel, speak} = sagaArgs;
+function* queryAmount(
+  environment: Environment,
+): Generator<Object, ?number, any> {             // eslint-disable-line no-undef
+  const {intentChannel, speak} = environment;
 
   let amount: ?number = null;
 
@@ -65,7 +73,11 @@ function* queryAmount(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-
 
     yield call(speak, intro + query, false);
 
-    const {intent, entities} = yield take(intentChannel);
+    const event = yield take(intentChannel);
+    invariant(event);
+
+    const {intent, entities} = event;
+
     if (intent === `confirm`) {
       for (const entity of entities) {
         const tokens = entity.split(` `);
@@ -91,21 +103,23 @@ function* queryAmount(sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-
   return amount;
 }
 
-export default function* (sagaArgs: SagaArgs): Generator<any, any, any> { // eslint-disable-line no-undef
-  invariant(sagaArgs);
+export default function*(
+  environment: Environment
+): Generator<Object, void, any> {                // eslint-disable-line no-undef
+  invariant(environment);
 
-  const {intentChannel, speak} = sagaArgs;
+  const {intentChannel, speak} = environment;
   invariant(intentChannel);
   invariant(speak);
 
   log.info(`Starting saga`);
 
-  const type = yield call(queryBottleType, sagaArgs);
+  const type = yield call(queryBottleType, environment);
   if (!type) {
     return;
   }
 
-  const amount = yield call(queryAmount, sagaArgs);
+  const amount = yield call(queryAmount, environment);
   if (!amount) {
     return;
   }

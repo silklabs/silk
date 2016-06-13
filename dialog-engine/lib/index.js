@@ -18,24 +18,25 @@ import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 
 import SpeechToText from './speechToText';
+import TextToIntention from './textToIntention';
 import TextToSpeech from './textToSpeech';
 
-export type DialogEngineOptions = {
-  // Nothing for now... Will eventually have luis model access token, etc.
-};
+import type {
+  Intention,
+  LuisOptions,
+  CustomIntentions,
+} from './textToIntention';
 
-export type Intention = {
-  intent: string;
-  entities: Array<string>;
+export type DialogEngineOptions = {
+  // Nothing for now...
 };
 
 export type DialogScriptOptions = {
-  textToIntention: { [key: string]: Intention };
+  customIntentions?: CustomIntentions;
+  luisOptions?: LuisOptions,
 };
 
 const log = createLog('dialog-engine');
-
-export const UNKNOWN_INTENT = 'unknownIntent';
 
 /**
  * Dialog Engine Class
@@ -106,29 +107,15 @@ export class DialogEngine extends EventEmitter {
   }
 
   // Returns intention from text (utterance)
-  async _getIntention(text: string): Promise<Intention> {
+  _getIntention(text: string): Promise<Intention> {
     invariant(text);
 
     text = text.toLowerCase();
 
     log.debug(`Requesting intention for '${text}'`);
 
-    const textToIntention = this._scriptOptions.textToIntention;
-    let {intent, entities} = textToIntention ?
-      Object.assign({}, textToIntention[text]) : {};
-
-    if (!intent) {
-      log.info(`Did not find intention information for '${text}'`);
-      intent = UNKNOWN_INTENT;
-      entities = [];
-    }
-
-    log.debug(`Processed intention`, intent, entities);
-
-    return {
-      intent,
-      entities,
-    };
+    const tti = new TextToIntention(this._scriptOptions);
+    return tti.getIntent(text);
   }
 
   speak(text: string, finished: boolean): void {
@@ -205,6 +192,8 @@ export class DialogEngine extends EventEmitter {
         log.debug(`Interpretation finished`, intention);
         this.emit(`intent`, intention.intent, intention.entities);
         this.emit(`interpret-end`, error);
+      }).catch((error) => {
+        log.warn(`Error getting intention`, error);
       });
     };
 

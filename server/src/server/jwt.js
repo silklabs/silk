@@ -107,8 +107,8 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
     }
 
     /**
-     * Unsafely decode the JWT signature as the name states you must not trust
-     * any values here and is used only in the process of looking up the "id" of
+     * Unsafely decode the JWT signature. As the name states you must not trust
+     * any values here. It is used only in the process of looking up the "id" of
      * the client.
      */
     req.unsafeJwt = jwt.decode(signature, {

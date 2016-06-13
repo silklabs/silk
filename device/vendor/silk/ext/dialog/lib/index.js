@@ -62,7 +62,7 @@ class Dialog {
   _kwsEnabled: boolean;
   _input: Input;
   _stream: ?Duplex;
-  _activeSpeechPromise: Promise = Promise.resolve();
+  _activePlaySoundPromise: Promise = Promise.resolve();
   _activeSpeechCount: number = 0;
   _vad: VoiceActivityDetector;
   _kws: KeywordSpotting;
@@ -188,7 +188,7 @@ class Dialog {
     };
 
     this._activeSpeechCount++;
-    this._activeSpeechPromise = this._activeSpeechPromise.then(() => {
+    this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
       // This is a workaround for issue #2032. Ideally this event should only
       // be called when the TTS is done.
       this._dialogEngine.endSpeak(text, null);
@@ -248,7 +248,7 @@ class Dialog {
       this._activeSpeechCount++;
 
       // Wait for previous playSound to finish before playing another file
-      this._activeSpeechPromise = this._activeSpeechPromise.then(() => {
+      this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
         return this._writeWavFile(pcmSamples)
         .then(() => {
           return util.playSound(SAY_FILE_NAME);
@@ -314,7 +314,7 @@ class Dialog {
       this._stream.end();
       this._stream = null;
     }
-    util.playSound(SPEECH_END_SOUND_FILE);
+    this._activePlaySoundPromise = util.playSound(SPEECH_END_SOUND_FILE);
   }
 
   /**

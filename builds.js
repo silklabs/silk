@@ -512,8 +512,8 @@ const builds = {
     title: 'Updating repocache for qemu/gonkjs',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
+      os: ['linux', 'osx'],
       env: {
-        os: ['linux', 'osx'],
         global: [
           'BOARD=qemu',
           'PRODUCT=gonkjs',

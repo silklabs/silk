@@ -117,24 +117,31 @@ export default class TextToIntention {
   _parseResponse(json: string): Intention {
     const response = JSON.parse(json);
 
-    let topMatch: ?IntentResponse = null;
+    let topMatchIntent: ?IntentResponse = null;
     response.intents.forEach((intentResponse: IntentResponse) => {
       if (intentResponse.score >= 0.5 &&
-          (!topMatch || topMatch.score < intentResponse.score)) {
-        topMatch = intentResponse;
+          (!topMatchIntent || topMatchIntent.score < intentResponse.score)) {
+        topMatchIntent = intentResponse;
       }
     });
 
-    if (!topMatch || topMatch.intent === `None`) {
+    if (!topMatchIntent || topMatchIntent.intent === `None`) {
       return {
         intent: UNKNOWN_INTENT,
         entities: [],
       };
     }
 
+    const entities = [];
+    for (let entity of response.entities) {
+      if (entity.score >= 0.5) {
+        entities.push(entity);
+      }
+    }
+
     return {
-      intent: topMatch.intent,
-      entities: response.entities,
+      intent: topMatchIntent.intent,
+      entities: entities,
     };
   }
 }

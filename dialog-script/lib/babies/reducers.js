@@ -16,7 +16,7 @@ import type {Action} from './actions';
 
 type BabyState = {
   // Unique identifier.
-  id: number;
+  id: string;
 
   // Name.
   name: string;

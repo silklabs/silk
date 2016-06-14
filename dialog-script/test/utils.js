@@ -45,7 +45,6 @@ export function testScript(generator, script) {
         }
       }
       lastError = error;
-
       assert.deepStrictEqual(next.value, expect);
       if (done) {
         assert.strictEqual(next.done, done);

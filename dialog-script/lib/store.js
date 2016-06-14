@@ -11,10 +11,15 @@ import reducer from './reducers';
 // TODO: Load from disk.
 //const initialState = null;
 
+// This middleware runs all of our saga machinery.
 const sagaMiddleware = createSagaMiddleware();
 
 const middleware = [sagaMiddleware];
 
+/**
+ * We want all redux state changes to be logged in debug builds (but not in
+ * production builds).
+ */
 if (process.env.NODE_ENV !== 'production') {
   // XXX The logger must always be the last middleware in the chain.
   middleware.push(createReduxLogger({
@@ -28,6 +33,7 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
+// Tell redux to create our one and only data store.
 const store = createStore(
   reducer,
   /* initialState, */

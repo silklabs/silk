@@ -5,19 +5,22 @@ import assert from 'assert';
 import {EventEmitter} from 'events';
 import {channel} from 'redux-saga';
 import {call, fork, put, take} from 'redux-saga/effects';
+import {createMockTask as createMockSaga} from 'redux-saga/utils';
 
 import {testScript} from './utils';
 import {
   default as createEnvironment,
-  audioEventTask,
+  audioEventSaga,
   createAudioEventChannel,
   createIntentEventChannel,
   createTextEventChannel,
+  forwardTextEventsSaga,
 } from '../lib/environment';
 import {
   speakEnd,
   interpretEnd,
 } from '../lib/actions';
+import {timerMonitorSaga} from '../lib/timers/saga';
 
 suite(`environment`, () => {
 
@@ -26,9 +29,11 @@ suite(`environment`, () => {
   const dialogEngine = new EventEmitter();
 
   test(`createEnvironment`, () => {
+    const sagas = {};
     const textChannel = {};
     const intentChannel = {};
-    const generator = createEnvironment(dialogEngine);
+    const generator = createEnvironment(dialogEngine, sagas);
+
     testScript(generator, [
       {
         expect: call(createTextEventChannel, dialogEngine),
@@ -37,20 +42,33 @@ suite(`environment`, () => {
         expect: call(createIntentEventChannel, dialogEngine),
       }, {
         provide: intentChannel,
-        expect: fork(audioEventTask, dialogEngine),
+        expect: fork(audioEventSaga, dialogEngine),
+      }, {
+        provide: createMockSaga(),
+        expect: fork(forwardTextEventsSaga, textChannel, sagas),
       },
     ]);
 
-    const { done, value } = generator.next({});
-    assert(done);
+    let {done, value} = generator.next(createMockSaga());
+    assert(!done);
     assert(value);
-    assert.strictEqual(value.textChannel, textChannel);
-    assert.strictEqual(value.intentChannel, intentChannel);
-    assert(typeof value.speak === `function`);
+    assert(typeof value.FORK.args[0].speak === `function`);
+
+    const environment = {
+      textChannel,
+      intentChannel,
+      speak: value.FORK.args[0].speak,
+    };
+
+    assert.deepStrictEqual(value, fork(timerMonitorSaga, environment));
+
+    ({done, value} = generator.next(createMockSaga()));
+    assert(done);
+    assert.deepStrictEqual(value, environment);
   });
 
-  test(`audioEventTask`, () => {
-    const generator = audioEventTask(dialogEngine);
+  test(`audioEventSaga`, () => {
+    const generator = audioEventSaga(dialogEngine);
     const audioChannel = channel();
     const action = {};
     const error = new Error(`cancel`);

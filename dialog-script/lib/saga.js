@@ -3,43 +3,41 @@
  */
 
 import createLog from 'silk-log';
-import {buffers, channel} from 'redux-saga';
-import {call, cancel, fork, put, take} from 'redux-saga/effects';
+import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
 
-import createEnvironment from './environment';
+import {
+  default as createEnvironment,
+  startSaga,
+  cleanupFinishedSagas,
+} from './environment';
 import modifyBabies from './babies/saga';
 import startFeeding from './food/saga';
-import {
-  timerMonitorTask,
-  modifyTimers,
-} from './timers/saga';
+import modifyTimers from './timers/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
-import type {Environment} from './environment';
-import type {Task} from './index';
-
-type TaskData = {
-  task: Task;
-  textChannel: Object;
-  intentChannel: Object;
-};
-
-type TasksInProgress = {
-  independent: ?TaskData;
-  concurrent: ?TaskData;
-};
-
-type GeneratorFactory =
-  (...args: Array<any>) => Generator<Object, any, any>; // eslint-disable-line no-undef
+import type {
+  Environment,
+  SagaFunction,
+  SagasInProgress,
+} from './environment';
 
 const log = createLog(`dialog-script-saga`);
 
+// Text that gets spoken whenever we can't figure out what the user wants.
 export const unknownText =
   `Sorry, I'm not understanding you. Please check out the app for example ` +
   `requests and questions and try again.`;
 
+/**
+ * |independentIntents| lists those intents that will trigger sagas that will
+ * continue to run without constant voice interaction (e.g. a saga that sets a
+ * long timeout or performs a network request). We do not currently allow more
+ * than one of these sagas to be active at a time and so they are referred to as
+ *  "independent" sagas. They may run concurrently with one of the
+ * "concurrent" sagas, see below.
+ */
 const independentIntents: Set<string> = new Set([
   `startFeeding`,
   `startNursing`,
@@ -48,218 +46,240 @@ const independentIntents: Set<string> = new Set([
   `rename`,
 ]);
 
+/**
+ * |concurrentIntents| lists those intents that will trigger sagas that are
+ * constantly interacting with the user via voice (e.g. simple queries like
+ * "what time is it?" => "it is now 7 am" or simple commands like "turn off
+ * the music"). These sagas may run during another "independent" saga, see
+ * above.
+ */
 const concurrentIntents: Set<string> = new Set([
   `currentTime`,
   `startTimer`,
   `cancelTimer`,
 ]);
 
-function* forkTask(
-  factory: GeneratorFactory,
-  environment: Environment,
-  ...args: Array<any>
-): Generator<Object | Array<Object>, TaskData, any> { // eslint-disable-line no-undef
-  const textChannel = yield call(channel, buffers.none());
-  invariant(textChannel);
-
-  const intentChannel = yield call(channel, buffers.none());
-  invariant(intentChannel);
-
-  const taskEnvironment: Environment = {
-    ...environment,
-    textChannel,
-    intentChannel,
-  };
-
-  const task = yield fork(factory, taskEnvironment, ...args);
-  invariant(task);
-
-  return {
-    task,
-    textChannel,
-    intentChannel,
-  };
-}
-
-export function* forwardTextEventsTask(
-  textChannel: Object,
-  tasks: TasksInProgress,
-): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
-  try {
-    log.debug(`Starting text event forwarding task`);
-
-    while (true) {                  // eslint-disable-line no-constant-condition
-      const text = yield take(textChannel);
-      log.debug(`Got text event`, text);
-
-      if (tasks.concurrent && tasks.concurrent.task.isRunning()) {
-        yield put(tasks.concurrent.textChannel, text);
-      }
-
-      if (tasks.independent && tasks.independent.task.isRunning()) {
-        yield put(tasks.independent.textChannel, text);
-      }
-    }
-  } finally {
-    log.debug(`Text event forwarding task exiting`);
-  }
-}
-
-function* closeTask(
-  taskData: TaskData,
-): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
-  taskData.textChannel.close();
-  taskData.intentChannel.close();
-  yield cancel(taskData.task);
-}
-
+// A simple saga that speaks the current time.
 export function* sayCurrentTime(
   environment: Environment,
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   const {speak} = environment;
 
+  // Get the current time and isolate individual components that we care about.
   const now = new Date();
   const hour = now.getHours() % 12;
   const minutes = now.getMinutes();
   const am = now.getHours() < 12;
 
+  // TODO: More clever variations? (e.g. "half past 5").
   const timeString = `${hour} ${((minutes > 0 && minutes < 10) ? 'oh ' : '')}` +
                      `${(minutes > 0 ? minutes : 'o\'clock')} ` +
                      `${(am ? 'AM' : 'PM')}`;
 
+  /**
+   * Instruct the saga runtime to "call the speak function with these
+   * arguments". The |call| function is not absolutely essential (you could also
+   * simply write |yield speak(...)|, but then there would be no way to test the
+   * |sayCurrentTime| generator step-by-step. By using the |call| function we
+   * can write unit tests that run the generator one step at a time.
+   */
   yield call(speak, `The time is ${timeString}`, true);
 }
 
+/**
+ * This is our main saga. There are two phases:
+ *
+ * 1. Initialization.
+ * 2. An infinite loop waiting for user interaction.
+ *
+ * See below.
+ */
 export default function*(
   dialogEngine: DialogEngine,
 ): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
   log.info(`Starting saga`);
 
-  const environment = yield* createEnvironment(dialogEngine);
-  invariant(environment);
-
-  const {intentChannel, speak} = environment;
-
-  const tasks: TasksInProgress = {
+  /**
+   * We are currently set up to handle at most one "independent" saga and one
+   * "concurrent" saga at the same time. We can make this much more
+   * sophisticated in the future if needed.
+   */
+  const sagas: SagasInProgress = {
     independent: null,
     concurrent: null,
   };
 
-  log.debug(`Forking text event forwarding task`);
-  const taskForwardTextEvents = yield fork(forwardTextEventsTask,
-                                           environment.textChannel,
-                                           tasks);
-  invariant(taskForwardTextEvents);
+  /**
+   * Phase 1: Initialization.
+   *
+   * |createEnvironment| creates the |environment| object that contains all the
+   * functions we need to interact with the outside world. We can communicate
+   * with the user via the |speak| function and the user can communicate with us
+   * via the |textChannel| and |intentChannel|. These channels allow us to sleep
+   * while waiting for speech events.
+   *
+   * - |textChannel| delivers raw speech-to-text results. Use this channel for
+   *   getting names, dates, and other text that can't be modeled ahead of time.
+   *
+   * - |intentChannel| delivers our best guess as to what the user "intends"
+   *   to do. Use this channel for most commands.
+   *
+   * |createEnvironment| also starts various long-running concurrent sagas (e.g.
+   * sagas that monitor system timers).
+   *
+   * Note: We use |yield*| here because |createEnvironment| is not a
+   * self-contained saga; it is merely a helper function, and we do not want to
+   * wait for all of its subtasks to complete before returning control to us.
+   */
+  const environment = yield* createEnvironment(dialogEngine, sagas);
+  invariant(environment);
 
-  log.debug(`Forking timer task`);
-  const taskTimer = yield fork(timerMonitorTask, environment);
-  invariant(taskTimer);
+  // Pull the stuff we care about out of |environment|.
+  const {intentChannel, speak} = environment;
 
   log.debug(`Starting dialog loop`);
 
+  /**
+   * Phase 2: An infinite loop.
+   *
+   * We sleep while waiting for the user to speak and for that speech to be
+   * processed into an event on the |intentChannel|. Once we wake up we may
+   * launch other sagas as necessary before sleeping again.
+   */
   while (true) {                    // eslint-disable-line no-constant-condition
     log.debug(`Waiting for next intent`);
 
+    /**
+     * The |take| function instructs the saga runtime to suspend this saga
+     * until an event is available on the |intentChannel|. Most of the time we
+     * should be asleep here.
+     */
     const event = yield take(intentChannel);
     invariant(event);
 
+    /**
+     * |intentChannel| has given us an event, so now we have to decide what to
+     * do with it.
+     */
     const {intent, entities} = event;
-
     log.debug(`Got intent`, intent, entities);
 
-    if (tasks.independent && !tasks.independent.task.isRunning()) {
-      yield* closeTask(tasks.independent);
-      tasks.independent = null;
-    }
+    /**
+     * Before we start other sagas we make sure to clean up any previous sagas
+     * that are no longer running. This might free up a slot in |sagas| so that
+     * we can start another.
+     */
+    yield call(cleanupFinishedSagas, sagas);
 
-    if (tasks.concurrent && !tasks.concurrent.task.isRunning()) {
-      yield* closeTask(tasks.concurrent);
-      tasks.concurrent = null;
-    }
-
-    // Handle independent tasks first.
-    if (!tasks.independent && independentIntents.has(intent)) {
-      let factory: ?GeneratorFactory = null;
+    // Handle independent sagas first.
+    if (!sagas.independent && independentIntents.has(intent)) {
+      /**
+       * We need to know which saga function to call and the arguments that it
+       * needs.
+       */
+      let sagaFunction: ?SagaFunction = null;
       let args: Array<any> = [];
 
       switch (intent) {
       case `startFeeding`:
-        factory = startFeeding;
+        sagaFunction = startFeeding;
         args.push(null);
         break;
       case `startNursing`:
-        factory = startFeeding;
+        sagaFunction = startFeeding;
         args.push(`nursing`);
         break;
       case `startBottleFeeding`:
-        factory = startFeeding;
+        sagaFunction = startFeeding;
         args.push(`bottle`);
         break;
       case `register`:
-        factory = modifyBabies;
+        sagaFunction = modifyBabies;
         args.push(`add`);
         break;
       case `rename`:
-        factory = modifyBabies;
+        sagaFunction = modifyBabies;
         args.push(`rename`);
         break;
       default:
         throw new Error(`All intents in independentIntents must be handled!`);
       }
 
-      invariant(factory);
+      invariant(sagaFunction);
 
-      tasks.independent = yield* forkTask(factory, environment, ...args);
-      invariant(tasks.independent);
-      invariant(tasks.independent.task);
-      invariant(tasks.independent.intentChannel);
+      /**
+       * |startSaga| takes care of creating "tee" channels for the new saga. By
+       * default both |textChannel| and |intentChannel| are simple FIFO pipes.
+       * We want to "tee" events to multiple sagas so we need to make additional
+       * channels.
+       *
+       * We use |yield*| because |startSaga| forks the saga directly and we
+       * don't want to wait for those sagas to complete before control is
+       * returned to this function.
+       */
+      sagas.independent = yield* startSaga(sagaFunction, environment, ...args);
+      log.debug(`Sagas`, sagas);
+      invariant(sagas.independent);
 
-      log.debug(`looping`);
+      // This intent has now been consumed, no need to pass it to others.
       continue;
     }
 
-    // Handle concurrent tasks.
-    if (!tasks.concurrent && concurrentIntents.has(intent)) {
-      let factory: ?GeneratorFactory = null;
+    // Handle concurrent sagas.
+    if (!sagas.concurrent && concurrentIntents.has(intent)) {
+      /**
+       * This is nearly identical to the way we handled |independentIntents|
+       * above, except that we're storing the result in a  a different slot on
+       * |sagas|.
+       */
+      let sagaFunction: ?SagaFunction = null;
       let args: Array<any> = [];
 
       switch (intent) {
       case `currentTime`:
-        factory = sayCurrentTime;
+        sagaFunction = sayCurrentTime;
         break;
       case `startTimer`:
-        factory = modifyTimers;
+        sagaFunction = modifyTimers;
         args.push(`start`, entities);
         break;
       case `cancelTimer`:
-        factory = modifyTimers;
+        sagaFunction = modifyTimers;
         args.push(`cancel`, entities);
         break;
       default:
         throw new Error(`All intents in concurrentIntents must be handled!`);
       }
 
-      invariant(factory);
+      invariant(sagaFunction);
 
-      tasks.concurrent = yield* forkTask(factory, environment, ...args);
-      invariant(tasks.concurrent);
-      invariant(tasks.concurrent.task);
-      invariant(tasks.concurrent.intentChannel);
+      // See comment about |startSaga| above.
+      sagas.concurrent = yield* startSaga(sagaFunction, environment, ...args);
+      invariant(sagas.concurrent);
 
+      // This intent has now been consumed, no need to pass it to others.
       continue;
     }
 
-    invariant(!tasks.concurrent || tasks.independent);
-
-    if (tasks.concurrent) {
-      yield put(tasks.concurrent.intentChannel, event);
+    /**
+     * We received some intent that is either not in |independentIntents| and
+     * |concurrentIntents|, or it is but the slot is taken by another saga.
+     * All we can do is pass the intent along to the sagas that are already
+     * running. |put| pushes events onto each saga's |intentChannel|.
+     */
+    if (sagas.concurrent) {
+      yield put(sagas.concurrent.intentChannel, event);
     }
 
-    if (tasks.independent) {
-      yield put(tasks.independent.intentChannel, event);
+    if (sagas.independent) {
+      yield put(sagas.independent.intentChannel, event);
     }
 
-    if (!tasks.independent && !tasks.concurrent) {
+    /**
+     * If there are no active sagas then this intent must be one that we simply
+     * don't understand. Call the |speak| function to tell the user.
+     */
+    if (!sagas.independent && !sagas.concurrent) {
       log.warn(`Unknown intent`, intent, entities);
       yield call(speak, unknownText, true);
     }

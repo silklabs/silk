@@ -4,23 +4,24 @@
 
 import assert from 'assert';
 import {buffers, channel} from 'redux-saga';
-import {call, cancel, fork, put, take} from 'redux-saga/effects';
-import {createMockTask} from 'redux-saga/utils';
+import {call, fork, put, take} from 'redux-saga/effects';
+import {createMockTask as createMockSaga} from 'redux-saga/utils';
 
 import {testScript} from './utils';
 import {
-  audioEventTask,
+  audioEventSaga,
+  cleanupFinishedSagas,
   createIntentEventChannel,
   createTextEventChannel,
+  forwardTextEventsSaga,
 } from '../lib/environment';
 import {
   default as saga,
-  forwardTextEventsTask,
   unknownText,
 } from '../lib/saga';
 import modifyBabies from '../lib/babies/saga';
 import startFeeding from '../lib/food/saga';
-import {timerMonitorTask} from '../lib/timers/saga';
+import {timerMonitorSaga} from '../lib/timers/saga';
 
 suite(`saga`, () => {
 
@@ -28,10 +29,8 @@ suite(`saga`, () => {
 
   let sagaGenerator = null;
   let environment = null;
-  let textChannel = null;
-  let intentChannel = null;
-  let taskEnvironment = null;
-  let task = null;
+  let sagas = null;
+  let sagaEnvironment = null;
 
   setup(() => {
     sagaGenerator = saga(dialogEngine);
@@ -43,9 +42,7 @@ suite(`saga`, () => {
       speak: () => {},
     };
 
-    task = createMockTask();
-
-    const tasks = {
+    sagas = {
       independent: null,
       concurrent: null,
     };
@@ -58,45 +55,52 @@ suite(`saga`, () => {
         expect: call(createIntentEventChannel, dialogEngine),
       }, {
         provide: environment.intentChannel,
-        expect: fork(audioEventTask, dialogEngine),
+        expect: fork(audioEventSaga, dialogEngine),
       }, {
-        provide: createMockTask(),
-        expect: fork(forwardTextEventsTask, environment.textChannel, tasks),
+        provide: createMockSaga(),
+        expect: fork(forwardTextEventsSaga, environment.textChannel, sagas),
       },
     ]);
 
-    const next = sagaGenerator.next(createMockTask());
-    assert(!next.done);
-    assert(next.value);
-    assert(typeof next.value.FORK.args[0].speak === `function`);
+    let {done, value} = sagaGenerator.next(createMockSaga());
+    assert(!done);
+    assert(value);
+    assert(typeof value.FORK.args[0].speak === `function`);
 
-    environment.speak = next.value.FORK.args[0].speak;
-    assert.deepStrictEqual(next.value,
-                           fork(timerMonitorTask, environment));
+    environment.speak = value.FORK.args[0].speak;
 
+    assert.deepStrictEqual(value, fork(timerMonitorSaga, environment));
+
+    ({done, value} = sagaGenerator.next(createMockSaga()));
+    assert(!done);
+    assert.deepStrictEqual(value, take(environment.intentChannel));
+
+    ({done, value} = sagaGenerator.next({intent: `garbage`, entities: []}));
+    assert(!done);
+    sagas = value.CALL.args[0];
+    assert.deepStrictEqual(value, call(cleanupFinishedSagas, sagas));
 
     testScript(sagaGenerator, [
       {
-        provide: createMockTask(),
-        expect: take(environment.intentChannel),
-      }, {
-        provide: {intent: `garbage`, entities: [`more`, `garbage`]},
         expect: call(environment.speak, unknownText, true),
       }, {
         expect: take(environment.intentChannel),
       },
     ]);
 
-    textChannel = channel();
-    intentChannel = channel();
-    taskEnvironment = {...environment, textChannel, intentChannel};
-    task = createMockTask();
+    sagaEnvironment = {
+      ...environment,
+      textChannel: channel(),
+      intentChannel: channel(),
+    };
   });
 
   test(`unknown intent`, () => {
     testScript(sagaGenerator, [
       {
         provide: {intent: `noIdea`, entities: [``]},
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(environment.speak, unknownText, true),
       },
     ]);
@@ -106,13 +110,15 @@ suite(`saga`, () => {
     testScript(sagaGenerator, [
       {
         provide: {intent: `startFeeding`, entities: []},
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(startFeeding, taskEnvironment, null),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(startFeeding, sagaEnvironment, null),
       }, {
         provide: {},
         expect: take(environment.intentChannel),
@@ -125,19 +131,23 @@ suite(`saga`, () => {
     testScript(sagaGenerator, [
       {
         provide: event,
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(startFeeding, taskEnvironment, null),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(startFeeding, sagaEnvironment, null),
       }, {
-        provide: task,
+        provide: createMockSaga(),
         expect: take(environment.intentChannel),
       }, {
         provide: event,
-        expect: put(intentChannel, event),
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
+        expect: put(sagaEnvironment.intentChannel, event),
       },
     ]);
   });
@@ -146,15 +156,17 @@ suite(`saga`, () => {
     testScript(sagaGenerator, [
       {
         provide: {intent: `startNursing`, entities: []},
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(startFeeding, taskEnvironment, `nursing`),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(startFeeding, sagaEnvironment, `nursing`),
       }, {
-        provide: task,
+        provide: createMockSaga(),
         expect: take(environment.intentChannel),
       },
     ]);
@@ -164,15 +176,17 @@ suite(`saga`, () => {
     testScript(sagaGenerator, [
       {
         provide: {intent: `startBottleFeeding`, entities: []},
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(startFeeding, taskEnvironment, `bottle`),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(startFeeding, sagaEnvironment, `bottle`),
       }, {
-        provide: task,
+        provide: createMockSaga(),
         expect: take(environment.intentChannel),
       },
     ]);
@@ -182,15 +196,17 @@ suite(`saga`, () => {
     testScript(sagaGenerator, [
       {
         provide: {intent: `register`, entities: []},
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(modifyBabies, taskEnvironment, `add`),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(modifyBabies, sagaEnvironment, `add`),
       }, {
-        provide: task,
+        provide: createMockSaga(),
         expect: take(environment.intentChannel),
       },
     ]);
@@ -200,56 +216,60 @@ suite(`saga`, () => {
     testScript(sagaGenerator, [
       {
         provide: {intent: `rename`, entities: []},
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(modifyBabies, taskEnvironment, `rename`),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(modifyBabies, sagaEnvironment, `rename`),
       }, {
-        provide: task,
+        provide: createMockSaga(),
         expect: take(environment.intentChannel),
       },
     ]);
   });
 
-  test(`multiple independent tasks`, () => {
+  test(`multiple independent sagas`, () => {
     let event = {intent: `startFeeding`, entities: []};
+    let saga = createMockSaga();
     testScript(sagaGenerator, [
       {
         provide: event,
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(startFeeding, taskEnvironment, null),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(startFeeding, sagaEnvironment, null),
       }, {
-        provide: task,
+        provide: saga,
         expect: take(environment.intentChannel),
       }, {
         provide: event,
-        expect: put(intentChannel, event),
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
+        expect: put(sagaEnvironment.intentChannel, event),
       }, {
         expect: take(environment.intentChannel),
-      },
-    ]);
-
-    task.setRunning(false);
-
-    testScript(sagaGenerator, [
-      {
+      }, {
         provide: event,
-        expect: cancel(task),
+        expect: call(cleanupFinishedSagas, sagas),
       },
     ]);
 
-    textChannel = channel();
-    intentChannel = channel();
-    taskEnvironment = {...environment, textChannel, intentChannel};
-    task = createMockTask();
+    sagas.independent = null;
+
+    sagaEnvironment = {
+      ...environment,
+      textChannel: channel(),
+      intentChannel: channel(),
+    };
 
     event = {intent: `startBottleFeeding`, entities: [`baby`]};
 
@@ -257,17 +277,19 @@ suite(`saga`, () => {
       {
         expect: call(channel, buffers.none()),
       }, {
-        provide: textChannel,
+        provide: sagaEnvironment.textChannel,
         expect: call(channel, buffers.none()),
       }, {
-        provide: intentChannel,
-        expect: fork(startFeeding, taskEnvironment, null),
+        provide: sagaEnvironment.intentChannel,
+        expect: fork(startFeeding, sagaEnvironment, null),
       }, {
-        provide: task,
+        provide: createMockSaga(),
         expect: take(environment.intentChannel),
       }, {
         provide: event,
-        expect: put(intentChannel, event),
+        expect: call(cleanupFinishedSagas, sagas),
+      }, {
+        expect: put(sagaEnvironment.intentChannel, event),
       },
     ]);
   });

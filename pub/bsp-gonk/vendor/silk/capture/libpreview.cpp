@@ -296,6 +296,7 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
     }
 
     RefBase *lockedFrame = new LockedFrame(img.data, this);
+    lockedFrame->incStrong(NULL);
     for (size_t i = 0; i < mClients.size(); i++) {
       ClientImpl *client = mClients.itemAt(i);
       lockedFrame->incStrong(NULL);
@@ -305,6 +306,7 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
                             img.height,
                             (FrameOwner) lockedFrame);
     }
+    lockedFrame->decStrong(NULL);
   }
 }
 

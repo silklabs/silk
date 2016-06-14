@@ -58,15 +58,13 @@ function generateWavHeader(dataSize: number, options: ConfigDeviceMic) {
   return hdr;
 }
 
-
 export default class SpeechToText {
 
   _cb: ?Callback;
   _accessToken: ?Object = null;
   _req: ?ClientRequest = null;
   _finished: boolean = false;
-  _pcmSamples: Buffer = new Buffer(0);
-
+  _bufferedSamples: Array<Buffer> = [];
 
   constructor(cb: Callback) {
     this._cb = cb;
@@ -89,11 +87,6 @@ export default class SpeechToText {
 
     const accessToken = (await getAccessToken()).access_token;
     log.debug(`Got access token`);
-
-    if (this._finished) {
-      log.debug(`speech-to-text: Request aleady finished`);
-      return;
-    }
 
     const query = urlEncode({
       version: `3.0`,
@@ -167,9 +160,19 @@ export default class SpeechToText {
 
     log.info(`Sending wav header`);
     req.write(hdr);
-    if (this._pcmSamples.length > 0) {
-      log.info(`Sending queued PCM data: ${this._pcmSamples.length} bytes`);
-      req.write(this._pcmSamples);
+
+    if (this._bufferedSamples.length) {
+      log.info(`Sending buffered PCM data`);
+      this._bufferedSamples.forEach((buffer) => {
+        req.write(buffer);
+      });
+      this._bufferedSamples.length = 0;
+    }
+
+    if (this._finished) {
+      log.info(`Finishing request`);
+      req.end();
+      return;
     }
 
     this._req = req;
@@ -181,7 +184,7 @@ export default class SpeechToText {
     const req = this._req;
     if (!req) {
       log.info(`Queuing PCM data: ${pcmData.length} bytes`);
-      this._pcmSamples = Buffer.concat([this._pcmSamples, pcmData]); // *shudder*
+      this._bufferedSamples.push(pcmData);
       return;
     }
 
@@ -195,13 +198,9 @@ export default class SpeechToText {
 
     const req = this._req;
     if (!req) {
-      const msg = `Unable to get access token in time, request dropped`;
-      log.error(msg);
-
-      this._callCallback(new Error(msg));
+      log.debug(`Can't finish until we get an access token`);
       return;
     }
-
 
     log.info(`Finishing request`);
     req.end();

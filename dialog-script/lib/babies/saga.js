@@ -22,7 +22,7 @@ export function* queryBabyName(
   environment: Environment,
   customQuery?: string,
 ): Generator<Object, string, any> {              // eslint-disable-line no-undef
-  const {textChannel, intentChannel, speak} = environment;
+  const {micChannel, speak} = environment;
   const query = customQuery || `What is the baby's name?`;
 
   let name = ``;
@@ -31,21 +31,18 @@ export function* queryBabyName(
     const intro = retryCount ? `Sorry, I'll try again. ` : ``;
 
     yield call(speak, intro + query, false);
-    const text = yield take(textChannel);
 
-    /**
-     * Wait until the intent event has passed so that it doesn't race with some
-     * other |take| call.
-     */
-    yield take(intentChannel);
+    let event = yield take(micChannel);
+    invariant(event);
 
+    const {text} = event;
     if (!text) {
       continue;
     }
 
     yield call(speak, `I heard ${text}. Is that correct?`, false);
 
-    const event = yield take(intentChannel);
+    event = yield take(micChannel);
     invariant(event);
 
     if (event.intent === `confirm`) {
@@ -150,10 +147,6 @@ export default function* (
   type: 'add' | 'rename',
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   invariant(environment);
-
-  const {intentChannel, speak} = environment;
-  invariant(intentChannel);
-  invariant(speak);
 
   log.info(`Starting saga`, type);
 

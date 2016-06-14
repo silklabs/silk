@@ -25,7 +25,7 @@ const log = createLog(`dialog-script-food-nursing-saga`);
 function* queryAlert(
   environment: Environment,
 ): Generator<Object, ?boolean, any> {            // eslint-disable-line no-undef
-  const {intentChannel, speak} = environment;
+  const {micChannel, speak} = environment;
 
   let useTimer: ?boolean = null;
 
@@ -36,7 +36,7 @@ function* queryAlert(
 
     yield call(speak, intro + query, false);
 
-    const event = yield take(intentChannel);
+    const event = yield take(micChannel);
     invariant(event);
 
     const {intent} = event;
@@ -103,9 +103,9 @@ function* nursing(
 function* listenForCancel(
   environment: Environment,
 ): Generator<Object, boolean, any> {             // eslint-disable-line no-undef
-  const {intentChannel} = environment;
+  const {micChannel} = environment;
   for (;;) {
-    const event = yield take(intentChannel);
+    const event = yield take(micChannel);
     invariant(event);
 
     if (event.intent === `cancel`) {
@@ -121,8 +121,7 @@ export default function*(
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   invariant(environment);
 
-  const {intentChannel, speak} = environment;
-  invariant(intentChannel);
+  const {speak} = environment;
   invariant(speak);
 
   log.info(`Starting saga`);

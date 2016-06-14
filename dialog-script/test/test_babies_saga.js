@@ -3,10 +3,14 @@
 /* global test */
 
 import assert from 'assert';
+import {channel} from 'redux-saga';
 import {call, put, select, take} from 'redux-saga/effects';
 import * as uuid from 'uuid';
 
-import {testScript} from './utils';
+import {
+  makeMicEvent,
+  testScript,
+} from './utils';
 import {
   default as saga,
   getBabies,
@@ -23,10 +27,13 @@ suite(`babies/saga`, () => {
 
   const environment = {
     dialogEngine: {},
-    textChannel: () => {},
-    intentChannel: () => {},
+    micChannel: channel(),
     speak: () => {},
   };
+
+  const confirmEvent = makeMicEvent(`yes`, `confirm`);
+  const rejectEvent = makeMicEvent(`no`, `reject`);
+  const noTextEvent = makeMicEvent();
 
   test(`unknown type`, () => {
     const type = `foo`;
@@ -67,194 +74,172 @@ suite(`babies/saga`, () => {
     });
 
     test(`0 retries, 0 corrections`, () => {
-      const name = `jill`;
+      const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
           expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `confirm`, entities: []},
-          expect: name,
+          provide: confirmEvent,
+          expect: event.text,
           done: true,
         },
       ]);
     });
 
     test(`1 retry, 0 corrections`, () => {
-      const name = `jill`;
+      const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
           expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: ``,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `confirm`, entities: []},
-          expect: name,
+          provide: confirmEvent,
+          expect: event.text,
           done: true,
         },
       ]);
     });
 
     test(`1 retry, 1 correction`, () => {
-      const name = `jill`;
+      const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
           expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `unknown`, entities: []},
+          provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `confirm`, entities: []},
-          expect: name,
+          provide: confirmEvent,
+          expect: event.text,
           done: true,
         },
       ]);
     });
 
     test(`2 retries, 1 correction`, () => {
-      const name = `jill`;
+      const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
           expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: ``,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `unknown`, entities: []},
+          provide: rejectEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `confirm`, entities: []},
-          expect: name,
+          provide: confirmEvent,
+          expect: event.text,
           done: true,
         },
       ]);
     });
 
     test(`3 retries, 2 corrections (too many retries)`, () => {
-      const name = `jill`;
+      const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
           expect: call(environment.speak, `What is the baby's name?`, false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: ``,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `unknown`, entities: []},
+          provide: rejectEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
         }, {
-          expect: take(environment.textChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: name,
-          expect: take(environment.intentChannel),
-        }, {
+          provide: event,
           expect: call(environment.speak,
-                       `I heard ${name}. Is that correct?`,
+                       `I heard ${event.text}. Is that correct?`,
                        false),
         }, {
-          expect: take(environment.intentChannel),
+          expect: take(environment.micChannel),
         }, {
-          provide: {intent: `unknown`, entities: []},
+          provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry I'm having trouble. Please try again later.`,
                        true),

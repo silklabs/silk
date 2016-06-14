@@ -115,14 +115,19 @@ export default function*(
    * |createEnvironment| creates the |environment| object that contains all the
    * functions we need to interact with the outside world. We can communicate
    * with the user via the |speak| function and the user can communicate with us
-   * via the |textChannel| and |intentChannel|. These channels allow us to sleep
-   * while waiting for speech events.
+   * via the |micChannel| (which allows us to sleep while waiting for speech
+   * events.
    *
-   * - |textChannel| delivers raw speech-to-text results. Use this channel for
-   *   getting names, dates, and other text that can't be modeled ahead of time.
+   * |micChannel| delivers events that look like this:
    *
-   * - |intentChannel| delivers our best guess as to what the user "intends"
-   *   to do. Use this channel for most commands.
+   *   {
+   *     text (string):
+   *       Raw speech-to-text results.
+   *     intent (string):
+   *       Our best guess as to what the user "intends" to do.
+   *     entities (Array<string>):
+   *       Any entities associated with the intent.
+   *   }
    *
    * |createEnvironment| also starts various long-running concurrent sagas (e.g.
    * sagas that monitor system timers).
@@ -131,11 +136,11 @@ export default function*(
    * self-contained saga; it is merely a helper function, and we do not want to
    * wait for all of its subtasks to complete before returning control to us.
    */
-  const environment = yield* createEnvironment(dialogEngine, sagas);
+  const environment = yield* createEnvironment(dialogEngine);
   invariant(environment);
 
   // Pull the stuff we care about out of |environment|.
-  const {intentChannel, speak} = environment;
+  const {micChannel, speak} = environment;
 
   log.debug(`Starting dialog loop`);
 
@@ -154,7 +159,7 @@ export default function*(
      * until an event is available on the |intentChannel|. Most of the time we
      * should be asleep here.
      */
-    const event = yield take(intentChannel);
+    const event = yield take(micChannel);
     invariant(event);
 
     /**
@@ -268,11 +273,11 @@ export default function*(
      * running. |put| pushes events onto each saga's |intentChannel|.
      */
     if (sagas.concurrent) {
-      yield put(sagas.concurrent.intentChannel, event);
+      yield put(sagas.concurrent.micChannel, event);
     }
 
     if (sagas.independent) {
-      yield put(sagas.independent.intentChannel, event);
+      yield put(sagas.independent.micChannel, event);
     }
 
     /**
@@ -280,7 +285,7 @@ export default function*(
      * don't understand. Call the |speak| function to tell the user.
      */
     if (!sagas.independent && !sagas.concurrent) {
-      log.warn(`Unknown intent`, intent, entities);
+      log.warn(`Unknown intent: '${event.text}' => '${intent}'`, entities);
       yield call(speak, unknownText, true);
     }
   }

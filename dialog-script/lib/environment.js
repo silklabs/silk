@@ -35,8 +35,7 @@ export type Saga = {
 
 export type SagaData = {
   saga: Saga;
-  textChannel: Object;
-  intentChannel: Object;
+  micChannel: Object;
 };
 
 export type SagasInProgress = {
@@ -48,8 +47,7 @@ export type SagaFunction =
   (...args: Array<any>) => Generator<Object, any, any>; // eslint-disable-line no-undef
 
 export type Environment = {
-  textChannel: Object;
-  intentChannel: Object;
+  micChannel: Object;
   speak: (text: string, finished: boolean) => Promise<void>;
 };
 
@@ -111,37 +109,49 @@ export function* audioEventSaga(
   }
 }
 
-export function createTextEventChannel(dialogEngine: DialogEngine): Object {
+export function createMicEventChannel(dialogEngine: DialogEngine): Object {
+  const textEventName = `text`;
+  const intentEventName = `intent`;
+
   return eventChannel((push) => {
+    /**
+     * Keep track of outstanding listeners so that we can clean them all up if
+     * the channel is closed.
+     */
+    const intentListeners: Set<Function> = new Set();
+
     const textListener: ((text: string) => void) = (text) => {
-      log.debug(`'text' event`, text);
-      push(text);
+      log.debug(`'${textEventName}' event`, text);
+
+      const intentListener: (
+        (intent: string, entities: Array<string>) => void
+      ) = (intent, entities) => {
+        log.debug(`'${intentEventName}' event`, intent, entities);
+
+        dialogEngine.removeListener(`intent`, intentListener);
+        intentListeners.delete(intentListener);
+
+        push({
+          text,
+          intent,
+          entities,
+        });
+      };
+
+      dialogEngine.addListener(intentEventName, intentListener);
+      intentListeners.add(intentListener);
     };
 
-    dialogEngine.addListener(`text`, textListener);
+    dialogEngine.addListener(textEventName, textListener);
 
     return () => {
-      dialogEngine.removeListener(`text`, textListener);
-    };
-  });
-}
+      dialogEngine.removeListener(textEventName, textListener);
 
-export function createIntentEventChannel(dialogEngine: DialogEngine): Object {
-  return eventChannel((push) => {
-    const intentListener: ((intent: string, entities: Array<string>) => void) = (intent, entities) => {
-      log.debug(`'intent' event`, intent, entities);
-      push({
-        intent,
-        entities,
+      intentListeners.forEach((intentListener) => {
+        dialogEngine.removeListener(intentEventName, intentListener);
       });
     };
-
-    dialogEngine.addListener(`intent`, intentListener);
-
-    return () => {
-      dialogEngine.removeListener(`intent`, intentListener);
-    };
-  }, buffers.fixed());
+  });
 }
 
 export function speak(
@@ -172,16 +182,12 @@ export function* startSaga(
   environment: Environment,
   ...args: Array<any>
 ): Generator<Object | Array<Object>, SagaData, any> { // eslint-disable-line no-undef
-  const textChannel = yield call(channel, buffers.none());
-  invariant(textChannel);
-
-  const intentChannel = yield call(channel, buffers.none());
-  invariant(intentChannel);
+  const micChannel = yield call(channel, buffers.none());
+  invariant(micChannel);
 
   const sagaEnvironment: Environment = {
     ...environment,
-    textChannel,
-    intentChannel,
+    micChannel,
   };
 
   const saga = yield fork(factory, sagaEnvironment, ...args);
@@ -189,37 +195,8 @@ export function* startSaga(
 
   return {
     saga,
-    textChannel,
-    intentChannel,
+    micChannel,
   };
-}
-
-export function* forwardTextEventsSaga(
-  textChannel: Object,
-  sagas: SagasInProgress,
-): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
-  try {
-    log.debug(`Starting text event forwarding saga`, sagas);
-
-    while (true) {                  // eslint-disable-line no-constant-condition
-      const text = yield take(textChannel);
-      log.debug(`Got text event`, text, sagas);
-
-      const {concurrent, independent} = sagas;
-
-      if (concurrent && concurrent.saga.isRunning()) {
-        log.debug(`Forwarding to concurrent saga`);
-        yield put(concurrent.textChannel, text);
-      }
-
-      if (independent && independent.saga.isRunning()) {
-        log.debug(`Forwarding to independent saga`);
-        yield put(independent.textChannel, text);
-      }
-    }
-  } finally {
-    log.debug(`Text event forwarding saga exiting`);
-  }
 }
 
 export function* cleanupFinishedSagas(
@@ -227,8 +204,7 @@ export function* cleanupFinishedSagas(
 ): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
   const independent = sagas.independent;
   if (independent && !independent.saga.isRunning()) {
-    independent.textChannel.close();
-    independent.textChannel.close();
+    independent.micChannel.close();
     yield cancel(independent.saga);
 
     sagas.independent = null;
@@ -236,8 +212,7 @@ export function* cleanupFinishedSagas(
 
   const concurrent = sagas.concurrent;
   if (concurrent && !concurrent.saga.isRunning()) {
-    concurrent.textChannel.close();
-    concurrent.textChannel.close();
+    concurrent.micChannel.close();
     yield cancel(concurrent.saga);
 
     sagas.concurrent = null;
@@ -246,33 +221,21 @@ export function* cleanupFinishedSagas(
 
 export default function*(
   dialogEngine: DialogEngine,
-  sagas: SagasInProgress,
 ): Generator<Object | Array<Object>, Environment, any> { // eslint-disable-line no-undef
   invariant(dialogEngine);
 
   log.info(`Creating environment`);
 
-  log.debug(`Creating text event channel`);
-  const textChannel = yield call(createTextEventChannel, dialogEngine);
-  invariant(textChannel);
-
-  log.debug(`Creating intent event channel`);
-  const intentChannel = yield call(createIntentEventChannel, dialogEngine);
-  invariant(intentChannel);
+  log.debug(`Creating mic event channel`);
+  const micChannel = yield call(createMicEventChannel, dialogEngine);
+  invariant(micChannel);
 
   log.debug(`Forking audio event saga`);
   const sagaAudio = yield fork(audioEventSaga, dialogEngine);
   invariant(sagaAudio);
 
-  log.debug(`Forking text event forwarding saga`);
-  const sagaForwardTextEvents = yield fork(forwardTextEventsSaga,
-                                           textChannel,
-                                           sagas);
-  invariant(sagaForwardTextEvents);
-
   const env: Environment = {
-    textChannel,
-    intentChannel,
+    micChannel,
     speak: speak.bind(null, dialogEngine),
   };
 

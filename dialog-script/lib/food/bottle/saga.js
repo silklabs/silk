@@ -18,7 +18,7 @@ const log = createLog(`dialog-script-food-bottle-saga`);
 function* queryBottleType(
   environment: Environment,
 ): Generator<Object, ?string, any> {             // eslint-disable-line no-undef
-  const {intentChannel, speak} = environment;
+  const {micChannel, speak} = environment;
 
   let type: ?string = null;
 
@@ -28,7 +28,7 @@ function* queryBottleType(
 
     yield call(speak, intro + query, false);
 
-    const event = yield take(intentChannel);
+    const event = yield take(micChannel);
     invariant(event);
 
     const {intent, entities} = event;
@@ -63,7 +63,7 @@ function* queryBottleType(
 function* queryAmount(
   environment: Environment,
 ): Generator<Object, ?number, any> {             // eslint-disable-line no-undef
-  const {intentChannel, speak} = environment;
+  const {micChannel, speak} = environment;
 
   let amount: ?number = null;
 
@@ -73,7 +73,7 @@ function* queryAmount(
 
     yield call(speak, intro + query, false);
 
-    const event = yield take(intentChannel);
+    const event = yield take(micChannel);
     invariant(event);
 
     const {intent, entities} = event;
@@ -108,8 +108,7 @@ export default function*(
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   invariant(environment);
 
-  const {intentChannel, speak} = environment;
-  invariant(intentChannel);
+  const {speak} = environment;
   invariant(speak);
 
   log.info(`Starting saga`);

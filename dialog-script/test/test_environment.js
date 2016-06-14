@@ -12,11 +12,10 @@ import {
   default as createEnvironment,
   audioEventSaga,
   createAudioEventChannel,
-  createIntentEventChannel,
-  createTextEventChannel,
-  forwardTextEventsSaga,
+  createMicEventChannel,
 } from '../lib/environment';
 import {
+  speakBegin,
   speakEnd,
   interpretEnd,
 } from '../lib/actions';
@@ -29,23 +28,15 @@ suite(`environment`, () => {
   const dialogEngine = new EventEmitter();
 
   test(`createEnvironment`, () => {
-    const sagas = {};
-    const textChannel = {};
-    const intentChannel = {};
-    const generator = createEnvironment(dialogEngine, sagas);
+    const micChannel = channel();
+    const generator = createEnvironment(dialogEngine);
 
     testScript(generator, [
       {
-        expect: call(createTextEventChannel, dialogEngine),
+        expect: call(createMicEventChannel, dialogEngine),
       }, {
-        provide: textChannel,
-        expect: call(createIntentEventChannel, dialogEngine),
-      }, {
-        provide: intentChannel,
+        provide: micChannel,
         expect: fork(audioEventSaga, dialogEngine),
-      }, {
-        provide: createMockSaga(),
-        expect: fork(forwardTextEventsSaga, textChannel, sagas),
       },
     ]);
 
@@ -55,8 +46,7 @@ suite(`environment`, () => {
     assert(typeof value.FORK.args[0].speak === `function`);
 
     const environment = {
-      textChannel,
-      intentChannel,
+      micChannel,
       speak: value.FORK.args[0].speak,
     };
 
@@ -70,7 +60,6 @@ suite(`environment`, () => {
   test(`audioEventSaga`, () => {
     const generator = audioEventSaga(dialogEngine);
     const audioChannel = channel();
-    const action = {};
     const error = new Error(`cancel`);
     testScript(generator, [
       {
@@ -79,13 +68,13 @@ suite(`environment`, () => {
         provide: audioChannel,
         expect: take(audioChannel),
       }, {
-        provide: action,
-        expect: put(action),
+        provide: speakBegin(`foo`),
+        expect: put(speakBegin(`foo`)),
       }, {
         expect: take(audioChannel),
       }, {
-        provide: action,
-        expect: put(action),
+        provide: speakEnd(),
+        expect: put(speakEnd()),
       }, {
         expect: take(audioChannel),
       }, {

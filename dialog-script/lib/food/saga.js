@@ -19,8 +19,8 @@ export default function*(
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   invariant(environment);
 
-  const {intentChannel, speak} = environment;
-  invariant(intentChannel);
+  const {micChannel, speak} = environment;
+  invariant(micChannel);
   invariant(speak);
 
   log.info(`Starting saga`, type);
@@ -34,7 +34,7 @@ export default function*(
 
       yield call(speak, intro + query, false);
 
-      const event = yield take(intentChannel);
+      const event = yield take(micChannel);
       invariant(event);
 
       const {intent, entities} = event;

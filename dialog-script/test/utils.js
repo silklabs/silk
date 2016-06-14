@@ -91,3 +91,11 @@ export async function testUserScript(dialogEngine, script): Promise<void> {
     throw error;
   }
 }
+
+export function makeMicEvent(text = ``, intent = `unknown`, entities = []) {
+  return {
+    text,
+    intent,
+    entities,
+  };
+}

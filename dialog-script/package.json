@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "babel-eslint": "6.0.4",
+    "copy-webpack-plugin": "2.1.5",
     "eslint": "1.10.3",
     "eslint-config-silk": "^0.17.0",
     "event-to-promise": "0.7.0",

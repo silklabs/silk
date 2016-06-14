@@ -65,3 +65,10 @@ export function silkWillUnload() {
   script.unload();
   script = null;
 }
+
+// Only for testing!
+export function reload() {
+  invariant(script);
+  script.unload();
+  script = new Script(dialogEngine);
+}

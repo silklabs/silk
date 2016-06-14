@@ -1,4 +1,5 @@
 import assert from 'assert';
+import eventToPromise from 'event-to-promise';
 
 export function testScript(generator, script) {
   assert(generator, `No 'generator' passed`);
@@ -56,4 +57,38 @@ export function testScript(generator, script) {
       throw error;
     }
   });
+}
+
+export async function testUserScript(dialogEngine, script): Promise<void> {
+  assert(dialogEngine);
+  assert(script, `No 'script' passed`);
+  assert(Array.isArray(script), `Script is not an array`);
+  assert(script.length, `Script is an empty array`);
+
+  let index = 0;
+
+  try {
+    for ( ; index < script.length; index++) {
+      const state = script[index];
+
+      assert(typeof state.speak === `string`,
+             `State[${index}] speak is not a string`);
+      assert(typeof state.hear === `string`,
+             `State[${index}] hear is not a string`);
+      assert(typeof state.finished === `boolean`,
+             `State[${index}] finished is not a boolean`);
+
+      dialogEngine._mockInterpret(state.speak);
+
+      const [text, finished] = await eventToPromise(dialogEngine,
+                                                    `mock-speech`,
+                                                    {array: true});
+
+      assert.strictEqual(text, state.hear);
+      assert.strictEqual(finished, state.finished);
+    }
+  } catch(error) {
+    console.error(`State[${index}] Error: %s`, error); // eslint-disable-line no-console
+    throw error;
+  }
 }

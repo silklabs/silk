@@ -24,43 +24,28 @@ function genPublicKeyFromSecret(
   return AppCryptoSync.genEd25519PubKeyFromSecret(secretKeyHex);
 }
 
-function sign(
-  message: Buffer,
-  secretKey: Buffer
-): Buffer {
-  invariant(secretKey.length === encodingLength);
-  const [errorMsg, signatureHex] = global._crypto_ed25519_sign_hex(
-    message.toString('hex'),
-    secretKey.toString('hex')
-  );
-  if (errorMsg) {
-    throw new Error(errorMsg);
-  }
-  return new Buffer(signatureHex, 'hex');
+function genSign(
+  messageHex: string,
+  secretKeyHex: string
+): Promise<string> {
+  invariant(secretKeyHex.length === 2 * encodingLength);
+  return AppCryptoSync.genEd25519Sign(messageHex, secretKeyHex);
 }
 
-function verify(
-  message: Buffer,
-  signature: Buffer,
-  publicKey: Buffer
-): boolean {
-  invariant(publicKey.length === encodingLength);
-  invariant(signature.length === 2 * encodingLength);
-  const [errorMsg, verify] = global._crypto_ed25519_verify_hex(
-    message.toString('hex'),
-    signature.toString('hex'),
-    publicKey.toString('hex')
-  );
-  if (errorMsg) {
-    throw new Error(errorMsg);
-  }
-  return verify === 'true';
+function genVerify(
+  messageHex: string,
+  signatureHex: string,
+  publicKeyHex: string
+): Promise<boolean> {
+  invariant(publicKeyHex.length === 2 * encodingLength);
+  invariant(signatureHex.length === 4 * encodingLength);
+  return AppCryptoSync.genEd25519Verify(messageHex, signatureHex, publicKeyHex);
 }
 
 overrideCryptoSignImplementation({
   encodingLength,
   genKeyPair,
   genPublicKeyFromSecret,
-  sign,
-  verify,
+  genSign,
+  genVerify,
 });

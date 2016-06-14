@@ -228,8 +228,8 @@ export class UserState extends EventEmitter {
     log.info('Registering device', deviceId);
 
     // Sign the deviceId with the account token...
-    // Ugh, we're signing a hex string (which will be hashed twice
-    // before actually being signed).
+    // Ugh, we're signing a hex string, which will be hashed as a
+    // string before actually being signed.
     const registrationToken = await this.accessToken.genSign(deviceId);
 
     let {

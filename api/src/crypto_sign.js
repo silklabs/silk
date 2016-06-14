@@ -65,35 +65,35 @@ function genPublicKeyFromSecret(
   return Promise.resolve(keyPair.getPublic('hex'));
 }
 
-function sign(
-  message: Buffer,
-  secretKey: Buffer
-): Buffer {
-  invariant(secretKey.length === encodingLength);
-  const key = ed25519.keyFromSecret(secretKey);
-  const signature = key.sign(message);
-  return new Buffer(signature.toBytes());
+function genSign(
+  messageHex: string,
+  secretKeyHex: string
+): Promise<string> {
+  invariant(secretKeyHex.length === 2 * encodingLength);
+  const key = ed25519.keyFromSecret(secretKeyHex);
+  const signature = key.sign(messageHex);
+  return Promise.resolve(signature.toHex().toLowerCase());
 }
 
-function verify(
-  message: Buffer,
-  signature: Buffer,
-  publicKey: Buffer
-): boolean {
-  invariant(publicKey.length === encodingLength);
-  invariant(signature.length === 2 * encodingLength);
+function genVerify(
+  messageHex: string,
+  signatureHex: string,
+  publicKeyHex: string
+): Promise<boolean> {
+  invariant(publicKeyHex.length === 2 * encodingLength);
+  invariant(signatureHex.length === 4 * encodingLength);
   // `elliptic` is usually fine eating Buffers where it expects arrays,
   // but here are two cases where we really need to pass arrays.
-  const key = ed25519.keyFromPublic(Array.from(publicKey));
-  return key.verify(message, Array.from(signature));
+  const key = ed25519.keyFromPublic(publicKeyHex);
+  return key.verify(messageHex, signatureHex);
 }
 
 const API = {
   encodingLength,
   genKeyPair,
   genPublicKeyFromSecret,
-  sign,
-  verify,
+  genSign,
+  genVerify,
 };
 export default API;
 

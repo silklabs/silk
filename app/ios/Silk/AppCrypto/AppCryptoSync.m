@@ -46,8 +46,6 @@ NSString *binToNSHexString(unsigned char *bytes, size_t bytesLength) {
 
 @implementation AppCryptoSync
 
-@synthesize bridge = _bridge;
-
 RCT_EXPORT_MODULE()
 
 - (NSDictionary<NSString *, id> *)constantsToExport
@@ -59,121 +57,18 @@ RCT_EXPORT_MODULE()
   };
 }
 
-- (void)setBridge:(RCTBridge *)bridge
+- (instancetype)init
 {
-  _bridge = bridge;
-
   // This module may get reinstantiated if the bridge reloads, but we can't
   // initialize sodium more than once.
   static BOOL sodiumInitialized = NO;
   if (!sodiumInitialized && sodium_init() != 0) {
     NSLog(@"Could not initialize libsodium!");
-    return;
+    return nil;
   }
   sodiumInitialized = YES;
 
-  id<RCTJavaScriptExecutor> executor = [bridge valueForKey:@"javaScriptExecutor"];
-  if (![executor isKindOfClass:[RCTJSCExecutor class]]) {
-    NSLog(@"Failed to inject ed25519 native implementation into JavaScript context!");
-    return;
-  }
-
-  // Inject native implementations for EdDSA/Ed25519 signing/verification into
-  // the global JS context. They will still get executed synchronously on the JS
-  // thread, but they're much faster than any JS implementation.
-
-  // All helpers below return an array of which the first element is an error
-  // message and subsequent element(s) are the return value(s).
-
-  [executor addSynchronousHookWithName:@"_crypto_ed25519_sign_hex"
-                            usingBlock: ^NSArray<NSString *> *(NSString *msgHex, NSString *seedHex) {
-    int ret;
-
-    // Convert seed (secret) to binary.
-    unsigned char seedBytes[crypto_sign_ed25519_SEEDBYTES];
-    ret = nsHexStringToBin(seedHex, seedBytes, sizeof(seedBytes));
-    if (ret != 0) {
-      sodium_memzero(seedBytes, sizeof(seedBytes));
-      return @[@"Invalid hex string: seed"];
-    }
-
-    // Generate libsodium secret key [seed, public key].
-    unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
-    unsigned char secretKeyBytes[crypto_sign_ed25519_SECRETKEYBYTES];
-    ret = crypto_sign_ed25519_seed_keypair(publicKeyBytes, secretKeyBytes, seedBytes);
-    sodium_memzero(seedBytes, sizeof(seedBytes));
-    if (ret != 0) {
-      sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
-      return @[@"Failed to generate keypair from seed."];
-    }
-
-    // Convert message to binary.
-    if ([msgHex length] % 2 != 0) {
-      sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
-      return @[@"Invalid hex string: message"];
-    }
-    const size_t msgBytesLength = [msgHex length] / 2;
-    unsigned char *msgBytes = malloc(msgBytesLength);
-    if (!msgBytes) {
-      @throw([NSException exceptionWithName:@"Out Of Memory" reason:nil userInfo:nil]);
-    }
-    ret = nsHexStringToBin(msgHex, msgBytes, msgBytesLength);
-    if (ret != 0) {
-      sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
-      free(msgBytes);
-      return @[@"Invalid hex string: message"];
-    }
-
-    // Generate signature.
-    unsigned char sigBytes[crypto_sign_ed25519_BYTES];
-    unsigned long long siglen;
-    ret = crypto_sign_ed25519_detached(sigBytes, &siglen, msgBytes, msgBytesLength, secretKeyBytes);
-    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
-    free(msgBytes);
-    RCTAssert(siglen == sizeof(sigBytes), @"inconsistent signature length");
-    if (ret != 0) {
-      return @[@"Failed to create signature."];
-    }
-
-    // Clean up and convert result to hex.
-    return @[[NSNull null], binToNSHexString(sigBytes, sizeof(sigBytes))];
-  }];
-
-  [executor addSynchronousHookWithName:@"_crypto_ed25519_verify_hex"
-                            usingBlock: ^NSArray<NSString *> *(NSString *msgHex, NSString *sigHex, NSString *pubHex) {
-    int ret;
-
-    // Convert signature to binary.
-    unsigned char sigBytes[crypto_sign_ed25519_BYTES];
-    ret = nsHexStringToBin(sigHex, sigBytes, sizeof(sigBytes));
-    if (ret != 0) {
-      return @[@"Invalid hex string: signature"];
-    }
-
-    // Convert public key to binary.
-    unsigned char pubBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
-    ret = nsHexStringToBin(pubHex, pubBytes, sizeof(pubBytes));
-    if (ret != 0) {
-      return @[@"Invalid hex string: public key"];
-    }
-
-    // Convert message to binary.
-    if ([msgHex length] % 2 != 0) {
-      return @[@"Invalid hex string: message"];
-    }
-    const size_t msgBytesLength = [msgHex length] / 2;
-    unsigned char *msgBytes = malloc(msgBytesLength);
-    ret = nsHexStringToBin(msgHex, msgBytes, msgBytesLength);
-    if (ret != 0) {
-      free(msgBytes);
-      return @[@"Invalid hex string: message"];
-    }
-
-    // Verify signature and clean up.
-    ret = crypto_sign_ed25519_verify_detached(sigBytes, msgBytes, msgBytesLength, pubBytes);
-    free(msgBytes);
-    return @[[NSNull null], (ret == 0) ? @"true" : @"false"];
-  }];
+  return [super init];
 }
 
 /**
@@ -243,4 +138,165 @@ RCT_EXPORT_METHOD(genEd25519PubKeyFromSecret:(NSString *)seedHex
   resolve(publicKeyHex);
 }
 
+/**
+ * Generate ED25519 signature
+ */
+RCT_EXPORT_METHOD(genEd25519Sign:(NSString *)msgHex
+                  seed:(NSString *)seedHex
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  if ([seedHex length] != 2 * crypto_sign_ed25519_SEEDBYTES) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:1 userInfo:nil];
+    reject(@"E_ED25519_INVALID_KEY_LENGTH", @"Failed to generate public key", error);
+    return;
+  }
+
+  int ret;
+
+  // Convert seed (secret) to binary.
+  unsigned char seedBytes[crypto_sign_ed25519_SEEDBYTES];
+  ret = nsHexStringToBin(seedHex, seedBytes, sizeof(seedBytes));
+  if (ret != 0) {
+    sodium_memzero(seedBytes, sizeof(seedBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_KEY_FORMAT", @"Failed to sign message", error);
+    return;
+  }
+
+  // Generate libsodium secret key [seed, public key].
+  unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
+  unsigned char secretKeyBytes[crypto_sign_ed25519_SECRETKEYBYTES];
+  ret = crypto_sign_ed25519_seed_keypair(publicKeyBytes, secretKeyBytes, seedBytes);
+  sodium_memzero(seedBytes, sizeof(seedBytes));
+  if (ret != 0) {
+    sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_KEY_PAIR_FAILED", @"Failed to sign message", error);
+    return;
+  }
+
+  // Convert message to binary.
+  if ([msgHex length] % 2 != 0) {
+    sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_MESSAGE_FORMAT", @"Failed to sign message", error);
+    return;
+  }
+  const size_t msgBytesLength = [msgHex length] / 2;
+  unsigned char *msgBytes = malloc(msgBytesLength);
+  if (!msgBytes) {
+    @throw([NSException exceptionWithName:@"Out Of Memory" reason:nil userInfo:nil]);
+  }
+  ret = nsHexStringToBin(msgHex, msgBytes, msgBytesLength);
+  if (ret != 0) {
+    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+    free(msgBytes);
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_MESSAGE_FORMAT", @"Failed to sign message", error);
+    return;
+  }
+
+  // Generate signature.
+  unsigned char sigBytes[crypto_sign_ed25519_BYTES];
+  unsigned long long siglen;
+  ret = crypto_sign_ed25519_detached(sigBytes, &siglen, msgBytes, msgBytesLength, secretKeyBytes);
+  sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+  sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+  free(msgBytes);
+  RCTAssert(siglen == sizeof(sigBytes), @"inconsistent signature length");
+  if (ret != 0) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_MESSAGE_FORMAT", @"Failed to sign message", error);
+    return;
+  }
+
+  // Clean up and convert result to hex.
+  NSString *sigHex = binToNSHexString(sigBytes, sizeof(sigBytes));
+  sodium_memzero(sigBytes, sizeof(sigBytes));
+  resolve(sigHex);
+}
+
+/**
+ * Verify ED25519 signature
+ */
+RCT_EXPORT_METHOD(genEd25519Verify:(NSString *)msgHex
+                  signature:(NSString *)sigHex
+                  publicKey:(NSString *)pubHex
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  if ([sigHex length] != 2 * crypto_sign_ed25519_BYTES) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:1 userInfo:nil];
+    reject(@"E_ED25519_INVALID_SIGNATURE_LENGTH", @"Failed to verify signature", error);
+    return;
+  }
+
+  if ([pubHex length] != 2 * crypto_sign_ed25519_PUBLICKEYBYTES) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:1 userInfo:nil];
+    reject(@"E_ED25519_INVALID_KEY_LENGTH", @"Failed to verify signature", error);
+    return;
+  }
+
+  int ret;
+
+  // Convert signature to binary.
+  unsigned char sigBytes[crypto_sign_ed25519_BYTES];
+  ret = nsHexStringToBin(sigHex, sigBytes, sizeof(sigBytes));
+  if (ret != 0) {
+    sodium_memzero(sigBytes, sizeof(sigBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_SIGNATURE_FORMAT", @"Failed to verify signature", error);
+    return;
+  }
+
+  // Convert public key to binary.
+  unsigned char pubBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
+  ret = nsHexStringToBin(pubHex, pubBytes, sizeof(pubBytes));
+  if (ret != 0) {
+    sodium_memzero(sigBytes, sizeof(sigBytes));
+    sodium_memzero(pubBytes, sizeof(pubBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_KEY_FORMAT", @"Failed to verify signature", error);
+    return;
+  }
+
+  // Convert message to binary.
+  if ([msgHex length] % 2 != 0) {
+    sodium_memzero(sigBytes, sizeof(sigBytes));
+    sodium_memzero(pubBytes, sizeof(pubBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_MESSAGE_FORMAT", @"Failed to verify signature", error);
+    return;
+  }
+  const size_t msgBytesLength = [msgHex length] / 2;
+  unsigned char *msgBytes = malloc(msgBytesLength);
+  ret = nsHexStringToBin(msgHex, msgBytes, msgBytesLength);
+  if (ret != 0) {
+    free(msgBytes);
+    sodium_memzero(sigBytes, sizeof(sigBytes));
+    sodium_memzero(pubBytes, sizeof(pubBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_ED25519_INVALID_MESSAGE_FORMAT", @"Failed to verify signature", error);
+    return;
+  }
+
+  // Verify signature and clean up.
+  ret = crypto_sign_ed25519_verify_detached(sigBytes, msgBytes, msgBytesLength, pubBytes);
+  free(msgBytes);
+  sodium_memzero(sigBytes, sizeof(sigBytes));
+  sodium_memzero(pubBytes, sizeof(pubBytes));
+
+  resolve(@(ret));
+}
 @end

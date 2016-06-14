@@ -6,13 +6,15 @@
   "scripts": {
     "flow": "flow check",
     "lint": "eslint .",
-    "mocha": "NODE_ENV=production mocha $(find test -name '*_test.js')",
+    "mocha-prod": "NODE_ENV=production mocha $(find test -name '*_test.js')",
+    "mocha": "NODE_ENV=development REDUX_LOGGING=false mocha $(find test -name '*_test.js')",
     "silk-build": "silk-buildjs .",
-    "test": "npm run lint && npm run mocha"
+    "test": "npm run lint && npm run mocha && npm run mocha-prod"
   },
   "dependencies": {
     "babel-preset-silk-node4": "^0.17.0",
     "redux": "3.5.2",
+    "redux-immutable-state-invariant": "1.2.3",
     "redux-logger": "2.6.1",
     "redux-saga": "0.10.4",
     "redux-thunk": "2.1.0",

@@ -48,7 +48,7 @@ static __inline Client *open(FrameCallback frameCallback,
   }
 
   OpenFunc libpreview_open = (OpenFunc) dlsym(handle, "libpreview_open");
-  if (open == NULL) {
+  if (libpreview_open == NULL) {
     ALOGE("libpreview.so dlsym failed: %s\n", dlerror());
     dlclose(handle);
     handle = NULL;

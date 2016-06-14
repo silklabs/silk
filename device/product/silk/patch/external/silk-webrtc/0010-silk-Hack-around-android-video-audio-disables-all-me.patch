@@ -1,13 +1,7 @@
 From be223a5c3db6652d2ba5e83d5a8f065eed377085 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Mon, 6 Jun 2016 22:38:42 -0700
-Subject: [PATCH 10/11] silk: Hack around android video/audio [disables all
- media]
-
----
- webrtc/media/engine/webrtcvoiceengine.cc | 3 ++-
- webrtc/media/media.gyp                   | 4 ++--
- 2 files changed, 4 insertions(+), 3 deletions(-)
+Subject: [PATCH 10/11] silk: Hack until include_internal_audio_device=1 is enabled
 
 diff --git a/webrtc/media/engine/webrtcvoiceengine.cc b/webrtc/media/engine/webrtcvoiceengine.cc
 index b899470..d074abf 100644
@@ -23,25 +17,6 @@ index b899470..d074abf 100644
    webrtc::Trace::set_level_filter(kDefaultTraceFilter);
  
    // No ADM supplied? Get the default one from VoE.
-diff --git a/webrtc/media/media.gyp b/webrtc/media/media.gyp
-index 621af83..d7fd062 100644
---- a/webrtc/media/media.gyp
-+++ b/webrtc/media/media.gyp
-@@ -138,12 +138,12 @@
-           ],
-         }, {
-           'defines': [
--            'HAVE_WEBRTC_VIDEO',
-+            #'HAVE_WEBRTC_VIDEO',
-             'HAVE_WEBRTC_VOICE',
-           ],
-           'direct_dependent_settings': {
-             'defines': [
--              'HAVE_WEBRTC_VIDEO',
-+              #'HAVE_WEBRTC_VIDEO',
-               'HAVE_WEBRTC_VOICE',
-             ],
-           },
 -- 
 2.7.3
 

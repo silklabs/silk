@@ -67,14 +67,13 @@ export function timerEntityToMs(entities: string): ?number {
   }
 }
 
-export function* timerMonitorTask(
+export function* timerMonitorSaga(
   environment: Environment,
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   try {
     log.debug(`Starting timer monitor task`);
 
-    const {intentChannel, speak} = environment;
-    invariant(intentChannel);
+    const {speak} = environment;
     invariant(speak);
 
     let now = Date.now();
@@ -147,7 +146,7 @@ export function* timerMonitorTask(
   }
 }
 
-export function* modifyTimers(
+export default function* modifyTimers(
   environment: Environment,
   type: 'start' | 'cancel',
   entities: Array<string>

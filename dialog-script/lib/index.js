@@ -6,46 +6,46 @@ import createLog from 'silk-log';
 import getDialogEngine from 'silk-dialog-engine';
 import invariant from 'assert';
 
+// The main saga function.
 import saga from './saga';
+
+// The one and only data store.
 import store from './store';
 import textToIntention from './textToIntention';
 
 import type {DialogEngine} from 'silk-dialog-engine';
-
-export type Task = {
-  isRunning(): boolean;
-  isCancelled(): boolean;
-  result(): any;
-  error(): any;
-  done: Promise<any>;
-  cancel(): void;
-};
+import type {Saga} from './environment';
 
 const log = createLog('dialog-script');
 
-class Script{
+// The currently running saga.
+let currentSaga: ?Saga = null;
 
-  _task: ?Task;
+// Launch the main saga.
+function startScript(dialogEngine: DialogEngine): void {
+  invariant(!currentSaga);
 
-  constructor(dialogEngine: DialogEngine) {
-    log.info(`Starting script`);
-    log.debug(`Initial state`, store.getState());
+  log.info(`Starting script`);
+  log.debug(`Initial state`, store.getState());
 
-    this._task = store.runSaga(saga, dialogEngine);
-    invariant(this._task.isRunning());
-  }
-
-  unload() {
-    if (!this._task) {
-      log.warn(`Unloaded more than once`);
-      return;
-    }
-
-    this._task.cancel();
-    this._task = null;
-  }
+  currentSaga = store.runSaga(saga, dialogEngine);
+  invariant(currentSaga.isRunning());
 }
 
+// Cancel the main saga.
+function stopScript(): void {
+  if (!currentSaga) {
+    log.warn(`Unloaded more than once?`);
+    return;
+  }
+
+  log.info(`Canceling script`);
+  currentSaga.cancel();
+  currentSaga = null;
+}
+
+// Get the dialog engine and make sure it is configured with custom intents and
+// Luis keys.
 const dialogEngine = getDialogEngine();
 invariant(dialogEngine);
 
@@ -57,18 +57,19 @@ dialogEngine.configure({
   },
 });
 
-let script = new Script(dialogEngine);
+// Run the dialog engine with our script.
+startScript(dialogEngine);
 
+// This function is called whenever new packages have been pushed to the device
+// so we need to cancel any existing script immediately.
 export function silkWillUnload() {
-  log.info('Farewell');
-  invariant(script);
-  script.unload();
-  script = null;
+  log.info('Unloading');
+  stopScript();
 }
 
 // Only for testing!
 export function reload() {
-  invariant(script);
-  script.unload();
-  script = new Script(dialogEngine);
+  log.info('Reloading');
+  stopScript();
+  startScript(dialogEngine);
 }

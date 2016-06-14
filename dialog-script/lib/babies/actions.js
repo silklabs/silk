@@ -10,7 +10,7 @@ export type Action =
   {
     type: 'BABIES_ADD' | 'BABIES_RENAME';
     payload: {
-      id: number;
+      id: string;
       name: string;
     };
   } | {
@@ -18,7 +18,7 @@ export type Action =
   }
 ;
 
-export function addBaby(id: number, name: string): Action {
+export function addBaby(id: string, name: string): Action {
   return {
     type: TYPE_ADD,
     payload: {
@@ -28,7 +28,7 @@ export function addBaby(id: number, name: string): Action {
   };
 }
 
-export function renameBaby(id: number, name: string): Action {
+export function renameBaby(id: string, name: string): Action {
   return {
     type: TYPE_RENAME,
     payload: {

@@ -5,6 +5,7 @@
 import createLog from 'silk-log';
 import {call, put, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
+import * as uuid from 'uuid';
 
 import {
   addBaby,
@@ -14,8 +15,6 @@ import type {Environment} from '../environment';
 
 const log = createLog(`dialog-script-babies-saga`);
 
-export const getNextBabyId: ((state: Object) => number) =
-  (state) => state.nextBabyId;
 export const getBabies: ((state: Object) => Object) =
   (state) => state.babies.slice();
 
@@ -33,6 +32,13 @@ export function* queryBabyName(
 
     yield call(speak, intro + query, false);
     const text = yield take(textChannel);
+
+    /**
+     * Wait until the intent event has passed so that it doesn't race with some
+     * other |take| call.
+     */
+    yield take(intentChannel);
+
     if (!text) {
       continue;
     }
@@ -67,8 +73,8 @@ export function* add(
     return;
   }
 
-  const id = yield select(getNextBabyId);
-  invariant(typeof id === 'number');
+  const id = yield call(uuid.v4);
+  invariant(id);
 
   yield put(addBaby(id, name));
 
@@ -89,7 +95,7 @@ export function* rename(
   }
 
   let name = ``;
-  let id: ?number = null;
+  let id = ``;
 
   if (babies.length === 1) {
     name = yield call(queryBabyName, environment);
@@ -116,12 +122,12 @@ export function* rename(
         }
       }
 
-      if (id !== null) {
+      if (id) {
         break;
       }
     }
 
-    if (id === null) {
+    if (!id) {
       yield call(speak,
                  `Sorry I'm having trouble. Please try again later.`,
                  true);
@@ -134,8 +140,6 @@ export function* rename(
   if (!name) {
     return;
   }
-
-  invariant(typeof id === 'number');
 
   yield put(renameBaby(id, name));
   yield call(speak, `Ok, I've changed the baby's name to ${name}.`, true);

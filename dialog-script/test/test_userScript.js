@@ -88,7 +88,7 @@ suite(`userScript`, () => {
     const name = `john`;
     await testUserScript(dialogEngine, [
       {
-        speak: `Register this baby`,
+        speak: `Register my baby`,
         hear: `What is the baby's name?`,
         finished: false,
       }, {

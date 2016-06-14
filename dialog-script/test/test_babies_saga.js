@@ -4,11 +4,11 @@
 
 import assert from 'assert';
 import {call, put, select, take} from 'redux-saga/effects';
+import * as uuid from 'uuid';
 
 import {testScript} from './utils';
 import {
   default as saga,
-  getNextBabyId,
   getBabies,
   queryBabyName,
   add,
@@ -75,6 +75,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -97,6 +99,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: ``,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
@@ -104,6 +108,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -126,6 +132,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -140,6 +148,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -162,6 +172,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: ``,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
@@ -169,6 +181,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -183,6 +197,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -205,6 +221,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: ``,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
                        false),
@@ -212,6 +230,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -226,6 +246,8 @@ suite(`babies/saga`, () => {
           expect: take(environment.textChannel),
         }, {
           provide: name,
+          expect: take(environment.intentChannel),
+        }, {
           expect: call(environment.speak,
                        `I heard ${name}. Is that correct?`,
                        false),
@@ -267,13 +289,13 @@ suite(`babies/saga`, () => {
 
     test(`name`, () => {
       const name = `bob`;
-      const id = 10;
+      const id = uuid.v4();
       testScript(sagaGenerator, [
         {
           expect: call(queryBabyName, environment),
         }, {
           provide: name,
-          expect: select(getNextBabyId),
+          expect: call(uuid.v4),
         }, {
           provide: id,
           expect: put(addBaby(id, name)),

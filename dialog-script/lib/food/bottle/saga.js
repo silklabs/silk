@@ -33,7 +33,7 @@ function* queryBottleType(
 
     const {intent, entities} = event;
 
-    if (intent === `confirm`) {
+    if (intent === `None`) {
       for (const entity of entities) {
         if (entity === `breast milk`) {
           type = `milk`;
@@ -78,7 +78,7 @@ function* queryAmount(
 
     const {intent, entities} = event;
 
-    if (intent === `confirm`) {
+    if (intent === `None`) {
       for (const entity of entities) {
         const tokens = entity.split(` `);
         const num = parseInt(tokens[0]);

@@ -44,7 +44,7 @@ export default function*(
         type = 'nursing';
         break;
       }
-      if (intent === `confirm` &&
+      if (intent === `None` &&
           entities.some((e) => e === `bottle` || e === `formula`)) {
         type = 'bottle';
         break;

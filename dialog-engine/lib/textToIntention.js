@@ -119,13 +119,13 @@ export default class TextToIntention {
 
     let topMatchIntent: ?IntentResponse = null;
     response.intents.forEach((intentResponse: IntentResponse) => {
-      if (intentResponse.score >= 0.5 &&
+      if (intentResponse.score >= 0.35 &&
           (!topMatchIntent || topMatchIntent.score < intentResponse.score)) {
         topMatchIntent = intentResponse;
       }
     });
 
-    if (!topMatchIntent || topMatchIntent.intent === `None`) {
+    if (!topMatchIntent) {
       return {
         intent: UNKNOWN_INTENT,
         entities: [],
@@ -134,8 +134,8 @@ export default class TextToIntention {
 
     const entities = [];
     for (let entity of response.entities) {
-      if (entity.score >= 0.5) {
-        entities.push(entity);
+      if (entity.score >= 0.35) {
+        entities.push(entity.entity);
       }
     }
 

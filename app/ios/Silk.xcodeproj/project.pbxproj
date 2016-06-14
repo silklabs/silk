@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1753E8171D1062F500A0C5FF /* SLKCryptoTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1753E8161D1062F500A0C5FF /* SLKCryptoTest.m */; };
 		17E8D0C41D012931004581ED /* TPYHelloWorldDemoView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 17E8D0C31D012931004581ED /* TPYHelloWorldDemoView.xib */; };
 		17E8D0C61D0129CA004581ED /* TPYHelloWorldReactViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E8D0C51D0129CA004581ED /* TPYHelloWorldReactViewManager.m */; };
 		17E8D0CA1D012B11004581ED /* TPYHelloWorldReactView.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E8D0C91D012B11004581ED /* TPYHelloWorldReactView.m */; };
@@ -17,7 +18,7 @@
 		351329491CDD1C2300805844 /* DINRoundPro-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329441CDD1C2300805844 /* DINRoundPro-Regular.otf */; };
 		3513294A1CDD1C2300805844 /* DINRoundPro-Light.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329451CDD1C2300805844 /* DINRoundPro-Light.otf */; };
 		3513294B1CDD1C2300805844 /* DINRoundPro-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */; };
-		357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */ = {isa = PBXBuildFile; fileRef = 357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */; };
+		357D3EE61C34F96E005BBEC8 /* SLKCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 357D3EE51C34F96E005BBEC8 /* SLKCrypto.m */; };
 		357D3F601C38AB44005BBEC8 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357D3F5E1C38AB2B005BBEC8 /* libsodium.a */; };
 		3582BA421D0278D2000C6830 /* TPYHelloWorldDemoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3582BA411D0278D2000C6830 /* TPYHelloWorldDemoView.m */; };
 		35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C03E901CC02577008EF119 /* NotImplemented.swift */; };
@@ -50,9 +51,6 @@
 		5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302AC1ABCB8CE00DB3ED1 /* libRCTActionSheet.a */; };
 		5758F3381B609C5000C18E5D /* libRCTGeolocation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302BA1ABCB90400DB3ED1 /* libRCTGeolocation.a */; };
 		5758F3391B609C5000C18E5D /* libRCTVibration.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302E41ABCB9EE00DB3ED1 /* libRCTVibration.a */; };
-		577396151BA2914C00F900C6 /* AppCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 577396141BA2914C00F900C6 /* AppCrypto.m */; };
-		577396171BA2921400F900C6 /* AppCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396161BA2921400F900C6 /* AppCrypto.swift */; };
-		5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577396181BA29F8F00F900C6 /* AppCryptoTest.swift */; };
 		5774D7641B90D6710071F187 /* SLKWebSocketModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774D7631B90D6710071F187 /* SLKWebSocketModule.m */; };
 		5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139FDEF41B06529B00C62182 /* libRCTWebSocket.a */; };
 		57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AC68721B4F03B2009B70A3 /* AppDelegate.swift */; };
@@ -269,6 +267,8 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "../node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
+		1753E8161D1062F500A0C5FF /* SLKCryptoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKCryptoTest.m; sourceTree = "<group>"; };
+		1753E8181D10633900A0C5FF /* SLKCrypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKCrypto.h; sourceTree = "<group>"; };
 		17E8D0C31D012931004581ED /* TPYHelloWorldDemoView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TPYHelloWorldDemoView.xib; sourceTree = "<group>"; };
 		17E8D0C51D0129CA004581ED /* TPYHelloWorldReactViewManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPYHelloWorldReactViewManager.m; sourceTree = "<group>"; };
 		17E8D0C71D012A19004581ED /* TPYHelloWorldReactViewManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TPYHelloWorldReactViewManager.h; sourceTree = "<group>"; };
@@ -279,7 +279,7 @@
 		351329441CDD1C2300805844 /* DINRoundPro-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Regular.otf"; sourceTree = "<group>"; };
 		351329451CDD1C2300805844 /* DINRoundPro-Light.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Light.otf"; sourceTree = "<group>"; };
 		351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Bold.otf"; sourceTree = "<group>"; };
-		357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCryptoSync.m; sourceTree = "<group>"; };
+		357D3EE51C34F96E005BBEC8 /* SLKCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKCrypto.m; sourceTree = "<group>"; };
 		357D3F271C38AB2B005BBEC8 /* core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core.h; sourceTree = "<group>"; };
 		357D3F281C38AB2B005BBEC8 /* crypto_aead_aes256gcm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_aead_aes256gcm.h; sourceTree = "<group>"; };
 		357D3F291C38AB2B005BBEC8 /* crypto_aead_chacha20poly1305.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_aead_chacha20poly1305.h; sourceTree = "<group>"; };
@@ -361,9 +361,6 @@
 		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		5758F23A1B5EFE7600C18E5D /* Sync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
-		577396141BA2914C00F900C6 /* AppCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppCrypto.m; sourceTree = "<group>"; };
-		577396161BA2921400F900C6 /* AppCrypto.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCrypto.swift; sourceTree = "<group>"; };
-		577396181BA29F8F00F900C6 /* AppCryptoTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCryptoTest.swift; sourceTree = "<group>"; };
 		5774D7631B90D6710071F187 /* SLKWebSocketModule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKWebSocketModule.m; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -676,15 +673,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		577396131BA28FCC00F900C6 /* AppCrypto */ = {
+		577396131BA28FCC00F900C6 /* SLKCrypto */ = {
 			isa = PBXGroup;
 			children = (
-				577396141BA2914C00F900C6 /* AppCrypto.m */,
-				577396181BA29F8F00F900C6 /* AppCryptoTest.swift */,
-				577396161BA2921400F900C6 /* AppCrypto.swift */,
-				357D3EE51C34F96E005BBEC8 /* AppCryptoSync.m */,
+				1753E8181D10633900A0C5FF /* SLKCrypto.h */,
+				357D3EE51C34F96E005BBEC8 /* SLKCrypto.m */,
+				1753E8161D1062F500A0C5FF /* SLKCryptoTest.m */,
 			);
-			path = AppCrypto;
+			path = SLKCrypto;
 			sourceTree = "<group>";
 		};
 		5774D75C1B90D6050071F187 /* WebSocket */ = {
@@ -700,13 +696,13 @@
 			isa = PBXGroup;
 			children = (
 				3CFBF22B1BBF41ED00A7AF67 /* BLE */,
-				577396131BA28FCC00F900C6 /* AppCrypto */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				5774D75C1B90D6050071F187 /* WebSocket */,
 				57BCE10B1B69910C0047088B /* BlobManager */,
 				5741E07F1B59FC2500F9376C /* OverlayModal */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
 				35C03E921CC03307008EF119 /* SLKConfig */,
+				577396131BA28FCC00F900C6 /* SLKCrypto */,
 				35C03E931CC03357008EF119 /* SLKUtil */,
 				57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
@@ -886,7 +882,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftMigration = 0700;
-				LastSwiftUpdateCheck = 0700;
+				LastSwiftUpdateCheck = 0720;
 				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = Facebook;
 				TargetAttributes = {
@@ -1149,8 +1145,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */,
+				1753E8171D1062F500A0C5FF /* SLKCryptoTest.m in Sources */,
 				35F768331CFFDF8A003EAF4D /* SLKConfigTest.swift in Sources */,
-				5773961A1BA29F9300F900C6 /* AppCryptoTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1180,15 +1176,13 @@
 				35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
 				35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */,
-				577396151BA2914C00F900C6 /* AppCrypto.m in Sources */,
 				57BCE0FA1B6962ED0047088B /* BlobManager.swift in Sources */,
 				5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */,
 				5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */,
 				3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */,
-				577396171BA2921400F900C6 /* AppCrypto.swift in Sources */,
 				35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */,
 				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,
-				357D3EE61C34F96E005BBEC8 /* AppCryptoSync.m in Sources */,
+				357D3EE61C34F96E005BBEC8 /* SLKCrypto.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

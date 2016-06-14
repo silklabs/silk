@@ -1,9 +1,8 @@
+#import <CommonCrypto/CommonCrypto.h>
 #import <CommonCrypto/CommonDigest.h>
 
-#import "RCTBridge.h"
-#import "RCTBridgeModule.h"
-#import "RCTJSCExecutor.h"
 #import "RCTUtils.h"
+#import "SLKCrypto.h"
 
 #include "sodium.h"
 
@@ -41,10 +40,7 @@ NSString *binToNSHexString(unsigned char *bytes, size_t bytesLength) {
 }
 
 
-@interface AppCryptoSync : NSObject<RCTBridgeModule>
-@end
-
-@implementation AppCryptoSync
+@implementation SLKCrypto
 
 RCT_EXPORT_MODULE()
 
@@ -70,6 +66,60 @@ RCT_EXPORT_MODULE()
 
   return [super init];
 }
+
+RCT_EXPORT_METHOD(genRandomBytes:(nonnull NSNumber *)length
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  unsigned char *bytes = malloc(length.unsignedIntValue);
+  if (!bytes) {
+    @throw([NSException exceptionWithName:@"Out Of Memory" reason:nil userInfo:nil]);
+  }
+
+  int ret;
+  ret = SecRandomCopyBytes(kSecRandomDefault, length.unsignedIntValue, bytes);
+
+  if (ret != 0) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_RAND_BYTES_FAILED", @"Failed to generate random bytes", error);
+    return;
+  }
+
+  resolve(binToNSHexString(bytes, length.unsignedIntValue));
+}
+
+RCT_EXPORT_METHOD(genPBKDF2KeyDerivation:(NSString *)input
+                  salt:(NSString *)salt
+                  rounds:(nonnull NSNumber *)rounds
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  const char *saltBytes = [salt UTF8String];
+  const char *inputBytes = [input UTF8String];
+  unsigned char derivedKeyBytes[kCCKeySizeAES256];
+
+  int ret;
+  ret = CCKeyDerivationPBKDF(
+    kCCPBKDF2,
+    inputBytes,
+    [input lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+    (const unsigned char *)saltBytes,
+    [salt lengthOfBytesUsingEncoding:NSUTF8StringEncoding],
+    kCCPRFHmacAlgSHA256,
+    rounds.unsignedIntValue,
+    derivedKeyBytes,
+    sizeof(derivedKeyBytes)
+  );
+
+  if (ret != 0) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_PBKDF2_FAILED", @"Failed to derive key", error);
+    return;
+  }
+
+  resolve(binToNSHexString(derivedKeyBytes, sizeof(derivedKeyBytes)));
+}
+
 
 /**
  * Generate a new Ed25519 key pair.

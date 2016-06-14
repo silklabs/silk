@@ -9,19 +9,19 @@ import invariant from 'assert';
 import { NativeModules } from 'react-native';
 import { overrideCryptoSignImplementation } from 'silk-api';
 
-const { AppCryptoSync } = NativeModules;
+const { SLKCrypto } = NativeModules;
 
-const encodingLength = AppCryptoSync.EncodingLength;
+const encodingLength = SLKCrypto.EncodingLength;
 
 function genKeyPair(): Promise<[string, string]> {
-  return AppCryptoSync.genEd25519KeyPair();
+  return SLKCrypto.genEd25519KeyPair();
 }
 
 function genPublicKeyFromSecret(
   secretKeyHex: string
 ): Promise<string> {
   invariant(secretKeyHex.length === 2 * encodingLength);
-  return AppCryptoSync.genEd25519PubKeyFromSecret(secretKeyHex);
+  return SLKCrypto.genEd25519PubKeyFromSecret(secretKeyHex);
 }
 
 function genSign(
@@ -29,7 +29,7 @@ function genSign(
   secretKeyHex: string
 ): Promise<string> {
   invariant(secretKeyHex.length === 2 * encodingLength);
-  return AppCryptoSync.genEd25519Sign(messageHex, secretKeyHex);
+  return SLKCrypto.genEd25519Sign(messageHex, secretKeyHex);
 }
 
 function genVerify(
@@ -39,7 +39,7 @@ function genVerify(
 ): Promise<boolean> {
   invariant(publicKeyHex.length === 2 * encodingLength);
   invariant(signatureHex.length === 4 * encodingLength);
-  return AppCryptoSync.genEd25519Verify(messageHex, signatureHex, publicKeyHex);
+  return SLKCrypto.genEd25519Verify(messageHex, signatureHex, publicKeyHex);
 }
 
 overrideCryptoSignImplementation({

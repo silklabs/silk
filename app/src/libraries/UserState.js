@@ -18,7 +18,7 @@ import {
 import createLog from 'silk-log';
 import { AccessToken } from 'silk-api';
 
-import { pbkdf2KeyDerivation } from './Crypto';
+import { genPBKDF2KeyDerivation } from './Crypto';
 
 const log = createLog('UserState');
 const { BLESocketManager } = NativeModules;
@@ -112,7 +112,7 @@ export class UserState extends EventEmitter {
   }
 
   async checkPassword(email, password) {
-    let passwordHash = await pbkdf2KeyDerivation(
+    const passwordHash = await genPBKDF2KeyDerivation(
       password, /* input */
       email, /* salt */
       this.api.vip.PBKDF2_ROUNDS
@@ -134,7 +134,7 @@ export class UserState extends EventEmitter {
     const accessToken = await AccessToken.gen();
     this.accessToken = this.api.accessToken = accessToken;
 
-    let passwordHash = await pbkdf2KeyDerivation(
+    const passwordHash = await genPBKDF2KeyDerivation(
       password, /* input */
       email, /* salt */
       this.api.vip.PBKDF2_ROUNDS
@@ -177,7 +177,7 @@ export class UserState extends EventEmitter {
     const accessToken = await AccessToken.gen();
     this.accessToken = this.api.accessToken = accessToken;
 
-    let passwordHash = await pbkdf2KeyDerivation(
+    const passwordHash = await genPBKDF2KeyDerivation(
       password, /* input */
       email, /* salt */
       this.api.vip.PBKDF2_ROUNDS

@@ -20,6 +20,7 @@ import KeywordSpotting from 'silk-kws';
 import say from 'silk-say';
 import wav from 'wav';
 import fs from 'fs';
+import netstatus from 'silk-netstatus';
 
 import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
 import type { Env, Camera } from 'silk-exttest';
@@ -36,6 +37,7 @@ type SpeechEventCallback = (stream: Buffer, finished: boolean) => void;
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3');
 const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.mp3');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp3');
+const NETWORK_DOWN_SOUND_FILE = 'network_down.mp3';
 const SAY_FILE_NAME = '/data/say.wav';
 
 const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
@@ -43,6 +45,7 @@ const LOCAL_TTS_ENABLED_PROP = 'persist.silk.dialog.tts.enabled';
 
 const log = createLog('silkext-dialog');
 let camera: Camera;
+let modLocation: string;
 
 /**
  * Where to search for the dialog engine
@@ -170,6 +173,21 @@ class Dialog {
   }
 
   /**
+   * This function makes sure to finish the currently playing file
+   * before scheduling the next one
+   */
+  _playSound(file: string) {
+    log.debug(`Playing ${file}`);
+    this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
+      return util.playSound(file);
+    })
+    .catch(err => {
+      log.error(`cannot play ${file}, error: ${err}`);
+    });
+    return this._activePlaySoundPromise;
+  }
+
+  /**
    * This function handles the generation of text to speech if TTS service
    * running on the device is used
    */
@@ -199,7 +217,7 @@ class Dialog {
       log.debug('Finished speaking');
       finish();
     })
-    .catch((err) => {
+    .catch(err => {
       log.error(`Failed to speak text: ${err}`);
       util.playSound(ERROR_SOUND_FILE);
       finish(err);
@@ -258,7 +276,7 @@ class Dialog {
         log.debug(`Done playing audio`);
         finish();
       })
-      .catch((err) => {
+      .catch(err => {
         log.error(`cannot play ${SAY_FILE_NAME}, error: ${err}`);
         finish();
       });
@@ -267,15 +285,35 @@ class Dialog {
     stream.on('error', errorListener);
     stream.on('data', dataListener);
     stream.on('end', endListener);
-  }
+  };
 
   /**
    * Handle start of speech. On start of speech start sending
    * mic-data to the dialog engine to start the process of
    * conversion from speech to text.
    */
-  async _onSpeechStart() {
+  _onSpeechStart() {
     log.info(`onSpeechStart`);
+
+    // Check if network is available
+    if (!netstatus.online) {
+      let networkDownPromise = Promise.resolve();
+      if (this._localTts) {
+        networkDownPromise = say.speak('Internet is down, please try again');
+      } else {
+        if (modLocation) {
+          networkDownPromise = this._playSound(
+              path.join(modLocation, 'media', NETWORK_DOWN_SOUND_FILE));
+        } else {
+          log.error(`${DIALOGSCRIPT_MODNAME} not loaded; can't play error`);
+        }
+      }
+      networkDownPromise.then(() => {
+        this._onDialogDone();
+      });
+
+      return;
+    }
 
     if (this._stream) {
       log.info(`not ready, skipping speech start`);
@@ -283,19 +321,16 @@ class Dialog {
     }
     this._stream = new ClosingPassThrough();
 
-    try {
-      await util.playSound(KEYWORD_DETECTED_SOUND_FILE);
-    } catch (err) {
-      log.error(`cannot play ${KEYWORD_DETECTED_SOUND_FILE}, error: ${err}`);
-    }
+    this._playSound(KEYWORD_DETECTED_SOUND_FILE)
+    .then(() => {
+      if (this._kwsEnabled) {
+        this._vad.startVad();
+      }
 
-    if (this._kwsEnabled) {
-      this._vad.startVad();
-    }
-
-    if (this._stream) {
-      this._dialogEngine.interpret(this._stream);
-    }
+      if (this._stream) {
+        this._dialogEngine.interpret(this._stream);
+      }
+    });
   }
 
   /**
@@ -314,7 +349,7 @@ class Dialog {
       this._stream.end();
       this._stream = null;
     }
-    this._activePlaySoundPromise = util.playSound(SPEECH_END_SOUND_FILE);
+    this._playSound(SPEECH_END_SOUND_FILE);
   }
 
   /**
@@ -332,14 +367,13 @@ class Dialog {
    */
   _loadDialogScript(): void {
     for (const dir of dialogScriptSearchDirs) {
-      let modLocation = null;
       try {
         modLocation = fs.realpathSync(path.join(dir, DIALOGSCRIPT_MODNAME));
       } catch (e) {
         log.debug(e);
       }
 
-      if (modLocation !== null) {
+      if (modLocation) {
         try {
           log.info(`Loading ${DIALOGSCRIPT_MODNAME} from ${modLocation}`);
           modwatcher.require(modLocation);

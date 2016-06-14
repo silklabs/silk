@@ -1,9 +1,10 @@
 /* @flow */
 
-import jwa from 'silk-api/src/jwa';
 import jwt from 'silk-jsonwebtoken';
 import * as Joi from 'joi';
 import createLog from 'silk-log';
+
+import jwa from './jwa';
 
 import type Nonce from './models/nonce';
 import type { RouteNextFn, MiddlewareFn } from './express_types';
@@ -107,8 +108,8 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
     }
 
     /**
-     * Unsafely decode the JWT signature as the name states you must not trust
-     * any values here and is used only in the process of looking up the "id" of
+     * Unsafely decode the JWT signature. As the name states you must not trust
+     * any values here. It is used only in the process of looking up the "id" of
      * the client.
      */
     req.unsafeJwt = jwt.decode(signature, {

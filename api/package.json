@@ -7,7 +7,6 @@
   "symlinkDependencies": {
     "api-schema": "/api-schema",
     "eslint-config-silk": "/pub/eslint-config",
-    "silk-jsonwebtoken": "/jsonwebtoken",
     "silk-core-version": "/pub/version",
     "silk-log": "/pub/log",
     "silk-babeldeps": "/babeldeps",

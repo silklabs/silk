@@ -8,10 +8,10 @@
 
 import base64url from 'base64url';
 import crypto from 'crypto';
-
-import cryptoSign from './crypto_sign';
+import { eddsa as EdDSA } from 'elliptic';
 
 const ALGO = 'ed25519';
+const ed25519 = new EdDSA('ed25519');
 
 /**
  * Sign the input with the given private key.
@@ -24,10 +24,10 @@ function sign(
   input: string,
   privateKey: Buffer
 ): string {
-  return base64url(cryptoSign.sign(
-    crypto.createHash('sha256').update(input).digest(),
-    privateKey
-  ));
+  const message = crypto.createHash('sha256').update(input).digest();
+  const key = ed25519.keyFromSecret(privateKey);
+  const signature = key.sign(message);
+  return base64url(new Buffer(signature.toBytes()));
 }
 
 /**
@@ -47,12 +47,12 @@ function verify(
     // TODO: Logging.
     return false;
   }
-
-  return cryptoSign.verify(
-    crypto.createHash('sha256').update(input).digest(),
-    base64url.toBuffer(signatureBase64url),
-    publicKey
-  );
+  const message = crypto.createHash('sha256').update(input).digest();
+  // `elliptic` is usually fine eating Buffers where it expects arrays,
+  // but here are two cases where we really need to pass arrays.
+  const signature = Array.from(base64url.toBuffer(signatureBase64url));
+  const key = ed25519.keyFromPublic(Array.from(publicKey));
+  return key.verify(message, signature);
 }
 
 /**
@@ -62,11 +62,7 @@ export default function factory(algorithm: string): any {
   if (algorithm !== ALGO) {
     throw new Error(`JWA only supports: ${ALGO}`);
   }
-
-  return {
-    sign,
-    verify
-  };
+  return {sign, verify};
 }
 
 factory.ALGORITHMS = ['ed25519'];

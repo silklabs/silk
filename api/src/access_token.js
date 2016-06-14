@@ -4,10 +4,11 @@
  * @flow
  */
 import invariant from 'assert';
+import base64url from 'base64url';
 import crypto from 'crypto';
+import uuid from 'uuid';
 
 import cryptoSign from './crypto_sign';
-import {genJWTSignature} from './jwt';
 
 export default class AccessToken {
 
@@ -62,7 +63,6 @@ export default class AccessToken {
   async genSign(message: string): Promise<string> {
     invariant(this.priv, 'no private key');
     const secret = new Buffer(this.priv, 'hex');
-    // We're double-hashing here because cryptoSign also hashes the input.
     const hash = crypto.createHash('sha256').update(message).digest();
     return cryptoSign.sign(hash, secret).toString('hex');
   }
@@ -88,15 +88,32 @@ export default class AccessToken {
       const hash = crypto.createHash('sha256').update(body).digest('hex');
       payload += `\n${hash}`;
     }
-    const headers = {
+
+    // Construct the jsonwebtoken ourselves so we can use our own signing
+    // algorithm (ed25519) and implementation (JS, native, etc.)
+    const jwtHeader = {
+      typ: 'JWT',
+      alg: 'ed25519',
       // The server will identify us based on the public key which
       // is sent in the clear here as an "id". Then server _must_
       // validate this against known public keys.
       id: this.pub,
     };
-    invariant(this.priv);
-    const secret = new Buffer(this.priv, 'hex');
-    return genJWTSignature(payload, secret, headers);
+    const jwtPayload = {
+      // Unique id for this request.
+      jti: uuid.v4(),
+      // JSON representation of a string...
+      iat: new Date().toJSON(),
+      // sha256 of the json body...
+      requestHash: crypto.createHash('sha256').update(payload).digest('hex'),
+    };
+    const encodedHeader = base64url(JSON.stringify(jwtHeader), 'utf8');
+    const encodedPayload = base64url(JSON.stringify(jwtPayload), 'utf8');
+    const securedInput = `${encodedHeader}.${encodedPayload}`;
+    return this.genSign(securedInput).then((signatureHex) => {
+      const signature = base64url(new Buffer(signatureHex, 'hex'));
+      return `${securedInput}.${signature}`;
+    });
   }
 
 }

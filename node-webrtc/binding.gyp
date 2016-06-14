@@ -63,6 +63,9 @@
       'link_settings': {
         'conditions': [
           ['OS=="android"', {
+            'libraries': [
+              'libcutils.so',
+            ],
             'ldflags': [
               '-Wl,--unresolved-symbols=ignore-all',
             ]

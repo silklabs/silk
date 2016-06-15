@@ -15,6 +15,7 @@ import {
 
 const log = createLog(`dialog-script-food-bottle-saga`);
 
+// This saga asks for the bottle type and handles retries.
 function* queryBottleType(
   environment: Environment,
 ): Generator<Object, ?string, any> {             // eslint-disable-line no-undef
@@ -60,6 +61,7 @@ function* queryBottleType(
   return type;
 }
 
+// This saga asks for the amount of food handles retries.
 function* queryAmount(
   environment: Environment,
 ): Generator<Object, ?number, any> {             // eslint-disable-line no-undef
@@ -103,6 +105,7 @@ function* queryAmount(
   return amount;
 }
 
+// This saga simply asks two questions and then updates our data store.
 export default function*(
   environment: Environment
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef

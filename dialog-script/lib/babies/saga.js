@@ -18,6 +18,10 @@ const log = createLog(`dialog-script-babies-saga`);
 export const getBabies: ((state: Object) => Object) =
   (state) => state.babies.slice();
 
+/**
+ * This is a helper function that queries for a baby name, speaks the name back
+ * to ensure that we heard it correctly, and then retries if a mistake was made.
+ */
 export function* queryBabyName(
   environment: Environment,
   customQuery?: string,
@@ -60,6 +64,7 @@ export function* queryBabyName(
   return name;
 }
 
+// This saga adds a new baby to our data store after asking its name.
 export function* add(
   environment: Environment,
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
@@ -73,19 +78,29 @@ export function* add(
   const id = yield call(uuid.v4);
   invariant(id);
 
+  // |put| will actually update the data store.
   yield put(addBaby(id, name));
 
   yield call(speak, `Ok, ${name} is now registered`, true);
 }
 
+/**
+ * This saga is rather contrived (how often do we expect that babies need to be
+ * renamed?) but shows how to make saga decisions based on the current state.
+ * We have to match a spoken name with one of the babies in the data store. If
+ * there is only one baby we can skip that step, but if there is more than one
+ * baby we have to do extra work.
+ */
 export function* rename(
   environment: Environment,
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   const {speak} = environment;
 
+  // First |select| to find all the current babies we know about.
   const babies = yield select(getBabies);
   invariant(Array.isArray(babies));
 
+  // Now we can change our actions based on this information.
   if (!babies.length) {
     yield call(speak, `You haven't registered any babies yet.`, true);
     return;
@@ -138,10 +153,15 @@ export function* rename(
     return;
   }
 
+  // Update the data store by using |put|.
   yield put(renameBaby(id, name));
   yield call(speak, `Ok, I've changed the baby's name to ${name}.`, true);
 }
 
+/**
+ * This saga simply |call|'s one of the other sagas above based on the value of
+ * the |type| argument.
+ */
 export default function* (
   environment: Environment,
   type: 'add' | 'rename',

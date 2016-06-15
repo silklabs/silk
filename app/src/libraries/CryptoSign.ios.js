@@ -39,7 +39,8 @@ function genVerify(
 ): Promise<boolean> {
   invariant(publicKeyHex.length === 2 * encodingLength);
   invariant(signatureHex.length === 4 * encodingLength);
-  return SLKCrypto.genEd25519Verify(messageHex, signatureHex, publicKeyHex);
+  return SLKCrypto.genEd25519Verify(messageHex, signatureHex, publicKeyHex)
+    .then((result) => !!result);
 }
 
 overrideCryptoSignImplementation({

@@ -216,7 +216,7 @@ export default class KeywordSpotting extends EventEmitter {
    */
   _predictAsync(mat: Array<Array<number>>) {
     if (!this._ready) {
-      return Promise.resolve();
+      return Promise.resolve([]);
     }
     return new Promise((resolve, reject) => {
       let start = Date.now();
@@ -233,9 +233,9 @@ export default class KeywordSpotting extends EventEmitter {
           // Emit event if a successful keyword is spotted
           if ((label === HOT_KEYWORD) && (confidence >= THRESHOLD)) {
             log.info(`${label} spotted with confidence: ${confidence}%`);
-            resolve(label);
+            resolve([label, confidence]);
           } else {
-            resolve(null);
+            resolve([]);
           }
         }
       });
@@ -392,12 +392,12 @@ export default class KeywordSpotting extends EventEmitter {
     output.forEach(features => normalizer.apply(features, features));
 
     try {
-      let label = await this._predictAsync(output);
+      let [label, confidence] = await this._predictAsync(output);
       if (label && (label === HOT_KEYWORD)) {
         await this._playHotKeywordSound();
         this._saveAsWav();
         this._onKeywordDetected();
-        this.emit(label, Date.now());
+        this.emit(label, { when: Date.now(), confidence});
       }
     } catch (err) {
       log.error(`Prediction failed err: ${err.stack}||${err}`);

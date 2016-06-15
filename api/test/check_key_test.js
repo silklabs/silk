@@ -31,7 +31,10 @@ suite('check key', () => {
   test('garbage key', async () => {
     let id = AccessToken.importPub('garbage: no 64 hex chars');
     assert(!(await id.genIsValid()), 'garbage key is not considered valid');
-    await assertThrows(() => id.genVerify('token', 'garbage'), TypeError);
+    await assertThrows(
+      () => id.genVerify('token', 'garbage'),
+      assert.AssertionError
+    );
     await assertThrows(
       () => id.genVerify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd'),
       assert.AssertionError
@@ -41,7 +44,10 @@ suite('check key', () => {
   test('garbage signature', async () => {
     let id = AccessToken.importPub('0123401234012340123401234012340123401234012340123401234012340123');
     assert(await id.genIsValid(), '64 byte hex key is valid');
-    await assertThrows(() => id.genVerify('token', 'garbage'), TypeError);
+    await assertThrows(
+      () => id.genVerify('token', 'garbage'),
+      assert.AssertionError
+    );
     assert(!(await id.genVerify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd')));
   });
 

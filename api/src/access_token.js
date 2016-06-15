@@ -60,18 +60,17 @@ export default class AccessToken {
     return !!this.pub && this.pub.length === 64;
   }
 
-  async genSign(message: string): Promise<string> {
+  genSign(message: string): Promise<string> {
+    const hash = crypto.createHash('sha256').update(message).digest('hex');
     invariant(this.priv, 'no private key');
-    const secret = new Buffer(this.priv, 'hex');
-    const hash = crypto.createHash('sha256').update(message).digest();
-    return cryptoSign.sign(hash, secret).toString('hex');
+    return cryptoSign.genSign(hash, this.priv);
   }
 
-  async genVerify(message: string, signatureHex: string): Promise<boolean> {
-    return cryptoSign.verify(
-      crypto.createHash('sha256').update(message).digest(),
-      new Buffer(signatureHex, 'hex'),
-      new Buffer(this.pub, 'hex')
+  genVerify(message: string, signatureHex: string): Promise<boolean> {
+    return cryptoSign.genVerify(
+      crypto.createHash('sha256').update(message).digest('hex'),
+      signatureHex,
+      this.pub
     );
   }
 

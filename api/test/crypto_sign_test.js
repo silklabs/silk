@@ -2,7 +2,7 @@ import assert from 'assert';
 import cryptoSign from '../src/crypto_sign';
 
 function b(hexString) {
-  return new Buffer(hexString, 'hex');
+  return hexString;
 }
 
 // https://tools.ietf.org/html/draft-josefsson-eddsa-ed25519-02#section-6
@@ -149,14 +149,14 @@ const TEST_VECTORS = [{
 
 suite('Ed25519 test vectors', () => {
   TEST_VECTORS.forEach((vector, index) => {
-    test(`Test vector ${index + 1}`, () => {
-      let publicKey = cryptoSign.publicKeyFromSecret(vector.secretKey);
-      assert(publicKey.equals(vector.publicKey), 'public key');
+    test(`Test vector ${index + 1}`, async () => {
+      let publicKey = await cryptoSign.genPublicKeyFromSecret(vector.secretKey);
+      assert.equal(publicKey, vector.publicKey, 'public key');
 
-      let signature = cryptoSign.sign(vector.message, vector.secretKey);
-      assert(signature.equals(vector.signature), 'signature');
+      let signature = await cryptoSign.genSign(vector.message, vector.secretKey);
+      assert.equal(signature, vector.signature, 'signature');
 
-      let verify = cryptoSign.verify(
+      let verify = await cryptoSign.genVerify(
         vector.message,
         vector.signature,
         vector.publicKey

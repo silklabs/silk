@@ -15,26 +15,42 @@ import java.io.UnsupportedEncodingException;
 import java.security.Security;
 import java.security.SecureRandom;
 
-public class AppCrypto extends ReactContextBaseJavaModule {
+public class Crypto extends ReactContextBaseJavaModule {
 
   static {
     Security.insertProviderAt(new BouncyCastleProvider(), 1);
   }
 
-  //private static final String PBKDF2_ALGO = "PBKDF2WithHmacSHA256";
   private static final int PBKDF2_KEY_BITS = 256;
 
-  public AppCrypto(ReactApplicationContext reactContext) {
+  public Crypto(ReactApplicationContext reactContext) {
     super(reactContext);
   }
 
   @Override
   public String getName() {
-    return "AppCrypto";
+    return "SLKCrypto";
+  }
+
+  // TODO: could probably produce a faster version of this.
+  private String bytesToHex(byte[] bytes) {
+    StringBuilder stringBuilder = new StringBuilder(bytes.length * 2);
+    for (byte b: bytes) {
+      stringBuilder.append(String.format("%02x", b & 0xff));
+    }
+    return stringBuilder.toString();
   }
 
   @ReactMethod
-  public void pbkdf2KeyDerivation(
+  public void genRandomBytes(int length, Promise promise) {
+    SecureRandom random = new SecureRandom();
+    byte[] bytes = new byte[length];
+    random.nextBytes(bytes);
+    promise.resolve(bytesToHex(bytes));
+  }
+
+  @ReactMethod
+  public void genPBKDF2KeyDerivation(
     String input,
     String salt,
     int rounds,
@@ -49,22 +65,7 @@ public class AppCrypto extends ReactContextBaseJavaModule {
       return;
     }
 
-    // Convert to hex.
-    // TODO: could factor this out into a separate helper.
-    // TODO: could probably also produce a faster version of this.
-    StringBuilder stringBuilder = new StringBuilder(keyBytes.length * 2);
-    for (byte b: keyBytes) {
-      stringBuilder.append(String.format("%02x", b & 0xff));
-    }
-    promise.resolve(stringBuilder.toString());
-  }
-
-  @ReactMethod
-  public void getRandomBytes(int length, Promise promise) {
-    SecureRandom random = new SecureRandom();
-    byte[] bytes = new byte[length];
-    random.nextBytes(bytes);
-    promise.resolve(bytes);
+    promise.resolve(bytesToHex(keyBytes));
   }
 
 }

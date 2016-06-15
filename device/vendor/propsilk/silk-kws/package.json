@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run silk-build",
     "silk-build": "silk-buildjs .",
-    "lint": "eslint lib",
+    "lint": "eslint .",
     "postinstall": "../../../../npm_postinstall && npm run silk-build",
     "test": "npm run lint"
   },

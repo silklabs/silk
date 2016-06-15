@@ -155,7 +155,9 @@ export default class KeywordSpotting extends EventEmitter {
    * Call this function to add mic-data
    */
   addMicData(pkt: MicData) {
-    this._voiceActivityDetector.addMicData(pkt);
+    if (this._voiceActivityDetector) {
+      this._voiceActivityDetector.addMicData(pkt);
+    }
     this._handleMicData(pkt.when, pkt.frames);
   }
 
@@ -461,7 +463,9 @@ export default class KeywordSpotting extends EventEmitter {
    */
   _onKeywordDetected() {
     this._output = []; // Clear buffer to stop predictions right away
-    this._speechStopWhen = 0;
+    if (this._dialogEnabled) {
+      this._speechStopWhen = 0;
+    }
   }
 
   /**

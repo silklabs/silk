@@ -64,8 +64,8 @@ async function _answer(
   // XXX: Joi ?
   invariant(offer && typeof offer === 'object');
   invariant(offer.sdp && typeof offer.sdp === 'object');
-  invariant(Array.isArray(offer.dataChannels));
-  invariant('mediaStream' in offer);
+  // invariant(Array.isArray(offer.dataChannels));
+  // invariant('mediaStream' in offer);
 
   if (offer.mediaStream) {
     log.info('expecting a remote media stream');

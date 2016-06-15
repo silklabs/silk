@@ -302,7 +302,12 @@ export function timeout(ms: number): Promise<void> {
  * @memberof silk-sysutils
  */
 export function playSound(fileName: string): Promise<void> {
-  const BINARY = 'player';
+  let BINARY = 'player';
+  if (process.platform === 'darwin') {
+    BINARY = 'afplay'; // Default player on OSX
+  } else if (process.platform === 'linux') {
+    BINARY = 'mplayer'; // Run apt-get install mplayer first
+  }
 
   return exec(BINARY, [fileName])
   .catch(err => {

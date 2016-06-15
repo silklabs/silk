@@ -10,13 +10,14 @@ class Looper;
 
 #include "Capturedefs.h"
 #include "SocketListener1.h"
-
+#include "AudioSourceEmitter.h"
 
 /**
  * This class implements the data socket listener and sends the data to node
  * module over the {@code CAPTURE_DATA_SOCKET_NAME} socket
  */
-class Channel: public SocketListener1 {
+class Channel: virtual public AudioSourceEmitter::Observer,
+               virtual public SocketListener1 {
 public:
   enum Tag {
     TAG_VIDEO = 0,
@@ -42,6 +43,9 @@ public:
             const void *data, size_t size,
             FreeDataFunc freeDataFunc, void *freeData);
 
+  void OnData(void *data, size_t size) {
+    send(Channel::TAG_MIC, data, size, free, data);
+  }
 protected:
   virtual bool onDataAvailable(SocketClient *c) {
     return true;

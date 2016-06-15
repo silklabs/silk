@@ -89,3 +89,29 @@ LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 endif
 
 include $(BUILD_SILK_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE       := silk-mic
+LOCAL_MODULE_STEM  := mic
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := mic.cpp AudioSourceEmitter.cpp
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0
+LOCAL_SHARED_LIBRARIES := liblog libmedia libcutils libstagefright libutils
+LOCAL_C_INCLUDES := frameworks/av/include
+include $(BUILD_SILK_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE       := silk-capture-mic
+LOCAL_MODULE_STEM  := capture-mic
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := capture-mic.cpp
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0
+LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
+LOCAL_C_INCLUDES := \
+  frameworks/av/include \
+  vendor/silk/SocketListener \
+
+include $(BUILD_SILK_EXECUTABLE)
+

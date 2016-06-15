@@ -18,7 +18,7 @@ using namespace android;
 #define CAMERA_NAME "capture"
 
 //
-// Global variables
+// Global variables (:scream:)
 //
 extern const char* kMimeTypeAvc;
 extern status_t OK;

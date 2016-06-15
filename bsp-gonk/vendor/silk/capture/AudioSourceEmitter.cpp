@@ -7,7 +7,6 @@
 #include <media/stagefright/AudioSource.h>
 
 #include "AudioSourceEmitter.h"
-#include "Channel.h"
 
 // TODO: This hard code must match ext/clapper
 #define FFT_WINDOW_SIZE 512    // 32ms - units of samples
@@ -21,13 +20,15 @@
 
 using namespace android;
 
-AudioSourceEmitter::AudioSourceEmitter(Channel* channel, const sp<MediaSource> &source) :
-    mChannel(channel),
-    mSource(source) {
+AudioSourceEmitter::AudioSourceEmitter(const sp<MediaSource> &source,
+                                       sp<Observer> observer,
+                                       int audioChannels)
+    : mObserver(observer),
+      mSource(source) {
   mAudioBufferIdx = 0;
 
   mAudioBufferLen = FFT_WINDOW_SIZE * BYTES_PER_SAMPLE *
-      WINDOWS_PER_PACKET * sAudioChannels;
+      WINDOWS_PER_PACKET * audioChannels;
   mAudioBuffer = nullptr;
 }
 
@@ -51,7 +52,7 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
     const ReadOptions *options) {
   status_t err = mSource->read(buffer, options);
 
-  if (err == ::OK && (*buffer) && (*buffer)->range_length()) {
+  if (err == 0 && (*buffer) && (*buffer)->range_length()) {
     uint8_t *data = static_cast<uint8_t *>((*buffer)->data()) + (*buffer)->range_offset();
     uint32_t len = (*buffer)->range_length();
 
@@ -66,8 +67,8 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
         len -= fillLen;
       }
 
-      mChannel->send(Channel::TAG_MIC, mAudioBuffer, mAudioBufferLen, free, mAudioBuffer);
-      mAudioBuffer = nullptr;
+      mObserver->OnData(mAudioBuffer, mAudioBufferLen);
+      mAudioBuffer = nullptr; // Buffer ownership is transferred to OnData()
       mAudioBufferIdx = 0;
     }
 

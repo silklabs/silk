@@ -59,7 +59,6 @@ $(webrtc_makefile): $(nodewebrtc)
 	-Denable_protobuf=0 \
 	-Ddesktop_capture_supported=0 \
 	-Dclang_use_chrome_plugins=0 \
-	-Dinclude_internal_audio_device=0 \
 	-Dandroid_ndk_sysroot=$(HISTORICAL_NDK_VERSIONS_ROOT)/current/platforms/android-21/arch-arm \
 	-Dandroid_ndk_headers=$(ANDROID_BUILD_TOP)/ndk \
 	-Dandroid_ndk_sources=../../../../../../ndk \

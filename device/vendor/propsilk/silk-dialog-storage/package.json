@@ -1,0 +1,34 @@
+{
+  "name": "silk-dialog-storage",
+  "version": "0.0.1",
+  "description": "Storage for the dialog script",
+  "main": "./lib/index.js",
+  "scripts": {
+    "flow": "flow check",
+    "lint": "eslint .",
+    "mocha-prod": "NODE_ENV=production mocha $(find test -name '*_test.js')",
+    "mocha": "NODE_ENV=development mocha $(find test -name '*_test.js')",
+    "postinstall": "../../../../npm_postinstall",
+    "silk-build": "silk-buildjs .",
+    "test": "npm run lint && npm run mocha && npm run mocha-prod"
+  },
+  "dependencies": {
+    "msgpack-lite": "0.1.13",
+    "mz": "2.4.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "6.0.4",
+    "eslint": "1.10.3",
+    "flow-bin": "0.26.0",
+    "fs-extra": "0.26.5",
+    "mocha": "2.4.5"
+  },
+  "symlinkDependencies": {
+    "babel-preset-silk-node4": "/pub/babel-preset-silk-node4",
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-babel-run": "/pub/babel-run",
+    "silk-buildjs": "/pub/buildjs",
+    "silk-log": "/pub/log"
+  },
+  "private": true
+}

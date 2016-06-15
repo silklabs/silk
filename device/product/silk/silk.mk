@@ -41,6 +41,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
   silk-dialog-engine \
   silk-dialog-script \
+  silk-dialog-storage \
   silk-caffe \
   silk-cv \
   silk-gc1 \

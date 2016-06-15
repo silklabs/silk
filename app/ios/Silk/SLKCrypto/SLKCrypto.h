@@ -12,4 +12,22 @@
                       resolver:(nonnull RCTPromiseResolveBlock)resolve
                       rejecter:(nonnull RCTPromiseRejectBlock)reject;
 
+- (void)genEd25519KeyPair:(nonnull RCTPromiseResolveBlock)resolve
+                 rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genEd25519PubKeyFromSecret:(nonnull NSString *)seedHex
+                          resolver:(nonnull RCTPromiseResolveBlock)resolve
+                          rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genEd25519Sign:(nonnull NSString *)msgHex
+                  seed:(nonnull NSString *)seedHex
+              resolver:(nonnull RCTPromiseResolveBlock)resolve
+              rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genEd25519Verify:(nonnull NSString *)msgHex
+               signature:(nonnull NSString *)sigHex
+               publicKey:(nonnull NSString *)pubHex
+                resolver:(nonnull RCTPromiseResolveBlock)resolve
+                rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
 @end

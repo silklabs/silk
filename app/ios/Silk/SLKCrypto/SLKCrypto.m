@@ -347,6 +347,6 @@ RCT_EXPORT_METHOD(genEd25519Verify:(NSString *)msgHex
   sodium_memzero(sigBytes, sizeof(sigBytes));
   sodium_memzero(pubBytes, sizeof(pubBytes));
 
-  resolve(@(ret));
+  resolve(@(ret == 0));
 }
 @end

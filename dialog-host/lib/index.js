@@ -6,6 +6,12 @@
  * @flow
  */
 
+import mock from 'mock-require';
+import {DialogStorage} from 'silk-dialog-storage';
+
+mock('silk-dialog-storage',
+     new DialogStorage({path: `/tmp/_silk-dialog-storage_/data`}));
+
 import createLog from 'silk-log';
 import invariant from 'assert';
 

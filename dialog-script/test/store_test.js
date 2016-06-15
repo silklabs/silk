@@ -1,10 +1,11 @@
-/* global suite */
-/* global suiteSetup */
-/* global setup */
-/* global test */
+/* global suite, suiteSetup, suiteTeardown, setup, test */
 
 import assert from 'assert';
 
+import {
+  installMocks,
+  uninstallMocks,
+} from './utils';
 import {
   reset,
   speakBegin,
@@ -13,6 +14,7 @@ import {
   interpretEnd,
 } from '../lib/actions';
 
+
 suite(`store`, () => {
 
   let store = null;
@@ -20,7 +22,9 @@ suite(`store`, () => {
   let initialState = null;
 
   suiteSetup(async () => {
-    store = require('../lib/store').default;
+    installMocks();
+
+    store = await require('../lib/store').default();
     assert(store);
 
     dispatchAndWaitForStateChange = (action) => {
@@ -34,6 +38,10 @@ suite(`store`, () => {
     };
 
     initialState = store.getState();
+  });
+
+  suiteTeardown(() => {
+    uninstallMocks();
   });
 
   setup(async () => {

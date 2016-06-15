@@ -1,13 +1,17 @@
 /* global suite, suiteSetup, suiteTeardown, setup, test */
 
-import mock from 'mock-require';
+import invariant from 'assert';
+
+import {
+  installMocks,
+  uninstallMocks,
+  testUserScript,
+} from './utils';
 
 import * as mockDialogEngine from './mock/dialog-engine';
 
-import invariant from 'assert';
-
-import {testUserScript} from './utils';
 import {unknownText} from '../lib/saga';
+
 
 suite(`userScript`, () => {
 
@@ -20,8 +24,7 @@ suite(`userScript`, () => {
   let reload = null;
 
   suiteSetup(() => {
-    mock('silk-dialog-engine', mockDialogEngine);
-
+    installMocks();
     mockDialogEngine.createDialogEngine({});
 
     // This configures the dialog engine.
@@ -30,7 +33,7 @@ suite(`userScript`, () => {
   });
 
   suiteTeardown(() => {
-    mock.stop('silk-dialog-engine');
+    uninstallMocks;
   });
 
   setup(() => {

@@ -1,5 +1,18 @@
 import assert from 'assert';
 import eventToPromise from 'event-to-promise';
+import mock from 'mock-require';
+
+import * as mockDialogEngine from './mock/dialog-engine';
+import * as mockStorage from './mock/dialog-storage';
+
+export function installMocks() {
+  mock('silk-dialog-engine', mockDialogEngine);
+  mock('silk-dialog-storage', mockStorage);
+}
+
+export function uninstallMocks() {
+  mock.stopAll();
+}
 
 export function testScript(generator, script) {
   assert(generator, `No 'generator' passed`);

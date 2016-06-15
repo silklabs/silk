@@ -148,23 +148,23 @@ export default function*(
    * Phase 2: An infinite loop.
    *
    * We sleep while waiting for the user to speak and for that speech to be
-   * processed into an event on the |intentChannel|. Once we wake up we may
-   * launch other sagas as necessary before sleeping again.
+   * processed into an event on the |micChannel|. Once we wake up we may launch
+   * other sagas as necessary before sleeping again.
    */
   while (true) {                    // eslint-disable-line no-constant-condition
     log.debug(`Waiting for next intent`);
 
     /**
      * The |take| function instructs the saga runtime to suspend this saga
-     * until an event is available on the |intentChannel|. Most of the time we
+     * until an event is available on the |micChannel|. Most of the time we
      * should be asleep here.
      */
     const event = yield take(micChannel);
     invariant(event);
 
     /**
-     * |intentChannel| has given us an event, so now we have to decide what to
-     * do with it.
+     * |micChannel| has given us an event, so now we have to decide what to do
+     * with it.
      */
     const {intent, entities} = event;
     log.debug(`Got intent`, intent, entities);
@@ -214,9 +214,10 @@ export default function*(
 
       /**
        * |startSaga| takes care of creating "tee" channels for the new saga. By
-       * default both |textChannel| and |intentChannel| are simple FIFO pipes.
-       * We want to "tee" events to multiple sagas so we need to make additional
-       * channels.
+       * default the |micChannel| is a simple FIFO pipe and there is a 1:1
+       * relationship between events that get pushed onto the channel and the
+       * events that are yielded with |take|. We want to "tee" events to
+       * multiple sagas so we need to make additional channels.
        *
        * We use |yield*| because |startSaga| forks the saga directly and we
        * don't want to wait for those sagas to complete before control is
@@ -270,7 +271,7 @@ export default function*(
      * We received some intent that is either not in |independentIntents| and
      * |concurrentIntents|, or it is but the slot is taken by another saga.
      * All we can do is pass the intent along to the sagas that are already
-     * running. |put| pushes events onto each saga's |intentChannel|.
+     * running. |put| pushes events onto each saga's |micChannel|.
      */
     if (sagas.concurrent) {
       yield put(sagas.concurrent.micChannel, event);

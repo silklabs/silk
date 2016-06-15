@@ -15,6 +15,15 @@ export type State = {
   nursing: NursingState,
 };
 
+/**
+ * Combine the states of |bottle| and |nursing| together into a single object.
+ * The resulting state will look like:
+ *
+ *   {
+ *     bottle: {...}, // BottleState
+ *     nursing: {...}, // NursingState
+ *   }
+ */
 export default combineReducers({
   bottle,
   nursing,

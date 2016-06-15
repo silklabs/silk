@@ -150,7 +150,7 @@ void VideoCaptureModuleGonk::OnFrameCallback(void *userData,
     // Too paranoid?
     if ((int32_t) width != that->_currentWidth ||
         (int32_t) height != that->_currentHeight ||
-        kVideoI420 != that->_captureVideoType) {
+        kVideoNV21 != that->_captureVideoType) {
       ALOGW("Unexpected frame dimensions/format");
       break;
     }
@@ -161,7 +161,7 @@ void VideoCaptureModuleGonk::OnFrameCallback(void *userData,
     frameInfo.rawType = that->_captureVideoType;
 
     auto ret = that->IncomingFrame((unsigned char*) buffer,
-                                   width * height * 3/ 2, // Size of a YUV420SP frame
+                                   width * height * 3/ 2, // Size of a NV21 frame
                                    frameInfo);
     if (ret != 0) {
       ALOGW("IncomingFrame rejected! %d", ret);

@@ -1,7 +1,1 @@
-[
-  "pando",
-  "panda",
-  "bender",
-  "bando",
-  "when do"
-]
+../../../../../dnn-models/silk-dnn/models/keyword/keywords.txt

@@ -76,6 +76,7 @@ const externals = [
   'silk-core-version',
   'silk-cv',
   'silk-dialog-engine',
+  'silk-dialog-storage',
   'silk-gc1',
   'silk-input',
   'silk-kws',

@@ -76,7 +76,7 @@ int32_t DeviceInfoGonk::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
   cap.width = property_get_int32("ro.silk.camera.width", 1280);
   cap.height = property_get_int32("ro.silk.camera.height", 720);
   cap.maxFPS = property_get_int32("ro.silk.camera.fps", 24);
-  cap.rawType = kVideoI420;
+  cap.rawType = kVideoNV21;
   cap.expectedCaptureDelay =
     webrtc::videocapturemodule::kDefaultCaptureDelay;
 

@@ -77,7 +77,7 @@ endif
 # Specific "known bad" subdirectories are excluded.  These directories contain
 # files with characters such as '-', ''', and ' ' that generate invalid
 # dependencies.
-LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find $(LOCAL_PATH) -type f \
+LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find -L $(LOCAL_PATH) -type f \
   ! -regex '.*/node_modules/babel/test/fixtures/.*' \
   ! -regex '.*/node_modules/gulp-match/Rob.*' \
   ! -regex '.*/dlib/.*' \

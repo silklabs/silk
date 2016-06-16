@@ -263,7 +263,7 @@ RCT_EXPORT_METHOD(genEd25519Sign:(NSString *)msgHex
   RCTAssert(siglen == sizeof(sigBytes), @"inconsistent signature length");
   if (ret != 0) {
     NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
-    reject(@"E_ED25519_INVALID_MESSAGE_FORMAT", @"Failed to sign message", error);
+    reject(@"E_ED25519_SIGN_FAILED", @"Failed to sign message", error);
     return;
   }
 

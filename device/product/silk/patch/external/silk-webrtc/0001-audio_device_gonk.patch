@@ -1,19 +1,19 @@
-From 9aba5161adbff55072bd9d259984557082cab48f Mon Sep 17 00:00:00 2001
+From 6549c9ccf54dcab80740eef218487ef37cd97831 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Wed, 15 Jun 2016 10:13:08 -0700
 Subject: [PATCH] audio_device_gonk
 
 ---
- webrtc/modules/audio_device/audio_device.gypi    | 6 ++++++
- webrtc/modules/audio_device/audio_device_impl.cc | 4 ++++
- webrtc/modules/audio_device/audio_device_impl.h  | 4 ++--
- webrtc/modules/audio_device/gonk                 | 1 +
- webrtc/voice_engine/voice_engine_impl.cc         | 4 ++--
- 5 files changed, 15 insertions(+), 4 deletions(-)
+ webrtc/modules/audio_device/audio_device.gypi    | 15 +++++++++++++++
+ webrtc/modules/audio_device/audio_device_impl.cc |  4 ++++
+ webrtc/modules/audio_device/audio_device_impl.h  |  4 ++--
+ webrtc/modules/audio_device/gonk                 |  1 +
+ webrtc/voice_engine/voice_engine_impl.cc         |  4 ++--
+ 5 files changed, 24 insertions(+), 4 deletions(-)
  create mode 120000 webrtc/modules/audio_device/gonk
 
 diff --git a/webrtc/modules/audio_device/audio_device.gypi b/webrtc/modules/audio_device/audio_device.gypi
-index abefcdb..04e76c1 100644
+index abefcdb..72b6cd4 100644
 --- a/webrtc/modules/audio_device/audio_device.gypi
 +++ b/webrtc/modules/audio_device/audio_device.gypi
 @@ -70,6 +70,10 @@
@@ -27,9 +27,19 @@ index abefcdb..04e76c1 100644
            ],
          }], # OS==android
          ['include_internal_audio_device==0', {
-@@ -92,6 +96,8 @@
+@@ -91,7 +95,18 @@
+           ],
            'conditions': [
              ['OS=="android"', {
++              'include_dirs': [
++                '<!(echo $ANDROID_BUILD_TOP/vendor/opensilk/capture)',
++                '<!(echo $ANDROID_BUILD_TOP/system/core/include)',
++              ],
++              'defines': [
++                'AUDIO_DEVICE_GONK__BYTESPERSAMPLE=<(audio_device_gonk__bytesPerSample)',
++                'AUDIO_DEVICE_GONK__NUMCHANNELS=<(audio_device_gonk__numChannels)',
++                'AUDIO_DEVICE_GONK__SAMPLERATE=<(audio_device_gonk__sampleRate)',
++              ],
                'sources': [
 +                'gonk/audio_device_gonk.cc',
 +                'gonk/audio_device_gonk.h',

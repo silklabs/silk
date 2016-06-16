@@ -71,6 +71,9 @@ $(webrtc_makefile): $(nodewebrtc)
 	-Dinclude_tests=0 \
 	-Dchromium_code=0 \
 	-Dbuild_with_chromium=0 \
+	-Daudio_device_gonk__bytesPerSample=$(shell node -p "require('silk-config').deviceMic.bytesPerSample") \
+	-Daudio_device_gonk__numChannels=$(shell node -p "require('silk-config').deviceMic.numChannels") \
+	-Daudio_device_gonk__sampleRate=$(shell node -p "require('silk-config').deviceMic.sampleRate") \
 	--no-parallel \
 	third_party/node-webrtc/binding.gyp \
 	-R node-webrtc

@@ -99,6 +99,14 @@
            path="external/cereproc"
            remote="silk"
            revision="master"/>
+  <project name="jedisct1/libsodium"
+           path="external/libsodium"
+           remote="github"
+           revision="refs/tags/1.0.10"/>
+  <project name="paixaop/node-sodium"
+           path="external/node-sodium"
+           remote="github"
+           revision="refs/tags/1.1.5"/>
 
   <!-- This doesn't belong here.  Remove me when
        https://github.com/silklabs/silk-core/issues/795 is fixed. -->

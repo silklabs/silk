@@ -1,20 +1,20 @@
-From 39703a6705f41b91be98d927dcbf6c9c34d46dd6 Mon Sep 17 00:00:00 2001
-From: James Lal <james@silklabs.com>
-Date: Sun, 22 May 2016 21:44:37 -0700
-Subject: [PATCH] Androidify
+From 89d8bc37cca088642b81e8d4c26c2d0ece3fb842 Mon Sep 17 00:00:00 2001
+From: Ben Turner <bent@silklabs.com>
+Date: Thu, 16 Jun 2016 14:46:53 -0700
+Subject: [PATCH] Android bindings
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2827 +++++++++++++++++++++++++++++++++++++++++++++++
- lib/noble.js            |    2 +
- package.json            |    2 +
- 4 files changed, 2837 insertions(+)
+ lib/android/bindings.js | 2847 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/resolve-bindings.js |    2 +
+ package.json            |    6 +-
+ 4 files changed, 2859 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..f8275e2
+index 0000000..39c5a58
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,6 @@
@@ -26,10 +26,10 @@ index 0000000..f8275e2
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..ffe755e
+index 0000000..1fbcfe4
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2827 @@
+@@ -0,0 +1,2847 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -184,10 +184,10 @@ index 0000000..ffe755e
 + * Bindings.
 + */
 +function NobleBindings() {
-+  log.debug('Created NobleBindings');
++  log.debug('NobleBindings');
 +
 +  // A connection to the bledroid executable.
-+  this.bledroid = makeBledroidConnection();
++  this.bledroid = null;
 +
 +  // State needed during a scan.
 +  this.scanState = null;
@@ -218,11 +218,23 @@ index 0000000..ffe755e
 +  // Extra data needed by the currently executing command. Reset before the next
 +  // command runs.
 +  this.currentCommandInfo = null;
++};
++
++util.inherits(NobleBindings, events.EventEmitter);
++
++/**
++ * Init.
++ */
++NobleBindings.prototype.init = function() {
++  log.debug('init()');
++
++  this.bledroid = makeBledroidConnection();
 +
 +  // These events will trigger callbacks here instead of simply being forwarded
 +  // to the main noble objects.
 +  const hookedEvents = [
 +    'stateChange',
++    'addressChange',
 +    'discover',
 +    'clientConnect',
 +    'clientDisconnect',
@@ -468,6 +480,11 @@ index 0000000..ffe755e
 +  this.emit('stateChange', state);
 +}
 +
++NobleBindings.prototype.onAddressChange = function(address) {
++  log.debug('onAddressChange(\'%s\')', address);
++  this.emit('addressChange', address);
++};
++
 +/**
 + * Start scanning.
 + */
@@ -530,12 +547,15 @@ index 0000000..ffe755e
 +
 +  // TODO: Android doesn't offer an API to get this information.
 +  const addressType = 'unknown';
++  const connectable = undefined;
++
++  const serviceData = [ ];
++  const serviceDataSet = new Set();
++  const serviceUuidSet = new Set();
 +
 +  var localName;
 +  var txPowerLevel;
 +  var manufacturerData;
-+  var serviceUuidSet = new Set();
-+  var serviceData = [ ];
 +
 +  advertisingData.forEach(function(packet) {
 +    switch (packet.type) {
@@ -554,12 +574,11 @@ index 0000000..ffe755e
 +        break;
 +      case 'service-uuids':
 +        packet.data.forEach(function(serviceUuid) {
-+          if (!serviceUuidSet.has(serviceUuid)) {
-+            serviceUuidSet.add(serviceUuid);
-+          }
++          serviceUuidSet.add(serviceUuid);
 +        });
 +        break;
 +      case 'service-data':
++        serviceDataSet.add(packet.data.uuid);
 +        serviceData.push({
 +          uuid: packet.data.uuid,
 +          data: packet.data.data
@@ -576,7 +595,7 @@ index 0000000..ffe755e
 +    var found = false;
 +
 +    for (var serviceUuid of this.scanState.filter) {
-+      if (serviceUuidSet.has(serviceUuid)) {
++      if (serviceUuidSet.has(serviceUuid) || serviceDataSet.has(serviceUuid)) {
 +        found = true;
 +        break;
 +      }
@@ -600,6 +619,7 @@ index 0000000..ffe755e
 +            peripheralInfo.uuid,
 +            address,
 +            addressType,
++            connectable,
 +            advertisement,
 +            rssi);
 +};
@@ -2839,7 +2859,7 @@ index 0000000..ffe755e
 +};
 +
 +/**
-+ * Reade a value directly using a handle. Not supported on Android.
++ * Read a value directly using a handle. Not supported on Android.
 + */
 +NobleBindings.prototype.readHandle = function(deviceUuid, handle) {
 +  throw new Error('Not supported');
@@ -2857,21 +2877,21 @@ index 0000000..ffe755e
 +
 +// Exports
 +module.exports = new NobleBindings();
-diff --git a/lib/noble.js b/lib/noble.js
-index 9f04778..9bbc179 100644
---- a/lib/noble.js
-+++ b/lib/noble.js
-@@ -21,6 +21,8 @@ if (process.env.NOBLE_WEBSOCKET || process.title === 'browser') {
-   bindings = require('./mac/bindings');
- } else if (platform === 'linux' || platform === 'win32') {
-   bindings = require('./hci-socket/bindings');
-+} else if (platform === 'android') {
-+  bindings = require('./android/bindings');
- } else {
-   throw new Error('Unsupported platform');
- }
+diff --git a/lib/resolve-bindings.js b/lib/resolve-bindings.js
+index 74224d0..e63463c 100644
+--- a/lib/resolve-bindings.js
++++ b/lib/resolve-bindings.js
+@@ -11,6 +11,8 @@ module.exports = function() {
+     return require('./mac/bindings');
+   } else if (platform === 'linux' || platform === 'win32') {
+     return require('./hci-socket/bindings');
++  } else if (platform === 'android') {
++    return require('./android/bindings');
+   } else {
+     throw new Error('Unsupported platform');
+   }
 diff --git a/package.json b/package.json
-index 42cfdb6..67191e2 100644
+index 46baeca..f2fa9d4 100644
 --- a/package.json
 +++ b/package.json
 @@ -23,6 +23,7 @@
@@ -2882,6 +2902,21 @@ index 42cfdb6..67191e2 100644
      "darwin",
      "linux",
      "win32"
+@@ -30,12 +31,12 @@
+   "dependencies": {
+     "debug": "~2.2.0"
+   },
+-  "optionalDependencies": {
++  "__optionalDependencies": {
+     "bluetooth-hci-socket": "~0.4.4",
+     "bplist-parser": "0.0.6",
+     "xpc-connection": "~0.1.4"
+   },
+-  "devDependencies": {
++  "__devDependencies": {
+     "jshint": "latest",
+     "mocha": "~1.8.2",
+     "should": "~1.2.2",
 @@ -48,6 +49,7 @@
      "test": "mocha -R spec test/*.js"
    },
@@ -2891,5 +2926,5 @@ index 42cfdb6..67191e2 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.7.3
+2.9.0
 

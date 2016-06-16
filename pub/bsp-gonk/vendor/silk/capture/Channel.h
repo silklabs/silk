@@ -8,23 +8,18 @@ namespace android {
 class Looper;
 }
 
-#include "Capturedefs.h"
 #include "SocketListener1.h"
 #include "AudioSourceEmitter.h"
+#include "CaptureDataSocket.h"
 
 /**
  * This class implements the data socket listener and sends the data to node
  * module over the {@code CAPTURE_DATA_SOCKET_NAME} socket
  */
+using namespace capture::datasocket;
 class Channel: virtual public AudioSourceEmitter::Observer,
                virtual public SocketListener1 {
 public:
-  enum Tag {
-    TAG_VIDEO = 0,
-    TAG_FACES,
-    TAG_MIC,
-    __MAX_TAG
-  };
   struct Header {
     size_t size; // size of the packet, excluding this header
     int32_t tag; // of type Tag
@@ -44,7 +39,7 @@ public:
             FreeDataFunc freeDataFunc, void *freeData);
 
   void OnData(void *data, size_t size) {
-    send(Channel::TAG_MIC, data, size, free, data);
+    send(TAG_MIC, data, size, free, data);
   }
 protected:
   virtual bool onDataAvailable(SocketClient *c) {

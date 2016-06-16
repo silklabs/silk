@@ -9,11 +9,11 @@
 #include "AudioSourceEmitter.h"
 
 // TODO: This hard code must match ext/clapper
-#define FFT_WINDOW_SIZE 512    // 32ms - units of samples
+#define FFT_WINDOW_SIZE 640    // 40ms - units of samples
 
 // Batch this number of audio sample windows before sending off to node. Else,
 // we'd be flooding node with data every 20ms, which incurs lots o overhead.
-#define WINDOWS_PER_PACKET 3 // 96ms of data per TAG_MIC packet
+#define WINDOWS_PER_PACKET 3 // 120ms of data per TAG_MIC packet
 
 // AudioSource is always 16 bit PCM (2 bytes / sample)
 #define BYTES_PER_SAMPLE 2

@@ -71,8 +71,6 @@ type MicData = {
   frames: Buffer;
 };
 
-type SpeechToTextCallback = ((error: ?Error, text?: string) => void);
-
 /**
  * This class receives mic data stream and tries to detect a specific keyword
  * using keyword spotting with neural networks
@@ -277,6 +275,14 @@ export default class KeywordSpotting extends EventEmitter {
       }
       let keywordsJson = await fs.readFile(KEYWORDS);
       keywordTexts = JSON.parse(keywordsJson);
+
+      if (this._saveEnabled) {
+        if ((await fs.exists(POS_KWS_DIR)) === false) {
+          await mkdirp(POS_KWS_DIR);
+        } if ((await fs.exists(NEG_KWS_DIR)) === false) {
+          await mkdirp(NEG_KWS_DIR);
+        }
+      }
     } catch (err) {
       log.error(`Failed to load caffe model err: ${err}`);
       return;
@@ -321,6 +327,7 @@ export default class KeywordSpotting extends EventEmitter {
 
     // Start processing pcm data
     let [when, pcmData] = this._pcmDataArray.shift();
+    this._pcmDataSizeInBytes -= pcmData.length;
 
     // Stop processing after speech stop
     if (when >= this._speechStopWhen + PCM_BUFFER_SECS) {
@@ -330,8 +337,6 @@ export default class KeywordSpotting extends EventEmitter {
     }
 
     // Convert the raw pcm data into Float32Array of [-1, 1]
-    this._pcmDataSizeInBytes -= pcmData.length;
-
     let samples = new Int16Array(pcmData.length / 2);
     for (let i = 0; i < samples.length; ++i) {
       samples[i] = pcmData.readInt16LE(2 * i);
@@ -395,7 +400,7 @@ export default class KeywordSpotting extends EventEmitter {
       let [label, confidence] = await this._predictAsync(output);
       if (label && (label === HOT_KEYWORD)) {
         await this._playHotKeywordSound();
-        this._saveAsWav();
+        await this._saveAsWav();
         this._onKeywordDetected();
         this.emit(label, { when: Date.now(), confidence});
 
@@ -478,55 +483,49 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   *
+   * Run speech to text service to qualify the keyword and then save the pcm
+   * samples to the file
    */
   async _saveAsWav() {
-    if (this._saveEnabled && netstatus.online) {
-      const stt = new SpeechToText(this._finishSpeechToText);
-      try {
-        await mkdirp(POS_KWS_DIR);
-        await mkdirp(NEG_KWS_DIR);
-      } catch (err) {
-        if (err.code !== 'EEXIST') {
-          log.error(`Failed to create directory, error: ${err}`);
-          return;
-        }
-      }
-
-      log.debug(`Converting keyword to text`);
-      let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
-      stt.write(wavData);
-      stt.finish();
+    if (this._saveEnabled && (netstatus.online || this._standAlone)) {
+      return new Promise((resolve, reject) => {
+        const stt = new SpeechToText((error, text = '') => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          log.debug(`Speech to text service detected: ${text}`);
+          let dir = (keywordTexts.indexOf(text) !== -1) ? POS_KWS_DIR : NEG_KWS_DIR;
+          resolve(dir);
+        });
+        log.debug(`Converting keyword to text`);
+        let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
+        stt.write(wavData);
+        stt.finish();
+      })
+      .then(dir => this._writeWavFile(dir));
     }
   }
 
   /**
-   * This is called when speech to text conversion is finished
+   * Write wav data in a file
    */
-  _finishSpeechToText: SpeechToTextCallback = (error, text = '') => {
-    if (error) {
-      log.error(`Speech stream error ${error}`);
-      return;
-    }
-    if (!text) {
-      log.warn(`No speech detected`);
-      return;
-    }
-
-    log.debug(`Speech to text service detected: ${text}`);
-    let sampleDir;
-    if (keywordTexts.indexOf(text) !== -1) {
-      sampleDir = POS_KWS_DIR;
-    } else {
-      sampleDir = NEG_KWS_DIR;
-    }
-    let writer = new wav.FileWriter(`${sampleDir}/${Date.now()}.wav`, {
-      sampleRate: this._sampleRate,
-      channels: this._numChannels,
-      bitDepth: this._bytesPerSample * 8,
+  _writeWavFile(dir: string): Promise {
+    return new Promise(async (resolve, reject) => {
+      let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
+      let writer = new wav.FileWriter(`${dir}/${Date.now()}.wav`, {
+        sampleRate: this._sampleRate,
+        channels: this._numChannels,
+        bitDepth: this._bytesPerSample * 8,
+      });
+      writer.on('header', () => {
+        resolve();
+      });
+      writer.on('error', err => {
+        reject(err);
+      });
+      writer.write(wavData);
+      writer.end();
     });
-    let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
-    writer.write(wavData);
-    writer.end();
   }
 }

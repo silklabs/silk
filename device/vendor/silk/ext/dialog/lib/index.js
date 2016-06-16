@@ -33,12 +33,15 @@ type MicData = {
 type MicDataCallback = (pkt: MicData) => void;
 type InputEventCallback = (event: { keyId: string }) => void;
 type SpeechEventCallback = (stream: Buffer, finished: boolean) => void;
+type InterpretEndCallback = (error: ?Error) => void;
 
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3');
 const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.mp3');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp3');
-const NETWORK_DOWN_SOUND_FILE = 'network_down.mp3';
 const SAY_FILE_NAME = '/data/say.wav';
+
+const NETWORK_DOWN_SOUND_FILE = 'network_down.mp3';
+const NETWORK_ERROR_SOUND_FILE = 'network_error.mp3';
 
 const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
 const LOCAL_TTS_ENABLED_PROP = 'persist.silk.dialog.tts.enabled';
@@ -96,6 +99,7 @@ class Dialog {
     } else {
       this._dialogEngine.on('speech', this._onSpeak);
     }
+    this._dialogEngine.on('interpret-end', this._onInterpretEnd);
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
@@ -152,6 +156,16 @@ class Dialog {
   };
 
   /**
+   * Handle end of text interpretation
+   */
+  _onInterpretEnd: InterpretEndCallback = error => {
+    if (error) {
+      this._playErrorMessage('Unable to talk to the server, please try again',
+          NETWORK_ERROR_SOUND_FILE);
+    }
+  };
+
+  /**
    * Write raw pcm data in a wav file
    */
   _writeWavFile(pcmSamples: Buffer): Promise {
@@ -185,6 +199,27 @@ class Dialog {
       log.error(`cannot play ${file}, error: ${err}`);
     });
     return this._activePlaySoundPromise;
+  }
+
+
+  /**
+   * This function plays the specified error message
+   */
+  _playErrorMessage(errorMsg: string, errorFile: string) {
+    // Play error sound first
+    let errorSoundPromise = this._playSound(ERROR_SOUND_FILE);
+
+    let errorMsgPromise = Promise.resolve();
+    if (this._localTts) {
+      errorMsgPromise = errorSoundPromise.then(() => say.speak(errorMsg));
+    } else {
+      if (modLocation) {
+        errorMsgPromise = this._playSound(path.join(modLocation, 'media', errorFile));
+      } else {
+        log.error(`${DIALOGSCRIPT_MODNAME} not loaded; can't play error message`);
+      }
+    }
+    errorMsgPromise.then(() => this._onDialogDone());
   }
 
   /**
@@ -297,21 +332,8 @@ class Dialog {
 
     // Check if network is available
     if (!netstatus.online) {
-      let networkDownPromise = Promise.resolve();
-      if (this._localTts) {
-        networkDownPromise = say.speak('Internet is down, please try again');
-      } else {
-        if (modLocation) {
-          networkDownPromise = this._playSound(
-              path.join(modLocation, 'media', NETWORK_DOWN_SOUND_FILE));
-        } else {
-          log.error(`${DIALOGSCRIPT_MODNAME} not loaded; can't play error`);
-        }
-      }
-      networkDownPromise.then(() => {
-        this._onDialogDone();
-      });
-
+      this._playErrorMessage('Internet is down, please try again',
+          NETWORK_DOWN_SOUND_FILE);
       return;
     }
 
@@ -412,6 +434,7 @@ class Dialog {
     this._input.removeListener('down', this._onKeyPress);
     this._dialogEngine.removeListener('speech', this._onSpeak);
     this._dialogEngine.removeListener('speak-begin', this._onSpeakBegin);
+    this._dialogEngine.removeListener('interpret-end', this._onInterpretEnd);
   }
 }
 

@@ -121,6 +121,8 @@ PRODUCT_PACKAGES += \
   aprotoc \
   libboost \
   libopenblas \
+  libsodium \
+  sodium \
 
 # Ugly gyp-generated package name for /node-webrtc
 PRODUCT_PACKAGES += \

@@ -34,7 +34,7 @@
   <project name="sandeepmistry/noble"
            path="external/noble"
            remote="github"
-           revision="refs/tags/v1.1.0" clone-depth="1"/>
+           revision="refs/tags/v1.6.0" clone-depth="1"/>
   <project name="sandeepmistry/bleno"
            path="external/bleno"
            remote="github"

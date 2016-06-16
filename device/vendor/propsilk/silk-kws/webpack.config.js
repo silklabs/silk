@@ -6,5 +6,5 @@ module.exports = {
       { from: 'model', to: 'model' },
       { from: 'media', to: 'media' },
     ]),
-  ]
+  ],
 };

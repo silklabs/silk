@@ -112,9 +112,5 @@ LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := capture-mic.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0
 LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
-LOCAL_C_INCLUDES := \
-  frameworks/av/include \
-  vendor/silk/SocketListener \
-
 include $(BUILD_SILK_EXECUTABLE)
 

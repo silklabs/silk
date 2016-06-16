@@ -29,7 +29,7 @@ void FaceDetection::postData(int32_t msgType, const sp<IMemory>& dataPtr,
     void *faceData = malloc(size);
     if (faceData != nullptr) {
       memcpy(faceData, metadata->faces, size);
-      mChannel->send(Channel::TAG_FACES, faceData, size, free, faceData);
+      mChannel->send(TAG_FACES, faceData, size, free, faceData);
     }
   } else {
     ALOGD("postData: msgType=0x%x", msgType);

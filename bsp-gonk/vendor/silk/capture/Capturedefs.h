@@ -11,7 +11,6 @@ using namespace android;
 //
 
 #define CAPTURE_CTL_SOCKET_NAME "capturectl"
-#define CAPTURE_DATA_SOCKET_NAME "captured"
 #define CAPTURE_COMMAND_NAME "CaptureCommand"
 
 #define MAX_MSG_SIZE 128

@@ -3,6 +3,7 @@
 #include <utils/Log.h>
 
 #include "MPEG4SegmenterDASH.h"
+#include "Capturedefs.h"
 
 #include <cutils/properties.h>
 #include <include/avc_utils.h>
@@ -423,7 +424,7 @@ bool MPEG4SegmenterDASH::threadLoop() {
       // Write size and .mp4 data
       writer->incStrong(this);
       
-      mChannel->send(Channel::TAG_VIDEO, when, videoDurationMs,
+      mChannel->send(TAG_VIDEO, when, videoDurationMs,
                      writer->data().array(), writer->data().size(),
                      writerDecStrong, writer.get());
     } else {

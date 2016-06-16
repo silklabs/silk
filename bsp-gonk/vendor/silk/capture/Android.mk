@@ -97,6 +97,9 @@ LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := mic.cpp AudioSourceEmitter.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
+endif
 LOCAL_SHARED_LIBRARIES := liblog libmedia libcutils libstagefright libutils
 LOCAL_C_INCLUDES := frameworks/av/include
 include $(BUILD_SILK_EXECUTABLE)

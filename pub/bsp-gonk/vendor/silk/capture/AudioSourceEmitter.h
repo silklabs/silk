@@ -3,11 +3,23 @@
 
 #include <media/stagefright/foundation/ABase.h>
 #include <media/stagefright/MediaSource.h>
-#include "Channel.h"
+#include <utils/StrongPointer.h>
 
-class AudioSourceEmitter : public MediaSource {
+using namespace android;
+
+class AudioSourceEmitter: public MediaSource {
 public:
-  AudioSourceEmitter(Channel *channel, const sp<MediaSource> &source);
+
+  class Observer: public RefBase {
+  public:
+    // The implementation is responsible for free()-ing data
+    virtual void OnData(void *data, size_t size) = 0;
+  };
+
+  AudioSourceEmitter(const sp<MediaSource> &source,
+                     sp<Observer> observer,
+                     int audioChannels);
+
   virtual ~AudioSourceEmitter();
   virtual status_t start(MetaData *params = NULL);
   virtual status_t stop();
@@ -15,7 +27,7 @@ public:
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
 
 private:
-  Channel *mChannel;
+  sp<Observer> mObserver;
   sp<MediaSource> mSource;
   DISALLOW_EVIL_CONSTRUCTORS(AudioSourceEmitter);
 

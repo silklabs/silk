@@ -466,7 +466,7 @@ status_t CaptureCommand::initThreadAudioOnly() {
     )
   );
   sp<MediaSource> audioSourceEmitter =
-    new AudioSourceEmitter(&mChannel, audioSource);
+    new AudioSourceEmitter(audioSource, &mChannel, sAudioChannels);
   sp<MediaSource> audioMutter =
     new AudioMutter(audioSourceEmitter);
 
@@ -543,7 +543,7 @@ status_t CaptureCommand::initThreadCamera() {
       )
     );
     sp<MediaSource> audioSourceEmitter =
-      new AudioSourceEmitter(&mChannel, audioSource);
+      new AudioSourceEmitter(audioSource, &mChannel, sAudioChannels);
     sp<MediaSource> audioMutter =
       new AudioMutter(audioSourceEmitter);
     sp<MediaSource> audioEncoder =

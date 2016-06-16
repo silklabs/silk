@@ -357,6 +357,7 @@ void SocketListener1::sendData(const void *data, int len) {
     if (errno == EPIPE) {
       ALOGW("Socket disconnect; closing");
       release(c, false);
+      errno = 0;
     }
   }
 }

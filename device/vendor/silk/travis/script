@@ -7,7 +7,12 @@ if [ ! -d core ]; then
 fi
 
 echo "## Running unit tests ##"
-for dir in core ext/*/; do
+dirs=(core \
+      ext/*/ \
+      ../propsilk/silk-kws/ \
+      ../propsilk/silk-dialog-storage/ \
+      )
+for dir in ${dirs[@]}; do
   if [ -d "$dir/test" ]; then
     echo "### Testing $dir"
     pushd "$dir"

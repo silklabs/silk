@@ -49,7 +49,6 @@ const NUM_SAMPLES = 70; // Each sample is 16ms
 // to be the common denominator
 const SKIP_SAMPLES = 10; // Skip these many samples
 
-const RAW_BYTES_TO_SKIP = SKIP_SAMPLES * STEP_SIZE * 2;
 const WINDOW_SIZE_IN_BYTES = NUM_SAMPLES * STEP_SIZE * 2;
 
 const PCM_BUFFER_SECS = 1000; // How many seconds worth of data to buffer
@@ -91,7 +90,7 @@ export default class KeywordSpotting extends EventEmitter {
   _pcmDataArray: Array<[number, Buffer]>;
   _pcmDataSizeInBytes: number;
   _vib: Vibrator;
-  _dialogEnabled: boolean;
+  _standAlone: boolean;
   _wavDataBuffer: Buffer;
   _saveEnabled: boolean;
   _onSpeechStart: (when: number) => void;
@@ -103,9 +102,9 @@ export default class KeywordSpotting extends EventEmitter {
   _ready: boolean = false;
   _vadEnabled: boolean = false;
 
-  constructor(voiceActivityDetector: VoiceActivityDetector, dialogEnabled: boolean = true) {
+  constructor(voiceActivityDetector: VoiceActivityDetector, standAlone: boolean = false) {
     super();
-    this._dialogEnabled = dialogEnabled;
+    this._standAlone = standAlone;
     this._voiceActivityDetector = voiceActivityDetector;
     this._init();
     this._vib = new Vibrator();
@@ -391,6 +390,7 @@ export default class KeywordSpotting extends EventEmitter {
     output.forEach(features => normalizer.track(features));
     output.forEach(features => normalizer.apply(features, features));
 
+    let skipCount = SKIP_SAMPLES;
     try {
       let [label, confidence] = await this._predictAsync(output);
       if (label && (label === HOT_KEYWORD)) {
@@ -398,15 +398,23 @@ export default class KeywordSpotting extends EventEmitter {
         this._saveAsWav();
         this._onKeywordDetected();
         this.emit(label, { when: Date.now(), confidence});
+
+        // Skip an entire window of samples to prevent same keyword to be
+        // spotted again. In a non-standalone mode (w/ dialog extension) the
+        // kws is stopped right after a successful prediction so this doesn't matter
+        if (this._standAlone) {
+          skipCount = NUM_SAMPLES;
+        }
       }
     } catch (err) {
       log.error(`Prediction failed err: ${err.stack}||${err}`);
     }
 
     // Skip a few samples
-    this._output.splice(0, SKIP_SAMPLES);
+    this._output.splice(0, skipCount);
     if (this._saveEnabled) {
-      this._wavDataBuffer = this._wavDataBuffer.slice(RAW_BYTES_TO_SKIP);
+      let bytesToSkip = skipCount * STEP_SIZE * 2;
+      this._wavDataBuffer = this._wavDataBuffer.slice(bytesToSkip);
     }
 
     process.nextTick(() => this._processNextWindow()); // Process next sample
@@ -416,7 +424,7 @@ export default class KeywordSpotting extends EventEmitter {
    * Play a sound when hot keyword is detected
    */
   _playHotKeywordSound() {
-    if (!this._dialogEnabled) {
+    if (this._standAlone) {
       return util.playSound(path.join(__dirname, '..', 'media',
           'hotkeyword_detected.mp3'));
     } else {
@@ -462,10 +470,11 @@ export default class KeywordSpotting extends EventEmitter {
    * Stop processsing data as soon as keyword is detected
    */
   _onKeywordDetected() {
-    this._output = []; // Clear buffer to stop predictions right away
-    if (this._dialogEnabled) {
-      this._speechStopWhen = 0;
+    if (this._standAlone) {
+      return;
     }
+    this._output = []; // Clear buffer to stop predictions right away
+    this._speechStopWhen = 0;
   }
 
   /**

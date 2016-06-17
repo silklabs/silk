@@ -18,7 +18,7 @@ import {
 import createLog from 'silk-log';
 import { AccessToken } from 'silk-api';
 
-import { genPBKDF2KeyDerivation } from './Crypto';
+import { genPBKDF2KeyDerivation } from './crypto';
 
 const log = createLog('UserState');
 const { BLESocketManager } = NativeModules;

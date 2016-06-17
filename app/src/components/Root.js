@@ -10,11 +10,11 @@ import {
 // Inject global shims, native cryptographic signature
 // implementations, and profiler hooks.
 import '../libraries/BrowserShims';
-import '../libraries/CryptoSign';
+import '../libraries/crypto';
 import '../libraries/profiling';
 
 import Config from '../libraries/config';
-import { genRandomBytes } from '../libraries/Crypto';
+import { genRandomBytes } from '../libraries/crypto';
 import loadUserState from '../libraries/UserState';
 
 import createAPI from 'silk-api';

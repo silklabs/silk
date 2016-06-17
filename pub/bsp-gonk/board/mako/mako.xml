@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <include name="android-5.1.1_r1.xml"/>
+
+  <remote fetch="git://github.com/" name="github"/>
   <project name="DonkeyCoyote/proprietary_vendor_lge"
            path="vendor/lge"
            clone-depth="1"

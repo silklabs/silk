@@ -1,0 +1,18 @@
+{
+  "name": "silk-camera-facedetect",
+  "scripts": {
+    "lint": "eslint .",
+    "silk-build": "silk-buildjs ."
+  },
+  "dependencies": {
+    "opencv": "^5.0.0",
+    "silk": "^0.17.0",
+    "silk-buildjs": "^0.17.0"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "2.1.5",
+    "babel-eslint": "^6.0.4",
+    "eslint": "^1.10.3",
+    "eslint-config-silk": "^0.17.0"
+  }
+}

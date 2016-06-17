@@ -1,10 +1,10 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 exports.ClassDeclaration = ClassDeclaration;
-/*istanbul ignore next*/exports.ClassBody = ClassBody;
-/*istanbul ignore next*/exports.ClassProperty = ClassProperty;
-/*istanbul ignore next*/exports.ClassMethod = ClassMethod;
+exports.ClassBody = ClassBody;
+exports.ClassProperty = ClassProperty;
+exports.ClassMethod = ClassMethod;
 function ClassDeclaration(node) {
   this.printJoin(node.decorators, node, { separator: "" });
   this.push("class");
@@ -31,7 +31,7 @@ function ClassDeclaration(node) {
   this.print(node.body, node);
 }
 
-/*istanbul ignore next*/exports.ClassExpression = ClassDeclaration;
+exports.ClassExpression = ClassDeclaration;
 function ClassBody(node) {
   this.push("{");
   this.printInnerComments(node);

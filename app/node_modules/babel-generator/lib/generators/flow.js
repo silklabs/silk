@@ -1,28 +1,28 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 exports.TypeParameterDeclaration = exports.NumericLiteralTypeAnnotation = exports.GenericTypeAnnotation = exports.ClassImplements = undefined;
 exports.AnyTypeAnnotation = AnyTypeAnnotation;
-/*istanbul ignore next*/exports.ArrayTypeAnnotation = ArrayTypeAnnotation;
-/*istanbul ignore next*/exports.BooleanTypeAnnotation = BooleanTypeAnnotation;
-/*istanbul ignore next*/exports.BooleanLiteralTypeAnnotation = BooleanLiteralTypeAnnotation;
-/*istanbul ignore next*/exports.NullLiteralTypeAnnotation = NullLiteralTypeAnnotation;
-/*istanbul ignore next*/exports.DeclareClass = DeclareClass;
-/*istanbul ignore next*/exports.DeclareFunction = DeclareFunction;
-/*istanbul ignore next*/exports.DeclareInterface = DeclareInterface;
-/*istanbul ignore next*/exports.DeclareModule = DeclareModule;
-/*istanbul ignore next*/exports.DeclareTypeAlias = DeclareTypeAlias;
-/*istanbul ignore next*/exports.DeclareVariable = DeclareVariable;
-/*istanbul ignore next*/exports.ExistentialTypeParam = ExistentialTypeParam;
-/*istanbul ignore next*/exports.FunctionTypeAnnotation = FunctionTypeAnnotation;
-/*istanbul ignore next*/exports.FunctionTypeParam = FunctionTypeParam;
-/*istanbul ignore next*/exports.InterfaceExtends = InterfaceExtends;
-/*istanbul ignore next*/exports._interfaceish = _interfaceish;
-/*istanbul ignore next*/exports.InterfaceDeclaration = InterfaceDeclaration;
-/*istanbul ignore next*/exports.IntersectionTypeAnnotation = IntersectionTypeAnnotation;
-/*istanbul ignore next*/exports.MixedTypeAnnotation = MixedTypeAnnotation;
-/*istanbul ignore next*/exports.NullableTypeAnnotation = NullableTypeAnnotation;
-/*istanbul ignore next*/
+exports.ArrayTypeAnnotation = ArrayTypeAnnotation;
+exports.BooleanTypeAnnotation = BooleanTypeAnnotation;
+exports.BooleanLiteralTypeAnnotation = BooleanLiteralTypeAnnotation;
+exports.NullLiteralTypeAnnotation = NullLiteralTypeAnnotation;
+exports.DeclareClass = DeclareClass;
+exports.DeclareFunction = DeclareFunction;
+exports.DeclareInterface = DeclareInterface;
+exports.DeclareModule = DeclareModule;
+exports.DeclareTypeAlias = DeclareTypeAlias;
+exports.DeclareVariable = DeclareVariable;
+exports.ExistentialTypeParam = ExistentialTypeParam;
+exports.FunctionTypeAnnotation = FunctionTypeAnnotation;
+exports.FunctionTypeParam = FunctionTypeParam;
+exports.InterfaceExtends = InterfaceExtends;
+exports._interfaceish = _interfaceish;
+exports.InterfaceDeclaration = InterfaceDeclaration;
+exports.IntersectionTypeAnnotation = IntersectionTypeAnnotation;
+exports.MixedTypeAnnotation = MixedTypeAnnotation;
+exports.NullableTypeAnnotation = NullableTypeAnnotation;
+
 var _types = require("./types");
 
 Object.defineProperty(exports, "NumericLiteralTypeAnnotation", {
@@ -31,30 +31,29 @@ Object.defineProperty(exports, "NumericLiteralTypeAnnotation", {
     return _types.NumericLiteral;
   }
 });
-/*istanbul ignore next*/exports.NumberTypeAnnotation = NumberTypeAnnotation;
-/*istanbul ignore next*/exports.StringLiteralTypeAnnotation = StringLiteralTypeAnnotation;
-/*istanbul ignore next*/exports.StringTypeAnnotation = StringTypeAnnotation;
-/*istanbul ignore next*/exports.ThisTypeAnnotation = ThisTypeAnnotation;
-/*istanbul ignore next*/exports.TupleTypeAnnotation = TupleTypeAnnotation;
-/*istanbul ignore next*/exports.TypeofTypeAnnotation = TypeofTypeAnnotation;
-/*istanbul ignore next*/exports.TypeAlias = TypeAlias;
-/*istanbul ignore next*/exports.TypeAnnotation = TypeAnnotation;
-/*istanbul ignore next*/exports.TypeParameterInstantiation = TypeParameterInstantiation;
-/*istanbul ignore next*/exports.ObjectTypeAnnotation = ObjectTypeAnnotation;
-/*istanbul ignore next*/exports.ObjectTypeCallProperty = ObjectTypeCallProperty;
-/*istanbul ignore next*/exports.ObjectTypeIndexer = ObjectTypeIndexer;
-/*istanbul ignore next*/exports.ObjectTypeProperty = ObjectTypeProperty;
-/*istanbul ignore next*/exports.QualifiedTypeIdentifier = QualifiedTypeIdentifier;
-/*istanbul ignore next*/exports.UnionTypeAnnotation = UnionTypeAnnotation;
-/*istanbul ignore next*/exports.TypeCastExpression = TypeCastExpression;
-/*istanbul ignore next*/exports.VoidTypeAnnotation = VoidTypeAnnotation;
+exports.NumberTypeAnnotation = NumberTypeAnnotation;
+exports.StringLiteralTypeAnnotation = StringLiteralTypeAnnotation;
+exports.StringTypeAnnotation = StringTypeAnnotation;
+exports.ThisTypeAnnotation = ThisTypeAnnotation;
+exports.TupleTypeAnnotation = TupleTypeAnnotation;
+exports.TypeofTypeAnnotation = TypeofTypeAnnotation;
+exports.TypeAlias = TypeAlias;
+exports.TypeAnnotation = TypeAnnotation;
+exports.TypeParameter = TypeParameter;
+exports.TypeParameterInstantiation = TypeParameterInstantiation;
+exports.ObjectTypeAnnotation = ObjectTypeAnnotation;
+exports.ObjectTypeCallProperty = ObjectTypeCallProperty;
+exports.ObjectTypeIndexer = ObjectTypeIndexer;
+exports.ObjectTypeProperty = ObjectTypeProperty;
+exports.QualifiedTypeIdentifier = QualifiedTypeIdentifier;
+exports.UnionTypeAnnotation = UnionTypeAnnotation;
+exports.TypeCastExpression = TypeCastExpression;
+exports.VoidTypeAnnotation = VoidTypeAnnotation;
 
-var /*istanbul ignore next*/_babelTypes = require("babel-types");
+var _babelTypes = require("babel-types");
 
-/*istanbul ignore next*/
 var t = _interopRequireWildcard(_babelTypes);
 
-/*istanbul ignore next*/
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function AnyTypeAnnotation() {
@@ -160,8 +159,8 @@ function InterfaceExtends(node) {
   this.print(node.typeParameters, node);
 }
 
-/*istanbul ignore next*/exports.ClassImplements = InterfaceExtends;
-/*istanbul ignore next*/exports.GenericTypeAnnotation = InterfaceExtends;
+exports.ClassImplements = InterfaceExtends;
+exports.GenericTypeAnnotation = InterfaceExtends;
 function _interfaceish(node) {
   this.print(node.id, node);
   this.print(node.typeParameters, node);
@@ -240,23 +239,42 @@ function TypeAnnotation(node) {
   this.print(node.typeAnnotation, node);
 }
 
+function TypeParameter(node) {
+  if (node.variance === "plus") {
+    this.push("+");
+  } else if (node.variance === "minus") {
+    this.push("-");
+  }
+
+  this.push(node.name);
+
+  if (node.bound) {
+    this.print(node.bound, node);
+  }
+
+  if (node.default) {
+    this.space();
+    this.push("=");
+    this.space();
+    this.print(node.default, node);
+  }
+}
+
 function TypeParameterInstantiation(node) {
-  /*istanbul ignore next*/
   var _this = this;
 
   this.push("<");
   this.printJoin(node.params, node, {
     separator: ", ",
-    iterator: function /*istanbul ignore next*/iterator(node) {
-      /*istanbul ignore next*/_this.print(node.typeAnnotation, node);
+    iterator: function iterator(node) {
+      _this.print(node.typeAnnotation, node);
     }
   });
   this.push(">");
 }
 
-/*istanbul ignore next*/exports.TypeParameterDeclaration = TypeParameterInstantiation;
+exports.TypeParameterDeclaration = TypeParameterInstantiation;
 function ObjectTypeAnnotation(node) {
-  /*istanbul ignore next*/
   var _this2 = this;
 
   this.push("{");
@@ -268,10 +286,10 @@ function ObjectTypeAnnotation(node) {
     this.printJoin(props, node, {
       separator: false,
       indent: true,
-      iterator: function /*istanbul ignore next*/iterator() {
+      iterator: function iterator() {
         if (props.length !== 1) {
-          /*istanbul ignore next*/_this2.semicolon();
-          /*istanbul ignore next*/_this2.space();
+          _this2.semicolon();
+          _this2.space();
         }
       }
     });

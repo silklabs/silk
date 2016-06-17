@@ -14,6 +14,8 @@
 #include "webrtc/system_wrappers/include/sleep.h"
 #include "CaptureDataSocket.h"
 #include <cutils/sockets.h>
+#include <fcntl.h>
+#include <poll.h>
 
 #define LOG_TAG "audio_device_gonk"
 #include <utils/Log.h>
@@ -126,6 +128,11 @@ int32_t AudioDeviceGonk::StartRecording() {
     return 0;
   }
 
+  if (_ptrAudioBuffer == nullptr) {
+    ALOGE("Null audio buffer");
+    return -1;
+  }
+
   _socket = socket_local_client(CAPTURE_DATA_SOCKET_NAME,
                                 ANDROID_SOCKET_NAMESPACE_RESERVED,
                                 SOCK_STREAM);
@@ -135,36 +142,34 @@ int32_t AudioDeviceGonk::StartRecording() {
     return -1;
   }
 
-  if (_ptrAudioBuffer == nullptr) {
-    ALOGE("Null audio buffer");
-    return -1;
-  }
+  int flags = fcntl(_socket, F_GETFL, 0);
+  fcntl(_socket, F_SETFL, flags | O_NONBLOCK);
+
   _ptrAudioBuffer->SetRecordingSampleRate(AUDIO_DEVICE_GONK__SAMPLERATE);
   _ptrAudioBuffer->SetRecordingChannels(AUDIO_DEVICE_GONK__NUMCHANNELS);
 
-  _ptrThreadRec.reset(new rtc::PlatformThread( RecThreadFunc, this, "audio_device_gonk"));
+  _recording = true;
 
+  _ptrThreadRec.reset(new rtc::PlatformThread(RecThreadFunc, this, "audio_device_gonk"));
   _ptrThreadRec->Start();
   _ptrThreadRec->SetPriority(rtc::kRealtimePriority);
 
-  _recording = true;
   return 0;
 }
 
 int32_t AudioDeviceGonk::StopRecording() {
   CriticalSectionScoped lock(&_critSect);
-  if (!_recording) {
-    return 0;
-  }
+  _recording = false;
 
   if (_ptrThreadRec) {
     _ptrThreadRec->Stop();
     _ptrThreadRec.reset();
   }
 
-  close(_socket);
-  _socket = -1;
-  _recording = false;
+  if (_socket >= 0) {
+    close(_socket);
+    _socket = -1;
+  }
 
   delete [] _pcmData;
   _pcmData = nullptr;
@@ -311,8 +316,6 @@ void AudioDeviceGonk::ClearRecordingWarning() {}
 void AudioDeviceGonk::ClearRecordingError() {}
 
 void AudioDeviceGonk::AttachAudioBuffer(AudioDeviceBuffer* audioBuffer) {
-  CriticalSectionScoped lock(&_critSect);
-
   _ptrAudioBuffer = audioBuffer;
 
   // Inform the AudioBuffer about default settings for this implementation.
@@ -325,15 +328,28 @@ void AudioDeviceGonk::AttachAudioBuffer(AudioDeviceBuffer* audioBuffer) {
 }
 
 bool AudioDeviceGonk::RecThreadFunc(void* pThis) {
-    return (static_cast<AudioDeviceGonk*>(pThis)->RecThreadProcess());
+  return (static_cast<AudioDeviceGonk*>(pThis)->RecThreadProcess());
 }
 
 
-static int readExact(int fd, char *buffer, int x)
+static int readExact(int fd, char *buffer, int x, int timeout)
 {
   int bytesRead = 0;
   int result;
+  struct pollfd pollfd = {
+    .fd = fd,
+    .events = POLLIN | POLLHUP | POLLERR | POLLNVAL,
+    .revents = 0
+  };
+
   while (bytesRead < x) {
+    result = TEMP_FAILURE_RETRY(poll(&pollfd, 1, timeout));
+    if (result < 1) {
+      return result;
+    }
+    if (pollfd.revents != POLLIN) {
+      return -ETIMEDOUT;
+    }
     result = TEMP_FAILURE_RETRY(read(fd, buffer + bytesRead, x - bytesRead));
     if (result < 1) {
       return result;
@@ -346,6 +362,8 @@ static int readExact(int fd, char *buffer, int x)
 
 
 bool AudioDeviceGonk::RecThreadProcess() {
+  CriticalSectionScoped lock(&_critSect);
+
   if (!_recording) {
     return false;
   }
@@ -353,7 +371,12 @@ bool AudioDeviceGonk::RecThreadProcess() {
   capture::datasocket::PacketHeader hdr;
   int rc;
 
-  rc = readExact(_socket, (char *) &hdr, sizeof(hdr));
+  // PCM data should be arriving every 100ms-200ms or so at most normally, so if
+  // nothing arrives for a couple seconds then something is very wrong and it's
+  // time to eject
+  const int kCaptureSocketReadTimeout = 3000;
+
+  rc = readExact(_socket, (char *) &hdr, sizeof(hdr), kCaptureSocketReadTimeout);
   if (rc <= 0) {
     ALOGE("Header read error: %d", rc);
     return false;
@@ -367,7 +390,6 @@ bool AudioDeviceGonk::RecThreadProcess() {
     ALOGE("BAD HEADER: %d", rc);
     return false;
   }
-  //ALOGD("Header with tag=%d size=%d\n", hdr.tag, hdr.size);
 
   if (_pcmDataSize < (int) hdr.size) {
     _pcmDataSize = (int) hdr.size;
@@ -375,7 +397,7 @@ bool AudioDeviceGonk::RecThreadProcess() {
     _pcmData = new char[_pcmDataSize];
   }
 
-  rc = readExact(_socket, _pcmData, hdr.size);
+  rc = readExact(_socket, _pcmData, hdr.size, kCaptureSocketReadTimeout);
   if (rc <= 0) {
     ALOGE("Data read error: %d", rc);
     return false;
@@ -385,7 +407,6 @@ bool AudioDeviceGonk::RecThreadProcess() {
     return false;
   }
   if (hdr.tag == capture::datasocket::TAG_MIC) {
-    CriticalSectionScoped lock(&_critSect);
     if (_recording) {
       size_t index = 0;
       while (index <= hdr.size - kRecordingBufferSize) {

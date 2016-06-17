@@ -13,7 +13,7 @@ import {
   MessagePackDuplexStream,
 } from 'silk-streams';
 
-import { genRandomBytes } from '../Crypto';
+import { genRandomBytes } from '../crypto';
 import * as Metrics from '../../metrics/BTLE';
 import Stream from './Stream';
 

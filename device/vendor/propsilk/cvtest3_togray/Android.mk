@@ -1,3 +1,4 @@
+ifneq (,$(wildcard external/opencv3/opencv.mk))
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -8,3 +9,4 @@ LOCAL_SRC_FILES    := main.cpp
 include external/opencv3/opencv.mk
 include $(BUILD_SILK_EXECUTABLE)
 
+endif

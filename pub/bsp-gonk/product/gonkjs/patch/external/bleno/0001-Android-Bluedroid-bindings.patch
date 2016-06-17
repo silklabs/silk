@@ -1,23 +1,20 @@
-From 2e1b0a073bc0faa244c6493d41f82d554d6b5e5b Mon Sep 17 00:00:00 2001
-From: James Lal <james@silklabs.com>
-Date: Sun, 22 May 2016 18:58:52 -0700
-Subject: [PATCH] Androidify
+From 8e0c029eeb7b1559f1ff8d2bec740c67a09666e5 Mon Sep 17 00:00:00 2001
+From: Ben Turner <bent@silklabs.com>
+Date: Thu, 16 Jun 2016 14:29:54 -0700
+Subject: [PATCH] Android Bluedroid bindings
 
 ---
  Android.mk              |   7 +
- binding.gyp             |  38 -----
- lib/android/bindings.js | 371 ++++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 376 ++++++++++++++++++++++++++++++++++++++++++++++++
  lib/bleno.js            |   2 +
  package.json            |   6 +-
- test.js                 |   3 +-
- 6 files changed, 383 insertions(+), 44 deletions(-)
+ 4 files changed, 389 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
- delete mode 100644 binding.gyp
  create mode 100644 lib/android/bindings.js
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..cb2d54e
+index 0000000..d59df9c
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,7 @@
@@ -28,61 +25,18 @@ index 0000000..cb2d54e
 +
 +LOCAL_MODULE_PATH := $(TARGET_OUT)/silk/node_modules
 +include $(BUILD_NODE_MODULE)
-diff --git a/binding.gyp b/binding.gyp
-deleted file mode 100644
-index 99c8e32..0000000
---- a/binding.gyp
-+++ /dev/null
-@@ -1,38 +0,0 @@
--{
--  'targets': [
--    {
--      'target_name': 'hci-ble',
--      'type': 'executable',
--      'conditions': [
--        ['OS=="linux"', {
--          'sources': [
--            'src/hci-ble.c',
--            'src/utility.c'
--          ],
--          'link_settings': {
--            'libraries': [
--              '-lbluetooth'
--            ]
--          }
--        }]
--      ]
--    },
--    {
--      'target_name': 'l2cap-ble',
--      'type': 'executable',
--      'conditions': [
--        ['OS=="linux"', {
--          'sources': [
--            'src/l2cap-ble.c',
--            'src/utility.c'
--          ],
--          'link_settings': {
--            'libraries': [
--              '-lbluetooth'
--            ]
--          }
--        }]
--      ]
--    }
--  ]
--}
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..79fa377
+index 0000000..f7c4cdc
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,371 @@
+@@ -0,0 +1,376 @@
 +/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
 +/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 +
 +var debug = require('debug')('silk-bleno');
 +var events = require('events');
++var os = require('os');
 +var util = require('util');
 +
 +var makeBledroidConnection = require('silk-bledroid');
@@ -93,6 +47,8 @@ index 0000000..79fa377
 +var blenoBindings = new BlenoBindings();
 +
 +blenoBindings.init = function() {
++  this.emit('platform', os.platform());
++
 +  this._bledroid = makeBledroidConnection();
 +  this._bledroid.on('stateChange', this.onStateChange.bind(this));
 +  this._bledroid.on('addressChange', this.onAddressChange.bind(this));
@@ -446,52 +402,56 @@ index 0000000..79fa377
 +  }
 +};
 +
++blenoBindings.disconnect = function() {
++  throw new Error('disconnect() is not yet supported');
++};
 +
-+blenoBindings.init();
 +module.exports = blenoBindings;
 diff --git a/lib/bleno.js b/lib/bleno.js
-index bf8dd6c..61454e8 100644
+index 0d4f755..c4547fa 100644
 --- a/lib/bleno.js
 +++ b/lib/bleno.js
 @@ -18,6 +18,8 @@ if (platform === 'darwin') {
    bindings = require('./mac/bindings');
- } else if (platform === 'linux') {
-   bindings = require('./linux/bindings');
+ } else if (platform === 'linux' || platform === 'win32') {
+   bindings = require('./hci-socket/bindings');
 +} else if (platform === 'android') {
 +  bindings = require('./android/bindings');
  } else {
    throw new Error('Unsupported platform');
  }
 diff --git a/package.json b/package.json
-index d951f35..2321596 100644
+index c585abc..360e603 100644
 --- a/package.json
 +++ b/package.json
-@@ -35,10 +35,6 @@
-     "node-blink1": "~0.1.1"
+@@ -7,6 +7,7 @@
+     "node": ">=0.8"
+   },
+   "os": [
++    "android",
+     "darwin",
+     "linux",
+     "win32"
+@@ -29,16 +30,17 @@
+   "author": "Sandeep Mistry",
+   "license": "MIT",
+   "readmeFilename": "README.md",
+-  "devDependencies": {
++  "__devDependencies": {
+     "jshint": "~2.3.0",
+     "should": "~2.0.2",
+     "mocha": "~1.14.0",
+     "node-blink1": "~0.2.2"
    },
    "dependencies": {
--    "debug": "~0.7.2"
--  },
++    "browserify": "^10.2.1",
+     "debug": "^2.2.0"
+   },
 -  "optionalDependencies": {
--    "xpc-connection": "~0.1.3",
--    "bplist-parser": "0.0.6"
-+    "debug": "2.2.0"
-   }
- }
-diff --git a/test.js b/test.js
-index d1c8ea1..9b3284f 100644
---- a/test.js
-+++ b/test.js
-@@ -181,7 +181,8 @@ bleno.on('stateChange', function(state) {
-   console.log('on -> stateChange: ' + state + ', address = ' + bleno.address);
- 
-   if (state === 'poweredOn') {
--    bleno.startAdvertising('test', ['fffffffffffffffffffffffffffffff0']);
-+    bleno.startAdvertising('test', ['fb349b5f800000800010000003000000']);
-+
-   } else {
-     bleno.stopAdvertising();
-   }
++  "__optionalDependencies": {
+     "bluetooth-hci-socket": "~0.4.3",
+     "bplist-parser": "0.0.6",
+     "xpc-connection": "~0.1.4"
 -- 
-2.7.3
+2.9.0
 

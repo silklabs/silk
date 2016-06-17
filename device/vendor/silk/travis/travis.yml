@@ -27,6 +27,7 @@ addons:
       - libhighgui-dev
       - libopencv-dev
       - realpath
+      - mplayer
 
 install:
   - source ../../../pub/travis/common_before_install.sh

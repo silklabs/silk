@@ -49,7 +49,6 @@ const NUM_SAMPLES = 70; // Each sample is 16ms
 // to be the common denominator
 const SKIP_SAMPLES = 10; // Skip these many samples
 
-const RAW_BYTES_TO_SKIP = SKIP_SAMPLES * STEP_SIZE * 2;
 const WINDOW_SIZE_IN_BYTES = NUM_SAMPLES * STEP_SIZE * 2;
 
 const PCM_BUFFER_SECS = 1000; // How many seconds worth of data to buffer
@@ -72,8 +71,6 @@ type MicData = {
   frames: Buffer;
 };
 
-type SpeechToTextCallback = ((error: ?Error, text?: string) => void);
-
 /**
  * This class receives mic data stream and tries to detect a specific keyword
  * using keyword spotting with neural networks
@@ -91,7 +88,7 @@ export default class KeywordSpotting extends EventEmitter {
   _pcmDataArray: Array<[number, Buffer]>;
   _pcmDataSizeInBytes: number;
   _vib: Vibrator;
-  _dialogEnabled: boolean;
+  _standAlone: boolean;
   _wavDataBuffer: Buffer;
   _saveEnabled: boolean;
   _onSpeechStart: (when: number) => void;
@@ -103,9 +100,9 @@ export default class KeywordSpotting extends EventEmitter {
   _ready: boolean = false;
   _vadEnabled: boolean = false;
 
-  constructor(voiceActivityDetector: VoiceActivityDetector, dialogEnabled: boolean = true) {
+  constructor(voiceActivityDetector: VoiceActivityDetector, standAlone: boolean = false) {
     super();
-    this._dialogEnabled = dialogEnabled;
+    this._standAlone = standAlone;
     this._voiceActivityDetector = voiceActivityDetector;
     this._init();
     this._vib = new Vibrator();
@@ -278,6 +275,14 @@ export default class KeywordSpotting extends EventEmitter {
       }
       let keywordsJson = await fs.readFile(KEYWORDS);
       keywordTexts = JSON.parse(keywordsJson);
+
+      if (this._saveEnabled) {
+        if ((await fs.exists(POS_KWS_DIR)) === false) {
+          await mkdirp(POS_KWS_DIR);
+        } if ((await fs.exists(NEG_KWS_DIR)) === false) {
+          await mkdirp(NEG_KWS_DIR);
+        }
+      }
     } catch (err) {
       log.error(`Failed to load caffe model err: ${err}`);
       return;
@@ -322,6 +327,7 @@ export default class KeywordSpotting extends EventEmitter {
 
     // Start processing pcm data
     let [when, pcmData] = this._pcmDataArray.shift();
+    this._pcmDataSizeInBytes -= pcmData.length;
 
     // Stop processing after speech stop
     if (when >= this._speechStopWhen + PCM_BUFFER_SECS) {
@@ -331,8 +337,6 @@ export default class KeywordSpotting extends EventEmitter {
     }
 
     // Convert the raw pcm data into Float32Array of [-1, 1]
-    this._pcmDataSizeInBytes -= pcmData.length;
-
     let samples = new Int16Array(pcmData.length / 2);
     for (let i = 0; i < samples.length; ++i) {
       samples[i] = pcmData.readInt16LE(2 * i);
@@ -391,22 +395,31 @@ export default class KeywordSpotting extends EventEmitter {
     output.forEach(features => normalizer.track(features));
     output.forEach(features => normalizer.apply(features, features));
 
+    let skipCount = SKIP_SAMPLES;
     try {
       let [label, confidence] = await this._predictAsync(output);
       if (label && (label === HOT_KEYWORD)) {
         await this._playHotKeywordSound();
-        this._saveAsWav();
+        await this._saveAsWav();
         this._onKeywordDetected();
         this.emit(label, { when: Date.now(), confidence});
+
+        // Skip an entire window of samples to prevent same keyword to be
+        // spotted again. In a non-standalone mode (w/ dialog extension) the
+        // kws is stopped right after a successful prediction so this doesn't matter
+        if (this._standAlone) {
+          skipCount = NUM_SAMPLES;
+        }
       }
     } catch (err) {
       log.error(`Prediction failed err: ${err.stack}||${err}`);
     }
 
     // Skip a few samples
-    this._output.splice(0, SKIP_SAMPLES);
+    this._output.splice(0, skipCount);
     if (this._saveEnabled) {
-      this._wavDataBuffer = this._wavDataBuffer.slice(RAW_BYTES_TO_SKIP);
+      let bytesToSkip = skipCount * STEP_SIZE * 2;
+      this._wavDataBuffer = this._wavDataBuffer.slice(bytesToSkip);
     }
 
     process.nextTick(() => this._processNextWindow()); // Process next sample
@@ -416,7 +429,7 @@ export default class KeywordSpotting extends EventEmitter {
    * Play a sound when hot keyword is detected
    */
   _playHotKeywordSound() {
-    if (!this._dialogEnabled) {
+    if (this._standAlone) {
       return util.playSound(path.join(__dirname, '..', 'media',
           'hotkeyword_detected.mp3'));
     } else {
@@ -462,62 +475,57 @@ export default class KeywordSpotting extends EventEmitter {
    * Stop processsing data as soon as keyword is detected
    */
   _onKeywordDetected() {
-    this._output = []; // Clear buffer to stop predictions right away
-    if (this._dialogEnabled) {
-      this._speechStopWhen = 0;
+    if (this._standAlone) {
+      return;
     }
+    this._output = []; // Clear buffer to stop predictions right away
+    this._speechStopWhen = 0;
   }
 
   /**
-   *
+   * Run speech to text service to qualify the keyword and then save the pcm
+   * samples to the file
    */
   async _saveAsWav() {
-    if (this._saveEnabled && netstatus.online) {
-      const stt = new SpeechToText(this._finishSpeechToText);
-      try {
-        await mkdirp(POS_KWS_DIR);
-        await mkdirp(NEG_KWS_DIR);
-      } catch (err) {
-        if (err.code !== 'EEXIST') {
-          log.error(`Failed to create directory, error: ${err}`);
-          return;
-        }
-      }
-
-      log.debug(`Converting keyword to text`);
-      let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
-      stt.write(wavData);
-      stt.finish();
+    if (this._saveEnabled && (netstatus.online || this._standAlone)) {
+      return new Promise((resolve, reject) => {
+        const stt = new SpeechToText((error, text = '') => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          log.debug(`Speech to text service detected: ${text}`);
+          let dir = (keywordTexts.indexOf(text) !== -1) ? POS_KWS_DIR : NEG_KWS_DIR;
+          resolve(dir);
+        });
+        log.debug(`Converting keyword to text`);
+        let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
+        stt.write(wavData);
+        stt.finish();
+      })
+      .then(dir => this._writeWavFile(dir));
     }
   }
 
   /**
-   * This is called when speech to text conversion is finished
+   * Write wav data in a file
    */
-  _finishSpeechToText: SpeechToTextCallback = (error, text = '') => {
-    if (error) {
-      log.error(`Speech stream error ${error}`);
-      return;
-    }
-    if (!text) {
-      log.warn(`No speech detected`);
-      return;
-    }
-
-    log.debug(`Speech to text service detected: ${text}`);
-    let sampleDir;
-    if (keywordTexts.indexOf(text) !== -1) {
-      sampleDir = POS_KWS_DIR;
-    } else {
-      sampleDir = NEG_KWS_DIR;
-    }
-    let writer = new wav.FileWriter(`${sampleDir}/${Date.now()}.wav`, {
-      sampleRate: this._sampleRate,
-      channels: this._numChannels,
-      bitDepth: this._bytesPerSample * 8,
+  _writeWavFile(dir: string): Promise {
+    return new Promise(async (resolve, reject) => {
+      let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
+      let writer = new wav.FileWriter(`${dir}/${Date.now()}.wav`, {
+        sampleRate: this._sampleRate,
+        channels: this._numChannels,
+        bitDepth: this._bytesPerSample * 8,
+      });
+      writer.on('header', () => {
+        resolve();
+      });
+      writer.on('error', err => {
+        reject(err);
+      });
+      writer.write(wavData);
+      writer.end();
     });
-    let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
-    writer.write(wavData);
-    writer.end();
   }
 }

@@ -78,7 +78,7 @@ async function processWav(wav) {
 
 suite('test keyword spotting', function () {
   test('setup', async () => {
-    kws = new KeywordSpotting(null, false);
+    kws = new KeywordSpotting(null, true);
     log.info(`Waiting for kws to be initialized`);
     await eventToPromise(kws, 'ready');
     assert.notEqual(kws, null);

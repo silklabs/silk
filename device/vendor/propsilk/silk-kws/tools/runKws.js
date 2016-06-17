@@ -17,7 +17,7 @@ configureLog('*');
 const log = createLog('runKws');
 
 // Create instance of keyword spotting module
-let kws = new KeywordSpotting(null, false);
+let kws = new KeywordSpotting(null, true);
 
 // Hook up mic-data
 let simMic = mic({

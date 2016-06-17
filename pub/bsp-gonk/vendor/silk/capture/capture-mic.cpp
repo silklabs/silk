@@ -16,12 +16,12 @@
 
 int main(int argc, char **argv)
 {
-  int socket = socket_local_client(CAPTURE_DATA_SOCKET_NAME,
+  int socket = socket_local_client(CAPTURE_MIC_DATA_SOCKET_NAME,
                                    ANDROID_SOCKET_NAMESPACE_RESERVED,
                                    SOCK_STREAM);
 
   if (socket < 0) {
-    ALOGE("Error connecting to " CAPTURE_DATA_SOCKET_NAME " socket: %d", errno);
+    ALOGE("Error connecting to " CAPTURE_MIC_DATA_SOCKET_NAME " socket: %d", errno);
     return 1;
   }
 

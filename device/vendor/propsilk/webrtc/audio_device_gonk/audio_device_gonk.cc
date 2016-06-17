@@ -133,12 +133,12 @@ int32_t AudioDeviceGonk::StartRecording() {
     return -1;
   }
 
-  _socket = socket_local_client(CAPTURE_DATA_SOCKET_NAME,
+  _socket = socket_local_client(CAPTURE_MIC_DATA_SOCKET_NAME,
                                 ANDROID_SOCKET_NAMESPACE_RESERVED,
                                 SOCK_STREAM);
 
   if (_socket < 0) {
-    ALOGE("Error connecting to " CAPTURE_DATA_SOCKET_NAME " socket: %d", _socket);
+    ALOGE("Error connecting to " CAPTURE_MIC_DATA_SOCKET_NAME " socket: %d", _socket);
     return -1;
   }
 

@@ -60,7 +60,8 @@ service silk-capture /system/silk/bin/debug-wrapper /system/silk/bin/capture
     user graphics
     group camera
     socket capturectl stream 0600 root root
-    socket captured stream 0600 root root
+    socket capturemic stream 0600 root root
+    socket capturevid stream 0600 root root
 
 
 # Tee kernel logs to logcat main

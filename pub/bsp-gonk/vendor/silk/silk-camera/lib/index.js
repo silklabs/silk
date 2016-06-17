@@ -146,7 +146,8 @@ const CAMERA_VIDEO_ENABLED = CAMERA_HW_ENABLED && util.getboolprop('ro.silk.came
 // Constants
 //
 const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/capturectl';
-const CAPTURE_DATA_SOCKET_NAME = '/dev/socket/captured';
+const CAPTURE_MIC_DATA_SOCKET_NAME = '/dev/socket/capturemic';
+const CAPTURE_VID_DATA_SOCKET_NAME = '/dev/socket/capturevid';
 
 
 // When trying to reestablish contact with the capture process first delay by
@@ -294,7 +295,8 @@ export default class Camera extends EventEmitter {
     this._cvVideoCapture = null;
     this._cvVideoCaptureBusy = false;
     this._ctlSocket = null;
-    this._dataSocket = null;
+    this._micDataSocket = null;
+    this._vidDataSocket = null;
     this._frameQueue = []; // Queue of pending camera frame requests
     this._noFrameCount = 0;
 
@@ -412,9 +414,13 @@ export default class Camera extends EventEmitter {
       this._ctlSocket.destroy();
       this._ctlSocket = null;
     }
-    if (this._dataSocket) {
-      this._dataSocket.destroy();
-      this._dataSocket = null;
+    if (this._micDataSocket) {
+      this._micDataSocket.destroy();
+      this._micDataSocket = null;
+    }
+    if (this._vidDataSocket) {
+      this._vidDataSocket.destroy();
+      this._vidDataSocket = null;
     }
 
     if (restartCaptureProcess) {
@@ -522,21 +528,8 @@ export default class Camera extends EventEmitter {
     }
 
     // Connecting to data socket
-    this._dataBuffer = null;
-    log.verbose(`connecting to ${CAPTURE_DATA_SOCKET_NAME} socket`);
-    this._dataSocket = net.createConnection(CAPTURE_DATA_SOCKET_NAME, () => {
-      log.verbose(`connected to ${CAPTURE_DATA_SOCKET_NAME} socket`);
-      this._dataBuffer = null;
-    });
-    this._dataSocket.on('data', data => this._onDataSocketRead(data));
-    this._dataSocket.on('error', err => {
-      this._restart(`camera data socket error, reason=${err}`);
-    });
-    this._dataSocket.on('close', hadError => {
-      if (!hadError) {
-        this._restart(`camera data socket close`);
-      }
-    });
+    this._connectDataSocket(this._micDataSocket, CAPTURE_MIC_DATA_SOCKET_NAME);
+    this._connectDataSocket(this._vidDataSocket, CAPTURE_VID_DATA_SOCKET_NAME);
 
     // Connecting to control socket
     log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
@@ -842,74 +835,90 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _onDataSocketRead(newdata) {
-    let buf;
-    if (this._dataBuffer) {
-      // Prepend previous incomplete packet
-      buf = Buffer.concat([this._dataBuffer, newdata]);
-    } else {
-      buf = newdata;
-    }
-
-    let pos = 0;
-    while (pos + HEADER_NR_BYTES < buf.length) {
-      let size = buf.readInt32LE(pos);
-      if (pos + HEADER_NR_BYTES + size > buf.length) {
-        break; // Incomplete packet received
+  _connectDataSocket(_dataSocket, socketName) {
+    let _dataBuffer = null;
+    log.verbose(`connecting to ${socketName} socket`);
+    this._dataSocket = net.createConnection(socketName, () => {
+      log.verbose(`connected to ${socketName} socket`);
+      _dataBuffer = null;
+    });
+    this._dataSocket.on('error', err => {
+      this._restart(`camera data socket error, reason=${err}`);
+    });
+    this._dataSocket.on('close', hadError => {
+      if (!hadError) {
+        this._restart(`camera data socket close`);
       }
-      let tag = buf.readInt32LE(pos + 4);
-      let now = tag === TAG_VIDEO ? Date.now() : null;
-      let sec = buf.readInt32LE(pos + 8);   // timeval.tv_sec
-      let usec = buf.readInt32LE(pos + 12); // timeval.tv_usec
-      let durationMs = buf.readInt32LE(pos + 16);
-      let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
-
-      let pkt = buf.slice(pos + HEADER_NR_BYTES, pos + HEADER_NR_BYTES + size);
-
-      let tagInfo = `| size:${size} when:${sec}.${usec} durationMs:${durationMs}`;
-      switch (tag) {
-      case TAG_VIDEO:
-        log.debug(`TAG_VIDEO ${when}`, tagInfo);
-        this._videoTagReceived = true;
-        invariant(now);
-        let socketDuration = now - when - durationMs;
-
-        if (socketDuration < 0) {
-          log.debug(`Bad socketDuration: ${socketDuration}`);
-          socketDuration = 0;
-        }
-        log.debug(`socketDuration: ${socketDuration}`);
-
-        if (this._recording) {
-          this._throwyEmit('video-segment', when, durationMs, pkt);
-        }
-        break;
-      case TAG_FACES:
-        log.debug(`TAG_FACES ${when}`, tagInfo);
-        if (this._recording) {
-          this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
-        }
-        break;
-      case TAG_MIC:
-        log.debug(`TAG_MIC ${when}`, tagInfo);
-        this._micTagReceived = true;
-        if (this._recording) {
-          this._throwyEmit('mic-data', {when: when, frames: pkt});
-        }
-        break;
-      default:
-        // Flush the buffer and restart the socket
-        this._dataBuffer = null;
-        this._restart('Invalid capture tag', true);
-        throw new Error(`Invalid capture tag #${tag}`, tagInfo);
+    });
+    this._dataSocket.on('data', (newdata) => {
+      let buf;
+      if (_dataBuffer) {
+        // Prepend previous incomplete packet
+        buf = Buffer.concat([_dataBuffer, newdata]);
+      } else {
+        buf = newdata;
       }
-      pos += HEADER_NR_BYTES + size;
-    }
-    if (pos !== buf.length) {
-      this._dataBuffer = buf.slice(pos); // Save partial packet for next time
-    } else {
-      this._dataBuffer = null;
-    }
+
+      let pos = 0;
+      while (pos + HEADER_NR_BYTES < buf.length) {
+        let size = buf.readInt32LE(pos);
+        if (pos + HEADER_NR_BYTES + size > buf.length) {
+          break; // Incomplete packet received
+        }
+        let tag = buf.readInt32LE(pos + 4);
+        let now = tag === TAG_VIDEO ? Date.now() : null;
+        let sec = buf.readInt32LE(pos + 8);   // timeval.tv_sec
+        let usec = buf.readInt32LE(pos + 12); // timeval.tv_usec
+        let durationMs = buf.readInt32LE(pos + 16);
+        let when = sec * 1000 + Math.round(usec / 1000); // UTC ms since epoch
+
+        let pkt = buf.slice(pos + HEADER_NR_BYTES, pos + HEADER_NR_BYTES + size);
+
+        let tagInfo = `| size:${size} when:${sec}.${usec} durationMs:${durationMs}`;
+        switch (tag) {
+        case TAG_VIDEO:
+          log.debug(`TAG_VIDEO ${when}`, tagInfo);
+          this._videoTagReceived = true;
+          invariant(now);
+          let socketDuration = now - when - durationMs;
+
+          if (socketDuration < 0) {
+            log.debug(`Bad socketDuration: ${socketDuration}`);
+            socketDuration = 0;
+          }
+          log.debug(`socketDuration: ${socketDuration}`);
+
+          if (this._recording) {
+            this._throwyEmit('video-segment', when, durationMs, pkt);
+          }
+          break;
+        case TAG_FACES:
+          log.debug(`TAG_FACES ${when}`, tagInfo);
+          if (this._recording) {
+            this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+          }
+          break;
+        case TAG_MIC:
+          log.debug(`TAG_MIC ${when}`, tagInfo);
+          this._micTagReceived = true;
+          if (this._recording) {
+            this._throwyEmit('mic-data', {when: when, frames: pkt});
+          }
+          break;
+        default:
+          // Flush the buffer and restart the socket
+          _dataBuffer = null;
+          this._restart('Invalid capture tag', true);
+          throw new Error(`Invalid capture tag #${tag}`, tagInfo);
+        }
+        pos += HEADER_NR_BYTES + size;
+      }
+      if (pos !== buf.length) {
+        _dataBuffer = buf.slice(pos); // Save partial packet for next time
+      } else {
+        _dataBuffer = null;
+      }
+    });
   }
 
   /**

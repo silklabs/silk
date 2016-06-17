@@ -5,14 +5,11 @@
 # after a full successful build has completed for QEMU.
 
 dest=$1
-mkdir -p $dest/bin $dest/lib $dest/system $dest/prebuilts/qemu-kernel/arm/
-
-# adb ...
-cp $ANDROID_HOST_OUT/bin/adb $dest/bin
+mkdir -p $dest/{bin,android-emulator,system,prebuilts/qemu-kernel/arm}
 
 # emulator specific helpers ...
-cp $ANDROID_EMULATOR_PREBUILTS/emulator* $dest/bin
-cp $ANDROID_EMULATOR_PREBUILTS/lib/* $dest/lib
+cp -ra prebuilts/android-emulator $dest
+rm -rf $dest/android-emulator/windows # Sry...
 
 # emulator kernel
 # TODO: Support other emulator kernels ? (x86, arm64, etc... ?)
@@ -40,7 +37,20 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )/.." && pwd )"
 
 export ANDROID_PRODUCT_OUT=$ROOT
 export ANDROID_BUILD_TOP=$ROOT
-PATH=$ROOT/bin:$PATH
+
+case $(uname -s) in
+Darwin)
+  PATH=$ROOT/android-emulator/darwin-x86_64:$PATH
+  ;;
+Linux)
+  PATH=$ROOT/android-emulator/linux-x86_64:$PATH
+  ;;
+*)
+  echo Unsupported platform: $(uname -s)
+  exit 1
+  ;;
+esac
+
 EOF
 
 cat $ANDROID_BUILD_TOP/run-emulator >> $dest/bin/run-emulator

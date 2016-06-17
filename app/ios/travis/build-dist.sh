@@ -13,7 +13,7 @@ fi
 export NODE_DEBUG=http
 
 mkdir -p build
-xctool \
+xcodebuild \
   -project ios/$PROJECT.xcodeproj \
   -scheme $PROJECT \
   -configuration $CONFIGURATION \

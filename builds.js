@@ -128,20 +128,6 @@ const oss = {
     }
   }),
 
-  'sos-bsp-gonk-darwin-qemu-nightly': nightlyBuild('pub/bsp-gonk', {
-    title: 'Nightly build for QEMU SoS OSX',
-    travis_yml: 'pub/bsp-gonk/travis/travis_darwin.yml',
-    travis_config: {
-      os: ['osx'],
-      env: {
-        global: [
-          'BOARD=qemu',
-          'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
-        ],
-      },
-    },
-  }),
-
   'sos-bsp-gonk-darwin-null-qemu-nightly': nightlyBuild('pub/bsp-gonk', {
     title: 'Nightly build for Null QEMU SoS OSX',
     travis_yml: 'pub/bsp-gonk/travis/travis_darwin.yml',

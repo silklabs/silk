@@ -9,18 +9,18 @@
 
 // Only queue this number of packets by tag type. Packets are simply dropped
 // if the queue is full, so these numbers should be calibrated such that
-// there's a ~0% chance of packet loss during normal operation (especially
-// TAG_VIDEO).  Normally the |capture| client should be pulling all packets
-// out of the data socket in well under 1 second.
+// there's a ~0% chance of packet loss during normal operation.  Normally the
+// |capture| clients should be pulling all packets out of the data socket in
+// well under 1 second.
 static const int MaxPacketQueueByTag[__MAX_TAG] = {
   10, // TAG_VIDEO: 10 seconds of recorded video
   30, // TAG_FACES: 30 face events (10 events/second is not uncommon)
-  20, // TAG_MIC: 4 seconds of PCM data for audio analysis (~5 audio tags/second)
+  20, // TAG_MIC: 2 seconds of PCM data for audio analysis (~10 audio tags/second)
 };
 
 
-Channel::Channel()
-  : SocketListener1(CAPTURE_DATA_SOCKET_NAME, true),
+Channel::Channel(const char *socketName)
+  : SocketListener1(socketName, true),
     mPacketQueueByTag() {
 
   mTransmitLooper = new Looper(0);

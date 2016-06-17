@@ -76,11 +76,14 @@ class CaptureListener;
 class CaptureCommand: public FrameworkCommand,
                       public OpenCVCameraCapture::PreviewProducerListener {
 public:
-  CaptureCommand(CaptureListener* captureListener, Channel& channel) :
+  CaptureCommand(CaptureListener* captureListener,
+                 Channel& micChannel,
+                 Channel& vidChannel) :
       FrameworkCommand(CAPTURE_COMMAND_NAME),
       mCaptureListener(captureListener),
       mHardwareActive(false),
-      mChannel(channel) {
+      mMicChannel(micChannel),
+      mVidChannel(vidChannel) {
   }
 
   virtual ~CaptureCommand() {}
@@ -123,7 +126,8 @@ private:
   sp<ALooper> mLooper;
   sp<ICamera> mRemote;
   sp<CameraSource> mCameraSource;
-  Channel& mChannel;
+  Channel& mMicChannel;
+  Channel& mVidChannel;
   Mutex mPreviewTargetLock;
 };
 
@@ -133,9 +137,10 @@ private:
  */
 class CaptureListener: private FrameworkListener1 {
 public:
-  CaptureListener(Channel& channel) :
-      FrameworkListener1(CAPTURE_CTL_SOCKET_NAME) {
-    FrameworkListener1::registerCmd(new CaptureCommand(this, channel));
+  CaptureListener(Channel& micChannel, Channel& vidChannel)
+      : FrameworkListener1(CAPTURE_CTL_SOCKET_NAME) {
+    FrameworkListener1::registerCmd(
+      new CaptureCommand(this, micChannel, vidChannel));
   }
 
   int start() {
@@ -466,7 +471,7 @@ status_t CaptureCommand::initThreadAudioOnly() {
     )
   );
   sp<MediaSource> audioSourceEmitter =
-    new AudioSourceEmitter(audioSource, &mChannel, sAudioChannels);
+    new AudioSourceEmitter(audioSource, &mMicChannel, sAudioChannels);
   sp<MediaSource> audioMutter =
     new AudioMutter(audioSourceEmitter);
 
@@ -498,7 +503,7 @@ status_t CaptureCommand::initThreadCamera() {
   }
   mRemote = mCamera->remote();
 
-  FaceDetection faces(&mChannel);
+  FaceDetection faces(&mVidChannel);
   mCamera->setListener(&faces);
 
   {
@@ -543,13 +548,13 @@ status_t CaptureCommand::initThreadCamera() {
       )
     );
     sp<MediaSource> audioSourceEmitter =
-      new AudioSourceEmitter(audioSource, &mChannel, sAudioChannels);
+      new AudioSourceEmitter(audioSource, &mMicChannel, sAudioChannels);
     sp<MediaSource> audioMutter =
       new AudioMutter(audioSourceEmitter);
     sp<MediaSource> audioEncoder =
       prepareAudioEncoder(mLooper, audioMutter);
 
-    mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mChannel);
+    mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mVidChannel);
     mSegmenter->run();
 
     mHardwareActive = true;
@@ -684,17 +689,22 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  // Start the data socket that would be used to stream camera frames to the
-  // camera node module
-  Channel channel;
-  err = channel.startListener();
+  // Start the data sockets
+  Channel micChannel(CAPTURE_MIC_DATA_SOCKET_NAME);
+  err = micChannel.startListener();
   if (err < 0) {
-    ALOGE("Failed to start capture data socket listener: %d\n", err);
+    ALOGE("Failed to start capture mic socket listener: %d\n", err);
+    return 1;
+  }
+  Channel vidChannel(CAPTURE_VID_DATA_SOCKET_NAME);
+  err = vidChannel.startListener();
+  if (err < 0) {
+    ALOGE("Failed to start capture vid socket listener: %d\n", err);
     return 1;
   }
 
   // Start the control socket and register for commands from camera node module
-  CaptureListener captureListener(channel);
+  CaptureListener captureListener(micChannel, vidChannel);
   err = captureListener.start();
   if (err < 0) {
     ALOGE("Failed to start capture ctl socket listener: %d\n", err);

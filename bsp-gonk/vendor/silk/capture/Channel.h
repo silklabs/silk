@@ -27,7 +27,7 @@ public:
     int32_t durationMs;
   };
 
-  Channel();
+  Channel(const char *socketName);
   ~Channel();
 
   typedef void (*FreeDataFunc)(void *freeData);

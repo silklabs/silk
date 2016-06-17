@@ -1,6 +1,6 @@
 #!/bin/bash
 
-xctool \
+xcodebuild \
   -project ios/$PROJECT.xcodeproj \
   -scheme $PROJECT \
   -sdk iphonesimulator \

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-brew uninstall xctool && brew install --HEAD xctool
-
 brew reinstall npm nvm
 export NVM_DIR="$PWD/.nvm"
 source $(brew --prefix nvm)/nvm.sh

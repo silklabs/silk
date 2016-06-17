@@ -158,8 +158,10 @@ int32_t AudioDeviceGonk::StartRecording() {
 }
 
 int32_t AudioDeviceGonk::StopRecording() {
-  CriticalSectionScoped lock(&_critSect);
-  _recording = false;
+  {
+    CriticalSectionScoped lock(&_critSect);
+    _recording = false;
+  }
 
   if (_ptrThreadRec) {
     _ptrThreadRec->Stop();

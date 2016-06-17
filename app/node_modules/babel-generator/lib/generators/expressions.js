@@ -1,47 +1,42 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 exports.LogicalExpression = exports.BinaryExpression = exports.AwaitExpression = exports.YieldExpression = undefined;
 exports.UnaryExpression = UnaryExpression;
-/*istanbul ignore next*/exports.DoExpression = DoExpression;
-/*istanbul ignore next*/exports.ParenthesizedExpression = ParenthesizedExpression;
-/*istanbul ignore next*/exports.UpdateExpression = UpdateExpression;
-/*istanbul ignore next*/exports.ConditionalExpression = ConditionalExpression;
-/*istanbul ignore next*/exports.NewExpression = NewExpression;
-/*istanbul ignore next*/exports.SequenceExpression = SequenceExpression;
-/*istanbul ignore next*/exports.ThisExpression = ThisExpression;
-/*istanbul ignore next*/exports.Super = Super;
-/*istanbul ignore next*/exports.Decorator = Decorator;
-/*istanbul ignore next*/exports.CallExpression = CallExpression;
-/*istanbul ignore next*/exports.EmptyStatement = EmptyStatement;
-/*istanbul ignore next*/exports.ExpressionStatement = ExpressionStatement;
-/*istanbul ignore next*/exports.AssignmentPattern = AssignmentPattern;
-/*istanbul ignore next*/exports.AssignmentExpression = AssignmentExpression;
-/*istanbul ignore next*/exports.BindExpression = BindExpression;
-/*istanbul ignore next*/exports.MemberExpression = MemberExpression;
-/*istanbul ignore next*/exports.MetaProperty = MetaProperty;
+exports.DoExpression = DoExpression;
+exports.ParenthesizedExpression = ParenthesizedExpression;
+exports.UpdateExpression = UpdateExpression;
+exports.ConditionalExpression = ConditionalExpression;
+exports.NewExpression = NewExpression;
+exports.SequenceExpression = SequenceExpression;
+exports.ThisExpression = ThisExpression;
+exports.Super = Super;
+exports.Decorator = Decorator;
+exports.CallExpression = CallExpression;
+exports.EmptyStatement = EmptyStatement;
+exports.ExpressionStatement = ExpressionStatement;
+exports.AssignmentPattern = AssignmentPattern;
+exports.AssignmentExpression = AssignmentExpression;
+exports.BindExpression = BindExpression;
+exports.MemberExpression = MemberExpression;
+exports.MetaProperty = MetaProperty;
 
-var /*istanbul ignore next*/_isInteger = require("lodash/isInteger");
+var _isInteger = require("lodash/isInteger");
 
-/*istanbul ignore next*/
 var _isInteger2 = _interopRequireDefault(_isInteger);
 
-var /*istanbul ignore next*/_isNumber = require("lodash/isNumber");
+var _isNumber = require("lodash/isNumber");
 
-/*istanbul ignore next*/
 var _isNumber2 = _interopRequireDefault(_isNumber);
 
-var /*istanbul ignore next*/_babelTypes = require("babel-types");
+var _babelTypes = require("babel-types");
 
-/*istanbul ignore next*/
 var t = _interopRequireWildcard(_babelTypes);
 
-var /*istanbul ignore next*/_node = require("../node");
+var _node = require("../node");
 
-/*istanbul ignore next*/
 var n = _interopRequireWildcard(_node);
 
-/*istanbul ignore next*/
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -139,7 +134,7 @@ function CallExpression(node) {
 
   var isPrettyCall = node._prettyCall && !this.format.retainLines && !this.format.compact;
 
-  var separator = /*istanbul ignore next*/void 0;
+  var separator = void 0;
   if (isPrettyCall) {
     separator = ",\n";
     this.newline();
@@ -173,8 +168,8 @@ function buildYieldAwait(keyword) {
   };
 }
 
-var YieldExpression = /*istanbul ignore next*/exports.YieldExpression = buildYieldAwait("yield");
-var AwaitExpression = /*istanbul ignore next*/exports.AwaitExpression = buildYieldAwait("await");
+var YieldExpression = exports.YieldExpression = buildYieldAwait("yield");
+var AwaitExpression = exports.AwaitExpression = buildYieldAwait("await");
 
 function EmptyStatement() {
   this._lastPrintedIsEmptyStatement = true;
@@ -237,8 +232,8 @@ function BindExpression(node) {
   this.print(node.callee, node);
 }
 
-/*istanbul ignore next*/exports.BinaryExpression = AssignmentExpression;
-/*istanbul ignore next*/exports.LogicalExpression = AssignmentExpression;
+exports.BinaryExpression = AssignmentExpression;
+exports.LogicalExpression = AssignmentExpression;
 function MemberExpression(node) {
   this.print(node.object, node);
 
@@ -247,7 +242,7 @@ function MemberExpression(node) {
   }
 
   var computed = node.computed;
-  if (t.isLiteral(node.property) && /*istanbul ignore next*/(0, _isNumber2.default)(node.property.value)) {
+  if (t.isLiteral(node.property) && (0, _isNumber2.default)(node.property.value)) {
     computed = true;
   }
 
@@ -258,7 +253,7 @@ function MemberExpression(node) {
   } else {
     if (t.isNumericLiteral(node.object)) {
       var val = this.getPossibleRaw(node.object) || node.object.value;
-      if ( /*istanbul ignore next*/(0, _isInteger2.default)(+val) && !NON_DECIMAL_LITERAL.test(val) && !SCIENTIFIC_NOTATION.test(val) && !ZERO_DECIMAL_INTEGER.test(val) && !this.endsWith(".")) {
+      if ((0, _isInteger2.default)(+val) && !NON_DECIMAL_LITERAL.test(val) && !SCIENTIFIC_NOTATION.test(val) && !ZERO_DECIMAL_INTEGER.test(val) && !this.endsWith(".")) {
         this.push(".");
       }
     }

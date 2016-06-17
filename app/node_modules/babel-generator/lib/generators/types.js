@@ -1,4 +1,4 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 exports.ArrayPattern = exports.ObjectPattern = exports.RestProperty = exports.SpreadProperty = exports.SpreadElement = undefined;
@@ -8,24 +8,22 @@ var _stringify = require("babel-runtime/core-js/json/stringify");
 var _stringify2 = _interopRequireDefault(_stringify);
 
 exports.Identifier = Identifier;
-/*istanbul ignore next*/exports.RestElement = RestElement;
-/*istanbul ignore next*/exports.ObjectExpression = ObjectExpression;
-/*istanbul ignore next*/exports.ObjectMethod = ObjectMethod;
-/*istanbul ignore next*/exports.ObjectProperty = ObjectProperty;
-/*istanbul ignore next*/exports.ArrayExpression = ArrayExpression;
-/*istanbul ignore next*/exports.RegExpLiteral = RegExpLiteral;
-/*istanbul ignore next*/exports.BooleanLiteral = BooleanLiteral;
-/*istanbul ignore next*/exports.NullLiteral = NullLiteral;
-/*istanbul ignore next*/exports.NumericLiteral = NumericLiteral;
-/*istanbul ignore next*/exports.StringLiteral = StringLiteral;
-/*istanbul ignore next*/exports._stringLiteral = _stringLiteral;
+exports.RestElement = RestElement;
+exports.ObjectExpression = ObjectExpression;
+exports.ObjectMethod = ObjectMethod;
+exports.ObjectProperty = ObjectProperty;
+exports.ArrayExpression = ArrayExpression;
+exports.RegExpLiteral = RegExpLiteral;
+exports.BooleanLiteral = BooleanLiteral;
+exports.NullLiteral = NullLiteral;
+exports.NumericLiteral = NumericLiteral;
+exports.StringLiteral = StringLiteral;
+exports._stringLiteral = _stringLiteral;
 
-var /*istanbul ignore next*/_babelTypes = require("babel-types");
+var _babelTypes = require("babel-types");
 
-/*istanbul ignore next*/
 var t = _interopRequireWildcard(_babelTypes);
 
-/*istanbul ignore next*/
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -35,10 +33,12 @@ function Identifier(node) {
   // This is a terrible hack, but changing type annotations to use a new,
   // dedicated node would be a breaking change. This should be cleaned up in
   // the next major.
-  if (node.variance === "plus") {
-    this.push("+");
-  } else if (node.variance === "minus") {
-    this.push("-");
+  if (node.variance) {
+    if (node.variance === "plus") {
+      this.push("+");
+    } else if (node.variance === "minus") {
+      this.push("-");
+    }
   }
 
   this.push(node.name);
@@ -50,9 +50,9 @@ function RestElement(node) {
   this.print(node.argument, node);
 }
 
-/*istanbul ignore next*/exports.SpreadElement = RestElement;
-/*istanbul ignore next*/exports.SpreadProperty = RestElement;
-/*istanbul ignore next*/exports.RestProperty = RestElement;
+exports.SpreadElement = RestElement;
+exports.SpreadProperty = RestElement;
+exports.RestProperty = RestElement;
 function ObjectExpression(node) {
   var props = node.properties;
 
@@ -68,7 +68,7 @@ function ObjectExpression(node) {
   this.push("}");
 }
 
-/*istanbul ignore next*/exports.ObjectPattern = ObjectExpression;
+exports.ObjectPattern = ObjectExpression;
 function ObjectMethod(node) {
   this.printJoin(node.decorators, node, { separator: "" });
   this._method(node);
@@ -127,9 +127,9 @@ function ArrayExpression(node) {
   this.push("]");
 }
 
-/*istanbul ignore next*/exports.ArrayPattern = ArrayExpression;
+exports.ArrayPattern = ArrayExpression;
 function RegExpLiteral(node) {
-  this.push( /*istanbul ignore next*/"/" + node.pattern + "/" + node.flags);
+  this.push("/" + node.pattern + "/" + node.flags);
 }
 
 function BooleanLiteral(node) {
@@ -149,7 +149,7 @@ function StringLiteral(node, parent) {
 }
 
 function _stringLiteral(val, parent) {
-  val = /*istanbul ignore next*/(0, _stringify2.default)(val);
+  val = (0, _stringify2.default)(val);
 
   // escape illegal js but valid json unicode characters
   val = val.replace(/[\u000A\u000D\u2028\u2029]/g, function (c) {
@@ -167,7 +167,7 @@ function _stringLiteral(val, parent) {
     val = val.replace(/'/g, "\\'");
 
     // add single quotes
-    val = /*istanbul ignore next*/"'" + val + "'";
+    val = "'" + val + "'";
   }
 
   return val;

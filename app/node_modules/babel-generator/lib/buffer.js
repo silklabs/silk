@@ -1,4 +1,4 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 
@@ -6,14 +6,12 @@ var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var /*istanbul ignore next*/_repeat = require("lodash/repeat");
+var _repeat = require("lodash/repeat");
 
-/*istanbul ignore next*/
 var _repeat2 = _interopRequireDefault(_repeat);
 
-var /*istanbul ignore next*/_trimEnd = require("lodash/trimEnd");
+var _trimEnd = require("lodash/trimEnd");
 
-/*istanbul ignore next*/
 var _trimEnd2 = _interopRequireDefault(_trimEnd);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -23,8 +21,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 
 var Buffer = function () {
-  function /*istanbul ignore next*/Buffer(position, format) {
-    /*istanbul ignore next*/(0, _classCallCheck3.default)(this, Buffer);
+  function Buffer(position, format) {
+    (0, _classCallCheck3.default)(this, Buffer);
 
     this.printedCommentStarts = {};
     this.parenPushNewlineState = null;
@@ -64,8 +62,7 @@ var Buffer = function () {
    */
 
   Buffer.prototype.get = function get() {
-    return (/*istanbul ignore next*/(0, _trimEnd2.default)(this.buf)
-    );
+    return (0, _trimEnd2.default)(this.buf);
   };
 
   /**
@@ -76,8 +73,7 @@ var Buffer = function () {
     if (this.format.compact || this.format.concise) {
       return "";
     } else {
-      return (/*istanbul ignore next*/(0, _repeat2.default)(this.format.indent.style, this._indent)
-      );
+      return (0, _repeat2.default)(this.format.indent.style, this._indent);
     }
   };
 
@@ -234,7 +230,7 @@ var Buffer = function () {
 
     this.removeLast(" ");
     this._removeSpacesAfterLastNewline();
-    this._push( /*istanbul ignore next*/(0, _repeat2.default)("\n", i));
+    this._push((0, _repeat2.default)("\n", i));
   };
 
   /**
@@ -293,7 +289,7 @@ var Buffer = function () {
       var indent = this.getIndent();
 
       // replace all newlines with newlines with the indentation
-      str = str.replace(/\n/g, /*istanbul ignore next*/"\n" + indent);
+      str = str.replace(/\n/g, "\n" + indent);
 
       // we've got a newline before us so prepend on the indentation
       if (this.isLast("\n")) this._push(indent);
@@ -372,5 +368,5 @@ var Buffer = function () {
   return Buffer;
 }();
 
-/*istanbul ignore next*/exports.default = Buffer;
-/*istanbul ignore next*/module.exports = exports["default"];
+exports.default = Buffer;
+module.exports = exports["default"];

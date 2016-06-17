@@ -1,4 +1,4 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 exports.ThrowStatement = exports.BreakStatement = exports.ReturnStatement = exports.ContinueStatement = exports.ForOfStatement = exports.ForInStatement = undefined;
@@ -8,30 +8,27 @@ var _getIterator2 = require("babel-runtime/core-js/get-iterator");
 var _getIterator3 = _interopRequireDefault(_getIterator2);
 
 exports.WithStatement = WithStatement;
-/*istanbul ignore next*/exports.IfStatement = IfStatement;
-/*istanbul ignore next*/exports.ForStatement = ForStatement;
-/*istanbul ignore next*/exports.WhileStatement = WhileStatement;
-/*istanbul ignore next*/exports.DoWhileStatement = DoWhileStatement;
-/*istanbul ignore next*/exports.LabeledStatement = LabeledStatement;
-/*istanbul ignore next*/exports.TryStatement = TryStatement;
-/*istanbul ignore next*/exports.CatchClause = CatchClause;
-/*istanbul ignore next*/exports.SwitchStatement = SwitchStatement;
-/*istanbul ignore next*/exports.SwitchCase = SwitchCase;
-/*istanbul ignore next*/exports.DebuggerStatement = DebuggerStatement;
-/*istanbul ignore next*/exports.VariableDeclaration = VariableDeclaration;
-/*istanbul ignore next*/exports.VariableDeclarator = VariableDeclarator;
+exports.IfStatement = IfStatement;
+exports.ForStatement = ForStatement;
+exports.WhileStatement = WhileStatement;
+exports.DoWhileStatement = DoWhileStatement;
+exports.LabeledStatement = LabeledStatement;
+exports.TryStatement = TryStatement;
+exports.CatchClause = CatchClause;
+exports.SwitchStatement = SwitchStatement;
+exports.SwitchCase = SwitchCase;
+exports.DebuggerStatement = DebuggerStatement;
+exports.VariableDeclaration = VariableDeclaration;
+exports.VariableDeclarator = VariableDeclarator;
 
-var /*istanbul ignore next*/_repeat = require("lodash/repeat");
+var _repeat = require("lodash/repeat");
 
-/*istanbul ignore next*/
 var _repeat2 = _interopRequireDefault(_repeat);
 
-var /*istanbul ignore next*/_babelTypes = require("babel-types");
+var _babelTypes = require("babel-types");
 
-/*istanbul ignore next*/
 var t = _interopRequireWildcard(_babelTypes);
 
-/*istanbul ignore next*/
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -118,15 +115,15 @@ var buildForXStatement = function buildForXStatement(op) {
     this.keyword("for");
     this.push("(");
     this.print(node.left, node);
-    this.push( /*istanbul ignore next*/" " + op + " ");
+    this.push(" " + op + " ");
     this.print(node.right, node);
     this.push(")");
     this.printBlock(node);
   };
 };
 
-var ForInStatement = /*istanbul ignore next*/exports.ForInStatement = buildForXStatement("in");
-var ForOfStatement = /*istanbul ignore next*/exports.ForOfStatement = buildForXStatement("of");
+var ForInStatement = exports.ForInStatement = buildForXStatement("in");
+var ForOfStatement = exports.ForOfStatement = buildForXStatement("of");
 
 function DoWhileStatement(node) {
   this.push("do ");
@@ -139,7 +136,7 @@ function DoWhileStatement(node) {
 }
 
 function buildLabelStatement(prefix) {
-  /*istanbul ignore next*/var key = arguments.length <= 1 || arguments[1] === undefined ? "label" : arguments[1];
+  var key = arguments.length <= 1 || arguments[1] === undefined ? "label" : arguments[1];
 
   return function (node) {
     this.push(prefix);
@@ -159,10 +156,10 @@ function buildLabelStatement(prefix) {
   };
 }
 
-var ContinueStatement = /*istanbul ignore next*/exports.ContinueStatement = buildLabelStatement("continue");
-var ReturnStatement = /*istanbul ignore next*/exports.ReturnStatement = buildLabelStatement("return", "argument");
-var BreakStatement = /*istanbul ignore next*/exports.BreakStatement = buildLabelStatement("break");
-var ThrowStatement = /*istanbul ignore next*/exports.ThrowStatement = buildLabelStatement("throw", "argument");
+var ContinueStatement = exports.ContinueStatement = buildLabelStatement("continue");
+var ReturnStatement = exports.ReturnStatement = buildLabelStatement("return", "argument");
+var BreakStatement = exports.BreakStatement = buildLabelStatement("break");
+var ThrowStatement = exports.ThrowStatement = buildLabelStatement("throw", "argument");
 
 function LabeledStatement(node) {
   this.print(node.label, node);
@@ -210,7 +207,7 @@ function SwitchStatement(node) {
 
   this.printSequence(node.cases, node, {
     indent: true,
-    /*istanbul ignore next*/addNewlines: function addNewlines(leading, cas) {
+    addNewlines: function addNewlines(leading, cas) {
       if (!leading && node.cases[node.cases.length - 1] === cas) return -1;
     }
   });
@@ -243,8 +240,7 @@ function VariableDeclaration(node, parent) {
   var hasInits = false;
   // don't add whitespace to loop heads
   if (!t.isFor(parent)) {
-    for ( /*istanbul ignore next*/var _iterator = node.declarations, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : (0, _getIterator3.default)(_iterator);;) {
-      /*istanbul ignore next*/
+    for (var _iterator = node.declarations, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : (0, _getIterator3.default)(_iterator);;) {
       var _ref;
 
       if (_isArray) {
@@ -277,9 +273,9 @@ function VariableDeclaration(node, parent) {
   //       bar = "foo";
   //
 
-  var sep = /*istanbul ignore next*/void 0;
+  var sep = void 0;
   if (!this.format.compact && !this.format.concise && hasInits && !this.format.retainLines) {
-    sep = /*istanbul ignore next*/",\n" + /*istanbul ignore next*/(0, _repeat2.default)(" ", node.kind.length + 1);
+    sep = ",\n" + (0, _repeat2.default)(" ", node.kind.length + 1);
   }
 
   //

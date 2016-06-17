@@ -1,4 +1,4 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 exports.CodeGenerator = undefined;
@@ -20,34 +20,28 @@ exports.default = function (ast, opts, code) {
   return gen.generate();
 };
 
-var /*istanbul ignore next*/_detectIndent = require("detect-indent");
+var _detectIndent = require("detect-indent");
 
-/*istanbul ignore next*/
 var _detectIndent2 = _interopRequireDefault(_detectIndent);
 
-var /*istanbul ignore next*/_whitespace = require("./whitespace");
+var _whitespace = require("./whitespace");
 
-/*istanbul ignore next*/
 var _whitespace2 = _interopRequireDefault(_whitespace);
 
-var /*istanbul ignore next*/_sourceMap = require("./source-map");
+var _sourceMap = require("./source-map");
 
-/*istanbul ignore next*/
 var _sourceMap2 = _interopRequireDefault(_sourceMap);
 
-var /*istanbul ignore next*/_position = require("./position");
+var _position = require("./position");
 
-/*istanbul ignore next*/
 var _position2 = _interopRequireDefault(_position);
 
-var /*istanbul ignore next*/_babelMessages = require("babel-messages");
+var _babelMessages = require("babel-messages");
 
-/*istanbul ignore next*/
 var messages = _interopRequireWildcard(_babelMessages);
 
-var /*istanbul ignore next*/_printer = require("./printer");
+var _printer = require("./printer");
 
-/*istanbul ignore next*/
 var _printer2 = _interopRequireDefault(_printer);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -62,8 +56,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var CodeGenerator = exports.CodeGenerator = function (_Printer) {
   (0, _inherits3.default)(CodeGenerator, _Printer);
 
-  function /*istanbul ignore next*/CodeGenerator(ast, opts, code) {
-    /*istanbul ignore next*/(0, _classCallCheck3.default)(this, CodeGenerator);
+  function CodeGenerator(ast, opts, code) {
+    (0, _classCallCheck3.default)(this, CodeGenerator);
 
     opts = opts || {};
 
@@ -71,22 +65,21 @@ var CodeGenerator = exports.CodeGenerator = function (_Printer) {
     var tokens = ast.tokens || [];
     var format = CodeGenerator.normalizeOptions(code, opts, tokens);
 
-    var position = new /*istanbul ignore next*/_position2.default();
+    var position = new _position2.default();
 
-    /*istanbul ignore next*/
-    var _this = (0, _possibleConstructorReturn3.default)(this, /*istanbul ignore next*/_Printer.call( /*istanbul ignore next*/this, position, format));
+    var _this = (0, _possibleConstructorReturn3.default)(this, _Printer.call(this, position, format));
 
-    /*istanbul ignore next*/_this.comments = comments;
-    /*istanbul ignore next*/_this.position = position;
-    /*istanbul ignore next*/_this.tokens = tokens;
-    /*istanbul ignore next*/_this.format = format;
-    /*istanbul ignore next*/_this.opts = opts;
-    /*istanbul ignore next*/_this.ast = ast;
-    /*istanbul ignore next*/_this._inForStatementInitCounter = 0;
+    _this.comments = comments;
+    _this.position = position;
+    _this.tokens = tokens;
+    _this.format = format;
+    _this.opts = opts;
+    _this.ast = ast;
+    _this._inForStatementInitCounter = 0;
 
-    /*istanbul ignore next*/_this.whitespace = new /*istanbul ignore next*/_whitespace2.default(tokens);
-    /*istanbul ignore next*/_this.map = new /*istanbul ignore next*/_sourceMap2.default(position, opts, code);
-    /*istanbul ignore next*/return _this;
+    _this.whitespace = new _whitespace2.default(tokens);
+    _this.map = new _sourceMap2.default(position, opts, code);
+    return _this;
   }
 
   /**
@@ -99,7 +92,7 @@ var CodeGenerator = exports.CodeGenerator = function (_Printer) {
   CodeGenerator.normalizeOptions = function normalizeOptions(code, opts, tokens) {
     var style = "  ";
     if (code && typeof code === "string") {
-      var _indent = /*istanbul ignore next*/(0, _detectIndent2.default)(code).indent;
+      var _indent = (0, _detectIndent2.default)(code).indent;
       if (_indent && _indent !== " ") style = _indent;
     }
 

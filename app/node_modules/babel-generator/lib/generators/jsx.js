@@ -1,4 +1,4 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 
@@ -7,17 +7,17 @@ var _getIterator2 = require("babel-runtime/core-js/get-iterator");
 var _getIterator3 = _interopRequireDefault(_getIterator2);
 
 exports.JSXAttribute = JSXAttribute;
-/*istanbul ignore next*/exports.JSXIdentifier = JSXIdentifier;
-/*istanbul ignore next*/exports.JSXNamespacedName = JSXNamespacedName;
-/*istanbul ignore next*/exports.JSXMemberExpression = JSXMemberExpression;
-/*istanbul ignore next*/exports.JSXSpreadAttribute = JSXSpreadAttribute;
-/*istanbul ignore next*/exports.JSXExpressionContainer = JSXExpressionContainer;
-/*istanbul ignore next*/exports.JSXText = JSXText;
-/*istanbul ignore next*/exports.JSXElement = JSXElement;
-/*istanbul ignore next*/exports.JSXOpeningElement = JSXOpeningElement;
-/*istanbul ignore next*/exports.JSXClosingElement = JSXClosingElement;
-/*istanbul ignore next*/exports.JSXEmptyExpression = JSXEmptyExpression;
-/*istanbul ignore next*/
+exports.JSXIdentifier = JSXIdentifier;
+exports.JSXNamespacedName = JSXNamespacedName;
+exports.JSXMemberExpression = JSXMemberExpression;
+exports.JSXSpreadAttribute = JSXSpreadAttribute;
+exports.JSXExpressionContainer = JSXExpressionContainer;
+exports.JSXText = JSXText;
+exports.JSXElement = JSXElement;
+exports.JSXOpeningElement = JSXOpeningElement;
+exports.JSXClosingElement = JSXClosingElement;
+exports.JSXEmptyExpression = JSXEmptyExpression;
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function JSXAttribute(node) {
@@ -66,8 +66,7 @@ function JSXElement(node) {
   if (open.selfClosing) return;
 
   this.indent();
-  for ( /*istanbul ignore next*/var _iterator = node.children, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : (0, _getIterator3.default)(_iterator);;) {
-    /*istanbul ignore next*/
+  for (var _iterator = node.children, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : (0, _getIterator3.default)(_iterator);;) {
     var _ref;
 
     if (_isArray) {

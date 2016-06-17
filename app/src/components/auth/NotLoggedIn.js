@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   Alert,
-  DeviceEventEmitter,
   Image,
+  Keyboard,
   LayoutAnimation,
   ScrollView,
   StyleSheet,
@@ -40,8 +40,8 @@ export default class NotLoggedIn extends AsyncComponent {
 
   componentWillMount() {
     this._subscriptions = [
-      DeviceEventEmitter.addListener('keyboardWillShow', this.onKeyboardShow),
-      DeviceEventEmitter.addListener('keyboardWillHide', this.onKeyboardHide),
+      Keyboard.addListener('keyboardWillShow', this.onKeyboardShow),
+      Keyboard.addListener('keyboardWillHide', this.onKeyboardHide),
     ];
   }
 

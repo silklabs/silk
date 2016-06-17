@@ -1,12 +1,12 @@
-/*istanbul ignore next*/"use strict";
+"use strict";
 
 exports.__esModule = true;
 exports.File = File;
-/*istanbul ignore next*/exports.Program = Program;
-/*istanbul ignore next*/exports.BlockStatement = BlockStatement;
-/*istanbul ignore next*/exports.Noop = Noop;
-/*istanbul ignore next*/exports.Directive = Directive;
-/*istanbul ignore next*/exports.DirectiveLiteral = DirectiveLiteral;
+exports.Program = Program;
+exports.BlockStatement = BlockStatement;
+exports.Noop = Noop;
+exports.Directive = Directive;
+exports.DirectiveLiteral = DirectiveLiteral;
 function File(node) {
   this.print(node.program, node);
 }

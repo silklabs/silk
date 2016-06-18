@@ -1,0 +1,22 @@
+{
+  "name": "silk-crypto",
+  "version": "0.18.0",
+  "description": "",
+  "license": "proprietary",
+  "dependencies": {
+    "mz": "2.4.0",
+    "sodium": "1.1.5"
+  },
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "mocha": "2.4.5"
+  },
+  "scripts": {
+    "preinstall": "../npm_preinstall",
+    "postinstall": "../npm_postinstall",
+    "mocha": "mocha $(find ./test -name '*_test.js')",
+    "lint": "eslint .",
+    "test": "npm run lint && npm run mocha"
+  },
+  "private": true
+}

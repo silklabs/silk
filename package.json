@@ -42,7 +42,6 @@
     "hash.js": "1.0.3",
     "localStorage": "1.0.3",
     "msgpack-lite": "0.1.13",
-    "pbkdf2": "3.0.4",
     "promise": "6.1.0",
     "uuid": "2.0.1",
     "dev-null": "0.1.1",

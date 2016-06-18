@@ -11,24 +11,22 @@
 #include <string.h>
 #include <errno.h>
 #include <cutils/sockets.h>
-#include <private/android_filesystem_config.h>
 
-#include "Channel.h"
-#include "Capturedefs.h"
+#include "CaptureDataSocket.h"
 
 int main(int argc, char **argv)
 {
-  int socket = socket_local_client(CAPTURE_DATA_SOCKET_NAME,
+  int socket = socket_local_client(CAPTURE_MIC_DATA_SOCKET_NAME,
                                    ANDROID_SOCKET_NAMESPACE_RESERVED,
                                    SOCK_STREAM);
 
   if (socket < 0) {
-    ALOGE("Error connecting to " CAPTURE_DATA_SOCKET_NAME " socket: %d", errno);
+    ALOGE("Error connecting to " CAPTURE_MIC_DATA_SOCKET_NAME " socket: %d", errno);
     return 1;
   }
 
   for (;;) {
-    Channel::Header hdr;
+    capture::datasocket::PacketHeader hdr;
     int rc;
 
     rc = TEMP_FAILURE_RETRY(read(socket, &hdr, sizeof(hdr)));
@@ -41,11 +39,11 @@ int main(int argc, char **argv)
       return 1;
     }
 
-    if (hdr.size < sizeof(Channel::Header)) {
-      fprintf(stderr, "BAD HEADER: %d (%s)\n", rc, strerror(errno));
+    if (hdr.size < sizeof(capture::datasocket::PacketHeader)) {
+      ALOGE("BAD HEADER: %d (%s)", rc, strerror(errno));
       return 1;
     }
-    ALOGD("Header with tag=%d size=%d\n", hdr.tag, hdr.size);
+    ALOGD("Header with tag=%d size=%d", hdr.tag, hdr.size);
 
     char *buffer = (char *) malloc(hdr.size);
     memset(buffer, 0, sizeof(hdr.size));
@@ -58,7 +56,7 @@ int main(int argc, char **argv)
       ALOGE("Incomplete data.  Expected %d bytes, got %d bytes", hdr.size, rc);
       return 1;
     }
-    if (hdr.tag == Channel::TAG_MIC) {
+    if (hdr.tag == capture::datasocket::TAG_MIC) {
       TEMP_FAILURE_RETRY(write(1, buffer, hdr.size));
     }
     free(buffer);

@@ -1,3 +1,1 @@
-export TARGET_PRODUCT=aosp_hammerhead
-export TARGET_BUILD_VARIANT=eng
-export TARGET_BUILD_TYPE=release
+../../../pub/bsp-gonk/board/hammerhead/gonk.sh

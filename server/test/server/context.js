@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import createApi from 'silk-api';
 import merge from 'lodash.merge';
-import pbkdf2 from 'pbkdf2';
 import uuid from 'uuid';
 import Id from 'silk-api/src/access_token';
 import { TableClient, SharedKeyAuth } from 'silk-azure-storage/src/table';
@@ -17,7 +16,7 @@ import Devices from '../../src/server/models/devices';
 export function passwordHash(context, text) {
   // The assumption here is this will be much stronger when sent from the
   // client!
-  return pbkdf2.pbkdf2Sync(text, 'salt', 1, 32, 'sha256').toString('hex');
+  return crypto.pbkdf2Sync(text, 'salt', 1, 32, 'sha256').toString('hex');
 }
 
 export function sha256(context, text) {

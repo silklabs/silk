@@ -32,8 +32,7 @@ var config = {
     alias : {
       'fs': path.resolve(__dirname, 'src/shim/fs.js'),
       'kissfft': path.resolve(__dirname, 'src', 'shim', 'kissfft.js'),
-      'react-native': path.resolve(__dirname, 'src', 'shim', 'ReactNative.js'),
-      'NativeModules': path.resolve(__dirname, 'src', 'shim', 'NativeModules.js'),
+      'react-native': path.resolve(__dirname, 'src', 'shim', 'react-native.js'),
     },
   },
   babel: {

@@ -6,21 +6,16 @@
 import invariant from 'assert';
 import base64url from 'base64url';
 import crypto from 'crypto';
+import * as silkCrypto from 'silk-crypto';
 import uuid from 'uuid';
-
-import cryptoSign from './crypto_sign';
 
 export default class AccessToken {
 
   pub: string;
   priv: ?string;
 
-  static ENTROPY_BYTES = cryptoSign.encodingLength;
-
-  static gen(
-    options: {entropy?: Buffer;} = {}
-  ): Promise<AccessToken> {
-    return cryptoSign.genKeyPair(options)
+  static gen(): Promise<AccessToken> {
+    return silkCrypto.genEd25519KeyPair()
       .then(([priv, pub]) => new AccessToken(pub, priv));
   }
 
@@ -52,8 +47,8 @@ export default class AccessToken {
 
   async genIsValid(): Promise<boolean> {
     if (this.priv) {
-      const pubKey = await cryptoSign.genPublicKeyFromSecret(this.priv);
-      if (pubKey.toString('hex') !== this.pub) {
+      const pubKey = await silkCrypto.genEd25519PubKeyFromSecret(this.priv);
+      if (pubKey !== this.pub) {
         return false;
       }
     }
@@ -63,11 +58,11 @@ export default class AccessToken {
   genSign(message: string): Promise<string> {
     const hash = crypto.createHash('sha256').update(message).digest('hex');
     invariant(this.priv, 'no private key');
-    return cryptoSign.genSign(hash, this.priv);
+    return silkCrypto.genEd25519Sign(hash, this.priv);
   }
 
   genVerify(message: string, signatureHex: string): Promise<boolean> {
-    return cryptoSign.genVerify(
+    return silkCrypto.genEd25519Verify(
       crypto.createHash('sha256').update(message).digest('hex'),
       signatureHex,
       this.pub

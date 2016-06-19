@@ -25,10 +25,6 @@ import type {Request} from 'silk-http/src/client';
 
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;
-export {
-  default as CryptoSign,
-  overrideImplementation as overrideCryptoSignImplementation,
-} from './crypto_sign';
 export { default as RssiSmoother } from './rssi_smoother';
 export { default as Metric } from './metric';
 export { default as MetricTypes } from './metric_types';
@@ -149,10 +145,6 @@ async function genSignSignalingUrl(
 }
 
 export type Config = {
-  getRandomBytes?: (
-    size: number,
-    callback: (err: ?Error, buffer: Buffer) => void
-  ) => void;
   serverUrl?: ?string;
   metrics: {
     type: 'account' | 'device';

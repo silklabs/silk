@@ -189,7 +189,7 @@ RCT_EXPORT_METHOD(genEd25519PubKeyFromSecret:(NSString *)seedHex
 }
 
 /**
- * Generate ED25519 signature
+ * Generate Ed25519 signature
  */
 RCT_EXPORT_METHOD(genEd25519Sign:(NSString *)msgHex
                   seed:(NSString *)seedHex
@@ -274,7 +274,7 @@ RCT_EXPORT_METHOD(genEd25519Sign:(NSString *)msgHex
 }
 
 /**
- * Verify ED25519 signature
+ * Verify Ed25519 signature
  */
 RCT_EXPORT_METHOD(genEd25519Verify:(NSString *)msgHex
                   signature:(NSString *)sigHex

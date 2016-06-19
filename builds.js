@@ -253,6 +253,7 @@ const builds = {
     events: ['push'],
   }),
   'cli': npmPackageBuild('pub/cli'),
+  'crypto': npmPackageBuild('crypto'),
   'sim': npmPackageBuild('sim', {
     files: [
       'device/**',

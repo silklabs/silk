@@ -1,0 +1,25 @@
+From 46f8d75d4d628e238a202d3226284a0493f8edbe Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 19 Jun 2016 19:18:38 -0700
+Subject: [PATCH] Ditch the long list of APNs
+
+---
+ aosp_shamu.mk | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/aosp_shamu.mk b/aosp_shamu.mk
+index d383535..30e5270 100644
+--- a/aosp_shamu.mk
++++ b/aosp_shamu.mk
+@@ -17,8 +17,6 @@
+ # Sample: This is where we'd set a backup provider if we had one
+ # $(call inherit-product, device/sample/products/backup_overlay.mk)
+ 
+-# Get the long list of APNs
+-PRODUCT_COPY_FILES := device/sample/etc/apns-full-conf.xml:system/etc/apns-conf.xml
+ 
+ # Inherit from the common Open Source product configuration
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
+-- 
+2.7.4 (Apple Git-66)
+

@@ -29,7 +29,7 @@ declare export class Movie {
    * @memberof silk-movie.Movie
    * @instance
    */
-  run (animationFile: string): void;
+  run (animationFile: string, completedCallback: (() => void)): void;
 
   /**
    * Stops the movie, leaving it visible

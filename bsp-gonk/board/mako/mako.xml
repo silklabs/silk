@@ -99,6 +99,7 @@
   <remove-project name="platform/external/libnfc-nxp" />
   <remove-project name="platform/external/libyuv" />
   <remove-project name="platform/external/libphonenumber" />
+  <remove-project name="platform/external/linux-tools-perf" />
   <remove-project name="platform/external/lldb" />
   <remove-project name="platform/external/llvm" />
   <remove-project name="platform/external/lohit-fonts" />
@@ -280,6 +281,8 @@
   <remove-project name="platform/prebuilts/eclipse" />
   <remove-project name="platform/prebuilts/eclipse-build-deps" />
   <remove-project name="platform/prebuilts/eclipse-build-deps-sources" />
+  <remove-project name="platform/prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1"/>
+  <remove-project name="platform/prebuilts/gcc/darwin-x86/host/headers" />
   <remove-project name="platform/prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.8" />
   <remove-project name="platform/prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.9" />
   <remove-project name="platform/prebuilts/gcc/darwin-x86/mips/mipsel-linux-android-4.8" />

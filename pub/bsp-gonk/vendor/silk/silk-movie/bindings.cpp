@@ -104,6 +104,12 @@ private:
     Nan::HandleScope scope;
     Movie *me = Nan::ObjectWrap::Unwrap<Movie>(info.Holder());
 
+    const int argc = info.Length();
+    if (argc != 2) {
+      Nan::ThrowError("Movie: two arguments expected");
+      return;
+    }
+
     std::string movieFile(*v8::String::Utf8Value(info[0]->ToString()));
     Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
 

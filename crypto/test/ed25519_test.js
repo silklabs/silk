@@ -10,6 +10,7 @@ import * as silkCrypto from '..';
 // https://tools.ietf.org/html/draft-josefsson-eddsa-ed25519-02#section-6
 
 const TEST_VECTORS = [/*{
+  // Disabled due to https://github.com/paixaop/node-sodium/issues/77
   name: 'TEST 1',
   secretKey: (
     `9d61b19deffd5a60ba844af492ec2cc4` +

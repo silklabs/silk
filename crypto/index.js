@@ -50,7 +50,8 @@ export function genPBKDF2KeyDerivation(
   salt: string,
   rounds: number
 ): Promise<string> {
-  return pbkdf2(input, salt, rounds, 32, 'sha256');
+  return pbkdf2(input, salt, rounds, 32, 'sha256')
+    .then((key) => key.toString('hex'));
 }
 
 

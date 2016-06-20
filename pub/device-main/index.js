@@ -12,6 +12,16 @@ const ntp = require('silk-ntp').default;
 const Input = require('silk-input').default;
 const lights = require('silk-lights');
 
+function bail(reason, err) {
+  log.error('Exiting process due to ' + reason);
+  log.error(err.stack || err);
+  process.abort();
+}
+
+['unhandledRejection', 'uncaughtException'].forEach(reason => {
+  process.on(reason, err => bail(reason, err));
+});
+
 const productName = util.getstrprop('ro.product.name', '(unknown?)');
 log.info('Running on a ' + productName);
 
@@ -28,7 +38,7 @@ battery.init()
 
 // Display something on the screen (if there is one)
 let splash = new Movie();
-splash.run(path.join(__dirname, 'splash.zip'));
+splash.run(path.join(__dirname, 'splash.zip'), () => undefined);
 
 let vib = new Vibrator();
 vib.pattern(500);

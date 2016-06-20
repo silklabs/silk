@@ -169,7 +169,7 @@ class Ui extends events.EventEmitter {
     if (movieName !== this.currentMovieName) {
       this.currentMovieName = movieName;
       try {
-        this.movie.run(`/system/silk/media/${movieName}.zip`);
+        this.movie.run(`/system/silk/media/${movieName}.zip`, () => undefined);
       } catch (e) {
         log.warn(e);
       }

@@ -1,5 +1,5 @@
 {
-  "name": "rtc",
+  "name": "silk-rtc",
   "version": "0.18.0",
   "main": "src/index.js",
   "author": "Silk Labs, Inc",

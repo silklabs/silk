@@ -1,26 +1,30 @@
-From 00a32a08cc8ac67531e621903cd933a3a814810b Mon Sep 17 00:00:00 2001
+From 4f39b03d7d6f4d29292332c3422e8a3292a4558e Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Thu, 18 Jun 2015 08:58:11 -0700
 Subject: [PATCH] Add silk product
 
 ---
- aosp_shamu.mk | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ aosp_shamu.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/aosp_shamu.mk b/aosp_shamu.mk
-index e5fa301..dc8c55a 100644
+index e5fa301..03edca1 100644
 --- a/aosp_shamu.mk
 +++ b/aosp_shamu.mk
-@@ -28,8 +28,8 @@ PRODUCT_DEVICE := shamu
+@@ -28,10 +28,10 @@ PRODUCT_DEVICE := shamu
  PRODUCT_BRAND := Android
  PRODUCT_MODEL := AOSP on Shamu
  PRODUCT_MANUFACTURER := motorola
 -PRODUCT_RESTRICT_VENDOR_FILES := true
  
+-$(call inherit-product, device/moto/shamu/device.mk)
+-$(call inherit-product-if-exists, vendor/moto/shamu/device-vendor.mk)
 +$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
- $(call inherit-product, device/moto/shamu/device.mk)
- $(call inherit-product-if-exists, vendor/moto/shamu/device-vendor.mk)
++$(call inherit-product, device/moto/shamu/device.mk)
++$(call inherit-product-if-exists, vendor/motorola/shamu/device-vendor.mk)
+ 
+ PRODUCT_NAME := aosp_shamu
  
 -- 
-1.9.1
+2.7.4 (Apple Git-66)
 

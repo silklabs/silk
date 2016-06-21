@@ -116,7 +116,7 @@ export default class KeywordSpotting extends EventEmitter {
       this._detectKeyword(signal);
     });
 
-    this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, true);
+    this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, false);
     this._vadEnabled = util.getboolprop(VAD_ENABLED_PROP, false);
 
     this._pcmDataArray = []; // Array of [when, pcmData] tuples

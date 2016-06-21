@@ -4,5 +4,6 @@
   "persist.silk.eventtrk.enabled": true,
   "ro.silk.update.manifest_url": "https://silk-device.s3.amazonaws.com/{channel}/latest/{device}_ota.json",
   "ro.silk.update.poll_hours": 3,
+  "persist.silk.kws.save": true,
   "persist.silk.extensions": "*,-detectcat,-dnn,-samsungtv,-svmsounds,-peddetector"
 }

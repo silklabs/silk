@@ -61,7 +61,7 @@ export default function*(
       const {intent, entities} = event;
 
       if ((intent === `startNursing`) ||
-          (intent === `none` && entities.some((e) => e === `nursing`))) {
+          (intent === `None` && entities.some((e) => e === `nursing`))) {
         type = 'nursing';
         break;
       }

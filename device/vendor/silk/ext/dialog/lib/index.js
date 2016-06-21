@@ -41,6 +41,7 @@ const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp
 const SAY_FILE_NAME = '/data/say.wav';
 
 const NETWORK_DOWN_SOUND_FILE = 'network_down.mp3';
+const NETWORK_ERROR_MESSAGE = 'Unable to talk to the server, please try again';
 const NETWORK_ERROR_SOUND_FILE = 'network_error.mp3';
 
 const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
@@ -160,8 +161,7 @@ class Dialog {
    */
   _onInterpretEnd: InterpretEndCallback = error => {
     if (error) {
-      this._playErrorMessage('Unable to talk to the server, please try again',
-          NETWORK_ERROR_SOUND_FILE);
+      this._playErrorMessage(NETWORK_ERROR_MESSAGE, NETWORK_ERROR_SOUND_FILE);
     }
   };
 
@@ -271,10 +271,16 @@ class Dialog {
     let endListener: ?Function = null;
     let pcmSamples = new Buffer(0);
 
-    const finish = () => {
+    const finish = (error) => {
       stream.removeListener(`error`, errorListener);
       stream.removeListener(`data`, dataListener);
       stream.removeListener(`end`, endListener);
+
+      if (error) {
+        log.error(`Stream error: `, error);
+        this._playErrorMessage(NETWORK_ERROR_MESSAGE, NETWORK_ERROR_SOUND_FILE);
+        return;
+      }
 
       if (--this._activeSpeechCount <= 0) {
         this._activeSpeechCount = 0;
@@ -287,9 +293,7 @@ class Dialog {
     };
 
     errorListener = error => {
-      log.error(`Stream error`, error);
-      util.playSound(ERROR_SOUND_FILE);
-      finish();
+      finish(error);
     };
 
     dataListener = data => {

@@ -140,7 +140,6 @@ export class DialogEngine extends EventEmitter {
       return;
     }
 
-    tts.startRequest(text);
     const stream = new ClosingPassThrough();
 
     let ttsError: ?Error = null;
@@ -161,6 +160,7 @@ export class DialogEngine extends EventEmitter {
     });
 
     process.nextTick(() => this.emit(`speech`, stream, finished));
+    process.nextTick(() => tts.startRequest(text));
   }
 
   /**

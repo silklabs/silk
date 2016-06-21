@@ -1,4 +1,4 @@
-package com.silklabs.app.modules;
+package com.silklabs.app.crypto;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;

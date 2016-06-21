@@ -112,3 +112,5 @@ export function genX25519SharedSecret(
 ): Promise<string> {
   throw new Error('Not supported');
 }
+
+export const X25519_KEY_BYTES = 32;

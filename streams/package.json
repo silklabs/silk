@@ -9,6 +9,7 @@
   },
   "symlinkDependencies": {
     "silk-api": "/api",
+    "silk-crypto": "/crypto",
     "silk-log": "/pub/log",
     "eslint-config-silk": "/pub/eslint-config"
   },

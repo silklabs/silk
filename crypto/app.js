@@ -94,6 +94,8 @@ export function genX25519SharedSecret(
   theirPublicKeyHex: string
 ): Promise<string> {
   invariant(ourSecretKeyHex.length === 2 * SLKCrypto.crypto_scalarmult_BYTES);
-  invariant(theirPublicKeyKeyHex.length === 2 * SLKCrypto.crypto_scalarmult_BYTES);
+  invariant(theirPublicKeyHex.length === 2 * SLKCrypto.crypto_scalarmult_BYTES);
   return SLKCrypto.genX25519SharedSecret(ourSecretKeyHex, theirPublicKeyHex);
 }
+
+export const X25519_KEY_BYTES = SLKCrypto.crypto_scalarmult_BYTES;

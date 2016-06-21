@@ -141,3 +141,5 @@ export function genX25519SharedSecret(
   const sharedSecret = sodium.crypto_scalarmult(ourSecretKey, theirPublicKey);
   return Promise.resolve(sharedSecret.toString('hex'));
 }
+
+export const X25519_KEY_BYTES = sodium.crypto_scalarmult_BYTES;

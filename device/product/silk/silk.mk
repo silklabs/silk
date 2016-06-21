@@ -93,7 +93,7 @@ SILK_INIT := \
 SILK_GONK_PROGIES := \
   silk-dash \
   silk-ir \
-  silk-tts \
+  silk-tts-native \
   tts-cereproc-heather-license \
   tts-cereproc-heather-voice \
 

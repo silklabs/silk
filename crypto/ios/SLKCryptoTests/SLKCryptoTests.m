@@ -206,5 +206,42 @@
   XCTAssert(verified);
 }
 
+- (void)testX25519 {
+  // https://tools.ietf.org/html/rfc7748#section-6.1
+  NSString *alicePrivateKey = @"77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
+  NSString *alicePublicKey = @"8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a";
+  NSString *bobPrivateKey = @"5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb";
+  NSString *bobPublicKey = @"de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f";
+  NSString *sharedSecret = @"4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742";
+
+  SLKCrypto *crypto = [SLKCrypto new];
+  __block NSString *key;
+  RCTPromiseResolveBlock resolve = ^(NSString *result) { key = result; };
+  RCTPromiseRejectBlock reject = ^(NSString *code, NSString *message, NSError *error) {
+    XCTAssert(NO, @"Should not get here.");
+  };
+
+  [crypto genX25519PubKeyFromSecret:alicePrivateKey resolver:resolve rejecter:reject];
+  XCTAssert([key isEqualToString:alicePublicKey]);
+  key = nil;
+
+  [crypto genX25519PubKeyFromSecret:bobPrivateKey resolver:resolve rejecter:reject];
+  XCTAssert([key isEqualToString:bobPublicKey]);
+  key = nil;
+
+  [crypto genX25519SharedSecret:alicePrivateKey
+              theirPublicKeyHex:bobPublicKey
+                       resolver:resolve
+                       rejecter:reject];
+  XCTAssert([key isEqualToString:sharedSecret]);
+  key = nil;
+
+  [crypto genX25519SharedSecret:bobPrivateKey
+              theirPublicKeyHex:alicePublicKey
+                       resolver:resolve
+                       rejecter:reject];
+  XCTAssert([key isEqualToString:sharedSecret]);
+  key = nil;
+}
 
 @end

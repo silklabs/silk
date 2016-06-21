@@ -47,9 +47,11 @@ RCT_EXPORT_MODULE()
 - (NSDictionary<NSString *, id> *)constantsToExport
 {
   return @{
-    // The length of any primite value in the algorithm: seed, public key,
-    // R and S in the signature, etc.
-    @"EncodingLength": @(crypto_sign_ed25519_SEEDBYTES)
+    @"crypto_sign_ed25519_BYTES": @(crypto_sign_ed25519_BYTES),
+    @"crypto_sign_ed25519_PUBLICKEYBYTES": @(crypto_sign_ed25519_PUBLICKEYBYTES),
+    @"crypto_sign_ed25519_SECRETKEYBYTES": @(crypto_sign_ed25519_SECRETKEYBYTES),
+    @"crypto_sign_ed25519_SEEDBYTES": @(crypto_sign_ed25519_SEEDBYTES),
+    @"crypto_scalarmult_BYTES": @(crypto_scalarmult_BYTES)
   };
 }
 
@@ -67,6 +69,9 @@ RCT_EXPORT_MODULE()
   return [super init];
 }
 
+/**
+ * Requests a number of random bytes.
+ */
 RCT_EXPORT_METHOD(genRandomBytes:(nonnull NSNumber *)length
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -88,6 +93,9 @@ RCT_EXPORT_METHOD(genRandomBytes:(nonnull NSNumber *)length
   resolve(binToNSHexString(bytes, length.unsignedIntValue));
 }
 
+/**
+ * Derive a 256 bit key from a password using PBKDF2 and HMAC-SHA256.
+ */
 RCT_EXPORT_METHOD(genPBKDF2KeyDerivation:(NSString *)input
                   salt:(NSString *)salt
                   rounds:(nonnull NSNumber *)rounds
@@ -349,4 +357,141 @@ RCT_EXPORT_METHOD(genEd25519Verify:(NSString *)msgHex
 
   resolve(@(ret == 0));
 }
+
+/**
+ * Generate a new X25519 key pair.
+ */
+RCT_EXPORT_METHOD(genX25519KeyPair:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  unsigned char secretKeyBytes[crypto_scalarmult_BYTES];
+  unsigned char publicKeyBytes[crypto_scalarmult_BYTES];
+
+  int ret;
+
+  // Random secret key.
+  SecRandomCopyBytes(kSecRandomDefault, sizeof secretKeyBytes, secretKeyBytes);
+
+  // Generate public key.
+  ret = crypto_scalarmult_base(publicKeyBytes, secretKeyBytes);
+  if (ret != 0) {
+    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+    sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_X25519_KEY_PAIR_FAILED", @"Failed to generate key pair", error);
+    return;
+  }
+
+  // Clean up and convert the result to hex.
+  NSString *secretKeyHex = binToNSHexString(secretKeyBytes, sizeof(secretKeyBytes));
+  NSString *publicKeyHex = binToNSHexString(publicKeyBytes, sizeof(publicKeyBytes));
+  sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+  sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+  resolve(@[secretKeyHex, publicKeyHex]);
+}
+
+/**
+ * Generate the public key for a given X25519 secret key.
+ */
+RCT_EXPORT_METHOD(genX25519PubKeyFromSecret:(NSString *)secretKeyHex
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  if ([secretKeyHex length] != 2 * crypto_scalarmult_BYTES) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:1 userInfo:nil];
+    reject(@"E_X25519_INVALID_KEY_LENGTH", @"Failed to generate public key", error);
+    return;
+  }
+
+  int ret;
+
+  // Convert secret key to binary.
+  unsigned char secretKeyBytes[crypto_scalarmult_BYTES];
+  ret = nsHexStringToBin(secretKeyHex, secretKeyBytes, sizeof(secretKeyBytes));
+  if (ret != 0) {
+    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_X25519_INVALID_KEY_FORMAT", @"Failed to generate public key", error);
+    return;
+  }
+
+  // Generate public key.
+  unsigned char publicKeyBytes[crypto_scalarmult_BYTES];
+  ret = crypto_scalarmult_base(publicKeyBytes, secretKeyBytes);
+  if (ret != 0) {
+    sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+    sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_X25519_PUB_KEY_FAILED", @"Failed to generate public key", error);
+    return;
+  }
+
+  // Clean up and convert the result to hex.
+  NSString *publicKeyHex = binToNSHexString(publicKeyBytes, sizeof publicKeyBytes);
+  sodium_memzero(secretKeyBytes, sizeof(secretKeyBytes));
+  sodium_memzero(publicKeyBytes, sizeof(publicKeyBytes));
+  resolve(publicKeyHex);
+}
+
+/**
+ * Generate an X25519 secret.
+ */
+RCT_EXPORT_METHOD(genX25519SharedSecret:(NSString *)ourSecretKeyHex
+                  theirPublicKeyHex:(NSString *)theirPublicKeyHex
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  if ([ourSecretKeyHex length] != 2 * crypto_scalarmult_BYTES ||
+      [theirPublicKeyHex length] != 2 * crypto_scalarmult_BYTES) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:1 userInfo:nil];
+    reject(@"E_X25519_INVALID_KEY_LENGTH", @"Failed to derive shared secret", error);
+    return;
+  }
+
+  int ret;
+
+  // Convert our secret key to binary.
+  unsigned char ourSecretKeyBytes[crypto_scalarmult_BYTES];
+  ret = nsHexStringToBin(ourSecretKeyHex, ourSecretKeyBytes, sizeof(ourSecretKeyBytes));
+  if (ret != 0) {
+    sodium_memzero(ourSecretKeyBytes, sizeof(ourSecretKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_X25519_INVALID_KEY_FORMAT", @"Failed to derive shared secret", error);
+    return;
+  }
+
+  // Convert their public key to binary.
+  unsigned char theirPublicKeyBytes[crypto_scalarmult_BYTES];
+  ret = nsHexStringToBin(theirPublicKeyHex, theirPublicKeyBytes, sizeof(theirPublicKeyBytes));
+  if (ret != 0) {
+    sodium_memzero(ourSecretKeyBytes, sizeof(ourSecretKeyBytes));
+    sodium_memzero(theirPublicKeyBytes, sizeof(theirPublicKeyBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_X25519_INVALID_KEY_FORMAT", @"Failed to derive shared secret", error);
+    return;
+  }
+
+  // Derive shared secret.
+  unsigned char sharedSecretBytes[crypto_scalarmult_BYTES];
+  ret = crypto_scalarmult(sharedSecretBytes, ourSecretKeyBytes, theirPublicKeyBytes);
+  sodium_memzero(ourSecretKeyBytes, sizeof(ourSecretKeyBytes));
+  sodium_memzero(theirPublicKeyBytes, sizeof(theirPublicKeyBytes));
+  if (ret != 0) {
+    sodium_memzero(sharedSecretBytes, sizeof(sharedSecretBytes));
+
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_X25519_SHARED_SECRET_FAILED", @"Failed to derive shared secret", error);
+    return;
+  }
+
+  NSString *sharedSecretHex = binToNSHexString(sharedSecretBytes, sizeof(sharedSecretBytes));
+  sodium_memzero(sharedSecretBytes, sizeof(sharedSecretBytes));
+  resolve(sharedSecretHex);
+}
+
 @end

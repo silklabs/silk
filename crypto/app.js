@@ -26,8 +26,6 @@ export function genPBKDF2KeyDerivation(
 }
 
 
-const encodingLength = SLKCrypto.EncodingLength;
-
 /**
  * Generate a new Ed25519 key pair.
  */
@@ -41,7 +39,7 @@ export function genEd25519KeyPair(): Promise<[string, string]> {
 export function genEd25519PubKeyFromSecret(
   secretKeyHex: string
 ): Promise<string> {
-  invariant(secretKeyHex.length === 2 * encodingLength);
+  invariant(secretKeyHex.length === 2 * SLKCrypto.crypto_sign_ed25519_SEEDBYTES);
   return SLKCrypto.genEd25519PubKeyFromSecret(secretKeyHex);
 }
 
@@ -52,7 +50,7 @@ export function genEd25519Sign(
   messageHex: string,
   secretKeyHex: string
 ): Promise<string> {
-  invariant(secretKeyHex.length === 2 * encodingLength);
+  invariant(secretKeyHex.length === 2 * SLKCrypto.crypto_sign_ed25519_SEEDBYTES);
   return SLKCrypto.genEd25519Sign(messageHex, secretKeyHex);
 }
 
@@ -64,8 +62,38 @@ export function genEd25519Verify(
   signatureHex: string,
   publicKeyHex: string
 ): Promise<boolean> {
-  invariant(publicKeyHex.length === 2 * encodingLength);
-  invariant(signatureHex.length === 4 * encodingLength);
+  invariant(publicKeyHex.length === 2 * SLKCrypto.crypto_sign_ed25519_PUBLICKEYBYTES);
+  invariant(signatureHex.length === 2 * SLKCrypto.crypto_sign_ed25519_BYTES);
   return SLKCrypto.genEd25519Verify(messageHex, signatureHex, publicKeyHex)
     .then((result) => !!result);
+}
+
+
+/**
+ * Generate a new X25519 key pair.
+ */
+export function genX25519KeyPair(): Promise<[string, string]> {
+  return SLKCrypto.genX25519KeyPair();
+}
+
+/**
+ * Generate the public key for a given X25519 secret key.
+ */
+export function genX25519PubKeyFromSecret(
+  secretKeyHex: string
+): Promise<string> {
+  invariant(secretKeyHex.length === 2 * SLKCrypto.crypto_scalarmult_BYTES);
+  return SLKCrypto.genX25519PubKeyFromSecret(secretKeyHex);
+}
+
+/**
+ * Generate an X25519 secret.
+ */
+export function genX25519SharedSecret(
+  ourSecretKeyHex: string,
+  theirPublicKeyHex: string
+): Promise<string> {
+  invariant(ourSecretKeyHex.length === 2 * SLKCrypto.crypto_scalarmult_BYTES);
+  invariant(theirPublicKeyKeyHex.length === 2 * SLKCrypto.crypto_scalarmult_BYTES);
+  return SLKCrypto.genX25519SharedSecret(ourSecretKeyHex, theirPublicKeyHex);
 }

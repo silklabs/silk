@@ -51,6 +51,7 @@ PRODUCT_PACKAGES += \
   silk-kws \
   silk-say \
   silk-stt \
+  silk-tts \
 
 # vendor/silk/ext/...
 SILK_EXT := \

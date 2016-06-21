@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
@@ -7,13 +7,13 @@
  * @private
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import {EventEmitter} from 'events';
 import * as https from 'https';
 
 import type { SpeechOptions } from 'silk-dialog-script';
 
-const log = createLog(`dialog-tts`);
+const log = createLog('tts');
 
 class TextToSpeech extends EventEmitter {
 
@@ -81,6 +81,5 @@ class TextToSpeech extends EventEmitter {
   }
 }
 
-let tts = new TextToSpeech();
-module.exports = tts;
+module.exports = new TextToSpeech();
 

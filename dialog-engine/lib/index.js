@@ -18,8 +18,8 @@ import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 
 import stt from 'silk-stt';
+import tts from 'silk-tts';
 import TextToIntention from './textToIntention';
-import tts from './textToSpeech';
 
 import type {
   Intention,

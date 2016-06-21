@@ -22,6 +22,7 @@ export default async function assertAyncThrows(
       if (!contains.test(message)) {
         throw new Error(`Expected '${message}' to match regexp: ${contains}`);
       }
+      return;
     }
 
     if (message.indexOf(contains) === -1) {

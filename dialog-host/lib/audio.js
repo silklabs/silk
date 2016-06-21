@@ -15,7 +15,6 @@ import {EventEmitter} from 'events';
 import invariant from 'assert';
 import readline from 'readline';
 import Speaker from 'speaker';
-import {TEXT_TO_SPEECH_PARAMS} from 'silk-dialog-engine/lib/textToSpeech';
 
 import beep from './beep';
 
@@ -33,10 +32,10 @@ type Mic = EventEmitter & {
 const log = createLog(`dialog-audio`);
 
 const SPEAKER_PARAMS = {
-  channels: TEXT_TO_SPEECH_PARAMS.numChannels,
-  bitDepth: TEXT_TO_SPEECH_PARAMS.bytesPerSample * 8,
-  signed: TEXT_TO_SPEECH_PARAMS.encoding === `signed-integer`,
-  sampleRate: TEXT_TO_SPEECH_PARAMS.sampleRate,
+  channels: config.numChannels,
+  bitDepth: config.bytesPerSample * 8,
+  signed: config.encoding === `signed-integer`,
+  sampleRate: config.sampleRate,
 };
 
 export default class Audio extends EventEmitter {

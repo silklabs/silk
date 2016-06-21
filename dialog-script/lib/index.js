@@ -6,6 +6,9 @@ import createLog from 'silk-log';
 import getDialogEngine from 'silk-dialog-engine';
 import invariant from 'assert';
 import storage from 'silk-dialog-storage';
+import * as speechOptions from './speechAccessToken';
+
+export type SpeechOptions = typeof speechOptions;
 
 // The main saga function.
 import saga from './saga';
@@ -129,6 +132,7 @@ dialogEngine.configure({
     id: `1049f242-aa89-4ed2-ac4b-5861754818dc`,
     key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
   },
+  speechOptions,
 });
 
 let dialogScript: ?DialogScript = new DialogScript(dialogEngine);

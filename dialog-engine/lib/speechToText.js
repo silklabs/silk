@@ -14,16 +14,9 @@ import uuid from 'uuid';
 
 import config from 'silk-config';
 import type { ConfigDeviceMic } from 'silk-config';
+import type { SpeechOptions } from 'silk-dialog-script';
 
 const audioParams = config.deviceMic;
-
-import {
-  getAccessToken,
-  urlEncode,
-  APP_ID,
-  INSTANCE_ID,
-  SPEECH_HOST,
-} from './speechAccessToken';
 
 import type {ClientRequest} from 'https';
 
@@ -58,18 +51,16 @@ function generateWavHeader(dataSize: number, options: ConfigDeviceMic) {
   return hdr;
 }
 
-export default class SpeechToText {
+class SpeechToText {
 
   _cb: ?Callback;
-  _accessToken: ?Object = null;
   _req: ?ClientRequest = null;
   _finished: boolean = false;
   _bufferedSamples: Array<Buffer> = [];
+  _options: SpeechOptions;
 
-  constructor(cb: Callback) {
-    this._cb = cb;
-
-    this._startRequest();
+  configure(options: SpeechOptions) {
+    this._options = options;
   }
 
   _callCallback(error: ?Error, text?: string): void {
@@ -82,26 +73,33 @@ export default class SpeechToText {
     this._cb = null;
   }
 
-  async _startRequest(): Promise<void> {
-    log.debug(`_startRequest`);
+  async startRequest(cb: Callback): Promise<void> {
+    log.debug(`startRequest`);
+    if (this._cb) {
+      throw new Error(`Another request is being processed; plese try again`);
+    }
+    if (!this._options) {
+      throw new Error(`Not configured?`);
+    }
 
-    const accessToken = (await getAccessToken()).access_token;
+    this._cb = cb;
+    const accessToken = await this._options.getAccessToken();
     log.debug(`Got access token`);
 
-    const query = urlEncode({
+    const query = this._options.urlEncode({
       version: `3.0`,
       requestid: uuid.v4(), // per request
-      appid: APP_ID,
+      appid: this._options.APP_ID,
       format: `json`,
       locale: `en-US`,
       'device.os': `Silk OS`,
       scenarios: `ulm`,
-      instanceid: INSTANCE_ID,
+      instanceid: this._options.INSTANCE_ID,
       'result.profanitymarkup': 0, // Fuck marking up profanity
     });
 
     const opts = {
-      hostname: SPEECH_HOST,
+      hostname: this._options.SPEECH_HOST,
       port: 443,
       path: `/recognize/query?` + query,
       method: `POST`,
@@ -170,8 +168,10 @@ export default class SpeechToText {
     }
 
     if (this._finished) {
-      log.info(`Finishing request`);
+      log.info(`Finishing pending request`);
       req.end();
+      this._req = null;
+      this._finished = false;
       return;
     }
 
@@ -194,10 +194,10 @@ export default class SpeechToText {
 
   finish(): void {
     invariant(!this._finished);
-    this._finished = true;
 
     const req = this._req;
     if (!req) {
+      this._finished = true;
       log.debug(`Can't finish until we get an access token`);
       return;
     }
@@ -205,5 +205,7 @@ export default class SpeechToText {
     log.info(`Finishing request`);
     req.end();
   }
-
 }
+
+let stt = new SpeechToText();
+module.exports = stt;

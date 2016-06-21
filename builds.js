@@ -231,6 +231,7 @@ const builds = {
     files: [
       'app/node_modules/**',
       'app/ios/**',
+      'crypto/ios/**',
     ],
     events: ['pr', 'push', 'nightly'],
   }),
@@ -244,6 +245,7 @@ const builds = {
     files: [
       'app/node_modules/**',
       'app/android/**',
+      'crypto/android/**',
     ],
     events: ['pr'],
   }),

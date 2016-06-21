@@ -52,6 +52,16 @@
                ReferencedContainer = "container:Silk.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "352DCFA81D19A6150056D623"
+               BuildableName = "SLKCryptoTests.xctest"
+               BlueprintName = "SLKCryptoTests"
+               ReferencedContainer = "container:../../crypto/ios/SLKCrypto.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference

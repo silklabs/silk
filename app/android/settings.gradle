@@ -2,5 +2,8 @@ rootProject.name = 'Silk'
 
 include ':app'
 
-include ":libsodium-jni"
-project(":libsodium-jni").projectDir = file("external/libsodium-jni")
+include ":silk-crypto"
+project(":silk-crypto").projectDir = file("../../crypto/android")
+
+apply from: '../../crypto/android/settings.gradle'
+project(':libsodium-jni').projectDir = file("../../crypto/external/libsodium-jni")

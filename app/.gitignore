@@ -1,50 +1,9 @@
-# OSX
-#
-.DS_Store
-
-# Xcode
-#
-build/
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata
-*.xccheckout
-*.moved-aside
-DerivedData
-*.hmap
-*.ipa
-*.xcuserstate
-project.xcworkspace
-
-# Android/IJ
-#
-.idea
-.gradle
-local.properties
-
-# node.js
-#
-npm-debug.log
-
 # Ignore native module output ...
 /node_modules/bufferutil/build
 /node_modules/fsevents/build
 # fsevents also downloads to this location ...
 /node_modules/fsevents/lib
 /node_modules/utf-8-validate/build
-
-# XXX ignoring this for now because of massive churn.
-ios/Silk/*.jsbundle
-
-# Pods
-/Pods/
-Silk.xcworkspace/
 
 # Configs
 /config.local.json

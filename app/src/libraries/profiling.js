@@ -1,8 +1,9 @@
 import { ec as ECDH } from 'elliptic';
 import { Systrace } from 'react-native';
 
-import { CryptoSign, RssiSmoother } from 'silk-api';
+import { RssiSmoother } from 'silk-api';
 import HttpClient from 'silk-http/src/client';
+import * as CryptoModule from 'silk-crypto';
 import * as StreamsModule from 'silk-streams';
 
 import BLEStream from './ble/Stream';
@@ -28,13 +29,13 @@ if (__DEV__) {
   );
 
   Systrace.measureMethods(
-    CryptoSign,
-    'silk-api.CryptoSign',
+    CryptoModule,
+    'silk-crypto',
     [
-      'genKeyPair',
-      'genPublicKeyFromSecret',
-      'sign',
-      'verify',
+      'genEd25519KeyPair',
+      'genEd25519PubKeyFromSecret',
+      'genEd25519Sign',
+      'genEd25519Verify',
     ]
   );
 

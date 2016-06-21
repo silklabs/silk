@@ -15,10 +15,9 @@ import {
   AsyncStorage,
   NativeModules,
 } from 'react-native';
-import createLog from 'silk-log';
 import { AccessToken } from 'silk-api';
-
-import { genPBKDF2KeyDerivation } from './crypto';
+import { genPBKDF2KeyDerivation } from 'silk-crypto';
+import createLog from 'silk-log';
 
 const log = createLog('UserState');
 const { BLESocketManager } = NativeModules;

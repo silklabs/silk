@@ -10,6 +10,5 @@ addons:
     packages:
       - g++-4.8
 
-install: true
+install: ../server/install.sh
 script: npm test && npm run lint
-

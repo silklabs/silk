@@ -1,13 +1,13 @@
-From 2a16d6dcd62d05bf6bc4cfa978518e5c2a2e3568 Mon Sep 17 00:00:00 2001
+From 94b1fe70169011e1d63706f3bb3f7e9acbe3d572 Mon Sep 17 00:00:00 2001
 From: Philipp von Weitershausen <philikon@silklabs.com>
 Date: Thu, 16 Jun 2016 11:20:23 -0700
 Subject: [PATCH] Androidify
 
 ---
  .gitignore                             |   1 -
- src/libsodium/Android.mk               | 120 +++++++++++++++++++++++++++++++++
- src/libsodium/include/sodium/version.h |  29 ++++++++
- 3 files changed, 149 insertions(+), 1 deletion(-)
+ src/libsodium/Android.mk               | 159 +++++++++++++++++++++++++++++++++
+ src/libsodium/include/sodium/version.h |  29 ++++++
+ 3 files changed, 188 insertions(+), 1 deletion(-)
  create mode 100644 src/libsodium/Android.mk
  create mode 100644 src/libsodium/include/sodium/version.h
 
@@ -25,10 +25,10 @@ index 1dc5c62..249571b 100644
  test/default/browser
 diff --git a/src/libsodium/Android.mk b/src/libsodium/Android.mk
 new file mode 100644
-index 0000000..a8c81ff
+index 0000000..3121e93
 --- /dev/null
 +++ b/src/libsodium/Android.mk
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,159 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -74,7 +74,8 @@ index 0000000..a8c81ff
 +	crypto_generichash/blake2/ref/blake2b-load-avx2.h \
 +	crypto_generichash/blake2/ref/blake2b-ref.c \
 +	crypto_generichash/blake2/ref/generichash_blake2b.c \
-+	crypto_hash/crypto_hash.c crypto_hash/sha256/hash_sha256_api.c \
++	crypto_hash/crypto_hash.c \
++	crypto_hash/sha256/hash_sha256_api.c \
 +	crypto_hash/sha256/cp/hash_sha256.c \
 +	crypto_hash/sha512/hash_sha512_api.c \
 +	crypto_hash/sha512/cp/hash_sha512.c \
@@ -147,6 +148,44 @@ index 0000000..a8c81ff
 +	crypto_scalarmult/curve25519/ref10/x25519_ref10.h \
 +	crypto_stream/salsa20/ref/stream_salsa20_ref.c \
 +	crypto_stream/salsa20/ref/xor_salsa20_ref.c \
++	crypto_core/hchacha20/core_hchacha20.c \
++	crypto_core/hchacha20/core_hchacha20.h \
++	crypto_core/salsa2012/ref/core_salsa2012.c \
++	crypto_core/salsa2012/core_salsa2012_api.c \
++	crypto_core/salsa208/ref/core_salsa208.c \
++	crypto_core/salsa208/core_salsa208_api.c \
++	crypto_sign/ed25519/ref10/obsolete.c \
++	crypto_stream/aes128ctr/portable/afternm_aes128ctr.c \
++	crypto_stream/aes128ctr/stream_aes128ctr_api.c \
++	crypto_stream/aes128ctr/portable/beforenm_aes128ctr.c \
++	crypto_stream/aes128ctr/portable/common.h \
++	crypto_stream/aes128ctr/portable/consts.h \
++	crypto_stream/aes128ctr/portable/consts_aes128ctr.c \
++	crypto_stream/aes128ctr/portable/int128.h \
++	crypto_stream/aes128ctr/portable/int128_aes128ctr.c \
++	crypto_stream/aes128ctr/portable/stream_aes128ctr.c \
++	crypto_stream/aes128ctr/portable/types.h \
++	crypto_stream/aes128ctr/portable/xor_afternm_aes128ctr.c \
++	crypto_stream/salsa2012/stream_salsa2012_api.c \
++	crypto_stream/salsa2012/ref/stream_salsa2012.c \
++	crypto_stream/salsa2012/ref/xor_salsa2012.c \
++	crypto_stream/salsa208/stream_salsa208_api.c \
++	crypto_stream/salsa208/ref/stream_salsa208.c \
++	crypto_stream/salsa208/ref/xor_salsa208.c \
++	crypto_aead/aes256gcm/aesni/aead_aes256gcm_aesni.c \
++	crypto_pwhash/scryptsalsa208sha256/sse/pwhash_scryptsalsa208sha256_sse.c \
++	crypto_onetimeauth/poly1305/sse2/poly1305_sse2.c \
++	crypto_onetimeauth/poly1305/sse2/poly1305_sse2.h \
++	crypto_generichash/blake2/ref/blake2b-compress-ssse3.c \
++	crypto_generichash/blake2/ref/blake2b-compress-ssse3.h \
++	crypto_pwhash/argon2/argon2-fill-block-ssse3.c \
++	crypto_pwhash/argon2/blamka-round-ssse3.h \
++	crypto_stream/chacha20/vec/stream_chacha20_vec.h \
++	crypto_stream/chacha20/vec/stream_chacha20_vec.c \
++	crypto_generichash/blake2/ref/blake2b-compress-sse41.c \
++	crypto_generichash/blake2/ref/blake2b-compress-sse41.h \
++	crypto_generichash/blake2/ref/blake2b-compress-avx2.c \
++	crypto_generichash/blake2/ref/blake2b-compress-avx2.h \
 +
 +include $(BUILD_STATIC_LIBRARY)
 diff --git a/src/libsodium/include/sodium/version.h b/src/libsodium/include/sodium/version.h

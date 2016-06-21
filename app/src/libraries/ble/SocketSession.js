@@ -4,6 +4,7 @@
 
 import invariant from 'assert';
 import { RssiSmoother } from 'silk-api';
+import { genRandomBytes } from 'silk-crypto';
 import makeLog from 'silk-log';
 import {
   AuthenticateDuplexStream,
@@ -13,7 +14,6 @@ import {
   MessagePackDuplexStream,
 } from 'silk-streams';
 
-import { genRandomBytes } from '../crypto';
 import * as Metrics from '../../metrics/BTLE';
 import Stream from './Stream';
 

@@ -27,6 +27,7 @@ const external = [
   'silk-sysutils',
   'silk-vibrator',
   'silk-wifi',
+  'sodium',
   'v8-profiler',
 ].reduce((result, value) => {
   result[value] = true;

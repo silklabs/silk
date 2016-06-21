@@ -3,6 +3,7 @@
     "eslint-config-silk": "/pub/eslint-config",
     "silk-api": "/api",
     "silk-core-version": "/pub/version",
+    "silk-crypto": "/crypto",
     "silk-mse-player": "/mse-player",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",

@@ -20,7 +20,7 @@ import * as util from 'silk-sysutils';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import mkdirp from 'mkdirp-promise';
 import netstatus from 'silk-netstatus';
-import stt from 'silk-dialog-engine/lib/speechToText';
+import stt from 'silk-stt';
 
 import type { VoiceActivityDetector } from 'silk-vad';
 

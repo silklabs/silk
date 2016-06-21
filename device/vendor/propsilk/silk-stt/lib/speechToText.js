@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
@@ -7,7 +7,7 @@
  * @private
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import * as https from 'https';
 import invariant from 'assert';
 import uuid from 'uuid';
@@ -22,7 +22,7 @@ import type {ClientRequest} from 'https';
 
 type Callback = (error: ?Error, text?: string) => void;
 
-const log = createLog(`dialog-stt`);
+const log = createLog('stt');
 
 function generateWavHeader(dataSize: number, options: ConfigDeviceMic) {
   const bytesPerSample = options.bytesPerSample || 2;
@@ -55,7 +55,7 @@ class SpeechToText {
 
   _cb: ?Callback;
   _req: ?ClientRequest = null;
-  _finished: boolean = false;
+  _pendingFinish: boolean = false;
   _bufferedSamples: Array<Buffer> = [];
   _options: SpeechOptions;
 
@@ -64,25 +64,28 @@ class SpeechToText {
   }
 
   _callCallback(error: ?Error, text?: string): void {
-    if (!this._cb) {
-      log.error(`Callback was going to be called more than once`, error, text);
-      return;
+    if (this._cb) {
+      this._cb(error, text);
     }
 
-    this._cb(error, text);
+    this._req = null;
+    this._pendingFinish = false;
     this._cb = null;
   }
 
   async startRequest(cb: Callback): Promise<void> {
     log.debug(`startRequest`);
     if (this._cb) {
-      throw new Error(`Another request is being processed; plese try again`);
-    }
-    if (!this._options) {
-      throw new Error(`Not configured?`);
+      cb(new Error(`Another request is being processed; plese try again`));
+      return;
     }
 
     this._cb = cb;
+    if (!this._options) {
+      this._callCallback(new Error(`Speech to text not configured?`));
+      return;
+    }
+
     const accessToken = await this._options.getAccessToken();
     log.debug(`Got access token`);
 
@@ -167,11 +170,9 @@ class SpeechToText {
       this._bufferedSamples.length = 0;
     }
 
-    if (this._finished) {
+    if (this._pendingFinish) {
       log.info(`Finishing pending request`);
       req.end();
-      this._req = null;
-      this._finished = false;
       return;
     }
 
@@ -179,7 +180,7 @@ class SpeechToText {
   }
 
   write(pcmData: Buffer): void {
-    invariant(!this._finished);
+    invariant(!this._pendingFinish);
 
     const req = this._req;
     if (!req) {
@@ -193,11 +194,11 @@ class SpeechToText {
   }
 
   finish(): void {
-    invariant(!this._finished);
+    invariant(!this._pendingFinish);
 
     const req = this._req;
     if (!req) {
-      this._finished = true;
+      this._pendingFinish = true;
       log.debug(`Can't finish until we get an access token`);
       return;
     }
@@ -207,5 +208,4 @@ class SpeechToText {
   }
 }
 
-let stt = new SpeechToText();
-module.exports = stt;
+module.exports = new SpeechToText();

@@ -50,6 +50,7 @@ PRODUCT_PACKAGES += \
   silk-vad \
   silk-kws \
   silk-say \
+  silk-stt \
 
 # vendor/silk/ext/...
 SILK_EXT := \

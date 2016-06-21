@@ -17,7 +17,7 @@ import createLog from 'silk-log';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 
-import stt from './speechToText';
+import stt from 'silk-stt';
 import TextToIntention from './textToIntention';
 import tts from './textToSpeech';
 
@@ -221,12 +221,7 @@ export class DialogEngine extends EventEmitter {
       });
     };
 
-    try {
-      stt.startRequest(finish);
-    } catch (error) {
-      finish(error);
-      return;
-    }
+    stt.startRequest(finish);
 
     errorListener = (error) => {
       log.error(`Stream error`, error);

@@ -107,55 +107,72 @@ set +x
 EOF
   chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
 
-  # Create flash_fut script
-  cat > $archiveDir/$TARGET_PRODUCT/flash_fut.sh <<'EOF'
-#!/bin/bash
+  # Create flash_hub script
+  cat > $archiveDir/$TARGET_PRODUCT/flash_hub.sh <<'EOF'
+#!/bin/bash -e
+# Hub device config
 
 echo Flash the build and clear userdata/cache partitions
 $(dirname $0)/flash.sh -w
-EOF
 
-  chmod +x $archiveDir/$TARGET_PRODUCT/flash_fut.sh
-
-  # Create flash_demo script
-  cat > $archiveDir/$TARGET_PRODUCT/flash_demo.sh <<'EOF'
-#!/bin/bash
-# "Official" demo config
-
-cd $(dirname $0)
-
-echo Flash the build and clear userdata/cache partitions
-./flash.sh -w
-
+echo Waiting for device to boot
 adb wait-for-device
-
-echo Preparing default.prop ...
-rm default.prop
-
 adb root
 adb wait-for-device
-
-echo OTA updates disabled for demo builds to avoid surprises
-echo persist.silk.update.enabled=false >> default.prop
-
-echo Enable sounds on double clap ze clapper
-echo persist.silk.clapper.sound=true >> default.prop
 
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
 
-echo Disable BLE ranger to avoid wifi 2.4GHz conflicts
-echo persist.silk.ranger.enabled=false >> default.prop
+echo Preparing default.prop ...
+rm -f default.prop
+echo persist.silk.dev.no_server=true >> default.prop
+echo persist.silk.extensions=dialog >> default.prop
+echo persist.silk.kws.enabled=true >> default.prop
+echo persist.silk.volume.level=80 >> default.prop
+echo ro.silk.bt.hw.enabled=false >> default.prop
+echo ro.silk.camera.hw.enabled=false >> default.prop
 
 echo Pushing new default.prop ...
 adb remount
 adb push default.prop /system/
-rm default.prop
+rm -f default.prop
 
 echo Rebooting to apply configuration...
 adb reboot
 adb wait-for-device
 echo Device provisioning successful
+exit 0
+EOF
+
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash_hub.sh
+
+  # Create flash_camera.sh script
+  cat > $archiveDir/$TARGET_PRODUCT/flash_camera.sh <<'EOF'
+#!/bin/bash
+# Camera device config
+
+echo Flash the build and clear userdata/cache partitions
+$(dirname $0)/flash.sh -w
+
+echo Waiting for device to boot
+adb wait-for-device
+adb root
+adb wait-for-device
+
+echo Set device time to match host: $(date)
+adb shell time_genoff $(date +%s)000
+
+echo Pushing new default.prop ...
+adb remount
+adb push default.prop /system/
+rm -f default.prop
+
+echo Rebooting to apply configuration...
+adb reboot
+adb wait-for-device
+echo Device provisioning successful
+exit 0
+
 EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_demo.sh

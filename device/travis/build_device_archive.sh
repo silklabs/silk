@@ -162,11 +162,6 @@ adb wait-for-device
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
 
-echo Pushing new default.prop ...
-adb remount
-adb push default.prop /system/
-rm -f default.prop
-
 echo Rebooting to apply configuration...
 adb reboot
 adb wait-for-device

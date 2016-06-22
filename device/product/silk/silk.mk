@@ -39,20 +39,21 @@ PRODUCT_PACKAGES += \
 
 # vendor/propsilk/...
 PRODUCT_PACKAGES += \
+  silk-caffe \
+  silk-cv \
   silk-dialog-engine \
   silk-dialog-script \
   silk-dialog-storage \
-  silk-caffe \
-  silk-cv \
   silk-gc1 \
   silk-gonk-version \
+  silk-kws \
   silk-modwatcher \
   silk-netstatus \
-  silk-vad \
-  silk-kws \
   silk-say \
   silk-stt \
   silk-tts \
+  silk-update \
+  silk-vad \
 
 # vendor/silk/ext/...
 SILK_EXT := \

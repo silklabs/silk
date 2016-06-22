@@ -89,6 +89,7 @@ const externals = [
   'silk-properties',
   'silk-say',
   'silk-sensors',
+  'silk-speaker',
   'silk-stt',
   'silk-tts',
   'silk-sysutils',

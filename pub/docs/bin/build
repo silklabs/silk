@@ -9,6 +9,7 @@ APIDOC_SOURCE_FILES=" \
   ../bsp-gonk/vendor/silk/silk-lights/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-ntp/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-sensors/lib/index.js \
+  ../bsp-gonk/vendor/silk/silk-speaker/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-sysutils/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-vibrator/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-volume/lib/index.js \

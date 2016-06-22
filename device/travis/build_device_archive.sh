@@ -216,7 +216,11 @@ adb remount
 adb shell stop
 adb shell rm -rf /system/silk
 adb push system /system
-adb shell start
+if [ "$1" = "-w" ]; then
+  adb shell librecovery_test factoryReset
+else
+  adb shell start
+fi  
 EOF
 
   chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh

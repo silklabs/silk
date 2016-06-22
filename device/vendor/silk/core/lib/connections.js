@@ -22,7 +22,7 @@ import {
 } from 'silk-streams';
 
 import type { Duplex } from 'stream';
-import type { Recipient } from 'silk-rtc';
+import type { Peer, UserMediaConstraints } from 'silk-rtc';
 
 import api from './api';
 
@@ -46,7 +46,7 @@ export default class Connections extends EventEmitter {
   _serversTable: ?SasCompositeClient;
   _serverUrl: ?string;
   _demux: ?Duplex = null;
-  _connections: Set<Recipient> = new Set();
+  _connections: Set<Peer> = new Set();
 
   get connected(): bool {
     if (!this._ws) {
@@ -96,7 +96,7 @@ export default class Connections extends EventEmitter {
     }
 
     for (let connection of this._connections) {
-      connection.close();
+      connection.destroy();
     }
 
     if (this._ws) {
@@ -107,7 +107,7 @@ export default class Connections extends EventEmitter {
 
   send(type: string, event: string, payload: Object) {
     for (let recipient of this._connections) {
-      const channel = recipient.channel(type);
+      const channel = recipient.getChannel(type);
       if (channel) {
         invariant(channel);
         channel.emit(event, payload);
@@ -263,13 +263,25 @@ export default class Connections extends EventEmitter {
 
   _onSignaling: (stream: Duplex) => Promise<void> = async (stream) => {
     log.info(`Got signaling client ...`);
+    this.emit('request', stream);
     let recipient;
     try {
-      recipient = await answer(new JSONDuplexStream(stream));
+      recipient = answer(new JSONDuplexStream(stream));
+
+      // This essentially lets the peer request any kind of media it wants without restrictions.
+      // In the future we will need more advanced logic here to limit the total number of streams
+      // and more.
+      recipient.setMediaRequestHandler((label: string, constraints: UserMediaConstraints) => {
+        return recipient.requestLocalMediaStream(constraints);
+      });
+
+      await recipient.connect();
+      this.emit('connection', recipient);
     } catch (err) {
       log.error(`Failed to signal in webrtc connection: ${err.stack}`);
       return;
     } finally {
+      log.info(`Ending signaling stream`);
       stream.end();
     }
 

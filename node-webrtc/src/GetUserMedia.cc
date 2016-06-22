@@ -53,7 +53,8 @@ void GetUserMedia::GetMediaStream(const Nan::FunctionCallbackInfo<Value> &info) 
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, 0, 0);
     
     if (factory.get()) {
-      stream = factory->CreateLocalMediaStream("stream");
+      const std::string uuid = rtc::CreateRandomUuid();
+      stream = factory->CreateLocalMediaStream(uuid);
 
       if (stream.get()) {
         if (constraints->UseAudio()) {

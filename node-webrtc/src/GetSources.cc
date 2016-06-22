@@ -42,7 +42,8 @@ rtc::scoped_refptr<webrtc::AudioTrackInterface> GetSources::GetAudioSource(const
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, 0, 0);
   
   if (factory.get()) {
-    track = factory->CreateAudioTrack("audio", factory->CreateAudioSource(constraints->ToConstraints()));
+    const std::string uuid = rtc::CreateRandomUuid();
+    track = factory->CreateAudioTrack(uuid, factory->CreateAudioSource(constraints->ToConstraints()));
   }
 
   return track;
@@ -75,7 +76,8 @@ rtc::scoped_refptr<webrtc::VideoTrackInterface> GetSources::GetVideoSource(const
           capturer = device_factory.Create(cricket::Device(name, 0));
           
           if (capturer) {
-            track = factory->CreateVideoTrack("video", factory->CreateVideoSource(capturer, constraints->ToConstraints()));
+            const std::string uuid = rtc::CreateRandomUuid();
+            track = factory->CreateVideoTrack(uuid, factory->CreateVideoSource(capturer, constraints->ToConstraints()));
             return track;
           }
         }
@@ -109,7 +111,8 @@ rtc::scoped_refptr<webrtc::VideoTrackInterface> GetSources::GetVideoSource(const
             capturer = device_factory.Create(cricket::Device(name, 0));
             
             if (capturer) {
-              track = factory->CreateVideoTrack("video", factory->CreateVideoSource(capturer, constraints->ToConstraints()));
+              const std::string uuid = rtc::CreateRandomUuid();
+              track = factory->CreateVideoTrack(uuid, factory->CreateVideoSource(capturer, constraints->ToConstraints()));
               return track;
             }
           }

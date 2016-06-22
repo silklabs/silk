@@ -153,6 +153,11 @@ export class OnlineCamera extends React.Component {
               <Glyphicon glyph="headphones" style={styles.glyphicon} />
             </Button>
           </Link>
+          <Link to={`/webrtc/${this.deviceId}`}>
+            <Button bsSize="large">
+              <Glyphicon glyph="facetime-video" style={styles.glyphicon} />
+            </Button>
+          </Link>
         </div>
         <div style={styles.toolbar}>
           <DropdownButton bsSize="small" title="Speak with" id="speak"

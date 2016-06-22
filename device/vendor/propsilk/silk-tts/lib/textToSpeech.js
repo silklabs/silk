@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
@@ -7,47 +7,41 @@
  * @private
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import {EventEmitter} from 'events';
 import * as https from 'https';
 
-import {
-  getAccessToken,
-  APP_ID_NO_DASH,
-  INSTANCE_ID_NO_DASH,
-  SPEECH_HOST,
-} from './speechAccessToken';
+import type { SpeechOptions } from 'silk-dialog-script';
 
-const log = createLog(`dialog-tts`);
+const log = createLog('tts');
 
-export const TEXT_TO_SPEECH_PARAMS = {
-  bytesPerSample: 2,
-  encoding: `signed-integer`,
-  endian: `little`,
-  numChannels: 1,
-  sampleRate: 16000,
-};
+class TextToSpeech extends EventEmitter {
 
-export default class TextToSpeech extends EventEmitter {
+  _options: SpeechOptions;
 
-  _accessToken: ?Object = null;
-
-  constructor(text: string) {
+  constructor() {
     super();
-
-    this._startRequest(text);
   }
 
-  async _startRequest(text: string): Promise<void> {
-    log.debug(`_startRequest`, text);
+  configure(options: SpeechOptions) {
+    this._options = options;
+  }
 
-    const accessToken = (await getAccessToken()).access_token;
+  async startRequest(text: string): Promise<void> {
+    log.debug(`startRequest`, text);
+
+    if (!this._options) {
+      this.emit(`error`, `Not configured?`);
+      return;
+    }
+
+    const accessToken = await this._options.getAccessToken();
     log.debug(`Got access token`);
 
     const postData = `<speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Female' name='Microsoft Server Speech Text to Speech Voice (en-US, ZiraRUS)'>${text}</voice></speak>`;
 
     const opts = {
-      hostname: SPEECH_HOST,
+      hostname: this._options.SPEECH_HOST,
       port: 443,
       path: `/synthesize`,
       method: `POST`,
@@ -55,8 +49,8 @@ export default class TextToSpeech extends EventEmitter {
         'Content-Type': `application/ssml+xml`,
         'X-Microsoft-OutputFormat': `raw-16khz-16bit-mono-pcm`,
         'Authorization': `Bearer ${accessToken}`,
-        'X-Search-AppId': APP_ID_NO_DASH,
-        'X-Search-ClientID': INSTANCE_ID_NO_DASH,
+        'X-Search-AppId': this._options.APP_ID_NO_DASH,
+        'X-Search-ClientID': this._options.INSTANCE_ID_NO_DASH,
         'User-Agent': `silk`,
         'Content-Length': postData.length,
       },
@@ -85,5 +79,7 @@ export default class TextToSpeech extends EventEmitter {
     req.write(postData);
     req.end();
   }
-
 }
+
+module.exports = new TextToSpeech();
+

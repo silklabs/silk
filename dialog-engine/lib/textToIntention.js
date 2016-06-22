@@ -10,8 +10,6 @@
 import createLog from 'silk-log';
 import * as https from 'https';
 
-import {urlEncode} from './speechAccessToken';
-
 import type {DialogScriptOptions} from './index';
 
 export type Intention = {
@@ -41,6 +39,14 @@ const LUIS_HOSTNAME = `api.projectoxford.ai`;
 const LUIS_PORT = 443;
 const LUIS_PATH = `/luis/v1/application`;
 const LUIS_METHOD = `GET`;
+
+function urlEncode(obj: Object): string {
+  const list = [];
+  Object.keys(obj).forEach(key => {
+    list.push(`${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`);
+  });
+  return list.join(`&`);
+}
 
 export default class TextToIntention {
 

@@ -20,7 +20,7 @@ import * as util from 'silk-sysutils';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import mkdirp from 'mkdirp-promise';
 import netstatus from 'silk-netstatus';
-import SpeechToText from 'silk-dialog-engine/lib/speechToText';
+import stt from 'silk-stt';
 
 import type { VoiceActivityDetector } from 'silk-vad';
 
@@ -116,7 +116,7 @@ export default class KeywordSpotting extends EventEmitter {
       this._detectKeyword(signal);
     });
 
-    this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, true);
+    this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, false);
     this._vadEnabled = util.getboolprop(VAD_ENABLED_PROP, false);
 
     this._pcmDataArray = []; // Array of [when, pcmData] tuples
@@ -489,7 +489,7 @@ export default class KeywordSpotting extends EventEmitter {
   async _saveAsWav() {
     if (this._saveEnabled && (netstatus.online || this._standAlone)) {
       return new Promise((resolve, reject) => {
-        const stt = new SpeechToText((error, text = '') => {
+        stt.startRequest((error, text = '') => {
           if (error) {
             reject(error);
             return;

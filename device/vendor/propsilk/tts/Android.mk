@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := silk-tts
+LOCAL_MODULE := silk-tts-native
 LOCAL_MODULE_STEM := tts
 
 LOCAL_SRC_FILES := ../jsoncpp/jsoncpp.cpp \

@@ -17,15 +17,17 @@ import createLog from 'silk-log';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 
-import SpeechToText from './speechToText';
+import stt from 'silk-stt';
+import tts from 'silk-tts';
 import TextToIntention from './textToIntention';
-import TextToSpeech from './textToSpeech';
 
 import type {
   Intention,
   LuisOptions,
   CustomIntentions,
 } from './textToIntention';
+
+import type { SpeechOptions } from 'silk-dialog-script';
 
 export type DialogEngineOptions = {
   localTts?: boolean;
@@ -34,6 +36,7 @@ export type DialogEngineOptions = {
 export type DialogScriptOptions = {
   customIntentions?: CustomIntentions;
   luisOptions?: LuisOptions,
+  speechOptions?: SpeechOptions,
 };
 
 const log = createLog('dialog-engine');
@@ -104,6 +107,14 @@ export class DialogEngine extends EventEmitter {
    */
   configure(scriptOptions: DialogScriptOptions) {
     this._scriptOptions = scriptOptions;
+
+    if (this._scriptOptions.speechOptions) {
+      stt.configure(this._scriptOptions.speechOptions);
+    }
+
+    if (this._scriptOptions.speechOptions) {
+      tts.configure(this._scriptOptions.speechOptions);
+    }
   }
 
   // Returns intention from text (utterance)
@@ -129,7 +140,7 @@ export class DialogEngine extends EventEmitter {
       return;
     }
 
-    const tts = new TextToSpeech(text);
+    tts.startRequest(text);
     const stream = new ClosingPassThrough();
 
     let ttsError: ?Error = null;
@@ -210,7 +221,7 @@ export class DialogEngine extends EventEmitter {
       });
     };
 
-    const stt = new SpeechToText(finish);
+    stt.startRequest(finish);
 
     errorListener = (error) => {
       log.error(`Stream error`, error);

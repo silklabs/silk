@@ -72,7 +72,7 @@ export async function getAccessToken(): Promise<Object> {
                            `${res.statusCode}`));
           return;
         }
-        resolve(JSON.parse(json));
+        resolve((JSON.parse(json)).access_token);
       });
     });
 

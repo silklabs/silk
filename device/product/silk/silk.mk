@@ -50,6 +50,8 @@ PRODUCT_PACKAGES += \
   silk-vad \
   silk-kws \
   silk-say \
+  silk-stt \
+  silk-tts \
 
 # vendor/silk/ext/...
 SILK_EXT := \
@@ -91,7 +93,7 @@ SILK_INIT := \
 SILK_GONK_PROGIES := \
   silk-dash \
   silk-ir \
-  silk-tts \
+  silk-tts-native \
   tts-cereproc-heather-license \
   tts-cereproc-heather-voice \
 

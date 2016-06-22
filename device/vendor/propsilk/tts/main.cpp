@@ -7,7 +7,7 @@
  */
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "silk-tts"
+#define LOG_TAG "silk-tts-native"
 #include <utils/Log.h>
 
 #include <stdlib.h>

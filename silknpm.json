@@ -1,7 +1,10 @@
 {
   "ignored": [
     "pub/babel-preset-silk-node4",
-    "pub/babel",
+    "pub/babel-run",
+    "pub/babel-core",
+    "pub/babel-register",
+    "pub/babelcompile",
     "pub/log",
 
     "pub/cli",

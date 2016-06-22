@@ -175,7 +175,7 @@ exit 0
 
 EOF
 
-  chmod +x $archiveDir/$TARGET_PRODUCT/flash_demo.sh
+  chmod +x $archiveDir/$TARGET_PRODUCT/flash_camera.sh
 
   cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$TARGET_PRODUCT
 

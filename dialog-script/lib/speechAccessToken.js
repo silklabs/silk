@@ -12,9 +12,13 @@ import * as https from 'https';
 import uuid from 'uuid';
 
 export const CLIENT_ID = 'silk';
-export const CLIENT_SECRET = 'dffddcce62bb4210b0ad3f635512b337';
+export const CLIENT_SECRET = 'c37612b45c964a0396bc577edcf61be3';
 export const SPEECH_HOST = 'speech.platform.bing.com';
 export const SPEECH_URL = 'https://' + SPEECH_HOST;
+export const SPEECH_STT_PATH = '/recognize/query';
+export const CRIS_HOST = 'd9833087eaca45feaa3d292c6ad98df9.api.cris.ai';
+export const CRIS_STT_PATH = '/cris/speech/query';
+export const CRIS_ID = '369385a6-353f-4f9c-9740-70e359a573c8';
 
 // unique id for this app (can be anyyhing we choose)
 export const APP_ID = 'D4D52672-91D7-4C74-8AD8-42B1D98141A5';
@@ -22,6 +26,9 @@ export const APP_ID_NO_DASH = APP_ID.replace(/-/g, '');
 
 export const INSTANCE_ID = uuid.v4();
 export const INSTANCE_ID_NO_DASH = INSTANCE_ID.replace(/-/g, '');
+
+// specify STT service: true for CRIS, or false for normal Bing Speech
+export const STT_USE_CRIS = true;
 
 const log = createLog(`dialog-token`);
 const RETRY_LIMIT = 3;

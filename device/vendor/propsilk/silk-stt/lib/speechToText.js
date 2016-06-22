@@ -119,6 +119,7 @@ export default class SpeechToText {
     log.debug(`Got access token`);
 
     const query = options.urlEncode({
+      cid: options.CRIS_ID, // only needed for CRIS, else no-op
       version: `3.0`,
       requestid: uuid.v4(), // per request
       appid: options.APP_ID,
@@ -130,10 +131,18 @@ export default class SpeechToText {
       'result.profanitymarkup': 0, // Fuck marking up profanity
     });
 
+    let host = options.SPEECH_HOST;
+    let path = options.SPEECH_STT_PATH;
+
+    if (options.STT_USE_CRIS) {
+      host = options.CRIS_HOST;
+      path = options.CRIS_STT_PATH;
+    }
+
     const opts = {
-      hostname: options.SPEECH_HOST,
+      hostname: host,
       port: 443,
-      path: `/recognize/query?` + query,
+      path: path + '?' + query,
       method: `POST`,
       headers: {
         'Content-type': `audio/wav; samplerate=${audioParams.sampleRate}`,

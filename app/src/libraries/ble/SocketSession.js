@@ -4,12 +4,10 @@
 
 import invariant from 'assert';
 import { RssiSmoother } from 'silk-api';
-import { genRandomBytes } from 'silk-crypto';
 import makeLog from 'silk-log';
 import {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
-  EllipticJSKeyPair,
   HeartbeatDuplexStream,
   MessagePackDuplexStream,
 } from 'silk-streams';
@@ -21,10 +19,6 @@ import type MetricsAgent from 'silk-api/src/metrics_agent';
 import type { Socket } from './SocketManager';
 
 const log = makeLog(`btle-SocketSession`);
-
-function genKeyPair() {
-  return EllipticJSKeyPair.gen(genRandomBytes);
-}
 
 export default class SocketSession extends AuthenticateDuplexStream {
 
@@ -59,8 +53,6 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     const socketStream = new Stream(socket);
     const cryptoStream = new CryptoDuplexStream(
-      genKeyPair,
-      genRandomBytes,
       socketStream,
       metrics
     );

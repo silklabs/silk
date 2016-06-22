@@ -30,4 +30,28 @@
                 resolver:(nonnull RCTPromiseResolveBlock)resolve
                 rejecter:(nonnull RCTPromiseRejectBlock)reject;
 
+- (void)genX25519KeyPair:(nonnull RCTPromiseResolveBlock)resolve
+                rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genX25519PubKeyFromSecret:(nonnull NSString *)secretKeyHex
+                         resolver:(nonnull RCTPromiseResolveBlock)resolve
+                         rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genX25519SharedSecret:(nonnull NSString *)ourSecretKeyHex
+            theirPublicKeyHex:(nonnull NSString *)theirPublicKeyHex
+                     resolver:(nonnull RCTPromiseResolveBlock)resolve
+                     rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genX25519KeyPair:(nonnull RCTPromiseResolveBlock)resolve
+                rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genX25519PubKeyFromSecret:(nonnull NSString *)secretKeyHex
+                         resolver:(nonnull RCTPromiseResolveBlock)resolve
+                         rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
+- (void)genX25519SharedSecret:(nonnull NSString *)ourSecretKeyHex
+            theirPublicKeyHex:(nonnull NSString *)theirPublicKeyHex
+                     resolver:(nonnull RCTPromiseResolveBlock)resolve
+                     rejecter:(nonnull RCTPromiseRejectBlock)reject;
+
 @end

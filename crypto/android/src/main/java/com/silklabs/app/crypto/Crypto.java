@@ -37,6 +37,7 @@ public class Crypto extends ReactContextBaseJavaModule {
   private static final int crypto_sign_ed25519_PUBLICKEYBYTES = sodium.crypto_sign_ed25519_publickeybytes();
   private static final int crypto_sign_ed25519_SECRETKEYBYTES = sodium.crypto_sign_ed25519_secretkeybytes();
   private static final int crypto_sign_ed25519_SEEDBYTES = sodium.crypto_box_seedbytes();
+  private static final int crypto_scalarmult_BYTES = sodium.crypto_scalarmult_bytes();
 
   public Crypto(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -49,7 +50,11 @@ public class Crypto extends ReactContextBaseJavaModule {
 
   public @Nullable Map getConstants() {
     return MapBuilder.of(
-        "EncodingLength", crypto_sign_ed25519_SEEDBYTES);
+        "crypto_sign_ed25519_BYTES", crypto_sign_ed25519_BYTES,
+        "crypto_sign_ed25519_PUBLICKEYBYTES", crypto_sign_ed25519_PUBLICKEYBYTES,
+        "crypto_sign_ed25519_SECRETKEYBYTES", crypto_sign_ed25519_SECRETKEYBYTES,
+        "crypto_sign_ed25519_SEEDBYTES", crypto_sign_ed25519_SEEDBYTES,
+        "crypto_scalarmult_BYTES", crypto_scalarmult_BYTES);
   }
 
   // TODO: could probably build more efficient versions of these
@@ -79,6 +84,9 @@ public class Crypto extends ReactContextBaseJavaModule {
     return 0;
   }
 
+  /**
+   * Requests a number of random bytes.
+   */
   @ReactMethod
   public void genRandomBytes(int length, Promise promise) {
     SecureRandom random = new SecureRandom();
@@ -87,6 +95,9 @@ public class Crypto extends ReactContextBaseJavaModule {
     promise.resolve(bytesToHexString(bytes));
   }
 
+  /**
+   * Derive a 256 bit key from a password using PBKDF2 and HMAC-SHA256.
+   */
   @ReactMethod
   public void genPBKDF2KeyDerivation(
     String input,
@@ -106,6 +117,9 @@ public class Crypto extends ReactContextBaseJavaModule {
     promise.resolve(bytesToHexString(keyBytes));
   }
 
+  /**
+   * Generate a new Ed25519 key pair.
+   */
   @ReactMethod
   public void genEd25519KeyPair(Promise promise) {
     byte[] publicKeyBytes = new byte[crypto_sign_ed25519_PUBLICKEYBYTES];
@@ -123,6 +137,9 @@ public class Crypto extends ReactContextBaseJavaModule {
     promise.resolve(result);
   }
 
+  /**
+   * Generate the public key for a given Ed25519 secret key.
+   */
   @ReactMethod
   public void genEd25519PubKeyFromSecret(
     String seedHex,
@@ -153,6 +170,9 @@ public class Crypto extends ReactContextBaseJavaModule {
     promise.resolve(bytesToHexString(publicKeyBytes));
   }
 
+  /**
+   * Generate Ed25519 signature
+   */
   @ReactMethod
   public void genEd25519Sign(
     String msgHex,
@@ -207,6 +227,9 @@ public class Crypto extends ReactContextBaseJavaModule {
     promise.resolve(bytesToHexString(sigBytes));
   }
 
+  /**
+   * Verify Ed25519 signature
+   */
   @ReactMethod
   public void genEd25519Verify(
     String msgHex,
@@ -257,4 +280,104 @@ public class Crypto extends ReactContextBaseJavaModule {
     ret = sodium.crypto_sign_ed25519_verify_detached(sigBytes, msgBytes, msgBytes.length, pubBytes);
     promise.resolve(ret == 0);
   }
+
+
+  /**
+   * Generate a new X25519 key pair.
+   */
+  @ReactMethod
+  public void genX25519KeyPair(Promise promise) {
+    byte[] secretKeyBytes = new byte[crypto_scalarmult_BYTES];
+    byte[] publicKeyBytes = new byte[crypto_scalarmult_BYTES];
+
+    int ret;
+
+    SecureRandom random = new SecureRandom();
+    random.nextBytes(secretKeyBytes);
+
+    ret = sodium.crypto_scalarmult_base(publicKeyBytes, secretKeyBytes);
+    if (ret != 0) {
+      promise.reject("E_X25519_KEY_PAIR_FAILED", "Failed to generate key pair");
+      return;
+    }
+    WritableArray result = Arguments.createArray();
+    result.pushString(bytesToHexString(secretKeyBytes));
+    result.pushString(bytesToHexString(publicKeyBytes));
+    promise.resolve(result);
+  }
+
+  /**
+   * Generate the public key for a given X25519 secret key.
+   */
+  @ReactMethod
+  public void genX25519PubKeyFromSecret(String secretKeyHex, Promise promise) {
+    if (secretKeyHex.length() != 2 * crypto_scalarmult_BYTES) {
+      promise.reject("E_X25519_INVALID_KEY_LENGTH", "Failed to generate public key");
+      return;
+    }
+
+    int ret;
+
+    // Convert secret key to binary.
+    byte[] secretKeyBytes = new byte[crypto_scalarmult_BYTES];
+    ret = hexStringToBytes(secretKeyHex, secretKeyBytes);
+    if (ret != 0) {
+      promise.reject("E_X25519_INVALID_KEY_FORMAT", "Failed to generate public key");
+      return;
+    }
+
+    // Generate public key.
+    byte[] publicKeyBytes = new byte[crypto_scalarmult_BYTES];
+    ret = sodium.crypto_scalarmult_base(publicKeyBytes, secretKeyBytes);
+    if (ret != 0) {
+      promise.reject("E_X25519_PUB_KEY_FAILED", "Failed to generate public key");
+      return;
+    }
+
+    promise.resolve(bytesToHexString(publicKeyBytes));
+  }
+
+  /**
+   * Generate an X25519 secret.
+   */
+  @ReactMethod
+  public void genX25519SharedSecret(
+    String ourSecretKeyHex,
+    String theirPublicKeyHex,
+    Promise promise) {
+    if (ourSecretKeyHex.length() != 2 * crypto_scalarmult_BYTES ||
+        theirPublicKeyHex.length() != 2 * crypto_scalarmult_BYTES) {
+      promise.reject("E_X25519_INVALID_KEY_LENGTH", "Failed to derive shared secret");
+      return;
+    }
+
+    int ret;
+
+    // Convert our secret key to binary.
+    byte[] ourSecretKeyBytes = new byte[crypto_scalarmult_BYTES];
+    ret = hexStringToBytes(ourSecretKeyHex, ourSecretKeyBytes);
+    if (ret != 0) {
+      promise.reject("E_X25519_INVALID_KEY_FORMAT", "Failed to derive shared secret");
+      return;
+    }
+
+    // Convert their public key to binary.
+    byte[] theirPublicKeyBytes = new byte[crypto_scalarmult_BYTES];
+    ret = hexStringToBytes(theirPublicKeyHex, theirPublicKeyBytes);
+    if (ret != 0) {
+      promise.reject("E_X25519_INVALID_KEY_FORMAT", "Failed to derive shared secret");
+      return;
+    }
+
+    // Derive shared secret.
+    byte[] sharedSecretBytes = new byte[crypto_scalarmult_BYTES];
+    ret = sodium.crypto_scalarmult(sharedSecretBytes, ourSecretKeyBytes, theirPublicKeyBytes);
+    if (ret != 0) {
+      promise.reject("E_X25519_SHARED_SECRET_FAILED", "Failed to derive shared secret");
+      return;
+    }
+
+    promise.resolve(bytesToHexString(sharedSecretBytes));
+  }
+
 }

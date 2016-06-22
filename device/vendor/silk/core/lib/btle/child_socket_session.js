@@ -8,12 +8,10 @@
  */
 
 import assert from 'assert';
-import crypto from 'mz/crypto';
 import {RssiSmoother} from 'silk-api';
 import {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
-  EllipticJSKeyPair,
   HeartbeatDuplexStream,
   MessagePackDuplexStream,
 } from 'silk-streams';
@@ -71,8 +69,6 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
       scanner._serviceUuid
     );
     const cryptoStream = new CryptoDuplexStream(
-      EllipticJSKeyPair.gen,
-      crypto.randomBytes,
       bluetoothStream,
       api.metrics
     );

@@ -1,7 +1,11 @@
+/**
+ * @flow
+ */
+
 import assert from 'assert';
 import * as silkCrypto from '..';
 
-suite('PBKDF2 tests', async () => {
+suite('PBKDF2 tests', () => {
   test('old Silk dev account test vector', async () => {
     const password = 'silklabs';
     const salt = 'engineering@silklabs.com';

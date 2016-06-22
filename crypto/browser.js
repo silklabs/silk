@@ -85,3 +85,32 @@ export function genEd25519Verify(
   const key = ed25519.keyFromPublic(publicKeyHex);
   return key.verify(messageHex, signatureHex);
 }
+
+
+/**
+ * Generate a new X25519 key pair.
+ */
+export function genX25519KeyPair(): Promise<[string, string]> {
+  throw new Error('Not supported');
+}
+
+/**
+ * Generate the public key for a given X25519 secret key.
+ */
+export function genX25519PubKeyFromSecret(
+  secretKeyHex: string
+): Promise<string> {
+  throw new Error('Not supported');
+}
+
+/**
+ * Generate an X25519 secret.
+ */
+export function genX25519SharedSecret(
+  ourSecretKeyHex: string,
+  theirPublicKeyHex: string
+): Promise<string> {
+  throw new Error('Not supported');
+}
+
+export const X25519_KEY_BYTES = 32;

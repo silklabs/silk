@@ -106,3 +106,40 @@ export function genEd25519Verify(
   );
   return Promise.resolve(verified);
 }
+
+
+/**
+ * Generate a new X25519 key pair.
+ */
+export function genX25519KeyPair(): Promise<[string, string]> {
+  return randomBytes(sodium.crypto_scalarmult_BYTES).then((secretKey) => {
+    const publicKey = sodium.crypto_scalarmult_base(secretKey);
+    return [secretKey.toString('hex'), publicKey.toString('hex')];
+  });
+}
+
+/**
+ * Generate the public key for a given X25519 secret key.
+ */
+export function genX25519PubKeyFromSecret(
+  secretKeyHex: string
+): Promise<string> {
+  const secretKey = new Buffer(secretKeyHex, 'hex');
+  const publicKey = sodium.crypto_scalarmult_base(secretKey);
+  return Promise.resolve(publicKey.toString('hex'));
+}
+
+/**
+ * Generate an X25519 secret.
+ */
+export function genX25519SharedSecret(
+  ourSecretKeyHex: string,
+  theirPublicKeyHex: string
+): Promise<string> {
+  const ourSecretKey = new Buffer(ourSecretKeyHex, 'hex');
+  const theirPublicKey = new Buffer(theirPublicKeyHex, 'hex');
+  const sharedSecret = sodium.crypto_scalarmult(ourSecretKey, theirPublicKey);
+  return Promise.resolve(sharedSecret.toString('hex'));
+}
+
+export const X25519_KEY_BYTES = sodium.crypto_scalarmult_BYTES;

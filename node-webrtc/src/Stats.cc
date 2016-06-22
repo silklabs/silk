@@ -41,8 +41,8 @@ void RTCStatsReport::Init() {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   tpl->SetClassName(Nan::New("RTCStatsReport").ToLocalChecked());
 
-  tpl->PrototypeTemplate()->Set(Nan::New("names").ToLocalChecked(), Nan::New<FunctionTemplate>(RTCStatsReport::Names)->GetFunction());
-  tpl->PrototypeTemplate()->Set(Nan::New("stat").ToLocalChecked(), Nan::New<FunctionTemplate>(RTCStatsReport::Stat)->GetFunction());
+  Nan::SetPrototypeMethod(tpl, "names", RTCStatsReport::Names);
+  Nan::SetPrototypeMethod(tpl, "stat", RTCStatsReport::Stat);
   
   Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("id").ToLocalChecked(), RTCStatsReport::Id);
   Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("type").ToLocalChecked(), RTCStatsReport::Type);
@@ -173,7 +173,7 @@ void RTCStatsResponse::Init() {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
   tpl->SetClassName(Nan::New("RTCStatsResponse").ToLocalChecked());
 
-  tpl->PrototypeTemplate()->Set(Nan::New("result").ToLocalChecked(), Nan::New<FunctionTemplate>(RTCStatsResponse::Result)->GetFunction());
+  Nan::SetPrototypeMethod(tpl, "result", RTCStatsResponse::Result);
                                 
   constructor.Reset(tpl->GetFunction());
 }

@@ -6,10 +6,11 @@ LOCALGOALS += \
   demo \
   dist \
   emu \
-  fut \
   qemu \
   time \
   update \
+  camera \
+  hub \
 
 include ../pub/bsp-gonk/GNUmakefile
 
@@ -19,12 +20,11 @@ ifneq (,$(filter $(MAKECMDGOALS),$(LOCALGOALS)))
 .PHONY: update
 update:
 	set -xe; \
-  ACTIVE_SILK_BOARD=$$(readlink .repo/board); \
-  if [[ $$ACTIVE_SILK_BOARD == base ]]; then ACTIVE_SILK_BOARD=mako; fi; \
-  if [[ $$ACTIVE_SILK_BOARD == base.msm8909 ]]; then ACTIVE_SILK_BOARD=msm8909; fi; \
-  if [[ $$ACTIVE_SILK_BOARD == base.kenzo ]]; then ACTIVE_SILK_BOARD=kenzo; fi; \
-  [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$ACTIVE_SILK_BOARD; \
-  echo SILK_BOARD=$$SILK_BOARD; exit;\
+  [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$(readlink .repo/board); \
+  if [[ $$SILK_BOARD == base ]]; then SILK_BOARD=mako; fi; \
+  if [[ $$SILK_BOARD == base.msm8909 ]]; then SILK_BOARD=msm8909; fi; \
+  if [[ $$SILK_BOARD == base.kenzo ]]; then SILK_BOARD=kenzo; fi; \
+  echo SILK_BOARD=$$SILK_BOARD;\
   rm -rf out/prebuilt/$$SILK_BOARD; \
   mkdir -p out/prebuilt/$$SILK_BOARD; \
   cd out/prebuilt/$$SILK_BOARD; \

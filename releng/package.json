@@ -49,7 +49,7 @@
     "react-dom": "15.1.0",
     "react-router": "1.0.3",
     "request-promise": "0.4.3",
-    "require-from-string": "1.1.0",
+    "require-from-string": "1.2.0",
     "script-loader": "0.6.1",
     "sort-json": "1.1.1",
     "source-map-support": "0.3.3",

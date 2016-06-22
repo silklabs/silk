@@ -14,9 +14,9 @@ import silkCoreVersion from 'silk-core-version';
 import {spawnSync} from 'child_process';
 import validator from 'validator';
 
-import baseversion from './base_version';
-import createLog from './log';
-import * as util from './sysutils';
+import baseversion from 'silk-gonk-version';
+import createLog from 'silk-log';
+import * as util from 'silk-sysutils';
 
 const log = createLog('update');
 

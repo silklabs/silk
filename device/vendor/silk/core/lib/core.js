@@ -11,7 +11,7 @@
  */
 let baseversion = {
   actual: 'unknown',
-  expected: require('./base_version'),  // eslint-disable-line import/no-require
+  expected: require('silk-gonk-version'),  // eslint-disable-line import/no-require
 };
 try {
   baseversion.actual = require('base_version'); // eslint-disable-line import/no-require

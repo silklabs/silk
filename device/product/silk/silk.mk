@@ -28,9 +28,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 endif
 
-# Only install silk-base-version in full device builds
 ifneq ($(DEFAULT_GOAL),gonk_modules)
-PRODUCT_PACKAGES += silk-base-version
+# Only install silk-base-gonk-version in full device builds
+PRODUCT_PACKAGES += silk-base-gonk-version
 endif
 
 # vendor/silk/core/...
@@ -45,6 +45,7 @@ PRODUCT_PACKAGES += \
   silk-caffe \
   silk-cv \
   silk-gc1 \
+  silk-gonk-version \
   silk-modwatcher \
   silk-netstatus \
   silk-vad \

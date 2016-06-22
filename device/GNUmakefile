@@ -19,9 +19,12 @@ ifneq (,$(filter $(MAKECMDGOALS),$(LOCALGOALS)))
 .PHONY: update
 update:
 	set -xe; \
-  [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$(readlink .repo/board); \
-  if [[ $$SILK_BOARD == base ]]; then SILK_BOARD=mako; fi; \
-  echo SILK_BOARD=$$SILK_BOARD; \
+  ACTIVE_SILK_BOARD=$$(readlink .repo/board); \
+  if [[ $$ACTIVE_SILK_BOARD == base ]]; then ACTIVE_SILK_BOARD=mako; fi; \
+  if [[ $$ACTIVE_SILK_BOARD == base.msm8909 ]]; then ACTIVE_SILK_BOARD=msm8909; fi; \
+  if [[ $$ACTIVE_SILK_BOARD == base.kenzo ]]; then ACTIVE_SILK_BOARD=kenzo; fi; \
+  [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$ACTIVE_SILK_BOARD; \
+  echo SILK_BOARD=$$SILK_BOARD; exit;\
   rm -rf out/prebuilt/$$SILK_BOARD; \
   mkdir -p out/prebuilt/$$SILK_BOARD; \
   cd out/prebuilt/$$SILK_BOARD; \
@@ -29,15 +32,15 @@ update:
   tar zxf $$SILK_BOARD.tgz; \
   [[ $$SILK_BOARD == qemu ]] || ./*/$(or $(FLASH_SCRIPT),flash.sh); \
 
-# Update the currently attached Mako device with the latest prebuilt FUT build
-.PHONY: fut
-fut: FLASH_SCRIPT=flash_fut.sh
-fut: update
+# Update the currently device with the latest prebuilt hub build
+.PHONY: hub
+hub: FLASH_SCRIPT=flash_hub.sh
+hub: update
 
-# Update the currently attached Mako device with the latest prebuilt demo build
-.PHONY: demo
-demo: FLASH_SCRIPT=flash_demo.sh
-demo: update
+# Update the currently device with the latest prebuilt camera build
+.PHONY: camera
+camera: FLASH_SCRIPT=flash_camera.sh
+camera: update
 
 # Download and run the emulator
 .PHONY: qemu

@@ -9,7 +9,6 @@
 /* eslint-disable no-console */
 
 import invariant from 'assert';
-import crypto from 'crypto';
 import createLog from 'silk-log';
 import { default as createApi, AccessToken } from 'silk-api';
 
@@ -91,20 +90,12 @@ export default class Account {
       this.accessToken = this.api.accessToken = await AccessToken.gen();
     }
 
-    let passwordHash = crypto.pbkdf2Sync(
-      password,
-      email,
-      this.api.vip.PBKDF2_ROUNDS,
-      SHA256_KEYLENGTH,
-      'sha256'
-    ).toString('hex');
-
     let {
       success,
       beaconUUID,
-    } = await this.api.vip.signIn({
+    } = await this.api.vip.signInWithPassword({
       email,
-      passwordHash,
+      password,
       userAgent: 'silkcli',
     });
 

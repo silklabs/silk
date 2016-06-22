@@ -3,7 +3,6 @@
  */
 
 import invariant from 'assert';
-import crypto from 'crypto';
 import {default as createApi, AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 import socketio from 'socket.io-client';
@@ -14,8 +13,6 @@ import type { Socket } from 'socket.io-client';
 
 const log = createLog('socketio');
 
-const SHA256_KEYLENGTH = 32;
-
 export default async function connectToSocketIO(): Promise<Socket> {
   let api = createApi({
     serverUrl: config.serverUrl,
@@ -24,22 +21,15 @@ export default async function connectToSocketIO(): Promise<Socket> {
       tags: {},
     },
   });
-  let passwordHash = crypto.pbkdf2Sync(
-    config.password,
-    config.user,
-    api.vip.PBKDF2_ROUNDS,
-    SHA256_KEYLENGTH,
-    'sha256'
-  );
 
   api.accessToken = await AccessToken.gen();
 
   log.info('Attempting to authenticate with server.');
   let result;
   try {
-    result = await api.vip.signIn({
+    result = await api.vip.signInWithPassword({
       email: config.user,
-      passwordHash: passwordHash.toString('hex'),
+      password: config.password,
       userAgent: 'node',
     });
   } catch (error) {

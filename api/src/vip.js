@@ -6,56 +6,77 @@
  */
 
 import VIPBase from './gen/vip';
-import crypto from 'crypto';
+import { genPBKDF2KeyDerivation } from 'silk-crypto';
 
+import type {
+  CreateAccountInput,
+  CreateAccountOutput,
+  CheckPasswordInput,
+  CheckPasswordOutput,
+  SignInInput,
+  SignInOutput,
+} from './gen/vip';
+
+export type RawPasswordInput = {
+ email: string;
+ password: string;
+ userAgent: string;
+};
+
+export type HashedPasswordInput = {
+ email: string;
+ passwordHash: string;
+ userAgent: string;
+};
+
+const PBKDF2_ROUNDS = 64000; // (recommendation from 2009)
+
+function genFromPassword(
+  payload: RawPasswordInput
+): Promise<HashedPasswordInput> {
+  if (!payload.password) {
+    throw new Error('Password is required');
+  }
+
+  if (!payload.email) {
+    throw new Error('Email is required');
+  }
+
+  // Domain names are case insensitive!
+  const email = payload.email.toLowerCase().trim();
+  const {password, ...rest} = payload;
+  return genPBKDF2KeyDerivation(
+    password, /* input */
+    email, /* salt */
+    PBKDF2_ROUNDS
+  ).then((passwordHash) => {
+    return {passwordHash, ...rest};
+  });
+}
+
+/**
+ * Wrapper for the underlying createAccount functionality which expects a
+ * passwordHash to be generated.
+ */
 export default class Auth extends VIPBase {
 
-  PBKDF2_ROUNDS: number = 64000; // (recommendation from 2009)
+  createAccount: (payload: CreateAccountInput) => Promise<CreateAccountOutput>
+    = this.createAccount.bind(this);
+  checkPassword: (payload: CheckPasswordInput) => Promise<CheckPasswordOutput>
+    = this.checkPassword.bind(this);
+  signIn: (payload: SignInInput) => Promise<SignInOutput>
+    = this.signIn.bind(this);
 
-  hashPassword(email: string, password: string): string {
-    // Domain names are case insensitive!
-    email = email.toLowerCase().trim();
-
-    return crypto.pbkdf2Sync(
-      password, // key
-      email, // salt
-      this.PBKDF2_ROUNDS, // rounds
-      32, // key length
-      'sha256' // hash algorithm
-    ).toString('hex');
+  createAccountWithPassword(payload: RawPasswordInput): any {
+    return genFromPassword(payload).then(this.createAccount);
   }
 
-  fromPassword(payload: any): any {
-    if (!payload.password) {
-      throw new Error('Password is required');
-    }
-
-    if (!payload.email) {
-      throw new Error('Email is required');
-    }
-
-    // Do not mutate old payload...
-    let newPayload = Object.assign({}, payload);
-    newPayload.passwordHash = this.hashPassword(payload.email, payload.password);
-
-    delete newPayload.password;
-    return newPayload;
+  checkPasswordWithPassword(payload: RawPasswordInput): any {
+    return genFromPassword(payload).then(this.checkPassword);
   }
 
-  /**
-   * Wrapper for the underlying createAccount functionality which expects a
-   * passwordHash to be generated.
-   */
-  createAccountWithPassword(payload: any): any {
-    return this.createAccount(this.fromPassword(payload));
-  }
-
-  checkPasswordWithPassword(payload: any): any {
-    return this.checkPassword(this.fromPassword(payload));
-  }
-
-  signInWithPassword(payload: any): any {
-    return this.signIn(this.fromPassword(payload));
+  signInWithPassword(payload: RawPasswordInput): any {
+    return genFromPassword(payload).then(this.signIn);
   }
 
 }

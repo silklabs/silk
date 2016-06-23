@@ -39,6 +39,7 @@ PRODUCT_PACKAGES += \
 
 # vendor/propsilk/...
 PRODUCT_PACKAGES += \
+  silk-ab-updater \
   silk-caffe \
   silk-cv \
   silk-dialog-engine \

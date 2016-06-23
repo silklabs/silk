@@ -21,6 +21,7 @@ WHITELIST=$(cat <<-EOF
   babeldeps
   cam
   config
+  crypto
   http
   jsonwebtoken
   mse-player

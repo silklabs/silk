@@ -4,7 +4,6 @@
   "description": "Silk dialog host",
   "main": "lib/index.js",
   "scripts": {
-    "flow": "flow check",
     "lint": "eslint lib",
     "start": "DEBUG='silk-*' node index.js"
   },
@@ -25,8 +24,7 @@
   "devDependencies": {
     "babel-eslint": "6.0.4",
     "eslint": "1.10.3",
-    "eslint-config-silk": "^0.17.0",
-    "flow-bin": "0.26.0"
+    "eslint-config-silk": "^0.17.0"
   },
   "license": "proprietary",
   "private": true

@@ -59,7 +59,6 @@ export default function(state: State = initialState, action: Action): State {
    * additional timer.
    */
   case TYPE_ADD: {
-    // $FlowFixMe: Dunno why it doesn't like this.
     const {durationMs, expiresMs} = action.payload;
     const timerId = state.nextTimerId;
     return {

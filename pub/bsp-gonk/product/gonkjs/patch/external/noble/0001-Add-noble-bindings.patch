@@ -1,14 +1,14 @@
-From 89d8bc37cca088642b81e8d4c26c2d0ece3fb842 Mon Sep 17 00:00:00 2001
+From 2fecd474fd7f13324ef12c5743ed87993b56a80e Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:46:53 -0700
 Subject: [PATCH] Android bindings
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2847 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2877 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/resolve-bindings.js |    2 +
  package.json            |    6 +-
- 4 files changed, 2859 insertions(+), 2 deletions(-)
+ 4 files changed, 2889 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..39c5a58
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..1fbcfe4
+index 0000000..f5cf88c
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2847 @@
+@@ -0,0 +1,2877 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -47,7 +47,6 @@ index 0000000..1fbcfe4
 +  warn: debug('silk-noble:warn')
 +};
 +
-+const BLUETOOTH_UUID_SUFFIX = '-0000-1000-8000-00805f9b34fb';
 +const SANITIZE_UUID_REGEX = /[^\da-f]/g;
 +
 +// From http://androidxref.com/5.1.0_r1/xref/frameworks/base/core/java/android/bluetooth/BluetoothGatt.java#39
@@ -237,6 +236,7 @@ index 0000000..1fbcfe4
 +    'addressChange',
 +    'discover',
 +    'clientConnect',
++    'serverConnect',
 +    'clientDisconnect',
 +    'rssiUpdate',
 +    'serviceDiscover',
@@ -453,8 +453,11 @@ index 0000000..1fbcfe4
 +
 +    if (this.commandQueue.length) {
 +      log.warn('Clearing command queue');
-+      this.commandQueue = [ ];
++      this.commandQueue.length = 0;
 +    }
++
++    this.currentCommandInfo = null;
++    this.scanState = null;
 +
 +    if (this.peripheralMap.size) {
 +      log.warn('Disconnecting existing connections');
@@ -466,14 +469,13 @@ index 0000000..1fbcfe4
 +      for (var peripheralInfo of this.peripheralMap.values()) {
 +        uniquePeripheralInfos.add(peripheralInfo);
 +      }
++      this.peripheralMap.clear();
 +
 +      for (var peripheralInfo of uniquePeripheralInfos) {
 +        this.onClientDisconnect(peripheralInfo.address,
 +                                message,
 +                                peripheralInfo.connectionId);
 +      }
-+
-+      this.peripheralMap.clear();
 +    }
 +  }
 +
@@ -532,10 +534,20 @@ index 0000000..1fbcfe4
 +/**
 + * Called when peripherals are discovered during scan.
 + */
-+NobleBindings.prototype.onDiscover = function(address, rssi, advertisingData) {
-+  log.debug('onDiscover(%s, %d, %j)', address, rssi, advertisingData);
++NobleBindings.prototype.onDiscover = function(address,
++                                              rssi,
++                                              advertisingData,
++                                              force) {
++  force = force || false;
 +
-+  if (!this.scanState || this.scanState.stopRequested) {
++  log.debug('onDiscover(\'%s\', %d, %j, %s)',
++            address,
++            rssi,
++            advertisingData,
++            force);
++
++  if (!force &&
++      (!this.scanState || this.scanState.stopRequested)) {
 +    log.info('Scanning canceled, ignoring peripheral \'%s\'', address);
 +    return;
 +  }
@@ -591,7 +603,7 @@ index 0000000..1fbcfe4
 +    }
 +  });
 +
-+  if (this.scanState.filter) {
++  if (!force && this.scanState.filter) {
 +    var found = false;
 +
 +    for (var serviceUuid of this.scanState.filter) {
@@ -682,7 +694,6 @@ index 0000000..1fbcfe4
 +    return true;
 +  }
 +
-+  this.bledroid.noteNobleConnectionRequest(peripheralInfo.address);
 +  this.bledroid.command('connect ' + peripheralInfo.address.replace(/:/g, ''));
 +
 +  assert(!this.currentCommandInfo);
@@ -692,6 +703,23 @@ index 0000000..1fbcfe4
 +  };
 +
 +  return false;
++};
++
++/**
++ * Called when a central connects.
++ */
++NobleBindings.prototype.onServerConnect = function(address, connectionId) {
++  log.debug('onServerConnect(%s, %d)', address, connectionId);
++
++  // This event can happen any time.
++  var peripheralInfo = this.peripheralMap.get(address);
++  if (!peripheralInfo) {
++    log.debug('Unknown peripheral \'%s\', faking discover', address);
++    this.onDiscover(address, -80, [], /* force */ true);
++
++    // That should have made an entry in the peripheralMap.
++    assert(this.peripheralMap.has(address));
++  }
 +};
 +
 +/**
@@ -718,9 +746,12 @@ index 0000000..1fbcfe4
 +
 +  var peripheralInfo = this.peripheralMap.get(address);
 +  if (!peripheralInfo) {
-+    log.debug('Unknown peripheral \'%s\', ignoring', address);
-+    assert(!this.peripheralMap.has(connectionId));
-+    return;
++    log.debug('Unknown peripheral \'%s\', faking discover', address);
++    this.onDiscover(address, -80, [], /* force */ true);
++
++    // That should have made an entry in the peripheralMap.
++    peripheralInfo = this.peripheralMap.get(address);
++    assert(peripheralInfo);
 +  }
 +
 +  var error;
@@ -879,8 +910,7 @@ index 0000000..1fbcfe4
 +
 +  const peripheralInfo = this.peripheralMap.get(deviceUuid);
 +  if (!peripheralInfo) {
-+    log.warn('Cannot connect to unknown peripheral uuid \'%s\'',
-+             deviceUuid);
++    log.warn('Unknown peripheral uuid \'%s\'', deviceUuid);
 +    return true;
 +  }
 +

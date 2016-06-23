@@ -89,6 +89,14 @@ pushd $chromium_build_dir
 ninja
 popd
 
+# On linux we end up with the node-webrtc.node in lib we cannot fix this without
+# directly hacking gyp so we just copy it.
+if [[ -f $chromium_build_dir/lib/node-webrtc.node ]]; then
+  rm -f $chromium_build_dir/node-webrtc.node
+  cp $chromium_build_dir/lib/node-webrtc.node $chromium_build_dir
+fi
+
 # Blow away the build dir and symlink in node-webrtc ...
 rm -rf build
 ln -s $SILK_WEBRTC/out/ build
+

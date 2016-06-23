@@ -73,6 +73,7 @@ const externals = [
   'silk-alog',
   'silk-audioplayer',
   'silk-battery',
+  'silk-bledroid',
   'silk-camera',
   'silk-core-version',
   'silk-cv',

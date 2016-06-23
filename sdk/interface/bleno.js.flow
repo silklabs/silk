@@ -3,7 +3,7 @@
  * @flow
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
 export type AdapterState =
   'unknown' |
@@ -13,6 +13,12 @@ export type AdapterState =
   'poweredOff' |
   'poweredOn';
 
+export type WriteAttributeCallback = (result: number) => void;
+export type ReadAttributeCallback = (result: number, data: Buffer) => void;
+export type NotifyAttributeCallback = (data: Buffer) => void;
+
+export type ErrorCallback = (error: ?Error) => void;
+
 declare export class Bleno extends EventEmitter {
   platform: string;
   state: AdapterState;
@@ -20,18 +26,18 @@ declare export class Bleno extends EventEmitter {
   rssi: number;
   mtu: number;
 
-  stopAdvertising(callback?: Function): void;
+  stopAdvertising(callback?: ErrorCallback): void;
   startAdvertising(
     name: string,
     serviceUuids: Array<string>,
-    callback?: Function
+    callback?: ErrorCallback,
   ): void;
   startAdvertisingIBeacon(
     uuid: string,
     major: number,
     minor: number,
     measuredPower: number,
-    callback?: Function
+    callback?: ErrorCallback,
   ): void;
 }
 

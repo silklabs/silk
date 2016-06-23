@@ -33,7 +33,7 @@ function hexStringToUuid(hexString) {
   }
 }
 
-class Bledroid extends EventEmitter {
+export class Bledroid extends EventEmitter {
   constructor() {
     log.debug('Created');
 
@@ -72,7 +72,6 @@ class Bledroid extends EventEmitter {
   init() {
     log.debug('Initializing');
 
-    this.nobleConnections = new Set();
     this.adapterState = 'unknown';
 
     this.startBufferingCommands();
@@ -315,47 +314,12 @@ class Bledroid extends EventEmitter {
     }
   }
 
-  noteNobleConnectionRequest(address) {
-    if (!this.nobleConnections.has(address)) {
-      this.nobleConnections.add(address);
-    }
-  }
-
   onStateChange(state) {
     if (this.adapterState !== state) {
       log.debug(`onStateChange(${state})`);
       this.adapterState = state;
 
       this.emit('stateChange', state);
-    }
-  }
-
-  onListen(state, error) {
-    if (state) {
-      this.emit('advertisingStart', parseInt(error));
-    } else {
-      this.emit('advertisingStop');
-    }
-  }
-
-  onDiscover(address, rssi, advertisingData) {
-    address = address.toUpperCase();
-    rssi = parseInt(rssi);
-    advertisingData = parseAdvertising(hexStringToBuffer(advertisingData));
-
-    this.emit('discover', address, rssi, advertisingData);
-  }
-
-  onServerConnect(address) {
-    if (!this.nobleConnections.has(address)) {
-      this.emit('serverConnect', address);
-    }
-  }
-
-  onClientDisconnect(address, status, connectionId) {
-    if (this.nobleConnections.has(address)) {
-      this.nobleConnections.delete(address);
-      this.emit('clientDisconnect', address, status, connectionId);
     }
   }
 
@@ -407,70 +371,93 @@ Bledroid.prototype.messageMap = [
     emit: 'rssiUpdate',
     transform: [ undefined, parseInt, parseInt ],
   }, {
-    regex: /^!listen (0|1) (\d+)$/,
-    method: 'onListen',
-    transform: [ val => val === '1' ? true : false, parseInt ],
+    regex: /^!advertisingStart (\d+)$/,
+    emit: 'advertisingStart',
+    transform: [ parseInt ],
   }, {
-    regex: /^!serverConnect ([\dA-F:]{17})$/,
-    method: 'onServerConnect',
+    regex: /^!advertisingStop (\d+)$/,
+    emit: 'advertisingStop',
+    transform: [ parseInt ],
   }, {
-    regex: /^!serverDisconnect ([\dA-F:]{17})$/,
+    regex: /^!beaconStart (\d+)$/,
+    emit: 'beaconStart',
+    transform: [ parseInt ],
+  }, {
+    regex: /^!beaconStop (\d+)$/,
+    emit: 'beaconStop',
+    transform: [ parseInt ],
+  }, {
+    regex: /^!serverConnect ([\dA-F:]{17}) (\d+)$/,
+    emit: 'serverConnect',
+    transform: [ str => str.toUpperCase(), parseInt ],
+  }, {
+    regex: /^!serverDisconnect ([\dA-F:]{17}) (\d+)$/,
     emit: 'serverDisconnect',
+    transform: [ undefined, parseInt ],
   }, {
     regex: /^!clientConnect (\d+) ([\dA-F:]{17}) (\d+) (\d+)$/,
     emit: 'clientConnect',
     transform: [ parseInt, undefined, parseInt, parseInt ],
   }, {
     regex: /^!clientDisconnect ([\dA-F:]{17}) (\d+) (\d+)$/,
-    method: 'onClientDisconnect',
+    emit: 'clientDisconnect',
     transform: [ undefined, parseInt, parseInt ],
   }, {
-    regex: /^!mtuChange (\d+)$/,
+    regex: /^!mtuChange (\d+) (\d+)$/,
     emit: 'mtuChange',
+    transform: [ parseInt, parseInt ],
+  }, {
+    regex: /^!serviceAdded (\d+) (\d+)$/,
+    emit: 'serviceAdded',
+    transform: [ parseInt, parseInt ],
+  }, {
+    regex: /^!attributeAdded (\d+) (\d+)$/,
+    emit: 'attributeAdded',
+    transform: [ parseInt, parseInt ],
+  }, {
+    regex: /^!serviceStarted (\d+)$/,
+    emit: 'serviceStarted',
     transform: [ parseInt ],
   }, {
-    regex: /^!primaryServiceHandle (\d+)$/,
-    emit: 'primaryServiceHandle',
+    regex: /^!serviceStopped (\d+)$/,
+    emit: 'serviceStopped',
     transform: [ parseInt ],
   }, {
-    regex: /^!attributeHandle (-?\d+)$/,
-    emit: 'attributeHandle',
+    regex: /^!serviceDeleted (\d+)$/,
+    emit: 'serviceDeleted',
+    transform: [ parseInt ],
+  }, {
+    regex: /^!readAttribute (\d+) (\d+) ([\dA-F:]{17}) (\d+) (\d+) (1|0)$/,
+    emit: 'readAttribute',
     transform: [
-      str => {
-        let handle = parseInt(str);
-        if (handle <= 0) {
-          return false;
-        }
-        return handle;
-      }
+      parseInt,
+      parseInt,
+      undefined,
+      parseInt,
+      parseInt,
+      str => str === '1',
     ],
   }, {
-    regex: /^!servicesSet (\d+)$/,
-    emit: 'servicesSet',
-    transform: [ parseInt ],
-  }, {
-    regex: /^!servicesDelete (\d+)$/,
-    emit: 'servicesDelete',
-    transform: [ parseInt ],
-  }, {
-    // TODO: Skipping last argument ('isLong') for now.
-    regex: /^!readAttribute (\d+) (\d+) (\d+) (\d+) \d+$/,
-    emit: 'readAttribute',
-    transform: [ parseInt, parseInt, parseInt, parseInt, parseInt ],
-  }, {
-    regex: /^!writeAttribute (\d+) (\d+) (\d+) (0|1) (\d+) ([0-9a-fA-F]+)$/,
+    regex: /^!writeAttribute (\d+) (\d+) ([\dA-F:]{17}) (\d+) (\d+) (0|1) (0|1) ([\da-f]*)$/,
     emit: 'writeAttribute',
     transform: [
       parseInt,
       parseInt,
+      undefined,
+      parseInt,
       parseInt,
       str => str === '1',
-      parseInt,
+      str => str === '1',
       hexStringToBuffer
     ],
   }, {
     regex: /^!discover ([\dA-F:]{17}) (-\d+) ([\da-fA-F]+)$/,
-    method: 'onDiscover',
+    emit: 'discover',
+    transform: [
+      str => str.toUpperCase(),
+      parseInt,
+      data => parseAdvertising(hexStringToBuffer(data))
+    ],
   }, {
     regex: /^!serviceDiscover (\d+) ([\da-f]+) (\d+) (0|1)$/,
     emit: 'serviceDiscover',
@@ -579,12 +566,16 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid
     ],
   }, {
+    regex: /^!notifySent (\d+) (\d+)$/,
+    emit: 'notifySent',
+    transform: [ parseInt, parseInt ],
+  }, {
     regex: /^!unknownCommand (.*)$/,
     method: 'onUnknownCommand',
   }
 ];
 
-class BledroidConnection extends EventEmitter {
+export class BledroidConnection extends EventEmitter {
   constructor() {
     assert(bledroid);
     assert(bledroid instanceof Bledroid);
@@ -601,17 +592,16 @@ class BledroidConnection extends EventEmitter {
       bledroid.removeListener(event, listener);
     });
 
-    // Add a getter for the current adapter state.
-    Object.defineProperty(this, 'adapterState', {
-      get: function() {
-        return bledroid.adapterState;
-      },
-      configurable: true,
-      enumerable: true
-    });
-
     // Update our adapter state immediately.
     bledroid.command('getAdapterState');
+  }
+
+  command(commandStr) {
+    return bledroid.command(commandStr);
+  }
+
+  get adapterState() {
+    return bledroid.adapterState;
   }
 }
 
@@ -619,11 +609,5 @@ module.exports = function() {
   // Create our single instance if it has not yet been created.
   bledroid = bledroid || new Bledroid();
 
-  let connection = new BledroidConnection();
-
-  connection.command = bledroid.command.bind(bledroid);
-  connection.noteNobleConnectionRequest =
-    bledroid.noteNobleConnectionRequest.bind(bledroid);
-
-  return connection;
+  return new BledroidConnection();
 };

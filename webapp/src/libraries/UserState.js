@@ -21,7 +21,6 @@ import {
   NativeModules,
 } from 'react-native';
 import { AccessToken } from 'silk-api';
-import { genPBKDF2KeyDerivation } from 'silk-crypto';
 import createLog from 'silk-log';
 
 const log = createLog('UserState');
@@ -71,15 +70,15 @@ export class UserState extends EventEmitter {
   /**
    * Get the public/private keys...
    */
-  async _loadAccessToken() {
-    let accessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
-    if (!accessToken) {
+  async _loadAccessToken(): Promise<?AccessToken> {
+    let accessTokenString = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!accessTokenString) {
       log.info('No access token set....');
-      return accessToken;
+      return null;
     }
 
-    let parsed = JSON.parse(accessToken);
-    accessToken = new AccessToken(parsed.publicKey, parsed.privateKey);
+    const parsed = JSON.parse(accessTokenString);
+    const accessToken = new AccessToken(parsed.publicKey, parsed.privateKey);
     log.info('Using existing access token', accessToken);
     return accessToken;
   }
@@ -115,16 +114,13 @@ export class UserState extends EventEmitter {
     this.emit('unauthenticated');
   }
 
-  async checkPassword(email, password) {
-    const passwordHash = await genPBKDF2KeyDerivation(
-      password, /* input */
-      email, /* salt */
-      this.api.vip.PBKDF2_ROUNDS
-    );
-
-    return await this.api.vip.checkPassword({
+  checkPassword(email, password) {
+    // XXX: Put some more useful information here...
+    let userAgent = 'iOS';
+    return this.api.vip.checkPasswordWithPassword({
       email,
-      passwordHash,
+      password,
+      userAgent,
     });
   }
 
@@ -138,21 +134,15 @@ export class UserState extends EventEmitter {
     const accessToken = await AccessToken.gen();
     this.accessToken = this.api.accessToken = accessToken;
 
-    const passwordHash = await genPBKDF2KeyDerivation(
-      password, /* input */
-      email, /* salt */
-      this.api.vip.PBKDF2_ROUNDS
-    );
-
     // XXX: Put some more useful information here...
     let userAgent = 'iOS';
 
     let {
       success,
       beaconUUID,
-    } = await this.api.vip.signIn({
+    } = await this.api.vip.signInWithPassword({
       email,
-      passwordHash,
+      password,
       userAgent,
     });
 
@@ -181,21 +171,15 @@ export class UserState extends EventEmitter {
     const accessToken = await AccessToken.gen();
     this.accessToken = this.api.accessToken = accessToken;
 
-    const passwordHash = await genPBKDF2KeyDerivation(
-      password, /* input */
-      email, /* salt */
-      this.api.vip.PBKDF2_ROUNDS
-    );
-
     // XXX: Put some more useful information here...
     let userAgent = 'iOS';
 
     let {
       success,
       beaconUUID,
-    } = await this.api.vip.createAccount({
+    } = await this.api.vip.createAccountWithPassword({
       email,
-      passwordHash,
+      password,
       userAgent,
     });
 

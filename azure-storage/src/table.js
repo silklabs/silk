@@ -69,8 +69,8 @@ export class SharedKeyAuth {
 
   requestTransformer(req: Request): Promise<Request> {
     let [url, options] = req;
-    invariant(options.headers);
-    let headers = (options.headers : Headers);
+    let headers = options.headers;
+    invariant(headers);
 
     // Shared Key Auth requires singing of a few values ...
     let headersToSign = {};
@@ -203,12 +203,7 @@ export class TableClient extends HttpClient {
 
     this.requestTransformer = (req: Request): Promise<Request> => {
       let [url, options] = req;
-      if (!options.headers) {
-        options.headers = new Headers();
-      }
-      let headers = options.headers;
-      invariant(headers);
-
+      let headers = options.headers = options.headers || new Headers();
       headers.set('Date', new Date().toUTCString());
 
       // Helper to add the x-ms-client-request-id header value.

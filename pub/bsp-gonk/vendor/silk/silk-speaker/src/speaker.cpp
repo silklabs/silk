@@ -31,6 +31,7 @@ void Speaker::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "open", Open);
   Nan::SetPrototypeMethod(ctor, "write", Write);
   Nan::SetPrototypeMethod(ctor, "close", Close);
+  Nan::SetPrototypeMethod(ctor, "setVolume", SetVolume);
 
   // Constants
   #define CONST_INT(value) \
@@ -65,7 +66,8 @@ NAN_METHOD(Speaker::New) {
  *
  */
 Speaker::Speaker():
-    mAudioPlayer(NULL) {
+    mAudioPlayer(NULL),
+    gain(GAIN_MAX) {
   ALOGV("Creating instance of speaker");
 }
 
@@ -93,6 +95,10 @@ NAN_METHOD(Speaker::Open) {
   self->mAudioPlayer = new AudioPlayer(sampleRate, (audio_format_t) audioFormat,
                                        channelCount);
   self->mAudioPlayer->init();
+
+  // Start with the default volume of max unless user has called the setVolume
+  // to set the default volume level
+  self->mAudioPlayer->setVolume(self->gain);
 }
 
 /**
@@ -130,6 +136,10 @@ private:
 NAN_METHOD(Speaker::Write) {
   SETUP_FUNCTION(Speaker)
 
+  if (info.Length() != 3) {
+     JSTHROW("Invalid number of arguments provided");
+  }
+
   char *buffer = UnwrapPointer(info[0]);
   int len = info[1]->Int32Value();
   REQ_FUN_ARG(2, cb);
@@ -138,6 +148,20 @@ NAN_METHOD(Speaker::Write) {
   // Write audio data aysnc
   Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
   Nan::AsyncQueueWorker(new WriteAsyncWorker(callback, self, buffer, len));
+}
+
+NAN_METHOD(Speaker::SetVolume) {
+  SETUP_FUNCTION(Speaker)
+
+  if (info.Length() != 1) {
+    JSTHROW("Invalid number of arguments provided");
+  }
+
+  self->gain = info[0]->NumberValue();
+
+  if (self->mAudioPlayer != NULL) {
+    self->mAudioPlayer->setVolume(self->gain);
+  }
 }
 
 NAN_METHOD(Speaker::Close) {

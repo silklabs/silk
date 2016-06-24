@@ -25,6 +25,7 @@ public:
   AudioPlayer(int sampleRate, audio_format_t audioFormat, int channelCount);
   void init();
   int write(const void* bytes, size_t size);
+  void setVolume(float volume);
   void stop();
 
 private:

@@ -22,13 +22,11 @@ using namespace node;
 #define JSFUNC(NAME) \
   static NAN_METHOD(NAME);
 
-#define JSTHROW_TYPE(ERR) \
-  Nan::ThrowTypeError(ERR); \
-  return
-
 #define JSTHROW(ERR) \
   Nan::ThrowError(ERR); \
   return
+
+static const float GAIN_MAX = 1.0;
 
 /*
  * Unwraps Buffer instance "buffer" to a C `char *` with the offset specified.
@@ -48,6 +46,7 @@ class Speaker : public Nan::ObjectWrap {
 public:
   static void Init(v8::Local<v8::Object> exports);
   sp<AudioPlayer> mAudioPlayer;
+  float gain;
 
 private:
   explicit Speaker();
@@ -58,6 +57,7 @@ private:
   JSFUNC(Open);
   JSFUNC(Write);
   JSFUNC(Close);
+  JSFUNC(SetVolume);
 };
 
 #endif

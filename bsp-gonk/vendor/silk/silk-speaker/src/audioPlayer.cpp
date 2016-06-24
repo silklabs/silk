@@ -9,8 +9,6 @@
 #include <media/IAudioPolicyService.h>
 #include "audioPlayer.h"
 
-static const float GAIN_MAX = 1.0;
-
 /**
  * Constructor
  */
@@ -39,7 +37,6 @@ void AudioPlayer::init() {
   ALOGV("%s", __FUNCTION__);
   mAudioTrack = new AudioTrack(AUDIO_STREAM_MUSIC, mSampleRateInHz,
       mAudioFormat, audio_channel_out_mask_from_count(mChannelCount), 0);
-  mAudioTrack->setVolume(GAIN_MAX);
 }
 
 /**
@@ -88,6 +85,14 @@ int AudioPlayer::writeToAudioTrack(const void* bytes, size_t size) {
     count += written;
   }
   return count;
+}
+
+/**
+ * Set stream volume (gain)
+ */
+void AudioPlayer::setVolume(float gain) {
+  ALOGD("Audio player setting volume %f", gain);
+  mAudioTrack->setVolume(gain);
 }
 
 /**

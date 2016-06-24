@@ -18,7 +18,6 @@ import config from 'silk-config';
 import VoiceActivityDetector from 'silk-vad';
 import KeywordSpotting from 'silk-kws';
 import say from 'silk-say';
-import wav from 'wav';
 import fs from 'fs';
 import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';

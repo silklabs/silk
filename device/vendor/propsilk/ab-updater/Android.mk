@@ -8,6 +8,10 @@ LOCAL_CFLAGS += \
   -Wno-unused-parameter \
   -DRECOVERY_API_VERSION=3 \
 
+ifeq ($(TARGET_GE_MARSHMALLOW),)
+LOCAL_CFLAGS += -DINSTALL_PACKAGE_WIPE_CACHE_IS_INT
+endif
+
 LOCAL_SRC_FILES := \
   ../../../bootable/recovery/asn1_decoder.cpp \
   ../../../bootable/recovery/install.cpp \
@@ -27,7 +31,6 @@ LOCAL_SHARED_LIBRARIES := \
   libhardware \
 
 LOCAL_STATIC_LIBRARIES := \
-  libbase \
   libcutils \
   liblog \
   libm \

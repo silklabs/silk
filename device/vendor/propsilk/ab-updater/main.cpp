@@ -126,7 +126,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+#ifdef INSTALL_PACKAGE_WIPE_CACHE_IS_INT
+  int should_wipe_cache;
+#else
   bool should_wipe_cache;
+#endif
   status = install_package(update_package, &should_wipe_cache, "/data/last_install", false);
   if (status != INSTALL_SUCCESS) {
     ALOGE("Installation failed: %d", status);

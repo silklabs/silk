@@ -28,17 +28,20 @@ fi
 #
 
 GITS="\
-  silk-core \
   boost \
   cereproc \
-  gonk-alto \
   gonk-msm8956 \
   libwebrtc \
   node-webrtc \
   qualcomm-developer-network \
+  release-pando-gonk-caf.msm8909-la121 \
+  release-pando-gonk-caf.pandohub \
+  release-pando-gonk-msm8909-la121-patch-vqp \
+  silk-core \
   silk-dnn \
   silk-trainingset \
   vendor-qcom-msm8956 \
+  vendor-qcom-proprietary.msm8909-la121 \
 "
 
 # Fetch all the silk projects

@@ -463,15 +463,14 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
-  'repocache-msm8909': {
-    title: 'Updating repocache for msm8909',
+  'repocache-msm8909-la121': {
+    title: 'Updating repocache for msm8909-la121',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux'],
       env: {
         global: [
-          'BOARD=msm8909',
-          'BOARD_REPO=git@github.com:silklabs/gonk-msm8909.git',
+          'BOARD=msm8909-la121',
         ],
       },
     },

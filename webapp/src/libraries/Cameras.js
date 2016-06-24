@@ -4,7 +4,7 @@ import { EventEmitter } from 'events';
 import io from 'socket.io-client';
 import invariant from 'assert';
 import createLog from 'silk-log';
-import { signalDevice } from 'silk-rtc';
+import { call } from 'silk-rtc';
 
 import Api from './Api';
 import ObjectCollector from './ObjectCollector';
@@ -26,6 +26,7 @@ class Camera extends EventEmitter {
   _requestedRooms = { };
   _socket = null;
   _queue = null;
+  _peer = null;
   _channel = null;
 
   constructor(name, id) {
@@ -39,9 +40,17 @@ class Camera extends EventEmitter {
     this.setOffline();
   }
 
-  setWebRTCChannel(channel) {
+  getPeer() {
+    return this._peer;
+  }
+
+  setPeer(peer) {
+    const channel = peer.getChannel('video');
     const previous = this._channel;
+
+    this._peer = peer;
     this._channel = channel;
+    this.emit('peer', peer);
 
     if (previous !== channel) {
       log.info(`Updating webrtc status for ${this.id}`);
@@ -458,7 +467,7 @@ class Cameras extends EventEmitter {
     }
 
     if (this.cameras[deviceId]) {
-      this.cameras[deviceId].setWebRTCChannel(null);
+      this.cameras[deviceId].setPeer(null);
     }
   }
 
@@ -470,15 +479,15 @@ class Cameras extends EventEmitter {
 
     // TODO: We should not rely on socket.io in the future to detect
     // connected devices but for now this is very convient.
-    const devicePeer = signalDevice(Api, deviceId, {
-      dataChannels: {
-        video: {},
-      },
-    });
+    const devicePeer = call(Api, deviceId);
+    // XXX: This may fail and should be retired.
+    devicePeer.connect();
+    // XXX: Also sorta hacky... Indicate to the device to start sending video.
+    devicePeer.createChannel('video', {});
 
     this._webrtcConnections.set(deviceId, devicePeer);
     if (this.cameras[deviceId]) {
-      this.cameras[deviceId].setWebRTCChannel(devicePeer.channel('video'));
+      this.cameras[deviceId].setPeer(devicePeer);
     }
   }
 
@@ -596,6 +605,7 @@ class Cameras extends EventEmitter {
   }
 
   _updateStatus(status) {
+    console.log('~~~ EMIT STATE CHANGE ~~~');
     this.status = status;
     this.emit('stateChanged', this);
   }

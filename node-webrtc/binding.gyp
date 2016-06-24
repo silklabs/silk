@@ -108,15 +108,6 @@
           }]
         }],
         ['OS=="linux"', {
-          'actions': [{
-            'action_name': 'copy',
-            'inputs': [],
-            'outputs': ['node-webrtc.node'],
-            'action': [
-              './bin/copy_out.sh',
-              '<(PRODUCT_DIR)',
-            ]
-          }],
           'cflags': [
             '-Wno-deprecated-declarations',
             '-Wno-unused-variable',
@@ -167,4 +158,3 @@
     },
   ],
 }
-

@@ -4,6 +4,13 @@
  * @flow
  */
 
+export type UserMediaConstraints = {
+  // The constraints are platform specific and fairly complex so they are typed
+  // simply as "Object".
+  audio: bool | Object;
+  video: bool | Object;
+};
+
 // Taken from https://w3c.github.io/webrtc-pc/#widl-RTCDataChannelInit
 export type RTCDataChannelInit = {
   ordered?: bool;
@@ -26,6 +33,13 @@ declare export class RTCPeerConnectionIceEvent extends Event {
   url?: string;
 }
 
+declare export class RTCDataChannelEvent extends Event {
+  channel: RTCDataChannel;
+}
+
+declare export class RTCStreamEvent extends Event {
+  stream: MediaStream;
+}
 
 // Flow throws all kinds of property `handleEvent`. Property not found in ...
 // When extending EventTarget directly and I am too lazy to figure out why.
@@ -80,6 +94,8 @@ declare export class RTCPeerConnection extends WebrtcEventTarget {
   ): RTCDataChannel;
 
   addIceCandidate(candidate: RTCIceCandidate): void;
+  addStream(stream: MediaStream): void;
+  removeStream(stream: MediaStream): void;
 }
 
 declare export class RTCSessionDescription {

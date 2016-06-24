@@ -15,6 +15,7 @@ import type TransportEmitter from './transport_emitter';
 
 import type {
   RTCPeerConnection,
+  RTCDataChannel,
 } from '../interface/webrtc';
 
 import type {
@@ -35,8 +36,9 @@ export const ICE_READY = new Set([
  * ICE has failed or prematurely been disconnected.
  */
 export const ICE_ERROR = new Set([
+  // NOTE: We do not include disconnected here because we enter that state
+  // regularly during renegotiation.
   'failed',
-  'disconnected',
   'closed',
 ]);
 
@@ -46,6 +48,7 @@ export const ICE_ERROR = new Set([
  */
 export const ICE_FINISHED_STATES = new Set([
   'completed',
+  'disconnected',
   // ... on Set does actually work but this makes flow happy.
   ...Array.from(ICE_ERROR),
 ]);
@@ -54,7 +57,7 @@ export function webrtcPromise(
   peerConnection: RTCPeerConnection,
   name: string,
   ...args: Array<mixed>
-): Promise<mixed> {
+): Promise<any> {
   return new Promise((accept, reject) => {
     try {
       // $FlowFixMe: dynamic method call ...
@@ -65,9 +68,40 @@ export function webrtcPromise(
   });
 }
 
+export async function waitForStableSignaling(
+  log: Logger,
+  peerConnection: RTCPeerConnection,
+): Promise<void> {
+  let state = peerConnection.signalingState;
+  while (state !== 'stable') {
+    if (state === 'closed') {
+      throw new Error(`Signaling state is closed`);
+    }
+    log.info(`Waiting for signaling state (current = ${state})`);
+    await eventToPromise(peerConnection, 'signalingstatechange');
+    state = peerConnection.signalingState;
+  }
+  log.info(`Done waiting for signaling state`);
+}
+
+export async function waitForDataChannel(
+  peerConnection: RTCPeerConnection,
+  name: string,
+): Promise<RTCDataChannel> {
+  let event;
+  while(
+    (event = await eventToPromise(peerConnection, 'datachannel'))
+  ) {
+    let { channel } = event;
+    let { label } = channel;
+    if (label === name) {
+      return channel;
+    }
+  }
+  throw new Error(`Unreachable ...`);
+}
 
 export async function waitForDataChannels(
-  // TODO: We really need a log type for silk-log.
   log: Logger,
   peerConnection: RTCPeerConnection,
   dataChannels: Array<string>,
@@ -130,7 +164,12 @@ export async function waitForIce(
   // When we receive a candidate to add to our peerConnection from the remote.
   function remoteCandidateListener(candidate) {
     log.info(`(${type}) Adding ice candidate from remote...`, candidate);
-    peerConnection.addIceCandidate(new WebRTC.RTCIceCandidate(candidate));
+    try {
+      peerConnection.addIceCandidate(new WebRTC.RTCIceCandidate(candidate));
+    } catch (err) {
+      log.error(`Failed to add candidate:`, candidate);
+      // throw err;
+    }
   }
 
   function cleanupListeners() {
@@ -181,22 +220,25 @@ export function peerConnectionStateObserver(
   type: PeerTypes,
   peerConnection: RTCPeerConnection,
 ): void {
+  const info = (value) => {
+    log.info(`(${type}) ${value}`);
+  };
+
   peerConnection.addEventListener('icecandidate', (event) => {
-    log.info(`Got ice candidate ...`);
+    info(`Got ice candidate ... with candidate ? ${!!event.candidate}`);
   });
 
   peerConnection.addEventListener('signalingstatechange', (event) => {
-    // TODO: Add metrics...
-    log.info('signal state', peerConnection.signalingState);
+    info(`signal state: ${peerConnection.signalingState}`);
   });
 
   peerConnection.addEventListener('icegatheringstatechange', (event) => {
     // TODO: Add metrics...
-    log.info('ice gathering state', peerConnection.iceGatheringState);
+    info(`ice gathering state: ${peerConnection.iceGatheringState}`);
   });
 
   peerConnection.addEventListener('iceconnectionstatechange', (event) => {
     // TODO: Add metrics...
-    log.info('connection state', peerConnection.iceConnectionState);
+    info(`connection state: ${peerConnection.iceConnectionState}`);
   });
 }

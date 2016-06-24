@@ -8,10 +8,10 @@ node_resolve() {
   dirname $pkg
 }
 
-node_resolve silk-device-core
+node_resolve silk-gonk-version
 
 mkdir -p system/node_modules
-cp -f $(node_resolve silk-device-core)/lib/base_version.js system/node_modules/
+cp -f $(node_resolve silk-gonk-version)/gonk_version.js system/node_modules/base_version.js
 
 mkdir -p system/silk/bin
 rm -f system/silk/bin/node

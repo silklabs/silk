@@ -30,6 +30,9 @@ PRODUCT_PACKAGES += silk-player silk-volume
 # vendor/silk/bledroid/
 PRODUCT_PACKAGES += silk-bledroid-daemon
 
+# vendor/silk/bootctl/
+PRODUCT_PACKAGES += bootctl
+
 # vendor/silk/capture/
 PRODUCT_PACKAGES += silk-capture-daemon libpreview silk-capture-mic silk-mic
 

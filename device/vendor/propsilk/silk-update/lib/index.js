@@ -11,12 +11,12 @@ import {EventEmitter} from 'events';
 import fs from 'fs';
 import request from 'request';
 import silkCoreVersion from 'silk-core-version';
-import {spawnSync} from 'child_process';
+import {spawn, spawnSync} from 'child_process';
 import validator from 'validator';
 
-import baseversion from './base_version';
-import createLog from './log';
-import * as util from './sysutils';
+import baseversion from 'silk-gonk-version';
+import createLog from 'silk-log';
+import * as util from 'silk-sysutils';
 
 const log = createLog('update');
 
@@ -36,6 +36,7 @@ const FINGERPRINT = util.getprop('ro.build.fingerprint');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
+const AB_UPDATE = util.getboolprop('ro.silk.update.ab', false);
 const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
 const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP, silkCoreVersion.official);
 
@@ -541,15 +542,23 @@ function validateUpdateHash(sha1) {
 }
 
 function stageUpdate() {
+  if (AB_UPDATE) {
+    return util.exec('silk-ab-updater', [UPDATE_FILE_PATH])
+      .then(result => {
+        log.verbose(result.stdout);
+        if (result.code === 0) {
+          emitter.emit('staged');
+        } else {
+          log.warn('Update failed to apply');
+          log.info(result.stderr);
+        }
+      });
+  }
+
   if (PREVENT_REBOOT) {
     log.info(`'${PREVENT_REBOOT_PROP}' is set, skipping staged event`);
     return Promise.resolve();
   }
-
-  // TODO: Make sure nothing else is writing to disk before we call this
-  //       because we want our file cache buffers sync'd properly.
-  log.info(`'${PREVENT_REBOOT_PROP}' is not set, staging update`);
-
   emitter.emit('staged');
   return Promise.resolve();
 }
@@ -610,6 +619,12 @@ function start() {
   if (running) {
     return Promise.resolve();
   }
+
+  // Signal that the last update was successful enough to arrive here
+  spawn('bootctl', ['mark-boot-successful'], {
+    detached: true,
+    stdio: ['ignore'],
+  });
 
   if (!MANIFEST_URL_TEMPLATE) {
     log.warn(`'${MANIFEST_URL_PROP}' is unset, disabling updates`);
@@ -688,7 +703,9 @@ function stop() {
 }
 
 function apply() {
-  spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
+  if (!AB_UPDATE) {
+    spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
+  }
 
   // This is paranoid, but if spawnSync() returns before we reboot then we don't
   // want to attempt normal cleanup to remove the zip file. Setting these flags

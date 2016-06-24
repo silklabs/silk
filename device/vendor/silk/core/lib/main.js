@@ -11,7 +11,7 @@ import {install as installSourceMapSupport} from 'source-map-support';
 import version from 'silk-core-version';
 
 import ui from './ui';
-import createLog from './log';
+import createLog from 'silk-log';
 
 const log = createLog('main');
 
@@ -44,7 +44,7 @@ import Battery from 'silk-battery';
 import wifi from 'silk-wifi';
 import ntp from 'silk-ntp';
 import * as util from './sysutils';
-import update from './update';
+import update from 'silk-update';
 import config from './config';
 import silkconfig from 'silk-config';
 import sensors from 'silk-sensors';

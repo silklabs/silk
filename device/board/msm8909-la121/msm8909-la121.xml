@@ -2,11 +2,14 @@
 <manifest>
   <include name="caf.msm8909-la121.xml"/>
 
+  <!--
+    Achtung!
+    If you modify anything below consider updating pandohub.xml too.
+  -->
   <remote name="silkssh"
           fetch="ssh://git@github.com/silklabs/"
           revision="Always invalid.  Contact releng for more details"
           sync-j="4"/>
-
   <project name="release-pando-gonk-msm8909-la121-patch-vqp"
            path="board/msm8909-la121/patch/vendor/qcom/proprietary"
            remote="silkssh"

@@ -122,6 +122,15 @@ mkdir -p .repo
 ln -fs $board .repo/board
 ln -fs $product .repo/product
 
+function presync() {
+  for what in board/$board product/$product; do
+    if [[ -x $what/presync ]]; then
+      ( set -x; $what/presync )
+    fi
+  done
+}
+presync
+
 if [[ ! -d .repo/.git ]]; then
   # Construct an empty .git in .repo/ to prevent |git clean -dfx| from removing
   # the hard-earned contents of .repo/{projects,project-objects}

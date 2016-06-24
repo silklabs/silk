@@ -3,6 +3,7 @@ import eventToPromise from 'event-to-promise';
 import deviceApi from 'silk-device-core/lib/api';
 import Connections from 'silk-device-core/lib/connections';
 import createContext from 'silk-server/test/server/context';
+import skipOnTravis from 'silk-utils/skip_on_travis';
 
 import SignalServer from '../../src/signaling/call_manager';
 import * as WebRTC from '../../src/webrtc';
@@ -73,7 +74,7 @@ suite('Call / Answer manager', function() {
       ];
     }
 
-    test('connect -> recipient adds stream', async () => {
+    skipOnTravis(test, 'connect -> recipient adds stream', async () => {
       const [pc, devicePc] = await connect();
       const stream = await new Promise((accept, reject) => {
         WebRTC.getUserMedia({ video: true }, accept, reject);
@@ -87,7 +88,7 @@ suite('Call / Answer manager', function() {
       ]);
     });
 
-    test('connect -> recipient adds stream -> recipient removes stream', async () => {
+    skipOnTravis(test, 'connect -> recipient adds stream -> recipient removes stream', async () => {
       const [pc, devicePc] = await connect();
       const stream = await new Promise((accept, reject) => {
         WebRTC.getUserMedia({ video: true }, accept, reject);
@@ -110,7 +111,7 @@ suite('Call / Answer manager', function() {
       await eventToPromise(pc, 'removestream');
     });
 
-    test('connect -> caller adds stream -> destroy', async () => {
+    skipOnTravis(test, 'connect -> caller adds stream -> destroy', async () => {
       const [pc, devicePc] = await connect();
       const stream = await new Promise((accept, reject) => {
         WebRTC.getUserMedia({ video: true }, accept, reject);

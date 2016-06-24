@@ -97,8 +97,6 @@ SILK_GONK_PROGIES := \
   silk-dash \
   silk-ir \
   silk-tts-native \
-  tts-cereproc-heather-license \
-  tts-cereproc-heather-voice \
 
 SILK_UI_PACKAGES := \
   logo.png \
@@ -120,7 +118,6 @@ PRODUCT_PACKAGES += \
   bufferutil \
   libttspico \
   pocketsphinx \
-  libttscereproc \
   libgflags \
   libprotobuf-cpp-2.3.0-full-gnustl-rtti \
   aprotoc \
@@ -128,6 +125,14 @@ PRODUCT_PACKAGES += \
   libopenblas \
   libsodium \
   sodium \
+
+# cereproc is internal-only, we don't have a license to distribute
+INTERNALONLY_PACKAGES += \
+  tts-cereproc-heather-license \
+  tts-cereproc-heather-voice \
+  libttscereproc \
+
+PRODUCT_PACKAGES += $(INTERNALONLY_PACKAGES)
 
 # Ugly gyp-generated package name for /node-webrtc
 PRODUCT_PACKAGES += \

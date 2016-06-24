@@ -80,7 +80,6 @@ adb reboot-bootloader
 fastboot oem unlock
 set -e
 fastboot flash boot boot.img
-fastboot flash recovery recovery.img
 fastboot flash system system.img
 if [ -r recovery.img ]; then
   fastboot flash recovery recovery.img

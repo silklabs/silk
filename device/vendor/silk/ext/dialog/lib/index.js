@@ -21,6 +21,7 @@ import say from 'silk-say';
 import wav from 'wav';
 import fs from 'fs';
 import netstatus from 'silk-netstatus';
+import Speaker from 'silk-speaker';
 
 import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
 import type { Env, Camera } from 'silk-exttest';
@@ -38,7 +39,6 @@ type InterpretEndCallback = (error: ?Error) => void;
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3');
 const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.mp3');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp3');
-const SAY_FILE_NAME = '/data/say.wav';
 
 const NETWORK_DOWN_SOUND_FILE = 'network_down.mp3';
 const NETWORK_ERROR_MESSAGE = 'Unable to talk to the server, please try again';
@@ -166,27 +166,6 @@ class Dialog {
   };
 
   /**
-   * Write raw pcm data in a wav file
-   */
-  _writeWavFile(pcmSamples: Buffer): Promise {
-    return new Promise((resolve, reject) => {
-      let writer = new wav.FileWriter(SAY_FILE_NAME, {
-        sampleRate: config.deviceMic.sampleRate,
-        channels: config.deviceMic.numChannels,
-        bitDepth: config.deviceMic.bytesPerSample * 8,
-      });
-      writer.on('header', () => {
-        resolve();
-      });
-      writer.on('error', (err) => {
-        reject(err);
-      });
-      writer.write(pcmSamples);
-      writer.end();
-    });
-  }
-
-  /**
    * This function makes sure to finish the currently playing file
    * before scheduling the next one
    */
@@ -196,7 +175,7 @@ class Dialog {
       return util.playSound(file);
     })
     .catch(err => {
-      log.error(`cannot play ${file}, error: ${err}`);
+      log.error(`cannot play ${file}, error: `, err);
     });
     return this._activePlaySoundPromise;
   }
@@ -253,7 +232,7 @@ class Dialog {
       finish();
     })
     .catch(err => {
-      log.error(`Failed to speak text: ${err}`);
+      log.error(`Failed to speak text:`, err);
       util.playSound(ERROR_SOUND_FILE);
       finish(err);
     });
@@ -272,9 +251,9 @@ class Dialog {
     let pcmSamples = new Buffer(0);
 
     const finish = (error) => {
-      stream.removeListener(`error`, errorListener);
-      stream.removeListener(`data`, dataListener);
-      stream.removeListener(`end`, endListener);
+      stream.removeListener('error', errorListener);
+      stream.removeListener('data', dataListener);
+      stream.removeListener('end', endListener);
 
       if (error) {
         log.error(`Stream error: `, error);
@@ -306,9 +285,11 @@ class Dialog {
 
       // Wait for previous playSound to finish before playing another file
       this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
-        return this._writeWavFile(pcmSamples)
-        .then(() => {
-          return util.playSound(SAY_FILE_NAME);
+        return new Promise((resolve, reject) => {
+          let speaker = new Speaker(config.deviceMic);
+          speaker.on('close', () => resolve());
+          speaker.write(pcmSamples);
+          speaker.end();
         });
       })
       .then(() => {
@@ -316,7 +297,7 @@ class Dialog {
         finish();
       })
       .catch(err => {
-        log.error(`cannot play ${SAY_FILE_NAME}, error: ${err}`);
+        log.error(`Failed to stream audio to speaker, error: `, err);
         finish();
       });
     };

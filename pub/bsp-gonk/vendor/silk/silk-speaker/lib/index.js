@@ -14,6 +14,8 @@ type SpeakerOptions = WritableStreamOptions & ConfigDeviceMic;
 
 const log = createLog('speaker');
 const SAMPLES_PER_FRAME = 1024;
+const GAIN_MIN = 0.0;
+const GAIN_MAX = 1.0;
 
 /**
  * This module provides a writable stream instance to stream raw PCM data to
@@ -35,8 +37,10 @@ const SAMPLES_PER_FRAME = 1024;
  *                             bytesPerSample: 2,
  *                             encoding: 'signed-integer'
  *                           });
+ * speaker.setVolume(1.0);
  * speaker.write(pcmBuffer);
  * speaker.end();
+ * speaker.on('close', () => log.info(`done`));
  */
 export default class Speaker extends Writable {
 
@@ -88,6 +92,36 @@ export default class Speaker extends Writable {
       return bindings.AUDIO_FORMAT_PCM_FLOAT;
     }
     return null;
+  }
+
+  /**
+   * Sets the specified output gain value on all channels of this track. Gain
+   * values are clamped to the closed interval [0.0, 1.0]. A value of 0.0
+   * results in zero gain (silence), and a value of 1.0 means signal unchanged.
+   * The default value is 1.0.
+   * @memberof silk-speaker
+   * @instance
+   *
+   * @param gain output gain for all channels
+   */
+  setVolume(gain: number) {
+    gain = this._clampGain(gain);
+    this._speaker.setVolume(gain);
+  }
+
+  /**
+   * @private
+   */
+  _clampGain(gainOrLevel: number) {
+    if (isNaN(parseFloat(gainOrLevel))) {
+      throw new Error(`${gainOrLevel} is not a valid floating point number`);
+    }
+    if (gainOrLevel < GAIN_MIN) {
+      gainOrLevel = GAIN_MIN;
+    } else if (gainOrLevel > GAIN_MAX) {
+      gainOrLevel = GAIN_MAX;
+    }
+    return gainOrLevel;
   }
 
   /**

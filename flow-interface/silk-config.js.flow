@@ -5,7 +5,7 @@
 
 export type ConfigDeviceMic = {
   bytesPerSample: number;
-  encoding: string;
+  encoding: 'signed-integer' | 'unsigned-integer' | 'float';
   endian: 'big' | 'little';
   numChannels: number;
   sampleRate: number;

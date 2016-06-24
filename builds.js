@@ -378,7 +378,7 @@ const builds = {
     title: 'Pando dialog script release',
     travis_yml: 'releng/shipit/travis.release-pando-dialog-script.yml',
     events: ['nightly'],
-    branches: ['master', 'next'],
+    branches: ['master', 'next', 'release'],
   },
 
   // Nightly device builds
@@ -411,7 +411,7 @@ const builds = {
   }),
   */
   'device-kenzo-nightly': nightlyBuild('device', {
-    branches: ['master', 'next'],
+    branches: ['master', 'next', 'release'],
     title: 'kenzo nightly',
     travis_config: {
       env: {
@@ -429,7 +429,7 @@ const builds = {
     },
   }),
   'device-base.msm8909-nightly': nightlyBuild('device', {
-    branches: ['master', 'next'],
+    branches: ['master', 'next', 'release'],
     title: 'base.msm8909 nightly',
     travis_config: {
       env: {

@@ -1,6 +1,6 @@
 {
   "name": "babel-preset-silk-node4",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "A very fast loading babel preset for node 4",
   "repository": "silklabs/silk",
   "main": "index.js",

@@ -1,6 +1,6 @@
 {
   "name": "silk-log",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Logger conventions built around debug",
   "main": "index.js",
   "scripts": {

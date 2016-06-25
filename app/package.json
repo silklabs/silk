@@ -47,5 +47,5 @@
     "test": "npm run lint",
     "update": "./tools/update.internal.sh"
   },
-  "version": "0.18.0"
+  "version": "0.19.0"
 }

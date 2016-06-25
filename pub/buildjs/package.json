@@ -1,6 +1,6 @@
 {
   "name": "silk-buildjs",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "bin": {
     "silk-buildjs": "./bin/build"
   },

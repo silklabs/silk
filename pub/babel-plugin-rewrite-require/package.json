@@ -1,11 +1,24 @@
 {
   "name": "babel-plugin-rewrite-require",
   "version": "0.19.0",
+  "description": "Babel plugin for rewriting requires/imports",
+  "repository": "silklabs/silk",
   "license": "MIT",
+  "author": "Silk Labs",
   "contributors": [
     {
       "name": "Philipp von Weitershausen",
       "email": "philikon@silklabs.com"
     }
+  ],
+  "keywords": [
+    "babel",
+    "plugin",
+    "babel-plugin",
+    "module",
+    "alias",
+    "require",
+    "import",
+    "silk"
   ]
 }

@@ -41,7 +41,7 @@ const rootDir = path.resolve(__dirname, '../../..');
 const babelRC = {
   presets: [require('babel-preset-react-native')],
   plugins: [
-    [require('./module-aliases'), {
+    [require('babel-plugin-rewrite-require'), {
       aliases: aliases,
       throwForMissingFiles: [
         path.join(rootDir, 'app', 'config.local.json'),

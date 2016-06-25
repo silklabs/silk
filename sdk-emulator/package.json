@@ -1,6 +1,6 @@
 {
   "name": "silk-emulator",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Silk Emulator",
   "main": "package.json",
   "scripts": {

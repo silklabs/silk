@@ -13,7 +13,10 @@ declare export function get(name: string): string;
  *
  * @module silk-properties
  * @example
- * import props from 'silk-properties';
+ * 'use strict';
+ *
+ * const props = require('silk-properties');
+ * const log = require('silk-alog');
  *
  * let value = props.get('persist.silk.main');
  * log.info('Value: ' + value);
@@ -25,5 +28,5 @@ declare export function get(name: string): string;
  * @name get
  * @memberof silk-properties
  * @param {string} key The name of the system property to fetch
- * @return {string} Returns the value of a system property or null if no such property exists
+ * @return {?string} Returns the value of a system property or null if no such property exists
  */

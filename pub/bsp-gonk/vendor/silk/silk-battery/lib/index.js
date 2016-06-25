@@ -31,16 +31,19 @@ const BATTERY_OUT_OF_POWER_LEVEL = 5;
  *
  * @module silk-battery
  * @example
+ * 'use strict';
+ *
  * const Battery = require('silk-battery').default;
+ * const log = require('silk-alog');
  *
  * let battery = new Battery();
  * battery.init()
- * .then(function() {
- *   battery.on('out-of-power', function() {
+ * .then(() => {
+ *   battery.on('out-of-power', () => {
  *     log.info('Device running out of battery; shutting down...');
  *   });
  * })
- * .catch(function(err) {
+ * .catch(err => {
  *   log.error('Failed to initialize battery', err);
  * });
  */

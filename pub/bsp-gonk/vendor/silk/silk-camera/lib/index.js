@@ -4,14 +4,17 @@
  * @module silk-camera
  * @example
  * 'use strict';
+ *
  * const Camera = require('silk-camera').default;
+ * const log = require('silk-alog');
+ *
  * let camera = new Camera();
  * camera.init()
  * .then(() => {
  *   camera.startRecording();
  * });
  * camera.on('frame', (when, image) => {
- *   console.log('Received a frame at timestamp', when, '-', image);
+ *   log.info('Received a frame at timestamp', when, '-', image);
  * });
  */
 

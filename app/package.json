@@ -1,5 +1,6 @@
 {
   "symlinkDependencies": {
+    "babel-plugin-rewrite-require": "/pub/babel-plugin-rewrite-require",
     "eslint-config-silk": "/pub/eslint-config",
     "silk-api": "/api",
     "silk-core-version": "/pub/version",

@@ -1,0 +1,11 @@
+{
+  "name": "babel-plugin-rewrite-require",
+  "version": "0.19.0",
+  "license": "MIT",
+  "contributors": [
+    {
+      "name": "Philipp von Weitershausen",
+      "email": "philikon@silklabs.com"
+    }
+  ]
+}

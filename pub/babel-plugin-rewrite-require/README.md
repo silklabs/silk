@@ -31,7 +31,7 @@ module with a runtime exception, use the following option:
 
 ```json
 {
-  throwForMissingFiles: [
+  "throwForMissingFiles": [
     "/path/to/some/optional/configuration.json",
     "/path/to/build.artifact"
   ]

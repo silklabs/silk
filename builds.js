@@ -276,11 +276,11 @@ const builds = {
       'pub/bsp-gonk/**',
     ],
   }),
-  'device-base-kenzo-pr': npmPackageBuild('device', {
+  'device-base-msm8909-pr': npmPackageBuild('device', {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {
       env: {
-        global: ['GONK=base.kenzo'],
+        global: ['GONK=base.msm8909'],
       },
     },
     events: ['pr'],

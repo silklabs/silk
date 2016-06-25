@@ -339,15 +339,16 @@ function wpaCliRemoveAllNetworks() {
  *
  * @example
  * const wifi = require('silk-wifi').default;
+ * const log = require('silk-alog');
  *
  * wifi.init()
- * .then(function() {
+ * .then(() => {
  *   return wifi.online();
  * })
- * .then(function() {
+ * .then(() => {
  *   log.info('Wifi initialized successfully');
  * })
- * .catch(function(err) {
+ * .catch(err => {
  *   log.error('Failed to initialize wifi', err);
  * });
  */

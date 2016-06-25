@@ -20,7 +20,7 @@ declare export var fatal: SilkALogFunc;
  *
  * @module silk-alog
  * @example
- * import log from 'silk-alog';
+ * const log = require('silk-alog');
  *
  * log.fatal('sos');
  * log.error('ono');

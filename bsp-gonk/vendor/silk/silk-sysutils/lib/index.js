@@ -65,7 +65,7 @@ export function processthrow(e: string) {
  * @property {number} code result code
  * @property {string} stdout standard out stream
  * @property {string} stderr standard error stream
- * @private
+ * @memberof silk-sysutils
  */
 type ExecOutput = {
   code: number;
@@ -237,18 +237,16 @@ export function setprop(prop: string, value: PropTypes): ?Error {
 /**
  * This class provides helper utility to watch an android property and notify
  * via an event if the specified property has changed
+ * @module PropWatcher
  * @memberof silk-sysutils
+ *
+ * @example
+ * const util = require('silk-sysutils');
+ * const log = require('silk-alog');
+ *
+ * util.propWatcher.on('my.system.property', () => log.info('Property changed'));
  */
 class PropWatcher extends EventEmitter {
-  /**
-   * Property changed event. This event is emitted when the property being
-   * watched has changed.
-   *
-   * @event <property_name>
-   * @memberof silk-sysutils.PropWatcher
-   * @type {Object}
-   * @property {string} Property value
-   */
   constructor() {
     super();
     // Spawn process only if there is someone watching
@@ -260,6 +258,16 @@ class PropWatcher extends EventEmitter {
     cmd.stderr.on('data', data => {
       let match = data.toString().match(/^\d+ ([^ ]+) /);
       if (match && match[1]) {
+
+        /**
+         * An event that is the same name as the system property would be
+         * emitted when the property being watched has changed.
+         *
+         * @event property_name
+         * @memberof silk-sysutils.PropWatcher
+         * @type {Object}
+         * @property {string} Property value
+         */
         this.emit(match[1]);
       }
     });

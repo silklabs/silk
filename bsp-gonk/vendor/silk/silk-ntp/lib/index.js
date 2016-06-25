@@ -18,7 +18,9 @@ const log = createLog('ntp');
  * @module silk-ntp
  * @example
  * const ntp = require('silk-ntp').default;
- * ntp.on('time', () => console.log('NTP time acquired'));
+ * const log = require('silk-alog');
+ *
+ * ntp.on('time', () => log.info('NTP time acquired'));
  */
 let emitter = new EventEmitter();
 export default emitter;

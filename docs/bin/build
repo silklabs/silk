@@ -40,3 +40,4 @@ APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
   --name silk-device-api
 
 du -hs dist/api/device
+rm -rf build

@@ -9,6 +9,9 @@
  *
  * @module silk-movie
  * @example
+ * 'use strict';
+ *
+ * let path = require('path');
  * let Movie = require('silk-movie').Movie;
  *
  * let movie = new Movie();

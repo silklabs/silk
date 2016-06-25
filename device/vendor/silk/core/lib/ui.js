@@ -19,12 +19,13 @@ import * as util from './sysutils';
 const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
 const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
+const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
 
 type UiState = 'bootanimation' | 'setup' | 'connecting' | 'online' | 'charging' | 'powerdown';
 
 class Ui extends events.EventEmitter {
 
-  movie: Movie;
+  movie: ?Movie;
   vib: Vibrator;
   currentState: UiState;
   currentMovieName: UiState;
@@ -33,7 +34,7 @@ class Ui extends events.EventEmitter {
   constructor() {
     super();
 
-    this.movie = new Movie();
+    this.movie = DISPLAY_ENABLED ? new Movie() : null;
     this.vib = new Vibrator();
 
     // Only monitor the input devices used for the power and volume keys for these
@@ -169,7 +170,9 @@ class Ui extends events.EventEmitter {
     if (movieName !== this.currentMovieName) {
       this.currentMovieName = movieName;
       try {
-        this.movie.run(`/system/silk/media/${movieName}.zip`, () => undefined);
+        if (this.movie) {
+          this.movie.run(`/system/silk/media/${movieName}.zip`, () => undefined);
+        }
       } catch (e) {
         log.warn(e);
       }

@@ -1,5 +1,6 @@
 /**
  * @flow
+ * @private
  */
 
 import createLog from 'silk-log/device';

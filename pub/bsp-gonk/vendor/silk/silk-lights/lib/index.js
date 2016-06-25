@@ -12,67 +12,96 @@ const log = createLog('lights');
  * Silk lights module to provide controls for the backlight and
  * other LEDs on the board
  * @module silk-lights
- *   
+ *
  * @example
+ * 'use strict';
  * const lights = require('silk-lights');
- * 
+ *
  * // Keep the backlight on
  * let backlight = lights.backlight;
- * backlight.set(backlight.WHITE); 
+ * backlight.set(backlight.WHITE);
  */
 
 // From hardware/libhardware/include/hardware/lights.h
 /**
  * @name backlight
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_BACKLIGHT = 'backlight';
 /**
  * @name keyboard
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_KEYBOARD = 'keyboard';
 /**
  * @name buttons
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_BUTTONS = 'buttons';
 /**
  * @name battery
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_BATTERY = 'battery';
 /**
  * @name notifications
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_NOTIFICATIONS = 'notifications';
 /**
  * @name attention
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_ATTENTION = 'attention';
 /**
  * @name bluetooth
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_BLUETOOTH = 'bluetooth';
 /**
  * @name wifi
  * @property
- * @memberof silk-lights 
+ * @memberof silk-lights
  */
 const LIGHT_ID_WIFI = 'wifi';
+
+/**
+ * Flash mode types
+ *
+ * @name FlashMode
+ * @typedef {Object} FlashMode
+ *
+ * @property {number} LIGHT_FLASH_NONE No light to flash
+ * @property {number} LIGHT_FLASH_TIMED  To flash the light at a given rate,
+ *                    set flashMode to LIGHT_FLASH_TIMED, and then flashOnMS
+ *                    should be set to the number of milliseconds to turn the
+ *                    light on, followed by the number of milliseconds to turn
+ *                    the light off.
+ * @property {number} LIGHT_FLASH_HARDWARE To flash the light using hardware
+ *                    assist, set flashMode to the hardware mode.
+ * @memberof silk-lights
+ */
 const LIGHT_FLASH_NONE = 0;
 const LIGHT_FLASH_TIMED = 1;
 const LIGHT_FLASH_HARDWARE = 2;
+
+/**
+ * @name BrightnessMode
+ * @typedef {Object} BrightnessMode
+ *
+ * @property {number} BRIGHTNESS_MODE_USER Light brightness is managed by a
+ *                    user setting
+ * @property {number} BRIGHTNESS_MODE_USER Light brightness is managed by a
+ *                    light sensor
+ * @memberof silk-lights
+ */
 const BRIGHTNESS_MODE_USER = 0;
 const BRIGHTNESS_MODE_SENSOR = 1;
 
@@ -183,6 +212,14 @@ class Light extends events.EventEmitter {
     return this._color;
   }
 
+  /**
+   * Set the color of the light
+   * @instance
+   *
+   * @param {number} val color to set
+   * @return {Promise}
+   * @memberof silk-lights
+   */
   set color(val) {
     if (val < 0 || val > 0xFFFFFFFF) {
       throw new Error('Invalid color: ' + val);
@@ -193,10 +230,25 @@ class Light extends events.EventEmitter {
     }
   }
 
+  /**
+   * Get the current flash mode
+   * @instance
+   *
+   * @return {FlashMode} current flash mode
+   * @memberof silk-lights
+   */
   get flashMode() {
     return this._flashMode;
   }
 
+  /**
+   * Set the new flash mode
+   * @instance
+   *
+   * @param {FlashMode} val flash mode to set
+   * @return {Promise}
+   * @memberof silk-lights
+   */
   set flashMode(val) {
     if (val !== LIGHT_FLASH_NONE &&
         val !== LIGHT_FLASH_TIMED &&
@@ -209,10 +261,26 @@ class Light extends events.EventEmitter {
     }
   }
 
+  /**
+   * Get the current flash on timer value
+   * @instance
+   *
+   * @return {number} current flash on timer value
+   * @memberof silk-lights
+   */
   get flashOnMS() {
     return this._flashOnMS;
   }
 
+  /**
+   * Set the new flash on timer value. This is only applicable if the flash
+   * mode is set to LIGHT_FLASH_TIMED
+   * @instance
+   *
+   * @param {number} val flash on timer to set
+   * @return {Promise}
+   * @memberof silk-lights
+   */
   set flashOnMS(val) {
     if (val < 0 || val > 0xFFFFFFFF) {
       throw new Error('Invalid flashOnMS: ' + val);
@@ -223,10 +291,26 @@ class Light extends events.EventEmitter {
     }
   }
 
+  /**
+   * Get the current flash off timer value
+   * @instance
+   *
+   * @return {number} current flash off timer value
+   * @memberof silk-lights
+   */
   get flashOffMS() {
     return this._flashOffMS;
   }
 
+  /**
+   * Set the new flash off timer value. This is only applicable if the flash
+   * mode is set to LIGHT_FLASH_TIMED
+   * @instance
+   *
+   * @param {number} val flash off timer to set
+   * @return {Promise}
+   * @memberof silk-lights
+   */
   set flashOffMS(val) {
     if (val < 0 || val > 0xFFFFFFFF) {
       throw new Error('Invalid flashOffMS: ' + val);
@@ -237,10 +321,25 @@ class Light extends events.EventEmitter {
     }
   }
 
+  /**
+   * Get the current brightness mode
+   * @instance
+   *
+   * @return {BrightnessMode} Current brightness mode
+   * @memberof silk-lights
+   */
   get brightnessMode() {
     return this._brightnessMode;
   }
 
+  /**
+   * Set the new brightness mode
+   * @instance
+   *
+   * @param {BrightnessMode} val brighness mode to se
+   * @return {Promise}
+   * @memberof silk-lights
+   */
   set brightnessMode(val) {
     if (val !== BRIGHTNESS_MODE_USER &&
         val !== BRIGHTNESS_MODE_SENSOR) {
@@ -252,6 +351,19 @@ class Light extends events.EventEmitter {
     }
   }
 
+  /**
+   * Set color, flash mode, flash mode timers and brightness mode
+   *
+   * @instance
+   *
+   * @param {number} [color=0] color to set
+   * @param {FlashMode} [flashMode=LIGHT_FLASH_NONE] flash mode to set
+   * @param {number} [flashOnMS=0] flash on timer to set
+   * @param {number} [flashOffMS=0] flash off timer to set
+   * @param {BrightnessMode} [brightnessMode=BRIGHTNESS_MODE_USER] brightness mode to set
+   * @return {Promise}
+   * @memberof silk-lights
+   */
   set(color = 0,
       flashMode = LIGHT_FLASH_NONE,
       flashOnMS = 0,

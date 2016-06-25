@@ -15,6 +15,8 @@ let enabled = !util.getprop('persist.silk.quiet', version.official);
  *
  * @module silk-vibrator
  * @example
+ * 'use strict';
+ *
  * const Vibrator = require('silk-vibrator').default;
  * let vibrator = new Vibrator();
  * vibrator.pattern(100, 50, 100);

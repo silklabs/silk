@@ -38,6 +38,18 @@ class InputDevice extends events.EventEmitter {
     }
     let event;
     if (buffer.readUInt16LE(8) === 1 /*EV_KEY*/ ) {
+
+      /**
+       * Key event type
+       *
+       * @name KeyEventType
+       * @typedef {Object} KeyEventType
+       *
+       * @property {number} timeS Timestamp (Seconds part)
+       * @property {number} timeMS  Timestamp (Microseconds part)
+       * @property {number} keyCode Keyboard code
+       * @memberof silk-input
+       */
       event = {
         timeS: buffer.readUInt32LE(0),
         timeMS: buffer.readUInt32LE(4),
@@ -96,8 +108,35 @@ export default class Input extends events.EventEmitter {
   _open(devices) {
     this._inputDevices = devices.map(device => {
       let d = new InputDevice(`/dev/input/${device}`);
+
+      /**
+       * This event is emitted when a key is released
+       *
+       * @event up
+       * @memberof silk-input
+       * @instance
+       * @property {KeyEventType} e
+       */
       d.on('up', e => this.emit('up', e));
+
+      /**
+       * This event is emitted when a key is pressed
+       *
+       * @event down
+       * @memberof silk-input
+       * @instance
+       * @property {KeyEventType} e
+       */
       d.on('down', e => this.emit('down', e));
+
+      /**
+       * This event is emitted when key is pressed and held down
+       *
+       * @event repeat
+       * @memberof silk-input
+       * @instance
+       * @property {KeyEventType} e
+       */
       d.on('repeat', e => this.emit('repeat', e));
       return d;
     });

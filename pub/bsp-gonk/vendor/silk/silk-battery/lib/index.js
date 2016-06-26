@@ -22,13 +22,6 @@ const BATTERY_OUT_OF_POWER_LEVEL = 5;
 
 /**
  * Silk battery module. Following events are supported by this module.
- *
- * `needs-to-charge` event. This event is emitted when battery capacity
- * is too low to boot.
- * 
- * `out-of-power` event. This event is emitted when battery capacity
- * is too low to continue normal operation.
- *
  * @module silk-battery
  * @example
  * 'use strict';
@@ -69,11 +62,28 @@ export default class Battery extends events.EventEmitter {
           resolveInitPromise = null;
         } else {
           log.warn('Battery capacity too low to boot');
+
+          /**
+           * This event is emitted when battery capacity is too low to continue
+           * normal operation.
+           *
+           * @event needs-to-charge
+           * @memberof silk-battery
+           * @instance
+           */
           this.emit('needs-to-charge');
         }
       } else {
         if (capacity < BATTERY_OUT_OF_POWER_LEVEL) {
           log.warn('Battery capacity too low to continue normal operations');
+
+          /**
+           * This event is emitted when battery capacity is too low to boot
+           *
+           * @event out-of-power
+           * @memberof silk-battery
+           * @instance
+           */
           this.emit('out-of-power');
         }
       }

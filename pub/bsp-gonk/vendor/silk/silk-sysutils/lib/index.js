@@ -265,6 +265,7 @@ class PropWatcher extends EventEmitter {
          *
          * @event property_name
          * @memberof silk-sysutils.PropWatcher
+         * @instance
          * @type {Object}
          * @property {string} Property value
          */

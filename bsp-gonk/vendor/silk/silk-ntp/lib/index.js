@@ -34,6 +34,13 @@ const NTP_REFRESH_DELAY = 24 * 60 * 60 * 1000;
 function setSystemDate(date: Date) {
   log.info(`Setting system time to: ${date}`);
 
+  /**
+   * This event is fired when the new time has been acquired
+   *
+   * @event time
+   * @memberof silk-ntp
+   * @instance
+   */
   util.exec('time_genoff', [date.getTime().toString()])
     .then(() => emitter.emit('time'))
     .catch((err) => log.warn(`Error: unable to set system time: ${err}`));

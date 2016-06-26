@@ -269,9 +269,6 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
 
 /**
  * Class that talks to capture service to receive camera frames
- *
- * TODO: Document emitted events
- *
  * @class
  * @memberof silk-camera
  */
@@ -392,6 +389,17 @@ export default class Camera extends EventEmitter {
     }
 
     log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
+
+    /**
+     * This event is emitted when camera service is restarting
+     *
+     * @event restart
+     * @memberof silk-camera
+     * @instance
+     * @property {string} why reason for restart
+     * @property {boolean} restartCaptureProcess whether to restart capture
+     *                     process or not
+     */
     this._throwyEmit('restart', why, restartCaptureProcess);
     this._ready = false;
 
@@ -456,6 +464,14 @@ export default class Camera extends EventEmitter {
     this._initTimeout = null;
 
     this._ready = true;
+
+    /**
+     * This event is emitted when camera has finished intialization
+     *
+     * @event ready
+     * @memberof silk-camera
+     * @instance
+     */
     this._throwyEmit('ready');
   }
 
@@ -814,6 +830,18 @@ export default class Camera extends EventEmitter {
     });
 
     log.debug(`Grab time: ${Date.now() - when}ms`);
+
+    /**
+     * This event is emitted when a preview frame (4 FPS) is available.
+     *
+     * @event frame
+     * @memberof silk-camera
+     * @instance
+     * @property {number} when Timestamp of the preview frame in UTC milliseconds
+     *                         since epoch
+     * @property {Object} imRGB {@link https://github.com/peterbraden/node-opencv Opencv}
+     *                          matrix representing the image in RGB format
+     */
     this._throwyEmit('frame', when, imRGB);
 
     // Only emit the latest set of HAL-detected faces
@@ -832,6 +860,17 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _handleNextFastFrame(when, im) {
+    /**
+     * This event is emitted when a fast preview frame (12 FPS) is available.
+     *
+     * @event fast-frame
+     * @memberof silk-camera
+     * @instance
+     * @property {number} when Timestamp of the preview frame in UTC milliseconds
+     *                         since epoch
+     * @property {Object} im {@link https://github.com/peterbraden/node-opencv Opencv}
+     *                          matrix representing the image in raw YVU420SP format
+     */
     this._throwyEmit('fast-frame', when, im);
   }
 
@@ -892,6 +931,18 @@ export default class Camera extends EventEmitter {
           log.debug(`socketDuration: ${socketDuration}`);
 
           if (this._recording) {
+            /**
+             * This event is emitted when a MPEG4 video segement is available
+             *
+             * @event video-segment
+             * @memberof silk-camera
+             * @instance
+             * @property {number} when Timestamp of the video segment in UTC milliseconds
+             *                         since epoch
+             * @property {number} durationMs duration in milliseconds of the
+             *                    video segment
+             * @property {Object} pkt mpeg4 data
+             */
             this._throwyEmit('video-segment', when, durationMs, pkt);
           }
           break;
@@ -904,6 +955,18 @@ export default class Camera extends EventEmitter {
         case TAG_MIC:
           log.debug(`TAG_MIC ${when}`, tagInfo);
           this._micTagReceived = true;
+
+          /**
+           * This event is emitted when microhpone data is available
+           *
+           * @event mic-data
+           * @memberof silk-camera
+           * @instance
+           * @type {Object}
+           * @property {number} when Timestamp of the mic data in UTC milliseconds
+           *                         since epoch
+           * @property {Buffer} frames buffer containing the mic data
+           */
           if (this._recording) {
             this._throwyEmit('mic-data', {when: when, frames: pkt});
           }

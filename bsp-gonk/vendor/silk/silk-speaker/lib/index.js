@@ -21,14 +21,6 @@ const GAIN_MAX = 1.0;
 /**
  * This module provides a writable stream instance to stream raw PCM data to
  * the device speakers. This module emits following events.
- *
- *
- * "open" - Fired when the native open() call has completed.
- *
- * "close" - Fired after end() is called on the speaker and speaker is done
- * playing the entire audio stream. This speaker instance is essentially
- * finished after this point.
- *
  * @module silk-speaker
  *
  * @example
@@ -140,6 +132,15 @@ export default class Speaker extends Writable {
       this._speaker.open(this._options.numChannels, this._options.sampleRate,
           this.getFormat());
       this._opened = true;
+
+      /**
+       * This event is fired when speaker stream is opened and ready to receive
+       * a stream to play
+       *
+       * @event open
+       * @memberof silk-speaker
+       * @instance
+       */
       this.emit('open');
     }
 
@@ -183,8 +184,7 @@ export default class Speaker extends Writable {
   }
 
   /**
-   * Emits a "flush" event and then calls the `.close()` function on
-   * this Speaker instance.
+   * Calls the `.close()` function on this Speaker instance.
    *
    * @private
    */
@@ -210,6 +210,16 @@ export default class Speaker extends Writable {
     }
 
     this._closed = true;
+
+    /**
+     * This event is fired after end() is called on the speaker and speaker is
+     * done playing the entire audio stream. This speaker instance is essentially
+     * finished after this point
+     *
+     * @event close
+     * @memberof silk-speaker
+     * @instance
+     */
     this.emit('close');
   }
 }

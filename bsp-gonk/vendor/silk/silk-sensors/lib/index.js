@@ -72,6 +72,7 @@ class Sensors extends events.EventEmitter {
   /**
    * Initialize the Sensors module
    * @memberof silk-sensors
+   * @instance
    */
   init() {
     log.verbose(`connecting to ${SENSORS_SOCKET_NAME} socket`);
@@ -98,6 +99,7 @@ class Sensors extends events.EventEmitter {
    * @param {number} sensorType SENSOR_TYPE.* constant
    * @param {number} rate Sensor polling rate in milliseconds
    * @memberof silk-sensors
+   * @instance
    */
   activate(sensorType, rate) {
     this._active = true;
@@ -109,6 +111,7 @@ class Sensors extends events.EventEmitter {
    *
    * @param {number} sensorType SENSOR_TYPE.* constant
    * @memberof silk-sensors
+   * @instance
    */
   deactivate(sensorType) {
     this._active = false;
@@ -152,12 +155,13 @@ class Sensors extends events.EventEmitter {
       let sensorEvent = JSON.parse(line);
       if (sensorEvent.eventName === 'initialized') {
         /**
-         * `initialize` event. This event is emitted when sensor class is initialized
-         * and is ready to activate/decativate a sensor.
+         * This event is emitted when sensor class is initialized and is ready
+         * to activate/decativate a sensor
          *
          * @event initialize
          * @memberof silk-sensors
-         */ 
+         * @instance
+         */
         this.emit('initialize');
       } else if (sensorEvent.eventName === 'activated') {
         this.emit('activate');
@@ -168,7 +172,7 @@ class Sensors extends events.EventEmitter {
         log.warn('Received "error" from sensor service');
       } else if (sensorEvent.eventName === 'data') {
         /**
-         * `data` event. This event is emitted when sensor data is available.
+         * This event is emitted when sensor data is available.
          *
          * @event data
          * @property {number} sensorType One of the SENSOR_TYPE.* constants
@@ -176,6 +180,7 @@ class Sensors extends events.EventEmitter {
          *           contents of the values array depends on which sensor type is being
          *           monitored. Please refer to `hardware/sensors.h` for details.
          * @memberof silk-sensors
+         * @instance
          */
         this.emit('data', sensorEvent);
       } else {

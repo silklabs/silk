@@ -226,6 +226,15 @@ class WpaMonitor extends EventEmitter {
             reason = WIFI_DISCONNECT_REASONS[reasonIndex];
             log.info(`wifi disconnect reason: ${reason}`);
           }
+
+          /**
+           * This event is emitted when wifi is disconnected from an access point
+           *
+           * @event disconnected
+           * @memberof silk-wifi
+           * @instance
+           * @property {string} reason reason for disconnection
+           */
           this.emit('disconnected', reason);
           break;
         case 'CTRL-EVENT-SCAN-STARTED':
@@ -234,6 +243,13 @@ class WpaMonitor extends EventEmitter {
           this.emit('scanResults');
           break;
         case 'CTRL-EVENT-CONNECTED':
+          /**
+           * This event is emitted when wifi is connected to an access point
+           *
+           * @event connected
+           * @memberof silk-wifi
+           * @instance
+           */
           this.emit('connected');
           break;
         case 'CTRL-EVENT-STATE-CHANGE':
@@ -241,6 +257,16 @@ class WpaMonitor extends EventEmitter {
             let stateIndex = Number(found[1]);
             let state = WIFI_STATES[stateIndex];
             log.info(`wifi state: ${state}`);
+
+            /**
+             * This event is emitted when there is a change in wifi state
+             *
+             * @event stateChange
+             * @memberof silk-wifi
+             * @instance
+             * @type {Object}
+             * @property {string} state new wifi state
+             */
             this.emit('stateChange', state);
           }
           break;
@@ -414,6 +440,14 @@ export class Wifi extends EventEmitter {
 
       log.info('==> Wifi online');
       this._online = true;
+
+      /**
+       * This event is emitted when the device is connected to the network
+       *
+       * @event online
+       * @memberof silk-wifi
+       * @instance
+       */
       this.emit('online');
     })
     .catch(err => {
@@ -435,11 +469,29 @@ export class Wifi extends EventEmitter {
     monitor.on('disconnected', (reason) => {
       // Send error unless leaving under normal circumstances
       if (reason !== 'deauth_leaving') {
+
+        /**
+         * This event is emitted to report an error
+         *
+         * @event error
+         * @memberof silk-wifi
+         * @instance
+         * @type {Object}
+         * @property {Error} error Error reason
+         */
         this.emit('error', new Error(reason));
       }
       this._networkCleanup();
       log.info(`==> Wifi offline (${reason})`);
       this._online = false;
+
+      /**
+       * This event is emitted when wifi is offline
+       *
+       * @event offline
+       * @memberof silk-wifi
+       * @instance
+       */
       this.emit('offline');
       this.scan();
     });
@@ -524,13 +576,6 @@ export class Wifi extends EventEmitter {
   /**
    * Initiate a wifi scan request. Result of the scan is available via event
    * `scanResults`.
-   *
-   * @type {Object}
-   * @property {string} ssid
-   * @property {string} bssid
-   * @property {number} level
-   * @property {boolean} psk True if network requires WPA or PSK
-   *
    * @memberof silk-wifi
    * @instance
    *
@@ -614,6 +659,19 @@ export class Wifi extends EventEmitter {
     }
 
     log.debug('scanResults', scanResults);
+
+    /**
+     * This event is emitted when result of wifi scan is available
+     *
+     * @event scanResults
+     * @memberof silk-wifi
+     * @instance
+     * @type {Object}
+     * @property {string} ssid name of the network
+     * @property {string} bssid basic service set identifier
+     * @property {number} level signal level
+     * @property {boolean} psk True if network requires WPA or PSK
+     */
     this.emit('scanResults', scanResults);
   }
 

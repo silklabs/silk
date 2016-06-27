@@ -57,9 +57,12 @@ class InputDevice extends events.EventEmitter {
         type: ['up', 'down', 'repeat'][buffer.readUInt32LE(12)]
       };
       const keys = {
+        113: 'mute',
         114: 'volumedown',
         115: 'volumeup',
         116: 'power',
+        224: 'brightnessdown',
+        225: 'brightnessup',
         330: 'touch',
       };
       event.keyId = keys[event.keyCode];

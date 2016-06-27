@@ -25,7 +25,14 @@ git fetch --unshallow
 # Push latest dialog-script/ commits to $BRANCH branch
 git subtree split --prefix dialog-script -b release-pando-dialog-script
 git remote add pando git@github.com:silklabs/release-pando-dialog-script
-git push pando release-pando-dialog-script:$BRANCH
+
+MABYEFORCE=0
+if [[ $BRANCH != next ]]; then
+  # Next branch needs to be forced as its history gets rewritten on every
+  # branch off master
+  MABYEFORCE=--force
+fi
+git push pando $MABYEFORCE release-pando-dialog-script:$BRANCH
 
 if [[ $BRANCH != master ]]; then
   echo Skipping API documentation for branch $BRANCH

@@ -1,3 +1,4 @@
+import 'silk-react-native-blobs';
 import './libraries/node_shims';
 
 import CrashReporter from './libraries/CrashReporter';

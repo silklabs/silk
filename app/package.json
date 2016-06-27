@@ -7,6 +7,7 @@
     "silk-crypto": "/crypto",
     "silk-mse-player": "/mse-player",
     "silk-log": "/pub/log",
+    "silk-react-native-blobs": "/react-native-blobs",
     "silk-raygun": "/raygun",
     "silk-streams": "/streams"
   },

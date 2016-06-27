@@ -12,7 +12,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-package com.silklabs.app.modules;
+package com.silklabs.react.blobs;
 
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
@@ -35,8 +35,6 @@ import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.ReactConstants;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-
-import com.silklabs.app.BlobProvider;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -181,7 +179,12 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
             notifyWebSocketFailed(id, e.getMessage());
             return;
           }
-          params.putMap("data", mBlobProvider.store(data));
+          WritableMap blob = Arguments.createMap();
+          blob.putString("blobId", mBlobProvider.store(data));
+          blob.putInt("offset", 0);
+          blob.putInt("size", data.length);
+          params.putMap("data", blob);
+          params.putString("type", "blob");
         } else {
           String message;
           try {
@@ -261,7 +264,25 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
     }
     try {
-      client.sendMessage(RequestBody.create(WebSocket.TEXT, ByteString.decodeBase64(base64String)));
+      client.sendMessage(RequestBody.create(WebSocket.BINARY, ByteString.decodeBase64(base64String)));
+    } catch (IOException | IllegalStateException e) {
+      notifyWebSocketFailed(id, e.getMessage());
+    }
+  }
+
+  @ReactMethod
+  public void sendBlob(ReadableMap blob, int id) {
+    WebSocket client = mWebSocketConnections.get(id);
+    if (client == null) {
+      // This is a programmer error
+      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    }
+    byte[] data = mBlobProvider.resolve(
+      blob.getString("blobId"),
+      blob.getInt("offset"),
+      blob.getInt("size"));
+    try {
+      client.sendMessage(RequestBody.create(WebSocket.BINARY, data));
     } catch (IOException | IllegalStateException e) {
       notifyWebSocketFailed(id, e.getMessage());
     }
@@ -307,8 +328,8 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void enableBlobStorage(int id) {
-    mBlobsEnabled.put(id, true);
+  public void setBinaryType(String binaryType, int id) {
+    mBlobsEnabled.put(id, binaryType.equals("blob"));
   }
 
   @Override

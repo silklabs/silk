@@ -44,7 +44,7 @@ export default class CameraLiveVideo extends React.Component {
     if (message.contents !== 'mp4') {
       return;
     }
-    this.refs.video.enqueue(message.frame);
+    this.refs.video.enqueue(message.frame).then(() => message.frame.close());
   };
 
   render() {

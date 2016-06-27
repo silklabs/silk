@@ -20,6 +20,7 @@
 #import "RCTURLRequestHandler.h"
 #import "RCTView.h"
 
+#import "SLKBlobManager.h"
 #import "SLKWebSocketModule.h"
 
 #import <Raygun4iOS/Raygun4iOS.h>

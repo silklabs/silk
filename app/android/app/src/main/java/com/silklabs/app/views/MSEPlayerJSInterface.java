@@ -8,7 +8,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
 import com.facebook.react.bridge.ReactContext;
-import com.silklabs.app.BlobProvider;
+import com.silklabs.react.blobs.BlobProvider;
 
 import java.io.UnsupportedEncodingException;
 
@@ -32,7 +32,7 @@ public class MSEPlayerJSInterface {
   @JavascriptInterface
   public String resolveBlobURI(String uriString) {
     Uri uri = Uri.parse(uriString);
-    return Base64.encodeToString(mBlobProvider.resolveAndReleaseBlob(uri), Base64.NO_WRAP);
+    return Base64.encodeToString(mBlobProvider.resolve(uri), Base64.NO_WRAP);
   }
 
 }

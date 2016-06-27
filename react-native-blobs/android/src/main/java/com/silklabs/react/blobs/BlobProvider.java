@@ -1,4 +1,9 @@
-package com.silklabs.app;
+/**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ */
+
+package com.silklabs.react.blobs;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -7,9 +12,7 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.Nullable;
 
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableMap;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,56 +24,62 @@ import java.util.UUID;
 
 public final class BlobProvider extends ContentProvider {
 
-  public static final String AUTHORITY = "com.silklabs.app.blobs";
+  public static final String AUTHORITY = "com.silklabs.react.blobs";
 
-  private static final String TAG = "SilkBlobProvider";
+  private static final String TAG = "ReactBlobProvider";
 
   private Map<String, byte[]> mBlobs = new HashMap<>();
 
   // Direct API
 
-  public WritableMap store(byte[] data) {
+  public String store(byte[] data) {
     String id = UUID.randomUUID().toString();
-    mBlobs.put(id, data);
+    store(data, id);
+    return id;
+  }
 
-    WritableMap blob = Arguments.createMap();
-    blob.putString("__native_type", "Blob");
-    blob.putString("id", id);
-    blob.putInt("length", data.length);
-    if (data.length > 0) {
-      blob.putInt("firstByte", (int)data[0]);
-    }
-    return blob;
+  public void store(byte[] data, String id) {
+    mBlobs.put(id, data);
+  }
+
+  public void release(String id) {
+    mBlobs.remove(id);
   }
 
   @Nullable
-  public byte[] resolveAndReleaseBlob(Uri uri) {
+  public byte[] resolve(Uri uri) {
     String id = uri.getLastPathSegment();
     int offset = 0;
+    int size = -1;
     String offsetParam = uri.getQueryParameter("offset");
     if (offsetParam != null) {
       offset = Integer.parseInt(offsetParam, 10);
     }
-    return resolveAndReleaseBlob(id, offset);
-  }
-
-  @Nullable
-  public byte[] resolveAndReleaseBlob(ReadableMap blob) {
-    String id = blob.getString("id");
-    int offset = 0;
-    if (blob.hasKey("offset")) {
-      offset = blob.getInt("offset");
+    String sizeParam = uri.getQueryParameter("size");
+    if (sizeParam != null) {
+      size = Integer.parseInt(sizeParam, 10);
     }
-    return resolveAndReleaseBlob(id, offset);
+    return resolve(id, offset, size);
   }
 
   @Nullable
-  public byte[] resolveAndReleaseBlob(String id, int offset) {
+  public byte[] resolve(String id, int offset, int size) {
     byte[] data = mBlobs.remove(id);
+    if (data == null){
+      return null;
+    }
+    if (size == -1) {
+      size = data.length - offset;
+    }
     if (offset > 0) {
-      data = Arrays.copyOfRange(data, offset, data.length);
+      data = Arrays.copyOfRange(data, offset, offset + size);
     }
     return data;
+  }
+
+  @Nullable
+  public byte[] resolve(ReadableMap blob) {
+    return resolve(blob.getString("blobId"), blob.getInt("offset"), blob.getInt("size"));
   }
 
   // ContentProvider API
@@ -113,7 +122,10 @@ public final class BlobProvider extends ContentProvider {
     if (!mode.equals("r")) {
       throw new FileNotFoundException("Cannot open " + uri.toString() + " in mode '" + mode + "'");
     }
-    byte[] data = resolveAndReleaseBlob(uri);
+    byte[] data = resolve(uri);
+    if (data == null) {
+      throw new FileNotFoundException("Cannot open " + uri.toString() + ", blob not found.");
+    }
 
     ParcelFileDescriptor[] pipe;
     try {

@@ -23,11 +23,11 @@ class DashSegmentPlayerManager : RCTViewManager {
     }
   }
 
-  @objc func enqueue(reactTag: NSNumber, blob: Dictionary<String, AnyObject>) {
+  @objc func enqueue(reactTag: NSNumber, blob: Dictionary<String, AnyObject>, resolver: RCTPromiseResolveBlock, rejecter: RCTPromiseRejectBlock) {
     self.bridge!.uiManager.addUIBlock() {
       (__unused: RCTUIManager!, viewRegistry: Dictionary<NSNumber, UIView>!) in
       if let view = viewRegistry?[reactTag] as? DashSegmentPlayer {
-        view.enqueue(blob)
+        view.enqueue(blob, resolve: resolver, reject: rejecter)
       }
     }
   }

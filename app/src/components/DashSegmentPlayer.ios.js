@@ -65,8 +65,8 @@ export default class DashSegmentPlayer extends React.Component {
     DashSegmentPlayerManager.pause(this.getNativeHandle());
   }
 
-  enqueue(blob) {
-    DashSegmentPlayerManager.enqueue(this.getNativeHandle(), blob);
+  enqueue(blob: Blob): Promise<void> {
+    return DashSegmentPlayerManager.enqueue(this.getNativeHandle(), blob);
   }
 
   _onPlay = () => {

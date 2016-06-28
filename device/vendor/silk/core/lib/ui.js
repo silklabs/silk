@@ -109,6 +109,9 @@ class Ui extends events.EventEmitter {
   }
 
   _pokeBacklight() {
+    if (!DISPLAY_ENABLED) {
+      return;
+    }
     let off = true;
     let backlight = lights.backlight;
 

@@ -35,9 +35,8 @@ type EventPayload = {
 };
 
 type PendingFrame = {
-  currentPendingOffset: number;
-  currentBuffer: Buffer;
-
+  parts: Array<Blob>;
+  bytesReceived: number;
   frame: EventPayload;
   when: number;
 };
@@ -115,6 +114,7 @@ export default class StructuredDataChannel extends EventEmitter {
 
     this._channel = channel;
     if (channel) {
+      channel.binaryType = 'blob';
       channel.addEventListener('close', this._onClose);
       channel.addEventListener('error', this._onError);
       channel.addEventListener('message', this._onMessage);
@@ -145,42 +145,56 @@ export default class StructuredDataChannel extends EventEmitter {
       const { binaryPlaceholders } = frame;
       invariant(binaryPlaceholders.length);
 
-      const binaryFrame = binaryPlaceholders[0];
-      const [name, totalPendingBytes] = binaryFrame;
+      const [name, totalPendingBytes] = binaryPlaceholders[0];
 
-      if (!content || !content.data || !(content.data instanceof ArrayBuffer)) {
+      if (!content || !content.data || !(content.data instanceof Blob)) {
         log.warn('Got malformed data in binary frame.', content);
         throw new Error(`Got malformed payload data...`);
       }
 
-      const data = new Uint8Array(content.data);
-      this._pendingFrame.currentBuffer.set(data, this._pendingFrame.currentPendingOffset);
-      this._pendingFrame.currentPendingOffset += data.length;
+      this._pendingFrame.bytesReceived += content.data.size;
+      let remainder = totalPendingBytes - this._pendingFrame.bytesReceived;
 
-      if (this._pendingFrame.currentPendingOffset >= totalPendingBytes) {
-        log.verbose(`Finished collecting binary data for ${name}`);
-        frame.payload[name] = this._pendingFrame.currentBuffer.buffer;
-        binaryPlaceholders.shift();
-        this._pendingFrame.currentPendingOffset = 0;
-
-        if (binaryPlaceholders.length) {
-          const [, newPendingBytes] = binaryPlaceholders[0];
-          invariant(typeof newPendingBytes === 'number');
-
-          const newBuffer = new Uint8Array(new ArrayBuffer(newPendingBytes));
-          this._pendingFrame.currentBuffer = newBuffer;
-        }
-      } else {
-        const remainder = totalPendingBytes - this._pendingFrame.currentPendingOffset;
+      if (this._pendingFrame.bytesReceived < totalPendingBytes) {
+        this._pendingFrame.parts.push(content.data);
         log.verbose(`Waiting for more data for ${name} (${remainder})`);
+        return;
       }
 
-      if (binaryPlaceholders.length === 0) {
-        this._pendingFrame = null;
-        log.info(`Emitting frame after waiting ${Date.now() - when} ms for pending frames.`);
-        log.info(`Emit ${channel.label} / ${frame.type}`);
-        emit.call(this, frame.type, frame.payload);
+      log.verbose(`Finished collecting binary data for ${name}`);
+      let newParts = [];
+      let lastBlob = content.data;
+      if (remainder > 0) {
+        newParts.push(lastBlob.slice(remainder));
+        lastBlob = lastBlob.slice(0, remainder);
       }
+      this._pendingFrame.parts.push(lastBlob);
+      frame.payload[name] = new Blob(this._pendingFrame.parts);
+
+      // Free the partial blobs (only necessary in the app).
+      if (typeof Blob.prototype.close === 'function') {
+        this._pendingFrame.parts.forEach((blob) => {
+          if (blob === lastBlob && remainder > 0) {
+            return;
+          }
+          blob.close();
+        });
+      }
+
+      binaryPlaceholders.shift();
+      if (binaryPlaceholders.length) {
+        this._pendingFrame.bytesReceived = 0;
+        this._pendingFrame.parts = newParts;
+
+        // const [, newPendingBytes] = binaryPlaceholders[0];
+        // TODO what if newParts[0].size <= newPendingBytes
+        return;
+      }
+
+      this._pendingFrame = null;
+      log.info(`Emitting frame after waiting ${Date.now() - when} ms for pending frames.`);
+      log.info(`Emit ${channel.label} / ${frame.type}`);
+      emit.call(this, frame.type, frame.payload);
       return;
     }
 
@@ -188,21 +202,16 @@ export default class StructuredDataChannel extends EventEmitter {
 
     if (frame.binaryPlaceholders.length) {
       log.info(`Got frame with ${frame.binaryPlaceholders.length} pending frames.`);
-      const currentPendingBytes = frame.binaryPlaceholders[0][1];
+      const [, currentPendingBytes] = frame.binaryPlaceholders[0];
       invariant(typeof currentPendingBytes === 'number');
-
-      const currentBuffer = new Uint8Array(new ArrayBuffer(currentPendingBytes));
 
       // We need to keep track of how many bytes are outstanding as webrtc may
       // split up the packets.
       this._pendingFrame = {
         when: Date.now(),
         frame,
-        // starting length of the current placeholder ...
-        currentPendingOffset: 0,
-        // TODO: In the app we are going to need to do something else as the
-        // object we would get here would never contain the actual bytes.
-        currentBuffer,
+        bytesReceived: 0,
+        parts: [],
       };
       return;
     }

@@ -311,7 +311,7 @@ export default class CameraVideo extends React.Component {
     });
   };
 
-  _onNextVideoClip = (segmentData, when) => {
+  _onNextVideoClip = (segmentDataOrBlob, when) => {
     if (this.videoStartTimestampDevice === null) {
       this.videoStartTimestampDevice = when;
     }
@@ -320,13 +320,25 @@ export default class CameraVideo extends React.Component {
       this.dropNextSegment = false;
       return;
     }
+
+    if (segmentDataOrBlob instanceof ArrayBuffer) {
+      // socket.io still sends ArrayBuffer
+      this._feedSegmentData(segmentDataOrBlob, when);
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(segmentDataOrBlob);
+    reader.onloadend = () => this._feedSegmentData(reader.result, when);
+  };
+
+  _feedSegmentData(segmentData, when) {
     if (this.clogQueue) {
       log.debug(`Network is "clogged".`);
       this.clogQueue.push({segmentData, when});
       return;
     }
     this.refs.msePlayer.feedSegmentData(segmentData, when);
-  };
+  }
 
   _onMotionEventsCheck = () => {
     const showMotionEvents = this.refs.checkMotion.getChecked();

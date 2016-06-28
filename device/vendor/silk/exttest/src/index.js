@@ -9,6 +9,7 @@ import createOutbox from 'silk-core/lib/outbox';
 import netstatus from 'silk-netstatus';
 import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
+import { Ui } from 'silk-core/lib/ui';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 import wifi from 'silk-wifi';
@@ -19,6 +20,7 @@ import fs from 'fs';
 import path from 'path';
 
 import type { Outbox } from 'silk-core/lib/outbox/manager';
+import type { UiState } from 'silk-core/lib/ui';
 import type Sensors from 'silk-sensors';
 import type Connections from 'silk-core/lib/connections';
 
@@ -39,9 +41,10 @@ class Say {
 export type Log = typeof log;
 export type Util = typeof util;
 export type { Camera };
+export type { Say };
 export type { Sensors };
 export type { Timeline };
-export type { Say };
+export type { UiState };
 
 /**
  * Dummy environment class
@@ -51,6 +54,7 @@ export default class Env {
   camera: Camera;
   server: Server;
   outbox: Outbox;
+  ui: Ui;
   timeline: Timeline;
   sensors: Sensors;
   say: Say;

@@ -76,6 +76,8 @@ class InputDevice extends events.EventEmitter {
   }
 }
 
+let inputDevices = {};
+
 /**
  * Silk Input
  *
@@ -110,7 +112,13 @@ export default class Input extends events.EventEmitter {
 
   _open(devices) {
     this._inputDevices = devices.map(device => {
-      let d = new InputDevice(`/dev/input/${device}`);
+      const devicePath = `/dev/input/${device}`;
+      let d;
+      d = inputDevices[devicePath];
+      if (!d) {
+        d = new InputDevice(devicePath);
+        inputDevices[devicePath] = d;
+      }
 
       /**
        * This event is emitted when a key is released

@@ -369,6 +369,7 @@ class Env extends EventEmitter {
 
       /**
        * Key event. This event is emitted when a key is pressed or released.
+       * TODO: REMOVE THIS EVENT.  USE 'silk-input` INSTEAD
        *
        * @event key
        * @memberof Env.ui
@@ -377,7 +378,7 @@ class Env extends EventEmitter {
        * @property {string} type Type of key event: ['up', 'down']
        */
 
-      this._addEvents('ui', ui, this.ui, ['key']);
+      this._addEvents('ui', ui, this.ui, ['key', 'state']);
     }
 
     /**

@@ -77,6 +77,7 @@ SILK_EXT := \
   silkext-motion \
   silkext-motion-sound \
   silkext-nightlight \
+  silkext-pandohub-ui \
   silkext-peddetector \
   silkext-samsungtv \
   silkext-svmsounds \

@@ -13,17 +13,17 @@ import lights from 'silk-lights';
 import {Movie} from 'silk-movie';
 import Vibrator from 'silk-vibrator';
 
-import createLog from './log';
-import * as util from './sysutils';
+import createLog from 'silk-log/device';
+import * as util from 'silk-sysutils';
 
 const log = createLog('ui');
 const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
 const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
 const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
 
-type UiState = 'bootanimation' | 'setup' | 'connecting' | 'online' | 'charging' | 'powerdown';
+export type UiState = 'bootanimation' | 'setup' | 'connecting' | 'online' | 'charging' | 'powerdown';
 
-class Ui extends events.EventEmitter {
+export class Ui extends events.EventEmitter {
 
   movie: ?Movie;
   vib: Vibrator;
@@ -109,6 +109,9 @@ class Ui extends events.EventEmitter {
   }
 
   _pokeBacklight() {
+    if (!DISPLAY_ENABLED) {
+      return false;
+    }
     let off = true;
     let backlight = lights.backlight;
 
@@ -139,6 +142,7 @@ class Ui extends events.EventEmitter {
     }
     this.currentState = state;
     log.info(`ui state: ${this.currentState}`);
+    this.emit('state', this.currentState);
 
     if (NOTIF_LIGHT_ENABLED) {
       let light = lights.notifications;
@@ -194,4 +198,5 @@ class Ui extends events.EventEmitter {
   }
 }
 
-module.exports = new Ui();
+let ui = new Ui();
+export default ui;

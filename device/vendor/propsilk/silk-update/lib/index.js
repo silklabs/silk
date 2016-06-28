@@ -15,7 +15,7 @@ import {spawn, spawnSync} from 'child_process';
 import validator from 'validator';
 
 import baseversion from 'silk-gonk-version';
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 
 const log = createLog('update');
@@ -621,9 +621,12 @@ function start() {
   }
 
   // Signal that the last update was successful enough to arrive here
-  spawn('bootctl', ['mark-boot-successful'], {
+  let bootctl = spawn('bootctl', ['mark-boot-successful'], {
     detached: true,
     stdio: ['ignore'],
+  });
+  bootctl.on('error', error => {
+    log.warn('Failed to start bootctl', error.stack || error);
   });
 
   if (!MANIFEST_URL_TEMPLATE) {

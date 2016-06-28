@@ -13,7 +13,7 @@
     "nan": "2.3.5",
     "netmask": "1.0.5",
     "node-gyp": "3.3.1",
-    "node-pre-gyp": "^0.6.28",
+    "node-pre-gyp": "0.6.28",
     "nodeunit": "0.9.1",
     "resolve": "1.1.7",
     "uuid": "2.0.1",

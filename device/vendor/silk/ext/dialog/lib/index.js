@@ -78,7 +78,7 @@ class Dialog {
     camera = env.camera;
     this._monitor(true);
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, true);
-    this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, true);
+    this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, false);
 
     const options: DialogEngineOptions = {
       localTts: this._localTts,

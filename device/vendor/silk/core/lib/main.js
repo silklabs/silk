@@ -246,7 +246,7 @@ function main() {
       return Promise.all(hw);
     })
     .then(maybeAbortBoot)
-    .then(() => {
+    .then(async () => {
       diag = new Diag(server);
 
       // Activate the accelerometer once for the entire system (issue #876),
@@ -265,6 +265,20 @@ function main() {
         });
       }
 
+      // Load extensions now that hardware is initialized
+      ext = await makeExtensions({
+        btle: btle,
+        camera: camera,
+        sensors: sensors,
+        infrared: infrared,
+        timeline: timeline,
+        ui: ui,
+        say: say,
+        server: server,
+      });
+    })
+    .then(maybeAbortBoot)
+    .then(() => {
       if (!DEV_NO_SERVER_CONNECT) {
         log.info('Load configuration');
         return config.init(server);
@@ -414,26 +428,7 @@ async function onConfigured() {
   }
   configured = true;
   camera.startRecording();
-
-  // Load extensions in the "background" while initializing wifi
-  let extPromise;
-  if (!ext) {
-    extPromise = makeExtensions({
-      btle: btle,
-      camera: camera,
-      sensors: sensors,
-      infrared: infrared,
-      timeline: timeline,
-      ui: ui,
-      say: say,
-      server: server,
-    });
-  } else {
-    extPromise = Promise.resolve(ext);
-  }
-
   await wifi.online();
-  ext = await extPromise;
 
   if (DEV_NO_SERVER_CONNECT) {
     ui.goto('online');

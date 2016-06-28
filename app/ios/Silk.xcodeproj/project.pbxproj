@@ -295,7 +295,7 @@
 		351329451CDD1C2300805844 /* DINRoundPro-Light.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Light.otf"; sourceTree = "<group>"; };
 		351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Bold.otf"; sourceTree = "<group>"; };
 		352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKCrypto.xcodeproj; path = ../../crypto/ios/SLKCrypto.xcodeproj; sourceTree = "<group>"; };
-		357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
+		357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../pub/react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
 		3582BA401D0278D2000C6830 /* TPYHelloWorldDemoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPYHelloWorldDemoView.h; sourceTree = "<group>"; };
 		3582BA411D0278D2000C6830 /* TPYHelloWorldDemoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPYHelloWorldDemoView.m; sourceTree = "<group>"; };
 		35C03E901CC02577008EF119 /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
@@ -1164,7 +1164,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
 					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
-					"$(SRCROOT)/../../react-native-blobs/ios/SLKBlobs",
+					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = SilkTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
@@ -1191,7 +1191,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
 					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
-					"$(SRCROOT)/../../react-native-blobs/ios/SLKBlobs",
+					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = SilkTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
@@ -1217,7 +1217,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
 					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
-					"$(SRCROOT)/../../react-native-blobs/ios/SLKBlobs",
+					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Silk/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1252,7 +1252,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
 					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
-					"$(SRCROOT)/../../react-native-blobs/ios/SLKBlobs",
+					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Silk/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

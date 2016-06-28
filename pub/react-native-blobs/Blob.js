@@ -70,6 +70,10 @@ class Blob {
   blobId: string;
   offset: number;
 
+  /**
+   * "Public" constructor for JS consumers. Currently we only support
+   * creating Blobs from other Blobs.
+   */
   constructor(parts: Array<Blob>, options: any) {
     let blobId = createUUID();
     let size = 0;
@@ -87,6 +91,10 @@ class Blob {
     });
   }
 
+  /**
+   * The way for React Native modules (e.g. XHR, WebSocket, etc.) to construct
+   * blobs when native sends data to JS.
+   */
   static create(props: BlobProps): Blob {
     return Object.create(Blob.prototype, {
       blobId: {

@@ -227,12 +227,10 @@ export function getlistprop(
  *
  * @param {string} prop Name of the property to set
  * @param {string | boolean | number} value Property value
- * @return {Error} [] Result
  * @memberof silk-sysutils
  */
-export function setprop(prop: string, value: PropTypes): ?Error {
-  const result = spawnSync('setprop', [prop, value.toString()]);
-  return result.error;
+export function setprop(prop: string, value: PropTypes): void {
+  exec('setprop', [prop, value.toString()]);
 }
 /**
  * This class provides helper utility to watch an android property and notify

@@ -122,20 +122,22 @@ adb wait-for-device
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
 
-echo Preparing default.prop ...
-rm -f default.prop
-echo persist.silk.dev.no_server=true >> default.prop
-echo persist.silk.extensions=dialog,pandohub-ui >> default.prop
-echo persist.silk.kws.enabled=true >> default.prop
-echo persist.silk.dialog.tts.enabled=false >> default.prop
-echo persist.silk.volume.level=80 >> default.prop
-echo ro.silk.bt.hw.enabled=false >> default.prop
-echo ro.silk.camera.hw.enabled=false >> default.prop
+echo Preparing build.prop...
+rm -f build.prop
+adb pull /system/build.prop
 
-echo Pushing new default.prop ...
+echo persist.silk.dev.no_server=true >> build.prop
+echo persist.silk.extensions=dialog,pandohub-ui >> build.prop
+echo persist.silk.kws.enabled=true >> build.prop
+echo persist.silk.dialog.tts.enabled=false >> build.prop
+echo persist.silk.volume.level=80 >> build.prop
+echo ro.silk.bt.hw.enabled=false >> build.prop
+echo ro.silk.camera.hw.enabled=false >> build.prop
+
+echo Pushing new build.prop ...
 adb remount
-adb push default.prop /system/
-rm -f default.prop
+adb push build.prop /system/
+rm -f build.prop
 
 echo Rebooting to apply configuration...
 adb reboot

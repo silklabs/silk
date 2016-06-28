@@ -8,6 +8,7 @@
     "silk-mse-player": "/mse-player",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
+    "silk-react-native-blobs": "/pub/react-native-blobs",
     "silk-streams": "/streams"
   },
   "dependencies": {

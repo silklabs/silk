@@ -11,7 +11,6 @@ import {
 
 import PreviewQueue from '../libraries/PreviewQueue';
 import SocketIO from '../libraries/SocketIO';
-import { blobURI } from '../libraries/Util';
 
 import SocketIOComponent from './abstract/SocketIOComponent';
 import Spinner from './Spinner';
@@ -156,7 +155,8 @@ export default class CameraPreview extends SocketIOComponent {
       return (
         <Image
           style={styles.preview}
-          source={{uri: blobURI(this.state.blob)}}
+          source={{uri: URL.createObjectURL(this.state.blob)}}
+          onLoadEnd={() => this.state.blob && this.state.blob.close()}
         />
       );
     }

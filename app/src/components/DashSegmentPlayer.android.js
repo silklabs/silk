@@ -9,7 +9,6 @@ import {
 import createLog from 'silk-log';
 
 import Config from '../libraries/config';
-import { blobURI } from '../libraries/Util';
 
 const MSEPlayer = requireNativeComponent('SilkMSEPlayer');
 
@@ -40,12 +39,14 @@ export default class DashSegmentPlayer extends React.Component {
     return findNodeHandle(this.refs[NATIVE_REF]);
   }
 
-  enqueue(blob) {
+  enqueue(blob: Blob): Promise<void> {
     UIManager.dispatchViewManagerCommand(
       this.getNativeHandle(),
       UIManager.SilkMSEPlayer.Commands.enqueueSegment,
-      [blobURI(blob)]
+      [URL.createObjectURL(blob)]
     );
+    // TODO: this is totally cheating
+    return new Promise((resolve) => process.nextTick(resolve));
   }
 
   play() {

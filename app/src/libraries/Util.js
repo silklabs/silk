@@ -2,7 +2,7 @@
  * @flow
  */
 
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules } from 'react-native';
 
 const { SLKUtil } = NativeModules;
 
@@ -24,32 +24,4 @@ export function getWifiInfo(): Promise<?WifiInfo> {
  */
 export function exitApp() {
   SLKUtil.exitApp();
-}
-
-export type NativeBlob = {
-  __native_type: 'Blob';
-  id: string;
-  length: number;
-  firstByte?: number;
-  offset?: number;
-};
-
-export function blobURI(blob: ?NativeBlob): ?string {
-  if (!blob) {
-    return null;
-  }
-  if (Platform.OS === 'ios') {
-    let uri = `silk-blob://${blob.id}/`;
-    if (blob.offset) {
-      uri += `?offset=${blob.offset}`;
-    }
-    return uri;
-  } else if (Platform.OS === 'android') {
-    let uri = `content://com.silklabs.app.blobs/${blob.id}`;
-    if (blob.offset) {
-      uri += `?offset=${blob.offset}`;
-    }
-    return uri;
-  }
-  return null;
 }

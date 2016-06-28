@@ -139,19 +139,21 @@ public class DashSegmentPlayer : UIView, VBPlayerDelegate {
     }
   }
 
-  func enqueue(blob: Dictionary<String, AnyObject>) {
+  func enqueue(blob: Dictionary<String, AnyObject>, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
     AssertMainThread()
     if (self.player == nil) {
       self.initializePlayer()
     }
 
     dispatch_async(self.methodQueue) {
-      let blobManager = self.bridge.moduleForClass(BlobManager) as! BlobManager
-      let rawData = blobManager.resolveAndReleaseBlob(blob)
+      let blobManager = self.bridge.moduleForClass(SLKBlobManager) as! SLKBlobManager
+      let rawData = blobManager.resolve(blob)
       guard
         rawData != nil
       else {
-        self.dispatchErrorEvent("Could not resolve blob \(blob)")
+        let message = "Could not resolve blob \(blob)"
+        self.dispatchErrorEvent(message)
+        reject("E_BLOB_RESOLVE_FAILED", message, NSError(domain: "com.silklabs.app", code: -1, userInfo: nil))
         return
       }
       let data: NSData
@@ -159,9 +161,12 @@ public class DashSegmentPlayer : UIView, VBPlayerDelegate {
         data = try self.playback.processSegment(NSMutableData(data: rawData!))
         try self.player!.appendData(data, coding: .MP4)
       } catch {
-        self.dispatchErrorEvent("Processing mp4 segment failed")
+        let message = "Processing mp4 segment failed"
+        self.dispatchErrorEvent(message)
+        reject("E_MP4_SEGMENT_FAILED", message, NSError(domain: "com.silklabs.app", code: -1, userInfo: nil))
         return
       }
+      resolve(nil);
     }
   }
 

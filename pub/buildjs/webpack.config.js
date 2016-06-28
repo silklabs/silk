@@ -71,6 +71,7 @@ const externals = [
   'opencv',
   'segfault-handler',
   'silk-alog',
+  'silk-audioplayer',
   'silk-battery',
   'silk-camera',
   'silk-core-version',

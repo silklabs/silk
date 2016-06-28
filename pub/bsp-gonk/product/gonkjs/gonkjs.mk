@@ -123,5 +123,8 @@ PRODUCT_PACKAGES += opencv
 # vendor/silk/silk-speaker
 PRODUCT_PACKAGES += silk-speaker
 
+# vendor/silk/silk-audioplayer
+PRODUCT_PACKAGES += silk-audioplayer
+
 # include board-specific makefile if it exists
 -include board/$(SILK_BOARD)/$(SILK_BOARD).mk

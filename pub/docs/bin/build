@@ -3,6 +3,7 @@
 cd $(dirname $0)/..
 
 APIDOC_SOURCE_FILES=" \
+  ../bsp-gonk/vendor/silk/silk-audioplayer/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-battery/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-camera/lib/index.js \
   ../bsp-gonk/vendor/silk/silk-input/lib/index.js \

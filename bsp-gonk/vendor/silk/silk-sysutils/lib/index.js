@@ -11,7 +11,6 @@
  * const util = require('silk-sysutils');
  *
  * util.getprop('ro.product.name', 'unknown');
- * util.playSound('/data/hello.mp3');
  */
 
 import { EventEmitter } from 'events';
@@ -297,39 +296,6 @@ export let propWatcher = new PropWatcher();
  */
 export function timeout(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Play a sound file
- *
- * @param {string} fileName Name of the audio file to play
- * @return {Promise} Return a promise that is fulfilled when the sound
- *                         is done playing. Reject the promise if there is an
- *                         error.
- * @memberof silk-sysutils
- */
-export function playSound(fileName: string): Promise<void> {
-  let BINARY = 'player';
-  if (process.platform === 'darwin') {
-    BINARY = 'afplay'; // Default player on OSX
-  } else if (process.platform === 'linux') {
-    BINARY = 'mplayer'; // Run apt-get install mplayer first
-  }
-
-  return exec(BINARY, [fileName])
-  .catch(err => {
-    let msg = `Failed to exec '${BINARY}': ${err}`;
-    log.error(msg);
-    throw new Error(msg);
-  })
-  .then(result => {
-    if (result.code !== 0) {
-      let msg = `'${BINARY}' returned error code ${result.code}: ` +
-      result.stderr;
-      log.error(msg);
-      throw new Error(msg);
-    }
-  });
 }
 
 /**

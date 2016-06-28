@@ -1,0 +1,21 @@
+{
+  "name": "silk-audioplayer",
+  "version": "1.0.0",
+  "description": "Module to play audio files",
+  "main": "./lib/index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "silk-build": "silk-buildjs .",
+    "install": "node-gyp rebuild"
+  },
+  "license": "proprietary",
+  "dependencies": {
+    "nan": "2.3.5"
+  },
+  "symlinkDependencies": {
+    "silk-buildjs": "../../../../buildjs/",
+    "silk-log": "../../../../log"
+  },
+  "gypfile": true,
+  "private": true
+}

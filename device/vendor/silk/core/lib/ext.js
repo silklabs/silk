@@ -377,7 +377,9 @@ class Env extends EventEmitter {
        * @property {string} key Specific key that is generating the event
        * @property {string} type Type of key event: ['up', 'down']
        */
-
+      this.ui.getState = function() {
+        return deviceObjects.ui.getState();
+      };
       this._addEvents('ui', ui, this.ui, ['key', 'state']);
     }
 

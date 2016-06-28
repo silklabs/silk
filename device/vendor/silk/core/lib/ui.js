@@ -136,6 +136,10 @@ export class Ui extends events.EventEmitter {
     return off; // return true if the backlight was just enabled
   }
 
+  getState(): UiState {
+    return this.currentState;
+  }
+
   goto(state: UiState) {
     if (state === this.currentState || this.currentState === 'powerdown') {
       return false;

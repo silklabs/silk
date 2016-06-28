@@ -46,6 +46,7 @@ class PandoHubUi {
 
     this.input = new Input();
     this.input.on('down', this.onKeyPress);
+    this.uiState = env.ui.getState();
     env.ui.on('state', this.onUiState);
     this.render();
   }

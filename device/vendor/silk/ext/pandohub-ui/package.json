@@ -1,0 +1,21 @@
+{
+  "name": "silkext-pandohub-ui",
+  "version": "0.0.1",
+  "description": "Pando Hub UI",
+  "main": "./lib/index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "silk-build": "silk-buildjs .",
+    "test": "npm run lint"
+  },
+  "symlinkDependencies": {
+    "silk-babeldeps": "/babeldeps",
+    "silk-buildjs": "/pub/buildjs",
+    "silk-exttest": "/device/vendor/silk/exttest"
+  },
+  "devDependencies": {
+    "eslint": "1.10.3",
+    "babel-eslint": "6.0.4"
+  },
+  "private": true
+}

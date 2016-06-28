@@ -125,7 +125,7 @@ adb shell time_genoff $(date +%s)000
 echo Preparing default.prop ...
 rm -f default.prop
 echo persist.silk.dev.no_server=true >> default.prop
-echo persist.silk.extensions=dialog >> default.prop
+echo persist.silk.extensions=dialog,pandohub-ui >> default.prop
 echo persist.silk.kws.enabled=true >> default.prop
 echo persist.silk.dialog.tts.enabled=false >> default.prop
 echo persist.silk.volume.level=80 >> default.prop

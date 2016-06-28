@@ -96,6 +96,7 @@ const externals = [
   'silk-vad',
   'silk-vibrator',
   'silk-volume',
+  'silk-update',
   'silk-wifi',
   'v8-profiler',
   'kissfft',

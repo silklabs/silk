@@ -11,6 +11,7 @@ const Vibrator = require('silk-vibrator').default;
 const ntp = require('silk-ntp').default;
 const Input = require('silk-input').default;
 const lights = require('silk-lights');
+const Camera = require('silk-camera').default;
 
 function bail(reason, err) {
   log.error('Exiting process due to ' + reason);
@@ -83,4 +84,13 @@ function shutdown() {
   splash.hide();
   util.setprop('sys.powerctl', 'shutdown');
 }
+
+let camera = new Camera();
+camera.init()
+.then(() => {
+   camera.startRecording();
+});
+camera.on('frame', (when, image) => {
+  log.info('Received a frame at timestamp', when, '-', image);
+});
 

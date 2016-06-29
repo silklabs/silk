@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TouchableWithoutFeedback,
@@ -9,7 +10,6 @@ import createLog from 'silk-log';
 
 import OverlayModal from './OverlayModal';
 import DashSegmentPlayer from './DashSegmentPlayer';
-import Spinner from './Spinner';
 import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
 const log = createLog('CameraLiveVideo');
@@ -111,7 +111,7 @@ export default class CameraLiveVideo extends React.Component {
     if (this.state.playing) {
       return <View />;
     }
-    return <Spinner color="white" />;
+    return <ActivityIndicator color="white" />;
   }
 
   render() {

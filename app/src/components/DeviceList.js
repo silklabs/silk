@@ -2,6 +2,7 @@ import { OrderedMap, OrderedSet } from 'immutable';
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
@@ -16,7 +17,6 @@ import AsyncComponent from './abstract/AsyncComponent';
 import CameraLiveVideo from './CameraLiveVideo';
 import CameraPreview from './CameraPreview';
 import { Colors } from './CommonStyles';
-import Spinner from './Spinner';
 import UnconfiguredDevice from './UnconfiguredDevice';
 
 // This is mostly a guestimate based on FUT hardware. Absolute values
@@ -147,7 +147,7 @@ export default class DeviceList extends AsyncComponent {
 
   _renderSpinner() {
     return (
-      <Spinner
+      <ActivityIndicator
         size="large"
         style={styles.loadingSpinner}
       />

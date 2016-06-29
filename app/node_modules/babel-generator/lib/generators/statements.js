@@ -21,10 +21,6 @@ exports.DebuggerStatement = DebuggerStatement;
 exports.VariableDeclaration = VariableDeclaration;
 exports.VariableDeclarator = VariableDeclarator;
 
-var _repeat = require("lodash/repeat");
-
-var _repeat2 = _interopRequireDefault(_repeat);
-
 var _babelTypes = require("babel-types");
 
 var t = _interopRequireWildcard(_babelTypes);
@@ -33,26 +29,24 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var NON_ALPHABETIC_UNARY_OPERATORS = t.UPDATE_OPERATORS.concat(t.NUMBER_UNARY_OPERATORS).concat(["!"]);
-
 function WithStatement(node) {
   this.keyword("with");
-  this.push("(");
+  this.token("(");
   this.print(node.object, node);
-  this.push(")");
+  this.token(")");
   this.printBlock(node);
 }
 
 function IfStatement(node) {
   this.keyword("if");
-  this.push("(");
+  this.token("(");
   this.print(node.test, node);
-  this.push(")");
+  this.token(")");
   this.space();
 
   var needsBlock = node.alternate && t.isIfStatement(getLastStatement(node.consequent));
   if (needsBlock) {
-    this.push("{");
+    this.token("{");
     this.newline();
     this.indent();
   }
@@ -62,12 +56,13 @@ function IfStatement(node) {
   if (needsBlock) {
     this.dedent();
     this.newline();
-    this.push("}");
+    this.token("}");
   }
 
   if (node.alternate) {
-    if (this.isLast("}")) this.space();
-    this.push("else ");
+    if (this.endsWith("}")) this.space();
+    this.word("else");
+    this.space();
     this.printAndIndentOnComments(node.alternate, node);
   }
 }
@@ -80,44 +75,46 @@ function getLastStatement(statement) {
 
 function ForStatement(node) {
   this.keyword("for");
-  this.push("(");
+  this.token("(");
 
   this._inForStatementInitCounter++;
   this.print(node.init, node);
   this._inForStatementInitCounter--;
-  this.push(";");
+  this.token(";");
 
   if (node.test) {
     this.space();
     this.print(node.test, node);
   }
-  this.push(";");
+  this.token(";");
 
   if (node.update) {
     this.space();
     this.print(node.update, node);
   }
 
-  this.push(")");
+  this.token(")");
   this.printBlock(node);
 }
 
 function WhileStatement(node) {
   this.keyword("while");
-  this.push("(");
+  this.token("(");
   this.print(node.test, node);
-  this.push(")");
+  this.token(")");
   this.printBlock(node);
 }
 
 var buildForXStatement = function buildForXStatement(op) {
   return function (node) {
     this.keyword("for");
-    this.push("(");
+    this.token("(");
     this.print(node.left, node);
-    this.push(" " + op + " ");
+    this.space();
+    this.word(op);
+    this.space();
     this.print(node.right, node);
-    this.push(")");
+    this.token(")");
     this.printBlock(node);
   };
 };
@@ -126,26 +123,26 @@ var ForInStatement = exports.ForInStatement = buildForXStatement("in");
 var ForOfStatement = exports.ForOfStatement = buildForXStatement("of");
 
 function DoWhileStatement(node) {
-  this.push("do ");
+  this.word("do");
+  this.space();
   this.print(node.body, node);
   this.space();
   this.keyword("while");
-  this.push("(");
+  this.token("(");
   this.print(node.test, node);
-  this.push(");");
+  this.token(")");
+  this.semicolon();
 }
 
 function buildLabelStatement(prefix) {
   var key = arguments.length <= 1 || arguments[1] === undefined ? "label" : arguments[1];
 
   return function (node) {
-    this.push(prefix);
+    this.word(prefix);
 
     var label = node[key];
     if (label) {
-      if (!(this.format.minified && (t.isUnaryExpression(label, { prefix: true }) || t.isUpdateExpression(label, { prefix: true })) && NON_ALPHABETIC_UNARY_OPERATORS.indexOf(label.operator) > -1)) {
-        this.push(" ");
-      }
+      this.space();
 
       var terminatorState = this.startTerminatorless();
       this.print(label, node);
@@ -163,7 +160,8 @@ var ThrowStatement = exports.ThrowStatement = buildLabelStatement("throw", "argu
 
 function LabeledStatement(node) {
   this.print(node.label, node);
-  this.push(": ");
+  this.token(":");
+  this.space();
   this.print(node.body, node);
 }
 
@@ -183,27 +181,28 @@ function TryStatement(node) {
 
   if (node.finalizer) {
     this.space();
-    this.push("finally ");
+    this.word("finally");
+    this.space();
     this.print(node.finalizer, node);
   }
 }
 
 function CatchClause(node) {
   this.keyword("catch");
-  this.push("(");
+  this.token("(");
   this.print(node.param, node);
-  this.push(")");
+  this.token(")");
   this.space();
   this.print(node.body, node);
 }
 
 function SwitchStatement(node) {
   this.keyword("switch");
-  this.push("(");
+  this.token("(");
   this.print(node.discriminant, node);
-  this.push(")");
+  this.token(")");
   this.space();
-  this.push("{");
+  this.token("{");
 
   this.printSequence(node.cases, node, {
     indent: true,
@@ -212,16 +211,18 @@ function SwitchStatement(node) {
     }
   });
 
-  this.push("}");
+  this.token("}");
 }
 
 function SwitchCase(node) {
   if (node.test) {
-    this.push("case ");
+    this.word("case");
+    this.space();
     this.print(node.test, node);
-    this.push(":");
+    this.token(":");
   } else {
-    this.push("default:");
+    this.word("default");
+    this.token(":");
   }
 
   if (node.consequent.length) {
@@ -231,11 +232,31 @@ function SwitchCase(node) {
 }
 
 function DebuggerStatement() {
-  this.push("debugger;");
+  this.word("debugger");
+  this.semicolon();
+}
+
+function variableDeclarationIdent() {
+  // "let " or "var " indentation.
+  this.token(",");
+  this.push("\n");
+  for (var i = 0; i < 4; i++) {
+    this.push(" ");
+  }
+}
+
+function constDeclarationIdent() {
+  // "const " indentation.
+  this.token(",");
+  this.push("\n");
+  for (var i = 0; i < 6; i++) {
+    this.push(" ");
+  }
 }
 
 function VariableDeclaration(node, parent) {
-  this.push(node.kind + " ");
+  this.word(node.kind);
+  this.space();
 
   var hasInits = false;
   // don't add whitespace to loop heads
@@ -273,14 +294,14 @@ function VariableDeclaration(node, parent) {
   //       bar = "foo";
   //
 
-  var sep = void 0;
+  var separator = void 0;
   if (!this.format.compact && !this.format.concise && hasInits && !this.format.retainLines) {
-    sep = ",\n" + (0, _repeat2.default)(" ", node.kind.length + 1);
+    separator = node.kind === "const" ? constDeclarationIdent : variableDeclarationIdent;
   }
 
   //
 
-  this.printList(node.declarations, node, { separator: sep });
+  this.printList(node.declarations, node, { separator: separator });
 
   if (t.isFor(parent)) {
     // don't give semicolons to these nodes since they'll be inserted in the parent generator
@@ -295,7 +316,7 @@ function VariableDeclarator(node) {
   this.print(node.id.typeAnnotation, node);
   if (node.init) {
     this.space();
-    this.push("=");
+    this.token("=");
     this.space();
     this.print(node.init, node);
   }

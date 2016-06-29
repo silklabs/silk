@@ -133,7 +133,16 @@ The available options are:
   --reserved-file               File containing reserved names
   --reserve-domprops            Make (most?) DOM properties reserved for
                                 --mangle-props
-  --mangle-props                Mangle property names
+  --mangle-props                Mangle property names (default `0`). Set to 
+                                `true` or `1` to mangle all property names. Set
+                                to `unquoted` or `2` to only mangle unquoted 
+                                property names. Mode `2` also enables the
+                                `keep_quoted_props` beautifier option to 
+                                preserve the quotes around property names and
+                                disables the `properties` compressor option to
+                                prevent rewriting quoted properties with dot
+                                notation. You can override these by setting
+                                them explicitly on the command line.
   --mangle-regex                Only mangle property names matching the regex
   --name-cache                  File to hold mangled names mappings
   --pure-funcs                  List of functions that can be safely removed if
@@ -191,11 +200,6 @@ input files from the command line.
 
 To enable the mangler you need to pass `--mangle` (`-m`).  The following
 (comma-separated) options are supported:
-
-- `sort` — to assign shorter names to most frequently used variables.  This
-  saves a few hundred bytes on jQuery before gzip, but the output is
-  _bigger_ after gzip (and seems to happen for other libraries I tried it
-  on) therefore it's not enabled by default.
 
 - `toplevel` — mangle names declared in the toplevel scope (disabled by
   default).
@@ -296,12 +300,19 @@ to set `true`; it's effectively a shortcut for `foo=true`).
 
 - `unsafe` (default: false) -- apply "unsafe" transformations (discussion below)
 
+- `unsafe_comps` (default: false) -- Reverse `<` and `<=` to `>` and `>=` to
+  allow improved compression. This might be unsafe when an at least one of two
+  operands is an object with computed values due the use of methods like `get`,
+  or `valueOf`. This could cause change in execution order after operands in the
+  comparison are switching. Compression only works if both `comparisons` and
+  `unsafe_comps` are both set to true.
+
 - `conditionals` -- apply optimizations for `if`-s and conditional
   expressions
 
 - `comparisons` -- apply certain optimizations to binary nodes, for example:
-  `!(a <= b) → a > b` (only when `unsafe`), attempts to negate binary nodes,
-  e.g. `a = !b && !c && !d && !e → a=!(b||c||d||e)` etc.
+  `!(a <= b) → a > b` (only when `unsafe_comps`), attempts to negate binary
+  nodes, e.g. `a = !b && !c && !d && !e → a=!(b||c||d||e)` etc.
 
 - `evaluate` -- attempt to evaluate constant expressions
 
@@ -361,6 +372,9 @@ to set `true`; it's effectively a shortcut for `foo=true`).
   compressor from mangling/discarding function names.  Useful for code relying on
   `Function.prototype.name`.
 
+- `passes` -- default `1`. Number of times to run compress. Use an
+  integer argument larger than 1 to further reduce code size in some cases.
+  Note: raising the number of passes will increase uglify compress time.
 
 ### The `unsafe` option
 
@@ -415,6 +429,22 @@ code as usual.  The build will contain the `const` declarations if you use
 them. If you are targeting < ES6 environments, use `/** @const */ var`.
 
 <a name="codegen-options"></a>
+
+#### Conditional compilation, API
+You can also use conditional compilation via the programmatic API. With the difference that the
+property name is `global_defs` and is a compressor property:
+
+```js
+uglifyJS.minify([ "input.js"], {
+    compress: {
+        dead_code: true,
+        global_defs: {
+            DEBUG: false
+        }
+    }
+});
+```
+
 ## Beautifier options
 
 The code generator tries to output shortest code possible by default.  In
@@ -431,7 +461,7 @@ can pass additional arguments that control the code output:
   objects
 - `space-colon` (default `true`) -- insert a space after the colon signs
 - `ascii-only` (default `false`) -- escape Unicode characters in strings and
-  regexps
+  regexps (affects directives with non-ascii characters becoming invalid)
 - `inline-script` (default `false`) -- escape the slash in occurrences of
   `</script` in strings
 - `width` (default 80) -- only takes effect when beautification is on, this
@@ -458,6 +488,8 @@ can pass additional arguments that control the code output:
   - `1` -- always use single quotes
   - `2` -- always use double quotes
   - `3` -- always use the original quotes
+- `keep_quoted_props` (default `false`) -- when turned on, prevents stripping
+  quotes from property names in object literals.
 
 ### Keeping copyright notices or other comments
 
@@ -644,9 +676,14 @@ Other options:
 - `parse` (default {}) — pass an object if you wish to specify some
   additional [parser options][parser]. (not all options available... see below)
 
+##### mangle
+
+ - `except` - pass an array of identifiers that should be excluded from mangling
+
 ##### mangleProperties options
 
- - `regex` — Pass a RegExp to only mangle certain names (maps to the `--mange-regex` CLI arguments option)
+ - `regex` — Pass a RegExp to only mangle certain names (maps to the `--mangle-regex` CLI arguments option)
+ - `ignore_quoted` – Only mangle unquoted property names (maps to the `--mangle-props 2` CLI arguments option)
 
 We could add more options to `UglifyJS.minify` — if you need additional
 functionality please suggest!

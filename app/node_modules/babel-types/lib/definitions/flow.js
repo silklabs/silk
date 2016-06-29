@@ -240,7 +240,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 });
 
 (0, _index2.default)("TypeParameter", {
-  visitor: ["name", "bound"],
+  visitor: ["bound"],
   aliases: ["Flow"],
   fields: {
     // todo

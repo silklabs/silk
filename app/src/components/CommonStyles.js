@@ -17,10 +17,8 @@ export const FormStyles = StyleSheet.create({
     borderTopWidth: 1 / PixelRatio.get(),
     borderBottomWidth: 1 / PixelRatio.get(),
     borderColor: '#c8c7cc',
-    flex: 1,
   },
   formRow: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     borderColor: '#c8c7cc',

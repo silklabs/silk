@@ -42,6 +42,7 @@ var Buffer = function () {
       column: null,
       filename: null
     };
+    this._endsWithWord = false;
   }
 
   /**
@@ -52,7 +53,7 @@ var Buffer = function () {
     // catch up to this nodes newline if we're behind
     if (node.loc && this.format.retainLines && this.buf) {
       while (this.position.line < node.loc.start.line) {
-        this._push("\n");
+        this.push("\n");
       }
     }
   };
@@ -106,15 +107,7 @@ var Buffer = function () {
    */
 
   Buffer.prototype.semicolon = function semicolon() {
-    this.push(";");
-  };
-
-  /**
-   * Ensure last character is a semicolon.
-   */
-
-  Buffer.prototype.ensureSemicolon = function ensureSemicolon() {
-    if (!this.isLast(";")) this.semicolon();
+    this.token(";");
   };
 
   /**
@@ -126,7 +119,7 @@ var Buffer = function () {
     if (this.format.minified && !this._lastPrintedIsEmptyStatement) {
       this._removeLast(";");
     }
-    this.push("}");
+    this.token("}");
   };
 
   /**
@@ -134,20 +127,48 @@ var Buffer = function () {
    */
 
   Buffer.prototype.keyword = function keyword(name) {
-    this.push(name);
+    this.word(name);
     this.space();
   };
 
   /**
-   * Add a space to the buffer unless it is compact (override with force).
+   * Add a space to the buffer unless it is compact.
    */
 
-  Buffer.prototype.space = function space(force) {
-    if (!force && this.format.compact) return;
+  Buffer.prototype.space = function space() {
+    if (this.format.compact) return;
 
-    if (force || this.buf && !this.isLast(" ") && !this.isLast("\n")) {
+    if (this.buf && !this.endsWith(" ") && !this.endsWith("\n")) {
       this.push(" ");
     }
+  };
+
+  /**
+   * Writes a token that can't be safely parsed without taking whitespace into account.
+   */
+
+  Buffer.prototype.word = function word(str) {
+    if (this._endsWithWord) this.push(" ");
+
+    this.push(str);
+    this._endsWithWord = true;
+  };
+
+  /**
+   * Writes a simple token.
+   */
+
+  Buffer.prototype.token = function token(str) {
+    // space is mandatory to avoid outputting <!--
+    // http://javascript.spec.whatwg.org/#comment-syntax
+    if (str === "--" && this.last === "!" ||
+
+    // Need spaces for operators of the same kind to avoid: `a+++b`
+    str[0] === "+" && this.last === "+" || str[0] === "-" && this.last === "-") {
+      this.push(" ");
+    }
+
+    this.push(str);
   };
 
   /**
@@ -160,7 +181,7 @@ var Buffer = function () {
   };
 
   Buffer.prototype._removeLast = function _removeLast(cha) {
-    if (!this._isLast(cha)) return;
+    if (!this.endsWith(cha)) return;
     this.buf = this.buf.slice(0, -1);
     this.last = this.buf[this.buf.length - 1];
     this.position.unshift(cha);
@@ -196,7 +217,7 @@ var Buffer = function () {
     if (state.printed) {
       this.dedent();
       this.newline();
-      this.push(")");
+      this.token(")");
     }
   };
 
@@ -230,7 +251,9 @@ var Buffer = function () {
 
     this.removeLast(" ");
     this._removeSpacesAfterLastNewline();
-    this._push((0, _repeat2.default)("\n", i));
+    for (var j = 0; j < i; j++) {
+      this.push("\n");
+    }
   };
 
   /**
@@ -240,8 +263,10 @@ var Buffer = function () {
   Buffer.prototype._removeSpacesAfterLastNewline = function _removeSpacesAfterLastNewline() {
     var lastNewlineIndex = this.buf.lastIndexOf("\n");
     if (lastNewlineIndex >= 0 && this.get().length <= lastNewlineIndex) {
+      var toRemove = this.buf.slice(lastNewlineIndex + 1);
       this.buf = this.buf.substring(0, lastNewlineIndex + 1);
       this.last = "\n";
+      this.position.unshift(toRemove);
     }
   };
 
@@ -265,6 +290,8 @@ var Buffer = function () {
    */
 
   Buffer.prototype.withSource = function withSource(prop, loc, cb) {
+    if (!this.opts.sourceMaps) return cb();
+
     // Use the call stack to manage a stack of "source location" data.
     var originalLine = this._sourcePosition.line;
     var originalColumn = this._sourcePosition.column;
@@ -283,26 +310,12 @@ var Buffer = function () {
    * Push a string to the buffer, maintaining indentation and newlines.
    */
 
-  Buffer.prototype.push = function push(str, noIndent) {
-    if (!this.format.compact && this._indent && !noIndent && str !== "\n") {
-      // we have an indent level and we aren't pushing a newline
-      var indent = this.getIndent();
-
-      // replace all newlines with newlines with the indentation
-      str = str.replace(/\n/g, "\n" + indent);
-
+  Buffer.prototype.push = function push(str) {
+    if (!this.format.compact && this._indent && str[0] !== "\n") {
       // we've got a newline before us so prepend on the indentation
-      if (this.isLast("\n")) this._push(indent);
+      if (this.endsWith("\n")) str = this.getIndent() + str;
     }
 
-    this._push(str);
-  };
-
-  /**
-   * Push a string to the buffer.
-   */
-
-  Buffer.prototype._push = function _push(str) {
     // see startTerminatorless() instance method
     var parenPushNewlineState = this.parenPushNewlineState;
     if (parenPushNewlineState) {
@@ -316,7 +329,7 @@ var Buffer = function () {
 
         if (cha === "\n" || cha === "/") {
           // we're going to break this terminator expression so we need to add a parentheses
-          this._push("(");
+          str = "(" + str;
           this.indent();
           parenPushNewlineState.printed = true;
         }
@@ -326,12 +339,15 @@ var Buffer = function () {
     }
 
     // If there the line is ending, adding a new mapping marker is redundant
-    if (str[0] !== "\n") this.map.mark(this._sourcePosition);
+    if (this.opts.sourceMaps && str[0] !== "\n") this.map.mark(this._sourcePosition);
 
     //
     this.position.push(str);
     this.buf += str;
     this.last = str[str.length - 1];
+
+    // Clear any state-tracking flags that may have been set.
+    this._endsWithWord = false;
   };
 
   /**
@@ -339,29 +355,16 @@ var Buffer = function () {
    */
 
   Buffer.prototype.endsWith = function endsWith(str) {
+    var _this = this;
+
+    if (Array.isArray(str)) return str.some(function (s) {
+      return _this.endsWith(s);
+    });
+
     if (str.length === 1) {
       return this.last === str;
     } else {
       return this.buf.slice(-str.length) === str;
-    }
-  };
-
-  /**
-   * Test if a character is last in the buffer.
-   */
-
-  Buffer.prototype.isLast = function isLast(cha) {
-    if (this.format.compact) return false;
-    return this._isLast(cha);
-  };
-
-  Buffer.prototype._isLast = function _isLast(cha) {
-    var last = this.last;
-
-    if (Array.isArray(cha)) {
-      return cha.indexOf(last) >= 0;
-    } else {
-      return cha === last;
     }
   };
 

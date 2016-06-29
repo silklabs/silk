@@ -98,7 +98,7 @@ var Printer = function (_Buffer) {
     this.printAuxBeforeComment(oldInAux);
 
     var needsParens = n.needsParens(node, parent, this._printStack);
-    if (needsParens) this.push("(");
+    if (needsParens) this.token("(");
 
     this.printLeadingComments(node, parent);
 
@@ -110,7 +110,7 @@ var Printer = function (_Buffer) {
 
     var loc = t.isProgram(node) || t.isFile(node) ? null : node.loc;
     this.withSource("start", loc, function () {
-      _this2._print(node, parent);
+      _this2[node.type](node, parent);
     });
 
     // Check again if any of our children may have left an aux comment on the stack
@@ -118,7 +118,7 @@ var Printer = function (_Buffer) {
 
     this.printTrailingComments(node, parent);
 
-    if (needsParens) this.push(")");
+    if (needsParens) this.token(")");
 
     // end
     this._printStack.pop();
@@ -153,28 +153,12 @@ var Printer = function (_Buffer) {
   };
 
   Printer.prototype.getPossibleRaw = function getPossibleRaw(node) {
+    if (this.format.minified) return;
+
     var extra = node.extra;
     if (extra && extra.raw != null && extra.rawValue != null && node.value === extra.rawValue) {
       return extra.raw;
     }
-  };
-
-  Printer.prototype._print = function _print(node, parent) {
-    // In minified mode we need to produce as little bytes as needed
-    // and need to make sure that string quoting is consistent.
-    // That means we have to always reprint as opposed to getting
-    // the raw value.
-    if (!this.format.minified) {
-      var extra = this.getPossibleRaw(node);
-      if (extra) {
-        this.push("");
-        this._push(extra);
-        return;
-      }
-    }
-
-    var printMethod = this[node.type];
-    printMethod.call(this, node, parent);
   };
 
   Printer.prototype.printJoin = function printJoin(nodes, parent) {
@@ -203,7 +187,7 @@ var Printer = function (_Buffer) {
         }
 
         if (opts.separator && i < len - 1) {
-          _this3.push(opts.separator);
+          opts.separator.call(_this3);
         }
       }
     };
@@ -271,8 +255,7 @@ var Printer = function (_Buffer) {
     var opts = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
     if (opts.separator == null) {
-      opts.separator = ",";
-      if (!this.format.compact) opts.separator += " ";
+      opts.separator = commaSeparator;
     }
 
     return this.printJoin(items, parent, opts);
@@ -356,13 +339,10 @@ var Printer = function (_Buffer) {
       // whitespace before
       _this4.newline(_this4.whitespace.getNewlinesBefore(comment));
 
+      if (!_this4.endsWith(["[", "{"])) _this4.space();
+
       var column = _this4.position.column;
       var val = _this4.generateComment(comment);
-
-      if (column && !_this4.isLast(["\n", " ", "[", "{"])) {
-        _this4._push(" ");
-        column++;
-      }
 
       //
       if (comment.type === "CommentBlock" && _this4.format.indent.adjustMultilineComment) {
@@ -376,10 +356,6 @@ var Printer = function (_Buffer) {
         val = val.replace(/\n/g, "\n" + (0, _repeat2.default)(" ", indent));
       }
 
-      if (column === 0) {
-        val = _this4.getIndent() + val;
-      }
-
       // force a newline for line comments when retainLines is set in case the next printed node
       // doesn't catch up
       if ((_this4.format.compact || _this4.format.concise || _this4.format.retainLines) && comment.type === "CommentLine") {
@@ -387,7 +363,7 @@ var Printer = function (_Buffer) {
       }
 
       //
-      _this4._push(val);
+      _this4.push(val);
 
       // whitespace after
       _this4.newline(_this4.whitespace.getNewlinesAfter(comment));
@@ -419,9 +395,14 @@ var Printer = function (_Buffer) {
 }(_buffer2.default);
 
 exports.default = Printer;
+
+
+function commaSeparator() {
+  this.token(",");
+  this.space();
+}
+
 var _arr = [require("./generators/template-literals"), require("./generators/expressions"), require("./generators/statements"), require("./generators/classes"), require("./generators/methods"), require("./generators/modules"), require("./generators/types"), require("./generators/flow"), require("./generators/base"), require("./generators/jsx")];
-
-
 for (var _i2 = 0; _i2 < _arr.length; _i2++) {
   var generator = _arr[_i2];
   (0, _assign2.default)(Printer.prototype, generator);

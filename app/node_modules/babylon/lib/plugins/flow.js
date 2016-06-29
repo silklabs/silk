@@ -60,30 +60,39 @@ exports.default = function (instance) {
     };
   });
 
-  instance.extend("parseParenItem", function () {
-    return function (node, startLoc, startPos, forceArrow) {
-      var canBeArrow = this.state.potentialArrowAt = startPos;
+  instance.extend("parseConditional", function (inner) {
+    return function (expr, noIn, startPos, startLoc, refNeedsArrowPos) {
+      var state = this.state.clone();
+      try {
+        return inner.call(this, expr, noIn, startPos, startLoc);
+      } catch (err) {
+        if (refNeedsArrowPos && err instanceof SyntaxError) {
+          this.state = state;
+          refNeedsArrowPos.start = this.state.start;
+          return expr;
+        } else {
+          throw err;
+        }
+      }
+    };
+  });
+
+  instance.extend("parseParenItem", function (inner) {
+    return function (node, startLoc, startPos) {
+      node = inner.call(this, node, startLoc, startPos);
+      if (this.eat(_types.types.question)) {
+        node.optional = true;
+      }
+
       if (this.match(_types.types.colon)) {
         var typeCastNode = this.startNodeAt(startLoc, startPos);
         typeCastNode.expression = node;
         typeCastNode.typeAnnotation = this.flowParseTypeAnnotation();
 
-        if (forceArrow && !this.match(_types.types.arrow)) {
-          this.unexpected();
-        }
-
-        if (canBeArrow && this.eat(_types.types.arrow)) {
-          // ((lol): number => {});
-          var params = node.type === "SequenceExpression" ? node.expressions : [node];
-          var func = this.parseArrowExpression(this.startNodeAt(startLoc, startPos), params);
-          func.returnType = typeCastNode.typeAnnotation;
-          return func;
-        } else {
-          return this.finishNode(typeCastNode, "TypeCastExpression");
-        }
-      } else {
-        return node;
+        return this.finishNode(typeCastNode, "TypeCastExpression");
       }
+
+      return node;
     };
   });
 
@@ -343,9 +352,12 @@ exports.default = function (instance) {
   // parse function type parameters - function foo<T>() {}
   instance.extend("parseFunctionParams", function (inner) {
     return function (node) {
+      var oldInType = this.state.inType;
+      this.state.inType = true;
       if (this.isRelational("<")) {
         node.typeParameters = this.flowParseTypeParameterDeclaration();
       }
+      this.state.inType = oldInType;
       inner.call(this, node);
     };
   });
@@ -379,40 +391,99 @@ exports.default = function (instance) {
     };
   });
 
-  // handle return types for arrow functions
-  instance.extend("parseParenAndDistinguishExpression", function (inner) {
-    return function (startPos, startLoc, canBeArrow, isAsync) {
-      startPos = startPos || this.state.start;
-      startLoc = startLoc || this.state.startLoc;
+  // We need to support type parameter declarations for arrow functions. This
+  // is tricky. There are three situations we need to handle
+  //
+  // 1. This is either JSX or an arrow function. We'll try JSX first. If that
+  //    fails, we'll try an arrow function. If that fails, we'll throw the JSX
+  //    error.
+  // 2. This is an arrow function. We'll parse the type parameter declaration,
+  //    parse the rest, make sure the rest is an arrow function, and go from
+  //    there
+  // 3. This is neither. Just call the inner function
+  instance.extend("parseMaybeAssign", function (inner) {
+    return function () {
+      var jsxError = null;
 
-      if (canBeArrow && this.lookahead().type === _types.types.parenR) {
-        // let foo = (): number => {};
-        this.expect(_types.types.parenL);
-        this.expect(_types.types.parenR);
+      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
 
-        var node = this.startNodeAt(startPos, startLoc);
-        if (this.match(_types.types.colon)) node.returnType = this.flowParseTypeAnnotation();
-        this.expect(_types.types.arrow);
-        return this.parseArrowExpression(node, [], isAsync);
-      } else {
-        // let foo = (foo): number => {};
-        var _node2 = inner.call(this, startPos, startLoc, canBeArrow, isAsync, this.hasPlugin("trailingFunctionCommas"));
-
-        if (this.match(_types.types.colon)) {
-          var state = this.state.clone();
-          try {
-            return this.parseParenItem(_node2, startPos, startLoc, true);
-          } catch (err) {
-            if (err instanceof SyntaxError) {
-              this.state = state;
-              return _node2;
-            } else {
-              throw err;
-            }
+      if (_types.types.jsxTagStart && this.match(_types.types.jsxTagStart)) {
+        var state = this.state.clone();
+        try {
+          return inner.apply(this, args);
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            this.state = state;
+            jsxError = err;
+          } else {
+            throw err;
           }
-        } else {
-          return _node2;
         }
+      }
+
+      // Need to push something onto the context to stop
+      // the JSX plugin from messing with the tokens
+      this.state.context.push(_context.types.parenExpression);
+      if (jsxError != null || this.isRelational("<")) {
+        var arrowExpression = void 0;
+        var typeParameters = void 0;
+        try {
+          var oldInType = this.state.inType;
+          this.state.inType = true;
+          typeParameters = this.flowParseTypeParameterDeclaration();
+          this.state.inType = oldInType;
+
+          arrowExpression = inner.apply(this, args);
+          arrowExpression.typeParameters = typeParameters;
+        } catch (err) {
+          throw jsxError || err;
+        }
+
+        if (arrowExpression.type === "ArrowFunctionExpression") {
+          return arrowExpression;
+        } else if (jsxError != null) {
+          throw jsxError;
+        } else {
+          this.raise(typeParameters.start, "Expected an arrow function after this type parameter declaration");
+        }
+      }
+      this.state.context.pop();
+
+      return inner.apply(this, args);
+    };
+  });
+
+  // handle return types for arrow functions
+  instance.extend("parseArrow", function (inner) {
+    return function (node) {
+      if (this.match(_types.types.colon)) {
+        var state = this.state.clone();
+        try {
+          var returnType = this.flowParseTypeAnnotation();
+          if (!this.match(_types.types.arrow)) this.unexpected();
+          // assign after it is clear it is an arrow
+          node.returnType = returnType;
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            this.state = state;
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      return inner.call(this, node);
+    };
+  });
+
+  instance.extend("isClassMutatorStarter", function (inner) {
+    return function () {
+      if (this.isRelational("<")) {
+        return true;
+      } else {
+        return inner.call(this);
       }
     };
   });
@@ -420,16 +491,16 @@ exports.default = function (instance) {
 
 var _types = require("../tokenizer/types");
 
+var _context = require("../tokenizer/context");
+
 var _parser = require("../parser");
 
 var _parser2 = _interopRequireDefault(_parser);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/* eslint indent: 0 */
+var pp = _parser2.default.prototype; /* eslint indent: 0 */
 /* eslint max-len: 0 */
-
-var pp = _parser2.default.prototype;
 
 pp.flowParseTypeInitialiser = function (tok, allowLeadingPipeOrAnd) {
   var oldInType = this.state.inType;
@@ -643,7 +714,12 @@ pp.flowParseTypeParameterDeclaration = function () {
   var node = this.startNode();
   node.params = [];
 
-  this.expectRelational("<");
+  if (this.isRelational("<") || this.match(_types.types.jsxTagStart)) {
+    this.next();
+  } else {
+    this.unexpected();
+  }
+
   do {
     node.params.push(this.flowParseTypeParameter());
     if (!this.isRelational(">")) {
@@ -943,13 +1019,6 @@ pp.flowParsePrimaryType = function () {
       if (isGroupedType) {
         type = this.flowParseType();
         this.expect(_types.types.parenR);
-
-        // If we see a => next then someone was probably confused about
-        // function types, so we can provide a better error message
-        if (this.eat(_types.types.arrow)) {
-          this.raise(node, "Unexpected token =>. It looks like " + "you are trying to write a function type, but you ended up " + "writing a grouped type followed by an =>, which is a syntax " + "error. Remember, function type parameters are named so function " + "types look like (name1: type1, name2: type2) => returnType. You " + "probably wrote (type1) => returnType");
-        }
-
         return type;
       }
 
@@ -977,6 +1046,18 @@ pp.flowParsePrimaryType = function () {
       node.value = this.match(_types.types._true);
       this.next();
       return this.finishNode(node, "BooleanLiteralTypeAnnotation");
+
+    case _types.types.plusMin:
+      if (this.state.value === "-") {
+        this.next();
+        if (!this.match(_types.types.num)) this.unexpected();
+
+        node.value = -this.state.value;
+        this.addExtra(node, "rawValue", node.value);
+        this.addExtra(node, "raw", this.input.slice(this.state.start, this.state.end));
+        this.next();
+        return this.finishNode(node, "NumericLiteralTypeAnnotation");
+      }
 
     case _types.types.num:
       node.value = this.state.value;

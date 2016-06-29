@@ -229,6 +229,9 @@ function defineType(type) {
   for (var key in opts.fields) {
     var field = opts.fields[key];
 
+    if (opts.builder.indexOf(key) === -1) {
+      field.optional = true;
+    }
     if (field.default === undefined) {
       field.default = null;
     } else if (!field.validate) {

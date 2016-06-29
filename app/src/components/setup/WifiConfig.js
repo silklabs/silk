@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Image,
   Modal,
   StyleSheet,
@@ -15,7 +16,6 @@ import WifiNetworkIcon from './WifiNetworkIcon';
 import WifiNetworkSelector from './WifiNetworkSelector';
 import Selector from './Selector';
 import SetupScreen from './SetupScreen';
-import Spinner from '../Spinner';
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 const log = createLog('WifiConfig');
@@ -94,7 +94,7 @@ export default class WifiConfig extends React.Component {
       return (
         <View style={styles.ssidRow}>
           <Text style={styles.ssidLabel}>Scanning...</Text>
-          <Spinner color="white" />
+          <ActivityIndicator color="white" />
         </View>
       );
     }

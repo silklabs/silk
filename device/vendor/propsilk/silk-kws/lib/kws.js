@@ -490,7 +490,7 @@ export default class KeywordSpotting extends EventEmitter {
   async _saveAsWav() {
     if (this._saveEnabled && (netstatus.online || this._standAlone)) {
       return new Promise((resolve, reject) => {
-        stt.startRequest((error, text, confidence) => {
+        stt.startRequest((error, text = '', confidence = 0) => {
           if (error) {
             reject(error);
             return;

@@ -137,14 +137,14 @@ jvalue extract(std::weak_ptr<Instance>& instance, ExecutorToken token, char type
       value.l = valueOf(extractDouble(arg));
       break;
     case 'S':
-      value.l = jni::make_jstring(arg.getString()).release();
+      value.l = jni::make_jstring(arg.getString().c_str()).release();
       break;
     case 'A':
       value.l = ReadableNativeArray::newObjectCxxArgs(arg).release();
       break;
     case 'M':
       // HACK: Workaround for constructing ReadableNativeMap
-      value.l = ExposedReadableNativeArray(folly::dynamic::array(arg)).getMap(0);
+      value.l = ExposedReadableNativeArray(folly::dynamic::array(arg)).getMap(0).release();
       break;
     case 'X':
       value.l = extractCallback(instance, token, arg).release();

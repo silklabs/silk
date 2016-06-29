@@ -16,7 +16,7 @@ var _inherits2 = require("babel-runtime/helpers/inherits");
 var _inherits3 = _interopRequireDefault(_inherits2);
 
 exports.default = function (ast, opts, code) {
-  var gen = new CodeGenerator(ast, opts, code);
+  var gen = new Generator(ast, opts, code);
   return gen.generate();
 };
 
@@ -53,17 +53,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * user preferences, and valid output.
  */
 
-var CodeGenerator = exports.CodeGenerator = function (_Printer) {
-  (0, _inherits3.default)(CodeGenerator, _Printer);
+var Generator = function (_Printer) {
+  (0, _inherits3.default)(Generator, _Printer);
 
-  function CodeGenerator(ast, opts, code) {
-    (0, _classCallCheck3.default)(this, CodeGenerator);
+  function Generator(ast, opts, code) {
+    (0, _classCallCheck3.default)(this, Generator);
 
     opts = opts || {};
 
     var comments = ast.comments || [];
     var tokens = ast.tokens || [];
-    var format = CodeGenerator.normalizeOptions(code, opts, tokens);
+    var format = Generator.normalizeOptions(code, opts, tokens);
 
     var position = new _position2.default();
 
@@ -87,9 +87,9 @@ var CodeGenerator = exports.CodeGenerator = function (_Printer) {
    *
    * - Detects code indentation.
    * - If `opts.compact = "auto"` and the code is over 100KB, `compact` will be set to `true`.
-    */
+   */
 
-  CodeGenerator.normalizeOptions = function normalizeOptions(code, opts, tokens) {
+  Generator.normalizeOptions = function normalizeOptions(code, opts, tokens) {
     var style = "  ";
     if (code && typeof code === "string") {
       var _indent = (0, _detectIndent2.default)(code).indent;
@@ -105,7 +105,7 @@ var CodeGenerator = exports.CodeGenerator = function (_Printer) {
       compact: opts.compact,
       minified: opts.minified,
       concise: opts.concise,
-      quotes: opts.quotes || CodeGenerator.findCommonStringDelimiter(code, tokens),
+      quotes: opts.quotes || Generator.findCommonStringDelimiter(code, tokens),
       indent: {
         adjustMultilineComment: true,
         style: style,
@@ -137,7 +137,7 @@ var CodeGenerator = exports.CodeGenerator = function (_Printer) {
    */
 
 
-  CodeGenerator.findCommonStringDelimiter = function findCommonStringDelimiter(code, tokens) {
+  Generator.findCommonStringDelimiter = function findCommonStringDelimiter(code, tokens) {
     var occurences = {
       single: 0,
       double: 0
@@ -172,7 +172,7 @@ var CodeGenerator = exports.CodeGenerator = function (_Printer) {
    * Appends comments that weren't attached to any node to the end of the generated output.
    */
 
-  CodeGenerator.prototype.generate = function generate() {
+  Generator.prototype.generate = function generate() {
     this.print(this.ast);
     this.printAuxAfterComment();
 
@@ -182,5 +182,25 @@ var CodeGenerator = exports.CodeGenerator = function (_Printer) {
     };
   };
 
-  return CodeGenerator;
+  return Generator;
 }(_printer2.default);
+
+/**
+ * We originally exported the Generator class above, but to make it extra clear that it is a private API,
+ * we have moved that to an internal class instance and simplified the interface to the two public methods
+ * that we wish to support.
+ */
+
+var CodeGenerator = exports.CodeGenerator = function () {
+  function CodeGenerator(ast, opts, code) {
+    (0, _classCallCheck3.default)(this, CodeGenerator);
+
+    this._generator = new Generator(ast, opts, code);
+  }
+
+  CodeGenerator.prototype.generate = function generate() {
+    return this._generator.generate();
+  };
+
+  return CodeGenerator;
+}();

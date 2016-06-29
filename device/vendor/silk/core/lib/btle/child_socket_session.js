@@ -21,7 +21,8 @@ import BluetoothStream from './bluetooth_stream';
 import createLog from '../log';
 import api from '../api';
 import * as Metrics from '../metrics/btle';
-import {getboolprop, playSound} from 'silk-sysutils';
+import {getboolprop} from 'silk-sysutils';
+import player from 'silk-audioplayer';
 
 import type {Peripheral} from 'noble';
 import type SocketScanner from './socket_scanner';
@@ -121,7 +122,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
 
       heartbeatStream.on(`flatline`, this._onFlatline);
       if (HEARTBEAT_SOUNDS_ENABLED) {
-        heartbeatStream.on(`heartbeat`, () => playSound(HEARTBEAT_SOUND_FILE));
+        heartbeatStream.on(`heartbeat`, () => player.play(HEARTBEAT_SOUND_FILE));
       }
       heartbeatStream.monitorHeartbeats = true;
 
@@ -179,7 +180,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     this.emit(`error`, error);
 
     if (HEARTBEAT_SOUNDS_ENABLED) {
-      playSound(FLATLINE_SOUND_FILE);
+      player.play(FLATLINE_SOUND_FILE);
     }
   };
 

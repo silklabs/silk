@@ -21,6 +21,7 @@ import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import mkdirp from 'mkdirp-promise';
 import netstatus from 'silk-netstatus';
 import stt from 'silk-stt';
+import player from 'silk-audioplayer';
 
 import type { VoiceActivityDetector } from 'silk-vad';
 
@@ -430,7 +431,7 @@ export default class KeywordSpotting extends EventEmitter {
    */
   _playHotKeywordSound() {
     if (this._standAlone) {
-      return util.playSound(path.join(__dirname, '..', 'media',
+      return player.play(path.join(__dirname, '..', 'media',
           'hotkeyword_detected.mp3'));
     } else {
       return Promise.resolve();

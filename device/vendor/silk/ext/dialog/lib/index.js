@@ -21,6 +21,7 @@ import say from 'silk-say';
 import fs from 'fs';
 import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
+import player from 'silk-audioplayer';
 
 import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
 import type { Env, Camera } from 'silk-exttest';
@@ -35,9 +36,9 @@ type InputEventCallback = (event: { keyId: string }) => void;
 type SpeechEventCallback = (stream: Buffer, finished: boolean) => void;
 type InterpretEndCallback = (error: ?Error) => void;
 
-const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.mp3');
-const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.mp3');
-const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'motion_detected.mp3');
+const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.wav');
+const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.wav');
+const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'error.wav');
 
 const NETWORK_DOWN_SOUND_FILE = 'network_down.mp3';
 const NETWORK_ERROR_MESSAGE = 'Unable to talk to the server, please try again';
@@ -121,6 +122,19 @@ class Dialog {
     } else {
       this._input.on('down', this._onKeyPress);
     }
+
+    this._init();
+  }
+
+  async _init() {
+    // Preload sounds to reduce run time play latency
+    try {
+      await player.load(KEYWORD_DETECTED_SOUND_FILE);
+      await player.load(SPEECH_END_SOUND_FILE);
+      await player.load(ERROR_SOUND_FILE);
+    } catch (err) {
+      log.error(err);
+    }
   }
 
   /**
@@ -171,7 +185,7 @@ class Dialog {
   _playSound(file: string) {
     log.debug(`Playing ${file}`);
     this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
-      return util.playSound(file);
+      return player.play(file);
     })
     .catch(err => {
       log.error(`cannot play ${file}, error: `, err);
@@ -232,7 +246,7 @@ class Dialog {
     })
     .catch(err => {
       log.error(`Failed to speak text:`, err);
-      util.playSound(ERROR_SOUND_FILE);
+      this._playSound(ERROR_SOUND_FILE);
       finish(err);
     });
   };

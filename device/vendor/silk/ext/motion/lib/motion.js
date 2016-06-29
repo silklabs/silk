@@ -13,6 +13,7 @@ import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
 import MogSubtractor from './mogsubtractor';
 import * as util from 'silk-sysutils';
+import player from 'silk-audioplayer';
 
 import type { Env, Log, Camera, Timeline } from 'silk-exttest';
 type PreviewType = (when: number) => void;
@@ -49,7 +50,7 @@ const SOUND_FILE = path.join(__dirname, '../motion_detected.mp3');
  */
 function _playSound() {
   if (soundEnabled) {
-    util.playSound(SOUND_FILE);
+    player.play(SOUND_FILE);
   }
 }
 

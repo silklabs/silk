@@ -1,6 +1,7 @@
 // All the various native stuff we need ...
 
 import * as native from './native';
+import Blob from './blob';
 
 import {EventEmitter} from 'events';
 
@@ -15,22 +16,22 @@ export {
 } from './native';
 
 function assignGetters(constructor, list) {
-  for (let propertyName of list) {
+  list.forEach((propertyName) => {
     Object.defineProperty(constructor.prototype, propertyName, {
       enumerable: true,
       get: function () {
         return this.$target[propertyName];
       },
     });
-  }
+  });
 }
 
 function assignMethods(constructor, list) {
-  for (let methodName of list) {
+  list.forEach((methodName) => {
     constructor.prototype[methodName] = function(...args) {
       return this.$target[methodName](...args);
     };
-  }
+  });
 }
 
 function dispatchEvent(target, name, ...data) {
@@ -48,7 +49,7 @@ const DataChannelEvents = [
   'error',
 ];
 
-const RTCPeerConnecitonEvents = [
+const RTCPeerConnectionEvents = [
   'signalingstatechange',
   'iceconnectionstatechange',
   'icecandidate',
@@ -65,7 +66,6 @@ const DataChannelGetters = [
   'protocol',
   'readyState',
   'bufferedAmount',
-  'binaryType',
   'maxPacketLifeType',
   'maxRetransmits',
   'negotiated',
@@ -97,11 +97,20 @@ const RTCPeerConnectionMethods = [
 
 const DataChannelMethods = [
   'close',
-  'send'
+  'send',
 ];
 
+const DataChannelEventHandlers = {
+  message(event) {
+    if (this.binaryType === 'blob' && event.data instanceof ArrayBuffer) {
+      event.data = new Blob([event.data]);
+    }
+    dispatchEvent(this, 'message', event);
+  },
+};
+
 const RTCPeerConnectionEventHandlers = {
-  datachannel: function (event) {
+  datachannel(event) {
     event.channel = new DataChannel(event.channel);
     dispatchEvent(this, 'datachannel', event);
   },
@@ -126,12 +135,21 @@ class DataChannel extends EventTarget {
   constructor(target) {
     super();
     this.$target = target;
-    for (let eventName of DataChannelEvents) {
-      const method = (...data) => {
-        dispatchEvent(this, eventName, ...data);
-      };
-      this.$target[`on${eventName}`] = method;
-    }
+    DataChannelEvents.forEach((eventName) => {
+      let method = DataChannelEventHandlers[eventName];
+      if (!method) {
+        method = (...data) => dispatchEvent(this, eventName, ...data);
+      }
+      this.$target[`on${eventName}`] = method.bind(this);
+    });
+  }
+
+  get binaryType() {
+    return this._binaryType || this.$target.binaryType;
+  }
+
+  set binaryType(value) {
+    this._binaryType = value;
   }
 }
 assignGetters(DataChannel, DataChannelGetters);
@@ -148,15 +166,13 @@ export class RTCPeerConnection extends EventTarget {
     super();
     this.$target = native.RTCPeerConnection(config, constraints);
 
-    for (let eventName of RTCPeerConnecitonEvents) {
+    RTCPeerConnectionEvents.forEach((eventName) => {
       let method = RTCPeerConnectionEventHandlers[eventName];
       if (!method) {
-        method = (...data) => {
-          dispatchEvent(this, eventName, ...data);
-        };
+        method = (...data) => dispatchEvent(this, eventName, ...data);
       }
       this.$target[`on${eventName}`] = method.bind(this);
-    }
+    });
   }
 
   createDataChannel(...args) {

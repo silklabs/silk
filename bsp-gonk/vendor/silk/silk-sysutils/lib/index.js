@@ -331,3 +331,38 @@ export function playSound(fileName: string): Promise<void> {
     }
   });
 }
+
+/**
+ * Wrapper around process.uptime that returns the time in total milliseconds
+ * instead of seconds.
+ *
+ * @param {?number} start start time in milliseconds
+ * @return {number} current uptime in milliseconds if the start time wasn't
+ *                  specified or a diff of start time and the current uptime
+ *                  if the start time was specified
+ * @memberof silk-sysutils
+ * @example
+ * const util = require('silk-sysutils');
+ *
+ * const start = util.uptime();
+ * const diff = util.uptime(start);
+ */
+export function uptime(start?: number): number {
+  let end = process.hrtime();
+  let endMs = (end[0] * 1000) + (end[1] / 1000000);
+
+  let diffMs = endMs - (start ? start : 0);
+  return diffMs;
+}
+
+/**
+ * Return a random number between the provided range
+ *
+ * @param {number} min Minimum number
+ * @param {number} max Maximum number
+ * @return {number} random number
+ * @memberof silk-sysutils
+ */
+export function randBetween(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}

@@ -118,7 +118,7 @@ class PandoHubUi {
     try {
       fs.writeFileSync(filepath, brightness.toString());
     } catch (e) {
-      log.warning(e.stack || e);
+      log.warn(e.stack || e);
     }
   }
 

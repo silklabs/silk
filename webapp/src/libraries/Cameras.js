@@ -264,9 +264,8 @@ class Camera extends EventEmitter {
       this._socket.emit('join', previewStream);
 
       this._queue = new PreviewQueue(this.name, msg => {
-        const view = new Uint8Array(msg.frame);
-        if (view.length) {
-          this.previewImage = new Blob([view], { type: 'image/jpg' });
+        if (msg.frame.size) {
+          this.previewImage = msg.frame;
           this.previewTimestamp = new Date(msg.when);
           this.emit('previewImage', this.previewImage);
         }
@@ -295,7 +294,11 @@ class Camera extends EventEmitter {
     if (typeof ack === 'function') {
       ack();
     }
-    if (!msg || !msg.frame || !msg.frame.byteLength || !msg.when) {
+    if (msg.frame instanceof ArrayBuffer) {
+      // socket.io still sends ArrayBuffer
+      msg.frame = new Blob([msg.frame], { type: 'image/jpg' });
+    }
+    if (!msg || !msg.frame || !msg.frame.size || !msg.when) {
       log.warn('Received bad preview message', msg);
       return;
     }

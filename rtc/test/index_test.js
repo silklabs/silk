@@ -1,5 +1,6 @@
 import assert from 'assert';
 import eventToPromise from 'event-to-promise';
+import Blob from 'node-webrtc/lib/blob';
 import deviceApi from 'silk-device-core/lib/api';
 import Connections from 'silk-device-core/lib/connections';
 import createContext from 'silk-server/test/server/context';
@@ -8,6 +9,9 @@ import crypto from 'crypto';
 import sha256 from 'silk-utils/sha256';
 
 import { call } from 'silk-rtc';
+
+// Inject Blob into global scope.
+global.Blob = Blob;
 
 suite('silk-rtc', function() {
   const context = createContext();
@@ -193,8 +197,10 @@ suite('silk-rtc', function() {
 
     assert.equal(payload.string, 'woot');
     assert.equal(payload.number, '1');
-    assert.equal(sha256(new Buffer(payload.large)), expectedLarge);
-    assert.equal(sha256(new Buffer(payload.binary)), expectedBinary);
+    assert(payload.large instanceof Blob);
+    assert(payload.binary instanceof Blob);
+    assert.equal(sha256(payload.large.buffer), expectedLarge);
+    assert.equal(sha256(payload.binary.buffer), expectedBinary);
   });
 
 });

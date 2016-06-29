@@ -2,6 +2,7 @@ import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   ActionSheetIOS,
+  ActivityIndicator,
   Alert,
   Image,
   StyleSheet,
@@ -11,9 +12,7 @@ import {
 
 import PreviewQueue from '../libraries/PreviewQueue';
 import SocketIO from '../libraries/SocketIO';
-
 import SocketIOComponent from './abstract/SocketIOComponent';
-import Spinner from './Spinner';
 
 const DEVICE_RECONNECT_PREVIEW_DELAY_MS = 1000;
 const DEVICE_PREVIEW_TIMEOUT_MS = 10000;
@@ -167,7 +166,7 @@ export default class CameraPreview extends SocketIOComponent {
         </Text>
       );
     }
-    return <Spinner color="white" />;
+    return <ActivityIndicator color="white" />;
   }
 
   render() {

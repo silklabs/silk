@@ -11,7 +11,6 @@ import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
 import { Ui } from 'silk-core/lib/ui';
 import createLog from 'silk-log/device';
-import * as util from 'silk-sysutils';
 import wifi from 'silk-wifi';
 import Camera from 'silk-camera';
 import invariant from 'assert';
@@ -39,7 +38,6 @@ class Say {
 }
 
 export type Log = typeof log;
-export type Util = typeof util;
 export type { Camera };
 export type { Say };
 export type { Sensors };
@@ -58,7 +56,6 @@ export default class Env {
   timeline: Timeline;
   sensors: Sensors;
   say: Say;
-  util: typeof util;
   _previewCount: number;
   _previewTimeout: number | null;
   _log: Log;
@@ -70,7 +67,6 @@ export default class Env {
     this.server = new Server(this.connections);
     this.outbox = createOutbox(netstatus);
     this.timeline = new Timeline(this.server, this.outbox, this.camera);
-    this.util = util;
 
     this.camera.setPreviewFrame = (when, file) => this._loadPreviewFrame(when, file);
     this.camera.startPlayback = (clipDirectory, rate = 'slow', callback) =>

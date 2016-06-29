@@ -6,7 +6,7 @@
 
 import api from 'silk-core/lib/api';
 import Server from 'silk-core/lib/server';
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import https from 'https';
 import URL from 'url';
 import eventToPromise from 'event-to-promise';

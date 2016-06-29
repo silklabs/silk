@@ -8,6 +8,7 @@ import FaceDetector from './face_detector';
 import FaceRecognizer from './face_recognizer';
 import FaceTracker from './face_tracker';
 import * as config from './face_config';
+import * as sysutils from 'silk-sysutils';
 
 // Primarily for demoing face training. If enabled, clear trained faces
 // after N seconds of not detecting a face.
@@ -16,7 +17,6 @@ const FACE_AUTOCLEAR_TIMER_SECONDS = 30;
 
 let camera;
 let log;
-let sysutils;
 let timeline;
 
 class Main {
@@ -27,7 +27,6 @@ class Main {
   constructor(env) {
     camera = env.camera;
     log = env.log;
-    sysutils = env.util;
     timeline = env.timeline;
 
     this._startFaceProcessing();

@@ -7,6 +7,7 @@
 import movingAverage from 'moving-average';
 import HeartRate from './heartrate';
 import * as config from './face_config';
+import * as util from 'silk-sysutils';
 
 import type { Env, Log } from 'silk-exttest/interface/env';
 
@@ -83,7 +84,7 @@ export class Face {
     this.faceStart = Date.now();
     this.movement = FACE_MOVEMENT_NOT_CHANGED;
     this._doneCollectingFaces = false;
-    this._movementTrackingEnabled = env.util.getboolprop(
+    this._movementTrackingEnabled = util.getboolprop(
         FACE_MOVEMENT_TRACKING_ENABLED_PROP, false);
 
     // Calculate exponential moving average over FACE_AVERAGE_DURATION

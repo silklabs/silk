@@ -7,7 +7,7 @@
  * @flow
  */
 
-import * as sysutils from './sysutils';
+import * as sysutils from 'silk-sysutils';
 import createLog from './log';
 
 /**

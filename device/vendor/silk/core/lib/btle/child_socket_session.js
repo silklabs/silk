@@ -21,7 +21,7 @@ import BluetoothStream from './bluetooth_stream';
 import createLog from '../log';
 import api from '../api';
 import * as Metrics from '../metrics/btle';
-import {getboolprop, playSound} from '../sysutils';
+import {getboolprop, playSound} from 'silk-sysutils';
 
 import type {Peripheral} from 'noble';
 import type SocketScanner from './socket_scanner';

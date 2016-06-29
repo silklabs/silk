@@ -43,7 +43,7 @@ import Battery from 'silk-battery';
 
 import wifi from 'silk-wifi';
 import ntp from 'silk-ntp';
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import update from 'silk-update';
 import config from './config';
 import silkconfig from 'silk-config';

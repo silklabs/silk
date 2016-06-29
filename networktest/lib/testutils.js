@@ -5,7 +5,7 @@
  */
 
 import createLog from 'silk-log';
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 
 const log = createLog('testUtils');
 

@@ -21,7 +21,6 @@ module.exports = function(grunt) {
         files: {
           'lib/btle/scanner.js': '../../lib/btle/scanner.js',
           'lib/api.js': '../../lib/api.js',
-          'lib/sysutils.js': '../../lib/sysutils.js',
           'lib/log.js': '../../lib/log.js',
         }
       }

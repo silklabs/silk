@@ -6,9 +6,9 @@
 
 import path from 'path';
 import config from 'silk-config';
+import * as util from 'silk-sysutils';
 
 let log;
-let util;
 
 // Adjust clap and loud sound detection sensititivty. Will need to make
 // this more user friendly and make this a single setting, but for now,
@@ -31,7 +31,6 @@ class Clapper {
   constructor(env) {
     this._env = env;
     log = env.log;
-    util = env.util;
 
     // Platform specific constants
     this._riseEnergyDelta = util.getintprop(RISE_ENERGY_DELTA_PROP, 25000);

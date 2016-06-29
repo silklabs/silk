@@ -7,7 +7,7 @@
  */
 
 import assert from 'assert';
-import { getboolprop } from '../sysutils';
+import { getboolprop } from 'silk-sysutils';
 import makeLog from '../log';
 
 const log = makeLog('ranger');

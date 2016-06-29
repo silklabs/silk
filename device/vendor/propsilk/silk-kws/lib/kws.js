@@ -59,6 +59,7 @@ const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG
 // reason. Also further away the device is lower the confidence is. Keeping
 // the threshold to lower value to catch far utterances too.
 const THRESHOLD = 80; // Ignore predictions with probability lower than threshold
+const STT_CONFIDENCE_THRESHOLD = 0.35;
 
 const SAVE_KEYWORD_WAV = 'persist.silk.kws.save';
 const VAD_ENABLED_PROP = 'persist.silk.kws.vad.enabled';
@@ -489,21 +490,28 @@ export default class KeywordSpotting extends EventEmitter {
   async _saveAsWav() {
     if (this._saveEnabled && (netstatus.online || this._standAlone)) {
       return new Promise((resolve, reject) => {
-        stt.startRequest((error, text = '') => {
+        stt.startRequest((error, text, confidence) => {
           if (error) {
             reject(error);
             return;
           }
-          log.debug(`Speech to text service detected: ${text}`);
+          log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
           let dir = (keywordTexts.indexOf(text) !== -1) ? POS_KWS_DIR : NEG_KWS_DIR;
-          resolve(dir);
+          resolve([dir, confidence]);
         });
         log.debug(`Converting keyword to text`);
         let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
         stt.write(wavData);
         stt.finish();
       })
-      .then(dir => this._writeWavFile(dir));
+      .then(([dir, confidence]) => {
+        // Only trust the results if the confidence higher than the threshold
+        if (confidence >= STT_CONFIDENCE_THRESHOLD) {
+          return this._writeWavFile(dir);
+        } else {
+          log.warn(`Not saving the keyword ${confidence}`);
+        }
+      });
     }
   }
 

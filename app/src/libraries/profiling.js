@@ -2,7 +2,7 @@ import { ec as ECDH } from 'elliptic';
 import { Systrace } from 'react-native';
 
 import { RssiSmoother } from 'silk-api';
-import HttpClient from 'silk-http/src/client';
+import HttpClient from 'silk-http-client';
 import * as CryptoModule from 'silk-crypto';
 import * as StreamsModule from 'silk-streams';
 

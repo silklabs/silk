@@ -8,25 +8,17 @@
  */
 import invariant from 'assert';
 import URL from 'url';
-import HttpClient from 'silk-http/src/client';
-import { Headers } from 'silk-http/src/fetch';
+import HttpClient from 'silk-http-client';
+import { Headers } from 'silk-fetch';
 import formatURL from 'silk-utils/url_format';
 
 import * as tableSigner from './signer/table';
 import tableFilter from './table_filter';
 import connectionString from './connection_string';
 
-import type {
-  Request,
-} from 'silk-http/src/client';
-
-import type {
-  Sas,
-} from './signer/table';
-
-import type {
-  ConnectionString,
-} from './connection_string';
+import type {Request} from 'silk-http-client';
+import type {Sas} from './signer/table';
+import type {ConnectionString} from './connection_string';
 
 type AuthProvider = SharedAccessTokenAuth | SharedKeyAuth;
 type RequestIdFactory = (req: Request) => string;

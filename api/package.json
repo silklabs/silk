@@ -7,11 +7,12 @@
   "symlinkDependencies": {
     "api-schema": "/api-schema",
     "eslint-config-silk": "/pub/eslint-config",
+    "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/pub/version",
     "silk-crypto": "/crypto",
-    "silk-log": "/pub/log",
-    "silk-babeldeps": "/babeldeps",
-    "silk-http": "/http"
+    "silk-fetch": "/fetch",
+    "silk-http-client": "/http-client",
+    "silk-log": "/pub/log"
   },
   "dependencies": {
     "babel-runtime": "6.9.0",

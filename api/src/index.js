@@ -3,6 +3,7 @@
  */
 import invariant from 'assert';
 import URL from 'url';
+import fetch, {Headers} from 'silk-fetch';
 import createLog from 'silk-log';
 
 import VIP from './vip';
@@ -18,10 +19,9 @@ import MetricsAgent from './metrics_agent';
 
 import loadConfig from './config';
 import devAccount from './dev_account';
-import fetch, {Headers} from './fetch';
 
+import type {Request} from 'silk-http-client';
 import type {StringToStringDict} from './metric';
-import type {Request} from 'silk-http/src/client';
 
 // New consumers should refer to "id" as AccessToken.
 export { default as AccessToken } from './access_token' ;

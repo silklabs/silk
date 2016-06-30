@@ -23,10 +23,10 @@
     "browser"
   ],
   "symlinkDependencies": {
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-http-client": "/http-client",
     "silk-log": "/pub/log",
-    "silk-utils": "/utils",
-    "silk-http": "/http",
-    "eslint-config-silk": "/pub/eslint-config"
+    "silk-utils": "/utils"
   },
   "devDependencies": {
     "babel-eslint": "6.0.4",

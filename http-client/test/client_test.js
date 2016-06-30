@@ -3,7 +3,7 @@ import express from 'express';
 import {json as jsonParser} from 'body-parser';
 import URL from 'url';
 
-import Client from '../src/client';
+import Client from '..';
 
 function sleep(amount) {
   return new Promise((accept) => {

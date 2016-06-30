@@ -19,7 +19,7 @@ import createLog from './log';
 import LogcatStream from './streams/logcat';
 import LogcatToSyslog from './streams/logcat_to_syslog';
 import PapertrailOp from './outbox/papertrail_operation';
-import { getboolprop } from './sysutils';
+import { getboolprop } from 'silk-sysutils';
 
 const log = createLog('logcat');
 

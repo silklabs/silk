@@ -14,7 +14,7 @@ import eventToPromise from 'event-to-promise';
 import mkdirp from 'mkdirp-promise';
 import net from 'net';
 import wrapNoEntity from './fs/wrap_no_entity';
-import { getboolprop } from './sysutils';
+import { getboolprop } from 'silk-sysutils';
 import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
 import byline from 'byline';

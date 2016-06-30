@@ -18,7 +18,7 @@ import BufferStream from './streams/buffer';
 import EventTracker from './eventtracker';
 import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import createLog from './log';
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 
 const log = createLog('timeline');
 

@@ -14,7 +14,7 @@
  * @namespace
  */
 
-import { getprop } from './sysutils';
+import { getprop } from 'silk-sysutils';
 import { spawn } from 'child_process';
 import createLog from './log';
 import Store from './streams/store';

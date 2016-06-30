@@ -5,9 +5,9 @@
  */
 
 let log;
-let util;
 import { EventEmitter } from 'events';
 import { fft } from 'kissfft';
+import * as util from 'silk-sysutils';
 
 // Url to send audio diag data. Consider disabled if prop not set
 const AUDIO_DIAG_URL_PROP = 'persist.silk.audioDiagUrl';
@@ -355,6 +355,5 @@ class AudioDiag extends EventEmitter {
 
 module.exports = env => {
   log = env.log;
-  util = env.util;
   return { WindowHistory, FftProcessor, AudioDiag, WavFileSaver };
 };

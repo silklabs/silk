@@ -18,7 +18,7 @@ import api from '../api';
 import createDeferred from '../deferred';
 import createLog from '../log';
 import fork from '../process_fork';
-import {getboolprop, getintprop, getstrprop} from '../sysutils';
+import {getboolprop, getintprop, getstrprop} from 'silk-sysutils';
 import getDeviceId from '../deviceid';
 import * as Metrics from '../metrics/btle';
 import ParentSocketSession from './parent_socket_session';

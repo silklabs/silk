@@ -7,7 +7,7 @@
  */
 
 import createApi from 'silk-api';
-import {getprop} from './sysutils';
+import {getprop} from 'silk-sysutils';
 import version from 'silk-core-version';
 
 export default createApi({

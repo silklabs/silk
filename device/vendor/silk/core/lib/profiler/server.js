@@ -11,7 +11,7 @@ import eventToPromise from 'event-to-promise';
 import createLog from '../log';
 import path from 'path';
 import fs from 'mz/fs';
-import { getboolprop } from '../sysutils';
+import { getboolprop } from 'silk-sysutils';
 
 const PROF_ENABLED_PROP = 'persist.silk.profiling.enabled';
 const PROF_ENABLED = getboolprop(PROF_ENABLED_PROP);

@@ -7,7 +7,7 @@
  * @flow
  */
 
-import { getintprop } from '../sysutils';
+import { getintprop } from 'silk-sysutils';
 import invariant from 'assert';
 import { BTLE_SOCKET_UUIDS } from 'silk-api';
 import { EventEmitter } from 'events';

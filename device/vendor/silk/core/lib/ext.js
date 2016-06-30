@@ -11,7 +11,7 @@ import createLog from './log';
 import fs from 'mz/fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import wrapNoEntity from './fs/wrap_no_entity';
 import modwatcher from 'silk-modwatcher';
 
@@ -535,84 +535,6 @@ class Env extends EventEmitter {
         server.send(event, data);
       };
     }
-
-    /**
-     * Class that provides utiltiy methods
-     * @memberof Env
-     */
-    this.util = {
-     /**
-       * Play a sound file
-       *
-       * @param {string} fileName Name of the audio file to play
-       * @memberof Env.util
-       * @instance
-       */
-      playSound: fileName => util.playSound(fileName),
-
-      /**
-       * Get value of an android property as boolean
-       *
-       * @param {string} prop Name of the property to fetch
-       * @param {boolean} defaultValue Default value to use if property is not
-       *                  available
-       * @return {boolean}
-       * @memberof Env.util
-       * @instance
-       */
-      getboolprop: (prop, defaultValue) => {
-        return util.getboolprop(prop, defaultValue);
-      },
-
-      /**
-       * Get value of an android property as integer
-       *
-       * @param {string} prop Name of the property to fetch
-       * @param {integer} defaultValue Default value to use if property is not
-       *                  available
-       * @return {integer}
-       * @memberof Env.util
-       * @instance
-       */
-      getintprop: (prop, defaultValue) => {
-        return util.getintprop(prop, defaultValue);
-      },
-
-      /**
-       * Get value of an android property
-       *
-       * @param {string} prop Name of the property to fetch
-       * @param {string} defaultValue Default value to use if property is not
-       *                  available
-       * @return {PropTypes}
-       * @memberof Env.util
-       * @instance
-       */
-      getprop: (prop, defaultValue) => {
-        return util.getprop(prop, defaultValue);
-      },
-
-      /**
-       * Set value of an android property as boolean
-       *
-       * @param {string} prop Name of the property to set
-       * @param {PropTypes} value Property value
-       * @memberof Env.util
-       * @instance
-       */
-      setprop: (prop, value) => {
-        util.setprop(prop, value);
-      },
-
-      /**
-       * Get an instance of property watcher
-       *
-       * @property {PropWatcher} propWatcher
-       * @memberof Env.util
-       * @instance
-       */
-      propWatcher: util.propWatcher,
-    };
   }
 
   /**

@@ -12,13 +12,13 @@ import * as silkcv from 'silk-cv';
 import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
 import MogSubtractor from './mogsubtractor';
+import * as util from 'silk-sysutils';
 
-import type { Env, Log, Util, Camera, Timeline } from 'silk-exttest';
+import type { Env, Log, Camera, Timeline } from 'silk-exttest';
 type PreviewType = (when: number) => void;
 
 let camera: Camera;
 let log: Log;
-let util: Util;
 let timeline: Timeline;
 
 /**
@@ -67,7 +67,6 @@ class Motion {
     this._env = env;
     camera = this._env.camera;
     log = this._env.log;
-    util = this._env.util;
     timeline = this._env.timeline;
     soundEnabled = util.getboolprop(MOTION_PLAY_SOUND_PROP);
 

@@ -10,7 +10,7 @@ import assert from 'assert';
 import createLog from '../log';
 import * as Joi from 'joi';
 import SessionListenerBase from './session_listener_base';
-import { getboolprop } from '../sysutils';
+import { getboolprop } from 'silk-sysutils';
 import sensors from 'silk-sensors';
 
 const log = createLog('config-session-listener');

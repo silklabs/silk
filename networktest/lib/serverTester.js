@@ -6,7 +6,7 @@
 
 import DeviceSimulator from './deviceSimulator';
 import createLog from 'silk-log';
-import * as util from './sysutils';
+import * as util from 'silk-sysutils';
 import {LatencyStats, Repeater} from './testutils';
 
 const log = createLog('deviceTester');

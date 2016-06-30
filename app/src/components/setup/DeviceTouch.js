@@ -8,14 +8,13 @@ import SetupScreen from './SetupScreen';
 
 import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
-const AFTER_TOUCH_WAIT_MS = 250;
-
 export default class DeviceTouch extends AsyncComponent {
 
   static propTypes = {
     bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
     onCancel: React.PropTypes.func.isRequired,
     onSave: React.PropTypes.func.isRequired,
+    onMounted: React.PropTypes.func.isRequired,
   };
 
   state = {
@@ -33,9 +32,7 @@ export default class DeviceTouch extends AsyncComponent {
   }
 
   componentDidMount() {
-    if (this.props.bleDeviceSession.deviceId) {
-      this._advance();
-    }
+    this.props.onMounted();
   }
 
   componentWillUnmount() {
@@ -63,20 +60,7 @@ export default class DeviceTouch extends AsyncComponent {
     this.setStateAsync({
       touched: true,
     });
-    setTimeout(() => {
-      if (!this.mounted) {
-        return;
-      }
-      this._advance();
-    }, AFTER_TOUCH_WAIT_MS);
   };
-
-  _advance() {
-    this.props.navigator.pushAsync({
-      name: 'WifiConfig',
-      props: this.props,
-    });
-  }
 
   render() {
     let phone;

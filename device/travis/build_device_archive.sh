@@ -49,6 +49,7 @@ dir_exists()
 
 dir_exists "$ANDROID_BUILD_TOP" "Please run envsetup.sh first"
 dir_exists "$ANDROID_PRODUCT_OUT" "Please run lunch first"
+dir_exists "board/$SILK_BOARD" "Please run lunch first"
 
 if [[ -z $TARGET_PRODUCT ]]; then
   echo "Error: TARGET_PRODUCT does not exist, need some |lunch|"
@@ -78,7 +79,38 @@ set -x
 cd $(dirname $0)
 adb reboot-bootloader
 fastboot oem unlock
+
+FULL=false
+WIPE=false
+if [ "$1" = "-f" ]; then
+  shift
+  if [ -d nhlos ]; then
+    FULL=true
+    WIPE=true
+  else
+    echo "No nhlos/, -f ignored"
+  fi
+fi
+if [ "$1" = "-w" ]; then
+  WIPE=true
+fi
+
+
 set -e
+if $FULL; then
+  cd nhlos
+  # TODO: This is specific to 8909, will need to generalize eventually...
+  fastboot flash partition gpt_both0.bin
+  fastboot flash modem NON-HLOS.bin
+  fastboot flash sbl1 sbl1.mbn
+  fastboot flash rpm rpm.mbn
+  fastboot flash tz tz.mbn
+  fastboot flash sec sec.dat
+  fastboot flash persist persist.img
+  fastboot flash aboot emmc_appsboot.mbn
+  cd ..
+fi
+
 fastboot flash boot boot.img
 fastboot flash system system.img
 if [ -r recovery.img ]; then
@@ -88,7 +120,7 @@ if [ -r splash.img ]; then
   fastboot flash splash splash.img
 fi
 
-if [ "$1" = "-w" ]; then
+if $WIPE; then
   echo wipe user data/cache partitions
   fastboot format userdata
   fastboot format cache
@@ -112,7 +144,7 @@ EOF
 # Hub device config
 
 echo Flash the build and clear userdata/cache partitions
-$(dirname $0)/flash.sh -w
+$(dirname $0)/flash.sh $@ -w
 
 echo Waiting for device to boot
 adb wait-for-device
@@ -154,7 +186,7 @@ EOF
 # Camera device config
 
 echo Flash the build and clear userdata/cache partitions
-$(dirname $0)/flash.sh -w
+$(dirname $0)/flash.sh $@ -w
 
 echo Waiting for device to boot
 adb wait-for-device
@@ -175,6 +207,10 @@ EOF
   chmod +x $archiveDir/$TARGET_PRODUCT/flash_camera.sh
 
   cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$TARGET_PRODUCT
+
+  if [[ -d board/$SILK_BOARD/nhlos ]]; then
+    cp -r board/$SILK_BOARD/nhlos $archiveDir/$TARGET_PRODUCT
+  fi
 
 elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then
   # This is a qemu full device build

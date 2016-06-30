@@ -387,7 +387,7 @@ export default class Devices extends AsyncComponent {
     });
 
     log.debug('Launching device setup UI.');
-    const screen = bleDeviceSession.deviceId ? 'DeviceTouch' : 'WifiConfig';
+    const screen = bleDeviceSession.deviceId ? 'WifiConfig' : 'DeviceTouch';
     this.props.navigator.pushAsync({
       name: screen,
       props: {

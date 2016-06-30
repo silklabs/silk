@@ -20,6 +20,18 @@
 		352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCEBA1D18BB810056D623 /* libSLKCrypto.a */; };
 		357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357AF0361D20E27E0075394A /* libSLKBlobs.a */; };
 		3582BA421D0278D2000C6830 /* TPYHelloWorldDemoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3582BA411D0278D2000C6830 /* TPYHelloWorldDemoView.m */; };
+		35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222301CB493710015FD5C /* libRCTWebRTC.a */; };
+		35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222791CB49DAE0015FD5C /* libWebRTC.a */; };
+		35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222901CB4A0350015FD5C /* libstdc++.tbd */; };
+		35A222941CB4A0510015FD5C /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222931CB4A0510015FD5C /* libsqlite3.tbd */; };
+		35A222961CB4A0580015FD5C /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222951CB4A0580015FD5C /* VideoToolbox.framework */; };
+		35A222981CB4A0650015FD5C /* libc.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222971CB4A0650015FD5C /* libc.tbd */; };
+		35A2229A1CB4A07D0015FD5C /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222991CB4A07D0015FD5C /* CoreVideo.framework */; };
+		35A2229C1CB4A0820015FD5C /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A2229B1CB4A0820015FD5C /* CoreAudio.framework */; };
+		35A2229E1CB4A0870015FD5C /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A2229D1CB4A0870015FD5C /* GLKit.framework */; };
+		35A222A01CB4A08D0015FD5C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A2229F1CB4A08D0015FD5C /* CoreGraphics.framework */; };
+		35A222A21CB4A0940015FD5C /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222A11CB4A0940015FD5C /* AudioToolbox.framework */; };
+		35A222A41CB4A09A0015FD5C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222A31CB4A09A0015FD5C /* AVFoundation.framework */; };
 		35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C03E901CC02577008EF119 /* NotImplemented.swift */; };
 		35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1A55C1C5042B400551FC6 /* DashSegmentPlayer.swift */; };
 		35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 35C1A55D1C5042B400551FC6 /* DashSegmentPlayerManager.m */; };
@@ -155,6 +167,13 @@
 			proxyType = 2;
 			remoteGlobalIDString = 358F4ED71D1E81A9004DF814;
 			remoteInfo = SLKBlobs;
+		};
+		35A2222F1CB493710015FD5C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 35A2221F1CB493700015FD5C;
+			remoteInfo = RCTWebRTC;
 		};
 		5758F15C1B5DD38D00C18E5D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -298,6 +317,18 @@
 		357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../pub/react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
 		3582BA401D0278D2000C6830 /* TPYHelloWorldDemoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPYHelloWorldDemoView.h; sourceTree = "<group>"; };
 		3582BA411D0278D2000C6830 /* TPYHelloWorldDemoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPYHelloWorldDemoView.m; sourceTree = "<group>"; };
+		35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebRTC.xcodeproj; path = "../node_modules/react-native-webrtc/ios/RCTWebRTC.xcodeproj"; sourceTree = "<group>"; };
+		35A222791CB49DAE0015FD5C /* libWebRTC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWebRTC.a; path = "../node_modules/react-native-webrtc/ios/libjingle_peerconnection/libWebRTC.a"; sourceTree = "<group>"; };
+		35A222901CB4A0350015FD5C /* libstdc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libstdc++.tbd"; path = "usr/lib/libstdc++.tbd"; sourceTree = SDKROOT; };
+		35A222931CB4A0510015FD5C /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		35A222951CB4A0580015FD5C /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
+		35A222971CB4A0650015FD5C /* libc.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libc.tbd; path = usr/lib/libc.tbd; sourceTree = SDKROOT; };
+		35A222991CB4A07D0015FD5C /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		35A2229B1CB4A0820015FD5C /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		35A2229D1CB4A0870015FD5C /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
+		35A2229F1CB4A08D0015FD5C /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		35A222A11CB4A0940015FD5C /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		35A222A31CB4A09A0015FD5C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		35C03E901CC02577008EF119 /* NotImplemented.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplemented.swift; sourceTree = "<group>"; };
 		35C1A55C1C5042B400551FC6 /* DashSegmentPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashSegmentPlayer.swift; sourceTree = "<group>"; };
 		35C1A55D1C5042B400551FC6 /* DashSegmentPlayerManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DashSegmentPlayerManager.m; sourceTree = "<group>"; };
@@ -360,6 +391,18 @@
 			files = (
 				357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */,
 				352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */,
+				35A222A41CB4A09A0015FD5C /* AVFoundation.framework in Frameworks */,
+				35A222A21CB4A0940015FD5C /* AudioToolbox.framework in Frameworks */,
+				35A222A01CB4A08D0015FD5C /* CoreGraphics.framework in Frameworks */,
+				35A2229E1CB4A0870015FD5C /* GLKit.framework in Frameworks */,
+				35A2229C1CB4A0820015FD5C /* CoreAudio.framework in Frameworks */,
+				35A2229A1CB4A07D0015FD5C /* CoreVideo.framework in Frameworks */,
+				35A222981CB4A0650015FD5C /* libc.tbd in Frameworks */,
+				35A222961CB4A0580015FD5C /* VideoToolbox.framework in Frameworks */,
+				35A222941CB4A0510015FD5C /* libsqlite3.tbd in Frameworks */,
+				35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */,
+				35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */,
+				35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */,
 				6C5839051C1D15380004EC78 /* libc++.tbd in Frameworks */,
 				35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */,
 				5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */,
@@ -491,6 +534,39 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		35A2222C1CB493700015FD5C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				35A222301CB493710015FD5C /* libRCTWebRTC.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		35A222921CB4A03F0015FD5C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				35A222A31CB4A09A0015FD5C /* AVFoundation.framework */,
+				35A222A11CB4A0940015FD5C /* AudioToolbox.framework */,
+				35A2229F1CB4A08D0015FD5C /* CoreGraphics.framework */,
+				35A2229D1CB4A0870015FD5C /* GLKit.framework */,
+				35A2229B1CB4A0820015FD5C /* CoreAudio.framework */,
+				35A222991CB4A07D0015FD5C /* CoreVideo.framework */,
+				35A222951CB4A0580015FD5C /* VideoToolbox.framework */,
+				35A222971CB4A0650015FD5C /* libc.tbd */,
+				35A222901CB4A0350015FD5C /* libstdc++.tbd */,
+				35A222931CB4A0510015FD5C /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		35A222A51CB4A0B20015FD5C /* libjingle_peerconnection */ = {
+			isa = PBXGroup;
+			children = (
+				35A222791CB49DAE0015FD5C /* libWebRTC.a */,
+			);
+			name = libjingle_peerconnection;
+			sourceTree = "<group>";
+		};
 		35C03E921CC03307008EF119 /* SLKConfig */ = {
 			isa = PBXGroup;
 			children = (
@@ -619,6 +695,7 @@
 				139FDEE61B06529A00C62182 /* RCTWebSocket.xcodeproj */,
 				357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */,
 				352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */,
+				35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
@@ -635,6 +712,8 @@
 			isa = PBXGroup;
 			children = (
 				6C5839041C1D15380004EC78 /* libc++.tbd */,
+				35A222921CB4A03F0015FD5C /* Frameworks */,
+				35A222A51CB4A0B20015FD5C /* libjingle_peerconnection */,
 				6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */,
 				35DABDA21C5045FB005F479F /* Viblast */,
 				F91A54EA1B8B9D48009C75C9 /* Resources */,
@@ -807,6 +886,10 @@
 					ProjectRef = 00C302DF1ABCB9EE00DB3ED1 /* RCTVibration.xcodeproj */;
 				},
 				{
+					ProductGroup = 35A2222C1CB493700015FD5C /* Products */;
+					ProjectRef = 35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */;
+				},
+				{
 					ProductGroup = 139FDEE71B06529A00C62182 /* Products */;
 					ProjectRef = 139FDEE61B06529A00C62182 /* RCTWebSocket.xcodeproj */;
 				},
@@ -907,6 +990,13 @@
 			fileType = archive.ar;
 			path = libSLKBlobs.a;
 			remoteRef = 357AF0351D20E27E0075394A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		35A222301CB493710015FD5C /* libRCTWebRTC.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRCTWebRTC.a;
+			remoteRef = 35A2222F1CB493710015FD5C /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		5758F3321B60989C00C18E5D /* libART.a */ = {
@@ -1224,6 +1314,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Viblast",
+					"$(PROJECT_DIR)/../node_modules/react-native-webrtc/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG -DRCT_DEBUG -DRCT_DEV";
@@ -1259,6 +1350,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Viblast",
+					"$(PROJECT_DIR)/../node_modules/react-native-webrtc/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "";

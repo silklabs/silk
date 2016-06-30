@@ -86,4 +86,5 @@ dependencies {
     compile "com.facebook.react:react-native:+"  // From node_modules
     compile project(":silk-crypto")
     compile project(":silk-react-native-blobs")
+    compile project(':RCTWebRTC')
 }

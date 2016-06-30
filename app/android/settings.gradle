@@ -10,3 +10,6 @@ project(':libsodium-jni').projectDir = file("../../crypto/external/libsodium-jni
 
 include ":silk-react-native-blobs"
 project(":silk-react-native-blobs").projectDir = file("../../pub/react-native-blobs/android")
+
+include ':RCTWebRTC'
+project(':RCTWebRTC').projectDir = file("../node_modules/react-native-webrtc/android")

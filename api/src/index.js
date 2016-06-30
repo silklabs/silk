@@ -4,6 +4,7 @@
 import invariant from 'assert';
 import URL from 'url';
 import createLog from 'silk-log';
+import {Headers} from 'silk-http/src/fetch';
 
 import VIP from './vip';
 import Account from './gen/account';
@@ -56,11 +57,14 @@ class AuthConfig {
   serverUrl: string;
   accessToken: ?AccessToken;
 
+  requestTransformer: (req: Request) => Promise<Request>
+    = this.requestTransformer.bind(this);
+
   /**
    * Request transformer responsible for signing the request and constructing
    * the urls...
    */
-  requestTransformer = async (req: Request): Promise<Request> => {
+  async requestTransformer(req: Request): Promise<Request> {
     let [url, options] = req;
 
     // Ensure URL is absolute ...
@@ -73,21 +77,20 @@ class AuthConfig {
       options.body = JSON.stringify(options.body);
     }
 
+    // Making API requests without setting the API AccessToken first
+    // is not supported.
+    invariant(this.accessToken);
     const signature = await this.accessToken.genSignRequest(
       options.method,
       parsedUrl.pathname,
       options.body || ''
     );
 
-    options.headers = options.headers || {};
-    options.headers = Object.assign({}, options.headers, {
-      // XXX: Important that we always override previous headers ...
-      'content-type': 'application/json',
-      'authorization': `Bearer ${signature}`,
-    });
-
+    let headers = options.headers = options.headers || new Headers();
+    headers.set('Content-Type', 'application/json');
+    headers.set('Authorization', `Bearer ${signature}`);
     return [url, options];
-  };
+  }
 
   constructor(options: AuthConfigOptions) {
     this.update(options);

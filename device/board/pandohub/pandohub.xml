@@ -5,6 +5,10 @@
      This comment is a trick to include patches from board/msm8909-la121/...
       <include name="msm8909-la121.xml"/>
   -->
+  <project name="pandohub-nhlos"
+           path="board/pandohub/nhlos"
+           remote="silkssh"
+           revision="master"/>
 
   <!--
     Inline msm8909-la121.xml.

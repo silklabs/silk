@@ -63,9 +63,9 @@ class SpeechToText {
     this._options = options;
   }
 
-  _callCallback(error: ?Error, text?: string): void {
+  _callCallback(error: ?Error, text?: string, confidence?: number): void {
     if (this._cb) {
-      this._cb(error, text);
+      this._cb(error, text, confidence);
     }
 
     this._req = null;
@@ -143,15 +143,17 @@ class SpeechToText {
         invariant(response);
 
         let text = ``;
+        let confidence = 0;
         if (response.results && response.results.length > 0) {
           const result = response.results[0];
           text = result.name;
+          confidence = result.confidence;
           log.info(`Confidence ${result.confidence}: '${text}'`);
         } else {
           log.warn(`No text`);
         }
 
-        this._callCallback(null, text);
+        this._callCallback(null, text, confidence);
       });
     });
 

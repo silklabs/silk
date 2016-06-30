@@ -21,4 +21,3 @@ declare function getintprop(prop: string, defaultValue?: number): number;
 declare function getlistprop(prop: string, defaultValue?: Array<string>): Array<string>;
 declare function setprop(prop: string, value: PropTypes): ?Error;
 declare function timeout(ms: number): Promise;
-declare function playSound(fileName: string): void;

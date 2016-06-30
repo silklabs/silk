@@ -20,11 +20,15 @@ const GAIN_MAX = 1.0;
 
 /**
  * This module provides a writable stream instance to stream raw PCM data to
- * the device speakers. This module emits following events.
+ * the device speakers.
  * @module silk-speaker
  *
  * @example
- * const Speaker = require('silk-speaker').default;
+ * 'use strict';
+ *
+ * const Speaker = require('silk-speaker');
+ * const log = require('silk-alog');
+ *
  * let speaker = new Speaker({ numChannels: 1,
  *                             sampleRate: 16000,
  *                             bytesPerSample: 2,

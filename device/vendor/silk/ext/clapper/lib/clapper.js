@@ -7,6 +7,7 @@
 import path from 'path';
 import config from 'silk-config';
 import * as util from 'silk-sysutils';
+import player from 'silk-audioplayer';
 
 let log;
 
@@ -99,7 +100,7 @@ class Clapper {
       if (count === 2 && type === 'normal') {
         this._env.log.info(tag);
         if (soundEnabled) {
-          util.playSound(TWO_CLAPS_FILENAME);
+          player.play(TWO_CLAPS_FILENAME);
         }
         this._env.timeline.addObjects([{
           source: 'clapper',

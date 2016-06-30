@@ -24,9 +24,6 @@ PRODUCT_PACKAGES += node
 SILK_DEVICE_MAIN_PATH := $(abspath $(this_mkfile_dir)/../../../device-main)
 PRODUCT_PACKAGES += silk-device-main
 
-# vendor/silk/audio/
-PRODUCT_PACKAGES += silk-player silk-volume
-
 # vendor/silk/bledroid/
 PRODUCT_PACKAGES += silk-bledroid-daemon
 
@@ -77,6 +74,9 @@ PRODUCT_PACKAGES += silk-movie
 # vendor/silk/silk-ntp/
 PRODUCT_PACKAGES += silk-ntp
 
+# vendor/silk/player/
+PRODUCT_PACKAGES += silk-player
+
 # vendor/silk/silk-properties/
 PRODUCT_PACKAGES += silk-properties
 
@@ -85,6 +85,9 @@ PRODUCT_PACKAGES += fakeappops gonksched
 
 # vendor/silk/time_genoff/
 PRODUCT_PACKAGES += silk-time_genoff
+
+# vendor/silk/volume/
+PRODUCT_PACKAGES += silk-volume
 
 # vendor/silk/wpad/
 PRODUCT_PACKAGES += silk-wpad

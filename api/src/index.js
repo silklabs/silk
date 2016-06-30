@@ -4,7 +4,6 @@
 import invariant from 'assert';
 import URL from 'url';
 import createLog from 'silk-log';
-import {Headers} from 'silk-http/src/fetch';
 
 import VIP from './vip';
 import Account from './gen/account';
@@ -19,7 +18,7 @@ import MetricsAgent from './metrics_agent';
 
 import loadConfig from './config';
 import devAccount from './dev_account';
-import fetch from './fetch';
+import fetch, {Headers} from './fetch';
 
 import type {StringToStringDict} from './metric';
 import type {Request} from 'silk-http/src/client';

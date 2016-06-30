@@ -370,7 +370,12 @@ RCT_EXPORT_METHOD(genX25519KeyPair:(RCTPromiseResolveBlock)resolve
   int ret;
 
   // Random secret key.
-  SecRandomCopyBytes(kSecRandomDefault, sizeof secretKeyBytes, secretKeyBytes);
+  ret = SecRandomCopyBytes(kSecRandomDefault, sizeof secretKeyBytes, secretKeyBytes);
+  if (ret != 0) {
+    NSError *error = [NSError errorWithDomain:@"com.silklabs.app" code:ret userInfo:nil];
+    reject(@"E_RAND_BYTES_FAILED", @"Failed to generate key pair", error);
+    return;
+  }
 
   // Generate public key.
   ret = crypto_scalarmult_base(publicKeyBytes, secretKeyBytes);

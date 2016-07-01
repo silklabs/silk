@@ -415,10 +415,14 @@ server.on('cmd', cmd => {
 // Config service...
 config.on('unconfigured', () => {
   configured = false;
-  if (ui.goto('setup')) {
+  if (ui.goto('unconfigured')) {
     camera.stopRecording();
     server.disconnect();
   }
+});
+
+config.on('configuring', () => {
+  ui.goto('configuring');
 });
 
 config.on('configured', onConfigured);

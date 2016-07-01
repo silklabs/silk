@@ -92,8 +92,11 @@ class PandoHubUi {
       case 'charging':
         this.renderRing({r: 64, g: 64, b: 64});
         break;
-      case 'setup':
+      case 'unconfigured':
         this.renderRing({r: 255, g: 0, b: 0});
+        break;
+      case 'configuring':
+        this.renderRing({r: 0, g: 255, b: 255});
         break;
       case 'connecting':
         this.renderRing({r: 255, g: 255, b: 0});

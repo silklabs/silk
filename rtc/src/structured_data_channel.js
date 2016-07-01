@@ -114,7 +114,11 @@ export default class StructuredDataChannel extends EventEmitter {
 
     this._channel = channel;
     if (channel) {
-      channel.binaryType = 'blob';
+      try {
+        channel.binaryType = 'blob';
+      } catch (ex) {
+        log.debug(`Wasn't able to set binaryType to 'blob'. Soldering on.`);
+      }
       channel.addEventListener('close', this._onClose);
       channel.addEventListener('error', this._onError);
       channel.addEventListener('message', this._onMessage);
@@ -147,23 +151,29 @@ export default class StructuredDataChannel extends EventEmitter {
 
       const [name, totalPendingBytes] = binaryPlaceholders[0];
 
-      if (!content || !content.data || !(content.data instanceof Blob)) {
+      // In case binaryType = 'blob' above didn't work...
+      let data = content.data;
+      if (isBinary(data)) {
+        data = new Blob([data]);
+      }
+
+      if (!content || !data || !(data instanceof Blob)) {
         log.warn('Got malformed data in binary frame.', content);
         throw new Error(`Got malformed payload data...`);
       }
 
-      this._pendingFrame.bytesReceived += content.data.size;
+      this._pendingFrame.bytesReceived += data.size;
       let remainder = totalPendingBytes - this._pendingFrame.bytesReceived;
 
       if (this._pendingFrame.bytesReceived < totalPendingBytes) {
-        this._pendingFrame.parts.push(content.data);
+        this._pendingFrame.parts.push(data);
         log.verbose(`Waiting for more data for ${name} (${remainder})`);
         return;
       }
 
       log.verbose(`Finished collecting binary data for ${name}`);
       let newParts = [];
-      let lastBlob = content.data;
+      let lastBlob = data;
       if (remainder > 0) {
         newParts.push(lastBlob.slice(remainder));
         lastBlob = lastBlob.slice(0, remainder);

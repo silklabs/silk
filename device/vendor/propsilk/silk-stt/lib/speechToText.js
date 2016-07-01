@@ -151,6 +151,7 @@ class SpeechToText {
           log.info(`Confidence ${result.confidence}: '${text}'`);
         } else {
           log.warn(`No text`);
+          confidence = 1.0;
         }
 
         this._callCallback(null, text, confidence);

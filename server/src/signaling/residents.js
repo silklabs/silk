@@ -205,7 +205,8 @@ export default class Residents {
         return;
       }
 
-      client.connection.send(data);
+      // XXX: Remove the type conversion.
+      client.connection.send(data.toString());
     };
 
     const onClose = () => {

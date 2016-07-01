@@ -158,7 +158,7 @@ export default class StructuredDataChannel extends EventEmitter {
       }
 
       if (!content || !data || !(data instanceof Blob)) {
-        log.warn('Got malformed data in binary frame.', content);
+        log.warn('Got malformed data in binary frame:', data);
         throw new Error(`Got malformed payload data...`);
       }
 

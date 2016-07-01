@@ -17,6 +17,7 @@ import AsyncComponent from './AsyncComponent';
 const log = createLog('Devices');
 const { BLESocketManager } = NativeModules;
 
+const AFTER_TOUCH_WAIT_MS = 250;
 
 export const DeviceRecord = Record({ /* eslint new-cap: 0 */
   deviceId: null,
@@ -380,21 +381,38 @@ export default class Devices extends AsyncComponent {
       name: null,
     };
 
+    let deviceTouchViewMounted = false;
+    const setupScreenProps = {
+      bleDeviceSession,
+      onCancel: () => this._abortConfig(bleDeviceSession),
+      onSave: (config) => this._saveDeviceConfig(bleDeviceSession, config),
+      onMounted: () => deviceTouchViewMounted = true,
+    };
+
+    const advanceToWifiConfig = () =>
+      this.props.navigator.pushAsync({
+        name: 'WifiConfig',
+        props: setupScreenProps,
+      });
+
     bleDeviceSession.once('secret', (deviceSecret) => {
       let { deviceId } = deviceSecret;
       log.debug('And now kiththth! Received device ID', deviceId);
       this.configuringDevice.deviceId = deviceId;
+
+      if (deviceTouchViewMounted) {
+        log.debug('DeviceTouch view already mounted, advancing after a delay.');
+        setTimeout(advanceToWifiConfig, AFTER_TOUCH_WAIT_MS);
+        return;
+      }
+      log.debug('DeviceTouch view not yet mounted, advancing immediately.');
+      advanceToWifiConfig();
     });
 
     log.debug('Launching device setup UI.');
-    const screen = bleDeviceSession.deviceId ? 'WifiConfig' : 'DeviceTouch';
     this.props.navigator.pushAsync({
-      name: screen,
-      props: {
-        bleDeviceSession,
-        onCancel: () => this._abortConfig(bleDeviceSession),
-        onSave: (config) => this._saveDeviceConfig(bleDeviceSession, config),
-      },
+      name: 'DeviceTouch',
+      props: setupScreenProps,
     });
   };
 

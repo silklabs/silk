@@ -172,6 +172,7 @@ class DeviceConfig extends EventEmitter {
     assert(this._socketSessionListeners.length);
 
     this._btle.pauseScan();
+    this.emit('configuring');
 
     this._configuringSocketSessionListener = sessionListener;
 
@@ -202,6 +203,7 @@ class DeviceConfig extends EventEmitter {
     this._configuringSocketSessionListener = null;
 
     if (!this._config || !this._config.success) {
+      this.emit('unconfigured');
       this._btle.resumeScan();
     }
   }

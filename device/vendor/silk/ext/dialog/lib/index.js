@@ -24,7 +24,7 @@ import Speaker from 'silk-speaker';
 import player from 'silk-audioplayer';
 
 import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
-import type { Env, Camera } from 'silk-exttest';
+import type { Env, Camera, Timeline } from 'silk-exttest';
 import { Duplex } from 'stream';
 
 type MicData = {
@@ -35,6 +35,8 @@ type MicDataCallback = (pkt: MicData) => void;
 type InputEventCallback = (event: { keyId: string }) => void;
 type SpeechEventCallback = (stream: Buffer, finished: boolean) => void;
 type InterpretEndCallback = (error: ?Error) => void;
+type EventType = 'listening' | 'processing_speech' | 'speaking' |
+                 'speaking_network_error' | 'finished_processing_speech';
 
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.wav');
 const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.wav');
@@ -49,6 +51,7 @@ const LOCAL_TTS_ENABLED_PROP = 'persist.silk.dialog.tts.enabled';
 
 const log = createLog('silkext-dialog');
 let camera: Camera;
+let timeline: Timeline;
 let modLocation: string;
 
 /**
@@ -77,6 +80,7 @@ class Dialog {
 
   constructor(env: Env) {
     camera = env.camera;
+    timeline = env.timeline;
     this._monitor(true);
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, true);
     this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, false);
@@ -198,6 +202,8 @@ class Dialog {
    * This function plays the specified error message
    */
   _playErrorMessage(errorMsg: string, errorFile: string) {
+    this._emitEvent('speaking_network_error');
+
     // Play error sound first
     let errorSoundPromise = this._playSound(ERROR_SOUND_FILE);
 
@@ -220,6 +226,7 @@ class Dialog {
    */
   _onSpeakBegin: Function = (text, finished) => {
     log.debug(`_onSpeakBegin ${text} ${finished}`);
+    this._emitEvent('speaking');
 
     const finish = (err) => {
       if (--this._activeSpeechCount <= 0) {
@@ -257,6 +264,7 @@ class Dialog {
    */
   _onSpeak: SpeechEventCallback = (stream, finished) => {
     log.debug(`Received stream to speak ${finished}`);
+    this._emitEvent('speaking');
 
     let errorListener: ?Function = null;
     let dataListener: ?Function = null;
@@ -339,6 +347,7 @@ class Dialog {
       log.info(`not ready, skipping speech start`);
       return;
     }
+    this._emitEvent('listening');
     this._stream = new ClosingPassThrough();
 
     this._playSound(KEYWORD_DETECTED_SOUND_FILE)
@@ -365,6 +374,7 @@ class Dialog {
       return;
     }
 
+    this._emitEvent('processing_speech');
     if (this._stream) {
       this._stream.end();
       this._stream = null;
@@ -377,6 +387,7 @@ class Dialog {
    * keyword spotting again
    */
   _onDialogDone() {
+    this._emitEvent('finished_processing_speech');
     if (this._kwsEnabled) {
       this._kws.start();
     }
@@ -422,6 +433,19 @@ class Dialog {
   _onModulePush: ModulePushCallback = (modulePath: string) => {
     this._loadDialogScript();
   };
+
+  /**
+   * Emit an event to timeline
+   */
+  _emitEvent(event: EventType): void {
+    log.debug(`Emitting event ${event}`);
+    timeline.addObjects([{
+      source: 'dialog',
+      tag: event,
+      when: Date.now(),
+      durationMs: 250,
+    }]);
+  }
 
   willUnload(): void {
     log.info('unloading....');

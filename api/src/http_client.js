@@ -3,8 +3,8 @@
  *
  * @flow
  */
-import HttpClient from 'silk-http/src/client';
-import type { Request } from 'silk-http/src/client';
+import HttpClient from 'silk-http-client';
+import type { Request } from 'silk-http-client';
 
 export default class ApiClient extends HttpClient {
   // XXX: This is a hack since we still do not support true GET requests...

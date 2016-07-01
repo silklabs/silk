@@ -4,14 +4,12 @@
  *
  * @flow
  */
+import fetch from 'silk-fetch';
 import createLog from 'silk-log';
 
-import fetch from './fetch';
 import throwError from './fetch_error';
 
-import type {
-  FetchOptions,
-} from './fetch';
+import type {FetchOptions} from 'silk-fetch';
 
 // Tuple representing an outgoing request url, options ...
 export type Request = [string, FetchOptions];

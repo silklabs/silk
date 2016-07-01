@@ -1,19 +1,16 @@
 {
-  "name": "silk-http",
+  "name": "silk-http-client",
   "version": "0.19.0",
-  "main": "client.js",
   "scripts": {
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall",
-    "lint": "eslint test src",
+    "lint": "eslint .",
     "mocha": "mocha $(find test -name '*_test.js')",
     "test": "npm run lint && npm run mocha"
   },
-  "browser": {
-    "./src/fetch.js": "./src/fetch_browser.js"
-  },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
+    "silk-fetch": "/fetch",
     "silk-log": "/pub/log"
   },
   "devDependencies": {

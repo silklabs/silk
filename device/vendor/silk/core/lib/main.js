@@ -7,29 +7,22 @@
  */
 
 import gc1 from 'silk-gc1';
-import {install as installSourceMapSupport} from 'source-map-support';
+import {install as installSourceMapSupport} from './sourcemaps.js';
 import version from 'silk-core-version';
 
 import ui from './ui';
-import createLog from 'silk-log';
+import * as util from 'silk-sysutils';
+import createLog from 'silk-log/device';
 
 const log = createLog('main');
 
 log.info(`silk-core ${version.branch} ${version.semver} (${version.sha})`);
+const bootStartMs = util.uptime();
 ui.goto('bootanimation');
 
 // Activate source map support to exception stack traces as early as practical
 // in the boot sequence
 installSourceMapSupport();
-{ // eslint-disable-line no-lone-blocks
-  // Force the source maps into memory right away. It typically takes ~5
-  // seconds to load the source maps and unfortunately asynchronous loading is
-  // not currently supported by the source map library.  Taking the hit now
-  // avoids an unpredictable delay the first time an exception is thrown.
-  log.verbose('Warming up source maps');
-  (new Error()).stack; // Trigger a call to Error.prepareStackTrace
-  log.verbose('Source maps ready');
-}
 
 if (process.platform !== 'android') {
   let segfaultHandler = require('segfault-handler'); // eslint-disable-line import/no-require
@@ -43,7 +36,6 @@ import Battery from 'silk-battery';
 
 import wifi from 'silk-wifi';
 import ntp from 'silk-ntp';
-import * as util from 'silk-sysutils';
 import update from 'silk-update';
 import config from './config';
 import silkconfig from 'silk-config';
@@ -292,7 +284,8 @@ function main() {
         assert(api.accessToken, 'must have access token');
         connections.start();
       }
-      log.info('boot complete.');
+      const bootTimeS = util.uptime(bootStartMs) / 1000;
+      log.info(`boot complete in ${bootTimeS} seconds`);
       util.setprop('silk.boot_completed',
                    1 + parseInt(util.getprop('silk.boot_completed', 0)));
     }).

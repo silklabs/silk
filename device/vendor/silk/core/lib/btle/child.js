@@ -41,7 +41,7 @@ process.once(`disconnect`, () => {
 });
 
 // Activate source map support to exception stack traces as early as possible.
-import {install as installSourceMapSupport} from 'source-map-support';
+import {install as installSourceMapSupport} from '../sourcemaps.js';
 installSourceMapSupport();
 
 import bleno from 'bleno';
@@ -53,7 +53,7 @@ import {MessagePackDuplexStream, SocketDuplexStream} from 'silk-streams';
 import {BluetoothLE} from './parent';
 import createDeferred from '../deferred';
 import {createMessage as createInternalMessage} from './socket_message_utils';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import InternalMessageFilterStream from './internal_message_stream';
 
 import SocketScanner from './socket_scanner';
@@ -812,14 +812,6 @@ class BluetoothLEChild {
 }
 
 async function main(): Promise<void> {
-  // Force the source maps into memory right away. It typically takes ~5
-  // seconds to load the source maps and unfortunately asynchronous loading is
-  // not currently supported by the source map library.  Taking the hit now
-  // avoids an unpredictable delay the first time an exception is thrown.
-  log.verbose(`Warming up source maps`);
-  (new Error()).stack; // Trigger a call to Error.prepareStackTrace
-  log.verbose(`Source maps ready`);
-
   const instance = new BluetoothLEChild();
   return instance._start();
 }

@@ -7,6 +7,7 @@
  * @flow
  */
 
+import assert from 'assert';
 import events from 'events';
 import Input from 'silk-input';
 import lights from 'silk-lights';
@@ -21,14 +22,15 @@ const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled'
 const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
 const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
 
-export type UiState = 'bootanimation' | 'setup' | 'connecting' | 'online' | 'charging' | 'powerdown';
+export type UiState = 'bootanimation' | 'unconfigured' | 'configuring' |
+                      'connecting' | 'online' | 'charging' | 'powerdown';
 
 export class Ui extends events.EventEmitter {
 
   movie: ?Movie;
   vib: Vibrator;
   currentState: UiState;
-  currentMovieName: UiState;
+  currentMovieName: string;
   backlightTimer: ?number = null;
 
   constructor() {
@@ -155,7 +157,7 @@ export class Ui extends events.EventEmitter {
       case 'bootanimation':
         light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
         break;
-      case 'setup':
+      case 'unconfigured':
         light.set(light.YELLOW, light.FLASH_TIMED, 500, 500);
         break;
       case 'connecting':
@@ -168,13 +170,25 @@ export class Ui extends events.EventEmitter {
         light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
         break;
       case 'charging':
-      default:
         light.set(light.BLACK);
+        break;
+      default:
+        assert(false, `Unknown state: ${this.currentState}`);
         break;
       }
     }
 
-    let movieName = this.currentState;
+    let movieName;
+    switch (this.currentState) {
+    case 'unconfigured':
+    case 'connecting':
+      movieName = 'setup';
+      break;
+    default:
+      movieName = this.currentState;
+      break;
+    }
+
     if (movieName !== this.currentMovieName) {
       this.currentMovieName = movieName;
       try {

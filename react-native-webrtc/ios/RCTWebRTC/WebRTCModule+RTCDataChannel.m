@@ -3,6 +3,8 @@
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 
+#import "SLKBlobManager.h"
+
 #import "WebRTCModule+RTCDataChannel.h"
 
 @implementation WebRTCModule (RTCDataChannel)
@@ -42,6 +44,11 @@ RCT_EXPORT_METHOD(dataChannelClose:(nonnull NSNumber *)dataChannelId
   [self.dataChannels removeObjectForKey:dataChannelId];
 })
 
+RCT_EXPORT_METHOD(dataChannelSetBinaryType:(nonnull NSNumber *)dataChannelId binaryType:(NSString *)binaryType)
+{
+  [self.dataChannelBinaryTypeIsBlob setObject:@([binaryType isEqualToString:@"blob"]) forKey:dataChannelId];
+}
+
 - (NSString *)stringForDataChannelState:(RTCDataChannelState)state
 {
   switch (state) {
@@ -67,11 +74,27 @@ RCT_EXPORT_METHOD(dataChannelClose:(nonnull NSNumber *)dataChannelId
 // Called when a data buffer was successfully received.
 - (void)channel:(RTCDataChannel*)channel didReceiveMessageWithBuffer:(RTCDataBuffer*)buffer
 {
-  NSString *data = buffer.isBinary ?
-    [buffer.data base64EncodedStringWithOptions:0] :
-    [NSString stringWithUTF8String:buffer.data.bytes];
+  NSString *type = @"text";
+  id data;
+  if (buffer.isBinary) {
+    if ([self.dataChannelBinaryTypeIsBlob objectForKey:@(channel.streamId)]) {
+      SLKBlobManager *blobManager = [[self bridge] moduleForClass:[SLKBlobManager class]];
+      NSString *blobId = [blobManager store:buffer.data];
+      data = @{
+        @"blobId": blobId,
+        @"offset": @0,
+        @"size": @(buffer.data.length)
+      };
+      type = @"blob";
+    } else {
+      data = [buffer.data base64EncodedStringWithOptions:0];
+      type = @"binary";
+    }
+  } else {
+    data = [NSString stringWithUTF8String:buffer.data.bytes];
+  }
   NSDictionary *event = @{@"id": @(channel.streamId),
-                          @"type": buffer.isBinary ? @"binary" : @"text",
+                          @"type": type,
                           @"data": data};
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"dataChannelReceiveMessage"
                                                   body:event];

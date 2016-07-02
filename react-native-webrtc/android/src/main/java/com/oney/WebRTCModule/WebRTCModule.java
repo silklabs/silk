@@ -2,6 +2,8 @@ package com.oney.WebRTCModule;
 
 import android.app.Application;
 
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
@@ -19,6 +21,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.silklabs.react.blobs.BlobProvider;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -62,8 +65,12 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     public final SparseArray<MediaStream> mMediaStreams;
     public final SparseArray<MediaStreamTrack> mMediaStreamTracks;
     private final SparseArray<DataChannel> mDataChannels;
+    private Map<Integer, Boolean> mDataChannelBinaryTypeIsBlob;
     private MediaConstraints pcConstraints = new MediaConstraints();
     VideoSource videoSource;
+
+    private ReactContext mReactContext;
+    private BlobProvider mBlobProvider;
 
     public WebRTCModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -72,6 +79,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
         mMediaStreams = new SparseArray<MediaStream>();
         mMediaStreamTracks = new SparseArray<MediaStreamTrack>();
         mDataChannels = new SparseArray<DataChannel>();
+        mDataChannelBinaryTypeIsBlob = new HashMap<>();
 
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
         pcConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
@@ -79,6 +87,19 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
 
         PeerConnectionFactory.initializeAndroidGlobals(reactContext, true, true, true);
         mFactory = new PeerConnectionFactory();
+
+        mReactContext = reactContext;
+        initializeBlobProvider();
+    }
+
+    private void initializeBlobProvider() {
+        ContentResolver resolver = mReactContext.getContentResolver();
+        ContentProviderClient client = resolver.acquireContentProviderClient(BlobProvider.AUTHORITY);
+        if (client == null) {
+            return;
+        }
+        mBlobProvider = (BlobProvider)client.getLocalContentProvider();
+        client.release();
     }
 
     @Override
@@ -577,6 +598,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
                     params.putString("sdp", sdp.description);
                     callback.invoke(true, params);
                 }
+
                 @Override
                 public void onSetSuccess() {}
 
@@ -877,6 +899,11 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
         }
     }
 
+    @ReactMethod
+    public void dataChannelSetBinaryType(final int dataChannelId, String binaryType) {
+        mDataChannelBinaryTypeIsBlob.put(dataChannelId, binaryType.equals("blob"));
+    }
+
     @Nullable
     public String iceConnectionStateString(PeerConnection.IceConnectionState iceConnectionState) {
         switch (iceConnectionState) {
@@ -980,8 +1007,18 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
             }
 
             if (buffer.binary) {
-                params.putString("type", "binary");
-                params.putString("data", Base64.encodeToString(bytes, Base64.NO_WRAP));
+                if (mDataChannelBinaryTypeIsBlob.containsKey(mId) &&
+                    mDataChannelBinaryTypeIsBlob.get(mId)) {
+                    params.putString("type", "blob");
+                    WritableMap blob = Arguments.createMap();
+                    blob.putString("blobId", mBlobProvider.store(bytes));
+                    blob.putInt("offset", 0);
+                    blob.putInt("size", bytes.length);
+                    params.putMap("data", blob);
+                } else {
+                    params.putString("type", "binary");
+                    params.putString("data", Base64.encodeToString(bytes, Base64.NO_WRAP));
+                }
             } else {
                 params.putString("type", "text");
                 params.putString("data", new String(bytes, Charset.forName("UTF-8")));

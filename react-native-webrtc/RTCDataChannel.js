@@ -25,6 +25,10 @@ type RTCDataChannelState =
   'closing' |
   'closed';
 
+type RTCDataChannelBinaryType =
+  'arraybuffer' |
+  'blob';
+
 const DATA_CHANNEL_EVENTS = [
   'open',
   'message',
@@ -37,7 +41,7 @@ class ResourceInUse extends Error {}
 
 export default class RTCDataChannel extends EventTarget(DATA_CHANNEL_EVENTS) {
 
-  binaryType: 'arraybuffer' = 'arraybuffer'; // we only support 'arraybuffer'
+  _binaryType: RTCDataChannelBinaryType = 'arraybuffer';
   bufferedAmount: number = 0;
   bufferedAmountLowThreshold: number = 0;
   id: string;
@@ -75,6 +79,15 @@ export default class RTCDataChannel extends EventTarget(DATA_CHANNEL_EVENTS) {
     this.negotiated = !!dataChannelDict.negotiated;
 
     this._registerEvents();
+  }
+
+  get binaryType(): RTCDataChannelBinaryType {
+    return this._binaryType;
+  }
+
+  set binaryType(binaryType: RTCDataChannelBinaryType) {
+    WebRTCModule.dataChannelSetBinaryType(this.id, binaryType);
+    this._binaryType = binaryType;
   }
 
   send(data: string | ArrayBuffer | ArrayBufferView) {
@@ -126,6 +139,8 @@ export default class RTCDataChannel extends EventTarget(DATA_CHANNEL_EVENTS) {
         let data = ev.data;
         if (ev.type === 'binary') {
           data = base64.toByteArray(ev.data).buffer;
+        } else if (ev.type === 'blob') {
+          data = Blob.create(data);
         }
         this.dispatchEvent(new MessageEvent('message', {data}));
       }),

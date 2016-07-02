@@ -26,8 +26,8 @@ git fetch --unshallow
 git subtree split --prefix dialog-script -b release-pando-dialog-script
 git remote add pando git@github.com:silklabs/release-pando-dialog-script
 
-MABYEFORCE=0
-if [[ $BRANCH != next ]]; then
+MABYEFORCE=
+if [[ $BRANCH = next ]]; then
   # Next branch needs to be forced as its history gets rewritten on every
   # branch off master
   MABYEFORCE=--force

@@ -56,23 +56,23 @@ class PandoHubUi {
     this.render();
   }
 
-  onDialogListening = () => {
+  onDialogListening: (() => void) = () => {
     log.info('listening');
   };
 
-  onDialogProcessingSpeech= () => {
+  onDialogProcessingSpeech: (() => void) = () => {
     log.info('processing_speech');
   };
 
-  onDialogSpeaking = () => {
+  onDialogSpeaking: (() => void) = () => {
     log.info('speaking');
   };
 
-  onDialogNetworkError = () => {
+  onDialogNetworkError: (() => void) = () => {
     log.info('speaking_network_error');
   };
 
-  onDialogFinished = () => {
+  onDialogFinished: (() => void) = () => {
     log.info('finished_processing_speech');
   };
 

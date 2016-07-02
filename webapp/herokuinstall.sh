@@ -4,4 +4,4 @@
 npm run build
 
 # Need this disk space after we finished the build ...
-rm -rf $ROOT/../{app,device,node_modules}
+rm -rf ../{app,device,node_modules}

@@ -18,6 +18,9 @@ if [[ "$(uname)" == "Darwin" && -z $GET_OFF_MY_LAWN ]]; then
   # Following packages are needed by caffe module
   brew install -vd snappy leveldb gflags glog szip lmdb libtool
   brew install hdf5
+  
+  # OpenCV3 wants libwebp
+  brew install webp
 
   brew install -vd openblas
   brew link --force --overwrite openblas

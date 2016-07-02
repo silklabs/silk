@@ -48,18 +48,40 @@ function cleanup {
 }
 trap cleanup SIGINT SIGTERM SIGHUP EXIT
 
+killqemu() {
+  echo Killing emulator at pid=$EMU_PID
+  kill $EMU_PID
+  wait $EMU_PID || true
+
+  # Give slow CI systems a chance to breath...
+  sleep 2s
+}
 
 runqemu() {
+  local retries=$1
+  if [[ $retries -lt 0 ]]; then
+    echo Exhausted runqemu retries
+    cleanup 
+  fi
+
   echo "Starting emulator"
   make -C $ANDROID_BUILD_TOP qemu &
   EMU_PID=$!
+
+  set +e
+  $DEVICECHECK
+  exitstatus=$?
+  if [[ $exitstatus = 124 ]]; then
+    echo
+    echo ==== Retrying runqemu ====
+    echo
+    runqemu $(( $retries - 1 ))
+  fi
+  set -e
 }
 
-set -e
-
 # Start it, and ensure that it boots
-runqemu
-$DEVICECHECK
+runqemu 3
 
 # Swap in the current /system/silk build products
 echo
@@ -75,16 +97,10 @@ echo
   adb shell sync
 )
 echo
-echo Killing emulator at pid=$EMU_PID
-kill $EMU_PID
-wait $EMU_PID || true
-
-# Give slow CI systems a chance to breath...
-sleep 2s
+killqemu
 
 # Restart the emulator, does it still boot?
-runqemu
-$DEVICECHECK
+runqemu 3
 
 # Run additional script
 if [[ -n $RUN_SCRIPT ]]; then

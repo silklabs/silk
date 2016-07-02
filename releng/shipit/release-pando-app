@@ -22,7 +22,8 @@ WHITELIST=$(cat <<-EOF
   cam
   config
   crypto
-  http
+  fetch
+  http-client
   jsonwebtoken
   mse-player
   node_modules

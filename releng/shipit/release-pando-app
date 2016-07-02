@@ -18,6 +18,7 @@ WHITELIST=$(cat <<-EOF
   api
   api-schema
   app
+  azure-storage
   babeldeps
   cam
   config
@@ -31,6 +32,8 @@ WHITELIST=$(cat <<-EOF
   npm_preinstall
   pub
   raygun
+  react-native-webrtc
+  rtc
   silknpm.json
   streams
 EOF

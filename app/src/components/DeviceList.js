@@ -15,7 +15,8 @@ import SocketIO from '../libraries/SocketIO';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import CameraLiveVideo from './CameraLiveVideo';
-import CameraPreview from './CameraPreview';
+import CameraPreviewSocketIO from './CameraPreviewSocketIO';
+import CameraPreviewWebRTC from './CameraPreviewWebRTC';
 import { Colors } from './CommonStyles';
 import UnconfiguredDevice from './UnconfiguredDevice';
 
@@ -193,21 +194,34 @@ export default class DeviceList extends AsyncComponent {
       return null;
     }
     return devices.map((device, deviceId) => (
-      <View
-        style={styles.cameraPreview}
-        key={deviceId}>
-        <Text style={styles.cameraPreviewLabel}>
-          {device.name}
-        </Text>
-        <CameraPreview
-          deviceId={deviceId}
-          previewSize={device.previewSize || DEFAULT_PREVIEW_SIZE}
-          width={this.state.cameraPreviewWidth}
-          haveVideoStream={device.haveVideoStream}
-          onPress={() => this.startFullscreenVideo(deviceId)}
-          socket={this.props.socket}
-          hasNetwork={this.props.hasNetwork}
-        />
+      <View key={deviceId}>
+        <View style={styles.cameraPreview}>
+          <Text style={styles.cameraPreviewLabel}>
+            {device.name} (socket.io)
+          </Text>
+          <CameraPreviewSocketIO
+            deviceId={deviceId}
+            previewSize={device.previewSize || DEFAULT_PREVIEW_SIZE}
+            width={this.state.cameraPreviewWidth}
+            hasNetwork={this.props.hasNetwork}
+            onPress={() => this.startFullscreenVideo(deviceId)}
+            socket={this.props.socket}
+            haveVideoStream={device.haveVideoStream}
+          />
+        </View>
+        <View style={styles.cameraPreview}>
+          <Text style={styles.cameraPreviewLabel}>
+            {device.name} (WebRTC)
+          </Text>
+          <CameraPreviewWebRTC
+            deviceId={deviceId}
+            previewSize={device.previewSize || DEFAULT_PREVIEW_SIZE}
+            width={this.state.cameraPreviewWidth}
+            hasNetwork={this.props.hasNetwork}
+            onPress={() => this.startFullscreenVideo(deviceId)}
+            rtcConnection={device.rtcConnection}
+          />
+        </View>
       </View>
     )).toArray().reverse();
   }

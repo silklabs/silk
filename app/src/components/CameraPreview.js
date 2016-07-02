@@ -9,15 +9,16 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+import createLog from 'silk-log';
 
+import AsyncComponent from './abstract/AsyncComponent';
 import PreviewQueue from '../libraries/PreviewQueue';
-import SocketIO from '../libraries/SocketIO';
-import SocketIOComponent from './abstract/SocketIOComponent';
 
-const DEVICE_RECONNECT_PREVIEW_DELAY_MS = 1000;
+const log = createLog('CameraPreview');
+
 const DEVICE_PREVIEW_TIMEOUT_MS = 10000;
 
-export default class CameraPreview extends SocketIOComponent {
+export default class CameraPreview extends AsyncComponent {
   static propTypes = {
     deviceId: React.PropTypes.string,
     previewSize: React.PropTypes.shape({
@@ -25,11 +26,8 @@ export default class CameraPreview extends SocketIOComponent {
       height: React.PropTypes.number.isRequired,
     }),
     width: React.PropTypes.number.isRequired,
-    haveVideoStream: React.PropTypes.bool,
-    onPress: React.PropTypes.func,
-
     hasNetwork: React.PropTypes.bool.isRequired,
-    socket: React.PropTypes.instanceOf(SocketIO),
+    onPress: React.PropTypes.func,
   };
 
   static contextTypes = {
@@ -44,68 +42,38 @@ export default class CameraPreview extends SocketIOComponent {
   mounted: false;
   _timeoutTimer = null;
 
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
+
   componentWillMount() {
     this.mounted = true;
-    this._queue = new PreviewQueue(this.props.label, message => {
+    this._queue = new PreviewQueue(this.props.label, frame => {
       if (!this.mounted) {
         return;
       }
       this.setStateAsync({
         timedOut: false,
-        blob: message.frame,
+        blob: frame,
       });
     });
-
-    if (this.props.haveVideoStream) {
-      this.subscribeToSocket();
-    }
     this.startTimeoutTimer();
   }
 
-  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
+  componentWillUnmount() {
+    this.mounted = false;
+    if (this._queue) {
+      this._queue.deinit();
+      this._queue = null;
+    }
+    this.clearTimeoutTimer();
+  }
 
   componentWillReceiveProps(nextProps) {
-    if (!this.props.haveVideoStream && nextProps.haveVideoStream) {
-      // The device was known to us before, but only just now came
-      // online. Start subscribing to the device's socket.io room to
-      // receive preview images. However, for some reason, subscribing
-      // to it immediately can lead to not receiving any messages at all.
-      // See https://github.com/silklabs/silk-app/issues/577.
-      // Also, in anticipation of receiving preview images soon, clear any
-      // timeout state.
-      this.unsubscribeFromSocket(this.props.socket);
-      this.startTimeoutTimer();
-      this.setState({timedOut: false, blob: null});
-      setTimeout(() => {
-        this.subscribeToSocket(this.props.socket);
-      }, DEVICE_RECONNECT_PREVIEW_DELAY_MS);
-    }
     if (!this.props.hasNetwork && nextProps.hasNetwork) {
       this.startTimeoutTimer();
     }
     if (this.props.hasNetwork && !nextProps.hasNetwork) {
       this.clearTimeoutTimer();
     }
-  }
-
-  subscribeToSocket(socket) {
-    let { deviceId } = this.props;
-    if (!socket || !deviceId || !this.mounted) {
-      return;
-    }
-    let stream = `preview-${deviceId}`;
-    socket.on(stream, this.onPreviewFrame);
-    socket.join(stream);
-  }
-
-  unsubscribeFromSocket(socket) {
-    let { deviceId } = this.props;
-    if (!socket || !deviceId) {
-      return;
-    }
-    let stream = `preview-${deviceId}`;
-    socket.off(stream, this.onPreviewFrame);
-    socket.leave(stream);
   }
 
   startTimeoutTimer() {
@@ -128,24 +96,19 @@ export default class CameraPreview extends SocketIOComponent {
     }
   }
 
-  onPreviewFrame = (message, ack) => {
-    if (typeof ack === 'function') {
-      ack();
-    }
-    this._queue.push(message);
+  /**
+   * "API"
+   */
+  resetTimeout() {
+    this.setState({timedOut: false, blob: null});
     this.startTimeoutTimer();
-  };
-
-  componentWillUnmount() {
-    this.mounted = false;
-    this.unsubscribeFromSocket(this.props.socket);
-    if (this._queue) {
-      this._queue.deinit();
-      this._queue = null;
-    }
-    this.clearTimeoutTimer();
   }
 
+  pushFrame(frame) {
+    log.debug('preview frame', frame);
+    this._queue.push(frame);
+    this.startTimeoutTimer();
+  }
 
   _renderPreview() {
     // TODO: display this.props.haveVideoStream visually in some way.

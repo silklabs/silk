@@ -12,4 +12,4 @@ include ":silk-react-native-blobs"
 project(":silk-react-native-blobs").projectDir = file("../../pub/react-native-blobs/android")
 
 include ':RCTWebRTC'
-project(':RCTWebRTC').projectDir = file("../node_modules/react-native-webrtc/android")
+project(':RCTWebRTC').projectDir = file("../../react-native-webrtc/android")

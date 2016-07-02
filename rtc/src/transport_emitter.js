@@ -1,6 +1,6 @@
 /**
- * This module provides a thin wrapper to create event emitter interfaces out of
- * any transform stream which emits a particular set of objects:
+ * This module provides a thin wrapper to create event emitter interfaces out
+ * of any transform stream which emits a particular set of objects:
  *
  * Example:
  *
@@ -8,7 +8,8 @@
  *  const subject = new TransportEmitter(transport);
  *  transport.write(['foo', { bar: true }]);
  *
- * In the above example this will cause subject to emit foo with the given object.
+ * In the above example this will cause subject to emit foo with the given
+ * object.
  *
  * @flow
  */
@@ -52,6 +53,9 @@ export default class TransportEmitter extends EventEmitter {
     for (let event of MIRROR_EVENTS) {
       transport.on(event, emit.bind(this, event));
     }
+
+    // Avoid having stream errors become uncaught exceptions.
+    this.on('error', (err) => log.debug('Stream error:', err));
   }
 
   releaseIncomingEvent(name: string): number {

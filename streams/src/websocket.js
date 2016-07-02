@@ -1,7 +1,7 @@
 /**
- * Wrapper for WebSocket duplex stream. This interface very intentionally sticks
- * to the w3c spec for WebSocket clients rather then the slightly nicer
- * interface offered by ws for node.
+ * Wrapper for WebSocket duplex stream. This interface very intentionally
+ * sticks to the w3c spec for WebSocket clients rather than the slightly
+ * nicer interface offered by ws for node.
  *
  *  - Buffers writes during connect.
  *  - Does not reconnect.

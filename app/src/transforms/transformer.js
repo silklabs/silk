@@ -34,6 +34,10 @@ const aliases = {
   // a fetch implementation. However, the packager sees the require(,
   // so avoid trying to include node-fetch in the app bundle.
   'node-fetch': 'node-libs-browser/mock/empty',
+
+  // This makes silk-rtc magically work in the app, by rewriting
+  // its import of 'node-webrtc'.
+  'node-webrtc': 'react-native-webrtc',
 };
 
 const rootDir = path.resolve(__dirname, '../../..');

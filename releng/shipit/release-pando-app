@@ -36,6 +36,7 @@ WHITELIST=$(cat <<-EOF
   rtc
   silknpm.json
   streams
+  utils
 EOF
 )
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

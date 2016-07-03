@@ -129,7 +129,7 @@ export default React.createClass({
         style={style}
         ref={RCT_NATIVE_REF}
         orientation={this.props.orientation}>
-        {React.Children.map(this.props.children, React.cloneElement)}
+        {this.props.children}
       </OverlayModal>
     );
   },

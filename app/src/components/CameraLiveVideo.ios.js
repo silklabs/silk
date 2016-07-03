@@ -87,7 +87,12 @@ export default class CameraLiveVideo extends React.Component {
     // playhead isn't constantly at the edge of the buffer.
     const waitMs = this.firstSegmentDurationMs / 2;
     log.debug(`canPlay now, playing in ${waitMs}ms`);
-    setTimeout(() => this.refs.video.play(), waitMs);
+    setTimeout(() => {
+      if (!this.mounted) {
+        return;
+      }
+      this.refs.video.play();
+    }, waitMs);
   };
 
   _onPlay = () => {

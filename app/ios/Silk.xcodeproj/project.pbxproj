@@ -45,7 +45,6 @@
 		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; };
 		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
-		5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714F47C1BA373DC0087A138 /* NSDataExtension.swift */; };
 		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
 		5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0811B59FC2500F9376C /* OverlayModalManager.m */; };
 		5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0821B59FC2500F9376C /* OverlayModalManager.swift */; };
@@ -56,7 +55,6 @@
 		5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 78C398B91ACF4ADC00677621 /* libRCTLinking.a */; };
 		5758F17D1B5DD52800C18E5D /* libRCTSettings.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 139105C11AF99BAD00B5F7CC /* libRCTSettings.a */; };
 		5758F17E1B5DD52800C18E5D /* libRCTText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 832341B51AAA6A8300B99B32 /* libRCTText.a */; };
-		5758F23B1B5EFE7600C18E5D /* Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5758F23A1B5EFE7600C18E5D /* Sync.swift */; };
 		5758F3351B609C2000C18E5D /* libART.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5758F3321B60989C00C18E5D /* libART.a */; };
 		5758F3361B609C4300C18E5D /* libRCTNetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302DC1ABCB9D200DB3ED1 /* libRCTNetwork.a */; };
 		5758F3371B609C5000C18E5D /* libRCTActionSheet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302AC1ABCB8CE00DB3ED1 /* libRCTActionSheet.a */; };
@@ -344,13 +342,11 @@
 		3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
 		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
-		5714F47C1BA373DC0087A138 /* NSDataExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSDataExtension.swift; sourceTree = "<group>"; };
 		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
 		5741E0811B59FC2500F9376C /* OverlayModalManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OverlayModalManager.m; sourceTree = "<group>"; };
 		5741E0821B59FC2500F9376C /* OverlayModalManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModalManager.swift; sourceTree = "<group>"; };
 		5741E0BF1B5A108D00F9376C /* SLKConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfig.swift; sourceTree = "<group>"; };
 		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		5758F23A1B5EFE7600C18E5D /* Sync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -651,8 +647,6 @@
 				5714A0AB1B756B0900B0630C /* Assertions.swift */,
 				6C5839001C1D04610004EC78 /* CrashReporter.swift */,
 				35C03E901CC02577008EF119 /* NotImplemented.swift */,
-				5714F47C1BA373DC0087A138 /* NSDataExtension.swift */,
-				5758F23A1B5EFE7600C18E5D /* Sync.swift */,
 				5741E0EB1B5A206F00F9376C /* ViewController.swift */,
 				F9E92CF71B3900C200C10C24 /* main.jsbundle */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -1132,7 +1126,6 @@
 			files = (
 				57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */,
 				35DEE2D01C5069E6000BBF61 /* DashSegmentPlayback.swift in Sources */,
-				5758F23B1B5EFE7600C18E5D /* Sync.swift in Sources */,
 				35C1A5621C5042B400551FC6 /* DashSegmentPlayerManager.swift in Sources */,
 				5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */,
 				57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */,
@@ -1151,7 +1144,6 @@
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,
 				35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */,
 				5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */,
-				5714F47D1BA373DC0087A138 /* NSDataExtension.swift in Sources */,
 				3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */,
 				35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */,
 				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,

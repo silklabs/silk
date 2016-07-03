@@ -41,7 +41,7 @@
     "ms": "0.7.1",
     "pbkdf2": "3.0.4",
     "react": "15.1.0",
-    "react-addons-css-transition-group": "15.0.2",
+    "react-addons-css-transition-group": "15.1.0",
     "react-bootstrap": "0.29.4",
     "react-chartjs": "0.6.0",
     "react-dom": "15.1.0",

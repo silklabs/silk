@@ -9,9 +9,6 @@
 /* Begin PBXBuildFile section */
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		17E8D0C41D012931004581ED /* TPYHelloWorldDemoView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 17E8D0C31D012931004581ED /* TPYHelloWorldDemoView.xib */; };
-		17E8D0C61D0129CA004581ED /* TPYHelloWorldReactViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E8D0C51D0129CA004581ED /* TPYHelloWorldReactViewManager.m */; };
-		17E8D0CA1D012B11004581ED /* TPYHelloWorldReactView.m in Sources */ = {isa = PBXBuildFile; fileRef = 17E8D0C91D012B11004581ED /* TPYHelloWorldReactView.m */; };
 		351329471CDD1C2300805844 /* DINRoundPro-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329421CDD1C2300805844 /* DINRoundPro-Black.otf */; };
 		351329481CDD1C2300805844 /* DINRoundPro-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329431CDD1C2300805844 /* DINRoundPro-Medium.otf */; };
 		351329491CDD1C2300805844 /* DINRoundPro-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329441CDD1C2300805844 /* DINRoundPro-Regular.otf */; };
@@ -19,7 +16,6 @@
 		3513294B1CDD1C2300805844 /* DINRoundPro-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */; };
 		352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCEBA1D18BB810056D623 /* libSLKCrypto.a */; };
 		357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357AF0361D20E27E0075394A /* libSLKBlobs.a */; };
-		3582BA421D0278D2000C6830 /* TPYHelloWorldDemoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3582BA411D0278D2000C6830 /* TPYHelloWorldDemoView.m */; };
 		35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222301CB493710015FD5C /* libRCTWebRTC.a */; };
 		35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222791CB49DAE0015FD5C /* libWebRTC.a */; };
 		35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222901CB4A0350015FD5C /* libstdc++.tbd */; };
@@ -301,11 +297,6 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "../node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
-		17E8D0C31D012931004581ED /* TPYHelloWorldDemoView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TPYHelloWorldDemoView.xib; sourceTree = "<group>"; };
-		17E8D0C51D0129CA004581ED /* TPYHelloWorldReactViewManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPYHelloWorldReactViewManager.m; sourceTree = "<group>"; };
-		17E8D0C71D012A19004581ED /* TPYHelloWorldReactViewManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TPYHelloWorldReactViewManager.h; sourceTree = "<group>"; };
-		17E8D0C81D012B11004581ED /* TPYHelloWorldReactView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPYHelloWorldReactView.h; sourceTree = "<group>"; };
-		17E8D0C91D012B11004581ED /* TPYHelloWorldReactView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPYHelloWorldReactView.m; sourceTree = "<group>"; };
 		351329421CDD1C2300805844 /* DINRoundPro-Black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Black.otf"; sourceTree = "<group>"; };
 		351329431CDD1C2300805844 /* DINRoundPro-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Medium.otf"; sourceTree = "<group>"; };
 		351329441CDD1C2300805844 /* DINRoundPro-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Regular.otf"; sourceTree = "<group>"; };
@@ -313,8 +304,6 @@
 		351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Bold.otf"; sourceTree = "<group>"; };
 		352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKCrypto.xcodeproj; path = ../../crypto/ios/SLKCrypto.xcodeproj; sourceTree = "<group>"; };
 		357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../pub/react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
-		3582BA401D0278D2000C6830 /* TPYHelloWorldDemoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPYHelloWorldDemoView.h; sourceTree = "<group>"; };
-		3582BA411D0278D2000C6830 /* TPYHelloWorldDemoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPYHelloWorldDemoView.m; sourceTree = "<group>"; };
 		35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebRTC.xcodeproj; path = "../../react-native-webrtc/ios/RCTWebRTC.xcodeproj"; sourceTree = "<group>"; };
 		35A222791CB49DAE0015FD5C /* libWebRTC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWebRTC.a; path = "../../react-native-webrtc/ios/libjingle_peerconnection/libWebRTC.a"; sourceTree = "<group>"; };
 		35A222901CB4A0350015FD5C /* libstdc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libstdc++.tbd"; path = "usr/lib/libstdc++.tbd"; sourceTree = SDKROOT; };
@@ -497,20 +486,6 @@
 				146834041AC3E56700842450 /* libReact.a */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		17E8D0C21D012904004581ED /* 3rdParty */ = {
-			isa = PBXGroup;
-			children = (
-				17E8D0C31D012931004581ED /* TPYHelloWorldDemoView.xib */,
-				3582BA401D0278D2000C6830 /* TPYHelloWorldDemoView.h */,
-				3582BA411D0278D2000C6830 /* TPYHelloWorldDemoView.m */,
-				17E8D0C81D012B11004581ED /* TPYHelloWorldReactView.h */,
-				17E8D0C91D012B11004581ED /* TPYHelloWorldReactView.m */,
-				17E8D0C71D012A19004581ED /* TPYHelloWorldReactViewManager.h */,
-				17E8D0C51D0129CA004581ED /* TPYHelloWorldReactViewManager.m */,
-			);
-			path = 3rdParty;
 			sourceTree = "<group>";
 		};
 		352DCEB51D18BB810056D623 /* Products */ = {
@@ -711,7 +686,6 @@
 				6C5839021C1D14C30004EC78 /* Raygun4iOS.framework */,
 				35DABDA21C5045FB005F479F /* Viblast */,
 				F91A54EA1B8B9D48009C75C9 /* Resources */,
-				17E8D0C21D012904004581ED /* 3rdParty */,
 				57AC68811B4F0CE6009B70A3 /* Silk */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* SilkTests */,
@@ -1039,7 +1013,6 @@
 				F91A54F81B8B9D48009C75C9 /* OpenSans-ExtraBoldItalic.ttf in Resources */,
 				351329481CDD1C2300805844 /* DINRoundPro-Medium.otf in Resources */,
 				F91A54F71B8B9D48009C75C9 /* OpenSans-ExtraBold.ttf in Resources */,
-				17E8D0C41D012931004581ED /* TPYHelloWorldDemoView.xib in Resources */,
 				F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */,
 				3513294B1CDD1C2300805844 /* DINRoundPro-Bold.otf in Resources */,
 				F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */,
@@ -1132,13 +1105,10 @@
 				5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */,
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
 				3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */,
-				17E8D0C61D0129CA004581ED /* TPYHelloWorldReactViewManager.m in Sources */,
 				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
-				3582BA421D0278D2000C6830 /* TPYHelloWorldDemoView.m in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */,
 				6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */,
-				17E8D0CA1D012B11004581ED /* TPYHelloWorldReactView.m in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
 				35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */,
 				3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */,

@@ -181,7 +181,7 @@ export class Ui extends events.EventEmitter {
     let movieName;
     switch (this.currentState) {
     case 'unconfigured':
-    case 'connecting':
+    case 'configuring':
       movieName = 'setup';
       break;
     default:

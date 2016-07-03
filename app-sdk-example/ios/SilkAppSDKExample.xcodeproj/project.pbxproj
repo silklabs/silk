@@ -1,0 +1,582 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3504D0611D2B969D00BB24A2 /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */; };
+		35D7001D1D298EF700993A9C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001C1D298EF700993A9C /* main.m */; };
+		35D700201D298EF700993A9C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001F1D298EF700993A9C /* AppDelegate.m */; };
+		35D700231D298EF700993A9C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700221D298EF700993A9C /* ViewController.m */; };
+		35D700261D298EF700993A9C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35D700241D298EF700993A9C /* Main.storyboard */; };
+		35D700281D298EF700993A9C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 35D700271D298EF700993A9C /* Assets.xcassets */; };
+		35D7002B1D298EF700993A9C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35D700291D298EF700993A9C /* LaunchScreen.storyboard */; };
+		35D700361D298EF800993A9C /* SilkAppSDKExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700351D298EF800993A9C /* SilkAppSDKExampleTests.m */; };
+		35D700411D298EF800993A9C /* SilkAppSDKExampleUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700401D298EF800993A9C /* SilkAppSDKExampleUITests.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		35D700321D298EF800993A9C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700101D298EF700993A9C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 35D700171D298EF700993A9C;
+			remoteInfo = SilkAppSDKExample;
+		};
+		35D7003D1D298EF800993A9C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700101D298EF700993A9C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 35D700171D298EF700993A9C;
+			remoteInfo = SilkAppSDKExample;
+		};
+		35D7009C1D29AA0800993A9C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 35D7007C1D29957E00993A9C;
+			remoteInfo = SLKAppSDK;
+		};
+		35D7009E1D29AA0800993A9C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 35D700861D29957E00993A9C;
+			remoteInfo = SLKAppSDKTests;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		35D700181D298EF700993A9C /* SilkAppSDKExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SilkAppSDKExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		35D7001C1D298EF700993A9C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		35D7001E1D298EF700993A9C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		35D7001F1D298EF700993A9C /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		35D700211D298EF700993A9C /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		35D700221D298EF700993A9C /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		35D700251D298EF700993A9C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		35D700271D298EF700993A9C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		35D7002A1D298EF700993A9C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		35D7002C1D298EF700993A9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		35D700311D298EF800993A9C /* SilkAppSDKExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SilkAppSDKExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		35D700351D298EF800993A9C /* SilkAppSDKExampleTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SilkAppSDKExampleTests.m; sourceTree = "<group>"; };
+		35D700371D298EF800993A9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		35D7003C1D298EF800993A9C /* SilkAppSDKExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SilkAppSDKExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		35D700401D298EF800993A9C /* SilkAppSDKExampleUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SilkAppSDKExampleUITests.m; sourceTree = "<group>"; };
+		35D700421D298EF800993A9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKAppSDK.xcodeproj; path = ../../app-sdk/ios/SLKAppSDK.xcodeproj; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		35D700151D298EF700993A9C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3504D0611D2B969D00BB24A2 /* SLKAppSDK.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		35D7002E1D298EF800993A9C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		35D700391D298EF800993A9C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		35D7000F1D298EF700993A9C = {
+			isa = PBXGroup;
+			children = (
+				35D700961D29A9E500993A9C /* Frameworks */,
+				35D7001A1D298EF700993A9C /* SilkAppSDKExample */,
+				35D700341D298EF800993A9C /* SilkAppSDKExampleTests */,
+				35D7003F1D298EF800993A9C /* SilkAppSDKExampleUITests */,
+				35D700191D298EF700993A9C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		35D700191D298EF700993A9C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				35D700181D298EF700993A9C /* SilkAppSDKExample.app */,
+				35D700311D298EF800993A9C /* SilkAppSDKExampleTests.xctest */,
+				35D7003C1D298EF800993A9C /* SilkAppSDKExampleUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		35D7001A1D298EF700993A9C /* SilkAppSDKExample */ = {
+			isa = PBXGroup;
+			children = (
+				35D7001E1D298EF700993A9C /* AppDelegate.h */,
+				35D7001F1D298EF700993A9C /* AppDelegate.m */,
+				35D700211D298EF700993A9C /* ViewController.h */,
+				35D700221D298EF700993A9C /* ViewController.m */,
+				35D700241D298EF700993A9C /* Main.storyboard */,
+				35D700271D298EF700993A9C /* Assets.xcassets */,
+				35D700291D298EF700993A9C /* LaunchScreen.storyboard */,
+				35D7002C1D298EF700993A9C /* Info.plist */,
+				35D7001B1D298EF700993A9C /* Supporting Files */,
+			);
+			path = SilkAppSDKExample;
+			sourceTree = "<group>";
+		};
+		35D7001B1D298EF700993A9C /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				35D7001C1D298EF700993A9C /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		35D700341D298EF800993A9C /* SilkAppSDKExampleTests */ = {
+			isa = PBXGroup;
+			children = (
+				35D700351D298EF800993A9C /* SilkAppSDKExampleTests.m */,
+				35D700371D298EF800993A9C /* Info.plist */,
+			);
+			path = SilkAppSDKExampleTests;
+			sourceTree = "<group>";
+		};
+		35D7003F1D298EF800993A9C /* SilkAppSDKExampleUITests */ = {
+			isa = PBXGroup;
+			children = (
+				35D700401D298EF800993A9C /* SilkAppSDKExampleUITests.m */,
+				35D700421D298EF800993A9C /* Info.plist */,
+			);
+			path = SilkAppSDKExampleUITests;
+			sourceTree = "<group>";
+		};
+		35D700961D29A9E500993A9C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		35D700981D29AA0800993A9C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */,
+				35D7009F1D29AA0800993A9C /* SLKAppSDKTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		35D700171D298EF700993A9C /* SilkAppSDKExample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 35D700451D298EF800993A9C /* Build configuration list for PBXNativeTarget "SilkAppSDKExample" */;
+			buildPhases = (
+				35D700141D298EF700993A9C /* Sources */,
+				35D700151D298EF700993A9C /* Frameworks */,
+				35D700161D298EF700993A9C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SilkAppSDKExample;
+			productName = SilkAppSDKExample;
+			productReference = 35D700181D298EF700993A9C /* SilkAppSDKExample.app */;
+			productType = "com.apple.product-type.application";
+		};
+		35D700301D298EF800993A9C /* SilkAppSDKExampleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 35D700481D298EF800993A9C /* Build configuration list for PBXNativeTarget "SilkAppSDKExampleTests" */;
+			buildPhases = (
+				35D7002D1D298EF800993A9C /* Sources */,
+				35D7002E1D298EF800993A9C /* Frameworks */,
+				35D7002F1D298EF800993A9C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				35D700331D298EF800993A9C /* PBXTargetDependency */,
+			);
+			name = SilkAppSDKExampleTests;
+			productName = SilkAppSDKExampleTests;
+			productReference = 35D700311D298EF800993A9C /* SilkAppSDKExampleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		35D7003B1D298EF800993A9C /* SilkAppSDKExampleUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 35D7004B1D298EF800993A9C /* Build configuration list for PBXNativeTarget "SilkAppSDKExampleUITests" */;
+			buildPhases = (
+				35D700381D298EF800993A9C /* Sources */,
+				35D700391D298EF800993A9C /* Frameworks */,
+				35D7003A1D298EF800993A9C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				35D7003E1D298EF800993A9C /* PBXTargetDependency */,
+			);
+			name = SilkAppSDKExampleUITests;
+			productName = SilkAppSDKExampleUITests;
+			productReference = 35D7003C1D298EF800993A9C /* SilkAppSDKExampleUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		35D700101D298EF700993A9C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0730;
+				ORGANIZATIONNAME = "Silk Labs";
+				TargetAttributes = {
+					35D700171D298EF700993A9C = {
+						CreatedOnToolsVersion = 7.3;
+					};
+					35D700301D298EF800993A9C = {
+						CreatedOnToolsVersion = 7.3;
+						TestTargetID = 35D700171D298EF700993A9C;
+					};
+					35D7003B1D298EF800993A9C = {
+						CreatedOnToolsVersion = 7.3;
+						TestTargetID = 35D700171D298EF700993A9C;
+					};
+				};
+			};
+			buildConfigurationList = 35D700131D298EF700993A9C /* Build configuration list for PBXProject "SilkAppSDKExample" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 35D7000F1D298EF700993A9C;
+			productRefGroup = 35D700191D298EF700993A9C /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 35D700981D29AA0800993A9C /* Products */;
+					ProjectRef = 35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				35D700171D298EF700993A9C /* SilkAppSDKExample */,
+				35D700301D298EF800993A9C /* SilkAppSDKExampleTests */,
+				35D7003B1D298EF800993A9C /* SilkAppSDKExampleUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = SLKAppSDK.framework;
+			remoteRef = 35D7009C1D29AA0800993A9C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		35D7009F1D29AA0800993A9C /* SLKAppSDKTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = SLKAppSDKTests.xctest;
+			remoteRef = 35D7009E1D29AA0800993A9C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		35D700161D298EF700993A9C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35D7002B1D298EF700993A9C /* LaunchScreen.storyboard in Resources */,
+				35D700281D298EF700993A9C /* Assets.xcassets in Resources */,
+				35D700261D298EF700993A9C /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		35D7002F1D298EF800993A9C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		35D7003A1D298EF800993A9C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		35D700141D298EF700993A9C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35D700231D298EF700993A9C /* ViewController.m in Sources */,
+				35D700201D298EF700993A9C /* AppDelegate.m in Sources */,
+				35D7001D1D298EF700993A9C /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		35D7002D1D298EF800993A9C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35D700361D298EF800993A9C /* SilkAppSDKExampleTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		35D700381D298EF800993A9C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35D700411D298EF800993A9C /* SilkAppSDKExampleUITests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		35D700331D298EF800993A9C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 35D700171D298EF700993A9C /* SilkAppSDKExample */;
+			targetProxy = 35D700321D298EF800993A9C /* PBXContainerItemProxy */;
+		};
+		35D7003E1D298EF800993A9C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 35D700171D298EF700993A9C /* SilkAppSDKExample */;
+			targetProxy = 35D7003D1D298EF800993A9C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		35D700241D298EF700993A9C /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				35D700251D298EF700993A9C /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		35D700291D298EF700993A9C /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				35D7002A1D298EF700993A9C /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		35D700431D298EF800993A9C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		35D700441D298EF800993A9C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		35D700461D298EF800993A9C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = SilkAppSDKExample/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		35D700471D298EF800993A9C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = SilkAppSDKExample/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		35D700491D298EF800993A9C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = SilkAppSDKExampleTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SilkAppSDKExample.app/SilkAppSDKExample";
+			};
+			name = Debug;
+		};
+		35D7004A1D298EF800993A9C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = SilkAppSDKExampleTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SilkAppSDKExample.app/SilkAppSDKExample";
+			};
+			name = Release;
+		};
+		35D7004C1D298EF800993A9C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = SilkAppSDKExampleUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExampleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = SilkAppSDKExample;
+			};
+			name = Debug;
+		};
+		35D7004D1D298EF800993A9C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = SilkAppSDKExampleUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExampleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = SilkAppSDKExample;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		35D700131D298EF700993A9C /* Build configuration list for PBXProject "SilkAppSDKExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35D700431D298EF800993A9C /* Debug */,
+				35D700441D298EF800993A9C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		35D700451D298EF800993A9C /* Build configuration list for PBXNativeTarget "SilkAppSDKExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35D700461D298EF800993A9C /* Debug */,
+				35D700471D298EF800993A9C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		35D700481D298EF800993A9C /* Build configuration list for PBXNativeTarget "SilkAppSDKExampleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35D700491D298EF800993A9C /* Debug */,
+				35D7004A1D298EF800993A9C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		35D7004B1D298EF800993A9C /* Build configuration list for PBXNativeTarget "SilkAppSDKExampleUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35D7004C1D298EF800993A9C /* Debug */,
+				35D7004D1D298EF800993A9C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 35D700101D298EF700993A9C /* Project object */;
+}

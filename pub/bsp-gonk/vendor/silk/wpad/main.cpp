@@ -3,7 +3,7 @@
   wpa_supplicant events to /dev/socket/wpad
 */
 
-#define LOG_TAG "wpad"
+#define LOG_TAG "silk-wpad"
 #include <utils/Log.h>
 
 #include <cutils/properties.h>
@@ -42,7 +42,10 @@ public:
 int main(int, char **)
 {
   char hardware[PROPERTY_VALUE_MAX] = {0};
+  char board_platform[PROPERTY_VALUE_MAX] = {0};
   property_get("ro.hardware", hardware, NULL);
+  property_get("ro.board.platform", board_platform, NULL);
+
   if (!strcmp(hardware, "goldfish")) {
     ALOGW("Goldfish has no wifi");
     for (;;) {
@@ -66,14 +69,38 @@ int main(int, char **)
 
   wifi_stop_supplicant(false);
   wifi_unload_driver();
+  
+  // Block until netd is operational.  Mako uses netd (ndc) to reload its
+  // firmware but in general networking overall isn't going to get very far
+  // until netd is up, so might as well wait for it.
+  while (access("/data/misc/net/netd_pid", F_OK) != 0) {
+    ALOGI("Waiting for netd to start");
+    sleep(1);
+  }
 
   // Mako wants its firmware reloaded, all other devices don't seem to need this.
   if (!strcmp(hardware, "mako")) {
     BAIL_ON_FAIL(system("/system/bin/logwrapper /system/bin/ndc softap fwreload wlan0 AP"));
+    ALOGI("reloaded firmware");
   }
 
+  // Kenzo waits for the wlan.driver.ath to be set by wcnss_service
+  // before it's safe to load the kernel wlan driver
+  if (!strcmp(board_platform, "msm8952")) {
+    char value[PROPERTY_VALUE_MAX] = {0};
+    while (strlen(value) == 0) {
+      property_get("wlan.driver.ath", value, "");
+      ALOGI("Waiting for firmware ready signal");
+      sleep(1);
+    }
+    ALOGI("Firmware ready. wlan.driver.ath=%s", value);
+  }
+
+  ALOGI("Loading driver");
   BAIL_ON_FAIL(wifi_load_driver());
+  ALOGI("Driver loaded");
   BAIL_ON_FAIL(wifi_start_supplicant(false));
+  ALOGI("Started supplicant");
 
   // wifi driver (including .ko) loaded, can run as user wifi instead of root
   BAIL_ON_FAIL(setgid(AID_WIFI));
@@ -94,6 +121,7 @@ int main(int, char **)
     }
     ALOGW("Unable to connect to supplicant, attempt %d\n", retry++);
   }
+  ALOGI("Connected to supplicant");
 
   WpaListener wpad;
   BAIL_ON_FAIL(wpad.start());

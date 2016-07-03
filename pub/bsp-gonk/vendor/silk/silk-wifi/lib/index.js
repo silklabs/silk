@@ -169,32 +169,33 @@ class WpaMonitor extends EventEmitter {
     return this._ready;
   }
 
-  _restart(why) {
+  _reconnect(why) {
     if (this._socket) {
       this._ready = false;
       this._socket = null;
 
-      log.info(`wpad restart: ${why}`);
+      log.info(`wpad reconnect: ${why}`);
       util.timeout(1000)
       .then(() => this._init())
       .catch(util.processthrow);
       return;
     }
-    log.info(`wpad restart pending (ignored "${why}")`);
+    log.info(`wpad reconnect pending (ignored "${why}")`);
   }
 
   _init() {
     let socket = this._socket = net.connect({path: '/dev/socket/wpad'}, () => {
       this._buffer = '';
       this._ready = true;
+      log.info(`connected to wpad`);
     });
     socket.on('data', data => this._onData(data));
     socket.on('error', err => {
-      this._restart(`wpad error, reason=${err}`);
+      this._reconnect(err);
     });
     socket.on('close', hadError => {
       if (!hadError) {
-        this._restart(`wpad close`);
+        this._reconnect(`wpad close`);
       }
     });
   }
@@ -217,7 +218,7 @@ class WpaMonitor extends EventEmitter {
 
         switch (cmd) {
         case 'CTRL-EVENT-TERMINATING':
-          this._restart(cmd);
+          this._reconnect(cmd);
           break;
         case 'CTRL-EVENT-DISCONNECTED':
           let reason = '';

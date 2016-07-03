@@ -15,6 +15,7 @@
 		3513294A1CDD1C2300805844 /* DINRoundPro-Light.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329451CDD1C2300805844 /* DINRoundPro-Light.otf */; };
 		3513294B1CDD1C2300805844 /* DINRoundPro-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */; };
 		352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCEBA1D18BB810056D623 /* libSLKCrypto.a */; };
+		356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 356CF7211D28AAF900BE44CF /* libRCTOrientation.a */; };
 		357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357AF0361D20E27E0075394A /* libSLKBlobs.a */; };
 		35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222301CB493710015FD5C /* libRCTWebRTC.a */; };
 		35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222791CB49DAE0015FD5C /* libWebRTC.a */; };
@@ -41,11 +42,7 @@
 		3CFBF22F1BBF48A400A7AF67 /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */; };
 		3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
-		5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0801B59FC2500F9376C /* OverlayModal.swift */; };
-		5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0811B59FC2500F9376C /* OverlayModalManager.m */; };
-		5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0821B59FC2500F9376C /* OverlayModalManager.swift */; };
 		5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* SLKConfig.swift */; };
-		5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0EB1B5A206F00F9376C /* ViewController.swift */; };
 		5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302C01ABCB91800DB3ED1 /* libRCTImage.a */; };
 		5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 78C398B91ACF4ADC00677621 /* libRCTLinking.a */; };
@@ -147,6 +144,13 @@
 			proxyType = 2;
 			remoteGlobalIDString = 352DCE8C1D18B7B50056D623;
 			remoteInfo = SLKCrypto;
+		};
+		356CF7201D28AAF900BE44CF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 356CF71C1D28AAF900BE44CF /* RCTOrientation.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 134814201AA4EA6300B7C361;
+			remoteInfo = RCTOrientation;
 		};
 		357AF02F1D20E26D0075394A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -303,6 +307,7 @@
 		351329451CDD1C2300805844 /* DINRoundPro-Light.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Light.otf"; sourceTree = "<group>"; };
 		351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Bold.otf"; sourceTree = "<group>"; };
 		352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKCrypto.xcodeproj; path = ../../crypto/ios/SLKCrypto.xcodeproj; sourceTree = "<group>"; };
+		356CF71C1D28AAF900BE44CF /* RCTOrientation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTOrientation.xcodeproj; path = "../node_modules/react-native-orientation/iOS/RCTOrientation.xcodeproj"; sourceTree = "<group>"; };
 		357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../pub/react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
 		35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebRTC.xcodeproj; path = "../../react-native-webrtc/ios/RCTWebRTC.xcodeproj"; sourceTree = "<group>"; };
 		35A222791CB49DAE0015FD5C /* libWebRTC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWebRTC.a; path = "../../react-native-webrtc/ios/libjingle_peerconnection/libWebRTC.a"; sourceTree = "<group>"; };
@@ -331,11 +336,7 @@
 		3CFBF22E1BBF48A400A7AF67 /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
 		3D8567311B72DF64000C8BE1 /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
-		5741E0801B59FC2500F9376C /* OverlayModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModal.swift; sourceTree = "<group>"; };
-		5741E0811B59FC2500F9376C /* OverlayModalManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OverlayModalManager.m; sourceTree = "<group>"; };
-		5741E0821B59FC2500F9376C /* OverlayModalManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayModalManager.swift; sourceTree = "<group>"; };
 		5741E0BF1B5A108D00F9376C /* SLKConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfig.swift; sourceTree = "<group>"; };
-		5741E0EB1B5A206F00F9376C /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -374,6 +375,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */,
 				357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */,
 				352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */,
 				35A222A41CB4A09A0015FD5C /* AVFoundation.framework in Frameworks */,
@@ -497,6 +499,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		356CF71D1D28AAF900BE44CF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				356CF7211D28AAF900BE44CF /* libRCTOrientation.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		357AF0321D20E27E0075394A /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -590,16 +600,6 @@
 			path = BLE;
 			sourceTree = "<group>";
 		};
-		5741E07F1B59FC2500F9376C /* OverlayModal */ = {
-			isa = PBXGroup;
-			children = (
-				5741E0801B59FC2500F9376C /* OverlayModal.swift */,
-				5741E0811B59FC2500F9376C /* OverlayModalManager.m */,
-				5741E0821B59FC2500F9376C /* OverlayModalManager.swift */,
-			);
-			path = OverlayModal;
-			sourceTree = "<group>";
-		};
 		5758F32E1B60989C00C18E5D /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -613,7 +613,6 @@
 			children = (
 				3CFBF22B1BBF41ED00A7AF67 /* BLE */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
-				5741E07F1B59FC2500F9376C /* OverlayModal */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
 				35C03E921CC03307008EF119 /* SLKConfig */,
 				35C03E931CC03357008EF119 /* SLKUtil */,
@@ -622,7 +621,6 @@
 				5714A0AB1B756B0900B0630C /* Assertions.swift */,
 				6C5839001C1D04610004EC78 /* CrashReporter.swift */,
 				35C03E901CC02577008EF119 /* NotImplemented.swift */,
-				5741E0EB1B5A206F00F9376C /* ViewController.swift */,
 				F9E92CF71B3900C200C10C24 /* main.jsbundle */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -662,6 +660,7 @@
 				832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */,
 				00C302DF1ABCB9EE00DB3ED1 /* RCTVibration.xcodeproj */,
 				139FDEE61B06529A00C62182 /* RCTWebSocket.xcodeproj */,
+				356CF71C1D28AAF900BE44CF /* RCTOrientation.xcodeproj */,
 				357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */,
 				352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */,
 				35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */,
@@ -842,6 +841,10 @@
 					ProjectRef = 00C302D31ABCB9D200DB3ED1 /* RCTNetwork.xcodeproj */;
 				},
 				{
+					ProductGroup = 356CF71D1D28AAF900BE44CF /* Products */;
+					ProjectRef = 356CF71C1D28AAF900BE44CF /* RCTOrientation.xcodeproj */;
+				},
+				{
 					ProductGroup = 139105B71AF99BAD00B5F7CC /* Products */;
 					ProjectRef = 139105B61AF99BAD00B5F7CC /* RCTSettings.xcodeproj */;
 				},
@@ -944,6 +947,13 @@
 			fileType = archive.ar;
 			path = libSLKCrypto.a;
 			remoteRef = 352DCEB91D18BB810056D623 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		356CF7211D28AAF900BE44CF /* libRCTOrientation.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRCTOrientation.a;
+			remoteRef = 356CF7201D28AAF900BE44CF /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		357AF0301D20E26D0075394A /* SLKCryptoTests.xctest */ = {
@@ -1100,12 +1110,9 @@
 				57C30C301B92CE01003F9EFF /* DebugLog.swift in Sources */,
 				35DEE2D01C5069E6000BBF61 /* DashSegmentPlayback.swift in Sources */,
 				35C1A5621C5042B400551FC6 /* DashSegmentPlayerManager.swift in Sources */,
-				5741E0851B59FC2500F9376C /* OverlayModalManager.swift in Sources */,
 				57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */,
-				5741E0841B59FC2500F9376C /* OverlayModalManager.m in Sources */,
 				3D8567331B72DF64000C8BE1 /* RegionMonitor.swift in Sources */,
 				3CAF32F81BE3E9AF00C7049E /* BLESocketPeripheral.swift in Sources */,
-				5741E0831B59FC2500F9376C /* OverlayModal.swift in Sources */,
 				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */,
 				6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */,
@@ -1116,7 +1123,6 @@
 				5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */,
 				3CFBF22D1BBF486000A7AF67 /* BLESocketManager.swift in Sources */,
 				35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */,
-				5741E0EC1B5A206F00F9376C /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1215,7 +1221,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
-					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
+					"$(SRCROOT)/../node_modules/react-native-orientation/iOS/**",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = SilkTests/Info.plist;
@@ -1242,7 +1248,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
-					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
+					"$(SRCROOT)/../node_modules/react-native-orientation/iOS/**",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = SilkTests/Info.plist;
@@ -1268,7 +1274,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
-					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
+					"$(SRCROOT)/../node_modules/react-native-orientation/iOS/**",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Silk/Info.plist";
@@ -1304,7 +1310,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../node_modules/react-native/React/**",
-					"$(SRCROOT)/../node_modules/react-native/Libraries/WebSocket/**",
+					"$(SRCROOT)/../node_modules/react-native-orientation/iOS/**",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Silk/Info.plist";

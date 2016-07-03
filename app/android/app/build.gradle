@@ -87,4 +87,5 @@ dependencies {
     compile project(":silk-crypto")
     compile project(":silk-react-native-blobs")
     compile project(':RCTWebRTC')
+    compile project(':react-native-orientation')
 }

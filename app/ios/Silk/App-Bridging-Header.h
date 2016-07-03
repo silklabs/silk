@@ -6,9 +6,6 @@
  * interface with via swift need to be imported here.
  */
 
-#import <CommonCrypto/CommonKeyDerivation.h>
-#import <CommonCrypto/CommonCryptor.h>
-#import "RCTEventDispatcher.h"
 #import "RCTBridge.h"
 #import "RCTBridgeDelegate.h"
 #import "RCTRootView.h"
@@ -17,7 +14,6 @@
 #import "UIView+React.h"
 #import "RCTComponent.h"
 #import "RCTTouchHandler.h"
-#import "RCTURLRequestHandler.h"
 #import "RCTView.h"
 
 #import "SLKBlobManager.h"

@@ -62,18 +62,24 @@ exports.default = function (instance) {
 
   instance.extend("parseConditional", function (inner) {
     return function (expr, noIn, startPos, startLoc, refNeedsArrowPos) {
-      var state = this.state.clone();
-      try {
-        return inner.call(this, expr, noIn, startPos, startLoc);
-      } catch (err) {
-        if (refNeedsArrowPos && err instanceof SyntaxError) {
-          this.state = state;
-          refNeedsArrowPos.start = this.state.start;
-          return expr;
-        } else {
-          throw err;
+      // only do the expensive clone if there is a question mark
+      // and if we come from inside parens
+      if (refNeedsArrowPos && this.match(_types.types.question)) {
+        var state = this.state.clone();
+        try {
+          return inner.call(this, expr, noIn, startPos, startLoc);
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            this.state = state;
+            refNeedsArrowPos.start = err.pos || this.state.start;
+            return expr;
+          } else {
+            throw err;
+          }
         }
       }
+
+      return inner.call(this, expr, noIn, startPos, startLoc);
     };
   });
 

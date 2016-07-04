@@ -10,7 +10,6 @@ import createLog from 'silk-log';
 
 import OverlayModal from './OverlayModal';
 import DashSegmentPlayer from './DashSegmentPlayer';
-import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
 const log = createLog('CameraLiveVideo');
 
@@ -120,10 +119,9 @@ export default class CameraLiveVideo extends React.Component {
   }
 
   render() {
-    let dimensions = getLandscapeDimensions();
     return (
       <OverlayModal ref="overlay" presented={true}>
-        <View style={[styles.container]}>
+        <View style={styles.container}>
           <TouchableWithoutFeedback onPress={this._toggleControls}>
             <View style={[styles.video, styles.videoContainer]}>
               <DashSegmentPlayer
@@ -135,7 +133,9 @@ export default class CameraLiveVideo extends React.Component {
               {this._renderSpinner()}
             </View>
           </TouchableWithoutFeedback>
-          <View pointerEvents="box-none" style={[styles.videoOverlay, dimensions]}>
+          <View
+            style={[styles.video, styles.videoOverlay]}
+            pointerEvents="box-none">
             {this._renderControls()}
           </View>
         </View>
@@ -146,7 +146,6 @@ export default class CameraLiveVideo extends React.Component {
 
 const styles = StyleSheet.create({
   videoContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -171,14 +170,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  videoControls: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-
   doneButton: {
     padding: 10,
     fontSize: 14,
@@ -187,7 +178,11 @@ const styles = StyleSheet.create({
   },
 
   container: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'black',
   },
 });

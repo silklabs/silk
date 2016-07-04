@@ -107,6 +107,8 @@ export function genEd25519Verify(
   return Promise.resolve(verified);
 }
 
+export const ED25519_KEY_BYTES = sodium.crypto_sign_ed25519_PUBLICKEYBYTES;
+
 
 /**
  * Generate a new X25519 key pair.

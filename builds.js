@@ -194,9 +194,6 @@ const builds = {
     'pub/log',
     'pub/version',
     'react-native-transformer',
-    // TODO: bring this back once we have a solution that doesn't involve
-    // checking exclusively OS X binaries for node-webrtc into the tree.
-    //'rtc',
     'streams',
     'tools/mp4dash',
     'utils',

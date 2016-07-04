@@ -1,4 +1,3 @@
-import { NativeModules } from 'react-native';
 import { configureLog } from 'silk-log';
 import Config from './config';
 
@@ -32,12 +31,3 @@ if (typeof global.document === 'undefined') {
     },
   };
 }
-
-/**
- * Monkey-patch a new method onto WebSocket objects that enables
- * native blob storage for that socket, rather than channeling blobs
- * from native to JS via base64.
- */
-global.WebSocket.prototype.enableBlobStorage = function () {
-  NativeModules.WebSocketModule.enableBlobStorage(this._socketId);
-};

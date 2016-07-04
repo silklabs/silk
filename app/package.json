@@ -15,7 +15,7 @@
   },
   "localDependencies": {
     "babel-core": "6.8.0",
-    "react-native": "0.28.0",
+    "react-native": "0.29.0-rc.2",
     "react-native-orientation": "1.17.0",
     "socket.io-client": "1.4.6"
   },

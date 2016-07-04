@@ -10,7 +10,7 @@
     "test": "npm run lint"
   },
   "dependencies": {
-    "minmatch": "3.0.0"
+    "minimatch": "3.0.0"
   },
   "symlinkDependencies": {
     "silk-buildjs": "../../../../pub/buildjs/"

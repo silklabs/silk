@@ -52,7 +52,7 @@ export default class AccessToken {
         return false;
       }
     }
-    return !!this.pub && this.pub.length === 64;
+    return !!this.pub && this.pub.length === 2 * silkCrypto.ED25519_KEY_BYTES;
   }
 
   genSign(message: string): Promise<string> {

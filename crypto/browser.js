@@ -86,6 +86,8 @@ export function genEd25519Verify(
   return key.verify(messageHex, signatureHex);
 }
 
+export const ED25519_KEY_BYTES = ed25519.encodingLength;
+
 
 /**
  * Generate a new X25519 key pair.

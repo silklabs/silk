@@ -68,6 +68,8 @@ export function genEd25519Verify(
     .then((result) => !!result);
 }
 
+export const ED25519_KEY_BYTES = SLKCrypto.crypto_sign_ed25519_PUBLICKEYBYTES;
+
 
 /**
  * Generate a new X25519 key pair.

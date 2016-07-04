@@ -9,7 +9,7 @@ async function assertThrows(func, ErrorClass) {
   } catch(ex) {
     error = ex;
   }
-  assert(error instanceof ErrorClass);
+  assert(error instanceof ErrorClass, `Expected ${ErrorClass.name} exception, got ${error}`);
 }
 
 suite('check key', () => {
@@ -33,11 +33,11 @@ suite('check key', () => {
     assert(!(await id.genIsValid()), 'garbage key is not considered valid');
     await assertThrows(
       () => id.genVerify('token', 'garbage'),
-      assert.AssertionError
+      TypeError
     );
     await assertThrows(
       () => id.genVerify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd'),
-      assert.AssertionError
+      Error
     );
   });
 
@@ -46,7 +46,7 @@ suite('check key', () => {
     assert(await id.genIsValid(), '64 byte hex key is valid');
     await assertThrows(
       () => id.genVerify('token', 'garbage'),
-      assert.AssertionError
+      TypeError
     );
     assert(!(await id.genVerify('token', '012345678901234567890123456789012345678901234567890123456789abcd012345678901234567890123456789012345678901234567890123456789abcd')));
   });

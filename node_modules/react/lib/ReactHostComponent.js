@@ -6,22 +6,22 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  *
- * @providesModule ReactNativeComponent
+ * @providesModule ReactHostComponent
  */
 
 'use strict';
 
-var _assign = require('object-assign');
+var _prodInvariant = require('./reactProdInvariant'),
+    _assign = require('object-assign');
 
 var invariant = require('fbjs/lib/invariant');
 
-var autoGenerateWrapperClass = null;
 var genericComponentClass = null;
-// This registry keeps track of wrapper classes around native tags.
+// This registry keeps track of wrapper classes around host tags.
 var tagToComponentClass = {};
 var textComponentClass = null;
 
-var ReactNativeComponentInjection = {
+var ReactHostComponentInjection = {
   // This accepts a class that receives the tag string. This is a catch all
   // that can render any kind of tag.
   injectGenericComponentClass: function (componentClass) {
@@ -40,31 +40,13 @@ var ReactNativeComponentInjection = {
 };
 
 /**
- * Get a composite component wrapper class for a specific tag.
- *
- * @param {ReactElement} element The tag for which to get the class.
- * @return {function} The React class constructor function.
- */
-function getComponentClassForElement(element) {
-  if (typeof element.type === 'function') {
-    return element.type;
-  }
-  var tag = element.type;
-  var componentClass = tagToComponentClass[tag];
-  if (componentClass == null) {
-    tagToComponentClass[tag] = componentClass = autoGenerateWrapperClass(tag);
-  }
-  return componentClass;
-}
-
-/**
- * Get a native internal component class for a specific tag.
+ * Get a host internal component class for a specific tag.
  *
  * @param {ReactElement} element The element to create.
  * @return {function} The internal class constructor function.
  */
 function createInternalComponent(element) {
-  !genericComponentClass ? process.env.NODE_ENV !== 'production' ? invariant(false, 'There is no registered component for the tag %s', element.type) : invariant(false) : void 0;
+  !genericComponentClass ? process.env.NODE_ENV !== 'production' ? invariant(false, 'There is no registered component for the tag %s', element.type) : _prodInvariant('111', element.type) : void 0;
   return new genericComponentClass(element);
 }
 
@@ -84,12 +66,11 @@ function isTextComponent(component) {
   return component instanceof textComponentClass;
 }
 
-var ReactNativeComponent = {
-  getComponentClassForElement: getComponentClassForElement,
+var ReactHostComponent = {
   createInternalComponent: createInternalComponent,
   createInstanceForText: createInstanceForText,
   isTextComponent: isTextComponent,
-  injection: ReactNativeComponentInjection
+  injection: ReactHostComponentInjection
 };
 
-module.exports = ReactNativeComponent;
+module.exports = ReactHostComponent;

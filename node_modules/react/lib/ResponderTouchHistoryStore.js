@@ -11,6 +11,8 @@
 
 'use strict';
 
+var _prodInvariant = require('./reactProdInvariant');
+
 var EventPluginUtils = require('./EventPluginUtils');
 
 var invariant = require('fbjs/lib/invariant');
@@ -88,7 +90,7 @@ var reinitializeTouchTrack = function (touchTrack, touch) {
 
 var validateTouch = function (touch) {
   var identifier = touch.identifier;
-  !(identifier != null) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Touch object is missing identifier') : invariant(false) : void 0;
+  !(identifier != null) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Touch object is missing identifier') : _prodInvariant('133') : void 0;
   if (identifier > MAX_TOUCH_BANK) {
     console.warn('Touch identifier ' + identifier + ' is greater than maximum ' + 'supported ' + MAX_TOUCH_BANK + ' which causes performance issues ' + 'backfilling array locations for all of the indices.');
   }
@@ -114,7 +116,7 @@ var recordMoveTouchData = function (touch) {
   var touchTrack = touchBank[touch.identifier];
   if (process.env.NODE_ENV !== 'production') {
     validateTouch(touch);
-    !touchTrack ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Touch data should have been recorded on start') : invariant(false) : void 0;
+    !touchTrack ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Touch data should have been recorded on start') : _prodInvariant('134') : void 0;
   }
   touchTrack.touchActive = true;
   touchTrack.previousPageX = touchTrack.currentPageX;
@@ -131,7 +133,7 @@ var recordEndTouchData = function (touch) {
   var touchTrack = touchBank[touch.identifier];
   if (process.env.NODE_ENV !== 'production') {
     validateTouch(touch);
-    !touchTrack ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Touch data should have been recorded on start') : invariant(false) : void 0;
+    !touchTrack ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Touch data should have been recorded on start') : _prodInvariant('134') : void 0;
   }
   touchTrack.previousPageX = touchTrack.currentPageX;
   touchTrack.previousPageY = touchTrack.currentPageY;
@@ -168,7 +170,7 @@ var ResponderTouchHistoryStore = {
         if (process.env.NODE_ENV !== 'production') {
           var activeTouchData = touchBank[touchHistory.indexOfSingleActiveTouch];
           var foundActive = activeTouchData != null && !!activeTouchData.touchActive;
-          !foundActive ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Cannot find single active touch') : invariant(false) : void 0;
+          !foundActive ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Cannot find single active touch') : _prodInvariant('135') : void 0;
         }
       }
     }

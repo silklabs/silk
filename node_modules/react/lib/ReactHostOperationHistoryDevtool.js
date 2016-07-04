@@ -6,15 +6,15 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  *
- * @providesModule ReactNativeOperationHistoryDevtool
+ * @providesModule ReactHostOperationHistoryDevtool
  */
 
 'use strict';
 
 var history = [];
 
-var ReactNativeOperationHistoryDevtool = {
-  onNativeOperation: function (debugID, type, payload) {
+var ReactHostOperationHistoryDevtool = {
+  onHostOperation: function (debugID, type, payload) {
     history.push({
       instanceID: debugID,
       type: type,
@@ -22,7 +22,7 @@ var ReactNativeOperationHistoryDevtool = {
     });
   },
   clearHistory: function () {
-    if (ReactNativeOperationHistoryDevtool._preventClearing) {
+    if (ReactHostOperationHistoryDevtool._preventClearing) {
       // Should only be used for tests.
       return;
     }
@@ -34,4 +34,4 @@ var ReactNativeOperationHistoryDevtool = {
   }
 };
 
-module.exports = ReactNativeOperationHistoryDevtool;
+module.exports = ReactHostOperationHistoryDevtool;

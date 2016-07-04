@@ -42,16 +42,12 @@ class AppDelegate : UIResponder,
     self.regionMonitor!.start()
 
     // At least for now we don't implement our own specific controller...
-    let rootViewController = ViewController()
+    let rootViewController = UIViewController()
     rootViewController.view = rootView
 
     self.window = UIWindow(frame: UIScreen.mainScreen().bounds)
-
     self.window?.rootViewController = rootViewController
     self.window?.makeKeyAndVisible()
-
-    // Allow audio playback even when user has enabled mute switch.
-    let _ = try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
 
     return true
   }
@@ -68,6 +64,10 @@ class AppDelegate : UIResponder,
       self.inForeground = false
       self.bleSocketPeripheral?.setBackground()
     }
+  }
+
+  func application(application: UIApplication, supportedInterfaceOrientationsForWindow window: UIWindow?) -> UIInterfaceOrientationMask {
+    return Orientation.getOrientation()
   }
 
   // Display region enter/exit notifications to the user

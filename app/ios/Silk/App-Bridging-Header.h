@@ -19,6 +19,8 @@
 #import "SLKBlobManager.h"
 #import "SLKWebSocketModule.h"
 
+#import "Orientation.h"
+
 #import <Raygun4iOS/Raygun4iOS.h>
 
 #import "VBDisplayLayer.h"

@@ -1,14 +1,15 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Modal,
   StyleSheet,
   Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { lockToLandscape, lockToPortrait } from 'react-native-orientation';
 import createLog from 'silk-log';
 
-import OverlayModal from './OverlayModal';
 import DashSegmentPlayer from './DashSegmentPlayer';
 
 const log = createLog('CameraLiveVideo');
@@ -28,6 +29,10 @@ export default class CameraLiveVideo extends React.Component {
 
   mounted = false;
 
+  componentWillMount() {
+    lockToLandscape();
+  }
+
   componentDidMount() {
     this.mounted = true;
 
@@ -44,6 +49,8 @@ export default class CameraLiveVideo extends React.Component {
     const stream = `video-${deviceId}`;
     socket.off(stream, this._receiveSegment);
     socket.leave(stream);
+
+    setTimeout(lockToPortrait, 0);
   }
 
   _receiveSegment = (message, ack) => {
@@ -73,7 +80,7 @@ export default class CameraLiveVideo extends React.Component {
     return (
       <View style={styles.controls}>
         <Text
-          onPress={this._close}
+          onPress={this.props.onClose}
           style={styles.doneButton}>
           Done
         </Text>
@@ -98,13 +105,6 @@ export default class CameraLiveVideo extends React.Component {
     this.setState({playing: true});
   };
 
-  _close = () => {
-    // Signal dismissal of the view (but let it animate closed).
-    // After the animation allow any parent views to cleanup.
-    const overlay = this.refs.overlay;
-    overlay.dismiss().then(() => this.props.onClose());
-  };
-
   _toggleControls = () => {
     this.setState({
       showingControls: !this.state.showingControls,
@@ -120,7 +120,7 @@ export default class CameraLiveVideo extends React.Component {
 
   render() {
     return (
-      <OverlayModal ref="overlay" presented={true}>
+      <Modal visible={true}>
         <View style={styles.container}>
           <TouchableWithoutFeedback onPress={this._toggleControls}>
             <View style={[styles.video, styles.videoContainer]}>
@@ -139,7 +139,7 @@ export default class CameraLiveVideo extends React.Component {
             {this._renderControls()}
           </View>
         </View>
-      </OverlayModal>
+      </Modal>
     );
   }
 }

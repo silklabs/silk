@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { lockToPortrait } from 'react-native-orientation';
 
 // Inject global shims, native cryptographic signature
 // implementations, and profiler hooks.
@@ -54,6 +55,10 @@ export default class Root extends AsyncComponent {
     userState: null,
     accessToken: null,
   };
+
+  componentWillMount() {
+    lockToPortrait();
+  }
 
   componentDidMount() {
     Config.init();

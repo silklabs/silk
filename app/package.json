@@ -24,6 +24,7 @@
     "joi": "6.10.1",
     "lodash.merge": "3.3.2",
     "moment": "2.13.0",
+    "react": "15.1.0",
     "react-addons-pure-render-mixin": "15.1.0",
     "react-redux": "4.4.5",
     "redux": "3.5.2",

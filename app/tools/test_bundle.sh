@@ -8,5 +8,5 @@ node node_modules/react-native/local-cli/cli.js bundle \
   --reset-cache true \
   --bundle-output "$DEST/index.$PLATFORM.js" \
   --assets-dest "$DEST" \
-  --transformer "$PWD/src/transforms/transformer.js" \
+  --transformer "$PWD/../react-native-transformer" \
   --verbose

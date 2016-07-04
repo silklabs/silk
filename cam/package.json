@@ -10,7 +10,6 @@
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
-    "silk-flow-bin": "/pub/flow-bin",
     "silk-log": "/pub/log"
   },
   "dependencies": {

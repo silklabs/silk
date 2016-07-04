@@ -1,6 +1,5 @@
 {
   "symlinkDependencies": {
-    "babel-plugin-rewrite-require": "/pub/babel-plugin-rewrite-require",
     "eslint-config-silk": "/pub/eslint-config",
     "react-native-webrtc": "/react-native-webrtc",
     "silk-api": "/api",
@@ -10,6 +9,7 @@
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-react-native-blobs": "/pub/react-native-blobs",
+    "silk-react-native-transformer": "/react-native-transformer",
     "silk-rtc": "/rtc",
     "silk-streams": "/streams"
   },
@@ -47,7 +47,7 @@
     "localbundle": "./tools/local_bundle",
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall",
-    "start": "node node_modules/react-native/local-cli/cli.js start --transformer src/transforms/transformer.js",
+    "start": "node node_modules/react-native/local-cli/cli.js start --transformer ../react-native-transformer",
     "webview-dev-server": "cd android && ../../node_modules/.bin/webpack-dev-server",
     "test": "npm run lint",
     "update": "./tools/update.internal.sh"

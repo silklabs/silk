@@ -40,7 +40,7 @@ const aliases = {
   'node-webrtc': 'react-native-webrtc',
 };
 
-const rootDir = path.resolve(__dirname, '../../..');
+const rootDir = path.resolve(__dirname, '..');
 
 const babelRC = {
   presets: [require('babel-preset-react-native')],

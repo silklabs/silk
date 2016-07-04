@@ -32,6 +32,7 @@ WHITELIST=$(cat <<-EOF
   npm_preinstall
   pub
   raygun
+  react-native-transformer
   react-native-webrtc
   rtc
   silknpm.json

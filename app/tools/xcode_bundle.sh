@@ -19,6 +19,7 @@ esac
 
 source $(dirname $0)/../../pub/tools/gnu.sh
 APP_DIR="$(realpath $(dirname $0)/..)"
+ROOT_DIR="$(realpath $(dirname $0)/../..)"
 REACT_NATIVE_DIR="$APP_DIR/node_modules/react-native"
 
 # Xcode project file for React Native apps is located in ios/ subfolder
@@ -44,5 +45,5 @@ $NODE_BINARY "$REACT_NATIVE_DIR/local-cli/cli.js" bundle \
   --reset-cache true \
   --bundle-output "$DEST_FILE" \
   --assets-dest "$DEST" \
-  --transformer "$APP_DIR/src/transforms/transformer.js" \
+  --transformer "$ROOT_DIR/react-native-transformer" \
   --verbose

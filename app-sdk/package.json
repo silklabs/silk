@@ -1,0 +1,35 @@
+{
+  "symlinkDependencies": {
+    "eslint-config-silk": "/pub/eslint-config",
+    "react-native-webrtc": "/react-native-webrtc",
+    "silk-api": "/api",
+    "silk-core-version": "/pub/version",
+    "silk-crypto": "/crypto",
+    "silk-log": "/pub/log",
+    "silk-react-native-blobs": "/pub/react-native-blobs",
+    "silk-react-native-transformer": "/react-native-transformer",
+    "silk-rtc": "/rtc",
+    "silk-streams": "/streams"
+  },
+  "localDependencies": {
+    "babel-core": "6.8.0",
+    "react-native": "0.29.0-rc.2",
+    "socket.io-client": "1.4.6"
+  },
+  "dependencies": {
+    "react": "15.2.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "6.0.4",
+    "eslint": "1.10.3",
+    "eslint-plugin-react": "3.16.1"
+  },
+  "name": "silk-app-sdk",
+  "private": true,
+  "scripts": {
+    "lint": "eslint src",
+    "start": "node node_modules/react-native/local-cli/cli.js start --transformer ../react-native-transformer",
+    "test": "npm run lint"
+  },
+  "version": "0.19.0"
+}

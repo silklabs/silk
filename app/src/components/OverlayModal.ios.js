@@ -1,10 +1,11 @@
 import React from 'react';
 import {
   NativeModules,
+  Dimensions,
+  StyleSheet,
   findNodeHandle,
   requireNativeComponent,
 } from 'react-native';
-import { getLandscapeDimensions } from '../libraries/DeviceConfig';
 
 // There are two parts to the native wrapper:
 // 1.Public interface exposed for method calls:
@@ -14,6 +15,28 @@ const OverlayModal = requireNativeComponent('OverlayModal');
 
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'overlaymodal';
+
+export function getLandscapeDimensions() {
+  let deviceWidth = Dimensions.get('window').width;
+  let deviceHeight = Dimensions.get('window').height;
+  let dimensions = {};
+
+  // Because the overlay modal is not an actual subview of the react root view
+  // we must manually assign a height and width. For now we always render in
+  // landscape so figure out what that means in height/width regardless of
+  // the current orientation of the device.
+  if (deviceWidth > deviceHeight) {
+    // currently in landscape:
+    dimensions.height = deviceHeight;
+    dimensions.width = deviceWidth;
+  } else {
+    // currently in portrait (flip the values):
+    dimensions.width = deviceHeight;
+    dimensions.height = deviceWidth;
+  }
+
+  return dimensions;
+}
 
 export default React.createClass({
   propTypes: {
@@ -114,23 +137,22 @@ export default React.createClass({
       return <React.View />;
     }
 
-    let style = {
-      position: 'absolute',
-      alignItems: 'stretch',
-      flex: 1,
-    };
-
-    let dimensions = getLandscapeDimensions();
-    style.height = dimensions.height;
-    style.width = dimensions.width;
-
     return (
       <OverlayModal
-        style={style}
+        style={[styles.modal, getLandscapeDimensions()]}
         ref={RCT_NATIVE_REF}
         orientation={this.props.orientation}>
         {this.props.children}
       </OverlayModal>
     );
+  },
+});
+
+const styles = StyleSheet.create({
+  modal: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    alignItems: 'stretch',
   },
 });

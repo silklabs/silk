@@ -101,7 +101,7 @@ class PandoHubUi {
 
   constructor(env: Env) {
     this.uiState = 'bootanimation';
-    this.brightness = Math.max(0, Math.min(100, sysutil.getintprop('persist.pandohubui.brightness', 50))) / 255;
+    this.brightness = Math.max(0, Math.min(255, sysutil.getintprop('persist.pandohubui.brightness', 50))) / 255;
 
     this.nightlightRGB = {r: 0, b: 255, g: 200};
 

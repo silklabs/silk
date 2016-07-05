@@ -55,7 +55,8 @@ wifi.init()
   vib.pattern(500, 250, 500);
 })
 .catch((err) => {
-  log.error('Failed to initialize', err.stack || err);
+  log.error('Failed to initialize wifi');
+  log.error(err.stack || err);
 });
 
 ntp.on('time', () => log.verbose('NTP time acquired'));
@@ -91,6 +92,6 @@ camera.init()
    camera.startRecording();
 });
 camera.on('frame', (when, image) => {
-  log.info('Received a frame at timestamp', when, '-', image);
+  log.info('Received a frame at timestamp' + when + '-' + image);
 });
 

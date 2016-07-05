@@ -36,7 +36,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (void)postMessage:(id)message
 {
-  [_eventEmitter sendEventWithName:@"message" body:message];
+  [_eventEmitter sendEventWithName:@"silkAppSDKMessage" body:message];
 }
 
 // RCTBridgeDelegate

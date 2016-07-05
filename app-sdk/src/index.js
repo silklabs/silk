@@ -14,8 +14,8 @@ class SilkAppSDKEventEmitter extends NativeEventEmitter {
 
 const eventEmitter = new SilkAppSDKEventEmitter();
 
-eventEmitter.addListener('message', (message) => {
-  console.log('Receive message from native', message);
+eventEmitter.addListener('silkAppSDKMessage', (message) => {
+  console.log('Receive message from native', message); // eslint-disable-line no-console
 });
 
 eventEmitter.postMessage({type: 'INITIALIZED'});

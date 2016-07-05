@@ -26,7 +26,7 @@
 
 // SLKAppSDKDelegate methods
 
-- (void)onMessage:(id)message {
+- (void)onMessage:(NSDictionary<NSString *, id> *)message {
   NSLog(@"Received message: %@", message);
 
   // Send the message right back.

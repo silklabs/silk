@@ -3,6 +3,7 @@
 // Uncomment to use systrace
 //#define ATRACE_TAG ATRACE_TAG_ALWAYS
 #include <utils/Log.h>
+#include <cutils/properties.h>
 #include <cutils/trace.h>
 
 #include <fcntl.h>
@@ -2201,6 +2202,22 @@ int bt_init() {
 
   // Cleanup BT if we're part-way initialized already
   bt_cleanup();
+
+  char board_platform[PROPERTY_VALUE_MAX] = {0};
+  property_get("ro.board.platform", board_platform, NULL);
+  // On Kenzo, initializing Bluetooth before Wifi causes the wifi firmware
+  // to not load.  Work around this for now by requiring that wifi always be
+  // initialized first.  Normally silk-bledroid.js should wait for wifi before
+  // triggering bt_init(), but we ever somehow get this far without wifi
+  // initialized regardless then just refuse to continue.
+  if (!strcmp(board_platform, "msm8952")) {
+    char wlan_status[PROPERTY_VALUE_MAX] = {0};
+    property_get("wlan.driver.status", wlan_status, NULL);
+    if (0 != strcmp(wlan_status, "ok")) {
+      ALOGE("wlan driver status not ok.  Initialize wifi first: %s", wlan_status);
+      return 1;
+    }
+  }
 
   const hw_module_t *module;
   int err = hw_get_module(BT_HARDWARE_MODULE_ID, &module);

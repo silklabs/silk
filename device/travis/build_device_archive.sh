@@ -159,6 +159,7 @@ rm -f build.prop
 adb pull /system/build.prop
 
 echo persist.silk.dev.no_server=true >> build.prop
+echo persist.silk.update.enabled=false >> build.prop
 echo persist.silk.extensions=dialog,pandohub-ui >> build.prop
 echo persist.silk.kws.enabled=true >> build.prop
 echo persist.silk.dialog.tts.enabled=false >> build.prop

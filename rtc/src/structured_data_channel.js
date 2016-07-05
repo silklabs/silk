@@ -179,16 +179,22 @@ export default class StructuredDataChannel extends EventEmitter {
         lastBlob = lastBlob.slice(0, remainder);
       }
       this._pendingFrame.parts.push(lastBlob);
-      frame.payload[name] = new Blob(this._pendingFrame.parts);
 
-      // Free the partial blobs (only necessary in the app).
-      if (typeof Blob.prototype.close === 'function') {
-        this._pendingFrame.parts.forEach((blob) => {
-          if (blob === lastBlob && remainder > 0) {
-            return;
-          }
-          blob.close();
-        });
+      if (this._pendingFrame.parts.length === 1) {
+        // Avoid creating a new blob if there's only one anyway.
+        frame.payload[name] = this._pendingFrame.parts[0];
+      } else {
+        frame.payload[name] = new Blob(this._pendingFrame.parts);
+
+        // Free the partial blobs (only necessary in the app).
+        if (typeof Blob.prototype.close === 'function') {
+          this._pendingFrame.parts.forEach((blob) => {
+            if (blob === lastBlob && remainder > 0) {
+              return;
+            }
+            blob.close();
+          });
+        }
       }
 
       binaryPlaceholders.shift();

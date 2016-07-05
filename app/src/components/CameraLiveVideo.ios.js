@@ -7,7 +7,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { lockToLandscape, lockToPortrait } from 'react-native-orientation';
 import createLog from 'silk-log';
 
 import DashSegmentPlayer from './DashSegmentPlayer';
@@ -29,10 +28,6 @@ export default class CameraLiveVideo extends React.Component {
 
   mounted = false;
 
-  componentWillMount() {
-    lockToLandscape();
-  }
-
   componentDidMount() {
     this.mounted = true;
 
@@ -49,8 +44,6 @@ export default class CameraLiveVideo extends React.Component {
     const stream = `video-${deviceId}`;
     socket.off(stream, this._receiveSegment);
     socket.leave(stream);
-
-    setTimeout(lockToPortrait, 0);
   }
 
   _receiveSegment = (message, ack) => {

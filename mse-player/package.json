@@ -21,7 +21,7 @@
     "babel-eslint": "6.0.4"
   },
   "peerDependencies": {
-    "react": "15.1.0"
+    "react": "15.2.0"
   },
   "private": true
 }

@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { lockToLandscape, lockToPortrait } from 'react-native-orientation';
 import { SilkApi } from 'silk-api';
 
 import SocketIO from '../libraries/SocketIO';
@@ -49,7 +50,7 @@ export default class DeviceList extends AsyncComponent {
 
   startFullscreenVideo = (fullscreenDeviceId) => {
     if (Platform.OS === 'ios') {
-      this.setStateAsync({fullscreenDeviceId});
+      this.setStateAsync({fullscreenDeviceId}).then(lockToLandscape);
     } else {
       this.props.navigator.pushAsync({
         name: 'CameraLiveVideo',
@@ -62,7 +63,8 @@ export default class DeviceList extends AsyncComponent {
   };
 
   stopFullscreenVideo = () => {
-    this.setStateAsync({fullscreenDeviceId: null});
+    this.setStateAsync({fullscreenDeviceId: null})
+      .then(() => setTimeout(lockToPortrait, 0));
   };
 
   _getPreviewSize(deviceId) {

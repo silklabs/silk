@@ -2,6 +2,7 @@ import React from 'react';
 import {
   NativeModules,
   NetInfo,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -57,7 +58,9 @@ export default class Root extends AsyncComponent {
   };
 
   componentWillMount() {
-    lockToPortrait();
+    if (Platform.OS === 'ios') {
+      lockToPortrait();
+    }
   }
 
   componentDidMount() {

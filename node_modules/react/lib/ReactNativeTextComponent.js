@@ -11,12 +11,13 @@
 
 'use strict';
 
-var _assign = require('object-assign');
+var _prodInvariant = require('./reactProdInvariant'),
+    _assign = require('object-assign');
 
 var ReactInstrumentation = require('./ReactInstrumentation');
 var ReactNativeComponentTree = require('./ReactNativeComponentTree');
 var ReactNativeTagHandles = require('./ReactNativeTagHandles');
-var UIManager = require('UIManager');
+var UIManager = require('react-native/lib/UIManager');
 
 var invariant = require('fbjs/lib/invariant');
 
@@ -24,23 +25,23 @@ var ReactNativeTextComponent = function (text) {
   // This is really a ReactText (ReactNode), not a ReactElement
   this._currentElement = text;
   this._stringText = '' + text;
-  this._nativeParent = null;
+  this._hostParent = null;
   this._rootNodeID = null;
 };
 
 _assign(ReactNativeTextComponent.prototype, {
 
-  mountComponent: function (transaction, nativeParent, nativeContainerInfo, context) {
+  mountComponent: function (transaction, hostParent, hostContainerInfo, context) {
     if (process.env.NODE_ENV !== 'production') {
       ReactInstrumentation.debugTool.onSetText(this._debugID, this._stringText);
     }
 
-    // TODO: nativeParent should have this context already. Stop abusing context.
-    !context.isInAParentText ? process.env.NODE_ENV !== 'production' ? invariant(false, 'RawText "%s" must be wrapped in an explicit <Text> component.', this._stringText) : invariant(false) : void 0;
-    this._nativeParent = nativeParent;
+    // TODO: hostParent should have this context already. Stop abusing context.
+    !context.isInAParentText ? process.env.NODE_ENV !== 'production' ? invariant(false, 'RawText "%s" must be wrapped in an explicit <Text> component.', this._stringText) : _prodInvariant('20', this._stringText) : void 0;
+    this._hostParent = hostParent;
     var tag = ReactNativeTagHandles.allocateTag();
     this._rootNodeID = tag;
-    var nativeTopRootTag = nativeContainerInfo._tag;
+    var nativeTopRootTag = hostContainerInfo._tag;
     UIManager.createView(tag, 'RCTRawText', nativeTopRootTag, { text: this._stringText });
 
     ReactNativeComponentTree.precacheNode(this, tag);
@@ -48,7 +49,7 @@ _assign(ReactNativeTextComponent.prototype, {
     return tag;
   },
 
-  getNativeNode: function () {
+  getHostNode: function () {
     return this._rootNodeID;
   },
 

@@ -10,6 +10,8 @@
  */
 'use strict';
 
+var _prodInvariant = require('./reactProdInvariant');
+
 var ReactDOMContainerInfo = require('./ReactDOMContainerInfo');
 var ReactDefaultBatchingStrategy = require('./ReactDefaultBatchingStrategy');
 var ReactElement = require('./ReactElement');
@@ -64,7 +66,7 @@ function renderToStringImpl(element, makeStaticMarkup) {
  * See https://facebook.github.io/react/docs/top-level-api.html#reactdomserver.rendertostring
  */
 function renderToString(element) {
-  !ReactElement.isValidElement(element) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'renderToString(): You must pass a valid ReactElement.') : invariant(false) : void 0;
+  !ReactElement.isValidElement(element) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'renderToString(): You must pass a valid ReactElement.') : _prodInvariant('46') : void 0;
   return renderToStringImpl(element, false);
 }
 
@@ -74,7 +76,7 @@ function renderToString(element) {
  * See https://facebook.github.io/react/docs/top-level-api.html#reactdomserver.rendertostaticmarkup
  */
 function renderToStaticMarkup(element) {
-  !ReactElement.isValidElement(element) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'renderToStaticMarkup(): You must pass a valid ReactElement.') : invariant(false) : void 0;
+  !ReactElement.isValidElement(element) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'renderToStaticMarkup(): You must pass a valid ReactElement.') : _prodInvariant('47') : void 0;
   return renderToStringImpl(element, true);
 }
 

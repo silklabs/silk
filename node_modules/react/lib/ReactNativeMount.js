@@ -18,7 +18,7 @@ var ReactNativeTagHandles = require('./ReactNativeTagHandles');
 var ReactReconciler = require('./ReactReconciler');
 var ReactUpdateQueue = require('./ReactUpdateQueue');
 var ReactUpdates = require('./ReactUpdates');
-var UIManager = require('UIManager');
+var UIManager = require('react-native/lib/UIManager');
 
 var emptyObject = require('fbjs/lib/emptyObject');
 var instantiateReactComponent = require('./instantiateReactComponent');

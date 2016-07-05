@@ -11,14 +11,21 @@
 
 'use strict';
 
+var _prodInvariant = require('./reactProdInvariant');
+
+var ReactCurrentOwner = require('./ReactCurrentOwner');
+
 var invariant = require('fbjs/lib/invariant');
+var warning = require('fbjs/lib/warning');
 
 var tree = {};
-var rootIDs = [];
+var unmountedIDs = {};
+var rootIDs = {};
 
 function updateTree(id, update) {
   if (!tree[id]) {
     tree[id] = {
+      element: null,
       parentID: null,
       ownerID: null,
       text: null,
@@ -27,6 +34,10 @@ function updateTree(id, update) {
       isMounted: false,
       updateCount: 0
     };
+    // TODO: We need to do this awkward dance because TopLevelWrapper "never
+    // gets mounted" but its display name gets set in instantiateReactComponent
+    // before its debug ID is set to 0.
+    unmountedIDs[id] = true;
   }
   update(tree[id]);
 }
@@ -41,6 +52,22 @@ function purgeDeep(id) {
   }
 }
 
+function describeComponentFrame(name, source, ownerName) {
+  return '\n    in ' + name + (source ? ' (at ' + source.fileName.replace(/^.*[\\\/]/, '') + ':' + source.lineNumber + ')' : ownerName ? ' (created by ' + ownerName + ')' : '');
+}
+
+function describeID(id) {
+  var name = ReactComponentTreeDevtool.getDisplayName(id);
+  var element = ReactComponentTreeDevtool.getElement(id);
+  var ownerID = ReactComponentTreeDevtool.getOwnerID(id);
+  var ownerName;
+  if (ownerID) {
+    ownerName = ReactComponentTreeDevtool.getDisplayName(ownerID);
+  }
+  process.env.NODE_ENV !== 'production' ? warning(element, 'ReactComponentTreeDevtool: Missing React element for debugID %s when ' + 'building stack', id) : void 0;
+  return describeComponentFrame(name, element && element._source, ownerName);
+}
+
 var ReactComponentTreeDevtool = {
   onSetDisplayName: function (id, displayName) {
     updateTree(id, function (item) {
@@ -49,19 +76,21 @@ var ReactComponentTreeDevtool = {
   },
   onSetChildren: function (id, nextChildIDs) {
     updateTree(id, function (item) {
-      var prevChildIDs = item.childIDs;
       item.childIDs = nextChildIDs;
 
       nextChildIDs.forEach(function (nextChildID) {
         var nextChild = tree[nextChildID];
-        !nextChild ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected devtool events to fire for the child ' + 'before its parent includes it in onSetChildren().') : invariant(false) : void 0;
-        !(nextChild.displayName != null) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onSetDisplayName() to fire for the child ' + 'before its parent includes it in onSetChildren().') : invariant(false) : void 0;
-        !(nextChild.childIDs != null || nextChild.text != null) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onSetChildren() or onSetText() to fire for the child ' + 'before its parent includes it in onSetChildren().') : invariant(false) : void 0;
-        !nextChild.isMounted ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onMountComponent() to fire for the child ' + 'before its parent includes it in onSetChildren().') : invariant(false) : void 0;
-
-        if (prevChildIDs.indexOf(nextChildID) === -1) {
+        !nextChild ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected devtool events to fire for the child before its parent includes it in onSetChildren().') : _prodInvariant('68') : void 0;
+        !(nextChild.displayName != null) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onSetDisplayName() to fire for the child before its parent includes it in onSetChildren().') : _prodInvariant('69') : void 0;
+        !(nextChild.childIDs != null || nextChild.text != null) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onSetChildren() or onSetText() to fire for the child before its parent includes it in onSetChildren().') : _prodInvariant('70') : void 0;
+        !nextChild.isMounted ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onMountComponent() to fire for the child before its parent includes it in onSetChildren().') : _prodInvariant('71') : void 0;
+        if (nextChild.parentID == null) {
           nextChild.parentID = id;
+          // TODO: This shouldn't be necessary but mounting a new root during in
+          // componentWillMount currently causes not-yet-mounted components to
+          // be purged from our tree data so their parent ID is missing.
         }
+        !(nextChild.parentID === id) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onSetParent() and onSetChildren() to be consistent (%s has parents %s and %s).', nextChildID, nextChild.parentID, id) : _prodInvariant('72', nextChildID, nextChild.parentID, id) : void 0;
       });
     });
   },
@@ -70,18 +99,34 @@ var ReactComponentTreeDevtool = {
       return item.ownerID = ownerID;
     });
   },
+  onSetParent: function (id, parentID) {
+    updateTree(id, function (item) {
+      return item.parentID = parentID;
+    });
+  },
   onSetText: function (id, text) {
     updateTree(id, function (item) {
       return item.text = text;
+    });
+  },
+  onBeforeMountComponent: function (id, element) {
+    updateTree(id, function (item) {
+      return item.element = element;
+    });
+  },
+  onBeforeUpdateComponent: function (id, element) {
+    updateTree(id, function (item) {
+      return item.element = element;
     });
   },
   onMountComponent: function (id) {
     updateTree(id, function (item) {
       return item.isMounted = true;
     });
+    delete unmountedIDs[id];
   },
   onMountRootComponent: function (id) {
-    rootIDs.push(id);
+    rootIDs[id] = true;
   },
   onUpdateComponent: function (id) {
     updateTree(id, function (item) {
@@ -92,9 +137,8 @@ var ReactComponentTreeDevtool = {
     updateTree(id, function (item) {
       return item.isMounted = false;
     });
-    rootIDs = rootIDs.filter(function (rootID) {
-      return rootID !== id;
-    });
+    unmountedIDs[id] = true;
+    delete rootIDs[id];
   },
   purgeUnmountedComponents: function () {
     if (ReactComponentTreeDevtool._preventPurging) {
@@ -102,13 +146,37 @@ var ReactComponentTreeDevtool = {
       return;
     }
 
-    Object.keys(tree).filter(function (id) {
-      return !tree[id].isMounted;
-    }).forEach(purgeDeep);
+    for (var id in unmountedIDs) {
+      purgeDeep(id);
+    }
+    unmountedIDs = {};
   },
   isMounted: function (id) {
     var item = tree[id];
     return item ? item.isMounted : false;
+  },
+  getCurrentStackAddendum: function (topElement) {
+    var info = '';
+    if (topElement) {
+      var type = topElement.type;
+      var name = typeof type === 'function' ? type.displayName || type.name : type;
+      var owner = topElement._owner;
+      info += describeComponentFrame(name || 'Unknown', topElement._source, owner && owner.getName());
+    }
+
+    var currentOwner = ReactCurrentOwner.current;
+    var id = currentOwner && currentOwner._debugID;
+
+    info += ReactComponentTreeDevtool.getStackAddendumByID(id);
+    return info;
+  },
+  getStackAddendumByID: function (id) {
+    var info = '';
+    while (id) {
+      info += describeID(id);
+      id = ReactComponentTreeDevtool.getParentID(id);
+    }
+    return info;
   },
   getChildIDs: function (id) {
     var item = tree[id];
@@ -118,6 +186,10 @@ var ReactComponentTreeDevtool = {
     var item = tree[id];
     return item ? item.displayName : 'Unknown';
   },
+  getElement: function (id) {
+    var item = tree[id];
+    return item ? item.element : null;
+  },
   getOwnerID: function (id) {
     var item = tree[id];
     return item ? item.ownerID : null;
@@ -125,6 +197,12 @@ var ReactComponentTreeDevtool = {
   getParentID: function (id) {
     var item = tree[id];
     return item ? item.parentID : null;
+  },
+  getSource: function (id) {
+    var item = tree[id];
+    var element = item ? item.element : null;
+    var source = element != null ? element._source : null;
+    return source;
   },
   getText: function (id) {
     var item = tree[id];
@@ -135,7 +213,7 @@ var ReactComponentTreeDevtool = {
     return item ? item.updateCount : 0;
   },
   getRootIDs: function () {
-    return rootIDs;
+    return Object.keys(rootIDs);
   },
   getRegisteredIDs: function () {
     return Object.keys(tree);

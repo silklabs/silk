@@ -230,9 +230,13 @@ export default class KeywordSpotting extends EventEmitter {
           const confidence = parseInt((predictions[0].confidence * 100).toFixed(2));
 
           // Emit event if a successful keyword is spotted
-          if ((label === HOT_KEYWORD) && (confidence >= THRESHOLD)) {
-            log.info(`${label} spotted with confidence: ${confidence}%`);
-            resolve([label, confidence]);
+          if (label === HOT_KEYWORD) {
+            log.info(`***** ${label} spotted with confidence: ${confidence}%`);
+            if (confidence >= THRESHOLD) {
+              resolve([label, confidence]);
+            } else {
+              resolve([]);
+            }
           } else {
             resolve([]);
           }

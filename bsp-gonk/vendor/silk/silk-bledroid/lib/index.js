@@ -2,15 +2,10 @@ import assert from 'assert';
 import EventEmitter from 'events';
 import net from 'net';
 import parseAdvertising from './advertisingDataParser';
+import { getprop } from 'silk-sysutils';
+import createLog from 'silk-log/device';
 
-const debug = require('debug');
-
-const log = {
-  debug: debug('silk-bledroid:debug'),
-  info: debug('silk-bledroid:info'),
-  warn: debug('silk-bledroid:warn'),
-};
-
+const log = createLog('bledroid');
 const BLE_SOCKET_PATH = '/dev/socket/bledroid';
 const BLE_COMMAND_NAME = 'BleCommand';
 const SOCKET_RETRY_DELAY_MS = 500;
@@ -82,6 +77,25 @@ class Bledroid extends EventEmitter {
 
     this.startBufferingCommands();
 
+    if (getprop('ro.board.platform') === 'msm8952') {
+      // On Kenzo, initializing Bluetooth before Wifi causes the wifi firmware
+      // to not load.  Work around this for now by requiring that wifi always be
+      // initialized first.
+      const waitForWlan = () => {
+        if (getprop('wlan.driver.status') === 'ok') {
+          this._connect();
+          return;
+        }
+        log.verbose('Waiting for wlan to initialize');
+        setTimeout(waitForWlan, 1000);
+      };
+      waitForWlan();
+    } else {
+      this._connect();
+    }
+  }
+
+  _connect() {
     log.info(`Connecting to '${BLE_SOCKET_PATH}' socket`);
 
     const socket = net.createConnection(BLE_SOCKET_PATH);

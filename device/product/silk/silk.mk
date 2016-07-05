@@ -85,6 +85,7 @@ SILK_EXT := \
   silkext-svmsounds-clap \
   silkext-svmsounds-firealarm \
   silkext-svmsounds-glassbreak \
+  silkext-voicerecorder \
   silkext-welcome \
   silkext-welcome-config \
 

@@ -45,6 +45,8 @@ public class MainApplication extends Application implements ReactApplication {
       return Arrays.<ReactPackage>asList(
         new MainReactPackage(),
         new SilkReactPackage(),
+        // react-native-orientation doesn't work with RN 0.29 yet
+        //new OrientationPackage(),
         new WebRTCModulePackage());
     }
   };

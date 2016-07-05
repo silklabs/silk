@@ -6,6 +6,67 @@
  * @flow
  */
 
+/*
+  LEDs
+  ----
+
+  The pando hub has seven LP55321 controllers to manage its LEDs.  For more details on
+  this controller, see http://www.ti.com/lit/ds/symlink/lp55231.pdf
+
+  The nightlight driven by three controllers: 1-0032, 1-0033, 1-0034:
+
+    1-0032
+      1: D3002 (W)
+      2: D3004 (W)
+      3: -
+      4: -
+      5: D509 (W)
+      6: D510 (W)
+      7: D3011 (R)
+      8: D3012 (R)
+
+    1-0033:
+      1: D3001 (W)
+      2: D3010 (W)
+      3: D3003 (G)
+      4: D3005 (G)
+      5: D3013 (B)
+      6: D3014 (B)
+      7: -
+      8: -
+
+    1-0034:
+      1: D501 (W)
+      2: D502 (W)
+      3: D504 (G)
+      4: D505 (B)
+      5: D507 (G)
+      6: D508 (B)
+      7: -
+      8: D503 (R)
+      9: D506 (R)
+
+
+  The light ring is driven by four controllers, 5-0032..5-0034, which all
+  have the same LED mapping:
+      1: G
+      2: B
+      3: G
+      4: B
+      5: G
+      6: B
+      7: R
+      8: R
+      9: R
+
+  The light right controller orientation is as follows, where 12 o'clock points to the
+  power button:
+      5-0032: 5 o'clock
+      5-0033: 7 o'clock
+      5-0034: 2 o'clock
+      5-0035: 11 o'clock
+*/
+
 import path from 'path';
 import fs from 'fs';
 import assert from 'assert';

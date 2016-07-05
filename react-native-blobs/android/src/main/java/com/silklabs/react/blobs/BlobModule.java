@@ -16,6 +16,7 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 public class BlobModule extends ReactContextBaseJavaModule {
 
@@ -45,14 +46,16 @@ public class BlobModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void createFromParts(ReadableArray parts, String blobId) {
-    int totalSize = 0;
+    int totalBlobSize = 0;
+    ArrayList<ReadableMap> partList = new ArrayList<>(parts.size());
     for (int i = 0; i < parts.size(); i++) {
       ReadableMap part = parts.getMap(i);
-      totalSize += part.getInt("size");
+      totalBlobSize += part.getInt("size");
+      partList.add(i, part);
     }
-    ByteBuffer buffer = ByteBuffer.allocate(totalSize);
-    for (int i = 0; i < parts.size(); i++) {
-      buffer.put(mBlobProvider.resolve(parts.getMap(i)));
+    ByteBuffer buffer = ByteBuffer.allocate(totalBlobSize);
+    for (ReadableMap part : partList) {
+      buffer.put(mBlobProvider.resolve(part));
     }
     mBlobProvider.store(buffer.array(), blobId);
   }

@@ -74,6 +74,10 @@ void Player::Init(Local<Object> exports) {
 Player::Player():
     gain(GAIN_MAX) {
   ALOGV("Creating instance of player");
+
+  sp<ProcessState> ps = ProcessState::self();
+  ps->startThreadPool();
+
   mMediaPlayer = new MediaPlayer();
   mMediaPlayer->setListener(new MPListener);
 }

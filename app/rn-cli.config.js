@@ -2,6 +2,7 @@ const blacklist = require('react-native/packager/blacklist');
 const path = require('path');
 
 const additionalBlacklist = [
+  /app-sdk\/.*/,
   /bsp-gonk\/.*/,
   /device\/.*/,
   /external-.*/,

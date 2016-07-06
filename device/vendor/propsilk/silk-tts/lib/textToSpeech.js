@@ -35,7 +35,13 @@ class TextToSpeech extends EventEmitter {
       return;
     }
 
-    const accessToken = await this._options.getAccessToken();
+    let accessToken;
+    try {
+      accessToken = await this._options.getAccessToken();
+    } catch (err) {
+      this.emit(`error`, err);
+      return;
+    }
     log.debug(`Got access token`);
 
     const postData = `<speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Female' name='Microsoft Server Speech Text to Speech Voice (en-US, ZiraRUS)'>${text}</voice></speak>`;

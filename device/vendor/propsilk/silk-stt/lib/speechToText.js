@@ -86,7 +86,13 @@ class SpeechToText {
       return;
     }
 
-    const accessToken = await this._options.getAccessToken();
+    let accessToken;
+    try {
+      accessToken = await this._options.getAccessToken();
+    } catch (err) {
+      this._callCallback(err);
+      return;
+    }
     log.debug(`Got access token`);
 
     const query = this._options.urlEncode({

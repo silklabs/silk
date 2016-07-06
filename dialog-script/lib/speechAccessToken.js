@@ -24,8 +24,10 @@ export const INSTANCE_ID = uuid.v4();
 export const INSTANCE_ID_NO_DASH = INSTANCE_ID.replace(/-/g, '');
 
 const log = createLog(`dialog-token`);
+const RETRY_LIMIT = 3;
 
 let accessTokenPromise: ?Promise<Object> = null;
+let retryCounter = 0;
 
 export function urlEncode(obj: Object): string {
   const list = [];
@@ -47,8 +49,20 @@ function httpPost(opts: Object, data: string): Promise<Object> {
         if (res.statusCode !== 200) {
           reject(new Error(`Access token request failed with status code ` +
                            `${res.statusCode}`));
+
+          // Retry a few times to get access token
+          if (retryCounter < RETRY_LIMIT) {
+            log.info(`Renewing access token ${retryCounter + 1}/${RETRY_LIMIT}`);
+            retryCounter++;
+            process.nextTick(() => accessTokenPromise = httpPost(opts, data));
+          } else {
+            // Reset so that we try to get access token again when someone
+            // needs it
+            accessTokenPromise = null;
+          }
           return;
         }
+        retryCounter = 0;
         let token = JSON.parse(json);
         log.debug(`Token expires in ${token.expires_in} secs`);
 

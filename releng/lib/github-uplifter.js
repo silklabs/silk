@@ -123,7 +123,7 @@ git push --force stooge ${upliftPrBranchName}`;
     log.verbose(`Starting uplift: ${upliftCommand}`);
     const upliftResult = await new Promise((resolve) => {
       child_process.exec(`( ./bin/preinstall && ${upliftCommand} ) 2>&1`,
-        { timeout: 60 * 1000 }, // 1 minute should be more then enough
+        { timeout: 5 * 60 * 1000 }, // 5 minutes should be more then enough?
         (err, stdout, stderr) => resolve({err, stdout, stderr}),
       );
     });

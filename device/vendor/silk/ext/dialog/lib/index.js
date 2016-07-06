@@ -49,6 +49,11 @@ const NETWORK_ERROR_SOUND_FILE = 'network_error.mp3';
 const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
 const LOCAL_TTS_ENABLED_PROP = 'persist.silk.dialog.tts.enabled';
 
+// In this mode dialog extension starts the keyword spotting but doesn't process
+// the speech that follows. This helps with testing the keyword spotting on the
+// device
+const KWS_TEST_MODE_PROP = 'persist.silk.kws.testmode';
+
 const log = createLog('silkext-dialog');
 let camera: Camera;
 let timeline: Timeline;
@@ -84,6 +89,7 @@ class Dialog {
     this._monitor(true);
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, true);
     this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, false);
+    let kwsTestMode = util.getboolprop(KWS_TEST_MODE_PROP, false);
 
     const options: DialogEngineOptions = {
       localTts: this._localTts,
@@ -108,21 +114,23 @@ class Dialog {
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
-      this._kws = new KeywordSpotting(this._vad);
+      this._kws = new KeywordSpotting(this._vad, (kwsTestMode ? true: false));
       this._kws.start();
 
-      this._kws.on('keyword', () => {
-        log.debug(`Keyword detected`);
-        this._kws.stop();
-        this._onSpeechStart();
-      });
-      this._vad.on('speech_stop', () => {
-        this._onSpeechStop();
-      });
-      this._vad.on('speech_timeout', () => {
-        log.debug('Speech timedout');
-        this._onSpeechStop();
-      });
+      if (!kwsTestMode) {
+        this._kws.on('keyword', () => {
+          log.debug(`Keyword detected`);
+          this._kws.stop();
+          this._onSpeechStart();
+        });
+        this._vad.on('speech_stop', () => {
+          this._onSpeechStop();
+        });
+        this._vad.on('speech_timeout', () => {
+          log.debug('Speech timedout');
+          this._onSpeechStop();
+        });
+      }
     }
     this._input.on('down', this._onKeyPress);
     this._init();

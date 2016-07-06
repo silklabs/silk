@@ -123,10 +123,8 @@ class Dialog {
         log.debug('Speech timedout');
         this._onSpeechStop();
       });
-    } else {
-      this._input.on('down', this._onKeyPress);
     }
-
+    this._input.on('down', this._onKeyPress);
     this._init();
   }
 
@@ -159,17 +157,22 @@ class Dialog {
   };
 
   /**
-   * Handle volume key down event
+   * Handle key down event
    */
   _onKeyPress: InputEventCallback = event => {
-    if (event.keyId !== 'volumedown') {
+    if (event.keyId !== 'power') {
       return;
     }
     log.info(`Received key down event ${JSON.stringify(event)}`);
     if (!this._stream) {
+      if (this._kwsEnabled) {
+        this._kws.stop();
+      }
       this._onSpeechStart();
     } else {
-      this._onSpeechStop();
+      if (!this._kwsEnabled) {
+        this._onSpeechStop();
+      }
     }
   };
 

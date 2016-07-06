@@ -109,8 +109,33 @@ class PandoHubUi {
     this.input.on('down', this.onKeyPress);
     this.uiState = env.ui.getState();
     env.ui.on('state', this.onUiState);
+    env.timeline.on('listening', this.onDialogListening);
+    env.timeline.on('processing_speech', this.onDialogProcessingSpeech);
+    env.timeline.on('speaking', this.onDialogSpeaking);
+    env.timeline.on('speaking_network_error', this.onDialogNetworkError);
+    env.timeline.on('finished_processing_speech', this.onDialogFinished);
     this.render();
   }
+
+  onDialogListening: (() => void) = () => {
+    log.info('listening');
+  };
+
+  onDialogProcessingSpeech: (() => void) = () => {
+    log.info('processing_speech');
+  };
+
+  onDialogSpeaking: (() => void) = () => {
+    log.info('speaking');
+  };
+
+  onDialogNetworkError: (() => void) = () => {
+    log.info('speaking_network_error');
+  };
+
+  onDialogFinished: (() => void) = () => {
+    log.info('finished_processing_speech');
+  };
 
   onKeyPress: InputEventCallback = event => {
 

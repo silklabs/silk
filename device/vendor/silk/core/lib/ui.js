@@ -158,6 +158,7 @@ export class Ui extends events.EventEmitter {
         light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
         break;
       case 'unconfigured':
+      case 'configuring':
         light.set(light.YELLOW, light.FLASH_TIMED, 500, 500);
         break;
       case 'connecting':

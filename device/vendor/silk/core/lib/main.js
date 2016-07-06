@@ -426,8 +426,12 @@ config.on('unconfigured', () => {
   }
 });
 
-config.on('configuring', () => {
-  ui.goto('configuring');
+config.on('configStarted', () => {
+  ui.goto('configStarted');
+});
+
+config.on('configRegistering', () => {
+  ui.goto('configRegistering');
 });
 
 config.on('configured', onConfigured);

@@ -22,8 +22,14 @@ const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled'
 const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
 const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
 
-export type UiState = 'bootanimation' | 'unconfigured' | 'configuring' |
-                      'connecting' | 'online' | 'charging' | 'powerdown';
+export type UiState = 'bootanimation' |
+                      'unconfigured' |
+                      'configStarted' |
+                      'configRegistering' |
+                      'connecting' |
+                      'online' |
+                      'charging' |
+                      'powerdown';
 
 export class Ui extends events.EventEmitter {
 
@@ -158,7 +164,8 @@ export class Ui extends events.EventEmitter {
         light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
         break;
       case 'unconfigured':
-      case 'configuring':
+      case 'configStarted':
+      case 'configRegistering':
         light.set(light.YELLOW, light.FLASH_TIMED, 500, 500);
         break;
       case 'connecting':
@@ -182,7 +189,8 @@ export class Ui extends events.EventEmitter {
     let movieName;
     switch (this.currentState) {
     case 'unconfigured':
-    case 'configuring':
+    case 'configStarted':
+    case 'configRegistering':
       movieName = 'setup';
       break;
     default:

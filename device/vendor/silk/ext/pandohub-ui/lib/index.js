@@ -185,7 +185,8 @@ class PandoHubUi {
       case 'unconfigured':
         this.renderRing({r: 255, g: 0, b: 0});
         break;
-      case 'configuring':
+      case 'configStarted':
+      case 'configRegistering':
         this.renderRing({r: 0, g: 255, b: 255});
         break;
       case 'connecting':

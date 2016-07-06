@@ -7,15 +7,17 @@
  */
 'use strict';
 
-const {Platform} = require('react-native');
+const {NativeModules, Platform} = require('react-native');
+const {SLKBlobManager} = NativeModules;
 
 import type Blob from './Blob';
 
-let BLOB_URL_PREFIX = '';
-if (Platform.OS === 'ios') {
-  BLOB_URL_PREFIX = 'blob:';
-} else if (Platform.OS === 'android') {
-  BLOB_URL_PREFIX = 'content://com.silklabs.react.blobs/';
+let BLOB_URL_PREFIX = null;
+if (SLKBlobManager && typeof SLKBlobManager.blobUriScheme === 'string') {
+  BLOB_URL_PREFIX = SLKBlobManager.blobUriScheme + ':';
+  if (typeof SLKBlobManager.blobUriHost === 'string') {
+    BLOB_URL_PREFIX += `//${SLKBlobManager.blobUriHost}/`;
+  }
 }
 
 class URL {
@@ -25,6 +27,9 @@ class URL {
   }
 
   static createObjectURL(blob: Blob) {
+    if (BLOB_URL_PREFIX === null) {
+      throw new Error('Cannot create URL for blob!');
+    }
     return `${BLOB_URL_PREFIX}${blob.blobId}?offset=${blob.offset}&size=${blob.size}`;
   }
 

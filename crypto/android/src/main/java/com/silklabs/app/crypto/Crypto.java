@@ -1,5 +1,7 @@
 package com.silklabs.app.crypto;
 
+import android.support.annotation.Nullable;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -21,8 +23,6 @@ import java.security.Security;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Map;
-
-import javax.annotation.Nullable;
 
 public class Crypto extends ReactContextBaseJavaModule {
 
@@ -48,7 +48,8 @@ public class Crypto extends ReactContextBaseJavaModule {
     return "SLKCrypto";
   }
 
-  public @Nullable Map getConstants() {
+  @Nullable
+  public Map getConstants() {
     return MapBuilder.of(
         "crypto_sign_ed25519_BYTES", crypto_sign_ed25519_BYTES,
         "crypto_sign_ed25519_PUBLICKEYBYTES", crypto_sign_ed25519_PUBLICKEYBYTES,

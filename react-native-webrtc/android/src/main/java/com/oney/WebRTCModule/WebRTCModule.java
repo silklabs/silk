@@ -21,6 +21,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.silklabs.react.blobs.BlobModule;
 import com.silklabs.react.blobs.BlobProvider;
 
 import java.io.UnsupportedEncodingException;
@@ -70,7 +71,6 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     VideoSource videoSource;
 
     private ReactContext mReactContext;
-    private BlobProvider mBlobProvider;
 
     public WebRTCModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -89,17 +89,6 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
         mFactory = new PeerConnectionFactory();
 
         mReactContext = reactContext;
-        initializeBlobProvider();
-    }
-
-    private void initializeBlobProvider() {
-        ContentResolver resolver = mReactContext.getContentResolver();
-        ContentProviderClient client = resolver.acquireContentProviderClient(BlobProvider.AUTHORITY);
-        if (client == null) {
-            return;
-        }
-        mBlobProvider = (BlobProvider)client.getLocalContentProvider();
-        client.release();
     }
 
     @Override
@@ -1011,7 +1000,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
                     mDataChannelBinaryTypeIsBlob.get(mId)) {
                     params.putString("type", "blob");
                     WritableMap blob = Arguments.createMap();
-                    blob.putString("blobId", mBlobProvider.store(bytes));
+                    blob.putString("blobId", BlobModule.store(bytes));
                     blob.putInt("offset", 0);
                     blob.putInt("size", bytes.length);
                     params.putMap("data", blob);

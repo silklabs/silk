@@ -63,3 +63,35 @@ The following method is part of the Blob standard, but is currently not implemen
 ```js
 blob.close();
 ```
+
+## Installation
+
+After installing the `silk-react-native-blobs` package via NPM, ensure that the native code for iOS and Android is included in your app's project. `rnpm` provides a convenient way to do this:
+
+```
+rnpm link silk-react-native-blobs
+```
+
+### Android ContentProvider
+
+To allow Blobs be accessed via `content://` URIs, you need to register `BlobProvider` as a ContentProvider in your app's `AndroidManifest.xml`:
+
+```xml
+<manifest>
+  <application>
+    <provider
+      android:name="com.silklabs.react.blobs.BlobProvider"
+      android:authorities="@string/blob_provider_authority"
+      android:exported="false"
+      />
+  </application>
+</manifest>
+```
+
+And then define the `blob_provider_authority` string in `res/values/strings.xml`. Use a dotted name that's entirely unique to your app:
+
+```xml
+<resources>
+    <string name="blob_provider_authority">your.app.package.blobs</string>
+</resources>
+```

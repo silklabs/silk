@@ -6,6 +6,8 @@
 #import "SLKBlobManager.h"
 #import "RCTConvert.h"
 
+static NSString *const kBlobUriScheme = @"blob";
+
 @implementation SLKBlobManager
 {
   NSMutableDictionary<NSString *, NSData *> *_blobs;
@@ -13,6 +15,14 @@
 }
 
 RCT_EXPORT_MODULE()
+
+- (NSDictionary<NSString *, id> *)constantsToExport
+{
+  return @{
+    @"blobUriScheme": kBlobUriScheme,
+    @"blobUriHost": [NSNull null],
+  };
+}
 
 - (NSString *)store:(NSData *)data
 {
@@ -70,7 +80,7 @@ RCT_EXPORT_METHOD(release:(NSString *)blobId)
 
 - (BOOL)canHandleRequest:(NSURLRequest *)request
 {
-  return [request.URL.scheme caseInsensitiveCompare:@"blob"] == NSOrderedSame;
+  return [request.URL.scheme caseInsensitiveCompare:kBlobUriScheme] == NSOrderedSame;
 }
 
 - (id)sendRequest:(NSURLRequest *)request

@@ -64,17 +64,6 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
   public WebSocketModule(ReactApplicationContext context) {
     super(context);
     mReactContext = context;
-    initializeBlobProvider();
-  }
-
-  private void initializeBlobProvider() {
-    ContentResolver resolver = mReactContext.getContentResolver();
-    ContentProviderClient client = resolver.acquireContentProviderClient(BlobProvider.AUTHORITY);
-    if (client == null) {
-      return;
-    }
-    mBlobProvider = (BlobProvider)client.getLocalContentProvider();
-    client.release();
   }
 
   private void sendEvent(String eventName, WritableMap params) {
@@ -180,7 +169,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
             return;
           }
           WritableMap blob = Arguments.createMap();
-          blob.putString("blobId", mBlobProvider.store(data));
+          blob.putString("blobId", BlobModule.store(data));
           blob.putInt("offset", 0);
           blob.putInt("size", data.length);
           params.putMap("data", blob);
@@ -277,7 +266,7 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       // This is a programmer error
       throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
     }
-    byte[] data = mBlobProvider.resolve(
+    byte[] data = BlobModule.resolve(
       blob.getString("blobId"),
       blob.getInt("offset"),
       blob.getInt("size"));

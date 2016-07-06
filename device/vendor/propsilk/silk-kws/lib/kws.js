@@ -516,6 +516,11 @@ export default class KeywordSpotting extends EventEmitter {
         } else {
           log.warn(`Not saving the keyword ${confidence}`);
         }
+      })
+      .catch(err => {
+        // Consume errors when writing wav file to allow dialog to happen
+        // neverthless
+        log.error('Not saving the keyword: ', err);
       });
     }
   }

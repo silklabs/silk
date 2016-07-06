@@ -22,7 +22,13 @@ module.exports = {
   "rename my baby":              { "intent": "rename", "entities": ["baby"] },
   "what time is it":             { "intent": "currentTime", "entities": [] },
   "start a timer for 30 seconds":{ "intent": "startTimer", "entities": ["30 seconds"] },
-  "cancel the timer":            { "intent": "cancelTimer", "entities": ["30 seconds"] }
+  "cancel the timer":            { "intent": "cancelTimer", "entities": ["30 seconds"] },
+  "volume up":                   { "intent": "setVolume", "entities": ["up"] },
+  "volume down":                 { "intent": "setVolume", "entities": ["down"] },
+  "do not disturb":              { "intent": "setUiMode", "entities": ["dnd"] },
+  "all sound off":               { "intent": "setUiMode", "entities": ["mute"] },
+  "normal":                      { "intent": "setUiMode", "entities": ["normal"] },
+  "factory reset":               { "intent": "factoryReset", "entities": [] },
 };
 
 /* eslint-enable */

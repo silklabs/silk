@@ -13,6 +13,7 @@ import Input from 'silk-input';
 import lights from 'silk-lights';
 import {Movie} from 'silk-movie';
 import Vibrator from 'silk-vibrator';
+import factoryReset from 'silk-factory-reset';
 
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
@@ -98,7 +99,7 @@ export class Ui extends events.EventEmitter {
             util.timeout(1000),
             new Promise((resolve, reject) => cancelVolumeKeys = reject)
           ])
-          .then(() => this.emit('key:factoryreset'))
+          .then(() => factoryReset.start())
           .catch(() => null);
         }
         break;

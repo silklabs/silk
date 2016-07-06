@@ -14,6 +14,11 @@ import {
 import modifyBabies from './babies/saga';
 import startFeeding from './food/saga';
 import modifyTimers from './timers/saga';
+import {
+  requestFactoryReset,
+  setUiMode,
+  setVolume,
+} from './ui/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
@@ -54,9 +59,12 @@ const independentIntents: Set<string> = new Set([
  * above.
  */
 const concurrentIntents: Set<string> = new Set([
-  `currentTime`,
-  `startTimer`,
   `cancelTimer`,
+  `currentTime`,
+  `factoryReset`,
+  `setUiMode`,
+  `setVolume`,
+  `startTimer`,
 ]);
 
 // A simple saga that speaks the current time.
@@ -252,6 +260,17 @@ export default function*(
       case `cancelTimer`:
         sagaFunction = modifyTimers;
         args.push(`cancel`, entities);
+        break;
+      case `factoryReset`:
+        sagaFunction = requestFactoryReset;
+        break;
+      case `setVolume`:
+        sagaFunction = setVolume;
+        args.push(entities);
+        break;
+      case `setUiMode`:
+        sagaFunction = setUiMode;
+        args.push(dialogEngine, entities);
         break;
       default:
         throw new Error(`All intents in concurrentIntents must be handled!`);

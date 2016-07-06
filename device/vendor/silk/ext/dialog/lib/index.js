@@ -23,7 +23,12 @@ import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
 import player from 'silk-audioplayer';
 
-import type { DialogEngine, DialogEngineOptions, DialogState } from 'silk-dialog-engine';
+import type { 
+  DialogEngine,
+  DialogEngineOptions,
+  DialogState,
+  DialogUiModeEventCallback,
+} from 'silk-dialog-engine';
 import type { Env, Camera, Timeline } from 'silk-exttest';
 import { Duplex } from 'stream';
 
@@ -95,7 +100,21 @@ class Dialog {
     const options: DialogEngineOptions = {
       localTts: this._localTts,
     };
-    this._dialogEngine = createDialogEngine(options);
+
+    let uiMode;
+    switch (util.getprop('persist.silk.dialog.uimode')) {
+    case 'normal':
+    default:
+      uiMode = 'normal';
+      break;
+    case 'dnd':
+      uiMode = 'dnd';
+      break;
+    case 'mute':
+      uiMode = 'mute';
+      break;
+    }
+    this._dialogEngine = createDialogEngine(options, uiMode);
     this._loadDialogScript();
     this._input = new Input();
 
@@ -112,6 +131,7 @@ class Dialog {
       this._dialogEngine.on('speech', this._onSpeak);
     }
     this._dialogEngine.on('interpret-end', this._onInterpretEnd);
+    this._dialogEngine.on('ui-mode', this._onUiMode);
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
@@ -192,6 +212,10 @@ class Dialog {
         this._onSpeechStop();
       }
     }
+  };
+
+  _onUiMode: DialogUiModeEventCallback = uiMode => {
+    util.setprop('persist.silk.dialog.uimode', uiMode);
   };
 
   /**

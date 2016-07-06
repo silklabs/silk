@@ -33,6 +33,11 @@ export type DialogEngineOptions = {
   localTts?: boolean;
 };
 
+export type DialogUiMode = 'normal' |
+                           'dnd' |    // "Do Not Disturb" with alerts/timers
+                           'mute';    // Disable all interaction with the Speaker
+
+export type DialogUiModeEventCallback = (uiMode: DialogUiMode) => void;
 export type DialogScriptOptions = {
   customIntentions?: CustomIntentions;
   luisOptions?: LuisOptions,
@@ -56,14 +61,14 @@ const log = createLog('dialog-engine');
  */
 export class DialogEngine extends EventEmitter {
   /**
-   * This event is emitted when the speaker starts talking
+   * This event is emitted when the Speaker starts talking
    *
    * @event speak-begin
    * @param text Text that is about to be spoken.
    * @memberof silk-dialog-engine.DialogEngine
    */
   /**
-   * This event is emitted when the speaker finishes talking
+   * This event is emitted when the Speaker finishes talking
    *
    * @event speak-end
    * @param text Text that was spoken.
@@ -97,15 +102,35 @@ export class DialogEngine extends EventEmitter {
    * @param entities A list of entities that were inferred from the text.
    * @memberof silk-dialog-engine.DialogEngine
    */
+  /**
+   * This event is emitted when the UI mode changes
+   *
+   * @event ui-mode
+   * @param DialogUiMode The current ui mode.
+   * @memberof silk-dialog-engine.DialogEngine
+   */
 
+  _uiMode: DialogUiMode;
   _options: DialogEngineOptions;
   _scriptOptions: DialogScriptOptions;
 
-  constructor(options: DialogEngineOptions) {
+  constructor(options: DialogEngineOptions, uiMode: DialogUiMode) {
 
     super();
 
     this._options = options;
+    this._uiMode = uiMode;
+  }
+
+  get uiMode(): DialogUiMode {
+    return this._uiMode;
+  }
+
+  set uiMode(mode: DialogUiMode): void {
+    if (this._uiMode !== mode) {
+      this._uiMode = mode;
+      process.nextTick(() => this.emit('ui-mode', mode));
+    }
   }
 
   /**
@@ -257,14 +282,30 @@ export class DialogEngine extends EventEmitter {
 }
 
 let instance: ?DialogEngine = null;
+let resolveDialogEnginePromise = null;
 
 export function createDialogEngine(
   options: DialogEngineOptions,
+  uiMode: DialogUiMode = 'normal'
 ): DialogEngine {
   if (!instance) {
-    instance = new DialogEngine(options);
+    instance = new DialogEngine(options, uiMode);
+    if (resolveDialogEnginePromise) {
+      resolveDialogEnginePromise(instance);
+      resolveDialogEnginePromise = null;
+    }
   }
   return instance;
+}
+
+export function genDialogEngine(): Promise<DialogEngine> {
+  if (instance) {
+    return Promise.resolve(instance);
+  }
+
+  return new Promise(resolve => {
+    resolveDialogEnginePromise = resolve
+  });
 }
 
 /**
@@ -277,7 +318,6 @@ export function createDialogEngine(
  *
  * const getDialogEngine = require('silk-dialog-engine'.default;
  * let dialogEngine = getDialogEngine();
- *
  */
 export default function getDialogEngine(): DialogEngine {
   if (!instance) {

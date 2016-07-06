@@ -40,6 +40,7 @@ import update from 'silk-update';
 import config from './config';
 import silkconfig from 'silk-config';
 import sensors from 'silk-sensors';
+import factoryReset from 'silk-factory-reset';
 import infrared from './infrared';
 import Server from './server';
 import Connections from './connections';
@@ -552,7 +553,7 @@ ui.on('key:setup', () => {
   log.info('Continue holding for factory reset...');
 });
 ui.on('key:powerdown', shutdown);
-ui.on('key:factoryreset', () => {
+factoryReset.on('factory-reset', () => {
   log.warn('!! Factory reset !!');
 
   let finalPromiseFactory = () => {

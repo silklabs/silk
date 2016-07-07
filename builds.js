@@ -214,14 +214,12 @@ const builds = {
       'flow-interface/**',
     ],
   }),
-  'app-js-lint': npmPackageBuild('app', {
+  'app-lint': npmPackageBuild('app', {
     // Always run lint when JS files change.
     travis_yml: 'app/.travis-lint.yml',
     files: [
-      'app/.flowconfig',
       'app/.eslintrc',
       'app/**/*.js',
-      'webapp/install.sh',
     ],
   }),
   'app-ios-debug': npmPackageBuild('app', {
@@ -241,7 +239,7 @@ const builds = {
   }),
   'app-android-pr': npmPackageBuild('app', {
     // On PRs only build the entire Android app if relevant files changed.
-    travis_yml: 'app/android/.travis.yml',
+    travis_yml: 'app/android/travis/release.yml',
     files: [
       'app/node_modules/**',
       'app/android/**',
@@ -252,8 +250,32 @@ const builds = {
   }),
   'app-android-push': npmPackageBuild('app', {
     // Always build the app on a branch push, no matter what changed.
-    travis_yml: 'app/android/.travis.yml',
+    travis_yml: 'app/android/travis/release.yml',
     events: ['push'],
+  }),
+  'app-sdk-lint': npmPackageBuild('app-sdk', {
+    // Always run lint when JS files change.
+    travis_yml: 'app-sdk/.travis-lint.yml',
+    files: [
+      'app-sdk/.eslintrc',
+      'app-sdk/**/*.js',
+    ],
+  }),
+  'app-sdk-ios': npmPackageBuild('app-sdk', {
+    travis_yml: 'app-sdk-example/ios/.travis.yml',
+    cwd: 'app-sdk-example',
+    files: [
+      'app-sdk-example/ios/**',
+      'app-sdk/ios/**',
+    ],
+  }),
+  'app-sdk-android': npmPackageBuild('app-sdk', {
+    travis_yml: 'app-sdk-example/android/.travis.yml',
+    cwd: 'app-sdk-example',
+    files: [
+      'app-sdk-example/android/**',
+      'app-sdk/android/**',
+    ],
   }),
   'cli': npmPackageBuild('pub/cli'),
   'crypto': npmPackageBuild('crypto'),

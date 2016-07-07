@@ -16,8 +16,11 @@ env:
     - JAVA_OPTS=-Xmx512m
     - CXX=g++-4.8
 
-install: android/.travis/install
-script: android/.travis/script
+install:
+  - android/travis/install
+  - ./install.sh
+
+script: android/travis/script
 
 deploy:
   provider: s3

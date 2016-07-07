@@ -49,8 +49,8 @@ ServiceConnection silkServiceConnection = new ServiceConnection() {
     silkService.start(delegate);
   });
 }
-startService(new Intent(this, SilkAppSDKService.class)); // keep service alive for duration of process
-bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
+startService(new Intent(activity, SilkAppSDKService.class)); // keep service alive for duration of process
+bindService(new Intent(activity, SilkAppSDKService.class), silkServiceConnection, Context.BIND_AUTO_CREATE);
 ```
 
 The `delegate` object must implement the `SilkAppSDKDelegate` interface.

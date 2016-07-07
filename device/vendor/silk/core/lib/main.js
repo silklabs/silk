@@ -154,18 +154,30 @@ function main() {
       });
     }
   );
-  server.on('connect', netstatus.check);
-  server.on('disconnect', netstatus.check);
-  netstatus.on('online', () => connections.reconnect());
-  outbox = initOutbox(netstatus);
+
+  let netstatusOrStub = netstatus;
+
+  if (DEV_NO_SERVER_CONNECT) {
+    netstatusOrStub = {
+      check: () => undefined,
+      on: () => undefined,
+      online: false,
+    };
+  }
+  server.on('connect', netstatusOrStub.check);
+  server.on('disconnect', netstatusOrStub.check);
+  netstatusOrStub.on('online', () => connections.reconnect());
+  outbox = initOutbox(netstatusOrStub);
 
   crashreporter = makeCrashReporter(outbox);
   jsErrors(crashreporter);
 
   // Init metrics...
-  netstatus.on('online', api.metrics.onConnectivityChange);
-  netstatus.on('offline', api.metrics.onConnectivityChange);
-  api.metrics.start();
+  netstatusOrStub.on('online', api.metrics.onConnectivityChange);
+  netstatusOrStub.on('offline', api.metrics.onConnectivityChange);
+  if (!DEV_NO_SERVER_CONNECT) {
+    api.metrics.start();
+  }
 
   startCollectingProcessMetrics();
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env ../pub/babel-run/babel-node
+#!/usr/bin/env ../../../../pub/babel-run/babel-node
 
 /**
  * Copyright (c) 2016 Silk Labs, Inc.
@@ -8,10 +8,11 @@
  * @private
  */
 
-import TextToSpeech from '../lib/textToSpeech';
+import tts from 'silk-tts';
 import config from 'silk-config';
 import wav from 'wav';
 import { default as createLog, configureLog } from 'silk-log';
+import * as speechOptions from 'silk-dialog-script/lib/speechAccessToken';
 
 configureLog('*');
 const log = createLog('ttsConverter');
@@ -36,6 +37,7 @@ function writeWavFile(pcmSamples, fileName) {
   });
   writer.on('header', () => {
     log.info('Done');
+    setTimeout(() => process.exit(1), 1000); // eslint-disable-line
   });
   writer.on('error', err => {
     log.error(err);
@@ -46,7 +48,8 @@ function writeWavFile(pcmSamples, fileName) {
 
 // Convert text to raw pcm data
 log.info(`Converting \'${process.argv[2]}\' to speech`);
-const tts = new TextToSpeech(process.argv[2]);
+tts.configure(speechOptions);
+tts.startRequest(process.argv[2]);
 tts.addListener(`error`, (error) => {
   log.info(`TTS error`, error);
 });

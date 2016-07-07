@@ -10,12 +10,12 @@
 		3504D0631D2B978100BB24A2 /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3504D0621D2B978100BB24A2 /* libstdc++.tbd */; };
 		3504D0731D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3504D0711D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.m */; };
 		3504D0741D2C4BA300BB24A2 /* SLKAppSDKDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504D06C1D2C0E1D00BB24A2 /* SLKAppSDKDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		3504D0751D2C4BB500BB24A2 /* SLKAppSDKAPI.h in Headers */ = {isa = PBXBuildFile; fileRef = 35D700D31D29AE8200993A9C /* SLKAppSDKAPI.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		3504D0781D2C4FA900BB24A2 /* SLKAppSDKEventEmitter.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504D0701D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504D0751D2C4BB500BB24A2 /* SLKAppSDKService.h in Headers */ = {isa = PBXBuildFile; fileRef = 35D700D31D29AE8200993A9C /* SLKAppSDKService.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504D0781D2C4FA900BB24A2 /* SLKAppSDKEventEmitter.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504D0701D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		35D700801D29957E00993A9C /* SLKAppSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 35D7007F1D29957E00993A9C /* SLKAppSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		35D700871D29957E00993A9C /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7007C1D29957E00993A9C /* SLKAppSDK.framework */; };
 		35D7008C1D29957E00993A9C /* SLKAppSDKTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7008B1D29957E00993A9C /* SLKAppSDKTests.m */; };
-		35D700D61D29AE8200993A9C /* SLKAppSDKAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700D41D29AE8200993A9C /* SLKAppSDKAPI.m */; };
+		35D700D61D29AE8200993A9C /* SLKAppSDKService.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700D41D29AE8200993A9C /* SLKAppSDKService.m */; };
 		35D700D71D29AE8D00993A9C /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D700A61D29AB0500993A9C /* libReact.a */; };
 		35D700EB1D29AF1000993A9C /* libRCTNetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D700E01D29AEBB00993A9C /* libRCTNetwork.a */; };
 		35D700EC1D29AF1000993A9C /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D700C71D29ADCF00993A9C /* libRCTWebSocket.a */; };
@@ -65,8 +65,8 @@
 		35D7008D1D29957E00993A9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		35D700A11D29AB0500993A9C /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "../node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
 		35D700C21D29ADCF00993A9C /* RCTWebSocket.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebSocket.xcodeproj; path = "../node_modules/react-native/Libraries/WebSocket/RCTWebSocket.xcodeproj"; sourceTree = "<group>"; };
-		35D700D31D29AE8200993A9C /* SLKAppSDKAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKAppSDKAPI.h; sourceTree = "<group>"; };
-		35D700D41D29AE8200993A9C /* SLKAppSDKAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKAppSDKAPI.m; sourceTree = "<group>"; };
+		35D700D31D29AE8200993A9C /* SLKAppSDKService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKAppSDKService.h; sourceTree = "<group>"; };
+		35D700D41D29AE8200993A9C /* SLKAppSDKService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKAppSDKService.m; sourceTree = "<group>"; };
 		35D700DB1D29AEBB00993A9C /* RCTNetwork.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTNetwork.xcodeproj; path = "../node_modules/react-native/Libraries/Network/RCTNetwork.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -117,8 +117,8 @@
 			isa = PBXGroup;
 			children = (
 				35D7007F1D29957E00993A9C /* SLKAppSDK.h */,
-				35D700D31D29AE8200993A9C /* SLKAppSDKAPI.h */,
-				35D700D41D29AE8200993A9C /* SLKAppSDKAPI.m */,
+				35D700D31D29AE8200993A9C /* SLKAppSDKService.h */,
+				35D700D41D29AE8200993A9C /* SLKAppSDKService.m */,
 				3504D06C1D2C0E1D00BB24A2 /* SLKAppSDKDelegate.h */,
 				3504D0701D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.h */,
 				3504D0711D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.m */,
@@ -179,8 +179,8 @@
 			files = (
 				3504D0741D2C4BA300BB24A2 /* SLKAppSDKDelegate.h in Headers */,
 				35D700801D29957E00993A9C /* SLKAppSDK.h in Headers */,
+				3504D0751D2C4BB500BB24A2 /* SLKAppSDKService.h in Headers */,
 				3504D0781D2C4FA900BB24A2 /* SLKAppSDKEventEmitter.h in Headers */,
-				3504D0751D2C4BB500BB24A2 /* SLKAppSDKAPI.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -318,7 +318,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35D700D61D29AE8200993A9C /* SLKAppSDKAPI.m in Sources */,
+				35D700D61D29AE8200993A9C /* SLKAppSDKService.m in Sources */,
 				3504D0731D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

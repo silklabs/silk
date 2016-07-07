@@ -1,0 +1,24 @@
+language: objective-c
+
+osx_image: xcode7.3
+
+install:
+  - ../app/ios/travis/install
+  - ../app-sdk/install.sh
+
+before_script:
+  - node --version
+  - npm --version
+
+env:
+  global:
+    - CONFIGURATION=Debug
+    - PROJECT=SilkAppSDKExample
+
+script: >
+  xcodebuild
+  -project ios/$PROJECT.xcodeproj
+  -scheme $PROJECT
+  -configuration $CONFIGURATION
+  -sdk iphoneos
+  build

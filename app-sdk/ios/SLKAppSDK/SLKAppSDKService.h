@@ -7,10 +7,10 @@
 #import <Foundation/Foundation.h>
 #import "SLKAppSDKDelegate.h"
 
-@interface SLKAppSDKAPI : NSObject
+@interface SLKAppSDKService : NSObject
 
 - (instancetype)initWithDelegate:(id<SLKAppSDKDelegate>)delegate NS_DESIGNATED_INITIALIZER;
 
-- (void)postMessage:(id)message;
+- (void)postMessage:(NSDictionary<NSString *, id> *)message;
 
 @end

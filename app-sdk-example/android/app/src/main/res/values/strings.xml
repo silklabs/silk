@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Silk App SDK Example</string>
+    <string name="blob_provider_authority">com.silklabs.appsdk.example.blobs</string>
+</resources>

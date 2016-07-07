@@ -9,6 +9,6 @@
 /**
  * Receive message from SDK.
  */
-- (void)onMessage:(id)message;
+- (void)onMessage:(NSDictionary<NSString *, id> *)message;
 
 @end

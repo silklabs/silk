@@ -7,15 +7,15 @@
 #import "RCTBridge.h"
 #import "RCTBridgeDelegate.h"
 
-#import "SLKAppSDKAPI.h"
+#import "SLKAppSDKService.h"
 #import "SLKAppSDKDelegate.h"
 #import "SLKAppSDKEventEmitter.h"
 
-@interface SLKAppSDKAPI () <RCTBridgeDelegate>
+@interface SLKAppSDKService () <RCTBridgeDelegate>
 
 @end
 
-@implementation SLKAppSDKAPI
+@implementation SLKAppSDKService
 {
   RCTBridge *_bridge;
   id<SLKAppSDKDelegate> _delegate;
@@ -36,7 +36,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (void)postMessage:(id)message
 {
-  [_eventEmitter sendEventWithName:@"message" body:message];
+  [_eventEmitter sendEventWithName:@"silkAppSDKMessage" body:message];
 }
 
 // RCTBridgeDelegate

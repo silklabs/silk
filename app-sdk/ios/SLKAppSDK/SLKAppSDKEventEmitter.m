@@ -23,10 +23,10 @@ RCT_EXPORT_MODULE()
 
 - (NSArray<NSString *> *)supportedEvents
 {
-  return @[@"message"];
+  return @[@"silkAppSDKMessage"];
 }
 
-RCT_EXPORT_METHOD(postMessage:(id)message)
+RCT_EXPORT_METHOD(postMessage:(NSDictionary<NSString *, id> *)message)
 {
   [_delegate onMessage:message];
 }

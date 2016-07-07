@@ -4,14 +4,16 @@
   "description": "wrapper for wifi",
   "main": "./lib/index.js",
   "scripts": {
-    "postinstall": "../../../../npm_postinstall && silk-buildjs",
-    "build": "silk-buildjs"
+    "build": "silk-buildjs",
+    "lint": "eslint lib test",
+    "postinstall": "../../../../npm_postinstall && silk-buildjs"
   },
   "license": "MIT",
   "dependencies": {
     "netmask": "1.0.5"
   },
   "symlinkDependencies": {
+    "eslint-config-silk": "/pub/eslint-config",
     "silk-buildjs": "../../../../buildjs/",
     "silk-log": "../../../../log"
   },

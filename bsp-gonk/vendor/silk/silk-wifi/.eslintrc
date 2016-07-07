@@ -1,1 +1,3 @@
-node_modules/silk-gonk-build-glue/.eslintrc
+{
+  "extends": "eslint-config-silk",
+}

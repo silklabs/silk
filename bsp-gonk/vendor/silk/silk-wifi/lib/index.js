@@ -12,12 +12,6 @@ import createLog from 'silk-log/device';
 
 import type { Socket } from 'net';
 
-type WifiScanResult = {
-  ssid: string;
-  level: number;
-  psk: boolean;
-};
-
 const log = createLog('wifi');
 const USE_WIFI_STUB = util.getboolprop(
   'persist.silk.wifi.stub',
@@ -73,7 +67,17 @@ async function configureDhcpInterface(iface: string) {
 const SCAN_INTERVAL_MS = 10 * 1000;
 
 // ref: external/wpa_supplicant_8/src/common/defs.h
-const WIFI_STATES = [
+export type WifiState = 'disconnected' |
+                        'disabled' |
+                        'inactive' |
+                        'scanning' |
+                        'authenticating' |
+                        'associating' |
+                        'associated' |
+                        'four_way_handshake' |
+                        'group_handshake' |
+                        'completed';
+const WIFI_STATE_MAP = [
   'disconnected',
   'disabled',
   'inactive',
@@ -256,7 +260,7 @@ class WpaMonitor extends EventEmitter {
         case 'CTRL-EVENT-STATE-CHANGE':
           if ((found = extra.match(/ state=([0-9]) /))) {
             let stateIndex = Number(found[1]);
-            let state = WIFI_STATES[stateIndex];
+            let state = WIFI_STATE_MAP[stateIndex];
             log.info(`wifi state: ${state}`);
 
             /**
@@ -266,7 +270,7 @@ class WpaMonitor extends EventEmitter {
              * @memberof silk-wifi
              * @instance
              * @type {Object}
-             * @property {string} state new wifi state
+             * @property {WifiState} state new wifi state
              */
             this.emit('stateChange', state);
           }
@@ -384,18 +388,26 @@ export class Wifi extends EventEmitter {
   // Always start as offline until proven otherwise...
   _online: bool = false;
   _shutdown: bool = false;
-  dhcpRetryTimer: ?number;
+  _dhcpRetryTimer: ?number;
   _shutdown: bool = false;
+
+  /**
+   * Current wifi state.
+   *
+   * @memberof silk-wifi
+   * @instance
+   */
+  state: WifiState = 'disconnected';
 
   constructor() {
     super();
-    this.dhcpRetryTimer = null;
+    this._dhcpRetryTimer = null;
   }
 
   _networkCleanup() {
-    if (this.dhcpRetryTimer) {
-      clearTimeout(this.dhcpRetryTimer);
-      this.dhcpRetryTimer = null;
+    if (this._dhcpRetryTimer) {
+      clearTimeout(this._dhcpRetryTimer);
+      this._dhcpRetryTimer = null;
     }
     return util.exec('dhcputil', [iface, 'dhcp_stop'])
       .then(() => util.exec('ndc', ['network', 'destroy', '100']))
@@ -453,9 +465,9 @@ export class Wifi extends EventEmitter {
     })
     .catch(err => {
       log.warn(`Error: DHCP request failed: ${err.stack || err}, retrying...`);
-      this.dhcpRetryTimer = setTimeout(() => {
+      this._dhcpRetryTimer = setTimeout(() => {
         this._requestDhcp();
-        this.dhcpRetryTimer = null;
+        this._dhcpRetryTimer = null;
       }, 2000);
     });
   }
@@ -497,6 +509,7 @@ export class Wifi extends EventEmitter {
       this.scan();
     });
     monitor.on('stateChange', state => {
+      this.state = state;
       this.emit('stateChange', state);
     });
     monitor.on('scanResults', async () => {
@@ -756,7 +769,7 @@ export class StubWifi extends EventEmitter {
         }
       }
       return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns])
-        .then(() => { return; });
+        .then(() => undefined);
     }
     return Promise.resolve();
   }
@@ -765,6 +778,8 @@ export class StubWifi extends EventEmitter {
     log.info('Stub: "WiFi" shutdown');
     return Promise.resolve();
   }
+
+  state: WifiState = 'completed';
 
   isOnline(): bool {
     // Fingers crossed that somehow the device is online

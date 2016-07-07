@@ -199,6 +199,7 @@ class Dialog {
    */
   _onInterpretEnd: InterpretEndCallback = error => {
     if (error) {
+      this._onSpeechStop();
       this._playErrorMessage(NETWORK_ERROR_MESSAGE, NETWORK_ERROR_SOUND_FILE);
     }
   };

@@ -353,6 +353,16 @@ export default class Camera extends EventEmitter {
   }
 
   /**
+   * True if the device has a camera
+   *
+   * @memberof silk-camera
+   * @instance
+   */
+  get available() {
+    return CAMERA_HW_ENABLED;
+  }
+
+  /**
    * Releases cached images
    * @private
    */

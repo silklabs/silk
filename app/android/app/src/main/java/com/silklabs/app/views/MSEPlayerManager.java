@@ -26,7 +26,7 @@ public class MSEPlayerManager extends ReactWebViewManager {
     super(new WebViewConfig() {
       @Override
       public void configWebView(WebView webView) {
-        webView.addJavascriptInterface(new MSEPlayerJSInterface(webView), "silkNativeHelper");
+        webView.addJavascriptInterface(new MSEPlayerJSInterface(), "silkNativeHelper");
         webView.setWebChromeClient(new WebChromeClient() {
           @Override
           public boolean onConsoleMessage(ConsoleMessage consoleMessage) {

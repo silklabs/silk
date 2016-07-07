@@ -638,9 +638,10 @@ class Extensions {
    * @param {Object} cmd Command to be sent to the specified extension
    */
   onCommand(cmd) {
+    const targetName = `silkext-${cmd.targetName}`;
     for (let key in this._loaded) {
       let extension = this._loaded[key];
-      if (extension.env.name === cmd.targetName) {
+      if (extension.env.name === targetName) {
         try {
           extension.mod.onCommand(cmd);
         } catch (e) {

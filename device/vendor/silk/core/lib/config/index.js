@@ -171,7 +171,6 @@ class DeviceConfig extends EventEmitter {
     assert(!this._configuringSocketSessionListener);
     assert(this._socketSessionListeners.length);
 
-    this._btle.pauseScan();
     this.emit('configuring');
 
     this._configuringSocketSessionListener = sessionListener;
@@ -204,7 +203,6 @@ class DeviceConfig extends EventEmitter {
 
     if (!this._config || !this._config.success) {
       this.emit('unconfigured');
-      this._btle.resumeScan();
     }
   }
 
@@ -323,7 +321,6 @@ class DeviceConfig extends EventEmitter {
     assert(!this._wifiAbortConnection);
     assert(this._configuringSocketSessionListener);
 
-    this._btle.publicKeys = [this._config.registrarPublicKey];
     this._configuringSocketSessionListener.sendComplete();
 
     log.info('Configured');
@@ -331,27 +328,32 @@ class DeviceConfig extends EventEmitter {
   };
 
   _stopRetryingWifiConnection(error) {
-    log.debug(`DeviceConfig._stopRetryingWifiConnection()`, error);
+    log.debug(`DeviceConfig._stopRetryingWifiConnection()`);
 
     if (this._wifiAbortConnection) {
-      log.debug(`Rejecting wifi connection promise`);
+      log.debug(`Rejecting wifi connection promise`, error);
       this._wifiAbortConnection(error);
       this._wifiAbortConnection = null;
     }
   }
 
-  _onDismissed() {
+  async _onDismissed() {
     log.debug(`DeviceConfig._onDismissed()`);
 
     this._configuringSocketSessionListener.disconnect();
     this._configuringSocketSessionListener = null;
 
-    this._btle.publicKeys = [ this._config.registrarPublicKey ];
+    log.debug(`Turning off bluetooth`);
+    await this._btle.changeMode(this._btle.MODE_OFF);
+
+    this._btle.publicKeys = [this._config.registrarPublicKey];
+    this._btle.beaconInfo = this._getBeaconInfo();
 
     this._server.addListener(`connect`, this._onConfiguredServerConnect);
     this._server.addListener(`disconnect`, this._onConfiguredServerDisconnect);
 
-    this._btle.changeMode(this._btle.MODE_OFF);
+    log.debug(`Turning bluetooth back on`);
+    await this._btle.changeMode(this._btle.MODE_ON);
   }
 
   _onConfiguredServerConnect = async () => {
@@ -372,7 +374,7 @@ class DeviceConfig extends EventEmitter {
       }
     }
 
-    await this._btle.changeMode(this._btle.MODE_OFF);
+    await this._btle.changeMode(this._btle.MODE_ON);
   };
 
   _onConfiguredServerDisconnect = async () => {
@@ -383,16 +385,7 @@ class DeviceConfig extends EventEmitter {
 
     this._serverConnected = false;
 
-    await this._btle.changeMode(this._btle.MODE_OFF);
-
-    // It's possible that the server connected while we were turning off
-    // bluetooth.
-    if (this._serverConnected) {
-      return;
-    }
-
-    this._btle.beaconInfo = this._getBeaconInfo();
-    await this._btle.changeMode(this._btle.MODE_SCAN);
+    await this._btle.changeMode(this._btle.MODE_BEACON);
   };
 
   _getBeaconInfo() {
@@ -618,7 +611,7 @@ class DeviceConfig extends EventEmitter {
 
       this._setApiServerUrl();
 
-      await this._btle.changeMode(this._btle.MODE_SCAN);
+      await this._btle.changeMode(this._btle.MODE_BEACON);
       this.emit('configured');
 
       server.addListener(`connect`, this._onConfiguredServerConnect);
@@ -630,7 +623,7 @@ class DeviceConfig extends EventEmitter {
       // Ensure we don't have any stale state lying around...
       await Promise.all([
         wifi.forgetNetwork(),
-        this._btle.changeMode(this._btle.MODE_SCAN),
+        this._btle.changeMode(this._btle.MODE_BEACON),
       ]);
 
       this.emit('unconfigured');
@@ -699,7 +692,7 @@ class DeviceConfig extends EventEmitter {
     this._btle.publicKeys = null;
 
     log.debug(`Turning bluetooth back on`);
-    await this._btle.changeMode(this._btle.MODE_SCAN);
+    await this._btle.changeMode(this._btle.MODE_BEACON);
   }
 
   async _unconfigure() {

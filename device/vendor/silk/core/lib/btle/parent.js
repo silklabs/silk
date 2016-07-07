@@ -29,7 +29,7 @@ import type {Server, Socket} from 'net';
 
 import type {Deferred} from '../deferred';
 
-export type BluetoothMode = 'off' | 'scan' | 'beacon';
+export type BluetoothMode = 'off' | 'on' | 'beacon';
 export type BeaconInfo = {
   major: number;
   minor: number;
@@ -65,11 +65,11 @@ function randomInt(min: number = 0, max: number = 1e6): number {
 
 export class BluetoothLE extends EventEmitter {
   static MODE_OFF: string = `off`;
-  static MODE_SCAN: string = `scan`;
+  static MODE_ON: string = `on`;
   static MODE_BEACON: string = `beacon`;
 
   MODE_OFF: string = BluetoothLE.MODE_OFF;
-  MODE_SCAN: string = BluetoothLE.MODE_SCAN;
+  MODE_ON: string = BluetoothLE.MODE_ON;
   MODE_BEACON: string = BluetoothLE.MODE_BEACON;
 
   _privateKey: string = ``;
@@ -159,7 +159,7 @@ export class BluetoothLE extends EventEmitter {
     case BluetoothLE.MODE_OFF:
       break;
 
-    case BluetoothLE.MODE_SCAN:
+    case BluetoothLE.MODE_ON:
     case BluetoothLE.MODE_BEACON:
       invariant(this._beaconInfo);
       break;
@@ -173,40 +173,6 @@ export class BluetoothLE extends EventEmitter {
     this._sendMessage({
       name: `mode`,
       mode,
-      promiseId,
-    });
-
-    return promise;
-  }
-
-  pauseScan(): Promise<void> {
-    log.debug(`pauseScan`);
-
-    if (this._mode !== BluetoothLE.MODE_SCAN) {
-      return Promise.reject(new Error(`Must be in scanning mode`));
-    }
-
-    const [promise, promiseId] = this._createPromisePair();
-
-    this._sendMessage({
-      name: `pauseScan`,
-      promiseId,
-    });
-
-    return promise;
-  }
-
-  resumeScan(): Promise<void> {
-    log.debug(`resumeScan`);
-
-    if (this._mode !== BluetoothLE.MODE_SCAN) {
-      return Promise.reject(new Error(`Must be in scanning mode`));
-    }
-
-    const [promise, promiseId] = this._createPromisePair();
-
-    this._sendMessage({
-      name: `resumeScan`,
       promiseId,
     });
 
@@ -229,7 +195,6 @@ export class BluetoothLE extends EventEmitter {
     );
 
     const child = fork(childPath, {
-      silent: true,
       name: `btle`,
       restart: true,
     });
@@ -459,8 +424,6 @@ export class BluetoothLE extends EventEmitter {
       oldChild.removeListener(`exit`, this._onExit);
       oldChild.removeListener(`error`, this._onChildError);
       oldChild.removeListener(`message`, this._onMessage);
-      oldChild.stdout.removeListener(`data`, this._onStdout);
-      oldChild.stderr.removeListener(`data`, this._onStderr);
     }
 
     this._child = child;
@@ -472,8 +435,6 @@ export class BluetoothLE extends EventEmitter {
     child.addListener(`exit`, this._onExit);
     child.addListener(`error`, this._onChildError);
     child.addListener(`message`, this._onMessage);
-    child.stdout.addListener(`data`, this._onStdout);
-    child.stderr.addListener(`data`, this._onStderr);
 
     child.once(`restart`, (newChild) => {
       log.debug(`_onRestart`);
@@ -558,14 +519,6 @@ export class BluetoothLE extends EventEmitter {
     this._killChild();
   };
 
-  _onStdout: ((data: Buffer) => void) = (data) => {
-    log.info(`Child:\n`, data.toString().trim());
-  };
-
-  _onStderr: ((data: Buffer) => void) = (data) => {
-    log.error(`Child:\n`, data.toString().trim());
-  };
-
   _onMessage: ((message: any) => void) = (message) => {
     log.debug(`_onMessage`, message);
 
@@ -586,16 +539,6 @@ export class BluetoothLE extends EventEmitter {
 
       case `mode`: {
         this._onMode(message);
-        break;
-      }
-
-      case `pauseScan`: {
-        this._onPauseScan(message);
-        break;
-      }
-
-      case `resumeScan`: {
-        this._onResumeScan(message);
         break;
       }
 
@@ -621,18 +564,6 @@ export class BluetoothLE extends EventEmitter {
     log.debug(`_onMode`, message);
 
     this._mode = message.mode;
-    this._handlePromiseResponse(message);
-  }
-
-  _onPauseScan(message: any) {
-    log.debug(`_onPauseScan`);
-
-    this._handlePromiseResponse(message);
-  }
-
-  _onResumeScan(message: any) {
-    log.debug(`_onResumeScan`);
-
     this._handlePromiseResponse(message);
   }
 

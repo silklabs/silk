@@ -111,11 +111,27 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
-  internal func disconnect(id: Int) {
-    log.debug("disconnect(\(id))")
+  internal func end(id: Int) {
+    log.debug("end(\(id))")
+
+    let name = "silk-blesocketmanager-end"
+    let body = ["id": id]
+    self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
+  }
+
+  internal func disconnected(id: Int) {
+    log.debug("disconnected(\(id))")
 
     let name = "silk-blesocketmanager-disconnect"
     let body = ["id": id]
+    self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
+  }
+
+  internal func unconfiguredDevicesNearby(nearby: Bool) {
+    log.debug("unconfiguredDevicesNearby(\(nearby))")
+
+    let name = "silk-blesocketmanager-unconfigured-devices"
+    let body = ["nearby": nearby]
     self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
@@ -183,8 +199,14 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     let decodingOptions = NSDataBase64DecodingOptions(rawValue: 0)
     let data = NSData(base64EncodedString: dataBase64 as String,
                       options: decodingOptions)
+    if data === nil {
+      log.error("Failed to decode data")
+      return
+    }
 
-    BLESocketManager.bleSocketPeripheral!.send(id, data: data)
+    if data!.length != 0 {
+      BLESocketManager.bleSocketPeripheral!.send(id, data: data!)
+    }
   }
 
   func enableRssiUpdates(id: NSInteger, enable: Bool) {
@@ -192,5 +214,22 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
 
     BLESocketManager.bleSocketPeripheral!.enableRssiUpdates(id,
                                                             enable:enable)
+  }
+
+  func finish(id: NSInteger) {
+    log.debug("finish(\(id))")
+
+    BLESocketManager.bleSocketPeripheral!.finish(id)
+  }
+
+  func disconnect(id: NSInteger) {
+    log.debug("disconnect(\(id))")
+
+    BLESocketManager.bleSocketPeripheral!.disconnect(id)
+  }
+
+  func acceptConfigConnections(accept: Bool) {
+    log.debug("acceptConfigConnections(\(accept))")
+    BLESocketManager.bleSocketPeripheral!.acceptConfigConnections(accept)
   }
 }

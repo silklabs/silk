@@ -15,7 +15,8 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   private static let beaconUuidsKey = "silk-regionmonitor-beacon-uuids"
   internal static let configBeaconUuid =
-    NSUUID(UUIDString: "78955692-e50a-4dfd-b1f0-f59303ebf4cb")!
+    NSUUID(UUIDString: "cefa2202-53c7-4285-ac1b-a6e6eb00bb79")!
+
 
   private static var instance: RegionMonitor? = nil
 
@@ -342,15 +343,6 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
         }
       }
     }
-
-    // For now if we're still supposed to be monitoring this region we will
-    // pretend that we're 'inside'.
-    if let regionInfo = self.regions[identifier] {
-      if regionInfo.state != .Inside {
-        regionInfo.state = .Inside
-        self.delegate.regionEntered(self, uuid: regionInfo.uuid)
-      }
-    }
   }
 
   // When we launch this will read the current state of the region since we
@@ -363,10 +355,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     if let regionInfo = self.regions[region.identifier] {
       log.info("didDetermineState(\(state.rawValue), \(region.identifier))")
 
-      // Assume 'unknown' means 'inside' because we would rather advertise our
-      // bluetooth services needlessly than not advertise when a user is trying
-      // to use those services.
-      let stateToReport = state == .Unknown ? .Inside : state
+      let stateToReport = state == .Unknown ? .Outside : state
 
       if regionInfo.state != stateToReport {
         regionInfo.state = stateToReport

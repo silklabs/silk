@@ -30,9 +30,8 @@ export { default as Metric } from './metric';
 export { default as MetricTypes } from './metric_types';
 
 export const BTLE_SOCKET_UUIDS = {
-  service: '78955692e50a4dfdb1f0f59303ebf4cb',
-  read: '9c33375662c341418ee5fed0d9f84a72',
-  write: 'ef4cf1145d104b738a5f214aae42c6f9',
+  service: 'cefa220253c74285ac1ba6e6eb00bb79',
+  characteristic: 'fd30740d8bdc4a4dad5866b4343ea3c1',
 };
 
 type SocketioConfig = [string, {

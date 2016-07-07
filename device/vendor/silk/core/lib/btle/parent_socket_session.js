@@ -37,7 +37,7 @@ export default class ParentSocketSession extends DuplexTransform {
   _rssiUpdatesKilled: boolean = false;
 
   _authenticated: boolean = false;
-  _allowUnauthenticated: boolean = false;
+  _allowUnauthenticated: ?boolean = null;
   _emittedUnauthenticated: boolean = false;
 
   // Stuff that gets tracked for metrics.
@@ -57,13 +57,12 @@ export default class ParentSocketSession extends DuplexTransform {
     const internalStream = new InternalMessageFilterStream(msgpackStream);
 
     msgpackStream.on(`data`, (data) => {
-      log.verbose(`Received`, data);
+      log.verbose(`Received`, data.name || data);
     });
-    const msgpackOldWrite = msgpackStream.write;
-    // $FlowFixMe: Flow doesn't like it when we replace functions.
-    msgpackStream.write = (data, ...args) => {
-      log.verbose(`Sending`, data);
-      return msgpackOldWrite.call(msgpackStream, data, ...args);
+    const msgpackOldWrite = msgpackStream.write.bind(msgpackStream);
+    msgpackStream.write = (data, encodingOrCallback, callback) => {
+      log.verbose(`Sending`, data.name || data);
+      return msgpackOldWrite(data, encodingOrCallback, callback);
     };
 
     super(internalStream, internalStream, null, null, {
@@ -128,16 +127,18 @@ export default class ParentSocketSession extends DuplexTransform {
 
     invariant(!this._authenticated);
 
-    if (this._allowUnauthenticated) {
-      log.debug(`Already informed child that unauthenticated data is allowed`);
+    if (this._allowUnauthenticated !== null) {
+      log.debug(`Already informed child`);
       return;
     }
 
     this._emittedUnauthenticated = true;
-
     this.emit(`unauthenticated`);
-    if (!this._allowUnauthenticated) {
+
+    if (this._allowUnauthenticated === null) {
       log.warn(`Unauthenticated data was not explicitly allowed`);
+      this._allowUnauthenticated = false;
+
       this._internalStream.writeInternal(createInternalMessage({
         name: `allowUnauthenticated`,
         allow: false,
@@ -289,25 +290,15 @@ export default class ParentSocketSession extends DuplexTransform {
     return this._authenticated;
   }
 
-  allowUnauthenticated(): void {
-    log.debug(`allowUnauthenticated`);
+  allowUnauthenticated(allow: boolean): void {
+    log.debug(`allowUnauthenticated`, allow);
 
-    if (this._emittedUnauthenticated) {
-      throw new Error(`Called allowUnauthenticated() too late`);
-    }
-
-    if (this._allowUnauthenticated) {
-      return;
-    }
-    this._allowUnauthenticated = true;
-
-    if (this._authenticated) {
-      return;
-    }
+    invariant(this._allowUnauthenticated === null);
+    this._allowUnauthenticated = allow;
 
     this._internalStream.writeInternal(createInternalMessage({
       name: `allowUnauthenticated`,
-      allow: true,
+      allow,
     }));
   }
 

@@ -21,6 +21,11 @@ type RssiUpdateMessage = {
   id: number;
   rssi: number;
 };
+type NearbyMessage = {
+  nearby: boolean;
+};
+type EndMessage = ConnectMessage;
+type DisconnectMessage = ConnectMessage;
 
 const log = makeLog(`btle-SocketManager`);
 
@@ -64,6 +69,18 @@ export class Socket extends RobustEventEmitter {
     invariant(singletonInstance);
     singletonInstance.enableRssiUpdates(this._id, enable);
   }
+
+  finish() {
+    log.debug(`Socket.finish()`);
+    invariant(singletonInstance);
+    singletonInstance.finish(this._id);
+  }
+
+  disconnect() {
+    log.debug(`Socket.disconnect()`);
+    invariant(singletonInstance);
+    singletonInstance.disconnect(this._id);
+  }
 }
 
 /**
@@ -89,8 +106,12 @@ export class SocketManager extends RobustEventEmitter {
                                    this.onData);
     DeviceEventEmitter.addListener('silk-blesocketmanager-rssi',
                                    this.onRssiUpdate);
+    DeviceEventEmitter.addListener('silk-blesocketmanager-end',
+                                   this.onEnd);
     DeviceEventEmitter.addListener('silk-blesocketmanager-disconnect',
                                    this.onDisconnect);
+    DeviceEventEmitter.addListener('silk-blesocketmanager-unconfigured-devices',
+                                   this.onUnconfiguredDevicesNearby);
   }
 
   onConnect: ((args: ConnectMessage) => void) = (args) => {
@@ -131,7 +152,20 @@ export class SocketManager extends RobustEventEmitter {
     }
   };
 
-  onDisconnect: ((args: ConnectMessage) => void) = (args) => {
+  onEnd: ((args: EndMessage) => void) = (args) => {
+    const id = args.id;
+    log.debug(`SocketManager.onEnd(${id})`);
+
+    let socket = this._sockets.get(id);
+    if (socket) {
+      socket.emit('end');
+    } else {
+      log.info(`End received for connection ${id} that no longer exists, ` +
+               `ignoring`);
+    }
+  };
+
+  onDisconnect: ((args: DisconnectMessage) => void) = (args) => {
     const id = args.id;
     log.debug(`SocketManager.onDisconnect(${id})`);
 
@@ -144,6 +178,13 @@ export class SocketManager extends RobustEventEmitter {
       log.info(`Disconnect received for connection ${id} that no longer ` +
                `exists, ignoring`);
     }
+  };
+
+  onUnconfiguredDevicesNearby: ((args: NearbyMessage) => void) = (args) => {
+    const {nearby} = args;
+    log.debug(`SocketManager.onUnconfiguredDevicesNearby(${nearby})`);
+
+    process.nextTick(() => BLESocketManager.acceptConfigConnections(nearby));
   };
 
   send(id: number, data: Buffer) {
@@ -160,6 +201,22 @@ export class SocketManager extends RobustEventEmitter {
     invariant(this._sockets.has(id));
 
     BLESocketManager.enableRssiUpdates(id, enable);
+  }
+
+  finish(id: number) {
+    log.debug(`SocketManager.finish(${id})`);
+
+    invariant(this._sockets.has(id));
+
+    BLESocketManager.finish(id);
+  }
+
+  disconnect(id: number) {
+    log.debug(`SocketManager.disconnect(${id})`);
+
+    if (this._sockets.has(id)) {
+      BLESocketManager.disconnect(id);
+    }
   }
 }
 

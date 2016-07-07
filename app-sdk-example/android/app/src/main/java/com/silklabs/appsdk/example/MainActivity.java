@@ -49,7 +49,7 @@ public class MainActivity extends Activity {
     button.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         Bundle message = new Bundle();
-        message.putString("type", "BUTTON_PRESS");
+        message.putString("type", "HELLO_WORLD");
         mSilkService.postMessage(message);
       }
     });

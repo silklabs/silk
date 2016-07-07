@@ -12,5 +12,5 @@ FOUNDATION_EXPORT double SLKAppSDKVersionNumber;
 //! Project version string for SLKAppSDK.
 FOUNDATION_EXPORT const unsigned char SLKAppSDKVersionString[];
 
-#import <SLKAppSDK/SLKAppSDKAPI.h>
+#import <SLKAppSDK/SLKAppSDKService.h>
 #import <SLKAppSDK/SLKAppSDKDelegate.h>

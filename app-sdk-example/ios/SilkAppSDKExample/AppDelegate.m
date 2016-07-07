@@ -5,6 +5,7 @@
  */
 
 #import "AppDelegate.h"
+#import "ViewController.h"
 #import <SLKAppSDK/SLKAppSDK.h>
 
 @interface AppDelegate () <SLKAppSDKDelegate>
@@ -13,12 +14,21 @@
 
 @implementation AppDelegate
 {
-  SLKAppSDKAPI *silk;
+  SLKAppSDKService *silkService;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // Initialize Silk API
-  silk = [[SLKAppSDKAPI alloc] initWithDelegate:self];
+  silkService = [[SLKAppSDKService alloc] initWithDelegate:self];
+
+  UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+  ViewController *viewController = [storyBoard instantiateInitialViewController];
+  viewController.silkService = silkService;
+
+  // Set root view controller and make windows visible
+  self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+  self.window.rootViewController = viewController;
+  [self.window makeKeyAndVisible];
 
   // Override point for customization after application launch.
   return YES;
@@ -30,7 +40,7 @@
   NSLog(@"Received message: %@", message);
 
   // Send the message right back.
-  [silk postMessage:message];
+  [silkService postMessage:message];
 }
 
 @end

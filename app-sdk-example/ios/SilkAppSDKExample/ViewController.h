@@ -5,9 +5,10 @@
  */
 
 #import <UIKit/UIKit.h>
+#import <SLKAppSDK/SLKAppSDK.h>
 
 @interface ViewController : UIViewController
 
+@property (nonatomic) SLKAppSDKService *silkService;
 
 @end
-

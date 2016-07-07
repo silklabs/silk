@@ -7,15 +7,15 @@
 #import "RCTBridge.h"
 #import "RCTBridgeDelegate.h"
 
-#import "SLKAppSDKAPI.h"
+#import "SLKAppSDKService.h"
 #import "SLKAppSDKDelegate.h"
 #import "SLKAppSDKEventEmitter.h"
 
-@interface SLKAppSDKAPI () <RCTBridgeDelegate>
+@interface SLKAppSDKService () <RCTBridgeDelegate>
 
 @end
 
-@implementation SLKAppSDKAPI
+@implementation SLKAppSDKService
 {
   RCTBridge *_bridge;
   id<SLKAppSDKDelegate> _delegate;

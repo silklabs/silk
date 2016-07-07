@@ -125,7 +125,6 @@ class SpeechToText {
       let json = ``;
       res.once(`error`, (error) => this._callCallback(error));
       res.on(`data`, chunk => {
-        log.debug(`Response data chunk`, chunk.length);
         json += chunk;
       });
       res.once(`end`, () => {
@@ -193,12 +192,11 @@ class SpeechToText {
 
     const req = this._req;
     if (!req) {
-      log.info(`Queuing PCM data: ${pcmData.length} bytes`);
+      log.debug(`Queuing PCM data: ${pcmData.length} bytes`);
       this._bufferedSamples.push(pcmData);
       return;
     }
 
-    log.debug(`Writing PCM data: ${pcmData.length} bytes`);
     req.write(pcmData);
   }
 

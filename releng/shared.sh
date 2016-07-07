@@ -33,6 +33,7 @@ GITS="\
   gonk-msm8956 \
   libwebrtc \
   node-webrtc \
+  pandohub-nhlos \
   qualcomm-developer-network \
   release-pando-gonk-caf.msm8909-la121 \
   release-pando-gonk-caf.pandohub \

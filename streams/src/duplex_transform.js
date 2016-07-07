@@ -26,6 +26,16 @@ const EVENT_NAME_FINISH = `finish`;
 // Applies transforms to both directions of a Duplex stream.
 export default class DuplexTransform extends Duplex {
 
+  // Tell Flow that the |emit| method can be hooked.
+  emit: (event: string, ...args:Array<any>) => boolean;
+
+  // Tell Flow that the |write| method can be hooked.
+  write: (
+    chunk: string | Buffer,
+    encodingOrCallback?: string | Function,
+    callback?: Function
+  ) => boolean;
+
   // This class can be subclassed, so all members are prefixed with double
   // underscores to make it less likely that subclasses will use the same names.
   __name: string = ``;

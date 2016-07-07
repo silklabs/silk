@@ -323,7 +323,7 @@ function emitDeviceInfo() {
       logo,
       now: Date.now(),
       videoSize: camera.videoSize,
-      previewSize: timeline.previewSize,
+      previewSize: camera.available ? timeline.previewSize : null,
       objectsSize: camera.getFrameSize(),
     });
   }

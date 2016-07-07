@@ -59,7 +59,7 @@ const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG
 // Kenzo seems to produce results with lower confidence than with Mako for some
 // reason. Also further away the device is lower the confidence is. Keeping
 // the threshold to lower value to catch far utterances too.
-const THRESHOLD = 80; // Ignore predictions with probability lower than threshold
+const THRESHOLD = 65; // Ignore predictions with probability lower than threshold
 const STT_CONFIDENCE_THRESHOLD = 0.35;
 
 const SAVE_KEYWORD_WAV = 'persist.silk.kws.save';

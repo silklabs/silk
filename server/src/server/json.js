@@ -4,7 +4,7 @@
 
 
 import bodyParser from 'body-parser';
-import sha256 from './sha256';
+import sha256 from 'silk-utils/sha256';
 
 /**
  * Construct a hash of the request looks like this:

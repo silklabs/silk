@@ -51,6 +51,11 @@ export default {
     // server url
     useServiceDiscovery: false,
 
+    servers: {
+      // How often the server will update it's status within azure table.
+      checkIntervalMs: 5 * 60 * 1000,
+    },
+
     clients: {
       timeoutMs: 2 * 60 * 1000,
     },

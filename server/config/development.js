@@ -9,7 +9,7 @@ export default {
   // the default table names (which are the same as used in the production
   // credentials).
   azure: {
-    init: false,
+    init: true,
     setServiceProps: false,
     regions: {
       uswest: azureCreds.uswest,

@@ -30,6 +30,7 @@ import Nonce from '../server/models/nonce';
 import InfluxDB from '../influxdb_client';
 import MetricsAgent from '../metrics_agent';
 import Residents from './residents';
+import ServerState from './server_state';
 
 export type RouteContext = {
   devices: Devices;
@@ -38,7 +39,6 @@ export type RouteContext = {
   host: string;
   influxdb: ?InfluxDB;
   metricsAgent: MetricsAgent;
-  signalServers: CompositeTable;
   signalDevices: CompositeTable;
 };
 
@@ -50,7 +50,7 @@ function signatureProvider(req: any): ?string {
 }
 
 async function main (config: any): any {
-  const server = http.createServer(() => {} /* make flow happy */);
+  let server = http.createServer(() => {} /* make flow happy */);
   const db = await createDb(config);
   const nonce = new Nonce(db);
   const devices = new Devices(db);
@@ -115,27 +115,18 @@ async function main (config: any): any {
     accounts,
     influxdb,
     metricsAgent,
-    signalServers,
     signalDevices,
     host,
   };
 
+  let serverState;
   if (config.azure.init) {
-    const entity = {
-      // TODO: In a "real" (not heroku) cloud deployment with many signaling
-      // servers in production these values should be something like hashed region
-      // or something ...
-      PartitionKey: sha256(host),
-      RowKey: sha256(host),
+    serverState = new ServerState(
       host,
-      start: Date.now(),
-    };
-
-    // TODO: This logic is insufficient to handle more complicated cases where our
-    // services drop off for unknown reasons (like in a spot model). This is a
-    // close enough stop gap. In the future we can use "start" (and a periodic
-    // update for a aliveness check) to purge dead servers.
-    await signalServers.mergeOrInsertEntity(entity);
+      signalServers,
+      config.signaling.servers
+    );
+    await serverState.start();
   }
 
   const residents = new Residents({
@@ -313,7 +304,15 @@ async function main (config: any): any {
     // process being killed. We do this instead of closing the process mostly
     // for performance.
     close: async () => {
-      server.close();
+      if (server) {
+        server.close();
+        server = null;
+      }
+
+      if (serverState) {
+        await serverState.stop();
+        serverState = null;
+      }
     },
 
     // Restart the signaling server (will be bound on a new port ...)
@@ -324,8 +323,11 @@ async function main (config: any): any {
           accept();
         });
       });
-      const serverClose = eventToPromise(server, 'close');
-      server.close();
+      let serverClose = Promise.resolve();
+      if (server) {
+        serverClose = eventToPromise(server, 'close');
+        server.close();
+      }
       await Promise.all([serverClose, wsClose]);
 
       try {

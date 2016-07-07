@@ -13,6 +13,7 @@ suite('connect test', () => {
       clients: {
         timeoutMs: 3 * 1000
       },
+
       residents: {
         checkIntervalMs: 100,
         pingIntervalMs: 50,
@@ -157,5 +158,14 @@ suite('connect test', () => {
     };
     await eventToPromise(deviceWs, 'close');
     assert(pongAttempts > 0);
+  });
+
+  test('server entity delete', async () => {
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+    await context.signaling.close();
+
+    servers = await serversTable.query();
+    assert.equal(servers.length, 0);
   });
 });

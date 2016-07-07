@@ -82,6 +82,7 @@ class Dialog {
   _vad: VoiceActivityDetector;
   _kws: KeywordSpotting;
   _localTts: boolean;
+  _speechStopWhen: number;
 
   constructor(env: Env) {
     camera = env.camera;
@@ -114,7 +115,7 @@ class Dialog {
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
-      this._kws = new KeywordSpotting(this._vad, (kwsTestMode ? true: false));
+      this._kws = new KeywordSpotting(this._vad, (kwsTestMode ? true : false));
       this._kws.start();
 
       if (!kwsTestMode) {
@@ -123,8 +124,9 @@ class Dialog {
           this._kws.stop();
           this._onSpeechStart();
         });
-        this._vad.on('speech_stop', () => {
-          this._onSpeechStop();
+        this._vad.on('speech_stop', (when) => {
+          // Stop processing after mic data upto this time has been processed
+          this._speechStopWhen = when;
         });
         this._vad.on('speech_timeout', () => {
           log.debug('Speech timedout');
@@ -159,8 +161,16 @@ class Dialog {
     if (!this._stream) {
       return;
     }
+
     const { when, frames } = pkt;
     log.debug(`mic-data: ${frames.length} bytes at ${when}`);
+
+    // Stop processing after speech stop
+    if (when > this._speechStopWhen) {
+      this._onSpeechStop();
+      return;
+    }
+
     this._stream.write(frames);
   };
 
@@ -358,6 +368,7 @@ class Dialog {
       log.info(`not ready, skipping speech start`);
       return;
     }
+    this._speechStopWhen = Infinity;
     this._emitEvent('listening');
     this._stream = new ClosingPassThrough();
 

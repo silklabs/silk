@@ -10,7 +10,10 @@ import assert from 'assert';
 import createLog from '../log';
 import * as Joi from 'joi';
 import SessionListenerBase from './session_listener_base';
-import { getboolprop } from 'silk-sysutils';
+import {
+  exec,
+  getboolprop,
+} from 'silk-sysutils';
 import sensors from 'silk-sensors';
 
 const log = createLog('config-session-listener');
@@ -38,6 +41,7 @@ const SCHEMA = {
     publicKey: Joi.string().lowercase().trim().length(64).hex().required(),
     regToken: Joi.string().required(),
     serverUrl: Joi.string().allow(``).default(``).optional(),
+    time: Joi.number().required(),
   }).options({
     stripUnknown: true,
   }).required(),
@@ -276,7 +280,16 @@ export default class ConfigSessionListener extends SessionListenerBase {
         serverUrl: data.serverUrl,
       };
 
-      this._completeRegistration(secret);
+      const time = new Date(data.time);
+      log.debug(`Setting system time to configuring app's time`, time);
+
+      exec('time_genoff', [time.getTime().toString()])
+        .catch((error) => {
+          log.warn(`Unable to set system time`, error);
+        })
+        .then(() => {
+          this._completeRegistration(secret);
+        });
       return;
 
     case `dismiss`:

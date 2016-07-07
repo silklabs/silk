@@ -125,7 +125,7 @@ class DeviceConfig extends EventEmitter {
   _server: Server = null;
   _socketSessionListeners = [ ];
   _configuringSocketSessionListener = null;
-  _sessionStatus = ``;
+  _sessionStatus = ``;  // ServerState or WifiState (FIX when this file is flowed)
   _sessionErrorCode = ``;
   _lastWifiScanResults = null;
 
@@ -576,6 +576,11 @@ class DeviceConfig extends EventEmitter {
     this._initializing = true;
     log.info('Initializing config service');
 
+    if (wifi.isOnline()) {
+      this._onWifiStateChange(`online`);
+    } else {
+      this._onWifiStateChange(wifi.state);
+    }
     wifi.addListener(`online`, () => this._onWifiStateChange(`online`));
     wifi.addListener(`offline`, () => this._onWifiStateChange(`offline`));
     wifi.addListener(`stateChange`, (state) => this._onWifiStateChange(state));
@@ -583,6 +588,7 @@ class DeviceConfig extends EventEmitter {
                      (scanResults) => this._onWifiScanResults(scanResults));
     wifi.addListener(`error`, (error) => this._onWifiError(error));
 
+    this._onServerStateChange(server.lastEmittedState);
     server.addListener(`connecting`,
                        () => this._onServerStateChange(`connecting`));
     server.addListener(`reconnecting`,

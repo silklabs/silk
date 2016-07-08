@@ -1,4 +1,4 @@
-package com.silklabs.app.crypto;
+package com.silklabs.react.crypto;
 
 import android.support.annotation.Nullable;
 
@@ -24,7 +24,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Map;
 
-public class Crypto extends ReactContextBaseJavaModule {
+public class CryptoModule extends ReactContextBaseJavaModule {
 
   static {
     Security.insertProviderAt(new BouncyCastleProvider(), 1);
@@ -39,7 +39,7 @@ public class Crypto extends ReactContextBaseJavaModule {
   private static final int crypto_sign_ed25519_SEEDBYTES = sodium.crypto_box_seedbytes();
   private static final int crypto_scalarmult_BYTES = sodium.crypto_scalarmult_bytes();
 
-  public Crypto(ReactApplicationContext reactContext) {
+  public CryptoModule(ReactApplicationContext reactContext) {
     super(reactContext);
   }
 

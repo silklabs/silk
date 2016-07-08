@@ -1,3 +1,3 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.silklabs.app.crypto">
+          package="com.silklabs.react.crypto">
 </manifest>

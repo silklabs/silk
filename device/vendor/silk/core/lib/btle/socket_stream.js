@@ -83,10 +83,10 @@ export default class SocketStream extends Duplex {
 
     super(options);
 
-    peripheral.addListener(`disconnect`, this._onDisconnect);
+    peripheral.addListener(`disconnect`, this._onPeripheralDisconnect);
     this._peripheral = peripheral;
 
-    characteristic.addListener(`write`, this._onWrite);
+    characteristic.addListener(`write`, this._onCharacteristicWrite);
     this._characteristic = characteristic;
 
     this.addListener(`end`, this._onEnd);
@@ -100,8 +100,8 @@ export default class SocketStream extends Duplex {
 
     this.removeListener(`end`, this._onEnd);
     this.removeListener(`finish`, this._onFinish);
-    this._characteristic.removeListener(`write`, this._onWrite);
-    this._peripheral.removeListener(`disconnect`, this._onDisconnect);
+    this._characteristic.removeListener(`write`, this._onCharacteristicWrite);
+    this._peripheral.removeListener(`disconnect`, this._onPeripheralDisconnect);
 
     clearTimeout(this._writeTimeout);
     this._writeTimeout = null;
@@ -351,8 +351,8 @@ export default class SocketStream extends Duplex {
   }
 
   // Called by SocketService or by Noble when the peripheral disconnects.
-  _onDisconnect: (() => void) = () => {
-    log.debug(`_onDisconnect`);
+  _onPeripheralDisconnect: (() => void) = () => {
+    log.debug(`_onPeripheralDisconnect`);
 
     if (this._disconnected) {
       return;
@@ -449,12 +449,12 @@ export default class SocketStream extends Duplex {
     this._characteristic.write(data, /* withoutResponse */ false);
 
     this._writeTimeout = setTimeout(() => {
-      this._onWrite(new Error(`Timed out while writing`));
+      this._onCharacteristicWrite(new Error(`Timed out while writing`));
     }, TIMEOUT_MS);
   }
 
-  _onWrite: ((error?: Error) => void) = (error) => {
-    log.debug(`_onWrite`, error || ``);
+  _onCharacteristicWrite: ((error?: Error) => void) = (error) => {
+    log.debug(`_onCharacteristicWrite`, error || ``);
 
     const now = Date.now();
 

@@ -37,7 +37,7 @@
     "vinyl-fs": "^2.0.0"
   },
   "devDependencies": {
-    "eslint": "1.10.3",
+    "eslint": "2.13.1",
     "tap": "^2.2.0"
   },
   "gitHead": "2bc06d508b087ef4af0bb5bb5263b3a38d7e711e",

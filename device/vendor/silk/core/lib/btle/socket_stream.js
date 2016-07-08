@@ -155,22 +155,22 @@ export default class SocketStream extends Duplex {
     });
   }
 
-  _subscribe(subscribe: boolean): void {
-    log.debug(`_subscribe`, subscribe);
+  _subscribe(shouldSubscribe: boolean): void {
+    log.debug(`_subscribe`, shouldSubscribe);
 
-    if (this._subscribed === subscribe) {
-      log.debug(`Already ${subscribe ? '' : 'un'}subscribed`);
+    if (this._subscribed === shouldSubscribe) {
+      log.debug(`Already ${shouldSubscribe ? '' : 'un'}subscribed`);
       return;
     }
 
     if (this._subscribedChanging) {
-      log.debug(`Already ${subscribe ? '' : 'un'}subscribing`);
+      log.debug(`Already ${shouldSubscribe ? '' : 'un'}subscribing`);
       return;
     }
 
     const eventName = `notify`;
 
-    let listener;
+    let listener: ((isSubscribed: boolean) => void);
     let timeout;
     let disconnectHandler;
 
@@ -184,8 +184,8 @@ export default class SocketStream extends Duplex {
       this._characteristic.removeListener(eventName, listener);
     };
 
-    listener = (state) => {
-      log.debug(`${subscribe ? 'S' : 'Uns'}ubscribed`);
+    listener = (isSubscribed) => {
+      log.debug(`${shouldSubscribe ? 'S' : 'Uns'}ubscribed`);
 
       cleanup();
 
@@ -193,8 +193,8 @@ export default class SocketStream extends Duplex {
         return;
       }
 
-      if (subscribe !== state) {
-        if (subscribe) {
+      if (shouldSubscribe !== isSubscribed) {
+        if (shouldSubscribe) {
           process.nextTick(() => {
             this.emit(`metrics`, new Metrics.StreamSubscribeFailure());
           });
@@ -205,29 +205,30 @@ export default class SocketStream extends Duplex {
         return;
       }
 
-      invariant(this._subscribed !== state);
-      this._subscribed = state;
+      invariant(this._subscribed !== isSubscribed);
+      this._subscribed = isSubscribed;
 
-      if (state) {
-        if (this._outgoing) {
-          this._sendOutgoing();
-        }
-      } else {
+      if (!this._subscribed) {
         this._maybeScheduleClose();
+        return;
+      }
+
+      if (this._outgoing) {
+        this._sendOutgoing();
       }
     };
 
     timeout = setTimeout(() => {
       cleanup();
       this._emitError(new Error(`Timed out while ` +
-                                `${subscribe ? '' : 'un'}subscribing for ` +
+                                `${shouldSubscribe ? '' : 'un'}subscribing for ` +
                                 `notifications`));
     }, TIMEOUT_MS);
 
     disconnectHandler = () => {
       cleanup();
       this._emitError(new Error(`Disconnected while ` +
-                                `${subscribe ? '' : 'un'}subscribing for ` +
+                                `${shouldSubscribe ? '' : 'un'}subscribing for ` +
                                 `notifications`));
     };
 
@@ -235,7 +236,7 @@ export default class SocketStream extends Duplex {
     this._disconnectHandler = disconnectHandler;
 
     this._subscribedChanging = true;
-    this._characteristic.notify(subscribe);
+    this._characteristic.notify(shouldSubscribe);
   }
 
   // Stream API.

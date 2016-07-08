@@ -29,7 +29,7 @@
     "eslint": "1.10.3",
     "eslint-config-silk": "^0.17.0",
     "event-to-promise": "0.7.0",
-    "flow-bin": "0.27.0",
+    "flow-bin": "0.28.0",
     "mocha": "2.4.5",
     "mock-require": "1.3.0",
     "silk-babel-run": "^0.17.0",

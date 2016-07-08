@@ -210,6 +210,7 @@ const builds = {
     files: [
       '**/package.json',
       'node_modules/**',
+      'app/rn-cli.config.js',
       'app/node_modules/**',
       'flow-interface/**',
     ],
@@ -226,6 +227,7 @@ const builds = {
     // Only build the iOS app if relevant files changed.
     travis_yml: 'app/ios/travis/debug.yml',
     files: [
+      'app/rn-cli.config.js',
       'app/node_modules/**',
       'app/ios/**',
       'crypto/ios/**',
@@ -241,6 +243,7 @@ const builds = {
     // On PRs only build the entire Android app if relevant files changed.
     travis_yml: 'app/android/travis/release.yml',
     files: [
+      'app/rn-cli.config.js',
       'app/node_modules/**',
       'app/android/**',
       'crypto/android/**',

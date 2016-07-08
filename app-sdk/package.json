@@ -20,9 +20,9 @@
     "react": "15.2.0"
   },
   "devDependencies": {
-    "babel-eslint": "6.0.4",
-    "eslint": "1.10.3",
-    "eslint-plugin-react": "3.16.1"
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1",
+    "eslint-plugin-react": "5.2.2"
   },
   "name": "silk-app-sdk",
   "private": true,

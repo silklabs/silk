@@ -14,8 +14,8 @@
     "silk-log": "/pub/log"
   },
   "devDependencies": {
-    "babel-eslint": "6.0.4",
-    "eslint": "1.10.3",
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1",
     "body-parser": "1.14.2",
     "express": "4.13.3",
     "mocha": "2.4.5"

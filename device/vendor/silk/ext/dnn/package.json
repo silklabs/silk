@@ -24,7 +24,7 @@
   "private": true,
   "devDependencies": {
     "copy-webpack-plugin": "2.1.5",
-    "eslint": "1.10.3",
-    "babel-eslint": "6.0.4"
+    "eslint": "2.13.1",
+    "babel-eslint": "6.1.0"
   }
 }

@@ -24,8 +24,8 @@
     "event-to-promise": "0.7.0",
     "mocha": "2.4.5",
     "mz": "2.4.0",
-    "eslint": "1.10.3",
-    "babel-eslint": "6.0.4"
+    "eslint": "2.13.1",
+    "babel-eslint": "6.1.0"
   },
   "private": true
 }

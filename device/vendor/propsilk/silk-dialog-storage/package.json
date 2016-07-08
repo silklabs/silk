@@ -16,8 +16,8 @@
     "mz": "2.4.0"
   },
   "devDependencies": {
-    "babel-eslint": "6.0.4",
-    "eslint": "1.10.3",
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1",
     "fs-extra": "0.26.5",
     "mocha": "2.4.5"
   },

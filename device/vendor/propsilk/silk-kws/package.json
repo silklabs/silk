@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "copy-webpack-plugin": "2.1.5",
-    "eslint": "1.10.3",
+    "eslint": "2.13.1",
     "mocha": "2.4.5",
     "wav-decoder": "1.1.0"
   },

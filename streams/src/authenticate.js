@@ -6,7 +6,7 @@
  * @flow
  */
 
-import invariant from 'invariant';
+import invariant from 'assert';
 import {AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 

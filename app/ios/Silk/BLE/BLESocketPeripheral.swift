@@ -157,6 +157,7 @@ internal class BLESocketPeripheral: NSObject,
 
   // Connection info maps for easy lookups.
   private var connectionsById = [Int: Connection]()
+  //TODO: can we fold these into one by using Identifier?
   private var connectionsByCentral = [CBCentral: Connection]()
   private var connectionsByPeripheral = [CBPeripheral: Connection]()
 

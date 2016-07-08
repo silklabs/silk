@@ -100,14 +100,19 @@ set -e
 if $FULL; then
   cd nhlos
   # TODO: This is specific to 8909, will need to generalize eventually...
-  fastboot flash partition gpt_both0.bin
-  fastboot flash modem NON-HLOS.bin
-  fastboot flash sbl1 sbl1.mbn
-  fastboot flash rpm rpm.mbn
-  fastboot flash tz tz.mbn
-  fastboot flash sec sec.dat
-  fastboot flash persist persist.img
-  fastboot flash aboot emmc_appsboot.mbn
+  function flash_nhlos() {
+    fastboot flash partition gpt_both0.bin
+    fastboot flash modem NON-HLOS.bin
+    fastboot flash sbl1 sbl1.mbn
+    fastboot flash rpm rpm.mbn
+    fastboot flash tz tz.mbn
+    fastboot flash sec sec.dat
+    fastboot flash persist persist.img
+    fastboot flash aboot emmc_appsboot.mbn
+  }
+  flash_nhlos # Update partition table through LK
+  fastboot reboot-bootloader
+  flash_nhlos # Update everything again using the new LK
   cd ..
 fi
 

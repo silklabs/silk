@@ -448,7 +448,7 @@ Bledroid.prototype.messageMap = [
       parseInt,
       str => str === '1',
       str => str === '1',
-      hexStringToBuffer
+      hexStringToBuffer,
     ],
   }, {
     regex: /^!discover ([\dA-F:]{17}) (-\d+) ([\da-fA-F]+)$/,
@@ -456,7 +456,7 @@ Bledroid.prototype.messageMap = [
     transform: [
       str => str.toUpperCase(),
       parseInt,
-      data => parseAdvertising(hexStringToBuffer(data))
+      data => parseAdvertising(hexStringToBuffer(data)),
     ],
   }, {
     regex: /^!serviceDiscover (\d+) ([\da-f]+) (\d+) (0|1)$/,
@@ -474,7 +474,7 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid,
       hexStringToUuid,
       parseInt,
-      str => str === '1'
+      str => str === '1',
     ],
   }, {
     regex: /^!includedServiceDiscoverComplete (\d+) ([\da-f]+)$/,
@@ -488,7 +488,7 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid,
       hexStringToUuid,
       parseInt,
-      parseInt
+      parseInt,
     ],
   }, {
     regex: /^!characteristicDiscoverComplete (\d+) ([\da-f]+)$/,
@@ -502,7 +502,7 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid,
       hexStringToUuid,
       hexStringToUuid,
-      parseInt
+      parseInt,
     ],
   }, {
     regex: /^!descriptorDiscoverComplete (\d+) ([\da-f]+) ([\da-f]+)$/,
@@ -517,7 +517,7 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid,
       hexStringToUuid,
       parseInt,
-      hexStringToBuffer
+      hexStringToBuffer,
     ],
   }, {
     regex: /^!writeCharacteristic (\d+) (\d+) ([\da-f]+) ([\da-f]+)$/,
@@ -531,7 +531,7 @@ Bledroid.prototype.messageMap = [
       str => str === '1',
       parseInt,
       hexStringToUuid,
-      hexStringToUuid
+      hexStringToUuid,
     ],
   }, {
     regex: /^!notify (\d+) ([\da-f]+) ([\da-f]+) (\d+)(?:$| ([\da-f]+)$)/,
@@ -541,7 +541,7 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid,
       hexStringToUuid,
       parseInt,
-      hexStringToBuffer
+      hexStringToBuffer,
     ],
   }, {
     regex: /^!readDescriptor (\d+) (\d+) ([\da-f]+) ([\da-f]+) ([\da-f]+) (\d+)(?:$| ([\da-f]+)$)/,
@@ -553,7 +553,7 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid,
       hexStringToUuid,
       parseInt,
-      hexStringToBuffer
+      hexStringToBuffer,
     ],
   }, {
     regex: /^!writeDescriptor (\d+) (\d+) ([\da-f]+) ([\da-f]+) ([\da-f]+)$/,
@@ -563,7 +563,7 @@ Bledroid.prototype.messageMap = [
       parseInt,
       hexStringToUuid,
       hexStringToUuid,
-      hexStringToUuid
+      hexStringToUuid,
     ],
   }, {
     regex: /^!notifySent (\d+) (\d+)$/,
@@ -572,7 +572,7 @@ Bledroid.prototype.messageMap = [
   }, {
     regex: /^!unknownCommand (.*)$/,
     method: 'onUnknownCommand',
-  }
+  },
 ];
 
 export class BledroidConnection extends EventEmitter {

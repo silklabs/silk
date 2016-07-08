@@ -125,7 +125,7 @@ class Light extends events.EventEmitter {
       flashMode: this._flashMode,
       flashOnMS: this._flashOnMS,
       flashOffMS: this._flashOffMS,
-      brightnessMode: this._brightnessMode
+      brightnessMode: this._brightnessMode,
     };
 
     log.info('Setting \'%s\': %s', this._id, JSON.stringify(state));
@@ -137,7 +137,7 @@ class Light extends events.EventEmitter {
       state.flashMode,
       state.flashOnMS,
       state.flashOffMS,
-      state.brightnessMode
+      state.brightnessMode,
     ];
 
     return exec(binary, args)
@@ -394,7 +394,7 @@ function makeExports() {
     LIGHT_ID_NOTIFICATIONS,
     LIGHT_ID_ATTENTION,
     LIGHT_ID_BLUETOOTH,
-    LIGHT_ID_WIFI
+    LIGHT_ID_WIFI,
   ];
 
   let lightCache = { };
@@ -420,13 +420,13 @@ function makeExports() {
           value: light,
           writable: true,
           configurable: true,
-          enumerable: true
+          enumerable: true,
         });
 
         return light;
       },
       configurable: true,
-      enumerable: true
+      enumerable: true,
     });
   });
 

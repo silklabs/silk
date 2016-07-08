@@ -68,7 +68,6 @@ class TextToSpeech extends EventEmitter {
     const req = https.request(opts, res => {
       res.once(`error`, (error) => this.emit(`error`, error));
       res.on(`data`, (chunk) => {
-        log.debug(`Response data chunk`, chunk.length);
         this.emit(`data`, chunk);
       });
       res.once(`end`, () => {

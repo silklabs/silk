@@ -11,6 +11,8 @@ import createLog from 'silk-log/device';
 import * as https from 'https';
 import invariant from 'assert';
 import uuid from 'uuid';
+import wav from 'wav';
+import * as util from 'silk-sysutils';
 
 import config from 'silk-config';
 import type { ConfigDeviceMic } from 'silk-config';
@@ -23,6 +25,7 @@ import type {ClientRequest} from 'https';
 type Callback = (error: ?Error, text?: string) => void;
 
 const log = createLog('stt');
+const SAVE_SPEECH_WAV = 'persist.silk.speech.save';
 
 function generateWavHeader(dataSize: number, options: ConfigDeviceMic) {
   const bytesPerSample = options.bytesPerSample || 2;
@@ -58,6 +61,12 @@ class SpeechToText {
   _pendingFinish: boolean = false;
   _bufferedSamples: Array<Buffer> = [];
   _options: SpeechOptions;
+  _saveEnabled: boolean;
+  _wavDataBuffer: Buffer;
+
+  constructor() {
+    this._saveEnabled = util.getboolprop(SAVE_SPEECH_WAV, false);
+  }
 
   configure(options: SpeechOptions) {
     this._options = options;
@@ -66,6 +75,12 @@ class SpeechToText {
   _callCallback(error: ?Error, text?: string, confidence?: number): void {
     if (this._cb) {
       this._cb(error, text, confidence);
+    }
+
+    if (!error && this._saveEnabled) {
+      let buf = new Buffer(this._wavDataBuffer.length);
+      this._wavDataBuffer.copy(buf);
+      this._writeWavFile(buf);
     }
 
     this._req = null;
@@ -81,6 +96,8 @@ class SpeechToText {
     }
 
     this._cb = cb;
+    this._wavDataBuffer = new Buffer(0);
+
     if (!this._options) {
       this._callCallback(new Error(`Speech to text not configured?`));
       return;
@@ -125,7 +142,6 @@ class SpeechToText {
       let json = ``;
       res.once(`error`, (error) => this._callCallback(error));
       res.on(`data`, chunk => {
-        log.debug(`Response data chunk`, chunk.length);
         json += chunk;
       });
       res.once(`end`, () => {
@@ -190,15 +206,17 @@ class SpeechToText {
 
   write(pcmData: Buffer): void {
     invariant(!this._pendingFinish);
+    if (this._saveEnabled) {
+      this._wavDataBuffer = Buffer.concat([this._wavDataBuffer, pcmData]);
+    }
 
     const req = this._req;
     if (!req) {
-      log.info(`Queuing PCM data: ${pcmData.length} bytes`);
+      log.debug(`Queuing PCM data: ${pcmData.length} bytes`);
       this._bufferedSamples.push(pcmData);
       return;
     }
 
-    log.debug(`Writing PCM data: ${pcmData.length} bytes`);
     req.write(pcmData);
   }
 
@@ -214,6 +232,26 @@ class SpeechToText {
 
     log.info(`Finishing request`);
     req.end();
+  }
+
+  /**
+   * Write wav data in a file
+   */
+  _writeWavFile(wavData: Buffer): void {
+    log.info(`wavdata length ${wavData.length}`);
+    let writer = new wav.FileWriter(`/data/media/speech_${Date.now()}.wav`, {
+      sampleRate: config.deviceMic.sampleRate,
+      channels: config.deviceMic.numChannels,
+      bitDepth: config.deviceMic.bytesPerSample * 8,
+    });
+    writer.on('header', () => {
+      log.info('Done saving speech file');
+    });
+    writer.on('error', err => {
+      log.error(err);
+    });
+    writer.write(wavData);
+    writer.end();
   }
 }
 

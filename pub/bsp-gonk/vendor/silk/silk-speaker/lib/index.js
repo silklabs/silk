@@ -167,19 +167,15 @@ export default class Speaker extends Writable {
       } else {
         left = null;
       }
-      log.debug(`writing ${buffer.length} bytes`);
       this._speaker.write(buffer, buffer.length, onwrite);
     };
 
     let onwrite = written => {
-      log.debug(`wrote ${written} bytes`);
       if (written !== buffer.length) {
         done(new Error(`write() failed: ${written}`));
       } else if (left) {
-        log.debug(`still ${left.length} bytes left in this chunk`);
         write();
       } else {
-        log.debug('Done with this chunk');
         done();
       }
     };
@@ -193,7 +189,6 @@ export default class Speaker extends Writable {
    * @private
    */
   _flush() {
-    log.debug('Flushing the data');
     this.close();
   }
 

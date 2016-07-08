@@ -7,5 +7,6 @@ if [[ ! -d board/caf.msm8909-la121 ]]; then
             board/caf.msm8909-la121 -b $BRANCH
 else
   cd board/caf.msm8909-la121
+  git checkout $BRANCH
   git pull --rebase
 fi

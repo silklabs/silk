@@ -8,5 +8,6 @@ if [[ ! -d board/caf.pandohub ]]; then
             board/caf.pandohub -b $BRANCH
 else
   cd board/caf.pandohub
+  git checkout $BRANCH
   git pull --rebase
 fi

@@ -32,7 +32,7 @@ const NTP_RETRY_DELAY = 10 * 1000;
 const NTP_REFRESH_DELAY = 24 * 60 * 60 * 1000;
 
 function setSystemDate(date: Date) {
-  log.info(`Setting system time to: ${date}`);
+  log.info(`Setting system time to: ${date.toString()}`);
 
   /**
    * This event is fired when the new time has been acquired

@@ -48,7 +48,7 @@ async function configureDhcpInterface(iface: string) {
   log.info(`Network configuration:\n` +
            `interface: ${iface}\n` +
            `ipaddress: ${ipaddress}/${mask}\n` +
-           `dns: ${dns}\n` +
+           `dns: ${String(dns)}\n` +
            `gateway: ${gateway}\n` +
            `domain: ${domain}\n` +
            `base: ${baseMask}`);
@@ -656,7 +656,7 @@ export class Wifi extends EventEmitter {
         psk = true;
       }
 
-      const key = `${ssid}\0${psk}`;
+      const key = `${ssid}\0${String(psk)}`;
       level = parseInt(level, 10);
       const existingNetwork = bestNetworks[key];
       if (existingNetwork && existingNetwork.level < level) {

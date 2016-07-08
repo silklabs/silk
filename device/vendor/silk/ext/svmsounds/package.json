@@ -11,8 +11,7 @@
   },
   "symlinkDependencies": {
     "silk-audio": "/audio",
-    "silk-buildjs": "/pub/buildjs",
-    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
+    "silk-buildjs": "/pub/buildjs"
   },
   "dependencies": {
     "babel-runtime": "6.9.0"

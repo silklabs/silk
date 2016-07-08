@@ -1,16 +1,23 @@
 const blacklist = require('react-native/packager/blacklist');
 const path = require('path');
 
-const additionalBlacklist = [
-  /app-sdk\/.*/,
-  /bsp-gonk\/.*/,
-  /device\/.*/,
-  /external-.*/,
-  // TODO uniquify this from svm/models/
-  /svm\/.*/,
-  /releng\/.*/,
-  /tools\/heroku\/.*/,
+const ignoreDirectories = [
+  'app-sdk',
+  'bsp-gonk',
+  'pub/bsp-gonk',
+  'device',
+  'external-dlib',
+  'external-fast-image-size',
+  'external-jade',
+  'external-js-kissfft',
+  'external-node-kissfft',
+  'svm',
+  'releng',
+  'tools/heroku',
 ];
+
+const additionalBlacklist = ignoreDirectories
+  .map((dir) => new RegExp('^' + path.resolve(__dirname, '..', dir) + '/.*'));
 
 module.exports = {
   getProjectRoots() {

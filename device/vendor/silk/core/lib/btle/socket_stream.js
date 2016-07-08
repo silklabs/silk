@@ -83,10 +83,10 @@ export default class SocketStream extends Duplex {
 
     super(options);
 
-    peripheral.addListener(`disconnect`, this._onDisconnect);
+    peripheral.addListener(`disconnect`, this._onPeripheralDisconnect);
     this._peripheral = peripheral;
 
-    characteristic.addListener(`write`, this._onWrite);
+    characteristic.addListener(`write`, this._onCharacteristicWrite);
     this._characteristic = characteristic;
 
     this.addListener(`end`, this._onEnd);
@@ -100,8 +100,8 @@ export default class SocketStream extends Duplex {
 
     this.removeListener(`end`, this._onEnd);
     this.removeListener(`finish`, this._onFinish);
-    this._characteristic.removeListener(`write`, this._onWrite);
-    this._peripheral.removeListener(`disconnect`, this._onDisconnect);
+    this._characteristic.removeListener(`write`, this._onCharacteristicWrite);
+    this._peripheral.removeListener(`disconnect`, this._onPeripheralDisconnect);
 
     clearTimeout(this._writeTimeout);
     this._writeTimeout = null;
@@ -155,22 +155,22 @@ export default class SocketStream extends Duplex {
     });
   }
 
-  _subscribe(subscribe: boolean): void {
-    log.debug(`_subscribe`, subscribe);
+  _subscribe(shouldSubscribe: boolean): void {
+    log.debug(`_subscribe`, shouldSubscribe);
 
-    if (this._subscribed === subscribe) {
-      log.debug(`Already ${subscribe ? '' : 'un'}subscribed`);
+    if (this._subscribed === shouldSubscribe) {
+      log.debug(`Already ${shouldSubscribe ? '' : 'un'}subscribed`);
       return;
     }
 
     if (this._subscribedChanging) {
-      log.debug(`Already ${subscribe ? '' : 'un'}subscribing`);
+      log.debug(`Already ${shouldSubscribe ? '' : 'un'}subscribing`);
       return;
     }
 
     const eventName = `notify`;
 
-    let listener;
+    let listener: ((isSubscribed: boolean) => void);
     let timeout;
     let disconnectHandler;
 
@@ -184,8 +184,8 @@ export default class SocketStream extends Duplex {
       this._characteristic.removeListener(eventName, listener);
     };
 
-    listener = (state) => {
-      log.debug(`${subscribe ? 'S' : 'Uns'}ubscribed`);
+    listener = (isSubscribed) => {
+      log.debug(`${shouldSubscribe ? 'S' : 'Uns'}ubscribed`);
 
       cleanup();
 
@@ -193,8 +193,8 @@ export default class SocketStream extends Duplex {
         return;
       }
 
-      if (subscribe !== state) {
-        if (subscribe) {
+      if (shouldSubscribe !== isSubscribed) {
+        if (shouldSubscribe) {
           process.nextTick(() => {
             this.emit(`metrics`, new Metrics.StreamSubscribeFailure());
           });
@@ -205,29 +205,30 @@ export default class SocketStream extends Duplex {
         return;
       }
 
-      invariant(this._subscribed !== state);
-      this._subscribed = state;
+      invariant(this._subscribed !== isSubscribed);
+      this._subscribed = isSubscribed;
 
-      if (state) {
-        if (this._outgoing) {
-          this._sendOutgoing();
-        }
-      } else {
+      if (!this._subscribed) {
         this._maybeScheduleClose();
+        return;
+      }
+
+      if (this._outgoing) {
+        this._sendOutgoing();
       }
     };
 
     timeout = setTimeout(() => {
       cleanup();
       this._emitError(new Error(`Timed out while ` +
-                                `${subscribe ? '' : 'un'}subscribing for ` +
+                                `${shouldSubscribe ? '' : 'un'}subscribing for ` +
                                 `notifications`));
     }, TIMEOUT_MS);
 
     disconnectHandler = () => {
       cleanup();
       this._emitError(new Error(`Disconnected while ` +
-                                `${subscribe ? '' : 'un'}subscribing for ` +
+                                `${shouldSubscribe ? '' : 'un'}subscribing for ` +
                                 `notifications`));
     };
 
@@ -235,7 +236,7 @@ export default class SocketStream extends Duplex {
     this._disconnectHandler = disconnectHandler;
 
     this._subscribedChanging = true;
-    this._characteristic.notify(subscribe);
+    this._characteristic.notify(shouldSubscribe);
   }
 
   // Stream API.
@@ -350,8 +351,8 @@ export default class SocketStream extends Duplex {
   }
 
   // Called by SocketService or by Noble when the peripheral disconnects.
-  _onDisconnect: (() => void) = () => {
-    log.debug(`_onDisconnect`);
+  _onPeripheralDisconnect: (() => void) = () => {
+    log.debug(`_onPeripheralDisconnect`);
 
     if (this._disconnected) {
       return;
@@ -448,12 +449,12 @@ export default class SocketStream extends Duplex {
     this._characteristic.write(data, /* withoutResponse */ false);
 
     this._writeTimeout = setTimeout(() => {
-      this._onWrite(new Error(`Timed out while writing`));
+      this._onCharacteristicWrite(new Error(`Timed out while writing`));
     }, TIMEOUT_MS);
   }
 
-  _onWrite: ((error?: Error) => void) = (error) => {
-    log.debug(`_onWrite`, error || ``);
+  _onCharacteristicWrite: ((error?: Error) => void) = (error) => {
+    log.debug(`_onCharacteristicWrite`, error || ``);
 
     const now = Date.now();
 

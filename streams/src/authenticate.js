@@ -6,7 +6,7 @@
  * @flow
  */
 
-import invariant from 'invariant';
+import invariant from 'assert';
 import {AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 
@@ -176,9 +176,9 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
         AuthenticateReadStream.log.debug(`Waiting to be unblocked`);
         this._transformData = data;
         this._transformCallback = callback;
-      } else {
-        callback(this._error, data);
+        return;
       }
+      callback(this._error, data);
       return;
     }
 
@@ -214,7 +214,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     invariant(!this._authenticated);
 
     try {
-      await this._verifyInternal(authData);
+      await this._verifyAuthData(authData);
     } catch (error) {
       this._setError(error);
     }
@@ -233,8 +233,8 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     callback(this._error);
   }
 
-  async _verifyInternal(authData: string): Promise<void> {
-    AuthenticateReadStream.log.debug(`_verifyInternal`, authData);
+  async _verifyAuthData(authData: string): Promise<void> {
+    AuthenticateReadStream.log.debug(`_verifyAuthData`, authData);
 
     invariant(this._publicKeys);
     invariant(!this._authenticated);
@@ -259,9 +259,10 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
       return;
     }
 
-    AuthenticateReadStream.log.debug(`No known keys could authenticate the ` +
-                                     `signature`);
-    process.nextTick(() => this.emit(`unauthenticated`));
+    AuthenticateReadStream.log.debug(
+      `No known keys could authenticate the signature`
+    );
+    this.emit(`unauthenticated`);
 
     AuthenticateReadStream.log.debug(`Waiting to see if unauthenticated data ` +
                                      `is allowed`);

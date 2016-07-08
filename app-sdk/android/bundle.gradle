@@ -1,0 +1,13 @@
+def sdkProjectDir = project(":silk-app-sdk").projectDir
+def sdkRoot = file("$sdkProjectDir/..")
+
+project.ext.react = [
+  root: "$sdkRoot",
+  entryFile: "src/index.js",
+  bundleInDebug: true,
+  bundleInRelease: true,
+  inputExcludes: ["android/**", "ios/**", "node_modules/**"],
+  extraPackagerArgs: ["--transformer", "../react-native-transformer", "--verbose"]
+]
+
+apply from: "$sdkRoot/node_modules/react-native/react.gradle"

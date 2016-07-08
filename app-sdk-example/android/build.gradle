@@ -12,13 +12,15 @@ buildscript {
     }
 }
 
+def silkRootDir = file("../../")
+
 allprojects {
     repositories {
         mavenLocal()
         jcenter()
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-            url "$projectDir/../../../app-sdk/node_modules/react-native/android"
+            url "$silkRootDir/app-sdk/node_modules/react-native/android"
         }
     }
 }

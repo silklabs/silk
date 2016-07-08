@@ -77,7 +77,7 @@ class Dialog {
   _kwsEnabled: boolean;
   _input: Input;
   _stream: ?Duplex;
-  _activePlaySoundPromise: Promise = Promise.resolve();
+  _activePlaySoundPromise: Promise<void> = Promise.resolve();
   _activeSpeechCount: number = 0;
   _vad: VoiceActivityDetector;
   _kws: KeywordSpotting;

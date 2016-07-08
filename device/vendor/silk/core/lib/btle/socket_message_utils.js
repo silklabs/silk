@@ -13,8 +13,8 @@ const PROPERTY_NAME = `_[@*@]_`;
 function controlSchema(): Object {
   const schema = {
     name: Joi.string().required(),
+    [PROPERTY_NAME]: Joi.boolean().only(true).required(),
   };
-  schema[PROPERTY_NAME] = Joi.boolean().only(true).required();
   return schema;
 }
 

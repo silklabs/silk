@@ -378,7 +378,7 @@ class BluetoothLEChild {
     const beaconActive = this._beaconActive;
     const socketService = this._socketService;
 
-    let bledroidCrash: ?Deferred = null;
+    let bledroidCrash: ?Deferred<void> = null;
 
     if (beaconActive || socketService) {
       bledroidCrash = createDeferred();

@@ -115,7 +115,7 @@ class SpeechToText {
       headers: {
         'Content-type': `audio/wav; samplerate=${audioParams.sampleRate}`,
         //'Content-Length' : wav.length,
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${String(accessToken)}`,
       },
     };
 

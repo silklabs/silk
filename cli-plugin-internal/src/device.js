@@ -32,7 +32,7 @@ export default class Device {
   accessToken: AccessToken;
 
   constructor(options: DeviceOptions, adb: Adb) {
-    log.debug(`new device using server: ${options.serverUrl}`);
+    log.debug(`new device using server: ${String(options.serverUrl)}`);
 
     this.adb = adb;
     this.serverUrl = options.serverUrl;

@@ -265,8 +265,8 @@ export default class Timeline extends EventEmitter {
    */
   configLiveStream(args: ConfigLiveStreamArgs) {
     const {preview, video, diag, objects} = args;
-    log.info(`configLiveStream: preview=${preview}, video=${video}, ` +
-             `diag=${diag}, objects=${objects}`);
+    log.info(`configLiveStream: preview=${String(preview)}, video=${String(video)}, ` +
+             `diag=${String(diag)}, objects=${String(objects)}`);
 
     if (this.livePreview !== preview) {
       this.livePreview = preview;

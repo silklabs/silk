@@ -12,6 +12,8 @@ import createLog from 'silk-log';
 import Base from './base';
 import scrypt from '../scrypt';
 
+import type { ErrorState } from './base';
+
 /**
  * Password reset expires in 4 hours...
  */
@@ -443,7 +445,7 @@ export default class Accounts extends Base {
    */
   async resetPassword(
     payload: PasswordResetInput
-  ): Promise<PasswordResetResult|Object> {
+  ): Promise<PasswordResetResult | ErrorState> {
     payload = this.validate(payload, 'resetPassword');
 
     // Noted a few times but again this is sketchy effectively anyone can just
@@ -508,7 +510,7 @@ export default class Accounts extends Base {
     return {
       newToken: true,
       token,
-      expires
+      expires,
     };
   }
 

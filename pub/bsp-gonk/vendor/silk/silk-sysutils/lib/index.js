@@ -13,6 +13,7 @@
  * util.getprop('ro.product.name', 'unknown');
  */
 
+import invariant from 'assert';
 import { EventEmitter } from 'events';
 import { execFile, spawn, spawnSync } from 'child_process';
 import fs from 'fs';
@@ -86,13 +87,19 @@ type ExecOutput = {
 export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
   return new Promise((resolve, reject) => {
     execFile(cmd, args, (err, stdout, stderr) => {
-      let code = err ? err.code : 0;
+      let code = 0;
+      if (err) {
+        invariant(typeof err.code === 'number');
+        code = err.code;
+      }
       // 127 is failed exec, which is always wrong.  Otherwise we
       // leave it up to the user.
       if (code === 127) {
         return reject(err);
       }
-      return resolve({ code: code, stdout: stdout, stderr: stderr });
+      return resolve(
+        { code: code, stdout: stdout.toString(), stderr: stderr.toString() }
+      );
     });
   });
 }

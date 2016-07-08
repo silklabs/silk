@@ -23,7 +23,7 @@
 import invariant from 'assert';
 
 export default class Lock<T> {
-  _lock: ?Promise;
+  _lock: ?Promise<T>;
 
   async run(fn: () => Promise<T>): Promise<T> {
     // Wait for the lock to free up...

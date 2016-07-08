@@ -142,7 +142,7 @@ export default class CompositeTableClient {
    * of a property. Missing properties will not be removed via mergeOrInsertEntity and
    * will simply continue to exist with their previous state.
    */
-  mergeOrInsertEntity: (entity: Entity) => Promise =
+  mergeOrInsertEntity: (entity: Entity) => Promise<Entity> =
     ensureClients((entity: Entity): Promise<Entity> => {
       return runTableMutation(
         'mergeOrInsertEntity',

@@ -39,6 +39,6 @@ export default async function main (config) {
     // for performance.
     close: async() => {
       http.close();
-    }
+    },
   };
 }

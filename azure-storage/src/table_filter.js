@@ -40,7 +40,7 @@ const PROP_OPERATORS_TO_AZURE = {
   '$ne': 'ne',
 };
 
-function castValue(value: mixed): string | number | bool {
+function castValue(value: mixed): bool | string | number {
   switch (typeof value) {
   case 'string':
     return `'${value}'`;
@@ -63,7 +63,7 @@ function normalizeArrayOperatorCall(
 
   let clause = [];
   for (let value of values) {
-    clause.push(`${property} ${operator} ${castValue(value)}`);
+    clause.push(`${property} ${operator} ${String(castValue(value))}`);
   }
 
   return [`(${clause.join(join)})`];

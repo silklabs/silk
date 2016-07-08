@@ -531,7 +531,7 @@ export default class KeywordSpotting extends EventEmitter {
   /**
    * Write wav data in a file
    */
-  _writeWavFile(dir: string): Promise {
+  _writeWavFile(dir: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
       let writer = new wav.FileWriter(`${dir}/${Date.now()}.wav`, {

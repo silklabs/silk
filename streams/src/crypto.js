@@ -138,15 +138,15 @@ export class EncryptStream extends CryptoStreamBase {
     assert(this._randomBytes.length);
 
     // Grab random bytes out of our cache, and refill it asynchronously.
-    const random = this._randomBytes.pop();
+    const iv = this._randomBytes.pop();
     this._feedRandomBytes();
 
-    assert(random.length === CryptoStreamBase.IV_LENGTH);
+    assert(iv.length === CryptoStreamBase.IV_LENGTH);
 
     const cipher =
       crypto.createCipheriv(CryptoStreamBase.CIPHER_NAME,
                             this._sharedSecret,
-                            random);
+                            iv);
 
     log.debug(`Sending sequence number 0x` +
               this._sequenceBuffer.toString('hex'));
@@ -163,7 +163,7 @@ export class EncryptStream extends CryptoStreamBase {
         return;
       }
 
-      let messageSize = random.length;
+      let messageSize = iv.length;
 
       // Read all data from the cipher stream.
       const encryptedData = [];
@@ -185,7 +185,7 @@ export class EncryptStream extends CryptoStreamBase {
         // Send the message size unencrypted.
         messageSizeBuffer,
         // Send the random bytes unencrypted.
-        random,
+        iv,
         // Now send all the encrypted data.
         ...encryptedData,
       ], dataSize);
@@ -472,10 +472,10 @@ export class DecryptStream extends CryptoStreamBase {
       return false;
     }
 
-    let random = new Buffer(CryptoStreamBase.IV_LENGTH);
-    let randomIndex = 0;
+    let iv = new Buffer(CryptoStreamBase.IV_LENGTH);
+    let ivIndex = 0;
 
-    let remaining = random.length;
+    let remaining = iv.length;
 
     for (;;) {
       let buffer = this._data[0];
@@ -485,29 +485,29 @@ export class DecryptStream extends CryptoStreamBase {
       }
 
       if (buffer.length < remaining) {
-        buffer.copy(random, randomIndex);
-        randomIndex += buffer.length;
+        buffer.copy(iv, ivIndex);
+        ivIndex += buffer.length;
         remaining -= buffer.length;
       } else {
         if (buffer.length > remaining) {
-          buffer.slice(0, remaining).copy(random, randomIndex);
+          buffer.slice(0, remaining).copy(iv, ivIndex);
           this._data[0] = buffer.slice(remaining);
         } else {
-          buffer.copy(random, randomIndex);
+          buffer.copy(iv, ivIndex);
         }
         break;
       }
     }
 
-    this._dataLength -= random.length;
-    this._encryptedChunkSize -= random.length;
+    this._dataLength -= iv.length;
+    this._encryptedChunkSize -= iv.length;
 
     log.debug(`Creating decipher`);
 
     const decipher =
       crypto.createDecipheriv(CryptoStreamBase.CIPHER_NAME,
                               this._sharedSecret,
-                              random);
+                              iv);
 
     let firstData = true;
 

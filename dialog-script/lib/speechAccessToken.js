@@ -12,7 +12,7 @@ import * as https from 'https';
 import uuid from 'uuid';
 
 export const CLIENT_ID = 'silk';
-export const CLIENT_SECRET = '110e7213c3cc420ab03dea71fae35a53';
+export const CLIENT_SECRET = 'dffddcce62bb4210b0ad3f635512b337';
 export const SPEECH_HOST = 'speech.platform.bing.com';
 export const SPEECH_URL = 'https://' + SPEECH_HOST;
 

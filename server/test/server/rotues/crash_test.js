@@ -171,7 +171,7 @@ suite('crash metadata apis', () => {
         type: first.type,
         startTimeStamp: first.timeStamp,
         endTimeStamp: second.timeStamp,
-        limit: 1
+        limit: 1,
       });
       assert.strictEqual(find.length, 1, '1 record found');
       assert.deepEqual(find[0], second);

@@ -18,20 +18,15 @@ function timeString(stampMs) {
 
 class VideoChunks extends React.Component {
   state = {
-    queryTime: null,
+    queryTime: Date.now(),
     msg: '',
-    mostRecentTime: null,
+    mostRecentTime: Date.now(),
     gaps: [],
     workingHard: true,
   };
 
   get deviceId() {
     return this.props.params.deviceId;
-  }
-
-  constructor(props) {
-    super(props);
-    this.state.queryTime = this.state.mostRecentTime = Date.now();
   }
 
   componentWillMount() {

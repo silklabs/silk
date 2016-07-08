@@ -27,7 +27,7 @@ export default class PapertrailOperation extends StreamOperation {
     let tlsSock = new TLSSocket(sock, {
       isServer: false,
       requestCert: true,
-      rejectUnauthorized: true
+      rejectUnauthorized: true,
     });
 
     tlsSock.once('clientError', (err) => {

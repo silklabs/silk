@@ -17,5 +17,5 @@ export default createApi({
       version: version.semver,
       deviceType: getprop('ro.product.device'),
     },
-  }
+  },
 });

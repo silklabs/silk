@@ -28,14 +28,14 @@ class Request {
       {},
       this.headers,
       {
-        host: parsed.host
+        host: parsed.host,
       }
     );
 
     let res = await fetch(url, {
       method: this.method,
       headers,
-      body: this.body
+      body: this.body,
     });
     let body = await res.text();
     return { res, body };

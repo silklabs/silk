@@ -38,7 +38,7 @@ export default function(createServer: ServerFn) {
       try {
         await Promise.race([
           timeout(CLOSE_TIMEOUT_MS, new Error('Timed out while waiting for close')),
-          server.close()
+          server.close(),
         ]);
       } catch (err) {
         log.info(`Failed to exit cleanly:`, err.stack);

@@ -156,7 +156,7 @@ export default class Queue extends EventEmitter {
     for (let diskQueueId of this.diskQueue) {
       this.diskQueueState.set(diskQueueId, {
         id: diskQueueId,
-        path: path.join(this.storagePath, String(diskQueueId))
+        path: path.join(this.storagePath, String(diskQueueId)),
       });
     }
   }
@@ -289,7 +289,7 @@ export default class Queue extends EventEmitter {
       `);
       try {
         this.removeFromDiskQueue(handle);
-      } catch(errRemoveDisk) {
+      } catch (errRemoveDisk) {
         log.error(`
           Unexpected error removing files from disk
 
@@ -316,7 +316,7 @@ export default class Queue extends EventEmitter {
     this.diskQueue.push(id);
     let handle = {
       id,
-      path: path.join(this.storagePath, String(id))
+      path: path.join(this.storagePath, String(id)),
     };
 
     this.diskQueueState.set(id, handle);
@@ -391,7 +391,7 @@ export default class Queue extends EventEmitter {
       handle.promise = (async () => {
         try {
           await this._workDiskQueueItem(handle);
-        } catch(err) {
+        } catch (err) {
           log.error('Error working queue', err.stack);
         }
         handle.running = false;

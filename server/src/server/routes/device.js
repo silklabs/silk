@@ -63,7 +63,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       ))*/
       publicUrl: Joi.string().optional(), // not requried
       sas: Joi.array().items(Joi.any()).required(),
-    })
+    }),
   }, async (req, res) => {
     // 6 hours in the future ...
     let expiration = new Date(Date.now() + 1000 * 60 * 60 * 6);
@@ -76,7 +76,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     res.respond({
       publicUrl: ctx.config.signaling.publicUrl,
-      sas
+      sas,
     });
   });
 
@@ -88,20 +88,20 @@ export default function (ctx: RouteContext): ExpressRoutes {
     description: 'Complete registration of the deivce',
     output: Joi.object().keys({
       success: Joi.boolean().required(),
-      beaconUUID: Joi.string().guid()
+      beaconUUID: Joi.string().guid(),
     }),
     input: Joi.object().keys({
       // _account_ public key...
       registrarPublicKey: Joi.string().hex().required(),
       // registration token to use...
-      registrationToken: Joi.string()
-    }).required()
+      registrationToken: Joi.string(),
+    }).required(),
   }, async (req, res) => {
 
     // First we need to find the account that this device belongs to so we can
     // validate the registration token.
     let account = await ctx.accounts.findByPublicKey({
-      publicKey: req.body.registrarPublicKey
+      publicKey: req.body.registrarPublicKey,
     });
 
     if (!account) {
@@ -115,14 +115,14 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     let result = await ctx.devices.validateRegistration(req.body.registrarPublicKey, {
       publicKey: req.device.accessToken.publicKey,
-      registrationToken: req.body.registrationToken
+      registrationToken: req.body.registrationToken,
     });
 
     if (!result.error) {
       log.info('validated registration', req.device.accountId);
       res.respond({
         success: true,
-        beaconUUID: account.beaconUUID
+        beaconUUID: account.beaconUUID,
       });
       return;
     }

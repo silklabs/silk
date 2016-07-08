@@ -20,7 +20,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
   routes.use(PREFIX, authorizeDevice({
     nonce: ctx.nonce,
-    devices: ctx.devices
+    devices: ctx.devices,
   }));
 
   let api = expressApi(routes, {
@@ -38,20 +38,20 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'create',
     description: 'Create the crash metadata',
     output: Joi.object().keys({
-      id: Joi.string().required()
+      id: Joi.string().required(),
     }),
     input: Joi.object().keys({
       timeStamp: Joi.date().iso().required(),
       type: CrashReportTypes.required(),
-      url: Joi.string().trim().uri().required()
-    }).required()
+      url: Joi.string().trim().uri().required(),
+    }).required(),
   }, async (req, res) => {
     let metadata = Object.assign({}, req.body, {
-      deviceId: req.publicKey
+      deviceId: req.publicKey,
     });
     let id = await ctx.crashMeta.create(metadata);
     res.respond({
-      id: id
+      id: id,
     });
   });
 

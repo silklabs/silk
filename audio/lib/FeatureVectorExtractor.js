@@ -1,7 +1,4 @@
-import createLog from 'silk-log';
 import { EventEmitter } from 'events';
-
-const log = createLog('audio-SoundDetectorSVM');
 
 /**
  * Return the value of the maximum element of `array`.

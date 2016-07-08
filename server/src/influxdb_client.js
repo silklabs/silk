@@ -149,7 +149,7 @@ export default class InfluxDB {
 
     return this.request('write', { db: this.db }, {
       headers: {
-        'content-type': 'application/x-www-form-urlencoded'
+        'content-type': 'application/x-www-form-urlencoded',
       },
       method: 'POST',
       body: body.join('\n'),

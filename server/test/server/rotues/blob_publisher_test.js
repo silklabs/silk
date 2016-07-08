@@ -11,25 +11,25 @@ suite('blob', () => {
   suite('File', () => {
     let context = createContext({
       server: {
-        blobType: 'file'
+        blobType: 'file',
       },
 
       blobs: {
         file: {
           video: {
-            path: `${__dirname}/fixtures/blobs/video/`
+            path: `${__dirname}/fixtures/blobs/video/`,
           },
           crashreport: {
-            path: `${__dirname}/fixtures/blobs/crashreport/`
+            path: `${__dirname}/fixtures/blobs/crashreport/`,
           },
           log: {
-            path: `${__dirname}/fixtures/blobs/log/`
+            path: `${__dirname}/fixtures/blobs/log/`,
           },
           metrics: {
-            path: `${__dirname}/fixtures/blobs/metrics/`
-          }
-        }
-      }
+            path: `${__dirname}/fixtures/blobs/metrics/`,
+          },
+        },
+      },
     });
 
     let device;
@@ -45,18 +45,18 @@ suite('blob', () => {
     setup(async () => {
       let putSigned = await context.api.blobPublisher.putUrl('video', {
         contentLength: content.length,
-        contentType: 'application/json'
+        contentType: 'application/json',
       });
 
       let res = await fetch(putSigned.putUrl, {
         method: 'PUT',
         headers: putSigned.putHeaders,
-        body: content.toString()
+        body: content.toString(),
       });
 
       assert(res.ok, 'successfully puts');
       let ack = await context.api.blobPublisher.ack({
-        url: putSigned.putUrl
+        url: putSigned.putUrl,
       });
       url = ack.url;
     });
@@ -72,8 +72,8 @@ suite('blob', () => {
       // byte range:
       let response = await fetch(url, {
         headers: {
-          Range: 'bytes=0-1'
-        }
+          Range: 'bytes=0-1',
+        },
       });
       let text = await response.text();
       assert.equal('{"', text);
@@ -84,8 +84,8 @@ suite('blob', () => {
   suite('S3', () => {
     let context = createContext({
       server: {
-        blobType: 's3'
-      }
+        blobType: 's3',
+      },
     });
 
     if (!process.env.AWS_ACCESS_KEY_ID) {
@@ -106,18 +106,18 @@ suite('blob', () => {
 
       let putSigned = await context.api.blobPublisher.putUrl('video', {
         contentLength: content.length,
-        contentType: 'application/json'
+        contentType: 'application/json',
       });
 
       let res = await fetch(putSigned.putUrl, {
         method: 'PUT',
         headers: putSigned.putHeaders,
-        body: content.toString()
+        body: content.toString(),
       });
 
       assert(res.ok, 'successfully puts');
       let ack = await context.api.blobPublisher.ack({
-        url: putSigned.putUrl
+        url: putSigned.putUrl,
       });
 
       let response = await fetch(ack.url);
@@ -131,8 +131,8 @@ suite('blob', () => {
   suite('Aliyun', () => {
     let context = createContext({
       server: {
-        blobType: 'aliyun'
-      }
+        blobType: 'aliyun',
+      },
     });
 
     if (!process.env.ALIYUN_ACCESS_KEY_ID) {
@@ -153,18 +153,18 @@ suite('blob', () => {
 
       let putSigned = await context.api.blobPublisher.putUrl('video', {
         contentLength: content.length,
-        contentType: 'application/json'
+        contentType: 'application/json',
       });
 
       let res = await fetch(putSigned.putUrl, {
         method: 'PUT',
         headers: putSigned.putHeaders,
-        body: content.toString()
+        body: content.toString(),
       });
 
       assert(res.ok, 'successfully puts');
       let ack = await context.api.blobPublisher.ack({
-        url: putSigned.putUrl
+        url: putSigned.putUrl,
       });
 
       let signedUrl = context.blobHandler.getSignedUrl(ack.url);

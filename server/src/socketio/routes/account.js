@@ -4,7 +4,7 @@
 import {
   default as AccountRoom,
   VIDEO_STREAMS_ROOM,
-  DEVICE_ONLINE_EVENT
+  DEVICE_ONLINE_EVENT,
 } from '../account_room';
 
 import createLog from 'silk-log';
@@ -88,7 +88,7 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
         return;
       }
       session.room.emitToDevice(deviceId, 'cmd', cmd);
-    }
+    },
   };
 
 }

@@ -5,5 +5,5 @@ module.exports = {
     new CopyWebpack([
       { from: 'media', to: 'media' },
     ]),
-  ]
+  ],
 };

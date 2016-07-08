@@ -9,7 +9,7 @@ suite('scopes', function() {
   function account(email: string): AccountRecord {
     return {
       email,
-      _id: ''
+      _id: '',
     };
   }
 
@@ -17,7 +17,7 @@ suite('scopes', function() {
   setup(async () => {
     subject = new Scopes({
       admin: ['@silklabs.com', '@silk.io'],
-      root: ['james@silklabs.com']
+      root: ['james@silklabs.com'],
     });
   });
 
@@ -26,24 +26,24 @@ suite('scopes', function() {
   [
     {
       email: 'james@silklabs.com',
-      scopes: ['admin', 'root']
+      scopes: ['admin', 'root'],
     },
     {
       email: 'jAmeS@silklabS.COM',
-      scopes: ['admin', 'root']
+      scopes: ['admin', 'root'],
     },
     {
       email: 'i.like.dots@silklabs.com',
-      scopes: ['admin']
+      scopes: ['admin'],
     },
     {
       email: 'james@silk.io',
-      scopes: ['admin']
+      scopes: ['admin'],
     },
     {
       email: 'user@exmaple.com',
-      scopes: []
-    }
+      scopes: [],
+    },
   ].forEach((expect) => {
     let {email, scopes} = expect;
     test(`${email} should have scopes ${scopes.join(', ')}`, () => {

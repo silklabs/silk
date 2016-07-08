@@ -203,7 +203,7 @@ export default class CameraPreview extends React.Component {
         this._renderCanvasInternal(context,
                                    canvas.width / this._pixelRatio,
                                    canvas.height / this._pixelRatio);
-      } catch(err) {
+      } catch (err) {
         log.warn(err);
       }
 

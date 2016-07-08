@@ -53,31 +53,31 @@ export default class TimeMetadata extends Base {
   static INDEX = [
     {
       props: {
-        id: 1
+        id: 1,
       },
       /* XXX: We have non unique ids floating around in staging db */
       /* options: { unique: true, sparse: true } */
     },
     {
       props: {
-        deviceId: 1
-      }
+        deviceId: 1,
+      },
     },
     {
       props: {
-        metaType: 1
-      }
+        metaType: 1,
+      },
     },
     {
       props: {
-        startUTC: 1
-      }
+        startUTC: 1,
+      },
     },
     {
       props: {
-        endUTC: 1
-      }
-    }
+        endUTC: 1,
+      },
+    },
   ];
 
   static SCHEMA = {
@@ -96,7 +96,7 @@ export default class TimeMetadata extends Base {
       // Blob as url associated with this item.
       url: Joi.string().optional(),
       // Optional generic data.
-      data: Joi.object().optional()
+      data: Joi.object().optional(),
     }).required(),
 
     update: Joi.object().keys({
@@ -115,7 +115,7 @@ export default class TimeMetadata extends Base {
       metaType: TYPES,
       startTime: Joi.number().required(),
       endTime: Joi.number().required(),
-      maxCount: Joi.number().required()
+      maxCount: Joi.number().required(),
     }).required(),
 
     findBeforeTime: Joi.object().keys({
@@ -125,7 +125,7 @@ export default class TimeMetadata extends Base {
 
       metaType: TYPES,
       time: Joi.number().required(),
-      maxCount: Joi.number().required()
+      maxCount: Joi.number().required(),
     }).required(),
 
     // Finding one specific event
@@ -134,18 +134,18 @@ export default class TimeMetadata extends Base {
       deviceId: Joi.string().required(),
       metaType: TYPES,
       time: Joi.number().required(),
-      strict: Joi.bool()
+      strict: Joi.bool(),
     }).required(),
 
     findOneByTime: Joi.object().keys({
       deviceId: Joi.string().required(),
       metaType: TYPES,
-      time: Joi.number().required()
+      time: Joi.number().required(),
     }).required(),
 
     findById: Joi.object().keys({
-      id: Joi.string().required()
-    }).required()
+      id: Joi.string().required(),
+    }).required(),
   };
 
   static COLLECTION = 'time_metadata';
@@ -162,7 +162,7 @@ export default class TimeMetadata extends Base {
       },
       endUTC: {
         $gte: payload.startTime,
-      }
+      },
     })).sort({ startUTC: -1 }).limit(payload.maxCount).toArray();
 
     return result.map(this.formatOutput.bind(this));
@@ -173,8 +173,8 @@ export default class TimeMetadata extends Base {
     let result = await this.collection.find(deviceOrAccountQuery(payload, {
       metaType: payload.metaType,
       startUTC: {
-        $lte: payload.time
-      }
+        $lte: payload.time,
+      },
     })).sort({ endUTC: -1 }).limit(payload.maxCount).toArray();
     return result.map(this.formatOutput.bind(this));
   }
@@ -195,11 +195,11 @@ export default class TimeMetadata extends Base {
       deviceId: payload.deviceId,
       metaType: payload.metaType,
       startUTC: {
-        $lte: payload.time
+        $lte: payload.time,
       },
       endUTC: {
-        $gt: payload.time
-      }
+        $gt: payload.time,
+      },
     });
 
     // If that does not work try to find the most recent one.
@@ -215,8 +215,8 @@ export default class TimeMetadata extends Base {
       deviceId: payload.deviceId,
       metaType: payload.metaType,
       startUTC: {
-        $lt: payload.time
-      }
+        $lt: payload.time,
+      },
     }).sort({ startUTC: -1 }).limit(1).toArray())[0];
     return this.formatOutput(result);
   }
@@ -227,8 +227,8 @@ export default class TimeMetadata extends Base {
       deviceId: payload.deviceId,
       metaType: payload.metaType,
       startUTC: {
-        $gt: payload.time
-      }
+        $gt: payload.time,
+      },
     }).sort({ startUTC: 1 }).limit(1).toArray())[0];
     return this.formatOutput(result);
   }

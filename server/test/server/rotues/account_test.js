@@ -6,7 +6,7 @@ import SasCompositeTable from 'silk-azure-storage/src/sas_composite_table';
 
 import {
   TableClient,
-  SharedKeyAuth
+  SharedKeyAuth,
 } from 'silk-azure-storage/src/table';
 
 import createContext from '../context';
@@ -43,7 +43,7 @@ suite('account auth', () => {
       devicePublicKey: deviceAccessToken.toString(),
       name: 'test',
       type: 'camera',
-      registrationToken: token
+      registrationToken: token,
     });
     assert.ok(result.success);
     assert.ok(result.beaconUUID);
@@ -52,18 +52,18 @@ suite('account auth', () => {
       devicePublicKey: deviceAccessToken.toString(),
       name: 'test',
       type: 'camera',
-      registrationToken: token
+      registrationToken: token,
     });
     assert.ok(dup.success, 'idempotent');
 
     // Idempotent but should not result in multiple devices in list.
     let allByPubKey = await devices.collection.find({
-      'accessToken.publicKey': deviceAccessToken.toString()
+      'accessToken.publicKey': deviceAccessToken.toString(),
     });
     assert.equal(allByPubKey.length, 1);
 
     let device = await devices.findByPublicKey({
-      publicKey: deviceAccessToken.toString()
+      publicKey: deviceAccessToken.toString(),
     });
 
     assert.equal(device.accountId, accountOne.record._id.toString());
@@ -72,13 +72,13 @@ suite('account auth', () => {
     api.accessToken = deviceAccessToken;
     let complete = await api.device.completeRegistration({
       registrarPublicKey: accountOne.accessToken.toString(),
-      registrationToken: token
+      registrationToken: token,
     });
     assert.ok(complete.success);
     assert.ok(complete.beaconUUID);
 
     let deviceAfterComplete = await devices.findByPublicKey({
-      publicKey: deviceAccessToken.toString()
+      publicKey: deviceAccessToken.toString(),
     });
     assert.ok(deviceAfterComplete.registration.complete);
   });
@@ -110,7 +110,7 @@ suite('account auth', () => {
     test('POST /unregister_device', async () => {
       api.accessToken = accountOne.accessToken;
       await api.account.unregisterDevice({
-        devicePublicKey: deviceOne.accessToken.toString()
+        devicePublicKey: deviceOne.accessToken.toString(),
       });
 
       let { devices } = await api.account.listDevices();
@@ -124,7 +124,7 @@ suite('account auth', () => {
       let err;
       try {
         await api.device.socketioURL();
-      } catch(error) {
+      } catch (error) {
         err = error;
       }
       assert.equal(err.code, 403);
@@ -165,7 +165,7 @@ suite('account auth', () => {
 
     await allowed.api.account.queryMetrics({
       // We don't care about the results only that we don't get hit with the 401
-      query: 'does not matter'
+      query: 'does not matter',
     });
 
     await context.assertThrows(async () => {
@@ -183,7 +183,6 @@ suite('account auth', () => {
     const { accountId } = await api.account.whoami();
     const client = new SasCompositeTable(async () => {
       let { sas } = await api.account.getSasForDeviceSignaling();
-      console.log(sas);
       return sas;
     });
 
@@ -210,7 +209,7 @@ suite('account auth', () => {
     // return nothing.
     let outOfScope = await client.query({
       // valid but outside of our signed range query.
-      PartitionKey: 'foobar'
+      PartitionKey: 'foobar',
     });
     assert.equal(outOfScope.length, 0);
   });

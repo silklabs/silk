@@ -38,7 +38,7 @@ function method(action) {
   if (action.input) {
     args.push(`payload: ${action.inputType}`);
     perform = 'this._apiRequestWithBody(method, url, payload);';
-    commentParams += `  @param Object payload of request`;
+    commentParams += '  @param Object payload of request';
   }
 
   let comment = `

@@ -53,7 +53,7 @@ class LoudSoundDetector extends EventEmitter {
       'riseDurationMs',      // ^^^ energy must rise within this duration
       'minEnergyThreshold',  // after initial rise, energy must be above this
       'minEnergyDurationMs', // energy must stay above ^ for this amount of time
-      'maxEnergyDurationMs'  // ... but not more then this amount of time
+      'maxEnergyDurationMs',  // ... but not more then this amount of time
     ];
 
     params.forEach(param => {

@@ -66,7 +66,7 @@ export async function testAccount(context, overrides = {}) {
     publicKey: id.toString(),
     email: email,
     passwordHash: context.passwordHash('password'),
-    userAgent: 'nodejs'
+    userAgent: 'nodejs',
   }, overrides));
 
   if (res.error) {
@@ -74,7 +74,7 @@ export async function testAccount(context, overrides = {}) {
   }
 
   let record = await account.findByPublicKey({
-    publicKey: id.toString()
+    publicKey: id.toString(),
   });
 
   let api = createApi({
@@ -92,7 +92,7 @@ export async function testAccount(context, overrides = {}) {
     api,
     accessToken: id,
     record,
-    password: 'password'
+    password: 'password',
   };
 }
 
@@ -125,11 +125,11 @@ export async function registeredDevice(ctx, accountAccessToken) {
     devicePublicKey: deviceAccessToken.toString(),
     name: 'testing',
     type: 'camera',
-    registrationToken: token
+    registrationToken: token,
   });
 
   let device = await devices.findByPublicKey({
-    publicKey: deviceAccessToken.toString()
+    publicKey: deviceAccessToken.toString(),
   });
 
   // Act as the device rather then the account...
@@ -138,13 +138,13 @@ export async function registeredDevice(ctx, accountAccessToken) {
   api.maxRetries = 0;
   await api.device.completeRegistration({
     registrarPublicKey: accountAccessToken.toString(),
-    registrationToken: token
+    registrationToken: token,
   });
 
   return {
     api,
     accessToken: deviceAccessToken,
-    record: device
+    record: device,
   };
 }
 

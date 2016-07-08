@@ -152,11 +152,11 @@ class DeviceConfig extends EventEmitter {
 
   async _loadConfig() {
     if (!await fs.exists(CONFIG_PATH)) {
-      return null;
+      return;
     }
     try {
       this._config = JSON.parse(await fs.readFile(CONFIG_PATH, 'utf8'));
-    } catch(error) {
+    } catch (error) {
       log.warn(`Failed to parse config, removing`, error.stack);
       await fs.unlink(CONFIG_PATH);
       this._config = null;
@@ -640,6 +640,7 @@ class DeviceConfig extends EventEmitter {
 
     this._initializing = false;
     this._initialized = true;
+    return null;
   }
 
   unconfigure() {
@@ -729,7 +730,7 @@ class DeviceConfig extends EventEmitter {
     // Unconfigure BTLE and our network setup...
     await Promise.all([
       this._unconfigureBTLE(),
-      this._unconfigureNetwork()
+      this._unconfigureNetwork(),
     ]);
   }
 

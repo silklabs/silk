@@ -17,12 +17,12 @@ suite('accounts', () => {
       publicKey: key.toString(),
       email: 'user@example.com',
       passwordHash: context.passwordHash('password'),
-      userAgent: 'nodejs'
+      userAgent: 'nodejs',
     };
 
     let account = await subject.create(input);
     let byPublicKey = await subject.findByPublicKey({
-      publicKey: input.publicKey
+      publicKey: input.publicKey,
     });
     assert.ok(account.id);
     assert.equal(byPublicKey._id, account.id);
@@ -34,7 +34,7 @@ suite('accounts', () => {
       publicKey: key.toString(),
       email: 'user@example.com',
       passwordHash: context.passwordHash('password'),
-      userAgent: 'nodejs'
+      userAgent: 'nodejs',
     };
     await subject.create(input);
     // Should not need an update yet...
@@ -44,12 +44,12 @@ suite('accounts', () => {
 
     await subject.collection.update(
       {
-        'accountTokens.publicKey': key.toString()
+        'accountTokens.publicKey': key.toString(),
       },
       {
         $unset: {
-          'beaconUUID': ''
-        }
+          'beaconUUID': '',
+        },
       }
     );
 
@@ -60,7 +60,7 @@ suite('accounts', () => {
 
     let dbAccount;
     dbAccount = await subject.collection.findOne({
-      'accountTokens.publicKey': key.toString()
+      'accountTokens.publicKey': key.toString(),
     });
     assert.equal(dbAccount.beaconUUID, beaconUUID);
   });
@@ -71,13 +71,13 @@ suite('accounts', () => {
       publicKey: key.toString(),
       email: 'user@example.com',
       passwordHash: context.passwordHash('password'),
-      userAgent: 'nodejs'
+      userAgent: 'nodejs',
     };
 
     let authBeforeCreate = await subject.checkPassword({
       publicKey: input.publicKey,
       email: input.email,
-      passwordHash: input.passwordHash
+      passwordHash: input.passwordHash,
     });
     assert.ok(authBeforeCreate.error, 'fails to checkPassword');
 
@@ -91,14 +91,14 @@ suite('accounts', () => {
     let successfulAuth = await subject.checkPassword({
       publicKey: input.publicKey,
       email: input.email,
-      passwordHash: input.passwordHash
+      passwordHash: input.passwordHash,
     });
     assert.equal(successfulAuth.id, account.id);
 
     let unsuccessfulAuth = await subject.checkPassword({
       publicKey: input.publicKey,
       email: input.email,
-      passwordHash: context.passwordHash('other')
+      passwordHash: context.passwordHash('other'),
     });
     assert.ok(unsuccessfulAuth.error, 'fails to auth');
   });
@@ -109,7 +109,7 @@ suite('accounts', () => {
       publicKey: key.toString(),
       email: 'user@example.com',
       passwordHash: context.passwordHash('password'),
-      userAgent: 'nodejs'
+      userAgent: 'nodejs',
     };
 
     let account = await subject.create(input);
@@ -150,7 +150,7 @@ suite('accounts', () => {
     assert.equal(badPass.error.type, 'CheckPasswordFailure');
 
     let accountDetails = await subject.collection.findOne({
-      'accountTokens.publicKey': newKey.toString()
+      'accountTokens.publicKey': newKey.toString(),
     });
     assert.equal(accountDetails._id, signIn.id);
     let publicKeys = accountDetails.accountTokens.map(v => v.publicKey);
@@ -159,7 +159,7 @@ suite('accounts', () => {
 
   test('.resetPassword - no account', async () => {
     let result = await subject.resetPassword({
-      email: 'nothere@example.com'
+      email: 'nothere@example.com',
     });
     assert(result.error);
   });
@@ -170,7 +170,7 @@ suite('accounts', () => {
     setup(async() => {
       account = await context.testAccount();
       resetValue = await subject.resetPassword({
-        email: account.record.email
+        email: account.record.email,
       });
     });
 
@@ -181,7 +181,7 @@ suite('accounts', () => {
       let update = await subject.usePasswordResetToken({
         email: account.record.email,
         passwordHash: newPass,
-        token: resetValue.token
+        token: resetValue.token,
       });
 
       assert.equal(update.success, true);
@@ -191,12 +191,12 @@ suite('accounts', () => {
         email: account.record.email,
         passwordHash: newPass,
         publicKey: accessToken.toString(),
-        userAgent: 'test'
+        userAgent: 'test',
       });
       assert(auth.id, 'can reset password..');
 
       let secondReset = await subject.resetPassword({
-        email: account.record.email
+        email: account.record.email,
       });
       assert(secondReset.token, 'can reset again...');
       // After using the reset token it should be reset to a new token for next
@@ -206,7 +206,7 @@ suite('accounts', () => {
 
     test('second reset', async () => {
       let secondReset = await subject.resetPassword({
-        email: account.record.email
+        email: account.record.email,
       });
       assert(secondReset.token, 'second has second reset...');
       assert.equal(

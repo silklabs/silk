@@ -15,7 +15,7 @@ suite('jwa via jwt', () => {
       new Buffer(keys.priv, 'hex'),
       {
         algorithm: 'ed25519',
-        jwa: jwa
+        jwa: jwa,
       }
     );
 
@@ -24,7 +24,7 @@ suite('jwa via jwt', () => {
       new Buffer(keys.pub, 'hex'),
       {
         algorithms: ['ed25519'],
-        jwa: jwa
+        jwa: jwa,
       }
     );
     assert.equal(result.foo, true);
@@ -38,7 +38,7 @@ suite('jwa via jwt', () => {
         new Buffer(keys.pub, 'hex'),
         {
           algorithms: ['ed25519'],
-          jwa: jwa
+          jwa: jwa,
         }
       );
     }, /malformed/);
@@ -52,7 +52,7 @@ suite('jwa via jwt', () => {
       new Buffer(keys.priv, 'hex'),
       {
         algorithm: 'ed25519',
-        jwa: jwa
+        jwa: jwa,
       }
     );
 
@@ -66,7 +66,7 @@ suite('jwa via jwt', () => {
         new Buffer(keys.pub, 'hex'),
         {
           algorithms: ['ed25519'],
-          jwa: jwa
+          jwa: jwa,
         }
       );
     }, /signature/);

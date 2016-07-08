@@ -39,6 +39,6 @@ suiteSetup(async function() {
         This probably means you don't have mongodb running. Please start it before
         running tests.
       `);
-    })
+    }),
   ]);
 });

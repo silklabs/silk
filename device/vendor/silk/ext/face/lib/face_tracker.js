@@ -79,7 +79,7 @@ export default class FaceTracker {
           face,
           err,
           found,
-          rect && camera.normalRectsFrom([rect], this._frameSize)[0]
+          rect && camera.normalRectsFrom([rect], this._frameSize)[0],
         ]);
       });
     });

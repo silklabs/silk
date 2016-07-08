@@ -28,8 +28,8 @@ suite('time metadata apis', () => {
         endUTC: 200,
         url: 'xfoo',
         data: {
-          blob: true
-        }
+          blob: true,
+        },
       };
 
       let insert = await device.api.metadataPublisher.create(first);
@@ -42,7 +42,7 @@ suite('time metadata apis', () => {
       let next = Object.assign({}, first, {
         startUTC: 201,
         endUTC: 300,
-        data: { woot: true }
+        data: { woot: true },
       });
       delete next.id;
       let insert = await device.api.metadataPublisher.create(next);
@@ -54,7 +54,7 @@ suite('time metadata apis', () => {
       let findAfterTime = await account.api.metadata.findOneAfterTime({
         deviceId: id,
         metaType: 'video',
-        time: first.startUTC - 1
+        time: first.startUTC - 1,
       });
       assert.deepEqual(findAfterTime.data, first.data);
     });
@@ -65,7 +65,7 @@ suite('time metadata apis', () => {
         await secondAccount.api.metadata.findOneAfterTime({
           deviceId: id,
           metaType: 'video',
-          time: first.startUTC - 1
+          time: first.startUTC - 1,
         });
       });
     });
@@ -75,7 +75,7 @@ suite('time metadata apis', () => {
         await account.api.metadata.findOneAfterTime({
           deviceId: id,
           metaType: 'log',
-          time: first.startUTC - 1
+          time: first.startUTC - 1,
         });
       });
     });
@@ -85,7 +85,7 @@ suite('time metadata apis', () => {
         await account.api.metadata.findOneAfterTime({
           deviceId: id,
           metaType: 'video',
-          time: first.startUTC + 1
+          time: first.startUTC + 1,
         });
       });
     });
@@ -95,7 +95,7 @@ suite('time metadata apis', () => {
         deviceId: id,
         metaType: 'video',
         time: first.endUTC + 1,
-        maxCount: 1
+        maxCount: 1,
       });
       assert.equal(items.length, 1);
       assert.deepEqual(items[0].data, first.data);
@@ -106,7 +106,7 @@ suite('time metadata apis', () => {
         deviceId: id,
         metaType: 'log',
         time: first.endUTC + 1,
-        maxCount: 1
+        maxCount: 1,
       });
       assert.equal(items.length, 0);
     });
@@ -116,7 +116,7 @@ suite('time metadata apis', () => {
         deviceId: id,
         metaType: 'video',
         time: first.startUTC - 1,
-        maxCount: 1
+        maxCount: 1,
       });
       assert.equal(items.length, 0);
     });
@@ -127,7 +127,7 @@ suite('time metadata apis', () => {
           metaType: 'video',
           deviceId: id,
           strict: true,
-          time: first.endUTC
+          time: first.endUTC,
         });
       });
     });
@@ -137,7 +137,7 @@ suite('time metadata apis', () => {
         await account.api.metadata.findOneNear({
           metaType: 'log',
           deviceId: id,
-          time: first.endUTC - 2
+          time: first.endUTC - 2,
         });
       });
     });
@@ -146,7 +146,7 @@ suite('time metadata apis', () => {
       let findByTime = await account.api.metadata.findOneNear({
         metaType: first.metaType,
         deviceId: id,
-        time: first.endUTC - 2
+        time: first.endUTC - 2,
       });
       assert.deepEqual(findByTime.data, first.data);
     });
@@ -157,7 +157,7 @@ suite('time metadata apis', () => {
         deviceId: id,
         metaType: 'video',
         time: next.endUTC + 1,
-        maxCount: 1
+        maxCount: 1,
       });
       assert.equal(items.length, 1);
       assert.deepEqual(items[0].data, next.data);
@@ -169,7 +169,7 @@ suite('time metadata apis', () => {
         deviceId: id,
         metaType: 'video',
         time: next.endUTC + 1,
-        maxCount: 2
+        maxCount: 2,
       });
       assert.equal(items.length, 2);
       assert.deepEqual(items[0].data, next.data);
@@ -182,7 +182,7 @@ suite('time metadata apis', () => {
         deviceId: id,
         metaType: 'video',
         time: next.startUTC - 1,
-        maxCount: 2
+        maxCount: 2,
       });
       assert.equal(items.length, 1);
       assert.deepEqual(items[0].data, first.data);
@@ -194,7 +194,7 @@ suite('time metadata apis', () => {
         deviceId: id,
         metaType: 'video',
         time: first.startUTC - 1,
-        maxCount: 2
+        maxCount: 2,
       });
       assert.equal(items.length, 0);
     });

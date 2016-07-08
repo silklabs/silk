@@ -18,7 +18,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
   routes.use(PREFIX, authorizeDevice({
     nonce: ctx.nonce,
-    devices: ctx.devices
+    devices: ctx.devices,
   }));
 
   let api = expressApi(routes, {
@@ -36,11 +36,11 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'ack',
     description: 'Acknowledge a blob upload',
     output: Joi.object().keys({
-      url: Joi.string().uri().required()
+      url: Joi.string().uri().required(),
     }),
     input: Joi.object().keys({
-      url: Joi.string().uri().required()
-    }).required()
+      url: Joi.string().uri().required(),
+    }).required(),
   }, async (req, res) => {
     await ctx.blobHandler.postAck(req, res);
   });
@@ -55,12 +55,12 @@ export default function (ctx: RouteContext): ExpressRoutes {
     description: 'Get the blob put url',
     output: Joi.object().keys({
       putUrl: Joi.string().required(),
-      putHeaders: Joi.object().required()
+      putHeaders: Joi.object().required(),
     }),
     input: Joi.object().keys({
       contentLength: Joi.number().required(),
-      contentType: Joi.string().required()
-    }).required()
+      contentType: Joi.string().required(),
+    }).required(),
   }, async (req, res) => {
     await ctx.blobHandler.postBlob(req, res);
   });
@@ -70,7 +70,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     method: 'put',
     params: [
       { name: 'type', description: 'Type of blob.' },
-      { name: 'id', description: 'Identifier for blob.' }
+      { name: 'id', description: 'Identifier for blob.' },
     ],
     name: 'putBlob',
     description: 'Put blob (only works for file blobs)',
@@ -79,7 +79,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     }),
     input: Joi.object().keys({
       // TODO
-    }).required()
+    }).required(),
   }, async (req, res) => {
     if (ctx.config.server.blobType !== 'file') {
       res.sendStatus(501);

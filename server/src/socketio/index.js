@@ -10,6 +10,7 @@ let lastDogTick = Date.now();
 function watchdog() {
   let diff = Date.now() - lastDogTick;
   if (diff > BOGGED_DOWN_MS) {
+    // eslint-disable-next-line no-console
     console.error(`====[ Main thread was bogged down for ${diff - WATCHDOG_MS}ms ]====`);
   }
   lastDogTick = Date.now();

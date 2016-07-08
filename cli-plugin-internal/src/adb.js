@@ -51,8 +51,12 @@ class Adb {
 
     return new Promise((resolve, reject) => {
       let helper = childProcess.spawn(cmd, args);
-      helper.stdout.on('data', chunk => stdout += chunk.toString());
-      helper.stderr.on('data', chunk => stderr += chunk.toString());
+      helper.stdout.on('data', (chunk) => {
+        stdout += chunk.toString();
+      });
+      helper.stderr.on('data', (chunk) => {
+        stderr += chunk.toString();
+      });
       helper.on('close', code => {
         if (code !== 0) {
           log.debug(`_spawn: err=${code}, stderr=${stderr}`);

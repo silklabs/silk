@@ -67,7 +67,7 @@ const config = {
     loaders: [
       {
         test: /\.json$/,
-        loader: require.resolve('json-loader')
+        loader: require.resolve('json-loader'),
       },
       {
         test: /\.js$/,
@@ -78,7 +78,7 @@ const config = {
         only: [
           require.resolve('silk-babeldeps'),
         ],
-      }
+      },
     ],
   },
   plugins: [

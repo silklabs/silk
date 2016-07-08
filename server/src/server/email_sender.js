@@ -41,7 +41,7 @@ export default class EmailSender {
     // Who is on the "from" label in emails...
     this.sourceEmail = config.emails.sender;
     this.ses = new SES({
-      region: config.ses.region
+      region: config.ses.region,
     });
   }
 
@@ -78,8 +78,8 @@ export default class EmailSender {
       subject: 'Reset password',
       recipient: options.email,
       body: this.renderTemplate('reset_password', {
-        resetPasswordUrl: options.url
-      })
+        resetPasswordUrl: options.url,
+      }),
     });
   }
 
@@ -100,23 +100,23 @@ export default class EmailSender {
       // Note: we pay per destination so more destinations here does not make
       // anything cheaper
       Destination: {
-        ToAddresses: [options.recipient]
+        ToAddresses: [options.recipient],
       },
       Source: this.sourceEmail,
       Message: {
         // Yay: we don't need to mess with MIME
         Body: {
           Html: {
-            Data: options.body.html
+            Data: options.body.html,
           },
           Text: {
-            Data: options.body.txt
-          }
+            Data: options.body.txt,
+          },
         },
         Subject: {
-          Data: options.subject
-        }
-      }
+          Data: options.subject,
+        },
+      },
     });
 
     return await send.promise();

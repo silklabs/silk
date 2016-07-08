@@ -13,7 +13,7 @@ export default class StartServerMetric extends Metric {
 
   constructor() {
     super({
-      count: new MetricTypes.Integer(1)
+      count: new MetricTypes.Integer(1),
     });
   }
 }

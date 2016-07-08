@@ -212,7 +212,7 @@ export class BluetoothLE extends EventEmitter {
 
     try {
       await fs.unlink(SOCKET_PATH);
-    } catch(error) {
+    } catch (error) {
       if (error.code !== `ENOENT`) {
         throw error;
       }
@@ -240,7 +240,7 @@ export class BluetoothLE extends EventEmitter {
       log.info(`Cleaning up socket server`, SOCKET_PATH);
       try {
         unlinkSync(SOCKET_PATH);
-      } catch(error) {
+      } catch (error) {
         if (error.code !== `ENOENT`) {
           throw error;
         }
@@ -278,7 +278,7 @@ export class BluetoothLE extends EventEmitter {
 
     try {
       await this._startAll();
-    } catch(error) {
+    } catch (error) {
       log.error(`Failed to start`, error);
 
       if (this._child) {
@@ -546,7 +546,7 @@ export class BluetoothLE extends EventEmitter {
         log.error(`Unhandled message`, message);
         throw new Error(`Unhandled message '${message.name}'`);
       }
-    } catch(error) {
+    } catch (error) {
       log.error(error);
       this._killChild();
     }

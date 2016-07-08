@@ -142,7 +142,9 @@ export default class Diag {
 
   stop() {
     log.info('Stopping diag service');
-    this.loggers.map( logger => logger.server = null );
+    this.loggers.map((logger) => {
+      logger.server = null;
+    });
   }
 
   setConfig(cfg) {

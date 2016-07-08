@@ -2,9 +2,5 @@
   "extends": "eslint-config-silk",
   "env": {
     "mocha": true
-  },
-  "rules": {
-    "comma-dangle": 0,
-    "no-console": 0
   }
 }

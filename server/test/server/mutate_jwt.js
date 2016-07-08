@@ -29,6 +29,6 @@ export default function (token, mutateFn) {
   return [
     base64url(JSON.stringify(headers)),
     base64url(JSON.stringify(body)),
-    sig
+    sig,
   ].join('.');
 }

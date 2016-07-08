@@ -113,7 +113,7 @@ export default class MetricsAgent {
   }
 
   stop() {
-    log.info(`Stopping metrics submissions`);
+    log.info('Stopping metrics submissions');
     if (this._timerId !== null) {
       clearTimeout(this._timerId);
       this._timerId = null;
@@ -135,7 +135,7 @@ export default class MetricsAgent {
       if (this._points.length > MAX_METRICS) {
         this._droppedCount++;
         const dropped = this._points.shift();
-        log.warn(`Dropping metric because we have reached MAX_METRICS ` +
+        log.warn('Dropping metric because we have reached MAX_METRICS ' +
                  `(${MAX_METRICS})`,
                  dropped);
       }
@@ -153,7 +153,7 @@ export default class MetricsAgent {
     const firstPointTimestamp = this._firstPointTimestamp;
     if (!firstPointTimestamp) {
       invariant(!this._points.length);
-      log.info(`No points to submit`);
+      log.info('No points to submit');
       return;
     }
 
@@ -178,7 +178,7 @@ export default class MetricsAgent {
   }
 
   clear() {
-    log.info(`Clearing points`);
+    log.info('Clearing points');
     this._firstPointTimestamp = 0;
     this._droppedCount = 0;
     if (this._points.length) {

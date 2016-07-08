@@ -29,7 +29,7 @@ function loadConfig(configPath: string): Configs {
           configs[config] = json[config];
         }
       });
-    } catch(err) {
+    } catch (err) {
       console.log(`Error parsing ${configPath}, deleting. error: ${err}`);
       fs.unlinkSync(configPath);
     }
@@ -54,7 +54,7 @@ export default class DotConfig {
   deleteConfig() {
     try {
       fs.unlinkSync(this._configPath);
-    } catch(err) {} // eslint-disable-line no-empty
+    } catch (err) {} // eslint-disable-line no-empty
   }
 
   updateConfig(

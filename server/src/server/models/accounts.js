@@ -29,7 +29,7 @@ const ACCESS_TOKEN_ADD_SCHEMA = Joi.object().keys({
   email: EMAIL,
   passwordHash: PASSWORD_HASH,
   publicKey: Joi.string().required(),
-  userAgent: Joi.string().required()
+  userAgent: Joi.string().required(),
 }).required();
 
 const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
@@ -55,7 +55,7 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
    * changing the password/email/etc...
    */
   passwordCheck: Joi.object({
-    date: Joi.date()
+    date: Joi.date(),
   }).required(),
 
   /**
@@ -72,8 +72,8 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
     // If this identification has happened.
     validated: Joi.boolean().required(),
     // When the token associated with this method expires.
-    expires: Joi.date().required()
-  })
+    expires: Joi.date().required(),
+  }),
 });
 
 // XXX: Duplicating types so we can use them in flow too (lame).
@@ -126,9 +126,9 @@ export default class Accounts extends Base {
      */
     {
       props: {
-        'accountTokens.publicKey': 1
+        'accountTokens.publicKey': 1,
       },
-      options: { unique: true }
+      options: { unique: true },
     },
 
     /**
@@ -136,9 +136,9 @@ export default class Accounts extends Base {
      */
     {
       props: {
-        email: 1
+        email: 1,
       },
-      options: { unique: true }
+      options: { unique: true },
     },
 
     /**
@@ -146,15 +146,15 @@ export default class Accounts extends Base {
      */
     {
       props: {
-        beaconUUID: 1
+        beaconUUID: 1,
       },
-      options: { unique: true, sparse: true }
-    }
+      options: { unique: true, sparse: true },
+    },
   ];
 
   static SCHEMA = {
     findByPublicKey: Joi.object().keys({
-      publicKey: Joi.string().hex().required().min(32)
+      publicKey: Joi.string().hex().required().min(32),
     }),
 
     ensureDevAccount: Joi.object().keys({
@@ -170,7 +170,7 @@ export default class Accounts extends Base {
     checkPassword: Joi.object().keys({
       publicKey: Joi.string().required(),
       email: EMAIL,
-      passwordHash: PASSWORD_HASH
+      passwordHash: PASSWORD_HASH,
     }),
 
     accessToken: ACCESS_TOKEN_SCHEMA,
@@ -196,7 +196,7 @@ export default class Accounts extends Base {
        * Individual account tokens that are used to talk to our API servers an
        * account many have many of these with varying scopes.
        */
-      accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA).required()
+      accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA).required(),
 
     }).required(),
 
@@ -220,7 +220,7 @@ export default class Accounts extends Base {
     let params = {
       N: 2 ^ 14,
       r: 8,
-      p: 1
+      p: 1,
     };
 
     let hash = await scrypt.kdf(new Buffer(value), params);
@@ -239,7 +239,7 @@ export default class Accounts extends Base {
     let { publicKey } = payload;
 
     return await this.collection.findOne({
-      'accountTokens.publicKey': publicKey
+      'accountTokens.publicKey': publicKey,
     });
   }
 
@@ -256,7 +256,7 @@ export default class Accounts extends Base {
       scopes: [],
       passwordCheck: {},
       publicKey: publicKey,
-      userAgent: userAgent
+      userAgent: userAgent,
     }, 'accessToken');
   }
 
@@ -269,13 +269,13 @@ export default class Accounts extends Base {
       {
         'accountTokens.publicKey': publicKey,
         'beaconUUID': {
-          $exists: false
-        }
+          $exists: false,
+        },
       },
       {
         $set: {
-          'beaconUUID': id
-        }
+          'beaconUUID': id,
+        },
       }
     );
 
@@ -298,7 +298,7 @@ export default class Accounts extends Base {
       email: payload.email,
       password: {
         date: new Date(),
-        hash: password
+        hash: password,
       },
       accountTokens: [this.accessToken(payload)],
       beaconUUID: uuid.v4(),
@@ -310,8 +310,8 @@ export default class Accounts extends Base {
       {
         $or: [
           { email: payload.email },
-          { 'accountTokens.publicKey': payload.publicKey }
-        ]
+          { 'accountTokens.publicKey': payload.publicKey },
+        ],
       },
       { $setOnInsert: account },
       { upsert: true }
@@ -351,7 +351,7 @@ export default class Accounts extends Base {
     payload = this.validate(payload, 'signIn');
 
     let account = await this.collection.findOne({
-      email: payload.email
+      email: payload.email,
     });
 
     if (!account) {
@@ -374,13 +374,13 @@ export default class Accounts extends Base {
       {
         _id: account._id,
         'accountTokens.publicKey': {
-          $ne: payload.publicKey
-        }
+          $ne: payload.publicKey,
+        },
       },
       {
         $push: {
-          accountTokens: accessToken
-        }
+          accountTokens: accessToken,
+        },
       }
     );
 
@@ -407,7 +407,7 @@ export default class Accounts extends Base {
 
     let account = await this.collection.findOne({
       email: payload.email,
-      'accountTokens.publicKey': payload.publicKey
+      'accountTokens.publicKey': payload.publicKey,
     });
 
     if (!account) {
@@ -421,11 +421,11 @@ export default class Accounts extends Base {
 
     let update = await this.collection.update({
       _id: account._id,
-      'accountTokens.publicKey': payload.publicKey
+      'accountTokens.publicKey': payload.publicKey,
     }, {
       $set: {
-        passwordCheck: { date: new Date() }
-      }
+        passwordCheck: { date: new Date() },
+      },
     });
 
     if (update.n !== 1) {
@@ -496,9 +496,9 @@ export default class Accounts extends Base {
               pub: accessToken.pub,
               priv: accessToken.priv,
             },
-            created
-          }
-        }
+            created,
+          },
+        },
       }
     );
 
@@ -520,7 +520,7 @@ export default class Accounts extends Base {
     payload = this.validate(payload, 'usePasswordResetToken');
 
     let account = await this.collection.findOne({
-      email: payload.email
+      email: payload.email,
     });
 
     if (!account) {
@@ -553,8 +553,8 @@ export default class Accounts extends Base {
           password: {
             date: new Date(),
             hash: password,
-          }
-        }
+          },
+        },
       }
     );
 

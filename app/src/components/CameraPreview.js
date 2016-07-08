@@ -173,7 +173,7 @@ export default class CameraPreview extends AsyncComponent {
 
       try {
         await this.context.silkDevices.unregisterDevice(this.props.deviceId);
-      } catch(ex) {
+      } catch (ex) {
         Alert.alert(
           'Error Unregistering Device',
           'The device could not be unregistered. Please try again.'

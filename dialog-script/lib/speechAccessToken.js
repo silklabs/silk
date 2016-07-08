@@ -44,7 +44,9 @@ function httpPost(opts: Object, data: string): Promise<Object> {
     const req = https.request(opts, (res) => {
       let json = ``;
       res.on(`error`, (error) => reject(error));
-      res.on(`data`, (chunk) => json += chunk);
+      res.on(`data`, (chunk) => {
+        json += chunk;
+      });
       res.on(`end`, () => {
         if (res.statusCode !== 200) {
           reject(new Error(`Access token request failed with status code ` +
@@ -54,7 +56,9 @@ function httpPost(opts: Object, data: string): Promise<Object> {
           if (retryCounter < RETRY_LIMIT) {
             log.info(`Renewing access token ${retryCounter + 1}/${RETRY_LIMIT}`);
             retryCounter++;
-            process.nextTick(() => accessTokenPromise = httpPost(opts, data));
+            process.nextTick(() => {
+              accessTokenPromise = httpPost(opts, data);
+            });
           } else {
             // Reset so that we try to get access token again when someone
             // needs it

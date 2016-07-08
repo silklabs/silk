@@ -13,7 +13,7 @@ const SCHEMA = {
   }).required(),
 
   postAck: Joi.object().keys({
-    url: Joi.string().uri().required()
+    url: Joi.string().uri().required(),
   }).required(),
 };
 
@@ -74,7 +74,7 @@ function validatePostBlob(config, req, res) {
 
   try {
     Joi.assert(req.body, SCHEMA.postBlob);
-  } catch(e) {
+  } catch (e) {
     log.warn(`(validate post blob) ${e}: ` + JSON.stringify(req.body));
     res.sendStatus(400);
     return false;
@@ -92,7 +92,7 @@ function validatePostAck(req, res) {
 
   try {
     Joi.assert(req.body, SCHEMA.postAck);
-  } catch(e) {
+  } catch (e) {
     log.warn(`(post ack) ${e}: ` + JSON.stringify(req.body));
     res.sendStatus(400);
     return false;
@@ -105,6 +105,6 @@ export default function(config) {
   return {
     validatePostBlob: validatePostBlob.bind(null, config),
     validatePutBlob: validateBlobTypeAndHeaders.bind(null, config, null),
-    validatePostAck
+    validatePostAck,
   };
 }

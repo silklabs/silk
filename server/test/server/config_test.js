@@ -8,7 +8,7 @@ suite('config', () => {
   test('load - default config', () => {
     let config = loadConfig();
     let expected = Object.assign({}, DEFAULT_CONFIG.testing, {
-      value: false
+      value: false,
     });
     assert.deepEqual(config.testing, expected);
   });
@@ -16,7 +16,7 @@ suite('config', () => {
   test('load - test config', () => {
     let config = loadConfig('test');
     let expected = Object.assign({}, DEFAULT_CONFIG.testing, {
-      value: true
+      value: true,
     });
     assert.deepEqual(config.testing, expected);
   });
@@ -24,7 +24,7 @@ suite('config', () => {
   test('load - local overrides', () => {
     let config = loadConfig('test', `${__dirname}/fixtures/config`);
     let expected = Object.assign({}, DEFAULT_CONFIG.testing, {
-      value: false
+      value: false,
     });
     assert.deepEqual(config.testing, expected);
   });

@@ -67,7 +67,7 @@ class Config extends EventEmitter {
   async _loadUserConfig() {
     let value = await AsyncStorage.getItem(STORAGE_KEY);
     if (!value) {
-      return {};
+      return;
     }
     let config;
     try {

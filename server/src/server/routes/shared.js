@@ -65,12 +65,12 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
     name: 'socketioURL',
     description: 'Get socket.io url for device...',
     output: Joi.object().keys({
-      url: Joi.string().required()
+      url: Joi.string().required(),
     }),
-    input: Joi.object()
+    input: Joi.object(),
   }, async (req, res) => {
     res.respond({
-      url: getUrl()
+      url: getUrl(),
     });
   });
 
@@ -89,7 +89,7 @@ export default function(api: ?ExpressRoutes, type: string, ctx: RouteContext) {
       droppedCount: Joi.number().integer().min(0).optional(),
 
       // TODO: Handle "tuple" values. This will allow us to type this better.
-      points: Joi.array().items(Joi.any()).required()
+      points: Joi.array().items(Joi.any()).required(),
     }).required(),
   }, async (req, res) => {
     const influxdb = ctx.influxdb;

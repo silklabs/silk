@@ -253,6 +253,6 @@ let dataName = process.argv[4];
 try {
   let evaluator = new Evaluator(gtPath, dtPath, dataName);
   evaluator.run();
-} catch(err) {
+} catch (err) {
   console.error(`Error running evaluator: ${err.stack || err}`);
 }

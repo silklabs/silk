@@ -71,7 +71,8 @@ export default class Files {
     let writeNextBuffer = (fd, position, resolve, reject) => {
       if (bufferIndex === dataArray.length) {
         this.fs.close(fd);
-        return resolve();
+        resolve();
+        return;
       }
       let buffer = new filer.Buffer(dataArray[bufferIndex++]);
       this.fs.write(fd, buffer, 0, buffer.length, position, (err, nbytes) => {
@@ -84,7 +85,8 @@ export default class Files {
     return new Promise((resolve, reject) => {
       this.fs.open(this._absolutePath(name), 'w', (err, fd) => {
         if (err) {
-          return reject(err);
+          reject(err);
+          return;
         }
         // filer claims to follow open() semantics and truncate the
         // file when opened for writing, but it doesn't actually do

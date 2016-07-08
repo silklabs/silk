@@ -11,7 +11,7 @@ suite('email sender', () => {
 
   test('#renderTemplate', () => {
     let ctx = {
-      content: 'foobar'
+      content: 'foobar',
     };
 
     let result = subject.renderTemplate('test', ctx);
@@ -34,7 +34,7 @@ suite('email sender', () => {
       subject: 'emails',
       // email simulator:
       recipient: 'success@simulator.amazonses.com',
-      body: subject.renderTemplate('test', {})
+      body: subject.renderTemplate('test', {}),
     };
 
     let result = await subject.send(options);

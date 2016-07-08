@@ -213,7 +213,7 @@ export default class Timeline extends EventEmitter {
     camera.on('restart', (why, restartCaptureProcess) => {
       api.metrics.add(new CameraRestart({
         reason: why,
-        captureRestart: restartCaptureProcess
+        captureRestart: restartCaptureProcess,
       }));
     });
     this.camera = camera;
@@ -520,7 +520,7 @@ export default class Timeline extends EventEmitter {
       try {
         this.emit(object.tag, object.when, object.rects, object.source,
             object.name);
-      } catch(err) {
+      } catch (err) {
         // Escape this call stack then re-throw
         process.nextTick(() => {
           throw err;

@@ -98,7 +98,7 @@ suite('outbox stream', () => {
   let subject;
   setup(() => {
     subject = createOutbox({
-      storagePath: FIXTURE_DIR
+      storagePath: FIXTURE_DIR,
     });
 
     subject.registerOperation(TestOp);
@@ -111,8 +111,8 @@ suite('outbox stream', () => {
     let { stream, buffer } = randomStream();
     let operation = new FailableOp({
       arguments: {
-        failOnNth: 3
-      }
+        failOnNth: 3,
+      },
     });
 
     let writePromise = operation.write(stream);
@@ -152,8 +152,8 @@ suite('outbox stream', () => {
     let { buffer } = randomStream();
     let operation = new FailableOp({
       arguments: {
-        failOnNth: 3
-      }
+        failOnNth: 3,
+      },
     });
 
     // Write some bytes to the file...
@@ -181,8 +181,8 @@ suite('outbox stream', () => {
     let { stream, buffer } = randomStream();
     let operation = new TestOp({
       arguments: {
-        woot: true
-      }
+        woot: true,
+      },
     });
 
     let writePromise = operation.write(stream);
@@ -196,7 +196,7 @@ suite('outbox stream', () => {
   test('.write - with immediately thrown error', async () => {
     let { stream } = randomStream();
     let operation = new ImmediateFail({
-      arguments: {}
+      arguments: {},
     });
 
     // Run some async operation after creating the operation... This will
@@ -212,7 +212,7 @@ suite('outbox stream', () => {
   test('.write - with timeout', async () => {
     let { stream } = randomStream();
     let operation = new TimeoutOp({
-      arguments: {}
+      arguments: {},
     });
 
     // Run some async operation after creating the operation... This will

@@ -66,7 +66,7 @@ export default class CrashMetadata extends Base {
     let _id;
     try {
       _id = new mongo.ObjectId(id);
-    } catch(e) {
+    } catch (e) {
       log.warn(`${e}: '%s'`, id);
       throw e;
     }
@@ -74,7 +74,7 @@ export default class CrashMetadata extends Base {
     log.info(`Getting crash report with id '${id}'`);
 
     let result = await this.collection.findOne({
-      _id
+      _id,
     });
 
     result = this.formatOutput(result);

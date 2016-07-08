@@ -24,7 +24,7 @@ suite('devices', () => {
         publicKey: accountId.toString(),
         email: 'user@example.com',
         passwordHash: context.passwordHash('password'),
-        userAgent: 'nodejs'
+        userAgent: 'nodejs',
       });
 
       const registrationToken = await accountId.genSign(deviceId.toString());
@@ -47,7 +47,7 @@ suite('devices', () => {
       assert.ok(result.success);
 
       let device = await subject.findByPublicKey({
-        publicKey: deviceId.toString()
+        publicKey: deviceId.toString(),
       });
       assert.equal(device.registration.complete, true);
       assert.equal(device.accountId.toString(), account.id);
@@ -63,7 +63,7 @@ suite('devices', () => {
       assert.equal(result.error.type, 'InvalidRegistrationToken');
 
       let device = await subject.findByPublicKey({
-        publicKey: deviceId.toString()
+        publicKey: deviceId.toString(),
       });
       assert.equal(device.registration.complete, false);
       assert.equal(device.accountId.toString(), account.id);

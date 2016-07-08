@@ -345,7 +345,9 @@ export default class AVPipeline extends React.Component {
           .sort((a, b) => cmpSegmentTimestamps(segments[b], segments[a]))
           .slice(0, nrKeep);
     let filtered = {};
-    ids.forEach(id => filtered[id] = segments[id]);
+    ids.forEach((id) => {
+      filtered[id] = segments[id];
+    });
     return filtered;
   }
 

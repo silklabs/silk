@@ -33,7 +33,7 @@ suite('routes', () => {
         secondDeviceSocket = secondDevice.api.socketioClient(createSocketIO, 'device');
         secondDeviceSocket.open();
         await eventToPromise(secondDeviceSocket, 'connect');
-      })()
+      })(),
     ]);
   });
 
@@ -52,7 +52,7 @@ suite('routes', () => {
       name: 'name',
       // This is is overriden...
       id: 'yeah this is an id',
-      now: Date.now()
+      now: Date.now(),
     });
     let newDeviceResult = await newDevice;
     assert.equal(newDeviceResult.id, device.record.accessToken.publicKey);
@@ -63,7 +63,7 @@ suite('routes', () => {
       name: 'name',
       // This is is overriden...
       id: 'yeah this is an id',
-      when: Date.now()
+      when: Date.now(),
     });
 
     // Listen for new devices...
@@ -83,7 +83,7 @@ suite('routes', () => {
       preview: false,
       mic: false,
       objects: false,
-      msg: 'livestream'
+      msg: 'livestream',
     });
 
     // Leave the video room;
@@ -103,7 +103,7 @@ suite('routes', () => {
       preview: false,
       mic: false,
       objects: false,
-      msg: 'livestream'
+      msg: 'livestream',
     });
 
     let deleteEvent = eventToPromise(accountSocket, 'video-stream-delete');
@@ -137,7 +137,7 @@ suite('routes', () => {
       eventToPromise(accountSocket, roomName).then(() => {
         throw new Error('should not get event...');
       }),
-      new Promise((accept) => setTimeout(accept, 100))
+      new Promise((accept) => setTimeout(accept, 100)),
     ]);
     await emit(deviceSocket, 'video', event);
     await race;
@@ -160,7 +160,7 @@ suite('routes', () => {
     let event = eventToPromise(deviceSocket, 'cmd');
     let cmd = {
       woot: true,
-      id: device.record.accessToken.publicKey
+      id: device.record.accessToken.publicKey,
     };
     await emit(accountSocket, 'cmd', cmd);
     // Sorta lame test since we only test the positive case.

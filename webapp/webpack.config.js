@@ -1,16 +1,15 @@
 'use strict';
 
 const path = require('path');
-const webpack = require('webpack');
 
 const EXTERNAL_DIR = path.join(__dirname, 'external');
 
-var config = {
-  devServer : {
+let config = {
+  devServer: {
     contentBase: './public',
     publicPath: '/js/',
   },
-  devtool: "source-map",
+  devtool: 'source-map',
   entry: {
     bundle: './src/index',
   },
@@ -29,7 +28,7 @@ var config = {
     ],
   },
   resolve: {
-    alias : {
+    alias: {
       'fs': path.resolve(__dirname, 'src/shim/fs.js'),
       'kissfft': path.resolve(__dirname, 'src', 'shim', 'kissfft.js'),
       'react-native': path.resolve(__dirname, 'src', 'shim', 'react-native.js'),
@@ -48,9 +47,9 @@ var config = {
     ],
     plugins: [
       require('babel-plugin-transform-runtime'),
-    ]
+    ],
   },
-  module : {
+  module: {
     loaders: [
       { test: /\.json$/, loader: require.resolve('json-loader') },
       {
@@ -62,11 +61,11 @@ var config = {
           return require('silk-babeldeps')(filename);
         },
         loader: require.resolve('babel-loader'),
-      }
-    ]
+      },
+    ],
   },
   plugins: [],
-}
+};
 
 // TODO: Uglify disabled for now.  The output it produces doesn't load correctly
 //config.plugins.push(new webpack.optimize.UglifyJsPlugin({ output: {comments: false} }));

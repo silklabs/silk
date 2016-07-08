@@ -39,7 +39,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
   routes.use(PREFIX, authorizeAccount({
     nonce: ctx.nonce,
-    accounts: ctx.accounts
+    accounts: ctx.accounts,
   }));
 
   /**

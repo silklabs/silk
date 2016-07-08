@@ -20,7 +20,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
   routes.use(PREFIX, authorizeDevice({
     nonce: ctx.nonce,
-    devices: ctx.devices
+    devices: ctx.devices,
   }));
 
   let api = expressApi(routes, {
@@ -38,20 +38,20 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'create',
     description: 'Create metadata',
     output: Joi.object().keys({
-      id: Joi.string().required()
+      id: Joi.string().required(),
     }),
     // Take advantage of the fact we can override a subset of keys...
     input: TimeMetadata.SCHEMA.metadata.keys({
       // XXX: Sorta hack we always override whatever is passed here...
-      deviceId: Joi.any()
-    })
+      deviceId: Joi.any(),
+    }),
   }, async (req, res) => {
     let metadata = Object.assign({}, req.body, {
-      deviceId: req.publicKey
+      deviceId: req.publicKey,
     });
     let { id } = await ctx.timeMeta.create(metadata);
     res.respond({
-      id: id
+      id: id,
     });
   });
 
@@ -65,14 +65,14 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'update',
     description: 'Update an existing metadata object',
     output: Joi.object().keys({
-      id: Joi.string().required()
+      id: Joi.string().required(),
     }),
     // Take advantage of the fact we can override a subset of keys...
     input: TimeMetadata.SCHEMA.update,
   }, async (req, res) => {
     let { id } = await ctx.timeMeta.update(req.params.id, req.body);
     res.respond({
-      id: id
+      id: id,
     });
   });
 

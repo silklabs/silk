@@ -30,5 +30,5 @@ module.exports = {
 
   getBlacklistRE(platform) {
     return blacklist(platform, additionalBlacklist);
-  }
+  },
 };

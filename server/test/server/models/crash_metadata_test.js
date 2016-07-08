@@ -19,19 +19,19 @@ suite('metadata', () => {
         deviceId,
         type,
         timeStamp: new Date(0),
-        url: 'http://example.com/one'
+        url: 'http://example.com/one',
       },
       {
         deviceId,
         type,
         timeStamp: new Date(100),
-        url: 'http://example.com/two'
+        url: 'http://example.com/two',
       },
       {
         deviceId,
         type,
         timeStamp: new Date(200),
-        url: 'http://example.com/three'
+        url: 'http://example.com/three',
       },
     ];
 
@@ -73,7 +73,7 @@ suite('metadata', () => {
     results = await subject.find({
       deviceId,
       type,
-      startTimeStamp: new Date(400)
+      startTimeStamp: new Date(400),
     });
     assert.equal(results.length, 0, 'Found no result');
   });

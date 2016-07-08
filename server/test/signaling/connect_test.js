@@ -11,7 +11,7 @@ suite('connect test', () => {
   const context = createContext({
     signaling: {
       clients: {
-        timeoutMs: 3 * 1000
+        timeoutMs: 3 * 1000,
       },
 
       residents: {
@@ -42,7 +42,7 @@ suite('connect test', () => {
     await eventToPromise(ws, 'open');
 
     let deviceLocations = await serversTable.query({
-      PartitionKey: device.record.accountId
+      PartitionKey: device.record.accountId,
     });
 
     assert.equal(deviceLocations.length, 1);

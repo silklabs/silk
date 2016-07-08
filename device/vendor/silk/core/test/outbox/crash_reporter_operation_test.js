@@ -42,8 +42,8 @@ suite('CrashReporterOperation', () => {
       size: stat.size,
       metadata: {
         timeStamp: stat.birthtime,
-        type: 'tombstone'
-      }
+        type: 'tombstone',
+      },
     });
 
     log.info('Uploading crash report');
@@ -53,7 +53,7 @@ suite('CrashReporterOperation', () => {
     let result = await accountApi.crash.findAll({
       deviceId: api.accessToken.toString(),
       type: 'tombstone',
-      limit: 1
+      limit: 1,
     });
     log.info('Found:', result);
 

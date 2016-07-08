@@ -36,7 +36,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
   routes.use(PREFIX, jwtMiddleware({
     nonce: ctx.nonce,
     signatureProvider: null,
-    publicKeyProvider: async publicKey => publicKey
+    publicKeyProvider: async publicKey => publicKey,
   }));
 
   let api = expressApi(routes, {
@@ -51,7 +51,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     email: Joi.string().email().required().
       description('Users email address'),
     passwordHash: Joi.string().hex().min(64).required().
-      description('Password hash')
+      description('Password hash'),
   };
 
   const ACCESS_TOKEN_SCHEMA = Object.assign({}, COMMON_SCHEMA, {
@@ -68,7 +68,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       success: Joi.boolean().required(),
       beaconUUID: Joi.string().guid(),
     }),
-    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA)
+    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
   }, async (req, res) => {
     let account = await ctx.accounts.create({
       // Where this key was created (i.e. iPhone 5s ...)
@@ -81,7 +81,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
        * to belong to the privateKey which signed the JWT.
        */
       publicKey: req.unsafeJwt.header.id,
-      passwordHash: req.body.passwordHash
+      passwordHash: req.body.passwordHash,
     });
 
     if (account.error) {
@@ -106,13 +106,13 @@ export default function (ctx: RouteContext): ExpressRoutes {
       success: Joi.boolean().required(),
       beaconUUID: Joi.string().guid(),
     }),
-    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA)
+    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
   }, async (req, res) => {
     let account = await ctx.accounts.signIn({
       userAgent: req.body.userAgent,
       email: req.body.email,
       publicKey: req.unsafeJwt.header.id,
-      passwordHash: req.body.passwordHash
+      passwordHash: req.body.passwordHash,
     });
 
     if (account.error) {
@@ -135,7 +135,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'checkPassword',
     description: 'Authenticate with an existing account',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
     }),
     input: Joi.object().keys(COMMON_SCHEMA),
   }, async (req, res) => {
@@ -143,7 +143,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     let result = await ctx.accounts.checkPassword({
       email: req.body.email,
       publicKey: publicKey,
-      passwordHash: req.body.passwordHash
+      passwordHash: req.body.passwordHash,
     });
     if (!result.error) {
       log.info('authenticate', result.id);
@@ -160,7 +160,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'resetPassword',
     description: 'Trigger a password reset (forgot password)',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
     }),
     input: Accounts.SCHEMA.resetPassword,
   }, async (req, res) => {
@@ -210,7 +210,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'usePasswordResetToken',
     description: 'Use the token provided by resetPassword to set a new password',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
     }),
     input: Accounts.SCHEMA.usePasswordResetToken,
   }, async (req, res) => {

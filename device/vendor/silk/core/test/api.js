@@ -39,12 +39,12 @@ export default async function(config = {}) {
     devicePublicKey: api.accessToken.toString(),
     name: 'testing',
     type: 'camera',
-    registrationToken: token
+    registrationToken: token,
   });
 
   await api.device.completeRegistration({
     registrarPublicKey: accountApi.accessToken.toString(),
-    registrationToken: token
+    registrationToken: token,
   });
 
   return { device: api, account: accountApi };

@@ -40,12 +40,12 @@ class S3Blobs {
     let putUrl = await s3.getSignedUrl('putObject', {
       Bucket: blobConfig.bucket,
       Key: uuid.v4(),
-      ContentType: contentType
+      ContentType: contentType,
     });
 
     const putHeaders = {
       'Content-Length': contentLength,
-      'Content-Type': contentType
+      'Content-Type': contentType,
     };
 
     log.info(`Responding with PUT url '${putUrl}'`);

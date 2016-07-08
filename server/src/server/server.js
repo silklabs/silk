@@ -85,7 +85,7 @@ export default async function main (config: any): any {
   let blobs = {
     aliyun: null,
     s3: null,
-    file: await createFileBlob(config)
+    file: await createFileBlob(config),
   };
 
   if (config.server.blobType === 's3') {
@@ -191,6 +191,6 @@ export default async function main (config: any): any {
     close: async() => {
       await db.close();
       server.close();
-    }
+    },
   };
 }

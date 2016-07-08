@@ -5,5 +5,5 @@ module.exports = {
     new CopyWebpack([
       { from: 'motion_detected.mp3' },
     ]),
-  ]
+  ],
 };

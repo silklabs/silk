@@ -10,7 +10,7 @@ suite('signer', () => {
     const subject = new Signer(context.config.azure);
     let signatures = subject.createTableSignatures('sigservers', {
       expiration: new Date(),
-      signedPermissions: 'r'
+      signedPermissions: 'r',
     });
 
     // This is just a quick sanity check real tests will exercise the api ...

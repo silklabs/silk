@@ -394,7 +394,7 @@ export default class Devices extends AsyncComponent {
     log.debug('Going to configure a device.');
     try {
       bleDeviceSession.acceptRegistrationRequest();
-    } catch(ex) {
+    } catch (ex) {
       this._abortConfig(bleDeviceSession, ex);
       return;
     }
@@ -410,7 +410,9 @@ export default class Devices extends AsyncComponent {
       bleDeviceSession,
       onCancel: () => this._abortConfig(bleDeviceSession),
       onSave: (config) => this._saveDeviceConfig(bleDeviceSession, config),
-      onMounted: () => deviceTouchViewMounted = true,
+      onMounted: () => {
+        deviceTouchViewMounted = true;
+      },
     };
 
     const advanceToWifiConfig = () =>
@@ -469,7 +471,7 @@ export default class Devices extends AsyncComponent {
         serverUrl: this.props.api.config.serverUrl,
         time: Date.now(),
       });
-    } catch(ex) {
+    } catch (ex) {
       await this._abortConfig(bleDeviceSession, ex);
     }
   }

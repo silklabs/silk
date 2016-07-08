@@ -15,7 +15,7 @@ suite('accounts', () => {
     let record = {
       value: uuid.v1(),
       created: new Date(),
-      expires: new Date()
+      expires: new Date(),
     };
 
     let insert = await subject.create(record);
@@ -34,18 +34,18 @@ suite('accounts', () => {
       farFuture: {
         value: uuid.v1(),
         created: new Date(),
-        expires: new Date(3000, 1)
+        expires: new Date(3000, 1),
       },
       farPast: {
         value: uuid.v1(),
         created: new Date(),
-        expires: new Date(1980, 1)
+        expires: new Date(1980, 1),
       },
       notExpired: {
         value: uuid.v1(),
         created: new Date(),
-        expires: new Date(Date.now() + 60 * 1000)
-      }
+        expires: new Date(Date.now() + 60 * 1000),
+      },
     };
 
     // Promise.all could have been used but this is clearer if it fails...

@@ -304,35 +304,37 @@ export default class CameraClipRecorder {
     case 'live':
       return [when, imRGB, imGray, imScaledGray];
     default:
-      if (this._framePosition >= this._frames.size) {
-        log.error('Invalid _framePosition.',
-          `${this._framePosition} >= ${this._frames.size}`);
-        this.stopPlayback();
-        return [when, imRGB, imGray, imScaledGray];
-      }
+      {
+        if (this._framePosition >= this._frames.size) {
+          log.error('Invalid _framePosition.',
+            `${this._framePosition} >= ${this._frames.size}`);
+          this.stopPlayback();
+          return [when, imRGB, imGray, imScaledGray];
+        }
 
-      const frame = this._frames.get(this._framePosition);
+        const frame = this._frames.get(this._framePosition);
 
-      let nextFramePosition = this._framePosition;
-      if (this.state.mode === 'play') {
-        nextFramePosition++;
-        if (nextFramePosition >= this._frames.size) {
-          if (this.state.repeat) {
-            nextFramePosition = 0;
-          } else {
-            nextFramePosition = this._frames.size - 1;
-            this.stopPlayback();
+        let nextFramePosition = this._framePosition;
+        if (this.state.mode === 'play') {
+          nextFramePosition++;
+          if (nextFramePosition >= this._frames.size) {
+            if (this.state.repeat) {
+              nextFramePosition = 0;
+            } else {
+              nextFramePosition = this._frames.size - 1;
+              this.stopPlayback();
+            }
           }
         }
+        this._framePosition = nextFramePosition;
+
+        imRGB.release();
+        imGray.release();
+        imScaledGray.release();
+
+        [when, imRGB, imGray, imScaledGray] = frame;
+        return [when, imRGB.copy(), imGray.copy(), imScaledGray.copy()];
       }
-      this._framePosition = nextFramePosition;
-
-      imRGB.release();
-      imGray.release();
-      imScaledGray.release();
-
-      [when, imRGB, imGray, imScaledGray] = frame;
-      return [when, imRGB.copy(), imGray.copy(), imScaledGray.copy()];
     }
   }
 
@@ -420,4 +422,3 @@ export default class CameraClipRecorder {
     this._onStateChange();
   }
 }
-

@@ -74,6 +74,7 @@ export class ExpressRoutes {
         methodFn(req, res).catch(err => {
           next(err);
         });
+        return null;
       } catch (e) {
         let id = uuid.v1();
         debug(`

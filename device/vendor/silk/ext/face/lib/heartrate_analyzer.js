@@ -152,59 +152,59 @@ export default class HeartRateAnalyzer {
    * @param fftInput Float32Array of time domain samples
    * @return An object with heart rate in beats per minute (bpm) and its magnitude
    */
- estimate(fftInput) {
+  estimate(fftInput) {
    // Run the forward FFT on the normalized and windowed samples.
-   if (!this.fft) {
-     log.error('No FFT implementation available, skipping further processing');
-     return null;
-   }
+    if (!this.fft) {
+      log.error('No FFT implementation available, skipping further processing');
+      return null;
+    }
 
-   let [output, outputMagnitudes, dc, nyquist] = this._runFFT(fftInput); // eslint-disable-line no-unused-vars
-   log.debug(`outputMagnitudes: ${outputMagnitudes}`);
+    let [output, outputMagnitudes, dc, nyquist] = this._runFFT(fftInput); // eslint-disable-line no-unused-vars
+    log.debug(`outputMagnitudes: ${outputMagnitudes}`);
 
-   let maxBin = this.minFreqBin;
-   for (let i = this.minFreqBin; i < this.maxFreqBin; i++) {
-     if (outputMagnitudes[i] > outputMagnitudes[maxBin]) {
-       maxBin = i;
-     }
-   }
-   let bpm = (maxBin + 1) * this.hzPerBin * 60;
-   let maxIca = Math.max(...fftInput);
-   return {bpm: Math.floor(bpm), magnitude: outputMagnitudes[maxBin], maxIca};
- }
+    let maxBin = this.minFreqBin;
+    for (let i = this.minFreqBin; i < this.maxFreqBin; i++) {
+      if (outputMagnitudes[i] > outputMagnitudes[maxBin]) {
+        maxBin = i;
+      }
+    }
+    let bpm = (maxBin + 1) * this.hzPerBin * 60;
+    let maxIca = Math.max(...fftInput);
+    return {bpm: Math.floor(bpm), magnitude: outputMagnitudes[maxBin], maxIca};
+  }
 
  /**
   * Estimate the heartrate given all three components
   */
- estimateAll(y, cb, cr) {
-   let yInput = this._preprocess(y);
-   let cbInput = this._preprocess(cb);
-   let crInput = this._preprocess(cr);
+  estimateAll(y, cb, cr) {
+    let yInput = this._preprocess(y);
+    let cbInput = this._preprocess(cb);
+    let crInput = this._preprocess(cr);
 
    // Run Independent Component Analysis on the sources to eliminate motion
    // artifacts
-   let result = silkcv.Ica.jade(yInput, cbInput, crInput);
-   log.debug(`ICA[0] ${result[0]}`);
-   log.debug(`ICA[1] ${result[1]}`);
-   log.debug(`ICA[2] ${result[2]}`);
+    let result = silkcv.Ica.jade(yInput, cbInput, crInput);
+    log.debug(`ICA[0] ${result[0]}`);
+    log.debug(`ICA[1] ${result[1]}`);
+    log.debug(`ICA[2] ${result[2]}`);
 
    // Estimate heartrate on all three components
-   let result0 = this.estimate(result[0]);
-   let result1 = this.estimate(result[1]);
-   let result2 = this.estimate(result[2]);
+    let result0 = this.estimate(result[0]);
+    let result1 = this.estimate(result[1]);
+    let result2 = this.estimate(result[2]);
 
    // Sort result in descending order of magnitude
-   result = [result0, result1, result2];
-   result.sort((a, b) => {
-     return (a.magnitude > b.magnitude) ? -1 :
+    result = [result0, result1, result2];
+    result.sort((a, b) => {
+      return (a.magnitude > b.magnitude) ? -1 :
          ((a.magnitude === b.magnitude) ? 0 : 1);
-   });
+    });
 
    // Pick the component with the highest magnitude
-   let bpm = result[0].bpm;
-   log.info(`comp 1 bpm: ${result[0].bpm}, ${result[0].magnitude} ${result[0].maxIca}`);
-   log.info(`comp 2 bpm: ${result[1].bpm}, ${result[1].magnitude} ${result[1].maxIca}`);
-   log.info(`comp 3 bpm: ${result[2].bpm}, ${result[2].magnitude} ${result[2].maxIca}`);
-   return bpm;
- }
+    let bpm = result[0].bpm;
+    log.info(`comp 1 bpm: ${result[0].bpm}, ${result[0].magnitude} ${result[0].maxIca}`);
+    log.info(`comp 2 bpm: ${result[1].bpm}, ${result[1].magnitude} ${result[1].maxIca}`);
+    log.info(`comp 3 bpm: ${result[2].bpm}, ${result[2].magnitude} ${result[2].maxIca}`);
+    return bpm;
+  }
 }

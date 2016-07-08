@@ -10,22 +10,22 @@ suite('base model', () => {
   class Sub extends Base {
 
     static ERROR = {
-      foo: 'FOO'
+      foo: 'FOO',
     };
 
     static INDEX = [
       {
         props: {
-          'models.foo': 1
+          'models.foo': 1,
         },
-        options: { unique: true }
-      }
+        options: { unique: true },
+      },
     ];
 
     static SCHEMA = {
       model: Joi.object({
         foo: Joi.boolean().required(),
-      })
+      }),
     };
 
     static COLLECTION = 'sub';
@@ -43,8 +43,8 @@ suite('base model', () => {
   test('error', () => {
     assert.deepEqual(subject.error('foo'), {
       error: {
-        type: 'FOO'
-      }
+        type: 'FOO',
+      },
     });
   });
 

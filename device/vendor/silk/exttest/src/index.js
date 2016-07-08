@@ -11,7 +11,6 @@ import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
 import { Ui } from 'silk-core/lib/ui';
 import createLog from 'silk-log/device';
-import wifi from 'silk-wifi';
 import Camera from 'silk-camera';
 import invariant from 'assert';
 import opencv from 'opencv';

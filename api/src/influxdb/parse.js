@@ -148,9 +148,10 @@ function parseValues(iterator) {
 
 function parseTimestamp(iterator) {
   let result = iterToStr(iterator);
-  if (result) {
-    return types.Timestamp.parse(result);
+  if (!result) {
+    return null;
   }
+  return types.Timestamp.parse(result);
 }
 
 /**

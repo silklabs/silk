@@ -38,7 +38,7 @@ suite('account auth', () => {
     let input = {
       userAgent: 'woot',
       email: email,
-      password: 'password'
+      password: 'password',
     };
     let create = await api.vip.createAccountWithPassword(input);
     assert.ok(create.success);
@@ -56,7 +56,7 @@ suite('account auth', () => {
     let input = {
       userAgent: 'woot',
       email: email,
-      password: 'password'
+      password: 'password',
     };
     let create = await api.vip.createAccountWithPassword(input);
     assert.ok(create.success);
@@ -70,7 +70,7 @@ suite('account auth', () => {
     let create = await api.vip.createAccountWithPassword({
       userAgent: 'woot',
       email: email,
-      password: 'password'
+      password: 'password',
     });
     assert.ok(create.success);
     let record = await accounts.findByPublicKey({ publicKey: id.pub });
@@ -78,19 +78,19 @@ suite('account auth', () => {
 
     let auth = await api.vip.checkPasswordWithPassword({
       email: email,
-      password: 'password'
+      password: 'password',
     });
     assert.ok(auth.success);
 
     let authAgain = await api.vip.checkPasswordWithPassword({
       email: email,
-      password: 'password'
+      password: 'password',
     });
     assert.ok(authAgain.success);
 
     let passCheckFail = await api.vip.checkPasswordWithPassword({
       email: email,
-      password: 'fail'
+      password: 'fail',
     });
     assert.ok(!passCheckFail.success);
   });
@@ -102,13 +102,13 @@ suite('account auth', () => {
     let create = await api.vip.createAccountWithPassword({
       userAgent: 'woot',
       email: email,
-      password: 'password'
+      password: 'password',
     });
     assert.ok(create.success);
 
     let auth = await api.vip.checkPasswordWithPassword({
       email: emailMixed,
-      password: 'password'
+      password: 'password',
     });
     assert.ok(auth.success);
   });
@@ -117,7 +117,7 @@ suite('account auth', () => {
     let account = {
       userAgent: 'woot',
       email: email,
-      password: 'password'
+      password: 'password',
     };
 
     setup(async () => {
@@ -142,7 +142,7 @@ suite('account auth', () => {
         {},
         account,
         {
-          password: 'yousuck'
+          password: 'yousuck',
         }
       ));
       assert.ok(!result.success);
@@ -156,7 +156,7 @@ suite('account auth', () => {
 
     let auth = await api.vip.checkPasswordWithPassword({
       email,
-      password
+      password,
     });
 
     assert.ok(auth.success, 'dev account login works');
@@ -173,19 +173,19 @@ suite('account auth', () => {
     setup(async () => {
       account = await context.testAccount({
         // Required so SES will pass...
-        email: 'success@simulator.amazonses.com'
+        email: 'success@simulator.amazonses.com',
       });
       account.api.accessToken = await AccessToken.gen();
     });
 
     test('reset password', async () => {
       let reset = await account.api.vip.resetPassword({
-        email: account.record.email
+        email: account.record.email,
       });
       assert(reset.success);
 
       let {passwordReset} = await accounts.collection.findOne({
-        email: account.record.email
+        email: account.record.email,
       });
 
       let {pub, priv} = passwordReset.accessToken;
@@ -196,14 +196,14 @@ suite('account auth', () => {
       let useToken = await account.api.vip.usePasswordResetToken({
         email: account.record.email,
         token,
-        passwordHash: password
+        passwordHash: password,
       });
       assert(useToken.success);
 
       let signIn = await account.api.vip.signIn({
         email: account.record.email,
         passwordHash: password,
-        userAgent: 'test'
+        userAgent: 'test',
       });
       assert(signIn.success);
     });

@@ -27,10 +27,10 @@ let log;
 // state. If durationMs is 0 or undefined, scene will stay current state.
 //
 const scenes = {
-  blue: {states: [{color: [190, 88, 100, 3500], }], },
-  red: {states: [{color: [329, 44, 57, 3500]}], },
-  green: {states: [{color: [109, 94, 100, 3500], }], },
-  purple: {states: [{color: [295, 93, 100, 3500], }], },
+  blue: {states: [{color: [190, 88, 100, 3500] }] },
+  red: {states: [{color: [329, 44, 57, 3500]}] },
+  green: {states: [{color: [109, 94, 100, 3500] }] },
+  purple: {states: [{color: [295, 93, 100, 3500] }] },
   smoke: {
     states: [
       {color: [16, 100, 89, 3500], durationMs: 500},  /* red */

@@ -1,16 +1,15 @@
-var path = require('path');
-var webpack = require('webpack');
+let webpack = require('webpack');
 
-var config = {
-  devServer : {
+let config = {
+  devServer: {
     contentBase: './public',
     publicPath: '/js/',
   },
-  devtool: "source-map",
+  devtool: 'source-map',
   entry: ['babel-polyfill', './lib/www/index'],
   output: {
     path: 'public/js',
-    filename: 'bundle.js'
+    filename: 'bundle.js',
   },
   babel: {
     presets: [
@@ -19,7 +18,7 @@ var config = {
       require('babel-preset-react'),
     ],
   },
-  module : {
+  module: {
     loaders: [
       {
         test: /\.json$/,
@@ -29,13 +28,13 @@ var config = {
         test: /\.js$/,
         loader: require.resolve('babel-loader'),
         include: require('silk-babeldeps'),
-      }
-    ]
+      },
+    ],
   },
   plugins: [
     // Ignore octokat's require('xmlhttprequest')
-    new webpack.IgnorePlugin(new RegExp("^(xmlhttprequest)$")),
-  ]
-}
+    new webpack.IgnorePlugin(new RegExp('^(xmlhttprequest)$')),
+  ],
+};
 
 module.exports = config;

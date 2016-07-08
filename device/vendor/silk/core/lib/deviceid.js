@@ -40,7 +40,7 @@ export default async function getDeviceId(): Promise<AccessToken> {
     log.debug(`'${ID_PATH}' exists and is readable`);
 
     deviceId = AccessToken.import(fileContents);
-  } catch(e) {
+  } catch (e) {
     if (e.code === 'ENOENT') {
       log.debug(`'${ID_PATH}' does not exist`);
     } else {

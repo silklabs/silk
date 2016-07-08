@@ -44,7 +44,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     publicKeyProvider: async (publicKey) => {
       // Attempt to find an account with this id...
       let account = await ctx.accounts.findByPublicKey({
-        publicKey: publicKey
+        publicKey: publicKey,
       });
 
       if (!account) {
@@ -59,7 +59,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
         return accessToken.publicKey;
       }
       return null;
-    }
+    },
   };
 
   routes.use(PREFIX, jwtMiddleware(options));
@@ -75,7 +75,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     method: 'post',
     params: [],
     name: 'aPost',
-    input: Joi.object().required()
+    input: Joi.object().required(),
   }, async (req, res) => {
     res.respond({});
   });
@@ -85,7 +85,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     method: 'put',
     params: [],
     name: 'aPut',
-    input: Joi.object().required()
+    input: Joi.object().required(),
   }, async (req, res) => {
     res.respond({});
   });
@@ -95,7 +95,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     method: 'put',
     params: [],
     name: 'bPut',
-    input: Joi.object().required()
+    input: Joi.object().required(),
   }, async (req, res) => {
     res.respond({});
   });
@@ -104,7 +104,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     path: 'test',
     method: 'post',
     name: 'retryMe',
-    input: Joi.object().required()
+    input: Joi.object().required(),
   }, async (req, res) => {
     /**
      * There are a number of important conditions which can fail under:
@@ -133,7 +133,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     res.set('Content-Type', 'application/json');
     res.writeHead(status, {
       'Content-Length': contentLength,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
     await sleep(delayBody);
     res.end(body);

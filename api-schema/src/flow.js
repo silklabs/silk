@@ -135,10 +135,13 @@ function convertTrivial(input: any): string {
 }
 
 export default function convert(name: string, input: any): string {
-  switch(input.type) {
+  switch (input.type) {
   case 'object':
-    let res = convertObject(name, input);
-    return `${res.types.join('\n')}\n${res.flow}`;
+    // create a lexical scope
+    {
+      let res = convertObject(name, input);
+      return `${res.types.join('\n')}\n${res.flow}`;
+    }
   case 'array':
     return convertArray(name, input).typeName;
   default:

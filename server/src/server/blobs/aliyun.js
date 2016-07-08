@@ -57,7 +57,7 @@ class AliyunBlobs {
       method: 'PUT',
       bucket: blobConfig.bucket,
       object: blobType + '!' + uuid.v4(), // enbed blobType in object name
-      headers: headers
+      headers: headers,
     });
 
     log.info(`Responding with PUT url '${putUrl}'`);

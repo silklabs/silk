@@ -155,7 +155,7 @@ export default class SocketService extends BlenoService {
       try {
         log.debug(`Waiting for ${promises.length} peripherals to disconnect`);
         await Promise.all(promises);
-      } catch(error) {
+      } catch (error) {
         log.warn(error);
       }
       log.debug(`Done waiting`);
@@ -469,7 +469,7 @@ export default class SocketService extends BlenoService {
     log.info(`New stream for peripheral '${address}' created`);
     try {
       this.emit(`connect`, stream, peripheral);
-    } catch(error) {
+    } catch (error) {
       this._streams.delete(address);
       throw error;
     }

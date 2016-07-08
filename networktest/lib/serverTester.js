@@ -21,7 +21,9 @@ export default class ServerTester {
     return this._device.connect()
     .then(() => this._device.emitInfo(1, 0)) // server expects info first
     .then(() => repeater.start())
-    .then(results => stats = results)
+    .then((results) => {
+      stats = results;
+    })
     .then(() => this._device.disconnect())
     .then(() => stats)
     .catch(util.processthrow);

@@ -52,7 +52,7 @@ suite('connections', () => {
         // Calling restart causes an entirely new server to be spun up so we
         // need to get a reference to it prior to running the next restart.
         signaling = await pendingServer;
-      } while(attempt < tries);
+      } while (attempt < tries);
     });
   });
 

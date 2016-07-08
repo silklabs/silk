@@ -12,7 +12,7 @@ suite('sign url', function() {
       cloud: 'aws',
       region: 'us-west-2',
       bucket: 'silk-blobs-dev-us-west-2',
-      key: 'bc82bd3e-eb0b-45ae-9a1a-3e5cd710b611'
+      key: 'bc82bd3e-eb0b-45ae-9a1a-3e5cd710b611',
     });
   });
 

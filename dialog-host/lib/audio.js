@@ -149,6 +149,7 @@ export default class Audio extends EventEmitter {
     this._waitForWake();
   }
 
+  // eslint-disable-next-line no-undef
   speak(stream: Readable, nextState: DialogState): void {
     invariant(stream);
 

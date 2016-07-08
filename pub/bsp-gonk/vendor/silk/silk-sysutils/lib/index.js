@@ -35,7 +35,7 @@ if (process.platform === 'android') {
         return result.stdout.toString();
       }
       return '';
-    }
+    },
   };
 }
 

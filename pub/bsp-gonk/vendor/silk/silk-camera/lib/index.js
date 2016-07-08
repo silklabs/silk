@@ -285,8 +285,8 @@ export default class Camera extends EventEmitter {
     this._config = Object.assign({
       deviceMic: {
         bytesPerSample: 2,
-        encoding: "signed-integer",
-        endian: "little",
+        encoding: 'signed-integer',
+        endian: 'little',
         numChannels: 1,
         sampleRate: 16000,
       }}, config);
@@ -324,7 +324,9 @@ export default class Camera extends EventEmitter {
     const frameCaptureEnabled = this.listenerCount('frame') > 0;
     const fastFrameCaptureEnabled = this.listenerCount('fast-frame') > 0;
 
+    // eslint-disable-next-line eqeqeq
     if (frameCaptureEnabled != this._frameCaptureEnabled ||
+    // eslint-disable-next-line eqeqeq
         fastFrameCaptureEnabled != this._fastFrameCaptureEnabled) {
       this._frameCaptureEnabled = frameCaptureEnabled;
       this._fastFrameCaptureEnabled = fastFrameCaptureEnabled;
@@ -581,7 +583,7 @@ export default class Camera extends EventEmitter {
         vbr: VBR,
         audioMute: this._audioMute,
         audioSampleRate: this._config.deviceMic.sampleRate,
-        audioChannels: this._config.deviceMic.numChannels
+        audioChannels: this._config.deviceMic.numChannels,
       };
 
       this._command({cmdName: 'init', cmdData});
@@ -675,7 +677,7 @@ export default class Camera extends EventEmitter {
       let err = false;
 
       let frames = formats.map(format => { //eslint-disable-line no-loop-func
-        switch(format) {
+        switch (format) {
         case 'fullrgb':
           return image.fullrgb;
         case 'rgb':
@@ -929,31 +931,33 @@ export default class Camera extends EventEmitter {
         let tagInfo = `| size:${size} when:${sec}.${usec} durationMs:${durationMs}`;
         switch (tag) {
         case TAG_VIDEO:
-          log.debug(`TAG_VIDEO ${when}`, tagInfo);
-          this._videoTagReceived = true;
-          invariant(now);
-          let socketDuration = now - when - durationMs;
+          {
+            log.debug(`TAG_VIDEO ${when}`, tagInfo);
+            this._videoTagReceived = true;
+            invariant(now);
+            let socketDuration = now - when - durationMs;
 
-          if (socketDuration < 0) {
-            log.debug(`Bad socketDuration: ${socketDuration}`);
-            socketDuration = 0;
-          }
-          log.debug(`socketDuration: ${socketDuration}`);
+            if (socketDuration < 0) {
+              log.debug(`Bad socketDuration: ${socketDuration}`);
+              socketDuration = 0;
+            }
+            log.debug(`socketDuration: ${socketDuration}`);
 
-          if (this._recording) {
-            /**
-             * This event is emitted when a MPEG4 video segement is available
-             *
-             * @event video-segment
-             * @memberof silk-camera
-             * @instance
-             * @property {number} when Timestamp of the video segment in UTC milliseconds
-             *                         since epoch
-             * @property {number} durationMs duration in milliseconds of the
-             *                    video segment
-             * @property {Object} pkt mpeg4 data
-             */
-            this._throwyEmit('video-segment', when, durationMs, pkt);
+            if (this._recording) {
+              /**
+               * This event is emitted when a MPEG4 video segement is available
+               *
+               * @event video-segment
+               * @memberof silk-camera
+               * @instance
+               * @property {number} when Timestamp of the video segment in UTC milliseconds
+               *                         since epoch
+               * @property {number} durationMs duration in milliseconds of the
+               *                    video segment
+               * @property {Object} pkt mpeg4 data
+               */
+              this._throwyEmit('video-segment', when, durationMs, pkt);
+            }
           }
           break;
         case TAG_FACES:

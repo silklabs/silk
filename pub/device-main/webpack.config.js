@@ -5,5 +5,5 @@ module.exports = {
     new CopyWebpack([
       { from: 'splash.zip', to: 'splash.zip' },
     ]),
-  ]
+  ],
 };

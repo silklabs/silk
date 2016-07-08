@@ -89,7 +89,7 @@ function shutdown() {
 let camera = new Camera();
 camera.init()
 .then(() => {
-   camera.startRecording();
+  camera.startRecording();
 });
 camera.on('frame', (when, image) => {
   log.info('Received a frame at timestamp' + when + '-' + image);

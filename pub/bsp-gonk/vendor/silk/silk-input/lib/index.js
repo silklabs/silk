@@ -54,7 +54,7 @@ class InputDevice extends events.EventEmitter {
         timeS: buffer.readUInt32LE(0),
         timeMS: buffer.readUInt32LE(4),
         keyCode: buffer.readUInt16LE(10),
-        type: ['up', 'down', 'repeat'][buffer.readUInt32LE(12)]
+        type: ['up', 'down', 'repeat'][buffer.readUInt32LE(12)],
       };
       const keys = {
         113: 'mute',

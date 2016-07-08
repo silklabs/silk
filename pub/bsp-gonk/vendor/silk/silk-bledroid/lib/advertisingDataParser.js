@@ -163,7 +163,7 @@ function parseServiceData(uuidLength, buffer) {
 
   return {
     uuid: serviceUUID,
-    data
+    data,
   };
 }
 
@@ -187,7 +187,7 @@ function parseManufacturerData(buffer) {
   return {
     manufacturerCode,
     manufacturerName,
-    buffer
+    buffer,
   };
 }
 
@@ -243,7 +243,7 @@ export default function(buffer) {
         data.push({
           type: typeMeta.type,
           description: typeMeta.description,
-          data: parsedPayload
+          data: parsedPayload,
         });
         successfulParse = true;
       } else {
@@ -261,7 +261,7 @@ export default function(buffer) {
       data.push({
         type: dataType,
         description: typeMeta ? typeMeta.description : 'Unknown',
-        data: bufferToHexString(buffer)
+        data: bufferToHexString(buffer),
       });
     }
 
@@ -386,7 +386,7 @@ const MAPS = Object.defineProperties({ }, {
       return this.types;
     },
     configurable: true,
-    enumerable: true
+    enumerable: true,
   },
 
   flags: {
@@ -403,13 +403,13 @@ const MAPS = Object.defineProperties({ }, {
           [ 1 << 3, { description: 'Simultaneous LE and BR/EDR to Same Device Capable (Controller)',
                       value: '0x' + ((1 << 3) << 0).toString(16) }],
           [ 1 << 4, { description: 'Simultaneous LE and BR/EDR to Same Device Capable (Host)',
-                      value: '0x' + ((1 << 4) << 0).toString(16) }]
-        ]) ]
+                      value: '0x' + ((1 << 4) << 0).toString(16) }],
+        ]) ],
       ]);
       return this.flags;
     },
     configurable: true,
-    enumerable: true
+    enumerable: true,
   },
 
   manufacturers: {
@@ -1044,6 +1044,6 @@ const MAPS = Object.defineProperties({ }, {
       return this.manufacturers;
     },
     configurable: true,
-    enumerable: true
-  }
+    enumerable: true,
+  },
 });

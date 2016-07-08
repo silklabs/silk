@@ -284,12 +284,8 @@ export default class ConfigSessionListener extends SessionListenerBase {
       log.debug(`Setting system time to configuring app's time`, time);
 
       exec('time_genoff', [time.getTime().toString()])
-        .catch((error) => {
-          log.warn(`Unable to set system time`, error);
-        })
-        .then(() => {
-          this._completeRegistration(secret);
-        });
+        .catch((error) => log.warn(`Unable to set system time`, error))
+        .then(() => this._completeRegistration(secret));
       return;
 
     case `dismiss`:

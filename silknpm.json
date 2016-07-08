@@ -30,6 +30,7 @@
     "svm"
   ],
   "restrict": {
+    "pub/docs": [],
     "app": ["package.json"],
     "external-dlib": ["package.json"],
     "server": ["package.json"],

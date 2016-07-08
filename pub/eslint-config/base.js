@@ -1,7 +1,10 @@
 module.exports = {
   "extends": "eslint:recommended",
-  "ecmaFeatures": {
-    "modules": true
+  "parserOptions": {
+    "ecmaVersion": 7,
+    "ecmaFeatures": {
+      "modules": true
+    }
   },
   "env": {
     "es6": true,
@@ -14,7 +17,7 @@ module.exports = {
     "no-catch-shadow": 2,
     "no-const-assign": 2,
     "no-debugger": 2,
-    "no-empty-label": 2,
+    "no-labels": 2,
     "no-eval": 2,
     "no-extend-native": 2,
     "no-extra-bind": 2,
@@ -67,11 +70,11 @@ module.exports = {
     "key-spacing": [2, {"beforeColon": false, "afterColon": true}],
     "new-cap": 2,
     "new-parens": 2,
-    "quotes": [2, "single", "avoid-escape"],
+    "quotes": [2, "single", { "avoidEscape": true, "allowTemplateLiterals": true }],
     "semi": 2,
     "semi-spacing": [2, {"before": false, "after": true}],
     "space-infix-ops": 2,
-    "space-return-throw-case": 2,
+    "keyword-spacing": 2,
     "space-unary-ops": [2, {"words": true, "nonwords": false}],
     "strict": 0,
     "yoda": 0

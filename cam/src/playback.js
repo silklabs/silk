@@ -74,7 +74,7 @@ export default class VideoPlayback {
     this.width = info.videoTracks[0].track_width;
     this.height = info.videoTracks[0].track_height;
     log.debug(`Audio codec: ${this.audioCodec}`);
-    log.debug(`Video codec: ${this.videoCodec}`);
+    log.debug(`Video codec: ${String(this.videoCodec)}`);
   }
 
   /**

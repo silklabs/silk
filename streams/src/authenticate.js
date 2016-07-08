@@ -110,7 +110,6 @@ export class AuthenticateStreamBase extends ClosingTransform {
     this._transformCallback = null;
 
     if (callback) {
-      // $FlowFixMe: Flow doesn't understand streams in object mode.
       callback(this._error, data);
     }
   }

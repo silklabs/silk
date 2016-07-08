@@ -235,6 +235,7 @@ async function main (config: any): any {
       throw new Error('After parse formatted url is invalid...');
     }
 
+    invariant(typeof signUrl.pathname === 'string');
     let canonicalReq = `${signUrl.pathname}\n${req.method.toLowerCase()}`;
     // TODO: Figure how out to avoid appending to req like this...
     req.requestHash = sha256(canonicalReq);

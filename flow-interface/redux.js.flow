@@ -51,7 +51,7 @@ export type StoreEnhancerStoreCreator<S: Object> = (
   initialState: S
 ) => Store<S>;
 
-declare export var createStore: StoreCreator;
+declare export var createStore: StoreCreator<State>;
 
 export interface MiddlewareAPI<S> {
   dispatch: Dispatch<S>;
@@ -63,8 +63,8 @@ export type Middleware<S: Object, api: MiddlewareAPI<S>> = (
 ) => Dispatch<S>;
 
 declare export function applyMiddleware(
-  ...middlewares: Array<Middleware>
-): GenericStoreEnhancer;
+  ...middlewares: Array<Middleware<Object, MiddlewareAPI<Object>>>
+): GenericStoreEnhancer<Object>;
 
 export type ActionCreator<A: Action> = (
   ...args: Array<any>

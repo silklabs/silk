@@ -1,6 +1,7 @@
 /**
  * @flow
  */
+import invariant from 'assert';
 import http from 'http';
 import eventToPromise from 'event-to-promise';
 import URL from 'url';
@@ -175,6 +176,7 @@ export default async function main (config: any): any {
 
     // This server does not deal /w anything except socket.io requests so we
     // can simpify the hashing model here.
+    invariant(typeof signUrl.path === 'string');
     let canonicalReq = `${signUrl.path}\n${req.method.toLowerCase()}`;
     // TODO: Figure how out to avoid appending to req like this...
     req.requestHash = sha256(canonicalReq);

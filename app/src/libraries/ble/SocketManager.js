@@ -65,7 +65,7 @@ export class Socket extends RobustEventEmitter {
   }
 
   enableRssiUpdates(enable: boolean) {
-    log.debug(`Socket.updateRssi(${enable})`);
+    log.debug(`Socket.updateRssi(${String(enable)})`);
     invariant(singletonInstance);
     singletonInstance.enableRssiUpdates(this._id, enable);
   }
@@ -196,7 +196,7 @@ export class SocketManager extends RobustEventEmitter {
   }
 
   enableRssiUpdates(id: number, enable: boolean) {
-    log.debug(`SocketManager.updateRssi(${id}, ${enable})`);
+    log.debug(`SocketManager.updateRssi(${id}, ${String(enable)})`);
 
     invariant(this._sockets.has(id));
 

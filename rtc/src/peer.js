@@ -77,7 +77,7 @@ export default class Peer extends EventEmitter {
   /**
    * Holds the pending promise for the initial signaling ...
    */
-  _pendingSignaling: ?Promise;
+  _pendingSignaling: ?Promise<void>;
 
   /**
    * Has this peer ever been connected ?

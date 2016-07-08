@@ -27,13 +27,7 @@ type RegistrationResult = {
   regPublicKey: string;
 };
 
-type AccountDeviceInfo = {
-  publicKey: string;
-};
-
 const log = createLog('account');
-
-const SHA256_KEYLENGTH = 32;
 
 export default class Account {
   serverUrl: ?string;
@@ -42,7 +36,7 @@ export default class Account {
   beaconUUID: ?string;
 
   constructor(options: AccountOptions) {
-    log.debug(`new account using server: ${options.serverUrl}`);
+    log.debug(`new account using server: ${String(options.serverUrl)}`);
 
     this.serverUrl = options.serverUrl;
     this.api = createApi({

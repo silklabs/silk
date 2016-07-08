@@ -39,7 +39,7 @@ function parseRange(request): [?number, ?number] {
 }
 
 function handleOpenEndRequest(provider, request, response, offset): void {
-  log.info(`handleOpenEndRequest(${offset})`);
+  log.info(`handleOpenEndRequest(${String(offset)})`);
   if (typeof offset === 'number') {
     response.writeHead(206, {
       'content-type': 'video/mp4',
@@ -89,7 +89,7 @@ function handleOpenEndRequest(provider, request, response, offset): void {
 }
 
 function handleRangeRequest(provider, request, response, start, end): void {
-  log.info(`handleRangeRequest(${start}, ${end})`);
+  log.info(`handleRangeRequest(${String(start)}, ${end})`);
   start = start || 0;
   let segment = provider.findSegmentClosestToOffset(start);
   if (end) {

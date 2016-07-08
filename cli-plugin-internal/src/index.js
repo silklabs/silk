@@ -106,11 +106,11 @@ export const create = {
   main: async (args: LoginOrCreateArgs) => {
     let account = createAccount(args, true);
 
-    console.log(`Creating new account into ${account.serverUrl} with ${args.email} ...`);
+    console.log(`Creating new account into ${String(account.serverUrl)} with ${args.email} ...`);
 
     let success = await account.createAccount(args.email, args.password);
     console.log(`Account created ${success ? 'success' : 'failed'}`);
-  }
+  },
 };
 
 export const login = {
@@ -127,7 +127,7 @@ export const login = {
   main: async (args: LoginOrCreateArgs) => {
     let account = createAccount(args, true);
 
-    console.log(`Logging into ${account.serverUrl} with ${args.email} ...`);
+    console.log(`Logging into ${String(account.serverUrl)} with ${args.email} ...`);
 
     let success = await account.login(args.email, args.password);
     if (success) {
@@ -142,7 +142,7 @@ export const login = {
     } else {
       console.log('Login failure');
     }
-  }
+  },
 };
 
 export let logout = {
@@ -153,7 +153,7 @@ export let logout = {
     console.log(`Logging out of account ...`);
     await dotConfig.deleteConfig();
     console.log(`Logged out of account`);
-  }
+  },
 };
 
 type ConfigureArgs = {
@@ -186,8 +186,8 @@ export const configure = {
     COMMON_ARGS.deviceSerialNumber,
     [['-n'], {
       help: 'set flag to create a new device id',
-      action: 'storeTrue'
-    }]
+      action: 'storeTrue',
+    }],
   ],
   main: async (args: ConfigureArgs) => {
     let adb = createAdb(args.deviceSerialNumber);
@@ -207,7 +207,7 @@ export const configure = {
 
     const {deviceSerialNumber} = args;
     const api = new API({
-      device: deviceSerialNumber
+      device: deviceSerialNumber,
     });
 
     let success = await device.setupDevice(account, args.deviceName) &&
@@ -232,7 +232,7 @@ export const unconfig = {
   `,
   arguments: [
     // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
-    COMMON_ARGS.deviceSerialNumber
+    COMMON_ARGS.deviceSerialNumber,
   ],
   main: async (args: UnconfigArgs) => {
     let adb = createAdb(args.deviceSerialNumber);
@@ -296,7 +296,7 @@ export const remove = {
       dest: 'interactive',
       help: 'interactive mode. Remove device from list',
       action: 'storeTrue',
-    }]
+    }],
   ],
   main: async (args: RemoveArgs) => {
     console.log(`Remove device from server ...`);
@@ -322,31 +322,30 @@ export const remove = {
     } else {
       console.log(`Bad deviceToken ${deviceId}, not removing`);
     }
-  }
+  },
 };
 
 export const removeAll = {
-    help: `
-      Unregister all devices from account.
-      |silk login| must have been ran previously.
-    `,
-    main: async () => {
-      console.log(`Removing all devices from server ...`);
+  help: `
+    Unregister all devices from account.
+    |silk login| must have been ran previously.
+  `,
+  main: async () => {
+    console.log(`Removing all devices from server ...`);
 
-      let account = createAccount();
-      let devices = await account.listDevices();
+    let account = createAccount();
+    let devices = await account.listDevices();
 
-      if (devices.length === 0) {
-        console.log(`No devices associated with this account`);
-        return;
-      }
-
-      for (let i = 0; i < devices.length; i++) {
-        let deviceToken = devices[i].publicKey.toString();
-        console.log(`Removing ${deviceToken} ...`);
-        let success = await account.unregisterDevice(deviceToken);
-        console.log(`Removal ${success ? 'success' : 'failed'}`);
-      }
+    if (devices.length === 0) {
+      console.log(`No devices associated with this account`);
+      return;
     }
-  };
 
+    for (let i = 0; i < devices.length; i++) {
+      let deviceToken = devices[i].publicKey.toString();
+      console.log(`Removing ${deviceToken} ...`);
+      let success = await account.unregisterDevice(deviceToken);
+      console.log(`Removal ${success ? 'success' : 'failed'}`);
+    }
+  },
+};

@@ -88,7 +88,7 @@ export async function triggerBuild(
     throw new Error('Travis access token is not available!');
   }
 
-  log.info(`Triggering ${owner}/${repo}: ${build_request.message}`);
+  log.info(`Triggering ${owner}/${repo}: ${String(build_request.message)}`);
   return await request({
     url: 'https://api.travis-ci.com/repo/' + owner + '%2F' + repo + '/requests',
     method: 'POST',

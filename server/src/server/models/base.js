@@ -4,6 +4,12 @@ import createLog from 'silk-log';
 
 const log = createLog('models:base');
 
+export type ErrorState = {
+  error: {
+    type: string;
+  };
+};
+
 // XXX: Sadly we need to re-declare Error to add captureStackTrace.
 declare class Error {
   static (message?:string):Error;
@@ -83,7 +89,7 @@ export default class Base {
    * @param {String} name error name.
    * @return {Object} error object with type set to ERROR value.
    */
-  error(name: string): any {
+  error(name: string): ErrorState {
     let error = this.constructor.ERROR[name];
     if (!error) {
       throw new Error(`Attempted to use unknown error type: ${name}`);

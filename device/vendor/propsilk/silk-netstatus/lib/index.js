@@ -190,7 +190,7 @@ export class NetworkStatus extends EventEmitter {
 
     this._online = online;
     if (shouldEmitEvent) {
-      log.info(`online = ${online}`);
+      log.info(`online = ${String(online)}`);
       this.emit(event);
     }
   }
@@ -202,5 +202,3 @@ export class NetworkStatus extends EventEmitter {
  */
 let netstatus = new NetworkStatus(silkWifi);
 export default netstatus;
-
-

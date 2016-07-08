@@ -2,9 +2,6 @@
 Configuration profile used in tests.
 */
 
-import os from 'os';
-import crypto from 'crypto';
-
 import defaultConfig from './default';
 import * as azureCreds from '../../credentials/azure';
 

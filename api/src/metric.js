@@ -78,7 +78,7 @@ export default class BaseMetric {
                     type === 'boolean' ||
                     type === 'number',
                     `Tag value for '${propName}' is invalid: ` +
-                    `${value} (${type})`);
+                    `${value.toString()} (${type})`);
           if (type === 'string') {
             if (!value) {
               // Empty tags get rejected by InfluxDB so just delete them.

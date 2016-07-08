@@ -84,7 +84,7 @@ export default class PreviewQueue {
                   `device elapsed=${deviceElapsed} ms ` +
                   `app elapsed=${appElapsed} ms ` +
                   `device to app lag=${deviceToAppLag} ms ` +
-                  `queueRange=${queueTimeRange} ms`);
+                  `queueRange=${String(queueTimeRange)} ms`);
       }
       this._lastPreviewArrival = previewArrival;
     }

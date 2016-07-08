@@ -39,7 +39,7 @@ class Infrared {
   _execIr(args: Array<string>) {
     return sysutils.exec('ir', args)
     .catch(err => {
-      let msg = `Failed to exec ir ${args}: ${err}`;
+      let msg = `Failed to exec ir ${String(args)}: ${err}`;
       log.error(msg);
       throw new Error(msg);
     });

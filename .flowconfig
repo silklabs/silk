@@ -76,6 +76,10 @@ node_modules/fbjs/flow/lib/
 .*/node-webrtc/build-staging/.*
 .*/svm/models/.*
 
+# Ignore these modules which are present in both app/node_modules and node_modules/*
+.*/app/node_modules/fbjs.*
+.*/app-sdk/node_modules/fbjs.*
+
 [options]
 unsafe.enable_getters_and_setters=true
 module.system=haste
@@ -87,4 +91,4 @@ suppress_type=$FlowFixMe
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.27.0
+0.28.0

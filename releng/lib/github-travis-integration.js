@@ -217,7 +217,7 @@ export async function triggerBuildForProject(
   if (!sha && request.branch) {
     sha = await getBranchHeadCommit(owner_name, repo_name, request.branch);
   }
-  invariant(sha, `'${request.branch}' is an invalid branch`);
+  invariant(sha, `'${String(request.branch)}' is an invalid branch`);
 
   // Use the existing .travis.yml as a template. If the request contains
   // any additional configuration,
@@ -293,7 +293,7 @@ export async function triggerBuildForProject(
   config.notifications.webhooks.on_start = 'always';
 
   let build_request = {
-    message: `[${request.project}] ${request.message}`,
+    message: `[${request.project}] ${String(request.message)}`,
     branch: request.branch,
     config,
   };
@@ -466,7 +466,7 @@ async function triggerBuildsForPullRequest(
       state: 'pending',
       target_url: `https://travis-ci.com/${owner_name}/${repo_name}/builds/${build.id}`,
       description: 'Created',
-      context: `travis-ci/${project}`,
+      context: `travis-ci/${String(project)}`,
     });
   }
 
@@ -559,7 +559,7 @@ export async function handleTravisWebhook(
   }
 
   let project = getProjectFromBuildMessage(payload.message);
-  log.info(`Build was for project ${project}.`);
+  log.info(`Build was for project ${String(project)}.`);
   let state = TRAVIS_TO_GITHUB_BUILD_STATES[payload.state];
   log.info(`Updating state to ${state} for commit ${sha} on GitHub...`);
   await repo.statuses(sha).create({
@@ -603,7 +603,7 @@ export async function cancelOldPRBuilds(
       return;
     }
 
-    log.info(`PR #${pull_request_number}: [${project}] - ${build.id} is ${build.state}`);
+    log.info(`PR #${pull_request_number}: [${String(project)}] - ${build.id} is ${build.state}`);
     let existingBuildSha = activePullRequestBuilds[pull_request_number];
 
     if (!existingBuildSha) {

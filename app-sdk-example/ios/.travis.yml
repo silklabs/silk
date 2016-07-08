@@ -20,5 +20,5 @@ script: >
   -project ios/$PROJECT.xcodeproj
   -scheme $PROJECT
   -configuration $CONFIGURATION
-  -sdk iphoneos
+  -sdk iphonesimulator
   build

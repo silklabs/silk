@@ -73,7 +73,8 @@ class AppDelegate : UIResponder,
   // Display region enter/exit notifications to the user
   func notifyUser(notificationText: String) {
     // Ask user permission for user notifications
-    let registerUserNotificationSettings = UIApplication.instancesRespondToSelector("registerUserNotificationSettings:")
+    let registerUserNotificationSettings =
+      UIApplication.instancesRespondToSelector(#selector(UIApplication.registerUserNotificationSettings(_:)))
     if registerUserNotificationSettings {
       let types: UIUserNotificationType = [UIUserNotificationType.Alert, UIUserNotificationType.Sound, UIUserNotificationType.Badge]
       UIApplication.sharedApplication().registerUserNotificationSettings(UIUserNotificationSettings(forTypes: types, categories: nil))
@@ -91,28 +92,28 @@ class AppDelegate : UIResponder,
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
     assert(self.bleSocketPeripheral != nil)
-    self.bleSocketPeripheral!.addServiceUuid(uuid)
+    self.bleSocketPeripheral!.regionAdded(uuid)
   }
 
   func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
     assert(self.bleSocketPeripheral != nil)
-    self.bleSocketPeripheral!.removeServiceUuid(uuid)
+    self.bleSocketPeripheral!.regionRemoved(uuid)
   }
 
   func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
     assert(self.bleSocketPeripheral != nil)
     if uuid == RegionMonitor.configBeaconUuid {
-      notifyUser("An unconfigured SilkCam is nearby.")
+      notifyUser("An unconfigured Silk device is nearby.")
     }
-    self.bleSocketPeripheral!.startAdvertisingServiceUuid(uuid)
+    self.bleSocketPeripheral!.regionEntered(uuid)
   }
 
   func regionExited(regionMonitor: RegionMonitor, uuid: NSUUID) {
     assert(regionMonitor === self.regionMonitor!)
     assert(self.bleSocketPeripheral != nil)
-    self.bleSocketPeripheral!.stopAdvertisingServiceUuid(uuid)
+    self.bleSocketPeripheral!.regionExited(uuid)
   }
 
   // RCTBridgeDelegate

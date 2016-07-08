@@ -1,16 +1,21 @@
-From 8e0c029eeb7b1559f1ff8d2bec740c67a09666e5 Mon Sep 17 00:00:00 2001
+From 08aed131321e09f293eb43780338c2a9149ac8bb Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
 
 ---
- Android.mk              |   7 +
- lib/android/bindings.js | 376 ++++++++++++++++++++++++++++++++++++++++++++++++
- lib/bleno.js            |   2 +
- package.json            |   6 +-
- 4 files changed, 389 insertions(+), 2 deletions(-)
+ Android.mk                        |   7 +
+ lib/android/bindings.js           | 837 ++++++++++++++++++++++++++++++++++++++
+ lib/android/ccc-descriptor.js     | 196 +++++++++
+ lib/android/descriptor-wrapper.js |  92 +++++
+ lib/bleno.js                      |  20 +-
+ lib/characteristic.js             |   2 +
+ package.json                      |   6 +-
+ 7 files changed, 1149 insertions(+), 11 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
+ create mode 100644 lib/android/ccc-descriptor.js
+ create mode 100644 lib/android/descriptor-wrapper.js
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
@@ -27,388 +32,1149 @@ index 0000000..d59df9c
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..f7c4cdc
+index 0000000..b87141d
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,376 @@
-+/* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2 -*- */
-+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+@@ -0,0 +1,837 @@
++'use strict';
 +
-+var debug = require('debug')('silk-bleno');
-+var events = require('events');
-+var os = require('os');
-+var util = require('util');
++const assert = require('assert');
++const events = require('events');
++const os = require('os');
++const util = require('util');
 +
-+var makeBledroidConnection = require('silk-bledroid');
++const makeBledroidConnection = require('silk-bledroid');
 +
-+var BlenoBindings = function() {};
++const CCCDescriptor = require('./ccc-descriptor');
++const DescriptorWrapper = require('./descriptor-wrapper');
++
++const RESULT_SUCCESS = require('../characteristic').RESULT_SUCCESS;
++
++const log = (function() {
++  const debug = require('debug');
++  return {
++    debug: debug('silk-bleno:debug'),
++    info: debug('silk-bleno:info'),
++    warn: debug('silk-bleno:warn'),
++  };
++})();
++
++// Client Characteristic Configuration Descriptors control notifications.
++const UUID_CCC_DESCRIPTOR_16 = '2902';
++const UUID_CCC_DESCRIPTOR_32 = '00002902';
++const UUID_CCC_DESCRIPTOR_128 =
++  UUID_CCC_DESCRIPTOR_32 + '00001000800000805f9b34fb';
++
++// Ref: http://androidxref.com/5.1.0_r1/xref/frameworks/base/core/java/android/bluetooth/BluetoothGattCharacteristic.java#31
++const PROPERTY_BROADCAST              = 1 << 0;
++const PROPERTY_READ                   = 1 << 1;
++const PROPERTY_WRITE_NO_RESPONSE      = 1 << 2;
++const PROPERTY_WRITE                  = 1 << 3;
++const PROPERTY_NOTIFY                 = 1 << 4;
++const PROPERTY_INDICATE               = 1 << 5;
++const PROPERTY_SIGNED_WRITE           = 1 << 6;
++const PROPERTY_EXTENDED_PROPERTIES    = 1 << 7;
++
++const PERMISSION_READ                 = 1 << 0;
++const PERMISSION_READ_ENCRYPTED       = 1 << 1;
++const PERMISSION_READ_ENCRYPTED_MITM  = 1 << 2;
++const PERMISSION_WRITE                = 1 << 4;
++const PERMISSION_WRITE_ENCRYPTED      = 1 << 5;
++const PERMISSION_WRITE_ENCRYPTED_MITM = 1 << 6;
++const PERMISSION_WRITE_SIGNED         = 1 << 7;
++const PERMISSION_WRITE_SIGNED_MITM    = 1 << 8;
++
++function isCCCDescriptor(descriptor) {
++  const uuid = descriptor.uuid;
++  return uuid === UUID_CCC_DESCRIPTOR_16 ||
++         uuid === UUID_CCC_DESCRIPTOR_32 ||
++         uuid === UUID_CCC_DESCRIPTOR_128;
++}
++
++/**
++ * Metadata needed for each connection.
++ */
++function CentralInfo(address, connectionId) {
++  // These properties may never change.
++  this.address = address;
++  this.connectionId = connectionId;
++}
++
++function PendingNotifyCallback(address, characteristic, needResponse) {
++  // These properties may never change.
++  this.address = address;
++  this.characteristic = characteristic;
++  this.needResponse = needResponse;
++}
++
++function BlenoBindings() {
++  log.debug('BlenoBindings');
++
++  // A connection to the bledroid executable.
++  this.bledroid = null;
++
++  // Maps device address and connectionId to CentralInfo.
++  this.centralMap = new Map();
++
++  // Maps handle to attribute and attribute to handle.
++  this.attributeMap = new Map();
++  this.pendingSetServices = null;
++  this.pendingAttributes = null;
++  this.serviceHandle = null;
++
++  this.pendingNotifyCallbacks = [];
++}
++
 +util.inherits(BlenoBindings, events.EventEmitter);
 +
-+var blenoBindings = new BlenoBindings();
++BlenoBindings.prototype.init = function() {
++  log.debug('init');
 +
-+blenoBindings.init = function() {
++  this.bledroid = makeBledroidConnection();
++
++  // These events will trigger callbacks here instead of simply being forwarded
++  // to the main bleno objects.
++  const hookedEvents = [
++    'stateChange',
++    'addressChange',
++    'advertisingStart',
++    'advertisingStop',
++    'rssiUpdate',
++    'serverConnect',
++    'serverDisconnect',
++    'mtuChange',
++    'serviceAdded',
++    'serviceDeleted',
++    'attributeAdded',
++    'serviceStarted',
++    'serviceStopped',
++    'readAttribute',
++    'writeAttribute',
++    'notifySent',
++  ];
++
++  // Connect listeners directly to bledroid unless the events must be hooked.
++  this.on('newListener', function(event, listener) {
++    if (hookedEvents.indexOf(event) === -1) {
++      this.bledroid.addListener(event, listener);
++    }
++  }.bind(this));
++
++  this.on('removeListener', function(event, listener) {
++    this.bledroid.removeListener(event, listener);
++  }.bind(this));
++
++  // Automatically hook all events in the list above.
++  hookedEvents.forEach(function(event) {
++    const methodName =
++      'on' + event.charAt(0).toUpperCase() + event.substring(1);
++    if (methodName in this) {
++      this.bledroid.addListener(event, this[methodName].bind(this));
++    } else {
++      throw new Error('\'' + methodName + '\' not found!');
++    }
++  }.bind(this));
++
 +  this.emit('platform', os.platform());
-+
-+  this._bledroid = makeBledroidConnection();
-+  this._bledroid.on('stateChange', this.onStateChange.bind(this));
-+  this._bledroid.on('addressChange', this.onAddressChange.bind(this));
-+  this._bledroid.on('advertisingStart', this.onAdvertisingStart.bind(this));
-+  this._bledroid.on('advertisingStop', this.onAdvertisingStop.bind(this));
-+  this._bledroid.on('rssiUpdate', this.onRssiUpdate.bind(this));
-+  this._bledroid.on('serverConnect', this.onAccept.bind(this));
-+  this._bledroid.on('serverDisconnect', this.onDisconnect.bind(this));
-+  this._bledroid.on('mtuChange', this.onMtuChange.bind(this));
-+  this._bledroid.on('primaryServiceHandle', this.onPrimaryServiceHandle.bind(this));
-+  this._bledroid.on('attributeHandle', this.onAttributeHandle.bind(this));
-+  this._bledroid.on('servicesSet', this.onServicesSet.bind(this));
-+  this._bledroid.on('servicesDelete', this.onServicesDelete.bind(this));
-+  this._bledroid.on('readAttribute', this.onReadAttribute.bind(this));
-+  this._bledroid.on('writeAttribute', this.onWriteAttribute.bind(this));
-+
-+  this.acceptedAddress = null;
 +};
 +
-+blenoBindings.reset = function() {
-+  this.acceptedAddress = null;
-+  this._attributes = null;
-+  this._attributeMap = null;
-+  this._newAttributes = null;
-+  this._pendingSetServices = null;
-+  this._pendingServiceAttributes = null;
-+  this._currentAttribute = null;
-+  this._serviceHandle = null;
-+};
++BlenoBindings.prototype.startAdvertising = function(name, serviceUuids) {
++  log.debug('startAdvertising', name, serviceUuids);
 +
-+blenoBindings.startAdvertising = function(name, serviceUuids) {
-+  var services = '';
-+  if (serviceUuids) {
-+    services = ' ' + serviceUuids.join(' ');
++  if (typeof name === 'string' && name.length) {
++    log.warn('Device name will be used instead of \'%s\'', name);
 +  }
 +
-+  var command = 'advertisingData ' +
-+                '0 ' + // set_scan_rsp
-+                '0 ' + // include_name
-+                '0 ' + // include_txpower
-+                '0 ' + // min_interval
-+                '0 ' + // max_interval
-+                '0 ' + // appearance
-+                '0 ' + // manufacturer_len
-+                ''   + // manufacturer_data
-+                '0 ' + // service_data_len
-+                ''   + // service_data
-+                serviceUuids.length +
-+                services;
++  const command = 'startAdvertising ' +
++                  (name ? '1' : '0') + ' ' +
++                  '1 ' + // include_txpower
++                  '0 ' + // appearance
++                  '0 ' + // manufacturer_len
++                  ''   + // manufacturer_data
++                  '0 ' + // service_data_len
++                  ''   + // service_data
++                  serviceUuids.length +
++                  (serviceUuids.length ? (' ' + serviceUuids.join(' ')) : '');
 +
-+  this._bledroid.command(command);
-+  this._bledroid.command('setListen 1');
++  this.bledroid.command(command);
 +};
 +
-+blenoBindings.startAdvertisingIBeacon = function(data) {
-+  var header = new Buffer([
++BlenoBindings.prototype.startAdvertisingIBeacon = function(data) {
++  log.debug('startAdvertisingIBeacon', data);
++
++  const header = new Buffer([
 +    0x4c,               // Apple identifier (least significant byte)
 +    0x00,               // Apple identifier (most significant byte)
 +    0x02,               // iBeacon tag
 +    data.length         // Size of the iBeacon data
 +  ]);
 +
-+  var manufacturerLength = header.length + data.length;
-+  var manufacturerData = header.toString('hex') + data.toString('hex');
++  const manufacturerLength = header.length + data.length;
++  const manufacturerData = header.toString('hex') + data.toString('hex');
 +
-+  var command = 'advertisingData ' +
-+                '0 ' + // set_scan_rsp
-+                '0 ' + // include_name
-+                '0 ' + // include_txpower
-+                '0 ' + // min_interval
-+                '0 ' + // max_interval
-+                '0 ' + // appearance
-+                manufacturerLength + ' ' +
-+                manufacturerData + ' ' +
-+                '0 ' + // service_data_len
-+                ''   + // service_data
-+                '0 ' + // service_uuid_len
-+                '';    // service_uuid
++  const command = 'startAdvertising ' +
++                  '0 ' + // include_name
++                  '0 ' + // include_txpower
++                  '0 ' + // appearance
++                  manufacturerLength + ' ' +
++                  manufacturerData + ' ' +
++                  '0 ' + // service_data_len
++                  ''   + // service_data
++                  '0 ' + // service_uuid_len
++                  '';    // service_uuid
 +
-+  this._bledroid.command(command);
-+  this._bledroid.command('setListen 1');
++  this.bledroid.command(command);
 +};
 +
-+blenoBindings.stopAdvertising = function() {
-+  this._bledroid.command('setListen 0');
++BlenoBindings.prototype.stopAdvertising = function() {
++  log.debug('stopAdvertising');
++
++  this.bledroid.command('stopAdvertising');
 +};
 +
-+blenoBindings.updateRssi = function() {
-+  if (!this.acceptedAddress) {
-+    throw new Error("Not currently connected")
-+  }
-+  this._bledroid.command('updateRssi ' +
-+                         this.acceptedAddress.replace(/:/g, ''));
++BlenoBindings.prototype.updateRssi = function(address) {
++  log.debug('updateRssi', address);
++
++  assert(this.centralMap.has(address), 'Not connected to \'' + address + '\'');
++
++  this.bledroid.command('updateRssi ' + address.replace(/:/g, ''));
 +};
 +
-+blenoBindings.setServices = function(services) {
-+  if (this._pendingSetServices) {
-+    throw 'setServices() ongoing';
-+  }
++BlenoBindings.prototype.setServices = function(services) {
 +  services = services || [];
-+  this._attributes = [];
-+  this._newAttributes = [];
-+  this._pendingSetServices = services;
++  log.debug('setServices', services);
 +
-+  if (services.length > 1) {
-+    throw "TODO: support more than one service";
-+  }
++  assert(services.length <= 1, 'Only one service currently supported');
++  assert(!this.pendingSetServices,
++         'setServices called before previous call finished');
 +
-+  if (this._serviceHandle) {
-+    this._bledroid.command('deleteService ' + this._serviceHandle);
++  this.pendingSetServices = services;
++
++  if (this.serviceHandle === null) {
++    this.processSetServices();
 +  } else {
-+    this._processSetServices();
-+  }
-+}
-+
-+blenoBindings.onServicesDelete = function(error) {
-+  if (error) {
-+    this.emit('servicesSet', error);
-+  }
-+  this._serviceHandle = null;
-+  this._processSetServices();
-+};
-+
-+blenoBindings._processSetServices = function() {
-+  var services = this._pendingSetServices;
-+  this._pendingSetServices = null;
-+  if (services.length <= 0) {
-+    this.emit('servicesSet');
-+    return;
-+  }
-+  var service = services[0];
-+  var attributes = []
-+
-+  for (var j = 0; j < service.characteristics.length; j++) {
-+    var characteristic = service.characteristics[j];
-+    attributes.push(['characteristic', characteristic]);
-+    for (var k = 0; k < characteristic.descriptors.length; k++) {
-+      var descriptor = characteristic.descriptors[k];
-+      attributes.push(['descriptor', descriptor]);
-+    }
-+  }
-+  this._pendingServiceAttributes = attributes;
-+  this._bledroid.command('primaryService ' + (attributes.length*2 + 1) + ' ' + service.uuid);
-+
-+  console.log('setServices: ' + this._newAttributes);
-+};
-+
-+blenoBindings.onStateChange = function(state) {
-+  if (state !== 'poweredOn') {
-+    debug('Adapter state changed to \'%s\'', state);
-+    if (this.acceptedAddress) {
-+      debug('Disconnecting existing connection');
-+      this.onDisconnect(this.acceptedAddress);
-+    }
-+    this.reset();
-+  }
-+  this.emit('stateChange', state);
-+};
-+
-+blenoBindings.onAddressChange = function(address) {
-+  this.emit('addressChange', address);
-+};
-+
-+blenoBindings.onAdvertisingStart = function(error) {
-+  this.emit('advertisingStart', error);
-+};
-+
-+blenoBindings.onAdvertisingStop = function() {
-+  this.emit('advertisingStop');
-+};
-+
-+blenoBindings.onAccept = function(clientAddress) {
-+  debug('accept ' + clientAddress);
-+  if (this.acceptedAddress) {
-+    debug('Already accepted another connection, ignoring');
-+    return;
-+  }
-+  this.acceptedAddress = clientAddress;
-+  this.emit('accept', clientAddress);
-+};
-+
-+blenoBindings.onDisconnect = function(clientAddress) {
-+  debug('disconnected ' + clientAddress);
-+  if (this.acceptedAddress !== clientAddress) {
-+    return;
-+  }
-+  this.acceptedAddress = null;
-+  this.emit('disconnect', clientAddress);
-+};
-+
-+blenoBindings.onRssiUpdate = function(address, rssi, status) {
-+  this.emit('rssiUpdate', rssi);
-+};
-+
-+blenoBindings.onMtuChange = function(mtu) {
-+  this.emit('mtuChange', mtu);
-+};
-+
-+blenoBindings._addNextServiceAttribute = function() {
-+  this._currentAttribute = null;
-+
-+  if (this._pendingServiceAttributes.length == 0) {
-+    this._bledroid.command('startService ' + this._serviceHandle);
-+    return;
-+  }
-+  var attr = this._pendingServiceAttributes.shift();
-+
-+  switch (attr[0]) {
-+  case 'characteristic':
-+    var characteristic = attr[1];
-+    debug('characteristic ' + characteristic);
-+
-+    // Ref: http://androidxref.com/5.1.0_r1/xref/frameworks/base/core/java/android/bluetooth/BluetoothGattCharacteristic.java#31
-+    var properties = 0;
-+    var permissions = 0;
-+
-+    if (characteristic.properties.indexOf('read') !== -1) {
-+      properties |= 0x02;
-+
-+      if (characteristic.secure.indexOf('read') !== -1) {
-+        permissions |= 0x04;
-+      } else {
-+        permissions |= 0x01;
-+      }
-+    }
-+
-+    if (characteristic.properties.indexOf('writeWithoutResponse') !== -1) {
-+      properties |= 0x04;
-+
-+      if (characteristic.secure.indexOf('writeWithoutResponse') !== -1) {
-+        permissions |= 0x08;
-+      } else {
-+        permissions |= 0x02;
-+      }
-+    }
-+
-+    if (characteristic.properties.indexOf('write') !== -1) {
-+      properties |= 0x08;
-+
-+      if (characteristic.secure.indexOf('write') !== -1) {
-+        permissions |= 0x80;
-+      } else {
-+        permissions |= 0x10;
-+      }
-+    }
-+
-+    if (characteristic.properties.indexOf('notify') !== -1) {
-+      if (characteristic.secure.indexOf('notify') !== -1) {
-+        console.log("Warning: secure notify not supported");
-+      } else {
-+        properties |= 0x10;
-+      }
-+    }
-+
-+    if (characteristic.properties.indexOf('indicate') !== -1) {
-+      if (characteristic.secure.indexOf('indicate') !== -1) {
-+        console.log("Warning: secure indicate not supported");
-+      } else {
-+        properties |= 0x20;
-+      }
-+    }
-+    this._currentAttribute = characteristic;
-+    this._bledroid.command('addCharacteristic ' + this._serviceHandle + ' ' +
-+      characteristic.uuid + ' ' + properties + ' ' + permissions);
-+    break;
-+
-+  case 'descriptor':
-+    var descriptor = attr[1];
-+    debug('descriptor: ' + descriptor);
-+    this._currentAttribute = descriptor;
-+    this._bledroid.command('addDescriptor ' + this._serviceHandle + ' ' +
-+      descriptor.uuid + ' 1');
-+    break;
-+
-+  default:
-+    debug("Error: Invalid service attribute: " + attr);
-+    break;
++    log.debug('Removing old service before setting new service');
++    this.bledroid.command('deleteService ' + this.serviceHandle);
 +  }
 +};
 +
-+blenoBindings.onAttributeHandle = function(handle) {
-+  debug("onAttributeHandle: " + handle);
-+  if (!handle) {
-+    console.log('Error: failed to add attribute: ' + this._currentAttribute);
-+  } else {
-+    this._attributeMap[handle] = this._currentAttribute;
-+  }
-+  this._addNextServiceAttribute();
-+};
++BlenoBindings.prototype.failSetServices = function(error) {
++  log.warn('failSetServices', error);
++  assert(this.pendingSetServices);
 +
-+blenoBindings.onPrimaryServiceHandle = function(handle) {
-+  this._serviceHandle = handle;
-+  this._attributeMap = {};
-+  this._addNextServiceAttribute();
-+};
++  this.pendingSetServices = null;
++  this.pendingAttributes = null;
 +
-+blenoBindings.onServicesSet = function(error) {
 +  this.emit('servicesSet', error);
 +};
 +
-+blenoBindings.onReadAttribute = function(handle, connId, transId, offset) {
++BlenoBindings.prototype.onServiceDeleted = function(status) {
++  log.debug('onServiceDeleted', status);
 +
-+  var attr = this._attributeMap[handle];
-+  if (!attr) {
-+    console.log('Error: read from unknown attribute ' + handle);
++  if (status !== 0) {
++    const error = new Error('Failed to remove old service, status ' + status);
++    this.failSetServices(error);
 +    return;
 +  }
 +
-+  var callback = (function(handle, connId, transId, offset) {
-+    return function(result, data) {
-+      var hexdata = '';
-+      if (result == 0) {
-+        if (!Buffer.isBuffer(data)) {
-+          data = new Buffer(data);
-+        }
-+        hexdata = data.toString('hex');
-+      }
-+      this._bledroid.command('sendAttributeResponse ' + handle + ' ' + connId +
-+        ' ' + transId + ' ' + result + ' ' + offset + ' ' + hexdata);
-+    }.bind(this);
-+  }.bind(this))(handle, connId, transId, offset);
++  this.serviceHandle = null;
++  this.attributeMap.clear();
++  this.pendingNotifyCallbacks.length = 0;
 +
-+  if (typeof(attr.emit) != 'function') {
-+    callback(0, attr.value);
-+  } else {
-+    attr.emit('readRequest', offset, callback);
++  try {
++    this.processSetServices();
++  } catch(error) {
++    this.failSetServices(error);
++    throw error;
 +  }
 +};
 +
-+blenoBindings.onWriteAttribute = function(handle, connId, transId, needResponse, offset, data) {
++BlenoBindings.prototype.processSetServices = function() {
++  log.debug('processSetServices');
 +
-+  var attr = this._attributeMap[handle];
-+  if (!attr) {
-+    console.log('Error: write to unknown attribute ' + handle);
++  assert(this.pendingSetServices);
++
++  if (!this.pendingSetServices.length) {
++    this.pendingSetServices = null;
++    this.emit('servicesSet');
 +    return;
 +  }
 +
-+  var callback = (function(handle, connId, transId) {
-+    return function(result) {
-+      if (needResponse) {
-+        this._bledroid.command('sendAttributeResponse ' + handle + ' ' + connId +
-+          ' ' + transId + ' ' + result);
-+      }
-+    }.bind(this);
-+  }.bind(this))(handle, connId, transId);
++  const service = this.pendingSetServices[0];
++  const attributes = [];
 +
-+  if (typeof(attr.emit) != 'function') {
-+    callback(0x0E /* RESULT_UNLIKELY_ERROR */);
++  let characteristicCount = 0;
++  let descriptorCount = 0;
++
++  for (let characteristic of service.characteristics) {
++    attributes.push({
++      characteristic: characteristic,
++    });
++    characteristicCount++;
++
++    // Add CCC descriptor if the characteristic supports 'notify' or 'indicate'.
++    if ((characteristic.properties.indexOf('notify') !== -1 ||
++           characteristic.properties.indexOf('indicate') !== -1) &&
++        (!characteristic.descriptors.length ||
++         !isCCCDescriptor(characteristic.descriptors[0]))) {
++      attributes.push({
++        descriptor: new CCCDescriptor(this, characteristic),
++      });
++      descriptorCount++;
++    }
++
++    for (let descriptor of characteristic.descriptors) {
++      if (!(descriptor instanceof events.EventEmitter)) {
++        descriptor = new DescriptorWrapper(descriptor);
++      }
++      attributes.push({
++        descriptor: descriptor,
++      });
++      descriptorCount++;
++    }
++  }
++
++  const handleCount = 1 + // service
++                      (characteristicCount * 2) + // characteristics
++                      descriptorCount; // descriptors
++
++  assert(!this.pendingAttributes);
++  this.pendingAttributes = attributes;
++
++  log.debug('Creating service \'%s\'', service.uuid);
++  this.bledroid.command('addService ' + handleCount + ' ' + service.uuid);
++};
++
++BlenoBindings.prototype.onStateChange = function(state) {
++  log.debug('onStateChange', state);
++
++  if (state !== 'poweredOn') {
++    log.info('Adapter state changed to \'%s\'', state);
++
++    this.attributeMap.clear();
++    this.pendingSetServices = null;
++    this.pendingAttributes = null;
++    this.serviceHandle = null;
++    this.pendingNotifyCallbacks.length = 0;
++
++    if (this.centralMap.size) {
++      log.warn('Disconnecting existing connections');
++      // |centralMap| stores several different mappings to the same CentralInfo
++      // object so we need to de-duplicate them before disconnecting each of
++      // them.
++      const uniqueCentralInfos = new Set();
++      for (let centralInfo of this.centralMap.values()) {
++        uniqueCentralInfos.add(centralInfo);
++      }
++
++      this.centralMap.clear();
++
++      for (let centralInfo of uniqueCentralInfos) {
++        this.onServerDisconnect(centralInfo.address,
++                                centralInfo.connectionId);
++      }
++    }
++  }
++
++  this.emit('stateChange', state);
++};
++
++BlenoBindings.prototype.onAddressChange = function(address) {
++  log.debug('onAddressChange', address);
++
++  this.emit('addressChange', address);
++};
++
++BlenoBindings.prototype.onAdvertisingStart = function(status) {
++  log.debug('onAdvertisingStart', status);
++
++  if (status) {
++    const message = 'Failed to start advertising, status ' + status;
++    log.warn(message);
++    this.emit('advertisingStart', new Error(message));
++  }
++
++  this.emit('advertisingStart');
++};
++
++BlenoBindings.prototype.onAdvertisingStop = function(status) {
++  log.debug('onAdvertisingStop', status);
++
++  if (status) {
++    const message = 'Failed to stop advertising, status ' + status;
++    log.warn(message);
++    this.emit('advertisingStop', new Error(message));
++  }
++
++  this.emit('advertisingStop');
++};
++
++BlenoBindings.prototype.onServerConnect = function(address, connectionId) {
++  log.debug('onServerConnect', address, connectionId);
++
++  assert(!this.centralMap.has(address),
++         'Already connected to \'' + address + '\'');
++  assert(!this.centralMap.has(connectionId),
++         'Already have an entry for connectionId ' + connectionId);
++
++  const centralInfo = new CentralInfo(address, connectionId);
++  this.centralMap.set(address, centralInfo);
++  this.centralMap.set(connectionId, centralInfo);
++
++  this.emit('accept', address);
++};
++
++BlenoBindings.prototype.onServerDisconnect = function(address, connectionId) {
++  log.debug('onServerDisconnect', address, connectionId);
++
++  if (this.centralMap.has(address)) {
++    assert.strictEqual(this.centralMap.get(address),
++                       this.centralMap.get(connectionId));
 +  } else {
-+    attr.emit('writeRequest', data, offset, needResponse ? false : true, callback);
++    log.debug('Unknown central \'%s\', ignoring disconnect', address);
++    assert(!this.centralMap.has(connectionId),
++           'Have another entry for connectionId ' + connectionId);
++    return;
++  }
++
++  this.centralMap.delete(address);
++  this.centralMap.delete(connectionId);
++
++  if (this.pendingNotifyCallbacks.length) {
++    this.pendingNotifyCallbacks = this.pendingNotifyCallbacks.filter(
++      function(callback) {
++        return callback.address !== address;
++      }
++    );
++  }
++
++  this.emit('disconnect', address);
++};
++
++BlenoBindings.prototype.onRssiUpdate = function(address, rssi, status) {
++  log.debug('onRssiUpdate', address, rssi, status);
++
++  if (!this.centralMap.has(address)) {
++    log.warn('Unknown central \'%s\', ignoring rssi update', address);
++    return;
++  }
++
++  if (status) {
++    log.warn('Failed to update rssi: %d', status);
++
++    // XXX Total hack but we have to emit something or else API consumer
++    //     callbacks won't be called properly.
++    rssi = -80;
++  }
++
++  this.emit('rssiUpdate', rssi, address);
++};
++
++BlenoBindings.prototype.onMtuChange = function(connectionId, mtu) {
++  log.debug('onMtuChange', connectionId, mtu);
++
++  const centralInfo = this.centralMap.get(connectionId);
++  if (!centralInfo) {
++    log.warn('Unknown connectionId %d, cannot update mtu', connectionId);
++    return;
++  }
++
++  this.emit('mtuChange', mtu, centralInfo.address);
++};
++
++BlenoBindings.prototype.addNextServiceAttribute = function() {
++  log.debug('addNextServiceAttribute');
++
++  assert(this.pendingSetServices);
++  assert(this.serviceHandle !== null);
++
++  if (this.pendingAttributes.length === 0) {
++    this.pendingAttributes = null;
++
++    log.debug('Starting service');
++    this.bledroid.command('startService ' + this.serviceHandle);
++    return;
++  }
++
++  const pending = this.pendingAttributes[0];
++
++  if (pending.descriptor) {
++    const descriptor = pending.descriptor;
++    log.debug('Adding descriptor \'%s\'', descriptor.uuid);
++
++    const propertiesSet = new Set(descriptor.properties);
++    const secureSet = new Set(descriptor.secure);
++
++    let permissions = 0;
++
++    if (propertiesSet.has('read')) {
++      if (secureSet.has('read')) {
++        permissions |= PERMISSION_READ_ENCRYPTED_MITM;
++      } else {
++        permissions |= PERMISSION_READ;
++      }
++    }
++
++    if (propertiesSet.has('write')) {
++      if (secureSet.has('write')) {
++        permissions |= PERMISSION_WRITE_ENCRYPTED_MITM;
++      } else {
++        permissions |= PERMISSION_WRITE;
++      }
++    }
++
++    this.bledroid.command('addDescriptor ' +
++                          this.serviceHandle + ' ' +
++                          descriptor.uuid + ' ' +
++                          permissions);
++    return;
++  }
++
++  const characteristic = pending.characteristic;
++  assert(characteristic);
++
++  log.debug('Adding characteristic \'%s\'', characteristic.uuid);
++
++  const propertiesSet = new Set(characteristic.properties);
++  const secureSet = new Set(characteristic.secure);
++
++  let properties = 0;
++  let permissions = 0;
++
++  if (propertiesSet.has('read')) {
++    properties |= PROPERTY_READ;
++
++    if (secureSet.has('read')) {
++      permissions |= PERMISSION_READ_ENCRYPTED_MITM;
++    } else {
++      permissions |= PERMISSION_READ;
++    }
++  }
++
++  if (propertiesSet.has('writeWithoutResponse')) {
++    properties |= PROPERTY_WRITE_NO_RESPONSE;
++
++    if (secureSet.has('writeWithoutResponse')) {
++      permissions |= PERMISSION_WRITE_ENCRYPTED_MITM;
++    } else {
++      permissions |= PERMISSION_WRITE;
++    }
++  }
++
++  if (propertiesSet.has('write')) {
++    properties |= PROPERTY_WRITE;
++
++    if (secureSet.has('write')) {
++      permissions |= PERMISSION_WRITE_ENCRYPTED_MITM;
++    } else {
++      permissions |= PERMISSION_WRITE;
++    }
++  }
++
++  if (propertiesSet.has('notify')) {
++    if (secureSet.has('notify')) {
++      throw new Error('Secure notify not supported for characteristic \'' +
++                      characteristic.uuid + '\'');
++    }
++    properties |= PROPERTY_NOTIFY;
++  }
++
++  if (propertiesSet.has('indicate')) {
++    if (secureSet.has('indicate')) {
++      throw new Error('Secure indicate not supported for characteristic \'' +
++                      characteristic.uuid + '\'');
++    }
++    properties |= PROPERTY_INDICATE;
++  }
++
++  this.currentAttribute = characteristic;
++  this.bledroid.command('addCharacteristic ' +
++                        this.serviceHandle + ' ' +
++                        characteristic.uuid + ' ' +
++                        properties + ' ' +
++                        permissions);
++};
++
++BlenoBindings.prototype.onServiceAdded = function(status, handle) {
++  log.debug('onServiceAdded', status, handle);
++
++  assert(this.pendingSetServices);
++  assert(this.serviceHandle === null);
++
++  if (status) {
++    const error = new Error('Failed to add service, status ' + status);
++    this.failSetServices(error);
++    return;
++  }
++
++  this.serviceHandle = handle;
++  try {
++    this.addNextServiceAttribute();
++  } catch(error) {
++    this.failSetServices(error);
++    throw error;
 +  }
 +};
 +
-+blenoBindings.disconnect = function() {
-+  throw new Error('disconnect() is not yet supported');
++BlenoBindings.prototype.onAttributeAdded = function(status, handle) {
++  log.debug('onAttributeAdded', status, handle);
++
++  assert(this.pendingSetServices);
++  assert(this.serviceHandle !== null);
++
++  if (status) {
++    const error = new Error('Failed to add attribute, status ' + status);
++    this.attributeMap.clear();
++    this.failSetServices(error);
++    return;
++  }
++
++  const complete = this.pendingAttributes.shift();
++
++  const attribute = complete.characteristic || complete.descriptor;
++  assert(attribute);
++
++  this.attributeMap.set(handle, attribute);
++  this.attributeMap.set(attribute, handle);
++
++  try {
++    this.addNextServiceAttribute();
++  } catch(error) {
++    this.attributeMap.clear();
++    this.failSetServices(error);
++    throw error;
++  }
 +};
 +
-+module.exports = blenoBindings;
++BlenoBindings.prototype.onServiceStarted = function(status) {
++  log.debug('onServiceStarted', status);
++
++  assert(this.pendingSetServices);
++  assert(this.serviceHandle !== null);
++
++  this.pendingSetServices = null;
++  this.pendingAttributes = null;
++
++  if (status) {
++    const error = new Error('Failed to start service, status ' + status);
++    this.failSetServices(error);
++    return;
++  }
++
++  this.emit('servicesSet');
++};
++
++BlenoBindings.prototype.onServiceStopped = function(status) {
++  log.debug('onServiceStopped', status);
++};
++
++BlenoBindings.prototype.onReadAttribute = function(connectionId,
++                                                   transactionId,
++                                                   address,
++                                                   handle,
++                                                   offset,
++                                                   isLong) {
++  log.debug('onReadAttribute',
++            connectionId,
++            transactionId,
++            address,
++            handle,
++            offset,
++            isLong);
++
++  if (this.centralMap.has(address)) {
++    assert.strictEqual(this.centralMap.get(address),
++                       this.centralMap.get(connectionId));
++  } else {
++    log.warn('Unknown central \'%s\', ignoring read request', address);
++    assert(!this.centralMap.has(connectionId),
++           'Have another entry for connectionId ' + connectionId);
++    return;
++  }
++
++  const attribute = this.attributeMap.get(handle);
++  if (!attribute) {
++    log.warn('Unknown attribute handle %d, ignoring read request', handle);
++    return;
++  }
++
++  const callback = function(result, data) {
++    log.debug('onReadAttribute.callback',
++              result,
++              '<Buffer ' + data.length + '>',
++              address);
++
++    let hexdata = '';
++    if (result === RESULT_SUCCESS) {
++      if (!Buffer.isBuffer(data)) {
++        data = new Buffer(data);
++      }
++      hexdata = data.toString('hex');
++    }
++    this.bledroid.command('attributeResponse ' +
++                          connectionId + ' ' +
++                          transactionId + ' ' +
++                          handle + ' ' +
++                          result + ' ' +
++                          offset + ' ' +
++                          hexdata);
++  }.bind(this);
++
++  attribute.emit('readRequest', offset, callback, address);
++};
++
++BlenoBindings.prototype.onWriteAttribute = function(connectionId,
++                                                    transactionId,
++                                                    address,
++                                                    handle,
++                                                    offset,
++                                                    needResponse,
++                                                    isPreparedWrite,
++                                                    data) {
++  log.debug('onWriteAttribute',
++            connectionId,
++            transactionId,
++            address,
++            handle,
++            offset,
++            needResponse,
++            isPreparedWrite,
++            '<Buffer ' + data.length + '>');
++
++  if (this.centralMap.has(address)) {
++    assert.strictEqual(this.centralMap.get(address),
++                       this.centralMap.get(connectionId));
++  } else {
++    log.warn('Unknown central \'%s\', ignoring write request', address);
++    assert(!this.centralMap.has(connectionId),
++           'Have another entry for connectionId ' + connectionId);
++    return;
++  }
++
++  const attribute = this.attributeMap.get(handle);
++  if (!attribute) {
++    log.warn('Unknown attribute handle %d, ignoring write request', handle);
++    return;
++  }
++
++  if (isPreparedWrite) {
++    log.warn('Prepared writes not yet supported');
++    return;
++  }
++
++  const callback = function(result) {
++    log.debug('onWriteAttribute.callback', result, address);
++    if (needResponse) {
++      this.bledroid.command('attributeResponse ' +
++                            connectionId + ' ' +
++                            transactionId + ' ' +
++                            handle + ' ' +
++                            result);
++    }
++  }.bind(this);
++
++  attribute.emit('writeRequest',
++                 data,
++                 offset,
++                 !needResponse,
++                 callback,
++                 address);
++};
++
++BlenoBindings.prototype.disconnect = function(address) {
++  log.debug('disconnect', address);
++
++  const connectionInfo = this.centralMap.get(address);
++  if (!connectionInfo) {
++    log.warn('Unknown central \'%s\', cannot disconnect', address);
++    return;
++  }
++
++  this.bledroid.command('disconnectServer ' +
++                        address + ' ' +
++                        connectionInfo.connectionId);
++};
++
++BlenoBindings.prototype.sendNotify = function(address,
++                                              characteristic,
++                                              needResponse,
++                                              data) {
++  log.debug('sendNotify',
++            address,
++            characteristic.uuid,
++            needResponse,
++            '<Buffer ' + data.length + '>');
++
++  const connectionInfo = this.centralMap.get(address);
++  if (!connectionInfo) {
++    log.warn('Unknown central \'%s\', cannot send notification', address);
++    return;
++  }
++
++  if (!this.attributeMap.has(characteristic)) {
++    log.warn('Unknown characteristic \'%s\', cannot send notification',
++             characteristic.uuid);
++    return;
++  }
++
++  const handle = this.attributeMap.get(characteristic);
++
++  let hexdata = '';
++  if (data.length) {
++    hexdata = ' ' + data.toString('hex');
++  }
++
++  this.bledroid.command('sendNotify ' +
++                        connectionInfo.connectionId + ' ' +
++                        handle + ' ' +
++                        (needResponse ? 1 : 0) + ' ' +
++                        data.length +
++                        hexdata);
++
++  this.pendingNotifyCallbacks.push(new PendingNotifyCallback(address,
++                                                             characteristic,
++                                                             needResponse));
++};
++
++BlenoBindings.prototype.onNotifySent = function(connectionId, status) {
++  log.debug('onNotifySent', connectionId, status);
++
++  const connectionInfo = this.centralMap.get(connectionId);
++  if (!connectionInfo) {
++    log.warn('Unknown connectionId %d, cannot call notification callback');
++    return;
++  }
++
++  if (!this.pendingNotifyCallbacks.length) {
++    log.warn('No pending notify callbacks');
++    return;
++  }
++
++  const pendingCallback = this.pendingNotifyCallbacks[0];
++  if (pendingCallback.address !== connectionInfo.address) {
++    log.warn('Pending notify callback address mismatch',
++             pendingCallback.address,
++             connectionInfo.address);
++    return;
++  }
++
++  this.pendingNotifyCallbacks.shift();
++
++  if (status) {
++    log.warn('Failed to send notification, status %d', status);
++    return;
++  }
++
++  if (pendingCallback.needResponse) {
++    pendingCallback.characteristic.emit('indicate', connectionInfo.address);
++  } else {
++    pendingCallback.characteristic.emit('notify', connectionInfo.address);
++  }
++};
++
++module.exports = new BlenoBindings();
+diff --git a/lib/android/ccc-descriptor.js b/lib/android/ccc-descriptor.js
+new file mode 100644
+index 0000000..66ac767
+--- /dev/null
++++ b/lib/android/ccc-descriptor.js
+@@ -0,0 +1,196 @@
++'use strict';
++
++const assert = require('assert');
++const events = require('events');
++const util = require('util');
++
++const Characteristic = require('../characteristic');
++const Descriptor = require('../descriptor');
++
++const UUID_CCC_DESCRIPTOR_16 = '2902';
++
++const NOTIFICATION_DISABLED           = 0;
++const NOTIFICATION_WITH_NOTIFY        = 1 << 0;
++const NOTIFICATION_WITH_INDICATE      = 1 << 1;
++
++const MAX_NOTIFICATION_DATA_SIZE = 20;
++
++const log = (function() {
++  const debug = require('debug');
++  return {
++    debug: debug('silk-bleno:ccc-descriptor:debug'),
++    info: debug('silk-bleno:ccc-descriptor:info'),
++    warn: debug('silk-bleno:ccc-descriptor:warn'),
++  };
++})();
++
++// This descriptor maintain a two byte bitfield, only the first two bits are
++// ever used. See https://developer.bluetooth.org/gatt/descriptors/Pages/DescriptorViewer.aspx?u=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
++function CCCDescriptor(bindings, characteristic) {
++  Descriptor.call(this, {
++    uuid: UUID_CCC_DESCRIPTOR_16,
++    value: null,
++  });
++
++  events.EventEmitter.call(this);
++
++  // The BlenoBindings object.
++  this.bindings = bindings;
++
++  // The characteristic that this descriptor belongs to.
++  this.characteristic = characteristic;
++
++  // Maps address string to buffers representing the descriptor value.
++  this.subscriptions = new Map();
++
++  this.properties = ['read', 'write'];
++  this.secure = [];
++
++  this.on('readRequest', this.onReadRequest.bind(this));
++  this.on('writeRequest', this.onWriteRequest.bind(this));
++
++  bindings.on('disconnect', this.unsubscribe.bind(this));
++}
++
++util.inherits(CCCDescriptor, events.EventEmitter);
++
++CCCDescriptor.prototype.onReadRequest = function(offset, callback, address) {
++  log.debug('onReadRequest', offset, address);
++
++  let value = this.subscriptions.get(address);
++  if (!value) {
++    value = new Buffer([NOTIFICATION_DISABLED, 0]);
++  }
++
++  assert.strictEqual(value.length, 2);
++  assert.strictEqual(value[1], 0);
++
++  if (offset >= value.length) {
++    log.warn('Invalid offset for CCCD', offset);
++    callback(Characteristic.RESULT_INVALID_OFFSET);
++    return;
++  }
++
++  if (offset) {
++    value = value.slice(offset);
++    assert(value.length <= 1);
++  }
++
++  callback(Characteristic.RESULT_SUCCESS, value);
++};
++
++CCCDescriptor.prototype.onWriteRequest = function(data,
++                                                  offset,
++                                                  withoutResponse,
++                                                  callback,
++                                                  address) {
++  log.debug('onWriteRequest', data, offset, withoutResponse, address);
++
++  const maxValueLength = 2;
++
++  if (offset >= maxValueLength) {
++    log.warn('Invalid offset for CCCD', offset);
++    callback(Characteristic.RESULT_INVALID_OFFSET);
++    return;
++  }
++
++  if (data.length > (maxValueLength - offset)) {
++    log.warn('Invalid length for CCCD', data);
++    callback(Characteristic.RESULT_INVALID_ATTRIBUTE_LENGTH);
++    return;
++  }
++
++  assert(offset === 0 || offset === 1);
++
++  // Make sure that the second byte is 0.
++  if ((offset && data[0]) || data[1]) {
++    log.warn('Invalid data for CCCD', data);
++    callback(Characteristic.RESULT_UNLIKELY_ERROR);
++    return;
++  }
++
++  // Presumably we already verified the first byte and that's all we care
++  // about.
++  if (offset) {
++    callback(Characteristic.RESULT_SUCCESS);
++    return;
++  }
++
++  // We only understand two bits.
++  if (data[0] & ~(NOTIFICATION_WITH_NOTIFY | NOTIFICATION_WITH_INDICATE)) {
++    log.warn('Invalid data for CCCD', data);
++    callback(Characteristic.RESULT_UNLIKELY_ERROR);
++    return;
++  }
++
++  const newValue = data[0] ? new Buffer([data[0], 0]) : null;
++  const oldValue = this.subscriptions.get(address);
++
++  if (Buffer.isBuffer(oldValue) === Buffer.isBuffer(newValue)) {
++    if (newValue) {
++      this.subscriptions.set(address, newValue);
++    }
++    callback(Characteristic.RESULT_SUCCESS);
++    return;
++  }
++
++  if (oldValue) {
++    this.unsubscribe(address);
++    callback(Characteristic.RESULT_SUCCESS);
++    return;
++  }
++
++  const updateValueCallback = function(newData) {
++    log.debug('updateValueCallback', newData, address);
++
++    if (!Buffer.isBuffer(newData)) {
++      newData = new Buffer(newData);
++    }
++
++    if (newData.length > MAX_NOTIFICATION_DATA_SIZE) {
++      throw new Error('Data size exceeds notification limits');
++    }
++
++    const notificationValue = this.subscriptions.get(address);
++    if (!notificationValue) {
++      log.warn('Central \'%s\' is no longer subscribed to characteristic ' +
++               '\'%s\'', this.characteristic.uuid);
++      return;
++    }
++
++    const needResponse =
++      (notificationValue[0] & NOTIFICATION_WITH_INDICATE) ? true : false;
++
++    this.bindings.sendNotify(address,
++                             this.characteristic,
++                             needResponse,
++                             newData);
++  }.bind(this);
++
++  // Subscribe.
++  process.nextTick(function() {
++    this.characteristic.emit('subscribe',
++                             MAX_NOTIFICATION_DATA_SIZE,
++                             updateValueCallback,
++                             address);
++  }.bind(this));
++
++  this.subscriptions.set(address, newValue);
++  callback(Characteristic.RESULT_SUCCESS);
++};
++
++CCCDescriptor.prototype.unsubscribe = function(address) {
++  log.debug('unsubscribe', address);
++
++  if (!this.subscriptions.has(address)) {
++    return;
++  }
++
++  process.nextTick(function() {
++    this.characteristic.emit('unsubscribe', address);
++  }.bind(this));
++
++  this.subscriptions.delete(address);
++};
++
++module.exports = CCCDescriptor;
+diff --git a/lib/android/descriptor-wrapper.js b/lib/android/descriptor-wrapper.js
+new file mode 100644
+index 0000000..dde0b97
+--- /dev/null
++++ b/lib/android/descriptor-wrapper.js
+@@ -0,0 +1,92 @@
++'use strict';
++
++const assert = require('assert');
++const events = require('events');
++const util = require('util');
++
++const Characteristic = require('../characteristic');
++const Descriptor = require('../descriptor');
++
++const log = (function() {
++  const debug = require('debug');
++  return {
++    debug: debug('silk-bleno:descriptor-wrapper:debug'),
++    info: debug('silk-bleno:descriptor-wrapper:info'),
++    warn: debug('silk-bleno:descriptor-wrapper:warn'),
++  };
++})();
++
++function DescriptorWrapper(descriptor, options) {
++  assert(descriptor instanceof Descriptor);
++  options = options || {};
++
++  events.EventEmitter.call(this);
++
++  Object.defineProperties(this, {
++    uuid: {
++      configurable: true,
++      enumerable: true,
++      get: function() {
++        return descriptor.uuid;
++      },
++      set: function(uuid) {
++        descriptor.uuid = uuid;
++      },
++    },
++
++    value: {
++      configurable: true,
++      enumerable: true,
++      get: function() {
++        return descriptor.value;
++      },
++      set: function(value) {
++        descriptor.value = value;
++      },
++    },
++  });
++
++  this.properties = options.properties || ['read'];
++  this.secure = options.secure || [];
++
++  if (options.onReadRequest) {
++    this.onReadRequest = options.onReadRequest;
++  }
++
++  if (options.onWriteRequest) {
++    this.onWriteRequest = options.onWriteRequest;
++  }
++
++  this.on('readRequest', this.onReadRequest.bind(this));
++  this.on('writeRequest', this.onWriteRequest.bind(this));
++}
++
++util.inherits(DescriptorWrapper, events.EventEmitter);
++
++DescriptorWrapper.prototype.onReadRequest = function(offset,
++                                                     callback,
++                                                     address) {
++  log.debug('DescriptorWrapper.onReadRequest', offset, address);
++
++  if (Buffer.isBuffer(this.value) || typeof this.value === 'string') {
++    callback(Characteristic.RESULT_SUCCESS, this.value);
++  } else {
++    callback(Characteristic.RESULT_UNLIKELY_ERROR, null);
++  }
++};
++
++DescriptorWrapper.prototype.onWriteRequest = function(data,
++                                                      offset,
++                                                      withoutResponse,
++                                                      callback,
++                                                      address) {
++  log.debug('DescriptorWrapper.onWriteRequest',
++            data,
++            offset,
++            withoutResponse,
++            address);
++
++  callback(Characteristic.RESULT_UNLIKELY_ERROR);
++};
++
++module.exports = DescriptorWrapper;
 diff --git a/lib/bleno.js b/lib/bleno.js
-index 0d4f755..c4547fa 100644
+index 0d4f755..cdb49a3 100644
 --- a/lib/bleno.js
 +++ b/lib/bleno.js
 @@ -18,6 +18,8 @@ if (platform === 'darwin') {
@@ -420,6 +1186,65 @@ index 0d4f755..c4547fa 100644
  } else {
    throw new Error('Unsupported platform');
  }
+@@ -77,12 +79,12 @@ Bleno.prototype.onAccept = function(clientAddress) {
+   this.emit('accept', clientAddress);
+ };
+ 
+-Bleno.prototype.onMtuChange = function(mtu) {
++Bleno.prototype.onMtuChange = function(mtu, clientAddress) {
+   debug('mtu ' + mtu);
+ 
+   this.mtu = mtu;
+ 
+-  this.emit('mtuChange', mtu);
++  this.emit('mtuChange', mtu, clientAddress);
+ };
+ 
+ Bleno.prototype.onDisconnect = function(clientAddress) {
+@@ -211,23 +213,23 @@ Bleno.prototype.onServicesSet = function(error) {
+   this.emit('servicesSet', error);
+ };
+ 
+-Bleno.prototype.disconnect = function() {
++Bleno.prototype.disconnect = function(clientAddress) {
+   debug('disconnect');
+-  this._bindings.disconnect();
++  this._bindings.disconnect(clientAddress);
+ };
+ 
+-Bleno.prototype.updateRssi = function(callback) {
++Bleno.prototype.updateRssi = function(callback, clientAddress) {
+   if (callback) {
+     this.once('rssiUpdate', function(rssi) {
+-      callback(null, rssi);
++      callback(null, rssi, clientAddress);
+     });
+   }
+ 
+-  this._bindings.updateRssi();
++  this._bindings.updateRssi(clientAddress);
+ };
+ 
+-Bleno.prototype.onRssiUpdate = function(rssi) {
+-  this.emit('rssiUpdate', rssi);
++Bleno.prototype.onRssiUpdate = function(rssi, clientAddress) {
++  this.emit('rssiUpdate', rssi, clientAddress);
+ };
+ 
+ module.exports = Bleno;
+diff --git a/lib/characteristic.js b/lib/characteristic.js
+index cfbb680..388b3ec 100644
+--- a/lib/characteristic.js
++++ b/lib/characteristic.js
+@@ -6,6 +6,8 @@ var debug = require('debug')('characteristic');
+ var UuidUtil = require('./uuid-util');
+ 
+ function Characteristic(options) {
++  events.EventEmitter.call(this);
++
+   this.uuid = UuidUtil.removeDashes(options.uuid);
+   this.properties = options.properties || [];
+   this.secure = options.secure || [];
 diff --git a/package.json b/package.json
 index c585abc..360e603 100644
 --- a/package.json

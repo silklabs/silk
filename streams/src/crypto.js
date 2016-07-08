@@ -141,6 +141,8 @@ export class EncryptStream extends CryptoStreamBase {
     const random = this._randomBytes.pop();
     this._feedRandomBytes();
 
+    assert(random.length === CryptoStreamBase.IV_LENGTH);
+
     const cipher =
       crypto.createCipheriv(CryptoStreamBase.CIPHER_NAME,
                             this._sharedSecret,
@@ -161,35 +163,35 @@ export class EncryptStream extends CryptoStreamBase {
         return;
       }
 
-      let encryptedData = [ ];
-      let messageSize = CryptoStreamBase.IV_LENGTH;
+      let messageSize = random.length;
 
       // Read all data from the cipher stream.
-      let data = null;
-      while ((data = cipher.read())) {
-        encryptedData.push(data);
-        messageSize += data.length;
+      const encryptedData = [];
+      let encrypted = null;
+
+      while ((encrypted = cipher.read())) {
+        encryptedData.push(encrypted);
+        messageSize += encrypted.length;
       }
 
       const duration = Date.now() - startTime;
 
       log.debug(`Sending encrypted message of size ${messageSize}`);
+      const messageSizeBuffer = this._encodeInteger(messageSize);
 
-      // Send the message size unencrypted.
-      this.push(this._encodeInteger(messageSize));
+      const dataSize = messageSizeBuffer.length + messageSize;
 
-      log.debug(`Sending random bytes '${random.toString('hex')}'`);
+      const data = Buffer.concat([
+        // Send the message size unencrypted.
+        messageSizeBuffer,
+        // Send the random bytes unencrypted.
+        random,
+        // Now send all the encrypted data.
+        ...encryptedData,
+      ], dataSize);
 
-      // Send the random bytes unencrypted.
-      this.push(random);
-
-      // Now send all the encoded data.
-      for (let encrypted of encryptedData) {
-        this.push(encrypted);
-      }
-
+      this.push(data);
       callback(this._error);
-
 
       const plaintextSize = chunk.length + this._sequenceBuffer.length;
       this._metrics.add(new Metrics.Encrypt(plaintextSize, duration));
@@ -500,7 +502,7 @@ export class DecryptStream extends CryptoStreamBase {
     this._dataLength -= random.length;
     this._encryptedChunkSize -= random.length;
 
-    log.debug(`Creating decipher with random bytes '${random.toString('hex')}`);
+    log.debug(`Creating decipher`);
 
     const decipher =
       crypto.createDecipheriv(CryptoStreamBase.CIPHER_NAME,

@@ -65,15 +65,12 @@ export class StreamWrite extends Metric {
   static DESC = `The amount of time required to write bytes over BTLE`;
 
   constructor(durationMs: number,
-              bytesWritten: number,
-              bytesRemaining: number) {
+              bytesWritten: number) {
     invariant(durationMs >= 0, `Invalid duration ${durationMs}`);
     invariant(bytesWritten >= 0, `Invalid bytes written ${bytesWritten}`);
-    invariant(bytesRemaining >= 0, `Invalid bytes remaining ${bytesRemaining}`);
     super({
       durationMs: new MetricTypes.Integer(durationMs),
       bytesWritten: new MetricTypes.Integer(bytesWritten),
-      bytesRemaining: new MetricTypes.Integer(bytesRemaining),
     });
   }
 

@@ -9,7 +9,7 @@
 import Joi from 'joi';
 
 const MODE_SCHEMA =
-  Joi.string().only([`off`, `scan`, `beacon`]);
+  Joi.string().only([`off`, `on`, `beacon`]);
 const KEY_SCHEMA = Joi.string().hex().length(64);
 const BEACON_VERSION_SCHEMA = Joi.number().integer().min(0).max(65535);
 const BEACON_POWER_SCHEMA = Joi.number().integer().min(-100).max(0);
@@ -59,14 +59,6 @@ const MESSAGES_FROM_CHILD = Object.assign({}, MESSAGES_FROM_BOTH, {
     mode: MODE_SCHEMA.required(),
     error: ERROR_PROPERTY_SCHEMA.optional(),
   }),
-
-  pauseScan: promiseSchema(`pauseScan`, {
-    error: ERROR_PROPERTY_SCHEMA.optional(),
-  }),
-
-  resumeScan: promiseSchema(`resumeScan`, {
-    error: ERROR_PROPERTY_SCHEMA.optional(),
-  }),
 });
 
 const MESSAGES_FROM_PARENT = Object.assign({}, MESSAGES_FROM_BOTH, {
@@ -90,9 +82,6 @@ const MESSAGES_FROM_PARENT = Object.assign({}, MESSAGES_FROM_BOTH, {
   mode: promiseSchema(`mode`, {
     mode: MODE_SCHEMA.required(),
   }),
-
-  pauseScan: promiseSchema(`pauseScan`),
-  resumeScan: promiseSchema(`resumeScan`),
 });
 
 // Avoids needing to pass in an argument...

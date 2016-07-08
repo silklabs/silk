@@ -10,7 +10,10 @@ import assert from 'assert';
 import createLog from '../log';
 import * as Joi from 'joi';
 import SessionListenerBase from './session_listener_base';
-import { getboolprop } from 'silk-sysutils';
+import {
+  exec,
+  getboolprop,
+} from 'silk-sysutils';
 import sensors from 'silk-sensors';
 
 const log = createLog('config-session-listener');
@@ -38,6 +41,7 @@ const SCHEMA = {
     publicKey: Joi.string().lowercase().trim().length(64).hex().required(),
     regToken: Joi.string().required(),
     serverUrl: Joi.string().allow(``).default(``).optional(),
+    time: Joi.number().required(),
   }).options({
     stripUnknown: true,
   }).required(),
@@ -76,7 +80,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     // We're attempting to configure this device so we can't use authenticated
     // streams yet.
-    socketSession.allowUnauthenticated();
+    socketSession.allowUnauthenticated(true);
 
     super(deviceConfig, socketSession);
 
@@ -276,7 +280,16 @@ export default class ConfigSessionListener extends SessionListenerBase {
         serverUrl: data.serverUrl,
       };
 
-      this._completeRegistration(secret);
+      const time = new Date(data.time);
+      log.debug(`Setting system time to configuring app's time`, time);
+
+      exec('time_genoff', [time.getTime().toString()])
+        .catch((error) => {
+          log.warn(`Unable to set system time`, error);
+        })
+        .then(() => {
+          this._completeRegistration(secret);
+        });
       return;
 
     case `dismiss`:
@@ -387,11 +400,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._send({
       name: `complete`,
     });
-
-    // Disable the scanner now that we're properly configured. If the connection
-    // dies after this we don't really care and we don't want to start scanning
-    // again.
-    this._socketSession.stopScanning();
 
     this._state = ConfigSessionListener.STATE_COMPLETE;
     this._wifiErrorCount = 0;

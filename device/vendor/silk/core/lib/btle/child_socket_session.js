@@ -12,32 +12,22 @@ import {RssiSmoother} from 'silk-api';
 import {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
-  HeartbeatDuplexStream,
   MessagePackDuplexStream,
 } from 'silk-streams';
-import path from 'path';
 
-import BluetoothStream from './bluetooth_stream';
 import createLog from '../log';
 import api from '../api';
 import * as Metrics from '../metrics/btle';
-import {getboolprop} from 'silk-sysutils';
-import player from 'silk-audioplayer';
 
 import type {Peripheral} from 'noble';
-import type SocketScanner from './socket_scanner';
+import type SocketStream from './socket_stream';
 
 const log = createLog(`btle-child-socketsession`);
-
-const HEARTBEAT_SOUNDS_ENABLED = getboolprop('persist.silk.heartbeatSounds');
-const HEARTBEAT_SOUND_FILE = path.join(__dirname, 'media', 'heartbeat.mp3');
-const FLATLINE_SOUND_FILE = path.join(__dirname, 'media', 'flatline.mp3');
 
 export default class ChildSocketSession extends AuthenticateDuplexStream {
 
   static RSSI_UPDATE_TIMEOUT = 50;
 
-  _scanner: SocketScanner;
   _peripheral: Peripheral;
 
   // Set to true when |end()| is called.
@@ -46,8 +36,8 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
   // Set to true once the 'end' or 'error' event is emitted.
   _ended: boolean = false;
 
-  // Set to true after the peripheral has been disconnected.
-  _peripheralDisconnected: boolean = false;
+  // Set to true when the peripheral has been disconnected.
+  _disconnected: boolean = false;
 
   _rssiSmoother: RssiSmoother = new RssiSmoother();
   _rssiUpdatesEnabled: boolean = false;
@@ -59,44 +49,36 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
   _startTime: number = Date.now();
   _receivedBytes: number = 0;
   _sentBytes: number = 0;
-  _flatlined: boolean = false;
   _errorMessage: string = ``;
 
-  constructor(scanner: SocketScanner, peripheral: Peripheral) {
+  constructor(
+    stream: SocketStream,
+    peripheral: Peripheral,
+    privateKey: string,
+    publicKeys: Array<string>,
+  ) {
     log.debug(`constructor`);
 
-    const bluetoothStream = new BluetoothStream(
-      peripheral,
-      scanner._serviceUuid
-    );
-    const cryptoStream = new CryptoDuplexStream(
-      bluetoothStream,
-      api.metrics
-    );
+    const cryptoStream = new CryptoDuplexStream(stream, api.metrics);
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {
-      log.verbose(`Received`, data);
+      log.verbose(`Received`, data.name || data);
     });
-    const msgpackOldWrite = msgpackStream.write;
-    // $FlowFixMe: Flow doesn't like it when we replace functions.
-    msgpackStream.write = (data, ...args) => {
-      log.verbose(`Sending`, data);
-      return msgpackOldWrite.call(msgpackStream, data, ...args);
+    const msgpackOldWrite = msgpackStream.write.bind(msgpackStream);
+    msgpackStream.write = (data, encodingOrCallback, callback) => {
+      log.verbose(`Sending`, data.name || data);
+      return msgpackOldWrite(data, encodingOrCallback, callback);
     };
 
-    const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
-
-    super(heartbeatStream,
+    super(msgpackStream,
           cryptoStream,
-          scanner._privateKey,
-          scanner._publicKeys,
+          privateKey,
+          publicKeys,
           api.metrics);
 
-    this._scanner = scanner;
-
-    peripheral.addListener(`rssiUpdate`, this._onPeripheralRssiUpdate);
-    peripheral.addListener(`disconnect`, this._onPeripheralDisconnect);
+    peripheral.addListener(`rssiUpdate`, this._onRssiUpdate);
+    peripheral.addListener(`disconnect`, this._onDisconnect);
     this._peripheral = peripheral;
 
     this._rssiSmoother.update(peripheral.rssi);
@@ -105,36 +87,27 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     this.once(`error`, this._onError);
     this.once(`close`, this._onClose);
 
-    bluetoothStream.on(`data`, (data) => {
+    stream.on(`data`, (data) => {
       this._receivedBytes += data.length;
     });
-    const socketOldWrite = bluetoothStream.write;
-    bluetoothStream.write = (data, encoding, callback) => {
+    const streamOldWrite = stream.write.bind(stream);
+    stream.write = (data, encoding, callback) => {
       if (data) {
         this._sentBytes += data.length;
       }
-      return socketOldWrite.call(bluetoothStream, data, encoding, callback);
+      return streamOldWrite(data, encoding, callback);
     };
-
-    heartbeatStream.once(`data`, () => {
-      log.debug(`Heartbeat stream received first data event, starting ` +
-                `monitoring`);
-
-      heartbeatStream.on(`flatline`, this._onFlatline);
-      if (HEARTBEAT_SOUNDS_ENABLED) {
-        heartbeatStream.on(`heartbeat`, () => player.play(HEARTBEAT_SOUND_FILE));
-      }
-      heartbeatStream.monitorHeartbeats = true;
-
-      // Waiting to unpack entire messages can take longer than we would like
-      // sometimes so reset the monitor whenever the bluetooth stream receives
-      // data.
-      bluetoothStream.addListener(`data`, () => heartbeatStream.resetMonitor());
-    });
   }
 
-  _onPeripheralRssiUpdate: ((rssi: number) => void) = (rssi) => {
-    log.debug(`_onPeripheralRssiUpdate`, rssi);
+  _onDisconnect: (() => void) = () => {
+    log.debug(`_onDisconnect`);
+
+    this._disconnected = true;
+    this._peripheral.removeListener(`disconnect`, this._onDisconnect);
+  };
+
+  _onRssiUpdate: ((rssi: number) => void) = (rssi) => {
+    log.debug(`_onRssiUpdate`, rssi);
 
     this._rssiSmoother.update(rssi);
 
@@ -156,40 +129,15 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     }
   };
 
-  _onPeripheralDisconnect: (() => void) = () => {
-    log.debug(`_onPeripheralDisconnect`);
-
-    assert(!this._peripheralDisconnected);
-
-    this._peripheralDisconnected = true;
-
-    this._peripheral.removeListener(`disconnect`, this._onPeripheralDisconnect);
-
-    this._killRssiUpdates();
-  };
-
-  _onFlatline: (() => void) = () => {
-    log.debug(`_onFlatline`);
-
-    this._flatlined = true;
-
-    const error = new Error(
-      `Failed to receive heartbeat message in expected time`
-    );
-    log.warn(error);
-    this.emit(`error`, error);
-
-    if (HEARTBEAT_SOUNDS_ENABLED) {
-      player.play(FLATLINE_SOUND_FILE);
-    }
-  };
-
   _onEnd: (() => void) = () => {
     log.debug(`_onEnd`);
 
     this._ended = true;
 
     this._killRssiUpdates();
+
+    // Stop sending more data.
+    this.end();
   };
 
   _onError: ((error: Error) => void) = (error) => {
@@ -202,19 +150,18 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     this._ended = true;
 
     this._killRssiUpdates();
-
-    // Force-close both ends of the stream.
-    this.end();
-    this.push(null);
   };
 
   _onClose: (() => void) = () => {
     log.debug(`_onClose`);
 
-    let duration = Date.now() - this._startTime;
-    if (duration < 0) {
-      log.warn(`Time changed, unknown session duration`);
-      duration = 0;
+    const duration = Math.max(Date.now() - this._startTime, 0);
+
+    if (!this._disconnected) {
+      log.debug(`Disconnecting peripheral`);
+      this._peripheral.removeListener(`disconnect`, this._onDisconnect);
+      this._peripheral.disconnect();
+      this._disconnected = true;
     }
 
     const commonArgs = [
@@ -225,16 +172,14 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     ];
 
     let metric;
-    if (this._flatlined) {
-      metric = new Metrics.SocketSessionFlatline(...commonArgs);
-    } else if (this._errorMessage) {
+    if (this._errorMessage) {
       metric = new Metrics.SocketSessionError(...commonArgs,
                                               this._errorMessage);
     } else {
       metric = new Metrics.SocketSession(...commonArgs);
     }
 
-    api.metrics.add(metric);
+    this.emit(`metrics`, metric);
   };
 
   _onTime: (() => void) = () => {
@@ -252,7 +197,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     log.debug(`_killRssiUpdates`);
 
     this.rssiUpdatesEnabled = false;
-    this._peripheral.removeListener(`rssiUpdate`, this._onPeripheralRssiUpdate);
+    this._peripheral.removeListener(`rssiUpdate`, this._onRssiUpdate);
   }
 
   _updateRssiAfterDelay() {
@@ -272,20 +217,6 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
 
       this._peripheral.updateRssi();
     }, ChildSocketSession.RSSI_UPDATE_TIMEOUT);
-  }
-
-  emit(eventName: string, ...args: Array<any>): boolean {
-    if (eventName === `close` && !this._peripheralDisconnected) {
-      log.debug(`Stream is closed, disconnecting peripheral before emitting ` +
-                `the '${eventName}' event`);
-      this._peripheral.disconnect(() => {
-        log.debug(`Emitting the '${eventName}' event`);
-        super.emit(eventName, ...args);
-      });
-      return true;
-    }
-
-    return super.emit(eventName, ...args);
   }
 
   end(
@@ -335,29 +266,5 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
         this._rssiTimeout = null;
       }
     }
-  }
-
-  startScanning(): void {
-    log.debug(`startScanning`);
-
-    this._scanner.start();
-  }
-
-  stopScanning(): void {
-    log.debug(`stopScanning`);
-
-    this._scanner.stop();
-  }
-
-  skip() {
-    log.debug(`skip`);
-
-    this._scanner.addToSkipList(this._peripheral);
-  }
-
-  unskip() {
-    log.debug(`unskip`);
-
-    this._scanner.removeFromSkipList(this._peripheral);
   }
 }

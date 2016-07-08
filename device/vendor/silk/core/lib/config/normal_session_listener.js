@@ -16,6 +16,9 @@ export default class NormalSessionListener extends SessionListenerBase {
   constructor(deviceConfig, socketSession) {
     log.debug(`NormalSessionListener()`);
 
+    // We're already configured so we require authenticated streams.
+    socketSession.allowUnauthenticated(false);
+
     super(deviceConfig, socketSession);
 
     this._send({

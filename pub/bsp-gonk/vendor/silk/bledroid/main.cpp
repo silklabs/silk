@@ -26,6 +26,14 @@
 #include <memory>
 #include <cctype>
 #include <private/android_filesystem_config.h>
+#include <cutils/properties.h>
+
+#define BLE_SOCKET_NAME "bledroid"
+#define BLE_COMMAND_NAME "BleCommand"
+#define MAX_MSG_SIZE 1024
+#define MAX_NOTIFICATION_DATA_SIZE 20
+
+#define BT_UNITS_PER_MS 1000 / 625
 
 using namespace android;
 
@@ -55,7 +63,12 @@ enum WaitType {
   WaitStopService,
   WaitDeleteService,
   WaitConnect,
-  WaitDisconnect
+  WaitDisconnect,
+  WaitServerDisconnect,
+  WaitNotify,
+  WaitAdvertiseEnable,
+  WaitAdvertiseData,
+  WaitAdvertiseDisable,
 };
 
 // These wait types won't abort if waiting fails.
@@ -100,14 +113,39 @@ enum {
   WriteTypeSigned = 1 << 2
 };
 
+enum {
+  AdvertiseModeLowPower = BT_UNITS_PER_MS * 1000,
+  AdvertiseModeBalanced = BT_UNITS_PER_MS * 250,
+  AdvertiseModeLowLatency = BT_UNITS_PER_MS * 100,
+  AdvertiseIntervalDeltaUnit = 10,
+};
+
+enum {
+  AdvertiseEventTypeConnectable = 0,
+  AdvertiseEventTypeScannable = 2,
+  AdvertiseEventTypeNonConnectable = 3,
+};
+
+enum {
+  TransactionPowerLevelMin = 0,
+  TransactionPowerLevelLow = 1,
+  TransactionPowerLevelMed = 2,
+  TransactionPowerLevelHigh = 3,
+  TransactionPowerLevelMax = 4,
+};
+
+enum {
+  AdvertiseChannel37 = 1 << 0,
+  AdvertiseChannel38 = 1 << 1,
+  AdvertiseChannel39 = 1 << 2,
+  AdvertiseChannelAll = AdvertiseChannel37 |
+                        AdvertiseChannel38 |
+                        AdvertiseChannel39,
+};
+
 //
 // Constants
 //
-#define BLE_SOCKET_NAME "bledroid"
-#define BLE_COMMAND_NAME "BleCommand"
-#define MAX_MSG_SIZE 1024
-
-#define BT_UNITS_PER_MS 1000 / 625
 
 // This should be the same as GATT_MAX_PHY_CHANNEL in
 // external/bluetooth/bluedroid/include/bt_target.h
@@ -147,6 +185,11 @@ static const bt_uuid_t kClientListenScanUuid = {{
   0xe0, 0x42, 0x8f, 0x7d, 0x94, 0xd8, 0x5d, 0xed
 }};
 
+static const bt_uuid_t kClientBeaconUuid = {{
+  0xbd, 0x4e, 0x5b, 0x43, 0x0e, 0xce, 0x4a, 0xcb,
+  0x89, 0x09, 0x81, 0xce, 0x03, 0xcc, 0xd6, 0x2f
+}};
+
 // Set to true when we're trying to clean up after an error so that we don't
 // try to block or accidentally recurse. It will never be reset to false.
 bool cleaning_up_after_error = false;
@@ -168,6 +211,8 @@ public:
 };
 
 void bt_cleanup();
+int bt_stop_advertising();
+int bt_stop_beacon();
 
 void cleanup_and_abort() {
   ALOGD("cleanup_and_abort()");
@@ -395,6 +440,7 @@ private:
 
 bool hexstr_to_buffer(const char *str, char *buffer, size_t length) {
   if (!str) {
+    ALOGE("hexstr_to_buffer with no string");
     return false;
   }
 
@@ -405,7 +451,13 @@ bool hexstr_to_buffer(const char *str, char *buffer, size_t length) {
     b[0] = str[index * 2];
     b[1] = str[(index * 2) + 1];
 
-    if (!isxdigit(b[0]) || !isxdigit(b[1])) {
+    if (!isxdigit(b[0])) {
+      ALOGE("[%u] Not a hex digit '%c'", index * 2, b[0]);
+      return false;
+    }
+
+    if (!isxdigit(b[1])) {
+      ALOGE("[%u] Not a hex digit '%c'", (index * 2) + 1, b[1]);
       return false;
     }
 
@@ -606,8 +658,10 @@ bool uuid_to_str(const bt_uuid_t &uuid, char *str, size_t strLength) {
 bt_state_t adapter_state = BT_STATE_OFF;
 int gatt_server_if = -1;
 int gatt_client_listen_scan_if = -1;
-bool gatt_client_listening = false;
+int gatt_client_beacon_if = -1;
+bool desired_listen_state = false;
 bool gatt_client_scanning = false;
+bool adapter_supports_multi_adv = false;
 btgatt_interface_t const *gatt = nullptr;
 hw_device_t *device = nullptr;
 ThreadWaiter mainThreadWaiter;
@@ -637,6 +691,10 @@ bool connect_failed = false;
 
 const size_t disconnected_if_list_count =
   sizeof(disconnected_if_list) / sizeof(disconnected_if_list[0]);
+
+bool advertising = false;
+int status_during_advertise = 0;
+bool beaconActive = false;
 
 //
 // bt_os_callouts_t
@@ -696,24 +754,82 @@ void bt_adapter_state_changed_callback(bt_state_t state) {
 
   adapter_state = state;
   bledroid.sendEvent("!adapterState powered%s",
-      state == BT_STATE_OFF ? "Off" : "On");
+                     state == BT_STATE_OFF ? "Off" : "On");
 }
 
-void bt_adapter_properties_callback(bt_status_t status, int num_properties,
-    bt_property_t *properties) {
+void bt_adapter_properties_callback(bt_status_t status,
+                                    int num_properties,
+                                    bt_property_t *properties) {
   Tracer trc("bt_adapter_properties_callback");
+
   for (int i = 0; i < num_properties; i++) {
-    bt_property_t *prop = &properties[i];
-    if (prop->type == BT_PROPERTY_BDADDR) {
-      bt_bdaddr_t *addr = (bt_bdaddr_t *) prop->val;
-      bledroid.sendEvent("!address %02X:%02X:%02X:%02X:%02X:%02X",
-        addr->address[0],
-        addr->address[1],
-        addr->address[2],
-        addr->address[3],
-        addr->address[4],
-        addr->address[5]
-      );
+    const bt_property_t &prop = properties[i];
+
+    switch (prop.type) {
+      case BT_PROPERTY_BDADDR: {
+        bt_bdaddr_t *addr = (bt_bdaddr_t *) prop.val;
+        bledroid.sendEvent("!address %02X:%02X:%02X:%02X:%02X:%02X",
+          addr->address[0],
+          addr->address[1],
+          addr->address[2],
+          addr->address[3],
+          addr->address[4],
+          addr->address[5]
+        );
+        break;
+      }
+
+      case BT_PROPERTY_LOCAL_LE_FEATURES: {
+        auto *features = static_cast<bt_local_le_features_t *>(prop.val);
+#ifdef TARGET_GE_MARSHMALLOW
+        ALOGV("BT_PROPERTY_LOCAL_LE_FEATURES "
+                "version_supported=%u "
+                "local_privacy_enabled=%u "
+                "max_adv_instance=%u "
+                "rpa_offload_supported=%u "
+                "max_irk_list_size=%u "
+                "max_adv_filter_supported=%u "
+                "activity_energy_info_supported=%u "
+                "scan_result_storage_size=%u "
+                "total_trackable_advertisers=%u "
+                "extended_scan_support=%u "
+                "debug_logging_supported=%u",
+              features->version_supported,
+              features->local_privacy_enabled,
+              features->max_adv_instance,
+              features->rpa_offload_supported,
+              features->max_irk_list_size,
+              features->max_adv_filter_supported,
+              features->activity_energy_info_supported,
+              features->scan_result_storage_size,
+              features->total_trackable_advertisers,
+              features->extended_scan_support ? 1 : 0,
+              features->debug_logging_supported ? 1 : 0);
+#else // TARGET_GE_MARSHMALLOW
+        ALOGV("BT_PROPERTY_LOCAL_LE_FEATURES "
+                "local_privacy_enabled=%u "
+                "max_adv_instance=%u "
+                "rpa_offload_supported=%u "
+                "max_irk_list_size=%u "
+                "max_adv_filter_supported=%u "
+                "scan_result_storage_size_lobyte=%u "
+                "scan_result_storage_size_hibyte=%u "
+                "activity_energy_info_supported=%u",
+              features->local_privacy_enabled,
+              features->max_adv_instance,
+              features->rpa_offload_supported,
+              features->max_irk_list_size,
+              features->max_adv_filter_supported,
+              features->scan_result_storage_size_lobyte,
+              features->scan_result_storage_size_hibyte,
+              features->activity_energy_info_supported);
+#endif // TARGET_GE_MARSHMALLOW
+        adapter_supports_multi_adv = features->max_adv_instance >= 5;
+        break;
+      }
+
+      default:
+        break;
     }
   }
 }
@@ -925,6 +1041,9 @@ void gatt_register_client_callback(int status,
   } else if (gatt_client_listen_scan_if == -1 &&
              !memcmp(app_uuid, &kClientListenScanUuid, sizeof(*app_uuid))) {
     gatt_client_listen_scan_if = client_if;
+  } else if (gatt_client_beacon_if == -1 &&
+             !memcmp(app_uuid, &kClientBeaconUuid, sizeof(*app_uuid))) {
+    gatt_client_beacon_if = client_if;
   } else {
     if (!uuid_to_str(*app_uuid, uuid, sizeof(uuid))) {
       ALOGE("failed to convert uuid to string");
@@ -1639,9 +1758,14 @@ void gatt_client_listen_callback(int status, int server_if) {
   Tracer trc("gatt_client_listen_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitListen);
 
-  ALOGV("gatt_client_listen_callback: status=%d server_if=%d",
-        status, server_if);
-  bledroid.sendEvent("!listen %u %d", gatt_client_listening ? 1 : 0, status);
+  ALOGV("gatt_client_listen_callback: desired=%u status=%d server_if=%d",
+        desired_listen_state ? 1 : 0,
+        status,
+        server_if);
+
+  bledroid.sendEvent("!advertisingSt%s %d",
+                     desired_listen_state ? "art" : "op",
+                     status);
 }
 
 void gatt_client_configure_mtu_callback(int conn_id, int status, int mtu) {
@@ -1697,6 +1821,78 @@ void gatt_client_scan_filter_status_callback(int enable,
         enable, client_if, status);
 }
 
+/**
+ * Callback invoked when multi-adv enable operation has completed
+ */
+void gatt_client_multi_adv_enable_callback(int client_if, int status) {
+  Tracer trc("gatt_client_multi_adv_enable_callback");
+  auto signal = mainThreadWaiter.autoSignal(WaitAdvertiseEnable);
+
+  ALOGV("gatt_client_multi_adv_enable_callback: client_if=%d status=%d",
+        client_if,
+        status);
+
+  status_during_advertise = status;
+
+  if (status) {
+    if (client_if == gatt_client_listen_scan_if) {
+      bledroid.sendEvent("!advertisingStart %d", status);
+    } else if (client_if == gatt_client_beacon_if) {
+      bledroid.sendEvent("!beaconStart %d", status);
+    }
+  }
+}
+
+/**
+ * Callback invoked when multi-adv param update operation has completed
+ */
+void gatt_client_multi_adv_update_callback(int client_if, int status) {
+  Tracer trc("gatt_client_multi_adv_update_callback");
+  ALOGE("gatt_client_multi_adv_update_callback: client_if=%d status=%d",
+        client_if,
+        status);
+}
+
+/**
+ * Callback invoked when multi-adv instance data set operation has completed
+ */
+void gatt_client_multi_adv_data_callback(int client_if, int status) {
+  Tracer trc("gatt_client_multi_adv_data_callback");
+  auto signal = mainThreadWaiter.autoSignal(WaitAdvertiseData);
+
+  ALOGV("gatt_client_multi_adv_data_callback: client_if=%d status=%d",
+        client_if,
+        status);
+
+  status_during_advertise = status;
+
+  if (client_if == gatt_client_listen_scan_if) {
+    bledroid.sendEvent("!advertisingStart %d", status);
+  } else if (client_if == gatt_client_beacon_if) {
+    bledroid.sendEvent("!beaconStart %d", status);
+  }
+}
+
+/**
+ * Callback invoked when multi-adv disable operation has completed
+ */
+void gatt_client_multi_adv_disable_callback(int client_if, int status) {
+  Tracer trc("gatt_client_multi_adv_disable_callback");
+  auto signal = mainThreadWaiter.autoSignal(WaitAdvertiseDisable);
+
+  ALOGV("gatt_client_multi_adv_disable_callback: client_if=%d status=%d",
+        client_if,
+        status);
+
+  status_during_advertise = status;
+
+  if (client_if == gatt_client_listen_scan_if) {
+    bledroid.sendEvent("!advertisingStop %d", status);
+  } else if (client_if == gatt_client_beacon_if) {
+    bledroid.sendEvent("!beaconStop %d", status);
+  }
+}
+
 void gatt_client_congestion_callback(int conn_id, bool congested) {
   Tracer trc("gatt_client_congestion_callback");
   ALOGV("gatt_client_congestion_callback: conn_id=%d congested=%s",
@@ -1712,7 +1908,6 @@ void gatt_scan_parameter_setup_completed_callback(int client_if,
         client_if, status);
 }
 #endif
-
 
 btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   gatt_register_client_callback,
@@ -1737,10 +1932,10 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   gatt_client_scan_filter_cfg_callback,
   gatt_client_scan_filter_param_callback,
   gatt_client_scan_filter_status_callback,
-  NULL, // multi_adv_enable_callback
-  NULL, // multi_adv_update_callback
-  NULL, // multi_adv_data_callback
-  NULL, // multi_adv_disable_callback
+  gatt_client_multi_adv_enable_callback,
+  gatt_client_multi_adv_update_callback,
+  gatt_client_multi_adv_data_callback,
+  gatt_client_multi_adv_disable_callback,
   gatt_client_congestion_callback,
   NULL, // batchscan_cfg_storage_callback
   NULL, // batchscan_enable_disable_callback
@@ -1757,192 +1952,296 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
 // btgatt_server_callbacks_t
 //
 
-void gatt_server_register_server_callback(int status, int server_if,
-    bt_uuid_t *app_uuid) {
+void gatt_server_register_server_callback(int status,
+                                          int server_if,
+                                          bt_uuid_t * /* app_uuid */) {
   Tracer trc("gatt_server_register_server_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitRegisterServer);
 
-  (void) app_uuid;
   if (status != 0) {
     ALOGE("register_server failed. error=%d", status);
     cleanup_and_abort();
   }
+
+  ALOGV("gatt_server_register_server_callback. status=%d server_if=%d",
+        status,
+        server_if);
+
   gatt_server_if = server_if;
 }
 
 /**
  * Callback indicating that a remote device has connected or been disconnected
  */
-void gatt_server_connection_callback(int conn_id, int server_if, int connected,
-    bt_bdaddr_t *bda) {
+void gatt_server_connection_callback(int conn_id,
+                                     int server_if,
+                                     int connected,
+                                     bt_bdaddr_t *bda) {
   Tracer trc("gatt_server_connection_callback");
 
   if (!bda) {
-    ALOGE("gatt_server_connection_callback. NULL bda?\n");
+    ALOGE("gatt_server_connection_callback. NULL bda?");
     return;
   }
 
-  ALOGV("gatt_server_connection_callback. conn_id=%d server_if=%d connected=%d\n",
-      conn_id, server_if, connected);
-  bledroid.sendEvent("!server%sonnect %02X:%02X:%02X:%02X:%02X:%02X",
+  auto signal = mainThreadWaiter.autoSignal(WaitServerDisconnect,
+                                            !connected,
+                                            false);
+
+  ALOGV("gatt_server_connection_callback. conn_id=%d server_if=%d connected=%d",
+        conn_id,
+        server_if,
+        connected);
+
+  bledroid.sendEvent("!server%sonnect %02X:%02X:%02X:%02X:%02X:%02X %d",
     connected ? "C" : "Disc",
     bda->address[0],
     bda->address[1],
     bda->address[2],
     bda->address[3],
     bda->address[4],
-    bda->address[5]
+    bda->address[5],
+    conn_id
   );
 }
 
 /**
  * Callback invoked in response to create_service
  */
-void gatt_server_service_added_callback(int status, int server_if,
-    btgatt_srvc_id_t *srvc_id, int service_handle) {
+void gatt_server_service_added_callback(int status,
+                                        int server_if,
+                                        btgatt_srvc_id_t * /* srvc_id */,
+                                        int handle) {
   Tracer trc("gatt_server_service_added_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitAddService);
 
-  ALOGV("gatt_server_service_added_callback: status=%d server_if=%d srvc_handle=%d",
-    status, server_if, service_handle);
-  if (status == 0 && server_if == gatt_server_if) {
-    bledroid.sendEvent("!primaryServiceHandle %d", service_handle);
+  ALOGV("gatt_server_service_added_callback: status=%d server_if=%d handle=%d",
+        status,
+        server_if,
+        handle);
+
+  if (status) {
+    ALOGE("gatt_server_service_added_callback failed status=%d", status);
+    handle = 0;
   }
+  bledroid.sendEvent("!serviceAdded %d %d", status, handle);
 }
 
 /**
  * Callback indicating that an included service has been added to a service
  */
-void gatt_server_included_service_added_callback(int status, int server_if,
-    int srvc_handle, int incl_srvc_handle) {
+void gatt_server_included_service_added_callback(int status,
+                                                 int server_if,
+                                                 int srvc_handle,
+                                                 int incl_srvc_handle) {
   Tracer trc("gatt_server_included_service_added_callback");
-  ALOGE("gatt_server_included_service_added_callback");
+  ALOGV("gatt_server_included_service_added_callback");
 }
 
 /**
  * Callback invoked when a characteristic has been added to a service
  */
-void gatt_server_characteristic_added_callback(int status, int server_if,
-    bt_uuid_t *uuid, int srvc_handle, int char_handle) {
+void gatt_server_characteristic_added_callback(int status,
+                                               int server_if,
+                                               bt_uuid_t * /* uuid */,
+                                               int srvc_handle,
+                                               int char_handle) {
   Tracer trc("gatt_server_characteristic_added_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitAddCharacteristic);
 
   ALOGV("gatt_server_characteristic_added_callback. status=%d server_if=%d "
-      "srvc_handle=%d char_handle=%d",
-      status, server_if, srvc_handle, char_handle);
-  if (server_if == gatt_server_if) {
-    bledroid.sendEvent("!attributeHandle %d", status == 0 ? char_handle : -1);
-  }
+        "srvc_handle=%d char_handle=%d",
+        status,
+        server_if,
+        srvc_handle,
+        char_handle);
+
+  bledroid.sendEvent("!attributeAdded %d %d", status, char_handle);
 }
 
 /**
  * Callback invoked when a descriptor has been added to a characteristic
  */
-void gatt_server_descriptor_added_callback(int status, int server_if,
-    bt_uuid_t *uuid, int srvc_handle, int descr_handle) {
+void gatt_server_descriptor_added_callback(int status,
+                                           int server_if,
+                                           bt_uuid_t *uuid,
+                                           int srvc_handle,
+                                           int descr_handle) {
   Tracer trc("gatt_server_descriptor_added_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitAddDescriptor);
 
   ALOGV("gatt_server_descriptor_added_callback. status=%d server_if=%d "
-      "srvc_handle=%d descr_handle=%d",
-      status, server_if, srvc_handle, descr_handle);
-  if (server_if == gatt_server_if) {
-    bledroid.sendEvent("!attributeHandle %d", status == 0 ? descr_handle : -1);
-  }
+        "srvc_handle=%d descr_handle=%d",
+        status,
+        server_if,
+        srvc_handle,
+        descr_handle);
+
+  bledroid.sendEvent("!attributeAdded %d %d", status, descr_handle);
 }
 
 /**
  * Callback invoked in response to start_service
  */
-void gatt_server_service_started_callback(int status, int server_if,
-    int srvc_handle) {
+void gatt_server_service_started_callback(int status,
+                                          int server_if,
+                                          int srvc_handle) {
   Tracer trc("gatt_server_service_started_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitStartService);
 
   ALOGV("gatt_server_service_started_callback: status=%d server_if=%d "
-      "srvc_handle=%d", status, server_if, srvc_handle);
+        "srvc_handle=%d",
+        status,
+        server_if,
+        srvc_handle);
 
-  bledroid.sendEvent("!servicesSet %d", status);
+  bledroid.sendEvent("!serviceStarted %d", status);
 }
 
 /**
  * Callback invoked in response to stop_service
  */
-void gatt_server_service_stopped_callback(int status, int server_if,
-    int srvc_handle) {
+void gatt_server_service_stopped_callback(int status,
+                                          int server_if,
+                                          int srvc_handle) {
   Tracer trc("gatt_server_service_stopped_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitStopService);
 
   ALOGV("gatt_server_service_stopped_callback: status=%d server_if=%d "
-      "srvc_handle=%d", status, server_if, srvc_handle);
+        "srvc_handle=%d",
+        status,
+        server_if,
+        srvc_handle);
 
-  bledroid.sendEvent("!servicesStop %d", status);
+  bledroid.sendEvent("!serviceStopped %d", status);
 }
 
 /**
  * Callback triggered when a service has been deleted
  */
-void gatt_server_service_deleted_callback(int status, int server_if,
-    int srvc_handle) {
+void gatt_server_service_deleted_callback(int status,
+                                          int server_if,
+                                          int srvc_handle) {
   Tracer trc("gatt_server_service_deleted_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitDeleteService);
 
   ALOGV("gatt_server_service_deleted_callback: status=%d server_if=%d "
-      "srvc_handle=%d", status, server_if, srvc_handle);
+        "srvc_handle=%d",
+        status,
+        server_if,
+        srvc_handle);
 
-  bledroid.sendEvent("!servicesDelete %d", status);
+  bledroid.sendEvent("!serviceDeleted %d", status);
 }
 
 /**
  * Callback invoked when a remote device has requested to read a characteristic
  * or descriptor. The application must respond by calling send_response
  */
-void gatt_server_request_read_callback(int conn_id, int trans_id,
-    bt_bdaddr_t *bda, int attr_handle, int offset, bool is_long) {
+void gatt_server_request_read_callback(int conn_id,
+                                       int trans_id,
+                                       bt_bdaddr_t *bda,
+                                       int attr_handle,
+                                       int offset,
+                                       bool is_long) {
   Tracer trc("gatt_server_request_read_callback");
   ALOGV("gatt_server_request_read_callback: conn_id=%d trans_id=%d "
-      "attr_handle=%d offset=%d is_long=%d\n",
-    conn_id, trans_id, attr_handle, offset, is_long);
-  bledroid.sendEvent("!readAttribute %d %d %d %d %u", attr_handle, conn_id,
-      trans_id, offset, is_long ? 1 : 0);
+        "attr_handle=%d offset=%d is_long=%d",
+        conn_id,
+        trans_id,
+        attr_handle,
+        offset,
+        is_long);
+
+  bledroid.sendEvent("!readAttribute %d %d %02X:%02X:%02X:%02X:%02X:%02X %d %d "
+                     "%u",
+                     conn_id,
+                     trans_id,
+                     bda->address[0],
+                     bda->address[1],
+                     bda->address[2],
+                     bda->address[3],
+                     bda->address[4],
+                     bda->address[5],
+                     attr_handle,
+                     offset,
+                     is_long ? 1 : 0);
 }
 
 /**
  * Callback invoked when a remote device has requested to write to a
  * characteristic or descriptor.
  */
-void gatt_server_request_write_callback(int conn_id, int trans_id,
-    bt_bdaddr_t *bda, int attr_handle, int offset, int length,
-    bool need_rsp, bool is_prep, uint8_t* value) {
+void gatt_server_request_write_callback(int conn_id,
+                                        int trans_id,
+                                        bt_bdaddr_t *bda,
+                                        int attr_handle,
+                                        int offset,
+                                        int length,
+                                        bool need_rsp,
+                                        bool is_prep,
+                                        uint8_t* value) {
   Tracer trc("gatt_server_request_write_callback");
 
   ALOGV("gatt_server_request_write_callback conn_id=%d trans_id=%d "
-      "attr_handle=%d offset=%d length=%d need_rsp=%d is_prep=%d value[0]=%d",
-      conn_id, trans_id, attr_handle, offset, length, need_rsp, is_prep,
-      *value);
-
-  char w[80 + BTGATT_MAX_ATTR_LEN*2];
-  snprintf(w, sizeof(w), "!writeAttribute %d %d %d %u %d ", attr_handle,
-      conn_id, trans_id, need_rsp ? 1 : 0, offset);
+        "attr_handle=%d offset=%d length=%d need_rsp=%d is_prep=%d value[0]=%d",
+        conn_id,
+        trans_id,
+        attr_handle,
+        offset,
+        length,
+        need_rsp,
+        is_prep,
+        *value);
 
   if (length >= BTGATT_MAX_ATTR_LEN) {
-    ALOGE("Invalid length");
+    ALOGE("Invalid attribute length");
     return;
   }
 
-  char *p = w + strlen(w);
+  constexpr size_t kMaxCharacteristicLength = (MAX_MSG_SIZE - 60) / 2;
+
+  if (size_t(length) >= kMaxCharacteristicLength) {
+    ALOGE("Attribute length too long for our message size");
+    return;
+  }
+
+  char msg[kMaxCharacteristicLength + 1];
+  int written = snprintf(msg,
+                         sizeof(msg),
+                         "!writeAttribute %d %d %02X:%02X:%02X:%02X:%02X:%02X "
+                         "%d %d %u %u ",
+                         conn_id,
+                         trans_id,
+                         bda->address[0],
+                         bda->address[1],
+                         bda->address[2],
+                         bda->address[3],
+                         bda->address[4],
+                         bda->address[5],
+                         attr_handle,
+                         offset,
+                         need_rsp ? 1 : 0,
+                         is_prep ? 1 : 0);
+  if (written < 0 || written > int(sizeof(msg))) {
+    ALOGE("Failed to encode");
+    return;
+  }
+
+  char *p = msg + written;
   for (int i = 0; i < length; i++) {
     sprintf(p, "%02x", value[i]);
     p += 2;
   }
   *p = '\0';
 
-  if (strlen(w) >= sizeof(w)) {
+#ifdef DEBUG
+  if (strlen(msg) >= sizeof(msg)) {
     cleanup_and_abort();  // BUG!
   }
+#endif
 
-  ALOGE(w);
-  bledroid.sendEvent(w);
+  bledroid.sendEvent(msg);
 }
 
 /**
@@ -1970,7 +2269,13 @@ void gatt_server_response_confirmation_callback(int status, int handle) {
  */
 void gatt_server_indication_sent_callback(int conn_id, int status) {
   Tracer trc("gatt_server_indication_sent_callback");
-  ALOGE("gatt_server_indication_sent_callback");
+  auto signal = mainThreadWaiter.autoSignal(WaitNotify);
+
+  ALOGV("gatt_server_indication_sent_callback: conn_id=%d status=%d",
+        conn_id,
+        status);
+
+  bledroid.sendEvent("!notifySent %d %d", conn_id, status);
 }
 
 /**
@@ -1989,7 +2294,9 @@ void gatt_server_congestion_callback(int conn_id, bool congested) {
  */
 void gatt_server_mtu_changed_callback(int conn_id, int mtu) {
   Tracer trc("gatt_server_mtu_changed_callback");
-  bledroid.sendEvent("!mtuChange %d", mtu);
+  ALOGD("gatt_server_mtu_changed_callback: conn_id=%d mtu=%d",
+        conn_id, mtu);
+  bledroid.sendEvent("!mtuChange %d %d", conn_id, mtu);
 }
 
 btgatt_server_callbacks_t bt_gatt_server_callbacks = {
@@ -2140,6 +2447,14 @@ void bt_cleanup() {
   Tracer trc("bt_cleanup");
   ALOGV("bt cleanup");
 
+  if (advertising && bt_stop_advertising() != BT_STATUS_SUCCESS) {
+    ALOGW("stop advertising failed");
+  }
+
+  if (beaconActive && bt_stop_beacon() != BT_STATUS_SUCCESS) {
+    ALOGW("stop beacon failed");
+  }
+
   if (gatt) {
     if (gatt_server_if != -1 &&
         gatt->server->unregister_server(gatt_server_if) != BT_STATUS_SUCCESS) {
@@ -2148,7 +2463,12 @@ void bt_cleanup() {
     if (gatt_client_listen_scan_if != -1 &&
         gatt->client->unregister_client(gatt_client_listen_scan_if) !=
           BT_STATUS_SUCCESS) {
-      ALOGW("unregister_client failed");
+      ALOGW("unregister_client scan_listen failed");
+    }
+    if (gatt_client_beacon_if != -1 &&
+        gatt->client->unregister_client(gatt_client_beacon_if) !=
+          BT_STATUS_SUCCESS) {
+      ALOGW("unregister_client beacon failed");
     }
     gatt->cleanup();
   }
@@ -2184,13 +2504,16 @@ void bt_cleanup() {
     adapter_state = BT_STATE_OFF;
     gatt_server_if = -1;
     gatt_client_listen_scan_if = -1;
-    gatt_client_listening = false;
+    gatt_client_beacon_if = -1;
+    desired_listen_state = false;
     gatt_client_scanning = false;
     gatt = nullptr;
     device = nullptr;
     connection_id_during_register_for_notification = -1;
     address_during_rssi_update = kInvalidAddr;
     gatt_client_connection_count = 0;
+    advertising = false;
+    beaconActive = false;
   }
 }
 
@@ -2223,9 +2546,9 @@ int bt_init() {
   int err = hw_get_module(BT_HARDWARE_MODULE_ID, &module);
   LOG_ERROR(err, "hw_get_module for " BT_HARDWARE_MODULE_ID " failed: %d", err);
 
-  ALOGW("id: %s", module->id);
-  ALOGW("name: %s", module->name);
-  ALOGW("author: %s", module->author);
+  ALOGV("id: %s", module->id);
+  ALOGV("name: %s", module->name);
+  ALOGV("author: %s", module->author);
 
   err = module->methods->open(module, BT_HARDWARE_MODULE_ID, &device);
   LOG_ERROR(err, BT_HARDWARE_MODULE_ID " open failed: %d", err);
@@ -2247,6 +2570,21 @@ int bt_init() {
   CALL_AND_WAIT(bt->enable(), WaitEnableDisable);
   LOG_ERROR((adapter_state != BT_STATE_ON), "failed to turn on BT");
 
+  char name[PROPERTY_VALUE_MAX] = {0};
+  property_get("ro.silk.bt.name", name, "Silk");
+  ALOGV("Using bluetooth adapter name '%s'", name);
+
+  const int name_len = int(strlen(name));
+  LOG_ERROR(!name_len, "Empty bluetooth adapter name");
+
+  bt_property_t name_prop = {
+    .type = BT_PROPERTY_BDNAME,
+    .len = name_len,
+    .val = name,
+  };
+  err = bt->set_adapter_property(&name_prop);
+  LOG_ERROR(err, "bt set_adapter_property(BT_PROPERTY_BDNAME) failed: %d", err);
+
   gatt = static_cast<btgatt_interface_t const *>(bt->get_profile_interface(
       BT_PROFILE_GATT_ID));
   LOG_ERROR(!gatt, "Unable to get " BT_PROFILE_GATT_ID);
@@ -2258,24 +2596,26 @@ int bt_init() {
   CALL_AND_WAIT(gatt->server->register_server(serverUuid), WaitRegisterServer);
   LOG_ERROR(gatt_server_if == -1, "Failed to register gatt server");
 
-  auto *clientUuid = const_cast<bt_uuid_t *>(&kClientListenScanUuid);
-  CALL_AND_WAIT(gatt->client->register_client(clientUuid), WaitRegisterClient);
+  auto *listenScanUuid = const_cast<bt_uuid_t *>(&kClientListenScanUuid);
+  CALL_AND_WAIT(gatt->client->register_client(listenScanUuid),
+                                              WaitRegisterClient);
   LOG_ERROR(gatt_client_listen_scan_if == -1,
             "Failed to register listen/scan client");
+
+  auto *beaconUuid = const_cast<bt_uuid_t *>(&kClientBeaconUuid);
+  CALL_AND_WAIT(gatt->client->register_client(beaconUuid),
+                WaitRegisterClient);
+  LOG_ERROR(gatt_client_beacon_if == -1,
+            "Failed to register beacon client");
 
   return BT_STATUS_SUCCESS;
 }
 
-int bt_set_advertising_data(char *&saveptr) {
+int bt_start_advertising(char *&saveptr) {
   char manufacturer_buffer[31];
   char service_data_buffer[31];
 
   const char *token = strtok_r(nullptr, " ", &saveptr);
-  LOG_ERROR(!token, "No set_scan_rsp");
-  LOG_ERROR(*token != '0' && *token != '1', "Invalid set_scan_rsp");
-  const bool set_scan_rsp = *token == '1';
-
-  token = strtok_r(nullptr, " ", &saveptr);
   LOG_ERROR(!token, "No include_name");
   LOG_ERROR(*token != '0' && *token != '1', "Invalid include_name");
   const bool include_name = *token == '1';
@@ -2284,16 +2624,6 @@ int bt_set_advertising_data(char *&saveptr) {
   LOG_ERROR(!token, "No include_txpower");
   LOG_ERROR(*token != '0' && *token != '1', "Invalid include_txpower");
   const bool include_txpower = *token == '1';
-
-  token = strtok_r(nullptr, " ", &saveptr);
-  LOG_ERROR(!token, "No min_interval");
-  const int min_interval = atoi(token);
-  LOG_ERROR(min_interval < 0, "Invalid min_interval");
-
-  token = strtok_r(nullptr, " ", &saveptr);
-  LOG_ERROR(!token, "No max_interval");
-  const int max_interval = atoi(token);
-  LOG_ERROR(max_interval < min_interval, "Invalid max_interval");
 
   token = strtok_r(nullptr, " ", &saveptr);
   LOG_ERROR(!token, "No appearance");
@@ -2337,21 +2667,195 @@ int bt_set_advertising_data(char *&saveptr) {
   const int service_uuid_len = service_uuid_count * sizeof(*(service_uuids.get()));
   auto* service_uuid = reinterpret_cast<char*>(service_uuids.get());
 
-  // XXX Figure out how to wait for this?
-  int err = gatt->client->set_adv_data(gatt_client_listen_scan_if,
-                                       set_scan_rsp,
-                                       include_name,
-                                       include_txpower,
-                                       min_interval,
-                                       max_interval,
-                                       appearance,
-                                       manufacturer_len,
-                                       manufacturer_data,
-                                       service_data_len,
-                                       service_data,
-                                       service_uuid_len,
-                                       service_uuid);
-  LOG_ERROR(err, "gatt client set_adv_data failed: %d", err);
+  static const int kMinInterval = AdvertiseModeBalanced;
+  static const int kMaxInterval = kMinInterval + AdvertiseIntervalDeltaUnit;
+  static const int kAdvertiseEventType = AdvertiseEventTypeConnectable;
+  static const int kAdvertiseChannel = AdvertiseChannelAll;
+  static const int kTxPowerLevel = TransactionPowerLevelMed;
+  static const int kTimeoutSec = 0;
+
+  // TODO: We can add support for this later.
+  static const bool kSetScanResponse = false;
+
+  if (adapter_supports_multi_adv) {
+    if (!advertising) {
+      status_during_advertise = 0;
+
+      CALL_AND_WAIT(gatt->client->multi_adv_enable(
+                      gatt_client_listen_scan_if,
+                      kMinInterval,
+                      kMaxInterval,
+                      kAdvertiseEventType,
+                      kAdvertiseChannel,
+                      kTxPowerLevel,
+                      kTimeoutSec),
+                    WaitAdvertiseEnable);
+
+      LOG_ERROR(status_during_advertise != 0, "multi_adv_enable failed");
+
+      advertising = true;
+    }
+
+    status_during_advertise = 0;
+
+    CALL_AND_WAIT(gatt->client->multi_adv_set_inst_data(
+                    gatt_client_listen_scan_if,
+                    kSetScanResponse,
+                    include_name,
+                    include_txpower,
+                    appearance,
+                    manufacturer_len,
+                    manufacturer_data,
+                    service_data_len,
+                    service_data,
+                    service_uuid_len,
+                    service_uuid),
+                  WaitAdvertiseData);
+
+    LOG_ERROR(status_during_advertise != 0, "multi_adv_set_inst_data failed");
+  } else {
+    if (!advertising) {
+      desired_listen_state = true;
+      status_during_advertise = 0;
+
+      CALL_AND_WAIT(gatt->client->listen(gatt_client_listen_scan_if,
+                                         desired_listen_state),
+                    WaitListen);
+
+      LOG_ERROR(status_during_advertise != 0, "listen failed");
+
+      advertising = true;
+    }
+
+    // XXX Figure out how to wait for this?
+    int err = gatt->client->set_adv_data(gatt_client_listen_scan_if,
+                                         kSetScanResponse,
+                                         include_name,
+                                         include_txpower,
+                                         0, // min_interval
+                                         0, // max_interval
+                                         appearance,
+                                         manufacturer_len,
+                                         manufacturer_data,
+                                         service_data_len,
+                                         service_data,
+                                         service_uuid_len,
+                                         service_uuid);
+    LOG_ERROR(err, "gatt client set_adv_data failed: %d", err);
+  }
+
+  return BT_STATUS_SUCCESS;
+}
+
+int bt_stop_advertising() {
+  if (!advertising) {
+    return BT_STATUS_SUCCESS;
+  }
+
+  if (adapter_supports_multi_adv) {
+    status_during_advertise = 0;
+
+    CALL_AND_WAIT(gatt->client->multi_adv_disable(gatt_client_listen_scan_if),
+                  WaitAdvertiseDisable);
+
+    LOG_ERROR(status_during_advertise != 0, "multi_adv_disable failed");
+  } else {
+    desired_listen_state = false;
+    status_during_advertise = 0;
+
+    CALL_AND_WAIT(gatt->client->listen(gatt_client_listen_scan_if,
+                                       desired_listen_state),
+                  WaitListen);
+
+    LOG_ERROR(status_during_advertise != 0, "listen failed");
+  }
+
+  advertising = false;
+
+  return BT_STATUS_SUCCESS;
+}
+
+int bt_start_beacon(char *&saveptr) {
+  LOG_ERROR(!adapter_supports_multi_adv, "startBeacon not supported");
+
+  char *data_str = strtok_r(nullptr, " ", &saveptr);
+  LOG_ERROR(!data_str, "No beacon data");
+
+  const int data_len = strlen(data_str);
+  LOG_ERROR(data_len != 50, "Expected exactly 50 chars");
+
+  char data[25];
+  LOG_ERROR(!hexstr_to_buffer(data_str, data, sizeof(data)),
+            "Couldn't convert data");
+
+  static const int kMinInterval = AdvertiseModeBalanced;
+  static const int kMaxInterval = kMinInterval + AdvertiseIntervalDeltaUnit;
+  static const int kAdvertiseEventType = AdvertiseEventTypeNonConnectable;
+  static const int kAdvertiseChannel = AdvertiseChannelAll;
+  static const int kTxPowerLevel = TransactionPowerLevelMed;
+  static const int kTimeoutSec = 0;
+
+  if (!beaconActive) {
+    status_during_advertise = 0;
+
+    CALL_AND_WAIT(gatt->client->multi_adv_enable(
+                    gatt_client_beacon_if,
+                    kMinInterval,
+                    kMaxInterval,
+                    kAdvertiseEventType,
+                    kAdvertiseChannel,
+                    kTxPowerLevel,
+                    kTimeoutSec),
+                  WaitAdvertiseEnable);
+
+    LOG_ERROR(status_during_advertise != 0, "multi_adv_enable failed");
+
+    beaconActive = true;
+  }
+
+  static const bool kSetScanResponse = false;
+  static const bool kIncludeName = false;
+  static const bool kIncludeTxPower = false;
+  static const int kAppearance = 0;
+  static const int kServiceDataLength = 0;
+  static char* const kServiceData = nullptr;
+  static const int kServiceUuidsLength = 0;
+  static char* const kServiceUuids = nullptr;
+
+  status_during_advertise = 0;
+
+  CALL_AND_WAIT(gatt->client->multi_adv_set_inst_data(
+                  gatt_client_beacon_if,
+                  kSetScanResponse,
+                  kIncludeName,
+                  kIncludeTxPower,
+                  kAppearance,
+                  sizeof(data),
+                  data,
+                  kServiceDataLength,
+                  kServiceData,
+                  kServiceUuidsLength,
+                  kServiceUuids),
+                WaitAdvertiseData);
+
+  LOG_ERROR(status_during_advertise != 0, "multi_adv_set_inst_data failed");
+
+  return BT_STATUS_SUCCESS;
+}
+
+int bt_stop_beacon() {
+  if (!beaconActive) {
+    return BT_STATUS_SUCCESS;
+  }
+
+  status_during_advertise = 0;
+
+  CALL_AND_WAIT(gatt->client->multi_adv_disable(gatt_client_beacon_if),
+                WaitAdvertiseDisable);
+
+  LOG_ERROR(status_during_advertise != 0, "multi_adv_disable failed");
+
+  beaconActive = false;
 
   return BT_STATUS_SUCCESS;
 }
@@ -2541,6 +3045,11 @@ int bt_connect(char *&saveptr) {
     }
   }
 
+  if (gatt->client->refresh(client_if_during_connect, &addr) !=
+      BT_STATUS_SUCCESS) {
+    ALOGE("refresh failed");
+  }
+
   const bool isDirect = true;
 
   connect_failed = true;
@@ -2583,6 +3092,21 @@ int bt_disconnect(char *&saveptr) {
   if (gatt->client->unregister_client(clientIf) != BT_STATUS_SUCCESS) {
     ALOGW("unregister_client failed");
   }
+
+  return BT_STATUS_SUCCESS;
+}
+
+int bt_disconnect_server(char *&saveptr) {
+  char *addrString = strtok_r(NULL, " \n", &saveptr);
+  bt_bdaddr_t addr;
+  LOG_ERROR(!str_to_addr(addrString, addr),
+            "Malformed disconnectServer (bad address)");
+
+  char *connIdString = strtok_r(NULL, " \n", &saveptr);
+  int connId = atoi(connIdString);
+
+  CALL_AND_WAIT(gatt->server->disconnect(gatt_server_if, &addr, connId),
+                WaitServerDisconnect);
 
   return BT_STATUS_SUCCESS;
 }
@@ -2857,6 +3381,54 @@ int bt_write_descriptor(char *&saveptr) {
   return BT_STATUS_SUCCESS;
 }
 
+int bt_send_notify(char *&saveptr) {
+  char *token = strtok_r(NULL, " \n", &saveptr);
+  LOG_ERROR((token == NULL), "Malformed notify (no connection id)");
+  int connectionId = atoi(token);
+
+  token = strtok_r(NULL, " \n", &saveptr);
+  LOG_ERROR((token == NULL), "Malformed notify (no attribute handle)");
+  int handle = atoi(token);
+
+  token = strtok_r(NULL, " \n", &saveptr);
+  LOG_ERROR((token == NULL), "Malformed notify (no confirm)");
+  int confirm = atoi(token);
+
+  token = strtok_r(NULL, " \n", &saveptr);
+  LOG_ERROR((token == NULL), "Malformed notify (no data length)");
+  int dataLength = atoi(token);
+
+  LOG_ERROR((dataLength < 0 || dataLength > MAX_NOTIFICATION_DATA_SIZE),
+             "Malformed notify (invalid data length)");
+
+  char *hexData = NULL;
+  if (dataLength) {
+    token = strtok_r(NULL, " \n", &saveptr);
+    LOG_ERROR((token == NULL), "Malformed notify (no data)");
+    hexData = token;
+  }
+
+  char data[MAX_NOTIFICATION_DATA_SIZE];
+  char b[3] = { 0, 0, 0 };
+  for (int i = 0; i < dataLength; i++) {
+    b[0] = hexData[i * 2];
+    b[1] = hexData[i * 2 + 1];
+    data[i] = strtol(b, NULL, 16);
+  }
+
+  // XXX Figure out how to wait for this? Doesn't look possible because we
+  //     only get called back if the device responds.
+  CALL_AND_WAIT(gatt->server->send_indication(gatt_server_if,
+                                              handle,
+                                              connectionId,
+                                              dataLength,
+                                              confirm,
+                                              data),
+                WaitNotify);
+
+  return BT_STATUS_SUCCESS;
+}
+
 /**
  * This function is run every time a command is received from bleno
  */
@@ -2909,21 +3481,22 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   } else if (0 == strcmp(cmd, "getAdapterState")) {
       bledroid.sendEvent("!adapterState powered%s",
                          adapter_state == BT_STATE_OFF ? "Off" : "On");
-  } else if (0 == strcmp(cmd, "setListen")) {
-    char *onOff = strtok_r(NULL, " \n", &saveptr);
-    if (onOff) {
-      gatt_client_listening = (*onOff == '1');
-      CALL_AND_WAIT(gatt->client->listen(gatt_client_listen_scan_if,
-                                         gatt_client_listening),
-                    WaitListen);
-    }
-  } else if (0 == strcmp(cmd, "advertisingData")) {
-    err = bt_set_advertising_data(saveptr);
-    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to set advertising data");
-  } else if (0 == strcmp(cmd, "primaryService")) {
+  } else if (0 == strcmp(cmd, "startAdvertising")) {
+    err = bt_start_advertising(saveptr);
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to start advertising");
+  } else if (0 == strcmp(cmd, "stopAdvertising")) {
+    err = bt_stop_advertising();
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to stop advertising");
+  } else if (0 == strcmp(cmd, "startBeacon")) {
+    err = bt_start_beacon(saveptr);
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to start beacon");
+  } else if (0 == strcmp(cmd, "stopBeacon")) {
+    err = bt_stop_beacon();
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to stop beacon");
+  } else if (0 == strcmp(cmd, "addService")) {
     char *numAttributesStr = strtok_r(NULL, " \n", &saveptr);
     LOG_ERROR((numAttributesStr == NULL),
-        "Malformed primaryService (no numAttributes)");
+        "Malformed addService (no numAttributes)");
     int numAttributes = atoi(numAttributesStr);
 
     char *uuid = strtok_r(NULL, " \n", &saveptr);
@@ -2931,9 +3504,9 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     srvc_id.is_primary = 1;
     srvc_id.id.inst_id = 0;  // ???
     LOG_ERROR(!str_to_uuid(uuid, srvc_id.id.uuid),
-        "Malformed primaryService (no uuid)");
+        "Malformed addService (no uuid)");
 
-    ALOGV("primaryService %d %s\n", numAttributes, uuid);
+    ALOGV("addService %d %s\n", numAttributes, uuid);
     CALL_AND_WAIT(gatt->server->add_service(gatt_server_if,
                                             &srvc_id,
                                             numAttributes),
@@ -2998,7 +3571,7 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     CALL_AND_WAIT(gatt->server->delete_service(gatt_server_if,
                                                atoi(serviceHandleStr)),
                   WaitDeleteService);
-  } else if (0 == strcmp(cmd, "sendAttributeResponse")) {
+  } else if (0 == strcmp(cmd, "attributeResponse")) {
     int attr_handle;
     int conn_id;
     int trans_id;
@@ -3008,19 +3581,19 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     int length;
 
     char *token = strtok_r(NULL, " \n", &saveptr);
-    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no attr_value)");
-    attr_handle = atoi(token);
-
-    token = strtok_r(NULL, " \n", &saveptr);
-    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no conn_id)");
+    LOG_ERROR((token == NULL), "Malformed attributeResponse (no conn_id)");
     conn_id = atoi(token);
 
     token = strtok_r(NULL, " \n", &saveptr);
-    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no trans_id)");
+    LOG_ERROR((token == NULL), "Malformed attributeResponse (no trans_id)");
     trans_id = atoi(token);
 
     token = strtok_r(NULL, " \n", &saveptr);
-    LOG_ERROR((token == NULL), "Malformed sendAttributeResponse (no result)");
+    LOG_ERROR((token == NULL), "Malformed attributeResponse (no attr_handle)");
+    attr_handle = atoi(token);
+
+    token = strtok_r(NULL, " \n", &saveptr);
+    LOG_ERROR((token == NULL), "Malformed attributeResponse (no result)");
     result = atoi(token);
 
     offset = 0;
@@ -3107,6 +3680,12 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   } else if (0 == strcmp(cmd, "writeDescriptor")) {
     err = bt_write_descriptor(saveptr);
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to write descriptor");
+  } else if (0 == strcmp(cmd, "disconnectServer")) {
+    err = bt_disconnect_server(saveptr);
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to disconnectServer");
+  } else if (0 == strcmp(cmd, "sendNotify")) {
+    err = bt_send_notify(saveptr);
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to notify");
   } else if (0 == strcmp(cmd, "exit")) {
     bt_cleanup();
   } else {

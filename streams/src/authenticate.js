@@ -2,35 +2,68 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
-import assert from 'assert';
-import { AccessToken } from 'silk-api';
-import makeLog from 'silk-log';
+import invariant from 'invariant';
+import {AccessToken} from 'silk-api';
+import createLog from 'silk-log';
 
 import ClosingTransform from './closing_transform';
-import { CryptoDuplexStream } from './crypto';
+import {CryptoDuplexStream} from './crypto';
 import DuplexTransform from './duplex_transform';
 import * as Metrics from './metrics';
 
-const log = makeLog(`streams:authenticate`);
+import type {Duplex} from 'stream';
+import type {DuplexStreamOptions} from 'silk-streams';
+
+type TransformCallback = (error: ?Error, data?: Buffer | string) => void;
+
+type Deferred<T> = {
+  promise: Promise<T>,
+  accept: (value: Promise<T> | T) => void,
+  reject: (error: any) => void,
+};
 
 const PROPERTY_NAME = `_0--"_`;
 
-class AuthenticateStreamBase extends ClosingTransform {
+function isAuthData(data: Object): boolean {
+  return data && (typeof data === `object`) && (PROPERTY_NAME in data);
+}
 
-  _authenticated = false;
-  _allowUnauthenticated = false;
-  _ending = false;
-  _queue = [];
+function createDeferred<T>(): Deferred<T> {
+  const deferred = {};
+  deferred.promise = new Promise((accept, reject) => {
+    deferred.accept = accept;
+    deferred.reject = reject;
+  });
+  return deferred;
+}
 
-  constructor(cryptoStream, options = { }) {
-    log.debug(`AuthenticateStreamBase()`);
+export class AuthenticateStreamBase extends ClosingTransform {
 
-    assert(cryptoStream);
-    assert(cryptoStream.constructor === CryptoDuplexStream);
+  static log = createLog(`streams:authenticate-base`);
 
-    options = Object.assign({ }, options);
+  _onSharedSecret: ((sharedSecret: Buffer) => void);
+
+  _blocked: boolean = true;
+  _transformData: ?Object = null;
+  _transformCallback: ?TransformCallback = null;
+  _allowUnauthenticatedDeferred: Deferred<boolean> = createDeferred();
+
+  _error: ?Error = null;
+
+  constructor(
+    cryptoStream: CryptoDuplexStream,
+    options: ?DuplexStreamOptions,
+  ) {
+    AuthenticateStreamBase.log.debug(`constructor`);
+
+    invariant(cryptoStream);
+    invariant(cryptoStream.constructor === CryptoDuplexStream);
+
+    options = Object.assign({}, options);
     if (!(`objectMode` in options)) {
       options.objectMode = true;
     }
@@ -40,355 +73,346 @@ class AuthenticateStreamBase extends ClosingTransform {
     cryptoStream.once(`sharedSecret`, (secret) => this._onSharedSecret(secret));
   }
 
-  _queueOrPush(chunk) {
-    if (this._queue) {
-      this._queue.push(chunk);
-    } else {
-      this.push(chunk);
-    }
-  }
+  _setError(error: Error): void {
+    AuthenticateStreamBase.log.debug(`_setError`, error);
 
-  _setAuthenticated(callback = null) {
-    log.debug(`AuthenticateStreamBase._setAuthenticated()`);
-
-    assert(!this._authenticated);
-    assert(!this._allowUnauthenticated);
-    assert(this._queue);
-
-    this._authenticated = true;
-    this.emit(`authenticated`);
-
-    this._releaseQueue(callback);
-  }
-
-  _discardQueue() {
-    log.debug(`AuthenticateStreamBase._discardQueue()`);
-
-    this._queue = null;
-  }
-
-  _releaseQueue(callback = null) {
-    log.debug(`AuthenticateStreamBase._releaseQueue()`);
-
-    let queue = this._queue;
-    this._queue = null;
-
-    assert(queue);
-
-    let error;
-
-    if (this._ending) {
-      error = new Error(`Stream ended, cannot push queued data`);
-      log.warn(error);
-    } else {
-      error = null;
-      queue.forEach((queued) => {
-        this.push(queued);
-      });
-    }
-
-    if (callback) {
-      callback(error);
-    }
-  }
-
-  _isAuthChunk(chunk) {
-    return chunk && (typeof chunk === `object`) && (PROPERTY_NAME in chunk);
-  }
-
-  _onSharedSecret(/* sharedSecret */) {
-    assert(false, `Subclasses must override _onSharedSecret`);
-  }
-
-  end(chunk, encoding, callback) {
-    log.debug(`[${this.constructor.name}] AuthenticateStreamBase.end()`);
-
-    this._ending = true;
-
-    if (!this._queue) {
-      super.end(chunk, encoding, callback);
+    if (this._error) {
+      AuthenticateStreamBase.log.warn(`Multiple errors`, error);
+      invariant(!this._blocked);
       return;
     }
 
-    log.warn(`Stream ended with queued data`);
-    this._discardQueue();
+    this._error = error;
 
-    super.end(callback);
-  }
+    // Use the stream callback to signal the error if we can. Otherwise do it
+    // manually on the next tick.
+    if (this._transformCallback === null) {
+      process.nextTick(() => this.emit(`error`, error));
+    }
 
-  allowUnauthenticated(allow) {
-    log.debug(`AuthenticateStreamBase.allowUnauthenticated(${allow})`);
-
-    assert(!this._authenticated);
-
-    if (allow) {
-      if (this._allowUnauthenticated) {
-        log.warn(`allowUnauthenticated() called more than once`);
-        assert(!this._queue);
-        return;
-      }
-
-      this._allowUnauthenticated = true;
-
-      this._releaseQueue();
-    } else {
-      this._discardQueue();
+    if (this._blocked) {
+      this._unblock();
     }
   }
 
-  get authenticated() {
-    return this._authenticated;
+  _unblock(): void {
+    AuthenticateStreamBase.log.debug(`_unblock`);
+
+    if (!this._blocked) {
+      return;
+    }
+    this._blocked = false;
+
+    const data = this._transformData;
+    this._transformData = null;
+
+    const callback = this._transformCallback;
+    this._transformCallback = null;
+
+    if (callback) {
+      // $FlowFixMe: Flow doesn't understand streams in object mode.
+      callback(this._error, data);
+    }
   }
+
+  allowUnauthenticated(allow: boolean): void {
+    AuthenticateStreamBase.log.debug(`allowUnauthenticated`, allow);
+
+    this._allowUnauthenticatedDeferred.accept(allow);
+  }
+
 }
 
 export class AuthenticateReadStream extends AuthenticateStreamBase {
 
-  _publicKeys = null;
-  _sessionKey = ``;
-  _authData = null;
-  _authError = null;
-  _metrics = null;
-  _emittedUnauthenticated = false;
+  static log = createLog(`streams:authenticate-read`);
 
-  constructor(cryptoStream, publicKeys, metrics, options) {
-    log.debug(`AuthenticateReadStream()`);
+  _publicKeys: ?Array<string> = null;
+  _sharedSecret: ?string = null;
+  _authenticated: boolean = false;
+  _receivedAuthData: boolean = false;
 
-    assert(publicKeys);
-    assert(metrics);
-    if (!Array.isArray(publicKeys)) {
-      publicKeys = [ publicKeys ];
-    }
-    for (let publicKey of publicKeys) {
-      assert(typeof publicKey === `string`);
-    }
+  constructor(
+    cryptoStream: CryptoDuplexStream,
+    publicKeys: Array<string>,
+    options?: DuplexStreamOptions,
+  ) {
+    AuthenticateReadStream.log.debug(`constructor`);
+
+    invariant(publicKeys);
+    invariant(Array.isArray(publicKeys));
+    publicKeys.forEach((publicKey) => invariant(typeof publicKey === `string`));
 
     super(cryptoStream, options);
 
     this._publicKeys = publicKeys;
-    this._metrics = metrics;
   }
 
-  _transform(chunk, encoding, callback) {
-    // It's assumed that the crypto stream won't allow any data though until it
-    // has figured out its shared secret.
-    assert(this._sessionKey);
+  _transform(
+    data: Buffer | string,
+    encoding: string,
+    callback: ((error: ?Error, data?: Buffer | string) => void)
+  ): void {
+    invariant(!this._transformData);
+    invariant(!this._transformCallback);
 
-    if (this._authError) {
+    if (this._error) {
       // Previous failures effectively kill this stream.
-      callback(this._authError);
+      callback(this._error);
       return;
     }
 
-    if (!this._isAuthChunk(chunk)) {
-      this._queueOrPush(chunk);
-      callback(null);
+    if (!this._sharedSecret) {
+      // It's assumed that the crypto stream won't allow any data though until
+      // it has figured out its shared secret.
+      this._setError(new Error(`Received data before shared secret`));
+      callback(this._error);
       return;
     }
 
-    // Auth chunks never get pushed into the stream.
+    invariant(typeof data === 'object');
 
-    const authData = chunk[PROPERTY_NAME];
-
-    if (authData === null) {
-      log.info(`Receiving unauthenticated data`);
-
-      if (!this._allowUnauthenticated) {
-        if (this._emittedUnauthenticated) {
-          log.warn(`Received multiple auth messages`);
-        } else {
-          // Emit an event and see if unauthenticated access is allowed.
-          this._emittedUnauthenticated = true;
-          this.emit(`unauthenticated`);
-        }
+    if (!isAuthData(data)) {
+      if (this._blocked) {
+        AuthenticateReadStream.log.debug(`Waiting to be unblocked`);
+        this._transformData = data;
+        this._transformCallback = callback;
+      } else {
+        callback(this._error, data);
       }
-
-      callback(this._authError);
       return;
     }
 
-    if (this._authenticated) {
-      log.warn(`Already authenticated`);
-      callback(this._authError);
+    if (this._receivedAuthData) {
+      this._setError(new Error(`Received multiple auth messages`));
+      callback(this._error);
       return;
     }
 
-    if (this._allowUnauthenticated) {
-      log.info(`Received auth data but ignoring because we're running in ` +
-               `unauthenticated mode`);
-      callback(this._authError);
+    this._receivedAuthData = true;
+
+    invariant(!this._authenticated);
+
+    // Auth data never get pushed into the stream.
+    const authData: string = data[PROPERTY_NAME];
+    if ((typeof authData !== 'string') || !authData.length) {
+      const message = `Malformed auth message`;
+      AuthenticateReadStream.log.warn(message, data);
+
+      this._setError(new Error(message));
+      callback(this._error);
       return;
     }
 
-    this._genVerify(authData)
-      .then(() => {
-        // No need to hang on to these any more.
-        this._publicKeys = null;
-        this._setAuthenticated(callback);
-      })
-      .catch((error) => {
-        this._authError = error;
-        // No need to hang on to these any more.
-        this._publicKeys = null;
-
-        log.warn(this._authError);
-        this._discardQueue();
-        callback(this._authError);
-
-        this._metrics.add(new Metrics.AuthFailure(this._authError.toString()));
-      });
+    this._verify(authData, callback);
   }
 
-  _genVerify(authData: string): Promise<void> {
-    log.debug(`AuthenticateReadStream._genVerify('${authData}')`);
+  async _verify(authData: string, callback: TransformCallback): Promise<void> {
+    AuthenticateReadStream.log.debug(`verify`, authData);
 
-    assert(!this._authenticated);
-    assert(this._publicKeys);
-    assert(this._sessionKey);
+    invariant(this._publicKeys);
+    invariant(this._sharedSecret);
+    invariant(!this._authenticated);
 
-    if (!authData || (typeof authData !== `string`)) {
-      return Promise.reject(
-        new Error(`Auth data malformed: ` + JSON.stringify(authData))
-      );
+    try {
+      await this._verifyInternal(authData);
+    } catch (error) {
+      this._setError(error);
     }
 
-    if (!this._publicKeys.length) {
-      return Promise.reject(
-        new Error(`No public keys available`)
-      );
+    // No need to hang on to these any more.
+    this._publicKeys = null;
+
+    if (this._error) {
+      process.nextTick(() => {
+        invariant(this._error);
+        this.emit(`metrics`, new Metrics.AuthFailure(this._error.message));
+      });
     }
+
+    this._unblock();
+    callback(this._error);
+  }
+
+  async _verifyInternal(authData: string): Promise<void> {
+    AuthenticateReadStream.log.debug(`_verifyInternal`, authData);
+
+    invariant(this._publicKeys);
+    invariant(!this._authenticated);
+
+    const sharedSecret = this._sharedSecret;
+    invariant(sharedSecret);
 
     // Try to verify the signature against all public keys known to us.
-    return Promise.all(
+    const verifyResults = await Promise.all(
       this._publicKeys.map((publicKey) => {
-        log.debug(`Attempting to verify signature with '${publicKey}'`);
+        AuthenticateReadStream.log.debug(`Attempting to verify signature ` +
+                                         `with '${publicKey}'`);
         const id = AccessToken.importPub(publicKey);
-        return id.genVerify(this._sessionKey, authData);
+        return id.genVerify(sharedSecret, authData);
       })
-    ).then((verifyResults) => {
-      if (!verifyResults.some((result) => result)) {
-        throw new Error(`Auth signature could not be verified`);
-      }
-    });
-  }
+    );
 
-  _onSharedSecret(sharedSecret) {
-    log.debug(`AuthenticateReadStream._onSharedSecret()`);
-
-    if (this._sessionKey) {
-      log.warn(`Received shared secret more than once`);
+    if (verifyResults.some((result) => result)) {
+      AuthenticateReadStream.log.info(`Receiving authenticated data`);
+      this._authenticated = true;
+      this.emit(`authenticated`);
       return;
     }
 
-    this._sessionKey = sharedSecret.toString(`hex`);
+    AuthenticateReadStream.log.debug(`No known keys could authenticate the ` +
+                                     `signature`);
+    process.nextTick(() => this.emit(`unauthenticated`));
+
+    AuthenticateReadStream.log.debug(`Waiting to see if unauthenticated data ` +
+                                     `is allowed`);
+    const allowUnauthenticated =
+      await this._allowUnauthenticatedDeferred.promise;
+
+    if (allowUnauthenticated) {
+      AuthenticateReadStream.log.info(`Receiving unauthenticated data`);
+      return;
+    }
+
+    throw new Error(`Unauthenticated data not allowed`);
   }
 
-  allowUnauthenticated(allow) {
-    log.debug(`AuthenticateReadStream.allowUnauthenticated(${allow})`);
+  _onSharedSecret(sharedSecret: Buffer): void {
+    AuthenticateReadStream.log.debug(`_onSharedSecret ` +
+                                     `<Buffer ${sharedSecret.length}>`);
 
-    super.allowUnauthenticated(allow);
+    invariant(!this._sharedSecret);
+    this._sharedSecret = sharedSecret.toString('hex');
+  }
 
-    this._publicKeys = null;
+  get authenticated(): boolean {
+    return this._authenticated;
   }
 }
 
 export class AuthenticateWriteStream extends AuthenticateStreamBase {
 
+  static log = createLog(`streams:authenticate-read`);
+
   _accessToken: ?AccessToken;
+  _sentSignatureDeferred: Deferred<void> = createDeferred();
 
-  constructor(cryptoStream, privateKey, options) {
-    log.debug(`AuthenticateWriteStream()`);
+  constructor(
+    cryptoStream: CryptoDuplexStream,
+    privateKey: string,
+    options?: DuplexStreamOptions,
+  ) {
+    AuthenticateWriteStream.log.debug(`constructor`);
 
-    assert(privateKey);
-    assert(typeof privateKey === `string`);
+    invariant(privateKey);
+    invariant(typeof privateKey === `string`);
 
     super(cryptoStream, options);
 
-    this._accessToken = new AccessToken(null, privateKey);
+    this._accessToken = new AccessToken(``, privateKey);
   }
 
-  _transform(chunk, encoding, callback) {
-    // Make sure auth messages don't come through the normal write pipe.
-    assert(!this._isAuthChunk(chunk));
+  _transform(
+    data: Buffer | string,
+    encoding: string,
+    callback: ((error: ?Error, data?: Buffer | string) => void)
+  ): void {
+    invariant(!this._transformData);
+    invariant(!this._transformCallback);
 
-    this._queueOrPush(chunk);
-    callback(null);
-  }
-
-  _onSharedSecret(sharedSecret) {
-    log.debug(`AuthenticateWriteStream._onSharedSecret()`);
-
-    if (!this._accessToken) {
+    // Previous failures effectively kill this stream.
+    if (this._error) {
+      callback(this._error);
       return;
     }
 
-    this._sendAuthData(sharedSecret.toString(`hex`));
+    if (typeof data !== 'object') {
+      this._setError(new Error(`Data must be an object`));
+      callback(this._error);
+      return;
+    }
+
+    // Make sure auth messages don't come through the normal write pipe.
+    if (isAuthData(data)) {
+      this._setError(new Error(`Data cannot be auth data`));
+      callback(this._error);
+      return;
+    }
+
+    if (this._blocked) {
+      AuthenticateWriteStream.log.debug(`Waiting to be unblocked`);
+      this._transformData = data;
+      this._transformCallback = callback;
+      return;
+    }
+
+    callback(this._error, data);
   }
 
-  _sendAuthData(authData: string) {
-    log.debug(`AuthenticateWriteStream._sendAuthData(%j)`, authData);
+  _onSharedSecret(sharedSecret: Buffer): void {
+    AuthenticateWriteStream.log.debug(`_onSharedSecret` +
+                                      `<Buffer ${sharedSecret.length}>`);
 
-    assert(this._accessToken);
+    this._sendSignature(sharedSecret.toString('hex'));
+  }
+
+  async _sendSignature(sharedSecret: string): Promise<void> {
+    AuthenticateWriteStream.log.debug(`_sendSignature`, sharedSecret);
 
     const accessToken = this._accessToken;
     this._accessToken = null;
+    invariant(accessToken);
 
-    if (this._ending) {
-      log.warn(`Cannot send auth data because the stream has ended`);
-      return;
-    }
-
-    const message = {};
-    message[PROPERTY_NAME] = null;
-    if (!authData) {
-      this.push(message);
-      return;
-    }
-
-    accessToken.genSign(authData)
-      .then((signature) => {
-        message[PROPERTY_NAME] = signature;
-        this.push(message);
-      })
-      .catch((error) => {
-        process.nextTick(() => this.emit(`error`, error));
+    try {
+      const signature = await accessToken.genSign(sharedSecret);
+      // $FlowFixMe: Flow doesn't understand streams in object mode.
+      this.push({
+        [PROPERTY_NAME]: signature,
       });
-  }
-
-  allowUnauthenticated(allow) {
-    log.debug(`AuthenticateWriteStream.allowUnauthenticated(${allow})`);
-
-    assert(!this._authenticated);
-
-    if (allow) {
-      if (this._accessToken) {
-        log.info(`Sending unauthenticated data`);
-        this._sendAuthData(null);
-      }
+    } catch (error) {
+      this._setError(error);
     }
 
-    super.allowUnauthenticated(allow);
+    this._sentSignatureDeferred.accept();
   }
+
+  async setAuthenticated(authenticated: boolean): Promise<void> {
+    AuthenticateWriteStream.log.debug(`setAuthenticated`, authenticated);
+
+    const [allowUnauthenticated] = await Promise.all([
+      this._allowUnauthenticatedDeferred.promise,
+      this._sentSignatureDeferred.promise,
+    ]);
+
+    if (authenticated || allowUnauthenticated) {
+      this._unblock();
+    } else {
+      this._setError(new Error(`Unauthenticated data is not allowed`));
+    }
+  }
+
 }
 
 export class AuthenticateDuplexStream extends DuplexTransform {
 
-  __reader = null;
-  __writer = null;
+  static log = createLog(`streams:authenticate-duplex`);
 
-  constructor(wrappedStream,
-              cryptoStream,
-              privateKey,
-              publicKeys,
-              metrics,
-              options = { }) {
-    log.debug(`AuthenticateDuplexStream()`);
+  __reader: AuthenticateReadStream;
+  __writer: AuthenticateWriteStream;
+
+  constructor(wrappedStream: Duplex,
+              cryptoStream: CryptoDuplexStream,
+              privateKey: string,
+              publicKeys: Array<string>,
+              options?: DuplexStreamOptions) {
+    AuthenticateDuplexStream.log.debug(`constructor`);
 
     const reader =
-      new AuthenticateReadStream(cryptoStream, publicKeys, metrics, options);
+      new AuthenticateReadStream(cryptoStream, publicKeys, options);
     const writer =
       new AuthenticateWriteStream(cryptoStream, privateKey, options);
 
-    options = Object.assign({ }, options);
+    options = Object.assign({}, options);
     if (!(`objectMode` in options)) {
       options.objectMode = true;
     }
@@ -398,23 +422,32 @@ export class AuthenticateDuplexStream extends DuplexTransform {
 
     super(wrappedStream, wrappedStream, reader, writer, options);
 
-    reader.once(`authenticated`, () => writer._setAuthenticated());
-    reader.once(`unauthenticated`, () => this.emit(`unauthenticated`));
+    reader.once(`authenticated`, () => {
+      AuthenticateDuplexStream.log.debug(`This stream is authenticated`);
+      invariant(this.authenticated);
+      writer.setAuthenticated(true);
+      this.emit(`authenticated`);
+    });
 
-    writer.once(`authenticated`, () => this.emit(`authenticated`));
+    reader.once(`unauthenticated`, () => {
+      AuthenticateDuplexStream.log.debug(`This stream is unauthenticated`);
+      invariant(!this.authenticated);
+      writer.setAuthenticated(false);
+      this.emit(`unauthenticated`);
+    });
 
     this.__reader = reader;
     this.__writer = writer;
   }
 
-  allowUnauthenticated(allow = false) {
-    log.info(`Allowing unauthenticated data: ${allow}`);
+  allowUnauthenticated(allow: boolean): void {
+    AuthenticateDuplexStream.log.info(`allowUnauthenticated`, allow);
+
     this.__reader.allowUnauthenticated(allow);
     this.__writer.allowUnauthenticated(allow);
   }
 
-  get authenticated() {
-    assert(this.__reader.authenticated === this.__writer.authenticated);
+  get authenticated(): boolean {
     return this.__reader.authenticated;
   }
 }

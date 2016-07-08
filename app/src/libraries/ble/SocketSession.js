@@ -8,7 +8,6 @@ import makeLog from 'silk-log';
 import {
   AuthenticateDuplexStream,
   CryptoDuplexStream,
-  HeartbeatDuplexStream,
   MessagePackDuplexStream,
 } from 'silk-streams';
 
@@ -25,17 +24,13 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _socket: Socket;
   _privateKey: string;
   _publicKeys: Array<string>;
-  _heartbeatStream: HeartbeatDuplexStream;
 
   _disconnecting: boolean = false;
-  _sentDisconnect: boolean = false;
   _finished: boolean = false;
 
   _rssiSmoother: RssiSmoother = new RssiSmoother();
   _rssiUpdatesEnabled: boolean = false;
   _rssiValue: number = -80;
-
-  _metrics: MetricsAgent;
 
   // Stuff that gets tracked for metrics.
   _startTime: number = Date.now();
@@ -47,7 +42,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
               privateKey: string,
               publicKeys: Array<string>,
               metrics: MetricsAgent) {
-    log.debug(`SocketSession()`);
+    log.debug(`constructor`);
 
     invariant(metrics);
 
@@ -59,32 +54,25 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {
-      log.verbose(`Received`, data.name);
+      log.verbose(`Received`, data.name || data);
     });
-    const msgpackOldWrite = msgpackStream._write;
-    // $FlowFixMe: Flow doesn't like it when we replace functions.
-    msgpackStream._write = (data, encoding, callback) => {
-      log.verbose(`Sending`, data.name);
-      msgpackOldWrite.call(msgpackStream, data, encoding, callback);
+    const msgpackOldWrite = msgpackStream.write.bind(msgpackStream);
+    msgpackStream.write = (data, encodingOrCallback, callback) => {
+      log.verbose(`Sending`, data.name || data);
+      return msgpackOldWrite(data, encodingOrCallback, callback);
     };
 
-    const heartbeatStream = new HeartbeatDuplexStream(msgpackStream);
-
     super(
-      heartbeatStream,
+      msgpackStream,
       cryptoStream,
       privateKey,
       publicKeys,
-      metrics,
-      { autoClose: false }
+      metrics
     );
 
     socket.addListener(`rssiUpdate`, this._onSocketRssiUpdate);
     socket.addListener(`disconnect`, this._onSocketDisconnect);
     this._socket = socket;
-
-    heartbeatStream.sendHeartbeats = true;
-    this._heartbeatStream = heartbeatStream;
 
     this.once(`end`, this._onEnd);
     this.once(`error`, this._onError);
@@ -93,23 +81,24 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     this.once(`unauthenticated`, () => {
       log.info(`Receiving unauthenticated data`);
+      // XXX Someday maybe be smarter about when to accept unauthenticated data.
       this.allowUnauthenticated(true);
     });
 
     socketStream.on(`data`, (data) => {
       this._receivedBytes += data.length;
     });
-    const socketOldWrite = socketStream.write;
-    socketStream.write = (data, encoding, callback) => {
+    const socketOldWrite = socketStream.write.bind(socketStream);
+    socketStream.write = (data, encodingOrCallback, callback) => {
       if (data) {
         this._sentBytes += data.length;
       }
-      return socketOldWrite.call(socketStream, data, encoding, callback);
+      return socketOldWrite(data, encodingOrCallback, callback);
     };
   }
 
   _onSocketRssiUpdate: ((rssi: number) => void) = (rssi) => {
-    log.debug(`SocketSession._onSocketRssiUpdate(${rssi})`);
+    log.debug(`_onSocketRssiUpdate`, rssi);
 
     if (!this._rssiUpdatesEnabled) {
       return;
@@ -126,27 +115,31 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onSocketDisconnect: (() => void) = () => {
-    log.debug(`SocketSession._onSocketDisconnect()`);
+    log.debug(`_onSocketDisconnect`);
 
     this._killRssiUpdates();
   };
 
   _onEnd: (() => void) = () => {
-    log.debug(`SocketSession._onEnd()`);
+    log.debug(`_onEnd`);
 
     this._killRssiUpdates();
   };
 
   _onError: ((error: Error) => void) = (error) => {
-    log.debug(`SocketSession._onError()`);
+    log.debug(`_onError`, error);
 
-    if (!this._errorMessage) {
-      this._errorMessage = error.toString();
+    if (this._errorMessage) {
+      log.warn(`Multiple error events`, error);
+      return;
     }
+
+    log.warn(error);
+    this._errorMessage = error.toString();
   };
 
   _onFinish: (() => void) = () => {
-    log.debug(`SocketSession._onFinish()`);
+    log.debug(`_onFinish`);
 
     invariant(!this._rssiUpdatesEnabled);
     invariant(!this._finished);
@@ -155,7 +148,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   };
 
   _onClose: (() => void) = () => {
-    log.debug(`SocketSession._onClose()`);
+    log.debug(`_onClose`);
 
     const commonArgs = [
       Date.now() - this._startTime,
@@ -168,27 +161,17 @@ export default class SocketSession extends AuthenticateDuplexStream {
                    new Metrics.SocketSessionError(...commonArgs,
                                                   this._errorMessage) :
                    new Metrics.SocketSession(...commonArgs);
-    this._metrics.add(metric);
+    this.emit(`metrics`, metric);
+
+    this._socket.disconnect();
   };
 
   _killRssiUpdates() {
-    log.debug(`SocketSession._killRssiUpdates()`);
-
-    this._heartbeatStream.sendHeartbeats = false;
+    log.debug(`_killRssiUpdates`);
 
     this.rssiUpdatesEnabled = false;
     this._socket.removeListener(`rssiUpdate`, this._onSocketRssiUpdate);
     this._socket.removeListener(`disconnect`, this._onSocketDisconnect);
-  }
-
-  _sendDisconnect() {
-    log.debug(`SocketSession._sendDisconnect()`);
-    invariant(!this._sentDisconnect);
-
-    this._sentDisconnect = true;
-
-    this.write({ name: `disconnect` });
-    this.end();
   }
 
   get connected(): boolean {
@@ -214,7 +197,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
   }
 
   disconnect() {
-    log.debug(`SocketSession.disconnect()`);
+    log.debug(`disconnect`);
 
     if (this._disconnecting) {
       log.info(`Already disconnecting`);
@@ -225,10 +208,6 @@ export default class SocketSession extends AuthenticateDuplexStream {
 
     this._killRssiUpdates();
 
-    if (!this._finished && !this._sentDisconnect) {
-      // We will disconnect in |_onFinish()| after all the data that was written
-      // has been sent.
-      this._sendDisconnect();
-    }
+    this.end();
   }
 }

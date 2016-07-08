@@ -48,6 +48,7 @@ import bleno from 'bleno';
 import invariant from 'assert';
 import * as net from 'net';
 import noble from 'noble';
+import createBledroidConnection from 'silk-bledroid';
 import {MessagePackDuplexStream, SocketDuplexStream} from 'silk-streams';
 
 import {BluetoothLE} from './parent';
@@ -56,13 +57,15 @@ import {createMessage as createInternalMessage} from './socket_message_utils';
 import createLog from 'silk-log/device';
 import InternalMessageFilterStream from './internal_message_stream';
 
-import SocketScanner from './socket_scanner';
 import ChildSocketSession from './child_socket_session';
+import SocketService from './socket_service';
 import validateMessage from './validate_process_message';
 
 import type {AdapterState, Peripheral} from 'noble';
+import type {BledroidConnection} from 'silk-bledroid';
 
 import type {BeaconInfo, BluetoothMode} from './parent';
+import type SocketStream from './socket_stream';
 import type {Deferred} from '../deferred';
 
 type SessionInfo = {
@@ -84,21 +87,25 @@ class BluetoothLEChild {
   _beaconInfo: ?BeaconInfo = null;
 
   _desiredMode: BluetoothMode = BluetoothLE.MODE_OFF;
-  _advertising: boolean = false;
+  _beaconActive: boolean = false;
+  _socketService: ?SocketService = null;
+
   _changeStatePromise: Promise<void> = Promise.resolve();
 
   _adapterState: AdapterState = `poweredOff`;
   _adapterStateDeferred: Deferred<void> = createDeferred();
   _adapterStateDeferredAccepted: boolean = false;
 
+  _bledroid: BledroidConnection;
   _bledroidCrashDeferred: ?Deferred<void> = null;
 
-  _socketScanner: ?SocketScanner = null;
   _sessionInfoMap: Map<number, SessionInfo> = new Map();
   _nextSocketSessionId: number = 0;
 
   constructor() {
     log.debug(`constructor`);
+
+    this._bledroid = createBledroidConnection();
   }
 
   async _start(): Promise<void> {
@@ -170,7 +177,7 @@ class BluetoothLEChild {
   };
 
   _onNobleWarning: ((message: string) => void) = (message) => {
-    log.warn(`Noble warning:`, message);
+    log.warn(`Noble warning: '${message}'`);
   };
 
   _sendMessage(message: Object) {
@@ -204,16 +211,6 @@ class BluetoothLEChild {
 
     case `mode`: {
       this._onMode(message.mode, message.promiseId);
-      break;
-    }
-
-    case `pauseScan`: {
-      this._onPauseScan(message.promiseId);
-      break;
-    }
-
-    case `resumeScan`: {
-      this._onResumeScan(message.promiseId);
       break;
     }
 
@@ -260,12 +257,10 @@ class BluetoothLEChild {
     invariant(this._mode === BluetoothLE.MODE_OFF);
 
     if (beaconInfo) {
-      this._beaconInfo = Object.assign({
-        uuid: ``,
-        major: 0,
-        minor: 0,
+      this._beaconInfo = {
         measuredPower: this._defaultBeaconPower,
-      }, beaconInfo);
+        ...beaconInfo,
+      };
     } else {
       this._beaconInfo = null;
     }
@@ -278,7 +273,7 @@ class BluetoothLEChild {
     case BluetoothLE.MODE_OFF:
       break;
 
-    case BluetoothLE.MODE_SCAN:
+    case BluetoothLE.MODE_ON:
     case BluetoothLE.MODE_BEACON:
       invariant(this._beaconInfo);
       break;
@@ -333,58 +328,6 @@ class BluetoothLEChild {
     return this._changeStatePromise;
   }
 
-  _onPauseScan(promiseId: number): Promise<void> {
-    log.debug(`_onPauseScan`, promiseId);
-
-    invariant(this._mode === BluetoothLE.MODE_SCAN);
-    invariant(this._socketScanner);
-
-    return this._socketScanner.pause()
-      .then(() => {
-        this._sendMessage({
-          name: `pauseScan`,
-          promiseId,
-        });
-      })
-      .catch((error) => {
-        this._sendMessage({
-          name: `pauseScan`,
-          promiseId,
-          error: {
-            message: error.message,
-            stack: error.stack,
-          },
-        });
-        throw error;
-      });
-  }
-
-  _onResumeScan(promiseId: number): Promise<void> {
-    log.debug(`_onResumeScan`, promiseId);
-
-    invariant(this._mode === BluetoothLE.MODE_SCAN);
-    invariant(this._socketScanner);
-
-    return this._socketScanner.resume()
-      .then(() => {
-        this._sendMessage({
-          name: `resumeScan`,
-          promiseId,
-        });
-      })
-      .catch((error) => {
-        this._sendMessage({
-          name: `resumeScan`,
-          promiseId,
-          error: {
-            message: error.message,
-            stack: error.stack,
-          },
-        });
-        throw error;
-      });
-  }
-
   async _changeMode(mode: BluetoothMode): Promise<void> {
     log.debug(`_changeMode`, mode);
 
@@ -392,15 +335,17 @@ class BluetoothLEChild {
       return;
     }
 
-    await this._off();
-
-    if (mode !== BluetoothLE.MODE_OFF) {
+    if (mode === BluetoothLE.MODE_OFF) {
+      await this._off();
+    } else {
       invariant(this._beaconInfo);
 
       await this._startAdvertising();
 
-      if (mode === BluetoothLE.MODE_SCAN) {
-        await this._startSocketScanner();
+      if (mode === BluetoothLE.MODE_BEACON && !this._beaconActive) {
+        await this._startBeacon();
+      } else if (mode !== BluetoothLE.MODE_BEACON && this._beaconActive){
+        await this._stopBeacon();
       }
     }
 
@@ -410,123 +355,259 @@ class BluetoothLEChild {
   async _off(): Promise<void> {
     log.debug(`_off`);
 
-    let promises = [];
+    const promises = [];
 
     if (this._sessionInfoMap.size) {
       log.info(`Waiting for ${this._sessionInfoMap.size} socket sessions to ` +
                `close`);
+
+      const sessionPromises = [];
       this._sessionInfoMap.forEach((sessionInfo) => {
-        promises.push(new Promise((resolve) => {
+        return new Promise((resolve) => {
           const socketSession = sessionInfo.session;
           socketSession.once(`close`, resolve);
           socketSession.end();
-        }));
+        });
       });
+
+      promises.push(Promise.all(sessionPromises).then(() => {
+        log.info(`All socket sessions closed`);
+      }));
     }
 
-    let socketScanner = this._socketScanner;
-    if (socketScanner) {
-      log.info(`Waiting for socket scanner to stop`);
-      promises.push(socketScanner.stop());
-      socketScanner.removeListener(`discover`, this._onDiscover);
-    }
+    const beaconActive = this._beaconActive;
+    const socketService = this._socketService;
 
-    if (this._advertising && this._adapterState === `poweredOn`) {
-      log.info(`Waiting for advertising to stop`);
+    let bledroidCrash: ?Deferred = null;
+
+    if (beaconActive || socketService) {
+      bledroidCrash = createDeferred();
 
       invariant(!this._bledroidCrashDeferred);
-      this._bledroidCrashDeferred = createDeferred();
+      this._bledroidCrashDeferred = bledroidCrash;
+    }
 
-      let promise = new Promise(resolve => {
-        bleno.stopAdvertising(() => resolve());
+    if (socketService) {
+      log.info(`Waiting for advertising to stop`);
+
+      socketService.removeListener(`connect`, this._onConnect);
+
+      const promise = new Promise((resolve) => {
+        bleno.stopAdvertising(resolve);
       });
 
+      invariant(bledroidCrash);
+
       promises.push(Promise.race([
-        this._bledroidCrashDeferred.promise,
+        bledroidCrash.promise,
         promise,
-      ]));
+      ]).then(() => {
+        log.info(`Advertising stopped`);
+      }));
+    }
+
+    if (beaconActive) {
+      log.info(`Waiting for beacon to stop`);
+
+      const promise = new Promise((resolve) => {
+        const listener = (status) => {
+          this._bledroid.removeListener(`beaconStop`, listener);
+          if (status) {
+            log.warn(`Failed to stop beacon, status = ${status}`);
+          }
+          resolve();
+        };
+        this._bledroid.addListener(`beaconStop`, listener);
+        this._bledroid.command(`stopBeacon`);
+      });
+
+      invariant(bledroidCrash);
+
+      promises.push(Promise.race([
+        bledroidCrash.promise,
+        promise,
+      ]).then(() => {
+        log.info(`Beacon stopped`);
+      }));
     }
 
     if (promises.length) {
-      await Promise.all(promises);
+      try {
+        await Promise.all(promises);
+      } catch(error) {
+        log.warn(error);
+      }
+      log.info(`Done waiting`);
+    }
+
+    if (socketService) {
+      invariant(bledroidCrash);
+
+      log.info(`Waiting for socket service to stop`);
+      try {
+        await Promise.race([
+          bledroidCrash.promise,
+          socketService.stop(),
+        ]);
+      } catch(error) {
+        log.warn(error);
+      }
       log.info(`Done waiting`);
     }
 
     this._sessionInfoMap.clear();
-    this._socketScanner = null;
-    this._advertising = false;
+    this._socketService = null;
+    this._beaconActive = false;
     this._bledroidCrashDeferred = null;
   }
 
   async _startAdvertising(): Promise<void> {
     log.debug(`_startAdvertising`);
 
-    if (this._advertising) {
-      return;
-    }
-
     // Make sure that the adapter is on before attempting to start advertising.
     await this._adapterStateDeferred.promise;
 
-    invariant(!this._bledroidCrashDeferred);
-    this._bledroidCrashDeferred = createDeferred();
-
-    let promise = new Promise((resolve, reject) => {
-      const callback = error => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      };
-      invariant(this._beaconInfo);
-      bleno.startAdvertisingIBeacon(this._beaconInfo.uuid,
-                                    this._beaconInfo.major,
-                                    this._beaconInfo.minor,
-                                    this._beaconInfo.measuredPower,
-                                    callback);
-    });
-
-    await Promise.race([
-      this._bledroidCrashDeferred.promise,
-      promise,
-    ]);
-
-    this._advertising = true;
-    this._bledroidCrashDeferred = null;
-  }
-
-  async _startSocketScanner(): Promise<void> {
-    log.debug(`_startSocketScanner`);
-
-    if (this._socketScanner) {
+    if (this._socketService) {
       return;
     }
 
-    // Make sure that the adapter is on before attempting to start scanning.
-    await this._adapterStateDeferred.promise;
-
-    const scanner = new SocketScanner(
-      noble,
-      this._privateKey,
-      {
-        publicKeys: this._publicKeys,
-        serviceUuid: this._beaconInfo ? this._beaconInfo.uuid : ``,
-      }
-    );
+    const bledroidCrash = createDeferred();
 
     invariant(!this._bledroidCrashDeferred);
-    this._bledroidCrashDeferred = createDeferred();
+    this._bledroidCrashDeferred = bledroidCrash;
 
-    await Promise.race([
-      this._bledroidCrashDeferred.promise,
-      scanner.start(),
-    ]);
+    invariant(this._beaconInfo);
+    const service = new SocketService(noble, bleno, this._beaconInfo.uuid);
 
-    scanner.addListener(`discover`, this._onDiscover);
+    const promise = new Promise((resolve, reject) => {
+      const callback = error => error ? reject(error) : resolve();
+      bleno.setServices([service], callback);
+    }).then(() => new Promise((resolve, reject) => {
+      const callback = error => error ? reject(error) : resolve();
+      bleno.startAdvertising(`Silk`, [service.uuid], callback);
+    }));
 
-    this._socketScanner = scanner;
-    this._bledroidCrashDeferred = null;
+    try {
+      await Promise.race([
+        bledroidCrash.promise,
+        promise,
+      ]);
+      service.addListener(`connect`, this._onConnect);
+      this._socketService = service;
+    } finally {
+      this._bledroidCrashDeferred = null;
+    }
+  }
+
+  async _startBeacon(): Promise<void> {
+    log.debug(`_startBeacon`);
+
+    // Make sure that the adapter is on before attempting to start beaconing.
+    await this._adapterStateDeferred.promise;
+
+    if (this._beaconActive) {
+      return;
+    }
+
+    const beaconInfo = this._beaconInfo;
+    invariant(beaconInfo);
+
+    const beaconUuid = beaconInfo.uuid.toLowerCase().replace(/[^\da-f]/g, ``);
+    invariant(beaconUuid);
+
+    const uuidBuffer = new Buffer(beaconUuid, 'hex');
+    invariant(uuidBuffer.length === 16, `Invalid uuid '${beaconUuid}'`);
+
+    const dataLength = 25;
+    const data = new Buffer(dataLength);
+
+    let index = 0;
+
+    // iBeacon header.
+    data.writeUInt16LE(0x4c, index); // Apple company identifier.
+    index += 2;
+
+    data.writeUInt8(0x02, index++); // iBeacon tag.
+    data.writeUInt8(0x15, index++); // Size of the iBeacon data.
+
+    // iBeacon uuid.
+    uuidBuffer.copy(data, index);
+    index += uuidBuffer.length;
+
+    // iBeacon major.
+    data.writeUInt16BE(beaconInfo.major, index);
+    index += 2;
+
+    // iBeacon minor.
+    data.writeUInt16BE(beaconInfo.minor, index);
+    index += 2;
+
+    // iBeacon measured power.
+    data.writeInt8(beaconInfo.measuredPower, index++);
+
+    invariant(index === dataLength);
+
+    const bledroidCrash = createDeferred();
+
+    invariant(!this._bledroidCrashDeferred);
+    this._bledroidCrashDeferred = bledroidCrash;
+
+    const promise = new Promise((resolve) => {
+      const listener = (status) => {
+        this._bledroid.removeListener(`beaconStart`, listener);
+        if (status) {
+          log.warn(`Failed to start beacon, status = ${status}`);
+        }
+        resolve();
+      };
+      this._bledroid.addListener(`beaconStart`, listener);
+      this._bledroid.command(`startBeacon ${data.toString('hex')}`);
+    });
+
+    try {
+      await Promise.race([
+        bledroidCrash.promise,
+        promise,
+      ]);
+      this._beaconActive = true;
+    } finally {
+      this._bledroidCrashDeferred = null;
+    }
+  }
+
+  async _stopBeacon(): Promise<void> {
+    log.debug(`_stopBeacon`);
+
+    if (!this._beaconActive) {
+      return;
+    }
+
+    const promise = new Promise((resolve) => {
+      const listener = (status) => {
+        this._bledroid.removeListener(`beaconStop`, listener);
+        if (status) {
+          log.warn(`Failed to stop beacon, status = ${status}`);
+        }
+        resolve();
+      };
+      this._bledroid.addListener(`beaconStop`, listener);
+      this._bledroid.command(`stopBeacon`);
+    });
+
+    const bledroidCrash = createDeferred();
+
+    invariant(!this._bledroidCrashDeferred);
+    this._bledroidCrashDeferred = bledroidCrash;
+
+    try {
+      await Promise.race([
+        bledroidCrash.promise,
+        promise,
+      ]);
+      this._beaconActive = false;
+    } finally {
+      this._bledroidCrashDeferred = null;
+    }
   }
 
   _onAdapterStateChange: ((adapterState: string) => void) = (adapterState) => {
@@ -589,31 +670,26 @@ class BluetoothLEChild {
         this._sessionInfoMap.forEach((sessionInfo) => {
           sessionInfo.session.end();
         });
-        this._sessionInfoMap.clear();
       }
-      if (this._socketScanner) {
-        this._socketScanner.stop();
-        this._socketScanner = null;
+      if (this._socketService) {
+        this._socketService.stop();
       }
-      this._advertising = false;
-
-      this._mode = BluetoothLE.MODE_OFF;
     } catch(error) {
+      log.warn(error);
+    } finally {
       // Ensure that our state is correct even if something above failed.
       this._sessionInfoMap.clear();
-      this._socketScanner = null;
-      this._advertising = false;
+      this._socketService = null;
+      this._beaconActive = false;
       this._mode = BluetoothLE.MODE_OFF;
-
-      log.warn(error);
     }
   };
 
-  _onDiscover: ((peripheral: Peripheral) => void) = (peripheral) => {
-    log.debug(`_onDiscover`, peripheral.uuid);
-
-    invariant(peripheral.state === `connected`);
-    invariant(this._socketScanner);
+  _onConnect: ((stream: SocketStream, peripheral: Peripheral) => void) = (
+    stream,
+    peripheral,
+  ) => {
+    log.debug(`_onConnect`, peripheral.address);
 
     const id = this._nextSocketSessionId++;
     if (id === 0xffffffff) {
@@ -621,7 +697,12 @@ class BluetoothLEChild {
       this._nextSocketSessionId = 0;
     }
 
-    const session = new ChildSocketSession(this._socketScanner, peripheral);
+    const session = new ChildSocketSession(
+      stream,
+      peripheral,
+      this._privateKey,
+      this._publicKeys,
+    );
     const socket = net.connect(this._serverPath);
 
     let connectListener;
@@ -782,24 +863,6 @@ class BluetoothLEChild {
 
     case `rssi`: {
       session.rssiUpdatesEnabled = message.enabled;
-      break;
-    }
-
-    case `scan`: {
-      if (message.enabled) {
-        session.startScanning();
-      } else {
-        session.stopScanning();
-      }
-      break;
-    }
-
-    case `skip`: {
-      if (message.enabled) {
-        session.skip();
-      } else {
-        session.unskip();
-      }
       break;
     }
 

@@ -467,6 +467,7 @@ export default class Devices extends AsyncComponent {
         publicKey: registrarPublicKey,
         regToken: registrationToken,
         serverUrl: this.props.api.config.serverUrl,
+        time: Date.now(),
       });
     } catch(ex) {
       await this._abortConfig(bleDeviceSession, ex);

@@ -50,14 +50,6 @@ const MESSAGES_FROM_PARENT = {
   rssi: messageSchema(`rssi`, {
     enabled: Joi.boolean().required(),
   }),
-
-  scan: messageSchema(`scan`, {
-    enabled: Joi.boolean().required(),
-  }),
-
-  skip: messageSchema(`skip`, {
-    enabled: Joi.boolean().required(),
-  }),
 };
 
 // Avoids needing to pass in an argument...

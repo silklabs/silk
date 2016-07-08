@@ -17,6 +17,7 @@ node_modules/fbjs/flow/lib/
 .*/node_modules/json5/test/.*
 .*/node_modules/read-package-tree/test/.*
 .*/node_modules/silk-socket.io-client-node/.*
+.*/node_modules/node-inspector/.*
 
 # Ignore all sorts of dev dependencies that our code never imports
 # and doesn't need to get type checked against.
@@ -63,9 +64,6 @@ node_modules/fbjs/flow/lib/
 # vs. node modules. So we tell Flow to ignore node_modules/react-native and
 # provide a minimal declaration in flow-lib/react-native.js.flow.
 .*/node_modules/react-native/.*
-
-# These projects are defunct now.
-.*/tools/node_modules_cache/.*
 
 # Ignore the native modules whose interface
 # files are present in top level flow-interfaces

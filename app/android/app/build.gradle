@@ -13,12 +13,10 @@ project.ext.react = [
   bundleInDebug: true,
   bundleInRelease: true,
   inputExcludes: ["android/**", "ios/**", "node_modules/**"],
-  // Need to supply absolute path here because of
-  // https://github.com/facebook/react-native/pull/7857
   extraPackagerArgs: ["--transformer", file("../../../react-native-transformer"), "--verbose"]
 ]
 
-apply from: "react.gradle"
+apply from: "../../node_modules/react-native/react.gradle"
 apply from: "mse.gradle"
 
 /**

@@ -12,9 +12,9 @@ import KeywordSpotting from '..';
 import config from 'silk-config';
 import { default as createLog, configureLog } from 'silk-log';
 import mic from 'mic';
-import stt from 'silk-stt';
+import { configureSpeechToText } from 'silk-stt';
 import * as speechOptions from 'silk-dialog-script/lib/speechAccessToken';
-stt.configure(speechOptions);
+configureSpeechToText(speechOptions);
 
 configureLog('*');
 const log = createLog('runKws');

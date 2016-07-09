@@ -26,6 +26,7 @@ type Callback = (error: ?Error, text?: string) => void;
 
 const log = createLog('stt');
 const SAVE_SPEECH_WAV = 'persist.silk.speech.save';
+let options: SpeechOptions;
 
 function generateWavHeader(dataSize: number, options: ConfigDeviceMic) {
   const bytesPerSample = options.bytesPerSample || 2;
@@ -54,22 +55,27 @@ function generateWavHeader(dataSize: number, options: ConfigDeviceMic) {
   return hdr;
 }
 
-class SpeechToText {
+/**
+ * Call this function once to configure the speech options
+ */
+export function configureSpeechToText(speechOptions: SpeechOptions) {
+  options = speechOptions;
+}
+
+/**
+ * This class provides APIs to convert speech to text
+ */
+export default class SpeechToText {
 
   _cb: ?Callback;
   _req: ?ClientRequest = null;
   _pendingFinish: boolean = false;
   _bufferedSamples: Array<Buffer> = [];
-  _options: SpeechOptions;
   _saveEnabled: boolean;
   _wavDataBuffer: Buffer;
 
   constructor() {
     this._saveEnabled = util.getboolprop(SAVE_SPEECH_WAV, false);
-  }
-
-  configure(options: SpeechOptions) {
-    this._options = options;
   }
 
   _callCallback(error: ?Error, text?: string, confidence?: number): void {
@@ -98,34 +104,34 @@ class SpeechToText {
     this._cb = cb;
     this._wavDataBuffer = new Buffer(0);
 
-    if (!this._options) {
+    if (!options) {
       this._callCallback(new Error(`Speech to text not configured?`));
       return;
     }
 
     let accessToken;
     try {
-      accessToken = await this._options.getAccessToken();
+      accessToken = await options.getAccessToken();
     } catch (err) {
       this._callCallback(err);
       return;
     }
     log.debug(`Got access token`);
 
-    const query = this._options.urlEncode({
+    const query = options.urlEncode({
       version: `3.0`,
       requestid: uuid.v4(), // per request
-      appid: this._options.APP_ID,
+      appid: options.APP_ID,
       format: `json`,
       locale: `en-US`,
       'device.os': `Silk OS`,
       scenarios: `ulm`,
-      instanceid: this._options.INSTANCE_ID,
+      instanceid: options.INSTANCE_ID,
       'result.profanitymarkup': 0, // Fuck marking up profanity
     });
 
     const opts = {
-      hostname: this._options.SPEECH_HOST,
+      hostname: options.SPEECH_HOST,
       port: 443,
       path: `/recognize/query?` + query,
       method: `POST`,
@@ -254,5 +260,3 @@ class SpeechToText {
     writer.end();
   }
 }
-
-module.exports = new SpeechToText();

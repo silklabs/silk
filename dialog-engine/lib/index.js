@@ -17,7 +17,7 @@ import createLog from 'silk-log';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 
-import stt from 'silk-stt';
+import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
 import tts from 'silk-tts';
 import TextToIntention from './textToIntention';
 
@@ -109,7 +109,7 @@ export class DialogEngine extends EventEmitter {
     this._scriptOptions = scriptOptions;
 
     if (this._scriptOptions.speechOptions) {
-      stt.configure(this._scriptOptions.speechOptions);
+      configureSpeechToText(this._scriptOptions.speechOptions);
     }
 
     if (this._scriptOptions.speechOptions) {
@@ -221,7 +221,7 @@ export class DialogEngine extends EventEmitter {
       });
     };
 
-    stt.startRequest(finish);
+    const stt = new SpeechToText(finish);
 
     errorListener = (error) => {
       log.error(`Stream error`, error);
@@ -240,8 +240,8 @@ export class DialogEngine extends EventEmitter {
     stream.addListener(`error`, errorListener);
     stream.addListener(`data`, dataListener);
     stream.addListener(`end`, endListener);
+    stt.startRequest(finish);
   }
-
 }
 
 let instance: ?DialogEngine = null;

@@ -20,7 +20,7 @@ import * as util from 'silk-sysutils';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import mkdirp from 'mkdirp-promise';
 import netstatus from 'silk-netstatus';
-import stt from 'silk-stt';
+import SpeechToText from 'silk-stt';
 import player from 'silk-audioplayer';
 
 import type { VoiceActivityDetector } from 'silk-vad';
@@ -498,6 +498,7 @@ export default class KeywordSpotting extends EventEmitter {
   async _saveAsWav() {
     if (this._saveEnabled && (netstatus.online || this._standAlone)) {
       return new Promise((resolve, reject) => {
+        let stt = new SpeechToText();
         stt.startRequest((error, text = '', confidence = 0) => {
           if (error) {
             reject(error);

@@ -8,7 +8,7 @@
  * @private
  */
 
-import tts from 'silk-tts';
+import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
 import config from 'silk-config';
 import wav from 'wav';
 import { default as createLog, configureLog } from 'silk-log';
@@ -48,7 +48,8 @@ function writeWavFile(pcmSamples, fileName) {
 
 // Convert text to raw pcm data
 log.info(`Converting \'${process.argv[2]}\' to speech`);
-tts.configure(speechOptions);
+configureTextToSpeech(speechOptions);
+let tts = new TextToSpeech();
 tts.startRequest(process.argv[2]);
 tts.addListener(`error`, (error) => {
   log.info(`TTS error`, error);

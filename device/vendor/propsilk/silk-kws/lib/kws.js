@@ -20,7 +20,7 @@ import * as util from 'silk-sysutils';
 import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
 import mkdirp from 'mkdirp-promise';
 import netstatus from 'silk-netstatus';
-import stt from 'silk-stt';
+import SpeechToText from 'silk-stt';
 import player from 'silk-audioplayer';
 
 import type { VoiceActivityDetector } from 'silk-vad';
@@ -409,7 +409,7 @@ export default class KeywordSpotting extends EventEmitter {
       let [label, confidence] = await this._predictAsync(output);
       if (label && (label === HOT_KEYWORD)) {
         await this._playHotKeywordSound();
-        await this._saveAsWav();
+        this._saveAsWav();
         this._onKeywordDetected();
         this.emit(label, { when: Date.now(), confidence});
 
@@ -495,58 +495,47 @@ export default class KeywordSpotting extends EventEmitter {
    * Run speech to text service to qualify the keyword and then save the pcm
    * samples to the file
    */
-  async _saveAsWav() {
+  _saveAsWav(): void {
     if (this._saveEnabled && (netstatus.online || this._standAlone)) {
-      return new Promise((resolve, reject) => {
-        stt.startRequest((error, text = '', confidence = 0) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-          log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
-          let dir = (keywordTexts.indexOf(text) !== -1) ? POS_KWS_DIR : NEG_KWS_DIR;
-          resolve([dir, confidence]);
-        });
-        log.debug(`Converting keyword to text`);
-        let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
-        stt.write(wavData);
-        stt.finish();
-      })
-      .then(([dir, confidence]) => {
-        // Only trust the results if the confidence higher than the threshold
+      let wavData = new Buffer(WINDOW_SIZE_IN_BYTES);
+      this._wavDataBuffer.copy(wavData);
+
+      let stt = new SpeechToText();
+      stt.startRequest((error, text = '', confidence = 0) => {
+        if (error) {
+          log.error('Not saving the keyword: ', error);
+          return;
+        }
+        log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
+        let dir = (keywordTexts.indexOf(text) !== -1) ? POS_KWS_DIR : NEG_KWS_DIR;
         if (confidence >= STT_CONFIDENCE_THRESHOLD) {
-          return this._writeWavFile(dir);
+          this._writeWavFile(dir, wavData);
         } else {
           log.warn(`Not saving the keyword ${confidence}`);
         }
-      })
-      .catch(err => {
-        // Consume errors when writing wav file to allow dialog to happen
-        // neverthless
-        log.error('Not saving the keyword: ', err);
       });
+      log.debug(`Converting keyword to text`);
+      stt.write(wavData);
+      stt.finish();
     }
   }
 
   /**
    * Write wav data in a file
    */
-  _writeWavFile(dir: string): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      let wavData = this._wavDataBuffer.slice(0, WINDOW_SIZE_IN_BYTES);
-      let writer = new wav.FileWriter(`${dir}/${Date.now()}.wav`, {
-        sampleRate: this._sampleRate,
-        channels: this._numChannels,
-        bitDepth: this._bytesPerSample * 8,
-      });
-      writer.on('header', () => {
-        resolve();
-      });
-      writer.on('error', err => {
-        reject(err);
-      });
-      writer.write(wavData);
-      writer.end();
+  _writeWavFile(dir: string, wavData: Buffer): void {
+    let writer = new wav.FileWriter(`${dir}/${Date.now()}.wav`, {
+      sampleRate: this._sampleRate,
+      channels: this._numChannels,
+      bitDepth: this._bytesPerSample * 8,
     });
+    writer.on('header', () => {
+      log.debug('Keyword saved');
+    });
+    writer.on('error', err => {
+      log.error(err);
+    });
+    writer.write(wavData);
+    writer.end();
   }
 }

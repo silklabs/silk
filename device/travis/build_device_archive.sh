@@ -112,6 +112,7 @@ if $FULL; then
   }
   flash_nhlos # Update partition table through LK
   fastboot reboot-bootloader
+  sleep 1 # OSX needs some sleep here
   flash_nhlos # Update everything again using the new LK
   cd ..
 fi

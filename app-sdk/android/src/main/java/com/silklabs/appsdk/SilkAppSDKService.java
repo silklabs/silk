@@ -12,6 +12,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.facebook.react.LifecycleState;
 import com.facebook.react.ReactInstanceManager;
@@ -59,6 +60,7 @@ public class SilkAppSDKService extends Service {
     ReactInstanceManager.Builder builder = ReactInstanceManager.builder()
       .setApplication(getApplication())
       .setJSMainModuleName(getJSMainModuleName())
+      .setBundleAssetName(getBundleAssetName())
       .setUseDeveloperSupport(getUseDeveloperSupport())
       .setInitialLifecycleState(LifecycleState.BEFORE_RESUME);
 
@@ -66,7 +68,6 @@ public class SilkAppSDKService extends Service {
       builder.addPackage(reactPackage);
     }
 
-    builder.setBundleAssetName(getBundleAssetName());
     return builder.build();
   }
 

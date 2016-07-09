@@ -1061,7 +1061,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = ../tools/xcode_bundle.sh;
+			shellScript = ./bundle/xcode_bundle.sh;
 		};
 		6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */ = {
 			isa = PBXShellScriptBuildPhase;

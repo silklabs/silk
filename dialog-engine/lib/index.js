@@ -18,7 +18,7 @@ import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 
 import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
-import tts from 'silk-tts';
+import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
 import TextToIntention from './textToIntention';
 
 import type {
@@ -113,7 +113,7 @@ export class DialogEngine extends EventEmitter {
     }
 
     if (this._scriptOptions.speechOptions) {
-      tts.configure(this._scriptOptions.speechOptions);
+      configureTextToSpeech(this._scriptOptions.speechOptions);
     }
   }
 
@@ -140,6 +140,7 @@ export class DialogEngine extends EventEmitter {
       return;
     }
 
+    const tts = new TextToSpeech(text);
     const stream = new ClosingPassThrough();
 
     let ttsError: ?Error = null;

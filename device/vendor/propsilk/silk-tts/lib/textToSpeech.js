@@ -14,30 +14,35 @@ import * as https from 'https';
 import type { SpeechOptions } from 'silk-dialog-script';
 
 const log = createLog('tts');
+let options: SpeechOptions;
 
-class TextToSpeech extends EventEmitter {
+/**
+ * Call this function once to configure the speech options
+ */
+export function configureTextToSpeech(speechOptions: SpeechOptions) {
+  options = speechOptions;
+}
 
-  _options: SpeechOptions;
+/**
+ * This class provides APIs to convert text to speech
+ */
+export default class TextToSpeech extends EventEmitter {
 
   constructor() {
     super();
   }
 
-  configure(options: SpeechOptions) {
-    this._options = options;
-  }
-
   async startRequest(text: string): Promise<void> {
     log.debug(`startRequest`, text);
 
-    if (!this._options) {
+    if (!options) {
       this.emit(`error`, `Not configured?`);
       return;
     }
 
     let accessToken;
     try {
-      accessToken = await this._options.getAccessToken();
+      accessToken = await options.getAccessToken();
     } catch (err) {
       this.emit(`error`, err);
       return;
@@ -47,7 +52,7 @@ class TextToSpeech extends EventEmitter {
     const postData = `<speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Female' name='Microsoft Server Speech Text to Speech Voice (en-US, ZiraRUS)'>${text}</voice></speak>`;
 
     const opts = {
-      hostname: this._options.SPEECH_HOST,
+      hostname: options.SPEECH_HOST,
       port: 443,
       path: `/synthesize`,
       method: `POST`,
@@ -55,8 +60,8 @@ class TextToSpeech extends EventEmitter {
         'Content-Type': `application/ssml+xml`,
         'X-Microsoft-OutputFormat': `raw-16khz-16bit-mono-pcm`,
         'Authorization': `Bearer ${String(accessToken)}`,
-        'X-Search-AppId': this._options.APP_ID_NO_DASH,
-        'X-Search-ClientID': this._options.INSTANCE_ID_NO_DASH,
+        'X-Search-AppId': options.APP_ID_NO_DASH,
+        'X-Search-ClientID': options.INSTANCE_ID_NO_DASH,
         'User-Agent': `silk`,
         'Content-Length': postData.length,
       },
@@ -85,5 +90,3 @@ class TextToSpeech extends EventEmitter {
     req.end();
   }
 }
-
-module.exports = new TextToSpeech();

@@ -17,9 +17,10 @@ case "$CONFIGURATION" in
     ;;
 esac
 
-source $(dirname $0)/../../pub/tools/gnu.sh
-APP_DIR="$(realpath $(dirname $0)/..)"
-ROOT_DIR="$(realpath $(dirname $0)/../..)"
+source $(dirname $0)/../../../pub/tools/gnu.sh
+THIS_DIR=$(realpath $(dirname $0))
+APP_DIR=$(realpath $(dirname $0)/../..)
+ROOT_DIR=$(realpath $(dirname $0)/../../..)
 REACT_NATIVE_DIR="$APP_DIR/node_modules/react-native"
 
 # Xcode project file for React Native apps is located in ios/ subfolder
@@ -30,9 +31,9 @@ NODE_BINARY=node
 DEST=$CONFIGURATION_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH
 DEST_FILE="$DEST/main.jsbundle"
 
-bundle_type="$($APP_DIR/tools/bundle_type)"
+bundle_type="$($THIS_DIR/bundle_type)"
 if [[ "$bundle_type" == "local" ]]; then
-  $APP_DIR/tools/local_bundle
+  $THIS_DIR/local_bundle "$DEST"
   exit 0
 elif [[ "$bundle_type" != "bundle" ]]; then
   exit 0

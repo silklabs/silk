@@ -1,12 +1,12 @@
 #! /usr/bin/env node
 
-var config = require(__dirname + '/../config.local.json');
+var config = require('../../config.local.json');
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
 
 var rn = config['react-native'];
-var bundleFile = path.join(__dirname, '../ios/Silk/main.jsbundle');
+var bundleFile = process.argv[2];
 
 if (!rn || rn.type !== 'local' || !rn.url) {
   throw new Error('Invalid "react-native" section for local bundle in config.local.json');

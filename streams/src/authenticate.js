@@ -172,6 +172,12 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     invariant(typeof data === 'object');
 
     if (!isAuthData(data)) {
+      if (!this._receivedAuthData) {
+        this._setError(new Error(`Received data before auth data`));
+        callback(this._error);
+        return;
+      }
+
       if (this._blocked) {
         AuthenticateReadStream.log.debug(`Waiting to be unblocked`);
         this._transformData = data;
@@ -183,7 +189,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     }
 
     if (this._receivedAuthData) {
-      this._setError(new Error(`Received multiple auth messages`));
+      this._setError(new Error(`Received multiple auth data`));
       callback(this._error);
       return;
     }

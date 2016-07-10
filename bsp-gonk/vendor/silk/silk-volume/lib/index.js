@@ -4,6 +4,7 @@
  */
 
 import * as util from 'silk-sysutils';
+import { EventEmitter } from 'events';
 
 /**
  * Silk volume module
@@ -14,9 +15,10 @@ import * as util from 'silk-sysutils';
  * volume.level = 50;
  * volume.mute = false;
  */
-class Volume {
+class Volume extends EventEmitter {
   /**
-   * Gets the current volume level (0..100)
+   * Gets the current volume level (0..100).  Note that the value returned is
+   * unaffected by the active mute setting.
    *
    * @memberof silk-volume
    * @instance
@@ -36,6 +38,15 @@ class Volume {
       throw new Error('Invalid volume level', newlevel);
     }
     util.setprop('persist.silk.volume.level', newlevel);
+
+    /**
+     * Emitted when volume level or mute changes
+     *
+     * @event changed
+     * @memberof silk-volume
+     * @instance
+     */
+    this._throwyEmit('changed');
   }
 
   /**
@@ -56,6 +67,23 @@ class Volume {
    */
   set mute(newmute: boolean): void {
     util.setprop('persist.silk.volume.mute', newmute);
+    this._throwyEmit('changed');
+  }
+
+  /**
+   * Emit an event, and re-throw any exceptions to the process once the current
+   * call stack is unwound.
+   *
+   * @private
+   */
+  _throwyEmit(eventName, ...args) {
+    try {
+      this.emit(eventName, ...args);
+    } catch (err) {
+      process.nextTick(() => {
+        util.processthrow(err.stack || err);
+      });
+    }
   }
 }
 

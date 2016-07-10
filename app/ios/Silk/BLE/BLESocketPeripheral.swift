@@ -182,6 +182,10 @@ internal class BLESocketPeripheral: NSObject,
 
     self.centralManager.delegate = self
     self.peripheralManager.delegate = self
+
+    // Add config service.
+    self.services[BLESocketPeripheral.configServiceUuid] =
+      ServiceInfo(service: Service(type: BLESocketPeripheral.configServiceUuid))
   }
 
   func updateSocketManager(socketManager: BLESocketManager) {
@@ -190,6 +194,10 @@ internal class BLESocketPeripheral: NSObject,
 
   // Called when JS adds new account uuids.
   func regionAdded(uuid: NSUUID) {
+    if uuid == RegionMonitor.configBeaconUuid {
+      return
+    }
+
     dispatch_async(self.queue) {
       let serviceUuid = CBUUID(NSUUID: uuid)
       log.debug("regionAdded(\(serviceUuid))")
@@ -204,12 +212,14 @@ internal class BLESocketPeripheral: NSObject,
   }
 
   func regionRemoved(uuid: NSUUID) {
+    if uuid == RegionMonitor.configBeaconUuid {
+      return
+    }
+
     dispatch_async(self.queue) {
       let serviceUuid = CBUUID(NSUUID: uuid)
       log.debug("regionRemoved(\(serviceUuid))")
 
-      assert(serviceUuid != BLESocketPeripheral.configServiceUuid,
-             "Removing config service")
       assert(self.services[serviceUuid] != nil)
 
       self.removeAndCleanupService(serviceUuid)
@@ -307,10 +317,7 @@ internal class BLESocketPeripheral: NSObject,
   func acceptConfigConnections(accept: Bool) {
     log.debug("acceptConfigConnections(\(accept))")
 
-    let serviceUuid = BLESocketPeripheral.configServiceUuid
-    assert(self.services[serviceUuid] != nil)
-
-    let serviceInfo = self.services[serviceUuid]!
+    let serviceInfo = self.services[BLESocketPeripheral.configServiceUuid]!
     serviceInfo.available = accept
 
     self.updateState()

@@ -19,9 +19,11 @@ import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 
 const log = createLog('ui');
-const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
-const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
+
+const RESET_KEY_ENABLED = util.getboolprop('ro.silk.ui.key.reset', true);
+const POWER_KEY_ENABLED = util.getboolprop('ro.silk.ui.key.power', true);
 const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
+const LIGHT_ENABLED = util.getboolprop('ro.silk.ui.light', false);
 
 export type UiState = 'bootanimation' |
                       'unconfigured' |
@@ -90,26 +92,25 @@ export class Ui extends events.EventEmitter {
         volumeKeysPressed++;
         log.info(`down - volumeKeysPressed: ${volumeKeysPressed}`);
         if (volumeKeysPressed === 2) {
-          this.emit('key:setup');
-          if (FACTORY_RESET_DISABLED) {
-            log.verbose('Factory reset disabled');
-            break;
+          if (RESET_KEY_ENABLED) {
+            Promise.race([
+              util.timeout(1000),
+              new Promise((resolve, reject) => cancelVolumeKeys = reject)
+            ])
+            .then(() => factoryReset.start())
+            .catch(() => null);
           }
-          Promise.race([
-            util.timeout(1000),
-            new Promise((resolve, reject) => cancelVolumeKeys = reject)
-          ])
-          .then(() => factoryReset.start())
-          .catch(() => null);
         }
         break;
       case 'power':
-        Promise.race([
-          util.timeout(1000),
-          new Promise((resolve, reject) => cancelPowerDown = reject)
-        ])
-        .then(() => this.emit('key:powerdown'))
-        .catch(() => null);
+        if (POWER_KEY_ENABLED) {
+          Promise.race([
+            util.timeout(1000),
+            new Promise((resolve, reject) => cancelPowerDown = reject)
+          ])
+          .then(() => this.emit('key:powerdown'))
+          .catch(() => null);
+        }
         break;
       default:
         break;
@@ -157,7 +158,7 @@ export class Ui extends events.EventEmitter {
     log.info(`ui state: ${this.currentState}`);
     this.emit('state', this.currentState);
 
-    if (NOTIF_LIGHT_ENABLED) {
+    if (LIGHT_ENABLED) {
       let light = lights.notifications;
 
       switch (this.currentState) {

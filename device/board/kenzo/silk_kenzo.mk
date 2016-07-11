@@ -6,7 +6,7 @@
 #
 
 PRODUCT_PROPERTY_OVERRIDES += \
-  ro.silk.notif_light.enabled=true \
+  ro.silk.ui.light=true \
   ro.silk.ui.inputevents=event0,event6,event7 \
 
 PRODUCT_PROPERTY_OVERRIDES += \

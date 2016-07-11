@@ -548,9 +548,6 @@ update.on('staged', () => {
 });
 
 // UI...
-ui.on('key:setup', () => {
-  log.info('Continue holding for factory reset...');
-});
 ui.on('key:powerdown', shutdown);
 factoryReset.on('factory-reset', () => {
   log.warn('!! Factory reset !!');

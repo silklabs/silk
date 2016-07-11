@@ -37,10 +37,7 @@
 // SLKAppSDKDelegate methods
 
 - (void)onMessage:(NSDictionary<NSString *, id> *)message {
-  NSLog(@"Received message: %@", message);
-
-  // Send the message right back.
-  [silkService postMessage:message];
+  NSLog(@"Received message from SDK: %@", message);
 }
 
 @end

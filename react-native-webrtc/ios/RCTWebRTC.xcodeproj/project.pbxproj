@@ -328,7 +328,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../app/node_modules/react-native/React/**",
+					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/**",
 				);
 				LIBRARY_SEARCH_PATHS = (
@@ -345,7 +345,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../app/node_modules/react-native/React/**",
+					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/**",
 				);
 				LIBRARY_SEARCH_PATHS = (

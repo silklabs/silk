@@ -38,7 +38,7 @@ public class SilkAppSDKService extends Service {
   }
 
   protected String getJSMainModuleName() {
-    return "src/index";
+    return "app-sdk/src/index";
   }
 
   protected boolean getUseDeveloperSupport() {
@@ -58,6 +58,7 @@ public class SilkAppSDKService extends Service {
 
   protected ReactInstanceManager createReactInstanceManager() {
     ReactInstanceManager.Builder builder = ReactInstanceManager.builder()
+      .setUseOldBridge(true)
       .setApplication(getApplication())
       .setJSMainModuleName(getJSMainModuleName())
       .setBundleAssetName(getBundleAssetName())

@@ -43,7 +43,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  return [NSURL URLWithString:@"http://localhost:8081/src/index.bundle?platform=ios&dev=true"];
+  return [NSURL URLWithString:@"http://localhost:8081/app-sdk/src/index.bundle?platform=ios&dev=true"];
 }
 
 - (NSArray *)extraModulesForBridge:(RCTBridge *)bridge

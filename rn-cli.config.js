@@ -1,8 +1,13 @@
+/**
+ * This file gets require()-ed by the React Native packager
+ * and configures how it resolves and transforms modules.
+ */
+'use strict';
+
 const blacklist = require('react-native/packager/blacklist');
 const path = require('path');
 
 const ignoreDirectories = [
-  'app-sdk',
   'bsp-gonk',
   'pub/bsp-gonk',
   'device',
@@ -17,11 +22,11 @@ const ignoreDirectories = [
 ];
 
 const additionalBlacklist = ignoreDirectories
-  .map((dir) => new RegExp('^' + path.resolve(__dirname, '..', dir) + '/.*'));
+  .map((dir) => new RegExp('^' + path.join(__dirname, dir) + '/.*'));
 
 module.exports = {
   getProjectRoots() {
-    return [__dirname, path.resolve(__dirname, '..')];
+    return [__dirname];
   },
 
   getAssetRoots() {
@@ -30,5 +35,9 @@ module.exports = {
 
   getBlacklistRE(platform) {
     return blacklist(platform, additionalBlacklist);
+  },
+
+  getTransformModulePath() {
+    return require.resolve('silk-react-native-transformer');
   },
 };

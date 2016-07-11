@@ -14,9 +14,6 @@
     "silk-streams": "/streams"
   },
   "localDependencies": {
-    "babel-core": "6.8.0",
-    "react-native": "0.29.0-rc.2",
-    "react-native-orientation": "1.17.0",
     "socket.io-client": "1.4.6"
   },
   "dependencies": {
@@ -26,6 +23,8 @@
     "moment": "2.13.0",
     "react": "15.2.0",
     "react-addons-pure-render-mixin": "15.2.0",
+    "react-native": "0.30.0-rc.0",
+    "react-native-orientation": "1.17.0",
     "react-redux": "4.4.5",
     "redux": "3.5.2",
     "redux-thunk": "2.1.0",
@@ -48,7 +47,7 @@
     "lint": "eslint src",
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall",
-    "start": "node node_modules/react-native/local-cli/cli.js start --transformer ../react-native-transformer",
+    "start": "node ../node_modules/react-native/local-cli/cli.js start",
     "webview-dev-server": "cd android && ../../node_modules/.bin/webpack-dev-server",
     "test": "npm run lint",
     "update": "./tools/update.internal.sh"

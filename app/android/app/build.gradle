@@ -9,14 +9,23 @@ import com.android.build.OutputFile
  * bundle directly from the development server.
  */
 project.ext.react = [
-  entryFile: "src/index.js",
+  root: "../../../",
+  entryFile: "app/src/index.js",
   bundleInDebug: true,
   bundleInRelease: true,
-  inputExcludes: ["android/**", "ios/**", "node_modules/**"],
-  extraPackagerArgs: ["--transformer", file("../../../react-native-transformer"), "--verbose"]
+  inputExcludes: [
+    "**/node_modules/**",
+    "bsp-gonk/**",
+    "device/**",
+    "pub/bsp-gonk/**",
+    "sim/**",
+    "tools/heroku/**",
+    "webapp/**",
+  ],
+  extraPackagerArgs: ["--verbose"]
 ]
 
-apply from: "../../node_modules/react-native/react.gradle"
+apply from: "../../../node_modules/react-native/react.gradle"
 apply from: "mse.gradle"
 
 /**

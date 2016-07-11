@@ -30,6 +30,11 @@ const aliases = {
   vm: 'vm-browserify',
   zlib: 'browserify-zlib',
 
+  // The 'ws' library imports these native-backed libs, but we don't
+  // really need them.
+  'bufferutil': 'node-libs-browser/mock/empty',
+  'utf-8-validate': 'node-libs-browser/mock/empty',
+
   // We don't need node-fetch in the app because React Native provides
   // a fetch implementation. However, the packager sees the require(,
   // so avoid trying to include node-fetch in the app bundle.

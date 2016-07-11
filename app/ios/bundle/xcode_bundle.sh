@@ -19,9 +19,8 @@ esac
 
 source $(dirname $0)/../../../pub/tools/gnu.sh
 THIS_DIR=$(realpath $(dirname $0))
-APP_DIR=$(realpath $(dirname $0)/../..)
 ROOT_DIR=$(realpath $(dirname $0)/../../..)
-REACT_NATIVE_DIR="$APP_DIR/node_modules/react-native"
+REACT_NATIVE_DIR="$ROOT_DIR/node_modules/react-native"
 
 # Xcode project file for React Native apps is located in ios/ subfolder
 cd ..
@@ -40,11 +39,10 @@ elif [[ "$bundle_type" != "bundle" ]]; then
 fi
 
 $NODE_BINARY "$REACT_NATIVE_DIR/local-cli/cli.js" bundle \
-  --entry-file src/index.js \
+  --entry-file app/src/index.js \
   --platform ios \
   --dev $DEV \
   --reset-cache true \
   --bundle-output "$DEST_FILE" \
   --assets-dest "$DEST" \
-  --transformer "$ROOT_DIR/react-native-transformer" \
   --verbose

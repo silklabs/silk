@@ -136,7 +136,9 @@ class Dialog {
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
       this._kws = new KeywordSpotting(this._vad, (kwsTestMode ? true : false));
-      this._kws.start();
+      if (this._dialogEngine.uiMode !== 'mute') {
+        this._kws.start();
+      }
 
       if (!kwsTestMode) {
         this._kws.on('keyword', () => {
@@ -206,7 +208,9 @@ class Dialog {
       if (this._kwsEnabled) {
         this._kws.stop();
       }
-      this._onSpeechStart();
+      if (this._dialogEngine.uiMode !== 'mute') {
+        this._onSpeechStart();
+      }
     } else {
       if (!this._kwsEnabled) {
         this._onSpeechStop();
@@ -424,7 +428,9 @@ class Dialog {
   _onDialogDone() {
     this._emitEvent('finished_processing_speech');
     if (this._kwsEnabled) {
-      this._kws.start();
+      if (this._dialogEngine.uiMode !== 'mute') {
+        this._kws.start();
+      }
     }
   }
 

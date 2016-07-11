@@ -152,6 +152,7 @@ class PandoHubUi {
     .then(dialogEngine => {
       this.dialogEngine = dialogEngine;
       this.dialogEngine.on('ui-mode', this.onDialogUiMode);
+      volume.mute = this.dialogEngine.uiMode === 'mute';
       this.render();
     });
   }
@@ -205,7 +206,15 @@ class PandoHubUi {
       this.startAlert('volumeChanged');
       break;
     case 'mute':
-      volume.mute = !volume.mute;
+      if (this.dialogEngine) {
+        if (this.dialogEngine.uiMode === 'mute') {
+          this.dialogEngine.uiMode = 'normal';
+          volume.mute = false;
+        } else {
+          this.dialogEngine.uiMode = 'mute';
+          volume.mute = true;
+        }
+      }
       break;
     case 'brightnessdown':
       this.brightness = Math.max(0, this.brightness - 32);

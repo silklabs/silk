@@ -35,7 +35,6 @@ export function* setUiMode(
   environment: Environment,
   entities: Array<string>
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
-  const {speak, dialogEngine} = environment;
 
   invariant(entities.length === 1);
   switch (entities[0]) {

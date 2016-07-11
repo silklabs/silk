@@ -304,7 +304,7 @@ export function genDialogEngine(): Promise<DialogEngine> {
   }
 
   return new Promise(resolve => {
-    resolveDialogEnginePromise = resolve
+    resolveDialogEnginePromise = resolve;
   });
 }
 

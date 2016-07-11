@@ -98,12 +98,16 @@ class PandoHubUi {
   uiState: UiState;
   brightness: number; // 0 .. 1
   nightlightRGB: RGB;
+  ledsPresent: bool;
 
   constructor(env: Env) {
     this.uiState = 'bootanimation';
     this.brightness = Math.max(0, Math.min(255, sysutil.getintprop('persist.pandohubui.brightness', 50))) / 255;
-
     this.nightlightRGB = {r: 0, b: 255, g: 200};
+    this.ledsPresent = false;
+    fs.access('/sys/bus/i2c/drivers/lp5523x', err => {
+      this.ledsPresent = !err;
+    });
 
     this.input = new Input();
     this.input.on('down', this.onKeyPress);
@@ -202,6 +206,9 @@ class PandoHubUi {
   }
 
   writeLED(ledId: string, brightness: number) {
+    if (!this.ledsPresent) {
+      return;
+    }
     const filepath = path.join('/sys/bus/i2c/drivers/lp5523x', ledId, 'brightness');
     log.verbose('Writing to', filepath, 'with', brightness.toString());
     try {

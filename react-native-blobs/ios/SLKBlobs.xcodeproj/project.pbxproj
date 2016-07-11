@@ -220,8 +220,8 @@
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/../../../app/node_modules/react-native/React/**",
-					"$(SRCROOT)/../../../app/node_modules/react-native/Libraries/WebSocket",
+					"$(SRCROOT)/../../../node_modules/react-native/React/**",
+					"$(SRCROOT)/../../../node_modules/react-native/Libraries/WebSocket",
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRCROOT)/../../react-native/Libraries/WebSocket",
 				);
@@ -236,8 +236,8 @@
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/../../../app/node_modules/react-native/React/**",
-					"$(SRCROOT)/../../../app/node_modules/react-native/Libraries/WebSocket",
+					"$(SRCROOT)/../../../node_modules/react-native/React/**",
+					"$(SRCROOT)/../../../node_modules/react-native/Libraries/WebSocket",
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRCROOT)/../../react-native/Libraries/WebSocket",
 				);

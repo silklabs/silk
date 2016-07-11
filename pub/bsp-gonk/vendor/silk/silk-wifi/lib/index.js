@@ -545,7 +545,6 @@ export class Wifi extends EventEmitter {
     await this._startWpaMonitor();
     await wpaCli('scan');
     await wpaCli('status');
-    await wpaCliExpectOk('log_level', 'excessive');
     log.info('WiFi initialization complete');
   }
 

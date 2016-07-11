@@ -146,7 +146,7 @@ class PandoHubUi {
     env.timeline.on('speaking_network_error', this.onDialogNetworkError);
     env.timeline.on('finished_processing_speech', this.onDialogFinished);
 
-    volume.on('changed', this.onVolumeChanged);
+    volume.on('level', this.onVolumeLevel);
 
     genDialogEngine()
     .then(dialogEngine => {
@@ -188,7 +188,7 @@ class PandoHubUi {
     this.render();
   };
 
-  onVolumeChanged: (() => void) = () => {
+  onVolumeLevel: (() => void) = () => {
     this.startAlert('volumeChanged');
     this.render();
   }
@@ -199,11 +199,9 @@ class PandoHubUi {
     switch (event.keyId) {
     case 'volumedown':
       volume.level = Math.max(0, volume.level - 10);
-      this.startAlert('volumeChanged');
       break;
     case 'volumeup':
       volume.level = Math.min(100, volume.level + 10);
-      this.startAlert('volumeChanged');
       break;
     case 'mute':
       if (this.dialogEngine) {
@@ -219,16 +217,16 @@ class PandoHubUi {
     case 'brightnessdown':
       this.brightness = Math.max(0, this.brightness - 32);
       sysutil.setprop('persist.pandohubui.brightness', this.brightness);
+      this.render();
       break;
     case 'brightnessup':
       this.brightness = Math.min(255, this.brightness + 32);
       sysutil.setprop('persist.pandohubui.brightness', this.brightness);
+      this.render();
       break;
     default:
-      log.verbose('Unhandled key', event.keyId);
       break;
     }
-    this.render();
   };
 
   startAlert(alert: Alert) {
@@ -462,7 +460,7 @@ class PandoHubUi {
       this.dialogEngine.removeListener('ui-mode', this.onDialogUiMode);
     }
     this.input.removeListener('down', this.onKeyPress);
-    volume.removeListener('changed', this.onVolumeChanged);
+    volume.removeListener('level', this.onVolumeLevel);
   }
 }
 

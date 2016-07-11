@@ -270,7 +270,7 @@ export default function*(
         break;
       case `setUiMode`:
         sagaFunction = setUiMode;
-        args.push(dialogEngine, entities);
+        args.push(entities);
         break;
       default:
         throw new Error(`All intents in concurrentIntents must be handled!`);

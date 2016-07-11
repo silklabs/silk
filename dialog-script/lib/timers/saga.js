@@ -82,7 +82,7 @@ export function* timerMonitorSaga(
   try {
     log.debug(`Starting timer monitor task`);
 
-    const {speak} = environment;
+    const {dialogEngine, speak} = environment;
     invariant(speak);
 
     let now = Date.now();
@@ -182,7 +182,9 @@ export function* timerMonitorSaga(
       yield put(expireTimer(timer.id));
 
       // Alert the user.
-      yield call(speak, `Timer ${timer.id} has expired`);
+      if (dialogEngine.uiMode === 'normal') {
+        yield call(speak, `Timer ${timer.id} has expired`);
+     }
     }
   } finally {
     log.debug(`Timer monitor task exiting`);

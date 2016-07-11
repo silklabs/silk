@@ -16,7 +16,7 @@ export function* requestFactoryReset(
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
   const {micChannel, speak} = environment;
 
-  yield call(speak, `Are you sure you want to factory reset this device?`, false);
+  yield call(speak, `Are you sure you want to factory reset this device?`, 'waiting');
 
   let event = yield take(micChannel);
   invariant(event);
@@ -33,10 +33,9 @@ export function* requestFactoryReset(
 
 export function* setUiMode(
   environment: Environment,
-  dialogEngine: DialogEngine,
   entities: Array<string>
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
-  const {speak} = environment;
+  const {speak, dialogEngine} = environment;
 
   invariant(entities.length === 1);
   switch (entities[0]) {
@@ -65,5 +64,5 @@ export function* setVolume(
     volume.level = Math.max(volume.level - 10, 0);
   }
 
-  yield call(speak, `Volume set to ${volume.level} percent`, true);
+  yield call(speak, `Volume set to ${volume.level} percent`, 'idle');
 }

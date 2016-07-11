@@ -151,8 +151,8 @@ class PandoHubUi {
     genDialogEngine()
     .then(dialogEngine => {
       this.dialogEngine = dialogEngine;
-      this.dialogEngine.on('ui-mode', this.onDialogUiMode);
-      volume.mute = this.dialogEngine.uiMode === 'mute';
+      dialogEngine.on('ui-mode', this.onDialogUiMode);
+      volume.mute = dialogEngine.uiMode === 'mute';
       this.render();
     });
   }
@@ -265,14 +265,13 @@ class PandoHubUi {
   }
 
   render(): void {
-    if (!this.dialogEngine) {
-      return;
-    }
 
     log.info('deviceUiState:', this.deviceUiState);
     log.info('connectingSubstate:', this.connectingSubstate);
     log.info('dialogState:', this.dialogState);
-    log.info('dialogUiMode:', this.dialogEngine.uiMode);
+    if (this.dialogEngine) {
+      log.info('dialogUiMode:', this.dialogEngine.uiMode);
+    }
     log.info('alert:', this.alertTimer !== null);
     log.info('volume:', volume.level);
     log.info('volume mute:', volume.mute);

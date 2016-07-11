@@ -49,7 +49,7 @@ export default function*(
        * |call| will simply call the function specified (though in a manner that
        * is easy to test).
        */
-      yield call(speak, intro + query, false);
+      yield call(speak, intro + query, `waiting`);
 
       /**
        * |take| will let us sleep until the user has responded (and an event
@@ -88,6 +88,6 @@ export default function*(
   default:
     yield call(speak,
                `Sorry, I'm having trouble. Please try again later.`,
-               true);
+               `idle`);
   }
 }

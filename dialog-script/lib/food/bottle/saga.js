@@ -27,7 +27,7 @@ function* queryBottleType(
     const intro = retryCount ? `Sorry, I didn't get that. ` : `Ok, `;
     const query = `Are you using breast milk or formula?`;
 
-    yield call(speak, intro + query, false);
+    yield call(speak, intro + query, `waiting`);
 
     const event = yield take(micChannel);
     invariant(event);
@@ -55,7 +55,7 @@ function* queryBottleType(
   if (!type) {
     yield call(speak,
                `Sorry, I'm having trouble. Please try again later.`,
-               true);
+               `idle`);
   }
 
   return type;
@@ -73,7 +73,7 @@ function* queryAmount(
     const intro = retryCount ? `Sorry, I didn't get that. ` : ``;
     const query = `How many milliliters?`;
 
-    yield call(speak, intro + query, false);
+    yield call(speak, intro + query, `waiting`);
 
     const event = yield take(micChannel);
     invariant(event);
@@ -99,7 +99,7 @@ function* queryAmount(
   if (!amount) {
     yield call(speak,
                `Sorry, I'm having trouble. Please try again later.`,
-               true);
+               `idle`);
   }
 
   return amount;
@@ -128,5 +128,5 @@ export default function*(
 
   yield put(bottleType(type));
   yield put(bottleAmount(amount));
-  yield call(speak, `Ok, I'll record that.`, true);
+  yield call(speak, `Ok, I'll record that.`, `idle`);
 }

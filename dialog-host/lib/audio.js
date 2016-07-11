@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
@@ -149,7 +149,7 @@ export default class Audio extends EventEmitter {
     this._waitForWake();
   }
 
-  speak(stream: Readable, finished: boolean): void {
+  speak(stream: Readable, nextState: DialogState): void {
     invariant(stream);
 
     const speaker = new Speaker(SPEAKER_PARAMS);
@@ -169,10 +169,10 @@ export default class Audio extends EventEmitter {
 
       speaker.end();
 
-      if (finished) {
-        this._waitForWake();
-      } else {
+      if (nextState === 'waiting') {
         this._onWake();
+      } else if (nextState === 'idle') {
+        this._waitForWake();
       }
     };
 

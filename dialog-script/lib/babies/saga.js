@@ -34,7 +34,7 @@ export function* queryBabyName(
   for (let retryCount = 0; retryCount <= 2; retryCount++) {
     const intro = retryCount ? `Sorry, I'll try again. ` : ``;
 
-    yield call(speak, intro + query, false);
+    yield call(speak, intro + query, `waiting`);
 
     let event = yield take(micChannel);
     invariant(event);
@@ -44,7 +44,7 @@ export function* queryBabyName(
       continue;
     }
 
-    yield call(speak, `I heard ${text}. Is that correct?`, false);
+    yield call(speak, `I heard ${text}. Is that correct?`, `waiting`);
 
     event = yield take(micChannel);
     invariant(event);
@@ -58,7 +58,7 @@ export function* queryBabyName(
   if (!name) {
     yield call(speak,
                `Sorry I'm having trouble. Please try again later.`,
-               true);
+               `idle`);
   }
 
   return name;
@@ -81,7 +81,7 @@ export function* add(
   // |put| will actually update the data store.
   yield put(addBaby(id, name));
 
-  yield call(speak, `Ok, ${name} is now registered`, true);
+  yield call(speak, `Ok, ${name} is now registered`, `idle`);
 }
 
 /**
@@ -102,7 +102,7 @@ export function* rename(
 
   // Now we can change our actions based on this information.
   if (!babies.length) {
-    yield call(speak, `You haven't registered any babies yet.`, true);
+    yield call(speak, `You haven't registered any babies yet.`, `idle`);
     return;
   }
 
@@ -117,7 +117,7 @@ export function* rename(
       if (retryCount) {
         yield call(speak,
                    `Sorry, I don't have any baby registered with that name.`,
-                   true);
+                   `idle`);
       }
 
       const oldName = yield call(queryBabyName,
@@ -142,7 +142,7 @@ export function* rename(
     if (!id) {
       yield call(speak,
                  `Sorry I'm having trouble. Please try again later.`,
-                 true);
+                 `idle`);
       return;
     }
 
@@ -155,7 +155,7 @@ export function* rename(
 
   // Update the data store by using |put|.
   yield put(renameBaby(id, name));
-  yield call(speak, `Ok, I've changed the baby's name to ${name}.`, true);
+  yield call(speak, `Ok, I've changed the baby's name to ${name}.`, `idle`);
 }
 
 /**

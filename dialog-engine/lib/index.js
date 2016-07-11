@@ -39,6 +39,15 @@ export type DialogScriptOptions = {
   speechOptions?: SpeechOptions,
 };
 
+/**
+ * 'waiting'  : In this state the dialog engine listens to the mic input to get
+ *              feedback from the user.
+ * 'idle'     : In this state the dialog engine considers the dialog to be done
+ *              and requires the keyword to start a new dialog.
+ * @private
+ */
+export type DialogState = 'waiting' | 'idle';
+
 const log = createLog('dialog-engine');
 
 /**
@@ -83,7 +92,7 @@ export class DialogEngine extends EventEmitter {
   /**
    * This event is emitted once the text result has been run though intent analysis.
    *
-   * @event indent
+   * @event intent
    * @param intent Intent that was inferred from the text.
    * @param entities A list of entities that were inferred from the text.
    * @memberof silk-dialog-engine.DialogEngine
@@ -129,11 +138,11 @@ export class DialogEngine extends EventEmitter {
     return tti.getIntent(text);
   }
 
-  speak(text: string, finished: boolean): void {
+  speak(text: string, nextState: ?DialogState): void {
     invariant(text);
     log.debug(`Starting to speak`, text);
 
-    process.nextTick(() => this.emit(`speak-begin`, text, finished));
+    process.nextTick(() => this.emit(`speak-begin`, text, nextState));
 
     // Local TTS engine is being used so don't use the cloud based tts stream
     if (this._options && this._options.localTts) {
@@ -160,7 +169,7 @@ export class DialogEngine extends EventEmitter {
       this.emit(`speak-end`, text, ttsError);
     });
 
-    process.nextTick(() => this.emit(`speech`, stream, finished));
+    process.nextTick(() => this.emit(`speech`, stream, nextState));
     process.nextTick(() => tts.startRequest(text));
   }
 

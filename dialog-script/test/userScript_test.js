@@ -49,7 +49,7 @@ suite(`userScript`, () => {
       {
         speak: `Hello`,
         hear: unknownText,
-        finished: true,
+        nextState: `idle`,
       },
     ]);
   });
@@ -59,11 +59,11 @@ suite(`userScript`, () => {
       {
         speak: `Hello`,
         hear: unknownText,
-        finished: true,
+        nextState: `idle`,
       }, {
         speak: `What's going on?`,
         hear: unknownText,
-        finished: true,
+        nextState: `idle`,
       },
     ]);
   });
@@ -74,15 +74,15 @@ suite(`userScript`, () => {
       {
         speak: `Register my baby`,
         hear: `What is the baby's name?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: name,
         hear: `I heard ${name}. Is that correct?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: `Yes`,
         hear: `Ok, ${name} is now registered`,
-        finished: true,
+        nextState: `idle`,
       },
     ]);
   });
@@ -93,23 +93,23 @@ suite(`userScript`, () => {
       {
         speak: `Register my baby`,
         hear: `What is the baby's name?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: name,
         hear: `I heard ${name}. Is that correct?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: `No`,
         hear: `Sorry, I'll try again. What is the baby's name?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: name,
         hear: `I heard ${name}. Is that correct?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: `Yes`,
         hear: `Ok, ${name} is now registered`,
-        finished: true,
+        nextState: `idle`,
       },
     ]);
   });

@@ -40,7 +40,7 @@ function* queryAlert(
     const query =
       `Would you like me to tell you when it's time to switch sides?`;
 
-    yield call(speak, intro + query, false);
+    yield call(speak, intro + query, `waiting`);
 
     const event = yield take(micChannel);
     invariant(event);
@@ -101,8 +101,7 @@ function* nursing(
   // If the user requested an alert then we should issue one now.
   if (alert) {
     yield speak(`${timePerSideSec} seconds have passed. It's now time to ` +
-                `switch to the other side.`,
-                true);
+                `switch to the other side.`);
   }
 
   while (timeRemainingSec) {
@@ -115,10 +114,10 @@ function* nursing(
   if (alert) {
     yield call(speak,
                `${timePerSideSec} seconds have passed. You're all finished.`,
-               true);
+               `idle`);
   } else {
     // TODO Actually send some data to the network.
-    yield call(speak, `Nursing entry recorded.`, true);
+    yield call(speak, `Nursing entry recorded.`, `idle`);
   }
 
   return true;
@@ -174,20 +173,19 @@ export default function*(
 
   yield call(speak,
              `Based on your previous session, you should start nursing on ` +
-             `the ${state.side} side.`,
-             false);
+             `the ${state.side} side.`);
 
   const alert = yield call(queryAlert, environment);
   if (alert) {
     yield call(speak,
                `OK, setting the alert for ${state.timePerSideSec} seconds.`,
-               true);
+               `idle`);
   } else if (alert === null) {
     yield call(speak,
                `Sorry, I'm not understanding. I won't set a timer.`,
-               true);
+               `idle`);
   } else {
-    yield call(speak, `OK, I won't remind you when to switch sides.`, true);
+    yield call(speak, `OK, I won't remind you when to switch sides.`, `idle`);
   }
 
   /**

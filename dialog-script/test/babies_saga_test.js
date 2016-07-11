@@ -77,14 +77,14 @@ suite(`babies/saga`, () => {
       const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
-          expect: call(environment.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
@@ -99,21 +99,21 @@ suite(`babies/saga`, () => {
       const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
-          expect: call(environment.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
@@ -128,28 +128,28 @@ suite(`babies/saga`, () => {
       const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
-          expect: call(environment.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
@@ -164,35 +164,35 @@ suite(`babies/saga`, () => {
       const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
-          expect: call(environment.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: rejectEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
@@ -207,42 +207,42 @@ suite(`babies/saga`, () => {
       const event = makeMicEvent(`jill`);
       testScript(sagaGenerator, [
         {
-          expect: call(environment.speak, `What is the baby's name?`, false),
+          expect: call(environment.speak, `What is the baby's name?`, `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: rejectEvent,
           expect: call(environment.speak,
                        `Sorry, I'll try again. What is the baby's name?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: event,
           expect: call(environment.speak,
                        `I heard ${event.text}. Is that correct?`,
-                       false),
+                       `waiting`),
         }, {
           expect: take(environment.micChannel),
         }, {
           provide: noTextEvent,
           expect: call(environment.speak,
                        `Sorry I'm having trouble. Please try again later.`,
-                       true),
+                       `idle`),
         }, {
           expect: ``,
           done: true,
@@ -287,7 +287,7 @@ suite(`babies/saga`, () => {
         }, {
           expect: call(environment.speak,
                        `Ok, ${name} is now registered`,
-                       true),
+                       `idle`),
         }, {
           done: true,
         },
@@ -313,7 +313,7 @@ suite(`babies/saga`, () => {
           provide: [],
           expect: call(environment.speak,
                        `You haven't registered any babies yet.`,
-                       true),
+                       `idle`),
         }, {
           done: true,
         },
@@ -336,7 +336,7 @@ suite(`babies/saga`, () => {
         }, {
           expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
-                       true),
+                       `idle`),
         }, {
           done: true,
         },
@@ -380,7 +380,7 @@ suite(`babies/saga`, () => {
         }, {
           expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
-                       true),
+                       `idle`),
         }, {
           done: true,
         },
@@ -424,7 +424,7 @@ suite(`babies/saga`, () => {
           provide: `piper`,
           expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
-                       true),
+                       `idle`),
         }, {
           expect: call(queryBabyName,
                        environment,
@@ -438,7 +438,7 @@ suite(`babies/saga`, () => {
         }, {
           expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
-                       true),
+                       `idle`),
         }, {
           done: true,
         },
@@ -461,7 +461,7 @@ suite(`babies/saga`, () => {
           provide: `piper`,
           expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
-                       true),
+                       `idle`),
         }, {
           expect: call(queryBabyName,
                        environment,
@@ -470,7 +470,7 @@ suite(`babies/saga`, () => {
           provide: `piper`,
           expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
-                       true),
+                       `idle`),
         }, {
           expect: call(queryBabyName,
                        environment,
@@ -484,7 +484,7 @@ suite(`babies/saga`, () => {
         }, {
           expect: call(environment.speak,
                        `Ok, I've changed the baby's name to ${newName}.`,
-                       true),
+                       `idle`),
         }, {
           done: true,
         },
@@ -506,7 +506,7 @@ suite(`babies/saga`, () => {
           provide: `piper`,
           expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
-                       true),
+                       `idle`),
         }, {
           expect: call(queryBabyName,
                        environment,
@@ -515,7 +515,7 @@ suite(`babies/saga`, () => {
           provide: `piper`,
           expect: call(environment.speak,
                        `Sorry, I don't have any baby registered with that name.`,
-                       true),
+                       `idle`),
         }, {
           expect: call(queryBabyName,
                        environment,
@@ -524,7 +524,7 @@ suite(`babies/saga`, () => {
           provide: `piper`,
           expect: call(environment.speak,
                        `Sorry I'm having trouble. Please try again later.`,
-                       true),
+                       `idle`),
         }, {
           done: true,
         },

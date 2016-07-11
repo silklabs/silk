@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
@@ -18,7 +18,7 @@ import invariant from 'assert';
 import Audio from './audio';
 import {createDialogEngine} from 'silk-dialog-engine';
 
-import type {DialogEngineOptions} from 'silk-dialog-engine';
+import type {DialogEngineOptions, DialogState} from 'silk-dialog-engine';
 
 const log = createLog('dialog-demo');
 
@@ -38,5 +38,5 @@ const audio = new Audio();
 audio.addListener(`speech`, (stream) => dialogEngine.interpret(stream));
 dialogEngine.addListener(
   `speech`,
-  (stream, finished) => audio.speak(stream, finished)
+  (stream: Buffer, nextState: DialogState) => audio.speak(stream, nextState)
 );

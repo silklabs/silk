@@ -80,6 +80,7 @@ const externals = [
   'silk-dialog-engine',
   'silk-dialog-script',
   'silk-dialog-storage',
+  'silk-factory-reset',
   'silk-gc1',
   'silk-input',
   'silk-kws',

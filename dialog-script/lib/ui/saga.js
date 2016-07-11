@@ -28,6 +28,7 @@ export function* requestFactoryReset(
 
   if (event.intent === `confirm`) {
     factoryReset.start();
+    yield call(speak, '', 'idle');
   }
 }
 
@@ -35,6 +36,7 @@ export function* setUiMode(
   environment: Environment,
   entities: Array<string>
 ): Generator<Object, void, any> {                // eslint-disable-line no-undef
+  const {dialogEngine, speak} = environment;
 
   invariant(entities.length === 1);
   switch (entities[0]) {
@@ -46,6 +48,7 @@ export function* setUiMode(
   default:
     invariant(false, `Invalid mode: ${entities[0]}`);
   }
+  yield call(speak, '', 'idle');
 }
 
 export function* setVolume(
@@ -56,7 +59,6 @@ export function* setVolume(
 
   invariant(entities.length === 1);
   log.error('SETVOL', entities[0]);
-  let level = volume.level;
   if (entities[0] === 'up') {
     volume.level = Math.min(volume.level + 10, 100);
   } else {

@@ -164,7 +164,13 @@ export class DialogEngine extends EventEmitter {
   }
 
   speak(text: string, nextState: ?DialogState): void {
-    invariant(text);
+    // Currently speaking empty text is used to abort a dialog.  For now convert
+    // this into speaking the space character.
+    // TODO: Instead just go directly to the idle state
+    if (!text) {
+      text = ' ';
+    }
+
     log.debug(`Starting to speak`, text);
 
     process.nextTick(() => this.emit(`speak-begin`, text, nextState));

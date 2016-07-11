@@ -181,10 +181,10 @@ export function* timerMonitorSaga(
       // Take this timer out of the list via |put|.
       yield put(expireTimer(timer.id));
 
-      // Alert the user.
       if (dialogEngine.uiMode === 'normal') {
+        // Alert the user.
         yield call(speak, `Timer ${timer.id} has expired`);
-     }
+      }
     }
   } finally {
     log.debug(`Timer monitor task exiting`);

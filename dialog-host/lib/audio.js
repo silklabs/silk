@@ -32,10 +32,10 @@ type Mic = EventEmitter & {
 const log = createLog(`dialog-audio`);
 
 const SPEAKER_PARAMS = {
-  channels: config.numChannels,
-  bitDepth: config.bytesPerSample * 8,
-  signed: config.encoding === `signed-integer`,
-  sampleRate: config.sampleRate,
+  bytesPerSample: 16,
+  signed: true,
+  channels: 1,
+  sampleRate: 16000,
 };
 
 export default class Audio extends EventEmitter {

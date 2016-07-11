@@ -40,13 +40,14 @@ class Volume extends EventEmitter {
     util.setprop('persist.silk.volume.level', newlevel);
 
     /**
-     * Emitted when volume level or mute changes
+     * Emitted when the volume level changes
      *
-     * @event changed
+     * @event level
+     * @param {number} New volume level
      * @memberof silk-volume
      * @instance
      */
-    this._throwyEmit('changed');
+    this._throwyEmit('level', newlevel);
   }
 
   /**
@@ -67,7 +68,15 @@ class Volume extends EventEmitter {
    */
   set mute(newmute: boolean): void {
     util.setprop('persist.silk.volume.mute', newmute);
-    this._throwyEmit('changed');
+    /**
+     * Emitted when the volume mute changes
+     *
+     * @event mute
+     * @param {bool} Mute enabled or disabled
+     * @memberof silk-volume
+     * @instance
+     */
+    this._throwyEmit('mute', newmute);
   }
 
   /**

@@ -176,6 +176,8 @@ export class DialogEngine extends EventEmitter {
   /**
    * This function is to be called by an external tts engine when it is done
    * speaking the provided text
+   *
+   * @private
    */
   endSpeak(text: string, error: ?Error) {
     this.emit(`speak-end`, text, error);

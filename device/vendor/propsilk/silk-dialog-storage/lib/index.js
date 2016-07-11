@@ -81,7 +81,7 @@ export class DialogStorage {
   set(data: any): Promise<void> {
     log.debug(`set`, data);
 
-    /**
+    /*
      * Encode the data right away to avoid having to worry about mutations
      * while we're waiting for our turn in the chain.
      */
@@ -97,7 +97,7 @@ export class DialogStorage {
 
     const promise = this._promise.then(func);
 
-    /**
+    /*
      * Log errors here without interfering with the promise we hand the caller.
      * Also attach a dummy promise on the end to make sure we don't hold the
      * result around forever.
@@ -157,7 +157,7 @@ export class DialogStorage {
 
 /**
  * Global DialogStorage object
- * @memberof silk-device-storage
+ * @memberof silk-dialog-storage
  */
 const storage = new DialogStorage();
 export default storage;

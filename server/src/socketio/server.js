@@ -11,7 +11,7 @@ import createLog from 'silk-log';
 import deviceRoutes from './routes/device';
 import accountRoutes from './routes/account';
 import createDb from '../server/db';
-import sha256 from '../server/sha256';
+import sha256 from 'silk-utils/sha256';
 import authorizeDevice from '../server/authorize_device';
 import authorizeAccount from '../server/authorize_account';
 import runMiddleware from '../run_middleware';

@@ -13,6 +13,7 @@ suite('connect test', () => {
       clients: {
         timeoutMs: 3 * 1000
       },
+
       residents: {
         checkIntervalMs: 100,
         pingIntervalMs: 50,
@@ -136,5 +137,35 @@ suite('connect test', () => {
     await eventToPromise(accountWs, 'open');
 
     await eventToPromise(accountWs, 'close');
+  });
+
+  test('terminate resident for missing pongs', async function () {
+    this.timeout('10s');
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+    const deviceUrl =
+      await device.api.genSignSignalingUrl('device', servers[0].host);
+    let deviceWs = new WebSocket(deviceUrl);
+    let pongAttempts = 0;
+    // We override the ws implementation of pong so the server never
+    // sees the pong ....
+    const originalPong = deviceWs.pong;
+    deviceWs.pong = (...args) => {
+      if (++pongAttempts < 2) {
+        // Send a few pongs to simulate a client which dies ...
+        originalPong.call(deviceWs, ...args);
+      }
+    };
+    await eventToPromise(deviceWs, 'close');
+    assert(pongAttempts > 0);
+  });
+
+  test('server entity delete', async () => {
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+    await context.signaling.close();
+
+    servers = await serversTable.query();
+    assert.equal(servers.length, 0);
   });
 });

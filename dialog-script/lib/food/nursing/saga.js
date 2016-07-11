@@ -202,5 +202,6 @@ export default function*(
   if (winner.cancel) {
     log.warn(`Canceled`);
     yield put(updateTimeRemaining(0));
+    yield call(speak, `Nursing session canceled.`, `idle`);
   }
 }

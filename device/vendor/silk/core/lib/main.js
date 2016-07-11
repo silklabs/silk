@@ -293,9 +293,6 @@ function main() {
     .then(() => {
       if (DEV_NO_SERVER_CONNECT) {
         onConfigured();
-      } else {
-        assert(api.accessToken, 'must have access token');
-        connections.start();
       }
       const bootTimeS = util.uptime(bootStartMs) / 1000;
       log.info(`boot complete in ${bootTimeS} seconds`);
@@ -448,6 +445,8 @@ async function onConfigured() {
     ui.goto('online');
   } else {
     log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
+    assert(api.accessToken, 'must have access token');
+    connections.start();
     server.connect();
   }
 

@@ -29,7 +29,12 @@ import type {
   DialogState,
   DialogUiModeEventCallback,
 } from 'silk-dialog-engine';
-import type { Env, Camera, Timeline } from 'silk-exttest';
+import type {
+  Env,
+  Camera,
+  Timeline,
+  Ui,
+} from 'silk-exttest';
 import { Duplex } from 'stream';
 
 type MicData = {
@@ -63,6 +68,7 @@ const KWS_TEST_MODE_PROP = 'persist.silk.kws.testmode';
 const log = createLog('silkext-dialog');
 let camera: Camera;
 let timeline: Timeline;
+let ui: Ui;
 let modLocation: string;
 
 /**
@@ -92,6 +98,7 @@ class Dialog {
   constructor(env: Env) {
     camera = env.camera;
     timeline = env.timeline;
+    ui = env.ui;
     this._monitor(true);
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, true);
     this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, false);
@@ -136,9 +143,7 @@ class Dialog {
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
       this._kws = new KeywordSpotting(this._vad, (kwsTestMode ? true : false));
-      if (this._dialogEngine.uiMode !== 'mute') {
-        this._kws.start();
-      }
+      this._kws.start();
 
       if (!kwsTestMode) {
         this._kws.on('keyword', () => {
@@ -208,9 +213,7 @@ class Dialog {
       if (this._kwsEnabled) {
         this._kws.stop();
       }
-      if (this._dialogEngine.uiMode !== 'mute') {
-        this._onSpeechStart();
-      }
+      this._onSpeechStart();
     } else {
       if (!this._kwsEnabled) {
         this._onSpeechStop();
@@ -373,6 +376,18 @@ class Dialog {
    */
   _onSpeechStart() {
     log.info(`onSpeechStart`);
+    if (this._dialogEngine.uiMode === 'mute') {
+      log.verbose('UI muted');
+      return;
+    }
+    switch (ui.getState()) {
+    case 'connecting':
+    case 'online':
+      break;
+    default:
+      log.verbose('Skipping due to UI state', ui.getState());
+      return;
+    }
 
     // Check if network is available
     if (!netstatus.online) {
@@ -428,9 +443,7 @@ class Dialog {
   _onDialogDone() {
     this._emitEvent('finished_processing_speech');
     if (this._kwsEnabled) {
-      if (this._dialogEngine.uiMode !== 'mute') {
-        this._kws.start();
-      }
+      this._kws.start();
     }
   }
 

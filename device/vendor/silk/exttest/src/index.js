@@ -42,6 +42,7 @@ export type { Camera };
 export type { Say };
 export type { Sensors };
 export type { Timeline };
+export type { Ui };
 export type { UiState };
 
 /**

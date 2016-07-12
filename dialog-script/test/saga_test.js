@@ -38,6 +38,7 @@ suite(`saga`, () => {
     assert(sagaGenerator);
 
     environment = {
+      dialogEngine,
       micChannel: channel(),
       speak: () => {},
     };

@@ -13,17 +13,26 @@ import Input from 'silk-input';
 import lights from 'silk-lights';
 import {Movie} from 'silk-movie';
 import Vibrator from 'silk-vibrator';
+import factoryReset from 'silk-factory-reset';
 
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 
 const log = createLog('ui');
-const FACTORY_RESET_DISABLED = util.getboolprop('persist.silk.ui.reset.disabled');
-const NOTIF_LIGHT_ENABLED = util.getboolprop('ro.silk.notif_light.enabled', false);
-const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
 
-export type UiState = 'bootanimation' | 'unconfigured' | 'configuring' |
-                      'connecting' | 'online' | 'charging' | 'powerdown';
+const RESET_KEY_ENABLED = util.getboolprop('ro.silk.ui.key.reset', true);
+const POWER_KEY_ENABLED = util.getboolprop('ro.silk.ui.key.power', true);
+const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
+const LIGHT_ENABLED = util.getboolprop('ro.silk.ui.light', false);
+
+export type UiState = 'bootanimation' |
+                      'unconfigured' |
+                      'configStarted' |
+                      'configRegistering' |
+                      'connecting' |
+                      'online' |
+                      'charging' |
+                      'powerdown';
 
 export class Ui extends events.EventEmitter {
 
@@ -83,26 +92,25 @@ export class Ui extends events.EventEmitter {
         volumeKeysPressed++;
         log.info(`down - volumeKeysPressed: ${volumeKeysPressed}`);
         if (volumeKeysPressed === 2) {
-          this.emit('key:setup');
-          if (FACTORY_RESET_DISABLED) {
-            log.verbose('Factory reset disabled');
-            break;
+          if (RESET_KEY_ENABLED) {
+            Promise.race([
+              util.timeout(1000),
+              new Promise((resolve, reject) => cancelVolumeKeys = reject)
+            ])
+            .then(() => factoryReset.start())
+            .catch(() => null);
           }
-          Promise.race([
-            util.timeout(1000),
-            new Promise((resolve, reject) => cancelVolumeKeys = reject)
-          ])
-          .then(() => this.emit('key:factoryreset'))
-          .catch(() => null);
         }
         break;
       case 'power':
-        Promise.race([
-          util.timeout(1000),
-          new Promise((resolve, reject) => cancelPowerDown = reject)
-        ])
-        .then(() => this.emit('key:powerdown'))
-        .catch(() => null);
+        if (POWER_KEY_ENABLED) {
+          Promise.race([
+            util.timeout(1000),
+            new Promise((resolve, reject) => cancelPowerDown = reject)
+          ])
+          .then(() => this.emit('key:powerdown'))
+          .catch(() => null);
+        }
         break;
       default:
         break;
@@ -150,7 +158,7 @@ export class Ui extends events.EventEmitter {
     log.info(`ui state: ${this.currentState}`);
     this.emit('state', this.currentState);
 
-    if (NOTIF_LIGHT_ENABLED) {
+    if (LIGHT_ENABLED) {
       let light = lights.notifications;
 
       switch (this.currentState) {
@@ -158,7 +166,8 @@ export class Ui extends events.EventEmitter {
         light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
         break;
       case 'unconfigured':
-      case 'configuring':
+      case 'configStarted':
+      case 'configRegistering':
         light.set(light.YELLOW, light.FLASH_TIMED, 500, 500);
         break;
       case 'connecting':
@@ -182,7 +191,8 @@ export class Ui extends events.EventEmitter {
     let movieName;
     switch (this.currentState) {
     case 'unconfigured':
-    case 'configuring':
+    case 'configStarted':
+    case 'configRegistering':
       movieName = 'setup';
       break;
     default:

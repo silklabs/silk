@@ -171,7 +171,7 @@ class DeviceConfig extends EventEmitter {
     assert(!this._configuringSocketSessionListener);
     assert(this._socketSessionListeners.length);
 
-    this.emit('configuring');
+    this.emit('configStarted');
 
     this._configuringSocketSessionListener = sessionListener;
 
@@ -227,13 +227,15 @@ class DeviceConfig extends EventEmitter {
   _onConfigured = async secret => {
     log.debug(`DeviceConfig._onConfigured()`);
 
+    this.emit('configRegistering');
+
     assert(this._configuringSocketSessionListener);
     assert(secret.publicKey);
     assert(secret.regToken);
 
     // Only accept the server URL from the app in development.  In production
     // the server URL is locked to avoid the potential of device
-    // hijacking (TODO: Need to clarify this requirement).
+    // hijacking
     if (!util.getboolprop('ro.debuggable')) {
       secret.serverUrl = null;
     }
@@ -314,6 +316,7 @@ class DeviceConfig extends EventEmitter {
       if (this._configuringSocketSessionListener) {
         const reason = error.message;
         this._configuringSocketSessionListener.maybeSendRestart(reason);
+        this.emit('configStarted');
       }
       return;
     }

@@ -47,6 +47,7 @@ export type SagaFunction =
   (...args: Array<any>) => Generator<Object, any, any>; // eslint-disable-line no-undef
 
 export type Environment = {
+  dialogEngine: DialogEngine;
   micChannel: Object;
   speak: (text: string, nextState?: DialogState) => Promise<void>;
 };
@@ -235,6 +236,7 @@ export default function*(
   invariant(sagaAudio);
 
   const env: Environment = {
+    dialogEngine,
     micChannel,
     speak: speak.bind(null, dialogEngine),
   };

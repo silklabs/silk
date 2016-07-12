@@ -69,18 +69,35 @@
 
 import path from 'path';
 import fs from 'fs';
-import assert from 'assert';
+import invariant from 'assert';
 
 import createLog from 'silk-log/device';
 import Input from 'silk-input';
 import * as sysutil from 'silk-sysutils';
 import volume from 'silk-volume';
 import type { Env, UiState } from 'silk-exttest';
+import { genDialogEngine } from 'silk-dialog-engine';
+import type { DialogEngine, DialogUiModeEventCallback } from 'silk-dialog-engine';
 
 const log = createLog('silkext-pandohubui');
 
+const CONNECTING_TIMEOUT__LITTLE_SLOW = 30 * 1000;           // 30 seconds
+const CONNECTING_TIMEOUT__SOMETHINGS_WRONG = 10 * 60 * 1000; // 10 minutes
+
 type InputEventCallback = (event: { keyId: string }) => void;
 type UiStateEventCallback = (state: string) => void;
+type ConnectingSubstate = 'ok' | 'littleSlow' | 'somethingsWrong';
+
+
+type Alert = 'configStarted' |
+             'volumeChanged' |
+             'dialogDone';
+
+type DialogState = 'idle' |
+                   'listening' |
+                   'processing_speech' |
+                   'speaking' |
+                   'speaking_network_error';
 
 type RGB = {
   r: number; // 0..255
@@ -95,51 +112,86 @@ function clamp(v, min, max) {
 
 class PandoHubUi {
   input: Input;
-  uiState: UiState;
-  brightness: number; // 0 .. 1
+  deviceUiState: UiState;
+  dialogEngine: ?DialogEngine;
+  dialogState: DialogState;
+  connectingSubstate: ConnectingSubstate;
+  brightness: number; // 0 .. 255
   nightlightRGB: RGB;
+  connectingTimer: ?number;
+  alertTimer: ?number;
   ledsPresent: bool;
 
   constructor(env: Env) {
-    this.uiState = 'bootanimation';
-    this.brightness = Math.max(0, Math.min(255, sysutil.getintprop('persist.pandohubui.brightness', 50))) / 255;
+    this.input = new Input();
+    this.deviceUiState = 'bootanimation';
+    this.dialogState = 'idle';
+    this.dialogEngine = null;
+    this.brightness = clamp(0, 255, sysutil.getintprop('persist.pandohubui.brightness', 128));
     this.nightlightRGB = {r: 0, b: 255, g: 200};
+    this.connectingTimer = null;
+    this.alertTimer = null;
     this.ledsPresent = false;
     fs.access('/sys/bus/i2c/drivers/lp5523x', err => {
       this.ledsPresent = !err;
     });
 
-    this.input = new Input();
     this.input.on('down', this.onKeyPress);
-    this.uiState = env.ui.getState();
-    env.ui.on('state', this.onUiState);
+    this.onDeviceUiState(env.ui.getState());
+
+    env.ui.on('state', this.onDeviceUiState);
     env.timeline.on('listening', this.onDialogListening);
     env.timeline.on('processing_speech', this.onDialogProcessingSpeech);
     env.timeline.on('speaking', this.onDialogSpeaking);
     env.timeline.on('speaking_network_error', this.onDialogNetworkError);
     env.timeline.on('finished_processing_speech', this.onDialogFinished);
+
+    volume.on('level', this.onVolumeLevel);
+
+    genDialogEngine()
+    .then(dialogEngine => {
+      this.dialogEngine = dialogEngine;
+      dialogEngine.on('ui-mode', this.onDialogUiMode);
+      volume.mute = dialogEngine.uiMode === 'mute';
+      this.render();
+    });
+  }
+
+  onDialogUiMode: DialogUiModeEventCallback = uiMode => {
     this.render();
   }
 
   onDialogListening: (() => void) = () => {
-    log.info('listening');
+    this.dialogState = 'listening';
+    this.render();
   };
 
   onDialogProcessingSpeech: (() => void) = () => {
-    log.info('processing_speech');
+    this.dialogState = 'processing_speech';
+    this.render();
   };
 
   onDialogSpeaking: (() => void) = () => {
-    log.info('speaking');
+    this.dialogState = 'speaking';
+    this.render();
   };
 
   onDialogNetworkError: (() => void) = () => {
-    log.info('speaking_network_error');
+    this.dialogState = 'speaking_network_error';
+    this.render();
   };
 
   onDialogFinished: (() => void) = () => {
     log.info('finished_processing_speech');
+    this.dialogState = 'idle';
+    this.startAlert('dialogDone');
+    this.render();
   };
+
+  onVolumeLevel: (() => void) = () => {
+    this.startAlert('volumeChanged');
+    this.render();
+  }
 
   onKeyPress: InputEventCallback = event => {
 
@@ -152,30 +204,84 @@ class PandoHubUi {
       volume.level = Math.min(100, volume.level + 10);
       break;
     case 'mute':
-      volume.mute = !volume.mute;
+      if (this.dialogEngine) {
+        if (this.dialogEngine.uiMode === 'mute') {
+          this.dialogEngine.uiMode = 'normal';
+          volume.mute = false;
+        } else {
+          this.dialogEngine.uiMode = 'mute';
+          volume.mute = true;
+        }
+      }
       break;
     case 'brightnessdown':
-      this.brightness = Math.max(0, this.brightness - 0.1);
+      this.brightness = Math.max(0, this.brightness - 32);
+      sysutil.setprop('persist.pandohubui.brightness', this.brightness);
+      this.render();
       break;
     case 'brightnessup':
-      this.brightness = Math.min(1, this.brightness + 0.1);
+      this.brightness = Math.min(255, this.brightness + 32);
+      sysutil.setprop('persist.pandohubui.brightness', this.brightness);
+      this.render();
       break;
     default:
-      log.verbose('Unhandled key', event.keyId);
       break;
     }
-    sysutil.setprop('persist.pandohubui.brightness', clamp(this.brightness * 255, 0, 255));
+  };
+
+  startAlert(alert: Alert) {
+    if (this.alertTimer) {
+      clearTimeout(this.alertTimer);
+      this.alertTimer = null;
+    }
+    let alertTimeMs;
+    switch (alert) {
+    case 'configStarted':
+      alertTimeMs = 2000;
+      // TODO: Start LED pattern
+      break;
+    case 'volumeChanged':
+      alertTimeMs = 1000;
+      // TODO: Start LED pattern
+      break;
+    case 'dialogDone':
+      alertTimeMs = 500;
+      // TODO: Start LED pattern
+      break;
+    default:
+      invariant(false, 'Unknown alert:', alert);
+    }
+    log.info('alert started:', alert);
+    this.alertTimer = setTimeout(
+      () => {
+        log.info('alert complete:', alert);
+        this.alertTimer = null;
+        this.render();
+      },
+      alertTimeMs
+    );
+  }
+
+  render(): void {
+
+    log.info('deviceUiState:', this.deviceUiState);
+    log.info('connectingSubstate:', this.connectingSubstate);
+    log.info('dialogState:', this.dialogState);
+    if (this.dialogEngine) {
+      log.info('dialogUiMode:', this.dialogEngine.uiMode);
+    }
+    log.info('alert:', this.alertTimer !== null);
     log.info('volume:', volume.level);
     log.info('volume mute:', volume.mute);
     log.info('brightness:', this.brightness);
-    this.render();
-  };
 
-  render(): void {
+    if (this.alertTimer !== null) {
+      return;
+    }
     if (volume.mute) {
       this.renderRing({r: 255, g: 0, b: 255});
     } else {
-      switch (this.uiState) {
+      switch (this.deviceUiState) {
       case 'bootanimation':
         this.renderRing({r: 192, g: 192, b: 192});
         break;
@@ -185,21 +291,34 @@ class PandoHubUi {
       case 'unconfigured':
         this.renderRing({r: 255, g: 0, b: 0});
         break;
-      case 'configuring':
+      case 'configStarted':
+      case 'configRegistering':
         this.renderRing({r: 0, g: 255, b: 255});
         break;
       case 'connecting':
-        this.renderRing({r: 255, g: 255, b: 0});
+        switch (this.connectingSubstate) {
+        case 'ok':
+          this.renderRing({r: 255, g: 255, b: 0});
+          break;
+        case 'littleSlow':
+          this.renderRing({r: 255, g: 255, b: 128});
+          break;
+        case 'somethingsWrong':
+          this.renderRing({r: 255, g: 255, b: 255});
+          break;
+        default:
+          invariant(false, 'Unknown substate: ' + this.connectingSubstate);
+        }
         break;
       case 'online':
+        // TODO: check this.dialogEngine.uiMode...
         this.renderRing({r: 0, g: 255, b: 0});
         break;
       case 'powerdown':
         this.renderRing({r: 128, g: 128, b: 128});
         break;
       default:
-        assert('Unknown UI state', this.uiState);
-        break;
+        invariant(false, 'Unknown UI state', this.deviceUiState);
       }
     }
     this.renderNightlight();
@@ -219,10 +338,11 @@ class PandoHubUi {
   }
 
   renderNightlight() {
-    const nightlightBrightness = clamp(this.brightness * 255, 0, 255);
-    const r = clamp(this.nightlightRGB.r * this.brightness, 0, 255);
-    const g = clamp(this.nightlightRGB.g * this.brightness, 0, 255);
-    const b = clamp(this.nightlightRGB.b * this.brightness, 0, 255);
+    const nightlightBrightness = this.brightness;
+    const brightnessPercent = this.brightness / 255;
+    const r = clamp(this.nightlightRGB.r * brightnessPercent, 0, 255);
+    const g = clamp(this.nightlightRGB.g * brightnessPercent, 0, 255);
+    const b = clamp(this.nightlightRGB.b * brightnessPercent, 0, 255);
 
     // Top
     this.writeLED('1-0034/leds/d501:W', nightlightBrightness);
@@ -250,9 +370,10 @@ class PandoHubUi {
   }
 
   renderRing(rgb: RGB) {
-    const r = clamp(rgb.r * this.brightness, 0, 255);
-    const g = clamp(rgb.g * this.brightness, 0, 255);
-    const b = clamp(rgb.b * this.brightness, 0, 255);
+    const brightnessPercent = this.brightness / 255;
+    const r = clamp(rgb.r * brightnessPercent, 0, 255);
+    const g = clamp(rgb.g * brightnessPercent, 0, 255);
+    const b = clamp(rgb.b * brightnessPercent, 0, 255);
 
     this.writeLED('5-0032/leds/d601:R', r);
     this.writeLED('5-0032/leds/d601:G', g);
@@ -295,14 +416,51 @@ class PandoHubUi {
     this.writeLED('5-0034/leds/d609:B', b);
   }
 
-  onUiState: UiStateEventCallback = uiState => {
-    log.info('Ui State', uiState);
-    this.uiState = uiState;
+  onDeviceUiState: UiStateEventCallback = deviceUiState => {
+    log.info('Ui State', deviceUiState);
+    if (this.connectingTimer) {
+      clearTimeout(this.connectingTimer);
+      this.connectingTimer = null;
+    }
+    this.deviceUiState = deviceUiState;
+    this.connectingSubstate = 'ok';
+
+    switch (this.deviceUiState) {
+    case 'config started':
+      this.startAlert('configStarted');
+      break;
+    case 'connecting':
+      this.connectingTimer = setTimeout(this.onNotConnectedYet,
+        CONNECTING_TIMEOUT__LITTLE_SLOW);
+      break;
+    default:
+      break;
+    }
+    this.render();
+  };
+
+  onNotConnectedYet: (() => void) = () => {
+    this.connectingSubstate = 'littleSlow';
+    this.connectingTimer = setTimeout(this.onStillNotConnectedYet,
+      CONNECTING_TIMEOUT__SOMETHINGS_WRONG);
+    this.render();
+  };
+
+  onStillNotConnectedYet: (() => void) = () => {
+    this.connectingSubstate = 'somethingsWrong';
     this.render();
   };
 
   willUnload(): void {
+    if (this.connectingTimer) {
+      clearTimeout(this.connectingTimer);
+      this.connectingTimer = null;
+    }
+    if (this.dialogEngine) {
+      this.dialogEngine.removeListener('ui-mode', this.onDialogUiMode);
+    }
     this.input.removeListener('down', this.onKeyPress);
+    volume.removeListener('level', this.onVolumeLevel);
   }
 }
 

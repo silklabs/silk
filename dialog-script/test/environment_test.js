@@ -46,6 +46,7 @@ suite(`environment`, () => {
     assert(typeof value.FORK.args[0].speak === `function`);
 
     const environment = {
+      dialogEngine,
       micChannel,
       speak: value.FORK.args[0].speak,
     };

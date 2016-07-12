@@ -23,8 +23,18 @@ import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
 import player from 'silk-audioplayer';
 
-import type { DialogEngine, DialogEngineOptions, DialogState } from 'silk-dialog-engine';
-import type { Env, Camera, Timeline } from 'silk-exttest';
+import type { 
+  DialogEngine,
+  DialogEngineOptions,
+  DialogState,
+  DialogUiModeEventCallback,
+} from 'silk-dialog-engine';
+import type {
+  Env,
+  Camera,
+  Timeline,
+  Ui,
+} from 'silk-exttest';
 import { Duplex } from 'stream';
 
 type MicData = {
@@ -58,6 +68,7 @@ const KWS_TEST_MODE_PROP = 'persist.silk.kws.testmode';
 const log = createLog('silkext-dialog');
 let camera: Camera;
 let timeline: Timeline;
+let ui: Ui;
 let modLocation: string;
 
 /**
@@ -87,6 +98,7 @@ class Dialog {
   constructor(env: Env) {
     camera = env.camera;
     timeline = env.timeline;
+    ui = env.ui;
     this._monitor(true);
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, true);
     this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, false);
@@ -95,7 +107,21 @@ class Dialog {
     const options: DialogEngineOptions = {
       localTts: this._localTts,
     };
-    this._dialogEngine = createDialogEngine(options);
+
+    let uiMode;
+    switch (util.getprop('persist.silk.dialog.uimode')) {
+    case 'normal':
+    default:
+      uiMode = 'normal';
+      break;
+    case 'dnd':
+      uiMode = 'dnd';
+      break;
+    case 'mute':
+      uiMode = 'mute';
+      break;
+    }
+    this._dialogEngine = createDialogEngine(options, uiMode);
     this._loadDialogScript();
     this._input = new Input();
 
@@ -112,6 +138,7 @@ class Dialog {
       this._dialogEngine.on('speech', this._onSpeak);
     }
     this._dialogEngine.on('interpret-end', this._onInterpretEnd);
+    this._dialogEngine.on('ui-mode', this._onUiMode);
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
@@ -192,6 +219,10 @@ class Dialog {
         this._onSpeechStop();
       }
     }
+  };
+
+  _onUiMode: DialogUiModeEventCallback = uiMode => {
+    util.setprop('persist.silk.dialog.uimode', uiMode);
   };
 
   /**
@@ -345,6 +376,18 @@ class Dialog {
    */
   _onSpeechStart() {
     log.info(`onSpeechStart`);
+    if (this._dialogEngine.uiMode === 'mute') {
+      log.verbose('UI muted');
+      return;
+    }
+    switch (ui.getState()) {
+    case 'connecting':
+    case 'online':
+      break;
+    default:
+      log.verbose('Skipping due to UI state', ui.getState());
+      return;
+    }
 
     // Check if network is available
     if (!netstatus.online) {

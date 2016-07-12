@@ -11,7 +11,7 @@ import invariant from 'assert';
 import { EventEmitter } from 'events';
 
 import { answer } from 'silk-rtc';
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import WebSocket from 'ws';
 

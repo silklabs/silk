@@ -282,6 +282,8 @@ const builds = {
   }),
   'cli': npmPackageBuild('pub/cli'),
   'crypto': npmPackageBuild('crypto'),
+/*
+  TODO: Fix sim build
   'sim': npmPackageBuild('sim', {
     files: [
       'device/**',
@@ -289,6 +291,7 @@ const builds = {
       'sim/**',
     ],
   }),
+*/
   'device-base-mako-pr': npmPackageBuild('device', {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {

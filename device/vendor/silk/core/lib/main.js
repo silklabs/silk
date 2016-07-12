@@ -40,6 +40,7 @@ import update from 'silk-update';
 import config from './config';
 import silkconfig from 'silk-config';
 import sensors from 'silk-sensors';
+import factoryReset from 'silk-factory-reset';
 import infrared from './infrared';
 import Server from './server';
 import Connections from './connections';
@@ -292,9 +293,6 @@ function main() {
     .then(() => {
       if (DEV_NO_SERVER_CONNECT) {
         onConfigured();
-      } else {
-        assert(api.accessToken, 'must have access token');
-        connections.start();
       }
       const bootTimeS = util.uptime(bootStartMs) / 1000;
       log.info(`boot complete in ${bootTimeS} seconds`);
@@ -426,8 +424,12 @@ config.on('unconfigured', () => {
   }
 });
 
-config.on('configuring', () => {
-  ui.goto('configuring');
+config.on('configStarted', () => {
+  ui.goto('configStarted');
+});
+
+config.on('configRegistering', () => {
+  ui.goto('configRegistering');
 });
 
 config.on('configured', onConfigured);
@@ -443,6 +445,8 @@ async function onConfigured() {
     ui.goto('online');
   } else {
     log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
+    assert(api.accessToken, 'must have access token');
+    connections.start();
     server.connect();
   }
 
@@ -544,11 +548,8 @@ update.on('staged', () => {
 });
 
 // UI...
-ui.on('key:setup', () => {
-  log.info('Continue holding for factory reset...');
-});
 ui.on('key:powerdown', shutdown);
-ui.on('key:factoryreset', () => {
+factoryReset.on('factory-reset', () => {
   log.warn('!! Factory reset !!');
 
   let finalPromiseFactory = () => {

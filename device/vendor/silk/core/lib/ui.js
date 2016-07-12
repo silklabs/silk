@@ -58,7 +58,7 @@ export class Ui extends events.EventEmitter {
     let volumeKeysPressed = 0;
     input.on('up', e => {
       this._pokeBacklight();
-      switch(e.keyId) {
+      switch (e.keyId) {
       case 'volumedown':
         this.emit('key', 'volumedown', 'up');
         break;
@@ -84,7 +84,7 @@ export class Ui extends events.EventEmitter {
         // the backlight
         return;
       }
-      switch(e.keyId) {
+      switch (e.keyId) {
       case 'volumedown':
         this.emit('key', 'volumedown', 'down');
         break;
@@ -95,7 +95,9 @@ export class Ui extends events.EventEmitter {
           if (RESET_KEY_ENABLED) {
             Promise.race([
               util.timeout(1000),
-              new Promise((resolve, reject) => cancelVolumeKeys = reject)
+              new Promise((resolve, reject) => {
+                cancelVolumeKeys = reject;
+              }),
             ])
             .then(() => factoryReset.start())
             .catch(() => null);
@@ -106,7 +108,9 @@ export class Ui extends events.EventEmitter {
         if (POWER_KEY_ENABLED) {
           Promise.race([
             util.timeout(1000),
-            new Promise((resolve, reject) => cancelPowerDown = reject)
+            new Promise((resolve, reject) => {
+              cancelPowerDown = reject;
+            }),
           ])
           .then(() => this.emit('key:powerdown'))
           .catch(() => null);

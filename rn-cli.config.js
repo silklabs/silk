@@ -5,6 +5,7 @@
 'use strict';
 
 const blacklist = require('react-native/packager/blacklist');
+const fs = require('fs');
 const path = require('path');
 
 const ignoreDirectories = [
@@ -38,6 +39,8 @@ module.exports = {
   },
 
   getTransformModulePath() {
-    return require.resolve('silk-react-native-transformer');
+    return fs.realpathSync(
+      require.resolve('silk-react-native-transformer')
+    );
   },
 };

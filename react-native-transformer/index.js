@@ -90,6 +90,8 @@ function transform(src, filename, options) {
   };
 }
 
+// eslint-disable-next-line no-console
+console.log('Using silk-react-native-transformer');
 module.exports = function(data, callback) {
   let result;
   try {

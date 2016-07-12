@@ -62,6 +62,7 @@ function computeVersion() {
   default:
     console.error('Cannot perform local node install for platform: %s', platform);
     warnFailedUpgrade();
+    return null;
   }
 }
 

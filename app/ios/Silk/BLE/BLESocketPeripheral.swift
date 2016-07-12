@@ -153,7 +153,7 @@ internal class BLESocketPeripheral: NSObject,
 
   // A flag indicating the presence of unconfigured devices at the time we last
   // communicated with JS.
-  private var unconfiguredDevicesNearby: Bool = false
+  private var unconfiguredDevicesInRange: Bool = false
 
   // Connection info maps for easy lookups.
   private var connectionsById = [Int: Connection]()
@@ -237,11 +237,12 @@ internal class BLESocketPeripheral: NSObject,
       let serviceInfo = self.services[serviceUuid]!
 
       if serviceUuid == BLESocketPeripheral.configServiceUuid {
-        if !self.unconfiguredDevicesNearby {
-          self.unconfiguredDevicesNearby = true
+        if !self.unconfiguredDevicesInRange {
+          self.unconfiguredDevicesInRange = true
           if self.enabled {
-            log.info("Informing JS that there are unconfigured devices nearby")
-            self.socketManager.unconfiguredDevicesNearby(true)
+            log.info("Informing JS that there are unconfigured devices in " +
+                     "range")
+            self.socketManager.unconfiguredDevicesInRange(true)
           }
         }
       } else {
@@ -260,11 +261,11 @@ internal class BLESocketPeripheral: NSObject,
       let serviceInfo = self.services[serviceUuid]!
 
       if serviceUuid == BLESocketPeripheral.configServiceUuid {
-        if self.unconfiguredDevicesNearby {
-          self.unconfiguredDevicesNearby = false
+        if self.unconfiguredDevicesInRange {
+          self.unconfiguredDevicesInRange = false
           if self.enabled {
-            log.info("Informing JS that no unconfigured devices are nearby")
-            self.socketManager.unconfiguredDevicesNearby(false)
+            log.info("Informing JS that no unconfigured devices are in range")
+            self.socketManager.unconfiguredDevicesInRange(false)
           }
         }
       } else {
@@ -300,40 +301,40 @@ internal class BLESocketPeripheral: NSObject,
     self.enabled = enabled
 
     if enabled {
-      if self.unconfiguredDevicesNearby {
-        log.info("Informing JS that there are unconfigured devices nearby")
-        self.socketManager.unconfiguredDevicesNearby(true)
+      if self.unconfiguredDevicesInRange {
+        log.info("Informing JS that there are unconfigured devices in range")
+        self.socketManager.unconfiguredDevicesInRange(true)
       } else {
-        log.info("Informing JS that no unconfigured devices are nearby")
-        self.socketManager.unconfiguredDevicesNearby(false)
+        log.info("Informing JS that no unconfigured devices are in range")
+        self.socketManager.unconfiguredDevicesInRange(false)
       }
     } else {
-      self.unconfiguredDevicesNearby = false
+      self.unconfiguredDevicesInRange = false
     }
 
     self.updateState()
   }
 
-  func acceptConfigConnections(accept: Bool) {
-    log.debug("acceptConfigConnections(\(accept))")
+  func scanForUnconfiguredDevices(shouldScan: Bool) {
+    log.debug("scanForUnconfiguredDevices(\(shouldScan))")
 
     let serviceInfo = self.services[BLESocketPeripheral.configServiceUuid]!
-    serviceInfo.available = accept
+    serviceInfo.available = shouldScan
 
     self.updateState()
   }
 
-  func send(id: Int, data: NSData) {
-    log.debug("send(\(id), \(data.length))")
+  func send(connectionId: Int, data: NSData) {
+    log.debug("send(\(connectionId), \(data.length))")
 
     assert(data.length != 0)
 
-    if self.connectionsById[id] == nil {
-      log.error("Invalid connection id \(id), ignoring")
+    if self.connectionsById[connectionId] == nil {
+      log.error("Invalid connection id \(connectionId), ignoring")
       return
     }
 
-    let connection = self.connectionsById[id]!
+    let connection = self.connectionsById[connectionId]!
 
     connection.outgoingQueue.append(data)
 
@@ -342,15 +343,15 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func enableRssiUpdates(id: Int, enable: Bool) {
-    log.debug("enableRssiUpdates(\(id), \(enable))")
+  func enableRssiUpdates(connectionId: Int, enable: Bool) {
+    log.debug("enableRssiUpdates(\(connectionId), \(enable))")
 
-    if self.connectionsById[id] == nil {
-      log.error("Invalid connection id \(id), ignoring")
+    if self.connectionsById[connectionId] == nil {
+      log.error("Invalid connection id \(connectionId), ignoring")
       return
     }
 
-    let connection = self.connectionsById[id]!
+    let connection = self.connectionsById[connectionId]!
     if connection.rssiUpdatesEnabled == enable {
       return
     }
@@ -363,15 +364,15 @@ internal class BLESocketPeripheral: NSObject,
     connection.peripheral.readRSSI()
   }
 
-  func finish(id: Int) {
-    log.debug("finish(\(id))")
+  func finish(connectionId: Int) {
+    log.debug("finish(\(connectionId))")
 
-    if self.connectionsById[id] == nil {
-      log.error("Invalid connection id \(id), ignoring")
+    if self.connectionsById[connectionId] == nil {
+      log.error("Invalid connection id \(connectionId), ignoring")
       return
     }
 
-    let connection = self.connectionsById[id]!
+    let connection = self.connectionsById[connectionId]!
     assert(!connection.finished)
     connection.finished = true
 
@@ -393,15 +394,15 @@ internal class BLESocketPeripheral: NSObject,
     peripheral.setNotifyValue(false, forCharacteristic: characteristic)
   }
 
-  func disconnect(id: Int) {
-    log.debug("disconnect(\(id))")
+  func disconnect(connectionId: Int) {
+    log.debug("disconnect(\(connectionId))")
 
-    if self.connectionsById[id] == nil {
-      log.error("Invalid connection id \(id), ignoring")
+    if self.connectionsById[connectionId] == nil {
+      log.error("Invalid connection id \(connectionId), ignoring")
       return
     }
 
-    self.cleanupConnection(self.connectionsById[id]!)
+    self.cleanupConnection(self.connectionsById[connectionId]!)
   }
 
   private func updateState() {

@@ -180,7 +180,13 @@ const builds = {
   },
   'lint': {
     travis_yml: '.linttravis.yml',
-    files: ['**/.eslintrc', '**/.eslintignore', '**/*.js', '**/*.json'],
+    files: [
+      'lint.sh',
+      '**/.eslintrc',
+      '**/.eslintignore',
+      '**/*.js',
+      '**/*.json',
+    ],
     events: ['push', 'pr'],
     branches: ['master', 'next', 'release'],
   },

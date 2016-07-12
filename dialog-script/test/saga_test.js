@@ -76,7 +76,7 @@ suite(`saga`, () => {
 
     testScript(sagaGenerator, [
       {
-        expect: call(environment.speak, unknownText, true),
+        expect: call(environment.speak, unknownText, `idle`),
       }, {
         expect: take(environment.micChannel),
       },
@@ -94,7 +94,7 @@ suite(`saga`, () => {
         provide: makeMicEvent(`who knows`, `yikes`),
         expect: call(cleanupFinishedSagas, sagas),
       }, {
-        expect: call(environment.speak, unknownText, true),
+        expect: call(environment.speak, unknownText, `idle`),
       },
     ]);
   });

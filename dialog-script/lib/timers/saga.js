@@ -182,7 +182,7 @@ export function* timerMonitorSaga(
       yield put(expireTimer(timer.id));
 
       // Alert the user.
-      yield call(speak, `Timer ${timer.id} has expired`, true);
+      yield call(speak, `Timer ${timer.id} has expired`);
     }
   } finally {
     log.debug(`Timer monitor task exiting`);
@@ -212,7 +212,7 @@ export default function* modifyTimers(
   }
 
   if (durationMs === null) {
-    yield call(speak, `Sorry, I didn't understand your request`, true);
+    yield call(speak, `Sorry, I didn't understand your request`, `idle`);
     return;
   }
 
@@ -221,7 +221,7 @@ export default function* modifyTimers(
   // Add a new timer via |put|.
   if (type === `start`) {
     yield put(addTimer(durationMs, Date.now() + durationMs));
-    yield call(speak, `Ok, I've started a timer`, true);
+    yield call(speak, `Ok, I've started a timer`, `idle`);
     return;
   }
 
@@ -230,7 +230,7 @@ export default function* modifyTimers(
   invariant(timers);
 
   if (!timers.length) {
-    yield call(speak, `There are no timers running`, true);
+    yield call(speak, `There are no timers running`, `idle`);
     return;
   }
 
@@ -239,10 +239,10 @@ export default function* modifyTimers(
     // TODO Something smarter here.
     if (timer.durationMs === durationMs) {
       yield put(removeTimer(timer.id));
-      yield call(speak, `Ok, I've canceled that timer`, timer);
+      yield call(speak, `Ok, I've canceled that timer`, `idle`);
       return;
     }
   }
 
-  yield call(speak, `Sorry, I couldn't figure out which timer to cancel`, true);
+  yield call(speak, `Sorry, I couldn't figure out which timer to cancel`, `idle`);
 }

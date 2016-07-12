@@ -45,19 +45,19 @@ suite(`userScript`, () => {
       {
         speak: `I\'m feeding the baby`,
         hear: `Ok, Are you nursing or bottle feeding?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: `bottle`,
         hear: `Ok, Are you using breast milk or formula?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: `formula`,
         hear: `How many milliliters?`,
-        finished: false,
+        nextState: `waiting`,
       }, {
         speak: `100 ML`,
         hear: `Ok, I'll record that.`,
-        finished: true,
+        nextState: `idle`,
       },
     ]);
   });

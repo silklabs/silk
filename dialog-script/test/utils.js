@@ -87,17 +87,17 @@ export async function testUserScript(dialogEngine, script): Promise<void> {
              `State[${index}] speak is not a string`);
       assert(typeof state.hear === `string`,
              `State[${index}] hear is not a string`);
-      assert(typeof state.finished === `boolean`,
-             `State[${index}] finished is not a boolean`);
+      assert(typeof state.nextState === `string`,
+             `State[${index}] nextState is not a boolean`);
 
       dialogEngine._mockInterpret(state.speak);
 
-      const [text, finished] = await eventToPromise(dialogEngine,
+      const [text, nextState] = await eventToPromise(dialogEngine,
                                                     `mock-speech`,
                                                     {array: true});
 
       assert.strictEqual(text, state.hear);
-      assert.strictEqual(finished, state.finished);
+      assert.strictEqual(nextState, state.nextState);
     }
   } catch(error) {
     console.error(`State[${index}] Error: %s`, error); // eslint-disable-line no-console

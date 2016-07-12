@@ -21,7 +21,7 @@ import {
 } from './actions';
 import {timerMonitorSaga} from './timers/saga';
 
-import type {DialogEngine} from 'silk-dialog-engine';
+import type {DialogEngine, DialogState} from 'silk-dialog-engine';
 
 // Really a Task object...
 export type Saga = {
@@ -48,7 +48,7 @@ export type SagaFunction =
 
 export type Environment = {
   micChannel: Object;
-  speak: (text: string, finished: boolean) => Promise<void>;
+  speak: (text: string, nextState?: DialogState) => Promise<void>;
 };
 
 const log = createLog(`dialog-script-environment`);
@@ -157,7 +157,7 @@ export function createMicEventChannel(dialogEngine: DialogEngine): Object {
 export function speak(
   dialogEngine: DialogEngine,
   text: string,
-  finished: boolean,
+  nextState: ?DialogState,
 ): Promise<void> {
   return new Promise((resolve) => {
     const endListener = (speakingText) => {
@@ -173,7 +173,7 @@ export function speak(
     };
 
     dialogEngine.addListener(`speak-begin`, beginListener);
-    dialogEngine.speak(text, finished);
+    dialogEngine.speak(text, nextState);
   });
 }
 

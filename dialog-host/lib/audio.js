@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
@@ -32,10 +32,10 @@ type Mic = EventEmitter & {
 const log = createLog(`dialog-audio`);
 
 const SPEAKER_PARAMS = {
-  channels: config.numChannels,
-  bitDepth: config.bytesPerSample * 8,
-  signed: config.encoding === `signed-integer`,
-  sampleRate: config.sampleRate,
+  bytesPerSample: 16,
+  signed: true,
+  channels: 1,
+  sampleRate: 16000,
 };
 
 export default class Audio extends EventEmitter {
@@ -149,7 +149,7 @@ export default class Audio extends EventEmitter {
     this._waitForWake();
   }
 
-  speak(stream: Readable, finished: boolean): void {
+  speak(stream: Readable, nextState: DialogState): void {
     invariant(stream);
 
     const speaker = new Speaker(SPEAKER_PARAMS);
@@ -169,10 +169,10 @@ export default class Audio extends EventEmitter {
 
       speaker.end();
 
-      if (finished) {
-        this._waitForWake();
-      } else {
+      if (nextState === 'waiting') {
         this._onWake();
+      } else if (nextState === 'idle') {
+        this._waitForWake();
       }
     };
 

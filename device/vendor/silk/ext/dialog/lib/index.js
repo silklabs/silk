@@ -23,7 +23,7 @@ import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
 import player from 'silk-audioplayer';
 
-import type { DialogEngine, DialogEngineOptions } from 'silk-dialog-engine';
+import type { DialogEngine, DialogEngineOptions, DialogState } from 'silk-dialog-engine';
 import type { Env, Camera, Timeline } from 'silk-exttest';
 import { Duplex } from 'stream';
 
@@ -33,8 +33,9 @@ type MicData = {
 };
 type MicDataCallback = (pkt: MicData) => void;
 type InputEventCallback = (event: { keyId: string }) => void;
-type SpeechEventCallback = (stream: Buffer, finished: boolean) => void;
+type SpeechEventCallback = (stream: Buffer, nextState: ?DialogState) => void;
 type InterpretEndCallback = (error: ?Error) => void;
+type SpeakBeginCallback = (text: string, nextState: ?DialogState) => void;
 type EventType = 'listening' | 'processing_speech' | 'speaking' |
                  'speaking_network_error' | 'finished_processing_speech';
 
@@ -78,7 +79,6 @@ class Dialog {
   _input: Input;
   _stream: ?Duplex;
   _activePlaySoundPromise: Promise<void> = Promise.resolve();
-  _activeSpeechCount: number = 0;
   _vad: VoiceActivityDetector;
   _kws: KeywordSpotting;
   _localTts: boolean;
@@ -246,31 +246,24 @@ class Dialog {
    * This function handles the generation of text to speech if TTS service
    * running on the device is used
    */
-  _onSpeakBegin: Function = (text, finished) => {
-    log.debug(`_onSpeakBegin ${text} ${finished}`);
+  _onSpeakBegin: SpeakBeginCallback = (text, nextState) => {
+    log.debug(`_onSpeakBegin ${text} ${nextState}`);
     this._emitEvent('speaking');
 
     const finish = (err) => {
-      if (--this._activeSpeechCount <= 0) {
-        this._activeSpeechCount = 0;
-        if (!finished) {
-          this._onSpeechStart();
-        } else {
-          this._onDialogDone();
-        }
+      if (nextState === 'waiting') {
+        this._onSpeechStart();
+      } else if (nextState === 'idle') {
+        this._onDialogDone();
       }
     };
 
-    this._activeSpeechCount++;
     this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
-      // This is a workaround for issue #2032. Ideally this event should only
-      // be called when the TTS is done.
-      this._dialogEngine.endSpeak(text, null);
-
       return say.speak(text);
     })
     .then(() => {
       log.debug('Finished speaking');
+      this._dialogEngine.endSpeak(text, null);
       finish();
     })
     .catch(err => {
@@ -281,11 +274,10 @@ class Dialog {
   };
 
   /**
-   * Handle speech event from dialog engine. Store the stream
-   * data in a wav file and play the file at the end of the stream.
+   * Handle speech event from dialog engine
    */
-  _onSpeak: SpeechEventCallback = (stream, finished) => {
-    log.debug(`Received stream to speak ${finished}`);
+  _onSpeak: SpeechEventCallback = (stream, nextState) => {
+    log.debug(`Received stream to speak ${nextState}`);
     this._emitEvent('speaking');
 
     let errorListener: ?Function = null;
@@ -304,13 +296,10 @@ class Dialog {
         return;
       }
 
-      if (--this._activeSpeechCount <= 0) {
-        this._activeSpeechCount = 0;
-        if (!finished) {
-          this._onSpeechStart();
-        } else {
-          this._onDialogDone();
-        }
+      if (nextState === 'waiting') {
+        this._onSpeechStart();
+      } else if (nextState === 'idle') {
+        this._onDialogDone();
       }
     };
 
@@ -324,7 +313,6 @@ class Dialog {
 
     endListener = () => {
       log.debug('Speech stream ended');
-      this._activeSpeechCount++;
 
       // Wait for previous playSound to finish before playing another file
       this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {

@@ -83,7 +83,7 @@ export function* sayCurrentTime(
    * |sayCurrentTime| generator step-by-step. By using the |call| function we
    * can write unit tests that run the generator one step at a time.
    */
-  yield call(speak, `The time is ${timeString}`, true);
+  yield call(speak, `The time is ${timeString}`, `idle`);
 }
 
 /**
@@ -287,7 +287,7 @@ export default function*(
      */
     if (!sagas.independent && !sagas.concurrent) {
       log.warn(`Unknown intent: '${event.text}' => '${intent}'`, entities);
-      yield call(speak, unknownText, true);
+      yield call(speak, unknownText, `idle`);
     }
   }
 }

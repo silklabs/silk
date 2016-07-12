@@ -1,3 +1,5 @@
+'use strict';
+
 let webpack = require('webpack');
 
 let config = {

@@ -25,7 +25,7 @@ for project in $projects; do
     dirs+=('.')
   fi
 
-  $eslint $(find . -name '*.js' -depth 1) $dirs "$@"
+  $eslint $(find . -maxdepth 1 -name '*.js') $dirs "$@"
 
   popd > /dev/null
 done

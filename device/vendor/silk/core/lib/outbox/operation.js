@@ -223,9 +223,9 @@ export default class Operation {
       // Pipe the remainder stream to disk.
       await Promise.all([
         this._writeMetadata(directory, {
-          createdAt: Date.now()
+          createdAt: Date.now(),
         }),
-        this._writeBlob(directory, readable)
+        this._writeBlob(directory, readable),
       ]);
     } catch (err) {
       log.error(`

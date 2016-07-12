@@ -31,7 +31,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
   routes.use(PREFIX, authorizeAccount({
     nonce: ctx.nonce,
-    accounts: ctx.accounts
+    accounts: ctx.accounts,
   }));
 
   let api = expressApi(routes, {
@@ -55,7 +55,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     input: Joi.object(),
     output: Joi.object().keys({
       accountId: Joi.string().required(),
-    }).required()
+    }).required(),
   }, async (req, res) => {
     res.respond({
       accountId: req.account._id.toString(),
@@ -81,7 +81,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       name: Devices.NAME_SCHEMA,
       // registration token to use...
       registrationToken: Joi.string().required(),
-    }).required()
+    }).required(),
   }, async (req, res) => {
 
     // XXX: Some accounts may not have beaconUUID yet so update them to include
@@ -108,7 +108,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
         publicKey: req.body.devicePublicKey,
         name: req.body.name,
         type: req.body.type,
-        registrationToken: req.body.registrationToken
+        registrationToken: req.body.registrationToken,
       }
     );
 
@@ -116,7 +116,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       log.info('registered device', req.account.id);
       res.respond({
         success: true,
-        beaconUUID: req.account.beaconUUID
+        beaconUUID: req.account.beaconUUID,
       });
       return;
     }
@@ -134,19 +134,19 @@ export default function (ctx: RouteContext): ExpressRoutes {
       devices: Joi.array().required().items(Joi.object().keys({
         name: Devices.NAME_SCHEMA,
         publicKey: Joi.string().hex().required(),
-        deviceId: Joi.string().hex().required()
-      }))
+        deviceId: Joi.string().hex().required(),
+      })),
     }),
     input: Joi.object().keys({
       // TODO: Pagination?
-    }).required()
+    }).required(),
   }, async (req, res) => {
     let list = await ctx.devices.findAllByAccount(req.account._id);
     list = list.map((device) => {
       return {
         name: device.name,
         publicKey: device.accessToken.publicKey,
-        deviceId: device.accessToken.publicKey
+        deviceId: device.accessToken.publicKey,
       };
     });
 
@@ -161,14 +161,14 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'unregisterDevice',
     description: 'Remove device from the account',
     output: Joi.object().keys({
-      success: Joi.boolean().required()
+      success: Joi.boolean().required(),
     }),
     input: Joi.object().keys({
-      devicePublicKey: Joi.string().hex().required()
-    }).required()
+      devicePublicKey: Joi.string().hex().required(),
+    }).required(),
   }, async (req, res) => {
     let result = await ctx.devices.unregister({
-      publicKey: req.body.devicePublicKey
+      publicKey: req.body.devicePublicKey,
     });
 
     if (!result || result.error) {
@@ -193,8 +193,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
       error: Joi.string(),
     }),
     input: Joi.object().keys({
-      query: Joi.string().required()
-    }).required()
+      query: Joi.string().required(),
+    }).required(),
   }, async (req, res) => {
     let {account} = req;
     let scopes = ctx.scopes.accountScopes(account);
@@ -239,7 +239,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       ))*/
       publicUrl: Joi.string(), // not requried
       sas: Joi.array().items(Joi.any()).required(),
-    })
+    }),
   }, async (req, res) => {
     // 6 hours in the future ...
     const expiration = new Date(Date.now() + 1000 * 60 * 60 * 6);
@@ -260,7 +260,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     res.respond({
       publicUrl: ctx.config.signaling.publicUrl,
-      sas
+      sas,
     });
   });
 

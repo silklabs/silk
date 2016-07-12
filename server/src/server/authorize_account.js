@@ -21,7 +21,7 @@ export type AuthorizeAccountConfig = {
 export default function (ctx: AuthorizeAccountConfig, overrides: ?MiddlewareOverrides): MiddlewareFn {
   const method = async (publicKey: string, req: any): Promise<?string> => {
     let account = await ctx.accounts.findByPublicKey({
-      publicKey
+      publicKey,
     });
 
     if (!account) {

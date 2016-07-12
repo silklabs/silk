@@ -30,7 +30,7 @@ export default class Logcat extends Transform {
       for (let message of this._pendingMessages) {
         this.push({
           utc,
-          message
+          message,
         });
       }
       this._pendingMessages = [];
@@ -110,7 +110,7 @@ export default class Logcat extends Transform {
       tid,
       priority,
       tag,
-      message
+      message,
     });
     callback();
   }

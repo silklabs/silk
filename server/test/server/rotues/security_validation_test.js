@@ -36,7 +36,7 @@ suite('security validation tests', () => {
     app.use(jsonParser);
     app.use(testRoutes({
       accounts,
-      nonce
+      nonce,
     }).app);
 
     canonicalURL = await launchApp(app);
@@ -52,8 +52,8 @@ suite('security validation tests', () => {
       input: {
         userAgent: 'woot',
         email: `${uuid.v4()}@example.com`,
-        password: 'passwordsogood'
-      }
+        password: 'passwordsogood',
+      },
     },
 
     two: {
@@ -61,9 +61,9 @@ suite('security validation tests', () => {
       input: {
         userAgent: 'woot',
         email: `${uuid.v4()}@example.com`,
-        password: 'passwordsogood'
-      }
-    }
+        password: 'passwordsogood',
+      },
+    },
   };
 
   setup(async () => {
@@ -99,7 +99,7 @@ suite('security validation tests', () => {
       accessToken: users.one.id,
     });
     testApi = new TestAPI({
-      requestTransformer: api.config.requestTransformer
+      requestTransformer: api.config.requestTransformer,
     });
   });
 

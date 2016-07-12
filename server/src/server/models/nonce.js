@@ -20,9 +20,9 @@ export default class Nonce extends Base {
      */
     {
       props: {
-        value: 1
+        value: 1,
       },
-      options: { unique: true }
+      options: { unique: true },
     },
 
     /**
@@ -30,9 +30,9 @@ export default class Nonce extends Base {
      */
     {
       props: {
-        expires: 1
-      }
-    }
+        expires: 1,
+      },
+    },
   ];
 
   static SCHEMA = {
@@ -43,12 +43,12 @@ export default class Nonce extends Base {
       // must retry with a new value.
       value: UUID,
       created: Joi.date().required(),
-      expires: Joi.date().required()
+      expires: Joi.date().required(),
     }).required(),
 
     check: Joi.object().keys({
-      value: Joi.string()
-    }).required()
+      value: Joi.string(),
+    }).required(),
   };
 
   static COLLECTION = 'nonce';
@@ -62,11 +62,11 @@ export default class Nonce extends Base {
     let insert = await this.collection.update(
       // Search...
       {
-        value: payload.value
+        value: payload.value,
       },
       // Insert (only happens if search fails to find something)
       {
-        $setOnInsert: payload
+        $setOnInsert: payload,
       },
       { upsert: true }
     );
@@ -85,7 +85,7 @@ export default class Nonce extends Base {
   async check(payload: any): any {
     payload = this.validate(payload, 'check');
     return this.collection.findOne({
-      value: payload.value
+      value: payload.value,
     });
   }
 
@@ -98,8 +98,8 @@ export default class Nonce extends Base {
   async expireAll(): Promise<any> {
     return await this.collection.remove({
       expires: {
-        $lte: new Date()
-      }
+        $lte: new Date(),
+      },
     });
   }
 }

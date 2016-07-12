@@ -179,7 +179,7 @@ async function main (config: any): any {
       // yuck ...
       req.deviceId = deviceId;
       log.info(`Connecting client to ${deviceId}`);
-    }
+    },
   };
 
   /**
@@ -243,7 +243,7 @@ async function main (config: any): any {
     let res = {
       sendStatus(code) {
         errorStatus = code;
-      }
+      },
     };
     let { req } = connection;
 
@@ -333,10 +333,11 @@ async function main (config: any): any {
       try {
         return await main(config);
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.log(`Failed to restart: ${err.stack}`);
         throw err;
       }
-    }
+    },
   };
 }
 

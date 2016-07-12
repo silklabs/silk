@@ -243,7 +243,9 @@ export class Debuggerd extends EventEmitter {
       return this._startPromise;
     }
     return this._start()
-      .then(() => this._startPromise = null)
+      .then(() => {
+        this._startPromise = null;
+      })
       .catch((err) => {
         this._startPromise = null;
         throw err;
@@ -292,7 +294,7 @@ export class CrashReporter {
 
   constructor(outbox, tombstones, debuggerd, doUploads) {
     Object.assign(this, {
-      outbox, tombstones, debuggerd, doUploads
+      outbox, tombstones, debuggerd, doUploads,
     });
 
     // if we are actively uploading crashes hook up the listeners to create
@@ -427,8 +429,8 @@ export class CrashReporter {
         raygunMessage,
         metadata: {
           timeStamp: stats.birthtime,
-          type: 'tombstone'
-        }
+          type: 'tombstone',
+        },
       });
 
       // Add to the outbox queue this will _remove_ the tombstone. It is now
@@ -467,7 +469,7 @@ export class CrashReporter {
   async shutdown() {
     await Promise.all([
       this.tombstones.shutdown(),
-      this.debuggerd ? this.debuggerd.shutdown() : Promise.resolve()
+      this.debuggerd ? this.debuggerd.shutdown() : Promise.resolve(),
     ]);
   }
 
@@ -485,7 +487,7 @@ export class CrashReporter {
         metadata: {
           timeStamp: (new Date()).toISOString(), // Accurate enough...
           type: 'tombstone',
-        }
+        },
       });
       await this.outbox.addToQueue(operation, readable);
     } else {

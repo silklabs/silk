@@ -110,7 +110,7 @@ export default function startCollectingProcessMetrics(): void {
     let error;
     try {
       await probe();
-    } catch(err) {
+    } catch (err) {
       error = err;
     }
 

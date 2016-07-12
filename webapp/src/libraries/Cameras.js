@@ -139,18 +139,21 @@ class Camera extends EventEmitter {
         this.logs.dash = msg.log;
         break;
       case 'logcat':
-        const maxLines = 500;
+        // Lexical scope ...
+        {
+          const maxLines = 500;
 
-        let logcat = this.logs.logcat || [];
-        msg.log.split(/\r?\n/).map(line => {
-          if (line.length > 0) {
-            logcat.push(line);
+          let logcat = this.logs.logcat || [];
+          msg.log.split(/\r?\n/).map(line => {
+            if (line.length > 0) {
+              logcat.push(line);
+            }
+          });
+          while (logcat.length > maxLines) {
+            logcat.shift();
           }
-        });
-        while (logcat.length > maxLines) {
-          logcat.shift();
+          this.logs.logcat = logcat;
         }
-        this.logs.logcat = logcat;
         break;
       default:
         log.warn(`Unknown diag log name: ${msg.name}`);

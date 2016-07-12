@@ -151,7 +151,7 @@ export default class MSEPlayer extends React.Component {
 
     try {
       this.sourceBuffer.appendBuffer(segment.byteArray);
-    } catch(err) {
+    } catch (err) {
       if (err.name === 'QuotaExceededError' ||
           err.name === 'InvalidStateError') {
         // Full, bail out and save the rest for later.

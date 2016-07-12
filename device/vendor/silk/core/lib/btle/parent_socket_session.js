@@ -199,7 +199,7 @@ export default class ParentSocketSession extends DuplexTransform {
   _onInternalMessage: ((message: Object) => void) = (message) => {
     log.debug(`_onInternalMessage`, message);
 
-    switch(message.name) {
+    switch (message.name) {
     case `error`: {
       log.error(`Child error`, message.stack);
       const error = new Error(`Child error: '${message.message}'`);

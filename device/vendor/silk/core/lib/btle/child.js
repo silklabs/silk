@@ -20,7 +20,7 @@ function errorHandler(type: string, error: Error) {
         message: error.message,
         stack: error.stack,
       });
-    } catch(exception) {
+    } catch (exception) {
       console.error(exception.stack);          // eslint-disable-line no-console
     }
   }
@@ -141,7 +141,7 @@ class BluetoothLEChild {
         waitForPoweredOn(bleno, `bleno`),
         waitForPoweredOn(noble, `noble`),
       ]);
-    } catch(error) {
+    } catch (error) {
       this._removeProcessListeners();
       throw error;
     }
@@ -303,7 +303,7 @@ class BluetoothLEChild {
                 promiseId,
               });
               return;
-            } catch(err) {
+            } catch (err) {
               error = err;
             }
             log.warn(`Failed to change mode to '${mode}', retrying`, error);
@@ -434,7 +434,7 @@ class BluetoothLEChild {
     if (promises.length) {
       try {
         await Promise.all(promises);
-      } catch(error) {
+      } catch (error) {
         log.warn(error);
       }
       log.info(`Done waiting`);
@@ -449,7 +449,7 @@ class BluetoothLEChild {
           bledroidCrash.promise,
           socketService.stop(),
         ]);
-      } catch(error) {
+      } catch (error) {
         log.warn(error);
       }
       log.info(`Done waiting`);
@@ -674,7 +674,7 @@ class BluetoothLEChild {
       if (this._socketService) {
         this._socketService.stop();
       }
-    } catch(error) {
+    } catch (error) {
       log.warn(error);
     } finally {
       // Ensure that our state is correct even if something above failed.

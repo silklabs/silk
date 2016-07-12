@@ -206,7 +206,9 @@ function max(array) {
 function readEntireStream(stream) {
   return new Promise((resolve, reject) => {
     let buffer = new Buffer(0);
-    stream.on('data', (data) => buffer = Buffer.concat([ buffer, data ]));
+    stream.on('data', (data) => {
+      buffer = Buffer.concat([ buffer, data ]);
+    });
     stream.on('end', () => resolve(buffer));
   });
 }
@@ -331,7 +333,7 @@ export default class AudioStudio extends React.Component {
     this.liveTrack = new LiveTrack(SPECTROGRAM_FRAMES * FFT_SIZE,
                                    config.deviceMic.sampleRate);
     this._attachTrack(this.liveTrack);
-    this.state.track = this.liveTrack;
+    this.setState({ track: this.liveTrack });
     // We may still be loading prefs from file, but in that case state
     // will directly be updated when that finishes.
     Object.assign(this.state, this.prefs);

@@ -38,13 +38,13 @@ export default class CrashReportOperation extends StreamOperation {
       'crashreport',
       {
         contentLength: this.size,
-        contentType: CONTENT_TYPE
+        contentType: CONTENT_TYPE,
       }
     );
 
     let writer = httpStream(putUrl, {
       method: 'PUT',
-      headers: putHeaders
+      headers: putHeaders,
     });
     writer.putUrl = putUrl;
     return writer;

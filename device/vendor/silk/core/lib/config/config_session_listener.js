@@ -264,28 +264,30 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
 
     case `secret`:
-      if (this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
-        log.warn(`Received '${data.name}' while in state ${this._state}`);
-        break;
+      {
+        if (this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
+          log.warn(`Received '${data.name}' while in state ${this._state}`);
+          break;
+        }
+
+        assert(!this._dismissTimeout);
+        assert(!this._wifiErrorCount);
+
+        const secret = {
+          accessPoint: data.accessPoint,
+          password: data.password,
+          publicKey: data.publicKey,
+          regToken: data.regToken,
+          serverUrl: data.serverUrl,
+        };
+
+        const time = new Date(data.time);
+        log.debug(`Setting system time to configuring app's time`, time);
+
+        exec('time_genoff', [time.getTime().toString()])
+          .catch((error) => log.warn(`Unable to set system time`, error))
+          .then(() => this._completeRegistration(secret));
       }
-
-      assert(!this._dismissTimeout);
-      assert(!this._wifiErrorCount);
-
-      const secret = {
-        accessPoint: data.accessPoint,
-        password: data.password,
-        publicKey: data.publicKey,
-        regToken: data.regToken,
-        serverUrl: data.serverUrl,
-      };
-
-      const time = new Date(data.time);
-      log.debug(`Setting system time to configuring app's time`, time);
-
-      exec('time_genoff', [time.getTime().toString()])
-        .catch((error) => log.warn(`Unable to set system time`, error))
-        .then(() => this._completeRegistration(secret));
       return;
 
     case `dismiss`:

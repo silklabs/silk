@@ -24,9 +24,9 @@
     "uuid": "2.0.1"
   },
   "devDependencies": {
-    "babel-eslint": "6.0.4",
+    "babel-eslint": "6.1.0",
     "copy-webpack-plugin": "2.1.5",
-    "eslint": "1.10.3",
+    "eslint": "2.13.1",
     "eslint-config-silk": "^0.17.0",
     "event-to-promise": "0.7.0",
     "flow-bin": "0.28.0",

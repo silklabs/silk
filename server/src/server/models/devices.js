@@ -11,7 +11,7 @@ import { ObjectId } from 'promised-mongo';
 import AccessToken from 'silk-api/src/access_token';
 
 const DEVICE_TYPES = [
-  'camera'
+  'camera',
 ];
 
 const PUBLIC_KEY = Joi.string().hex().required();
@@ -40,20 +40,20 @@ export default class Devices extends Base {
   static ERROR = {
     duplicatePublicKey: 'DuplicatePublicKey',
     unknownDevice: 'UnknownDevice',
-    invalidRegistrationToken: 'InvalidRegistrationToken'
+    invalidRegistrationToken: 'InvalidRegistrationToken',
   };
 
   static INDEX = [
     {
       props: {
-        'accessToken.publicKey': 1
+        'accessToken.publicKey': 1,
       },
-      options: { unique: true }
+      options: { unique: true },
     },
     {
       props: {
-        'accountId': 1
-      }
+        'accountId': 1,
+      },
     },
   ];
 
@@ -108,14 +108,14 @@ export default class Devices extends Base {
 
         // The registration token for this device (usually the publicKey of this
         // device signed by the private key of an accountToken).
-        token: Joi.string().required()
+        token: Joi.string().required(),
       }).required(),
 
       /**
        * TODO: Device registration details are very important details that we
        * should monitor closely... We likely will want to record more details.
        */
-    })
+    }),
   };
 
   genIsRegistrationTokenValid(
@@ -153,12 +153,12 @@ export default class Devices extends Base {
       name: payload.name,
       registered: true,
       accessToken: {
-        publicKey: payload.publicKey
+        publicKey: payload.publicKey,
       },
       registration: {
         complete: false,
-        token: payload.registrationToken
-      }
+        token: payload.registrationToken,
+      },
     }, 'record');
 
     // Insert the document but do not override any other accounts with the same
@@ -171,7 +171,7 @@ export default class Devices extends Base {
 
     if (insert.n === 1) {
       let device = await this.findByPublicKey({
-        publicKey: record.accessToken.publicKey
+        publicKey: record.accessToken.publicKey,
       });
       return { id: device._id };
     }
@@ -186,8 +186,8 @@ export default class Devices extends Base {
       { 'accessToken.publicKey': payload.publicKey },
       {
         $set: {
-          registered: false
-        }
+          registered: false,
+        },
       }
     );
 
@@ -214,7 +214,7 @@ export default class Devices extends Base {
     payload = this.validate(payload, 'validateRegistration');
 
     let device = await this.findByPublicKey({
-      publicKey: payload.publicKey
+      publicKey: payload.publicKey,
     });
 
     if (!device) {
@@ -234,8 +234,8 @@ export default class Devices extends Base {
       { _id: device._id },
       {
         $set: {
-          'registration.complete': true
-        }
+          'registration.complete': true,
+        },
       }
     );
 
@@ -258,7 +258,7 @@ export default class Devices extends Base {
     let { publicKey } = payload;
 
     return await this.collection.findOne({
-      'accessToken.publicKey': publicKey
+      'accessToken.publicKey': publicKey,
     });
   }
 
@@ -270,7 +270,7 @@ export default class Devices extends Base {
     return await this.collection.find({
       // Only return devices which are actively registered with the server...
       'registered': true,
-      'accountId': accountId
+      'accountId': accountId,
     }).toArray();
   }
 
@@ -286,8 +286,8 @@ export default class Devices extends Base {
       accountId,
       'accessToken.publicKey': {
         $exists: true,
-        $in: publicKeys
-      }
+        $in: publicKeys,
+      },
     };
 
     // Run the query and stick the results in a set so we can verify all

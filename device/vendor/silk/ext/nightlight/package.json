@@ -10,15 +10,14 @@
     "test": "echo \"\""
   },
   "symlinkDependencies": {
-    "silk-buildjs": "/pub/buildjs",
-    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue"
+    "silk-buildjs": "/pub/buildjs"
   },
   "dependencies": {
     "babel-runtime": "6.9.0"
   },
   "private": true,
   "devDependencies": {
-    "eslint": "1.10.3",
-    "babel-eslint": "6.0.4"
+    "eslint": "2.13.1",
+    "babel-eslint": "6.1.0"
   }
 }

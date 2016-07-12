@@ -39,7 +39,7 @@ suite('outbox manager', () => {
     _getMetadata() {
       return {
         url: this.url,
-        args: this.args
+        args: this.args,
       };
     }
 
@@ -64,7 +64,7 @@ suite('outbox manager', () => {
   setup(async () => {
     server = await createStreamServer();
     subject = createOutbox({
-      storagePath: FIXTURE_DIR
+      storagePath: FIXTURE_DIR,
     });
     subject.queues.get('default-queue').concurrency = 20;
     subject.queues.get('default-queue').diskConcurrency = 20;

@@ -16,6 +16,7 @@
     "svm": "0.1.1"
   },
   "devDependencies": {
+    "eslint": "2.13.1",
     "mocha": "2.4.5"
   },
   "license": "proprietary",

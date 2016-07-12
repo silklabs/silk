@@ -1,1 +1,6 @@
-../gonk-build-glue/.eslintrc
+{
+  "extends": "eslint-config-silk",
+  "env": {
+    "mocha": true
+  }
+}

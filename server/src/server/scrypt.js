@@ -8,6 +8,7 @@ let scrypt;
 try {
   scrypt = require('scrypt');
 } catch (err) {
+  // eslint-disable-next-line no-console
   console.warn('Scrypt disabled....');
 }
 

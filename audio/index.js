@@ -131,7 +131,7 @@ export function parsePackedSVMModel(modelArrayBuffer) {
   // NB: this is the "internal representation" that svmjs wants for
   // its `fromJSON()` API.  Please don't change the property names.
   return {
-    N, D, b, kernelType: 'rbf', rbfSigma, alpha, labels, data: vectors
+    N, D, b, kernelType: 'rbf', rbfSigma, alpha, labels, data: vectors,
   };
 }
 

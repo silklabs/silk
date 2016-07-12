@@ -33,10 +33,10 @@
     "regression": "1.2.1"
   },
   "devDependencies": {
-    "babel-eslint": "6.0.4",
-    "eslint": "1.10.3",
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1",
     "eslint-plugin-import": "0.12.0",
-    "eslint-plugin-react": "3.16.1",
+    "eslint-plugin-react": "5.2.2",
     "event-to-promise": "0.7.0",
     "mkdirp": "0.5.1",
     "mocha": "2.4.5"

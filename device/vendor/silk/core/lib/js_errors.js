@@ -92,10 +92,11 @@ export default function(crashreporter) {
                                            stream2.getStoreSize(),
                                            { failedStack: err.stack }
                                           );
-      } catch(ex2) {
+      } catch (ex2) {
         log.error('Failed to report exception while reporting ${type}', ex2);
       }
     }
+    return null;
   };
 
   process.on('uncaughtException',

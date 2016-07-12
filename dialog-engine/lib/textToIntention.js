@@ -90,7 +90,9 @@ export default class TextToIntention {
         const req = https.request(opts, (res) => {
           let json = '';
           res.once(`error`, (error) => reject(error));
-          res.on('data', (chunk) => json += chunk);
+          res.on('data', (chunk) => {
+            json += chunk;
+          });
           res.once('end', () => {
             if (res.statusCode === 200) {
               log.info(`Request complete`);
@@ -99,7 +101,7 @@ export default class TextToIntention {
               let intent;
               try {
                 intent = this._parseResponse(json);
-              } catch(error) {
+              } catch (error) {
                 reject(error);
                 return;
               }

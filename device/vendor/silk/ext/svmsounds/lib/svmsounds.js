@@ -70,7 +70,7 @@ class SoundRecognizer {
           id: event.eventId,
           tag: 'sound',
           name: e.soundClass,
-          when: Math.round(1000 * e.startTime) || 0
+          when: Math.round(1000 * e.startTime) || 0,
         }]);
         event.timeoutId = setTimeout(emitEventPing, EVENT_PING_INTERVAL_MS);
       };

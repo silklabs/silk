@@ -15,7 +15,7 @@ let baseversion = {
 };
 try {
   baseversion.actual = require('base_version'); // eslint-disable-line import/no-require
-} catch(e) {
+} catch (e) {
   console.error(`Unable to load base_version: ${e}`); // eslint-disable-line
 }
 if (baseversion.actual !== baseversion.expected) { // TODO: use semver

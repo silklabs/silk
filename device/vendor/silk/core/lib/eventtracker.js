@@ -114,7 +114,7 @@ export default class EventTracker extends EventEmitter {
       tag: event.tag,
       startUTC: event.when,
       endUTC: event.when + DEFAULT_EVENT_LENGTH_MS,
-      data: {tag: event.tag, name: event.name}
+      data: {tag: event.tag, name: event.name},
     };
     log.info(`Recorded event '${record.tag}'`);
 
@@ -143,7 +143,7 @@ export default class EventTracker extends EventEmitter {
         startUTC: record.startUTC,
         endUTC: record.endUTC,
         data: record.data,
-      }]
+      }],
     });
 
     this.outbox.addToQueue(operation, null);

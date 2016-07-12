@@ -20,21 +20,21 @@ suite('time metadata', () => {
         metaType,
         startUTC: 0,
         endUTC: 100,
-        url: 'one'
+        url: 'one',
       },
       {
         deviceId,
         metaType,
         startUTC: 100,
         endUTC: 200,
-        url: 'two'
+        url: 'two',
       },
       {
         deviceId,
         metaType,
         startUTC: 200,
         endUTC: 300,
-        url: 'three'
+        url: 'three',
       },
     ];
 
@@ -45,28 +45,28 @@ suite('time metadata', () => {
     let one = await subject.findNearTime({
       deviceId,
       metaType,
-      time: 77
+      time: 77,
     });
     assert.equal(one.url, 'one');
 
     let two = await subject.findNearTime({
       deviceId,
       metaType,
-      time: 100
+      time: 100,
     });
     assert.equal(two.url, 'two');
 
     let three = await subject.findNearTime({
       deviceId,
       metaType,
-      time: 201
+      time: 201,
     });
     assert.equal(three.url, 'three');
 
     let outOfBounds = await subject.findNearTime({
       deviceId,
       metaType,
-      time: 400
+      time: 400,
     });
     assert.equal(outOfBounds.url, 'three');
   });

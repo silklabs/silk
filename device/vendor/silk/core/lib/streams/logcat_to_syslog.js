@@ -26,7 +26,7 @@ export default class LogcatToSyslog extends Transform {
 
   constructor(host) {
     super({
-      writableObjectMode: true
+      writableObjectMode: true,
     });
     assert(typeof host === 'string');
     this.host = host;

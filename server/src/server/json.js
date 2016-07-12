@@ -36,7 +36,7 @@ let middleware = bodyParser.json({
   // against a signed signature.
   verify: (req, res, buf) => {
     req.requestHash = requestHash(req, buf);
-  }
+  },
 });
 
 export default middleware;

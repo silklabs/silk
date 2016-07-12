@@ -37,13 +37,13 @@ export class BlobUploadOperation extends StreamOperation {
       this.constructor.META_TYPE,
       {
         contentLength: this.size,
-        contentType: this.constructor.CONTENT_TYPE
+        contentType: this.constructor.CONTENT_TYPE,
       }
     );
 
     let writer = httpStream(putUrl, {
       method: 'PUT',
-      headers: putHeaders
+      headers: putHeaders,
     });
 
     writer.putUrl = putUrl;
@@ -80,7 +80,7 @@ export class BlobUploadOperation extends StreamOperation {
   _getMetadata() {
     return {
       size: this.size,
-      metadata: this.metadata
+      metadata: this.metadata,
     };
   }
 }

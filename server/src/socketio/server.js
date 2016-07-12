@@ -46,7 +46,7 @@ export default async function main (config: any): any {
     // Clients must bring their own socket.io package.
     serveClient: false,
     // Only use fast websocket transport...
-    transports: ['websocket']
+    transports: ['websocket'],
   });
 
   let db = await createDb(config);
@@ -134,7 +134,7 @@ export default async function main (config: any): any {
     let res = {
       sendStatus(code) {
         next(new Error(`Auth error ${code}`));
-      }
+      },
     };
 
     let parsed = URL.parse(req.url, true);

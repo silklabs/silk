@@ -5,5 +5,5 @@ module.exports = {
     new CopyWebpack([
       { from: 'model', to: 'model' },
     ]),
-  ]
+  ],
 };

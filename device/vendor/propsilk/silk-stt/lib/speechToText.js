@@ -163,7 +163,7 @@ export default class SpeechToText {
         let response: ?Object = null;
         try {
           response = JSON.parse(json);
-        } catch(error) {
+        } catch (error) {
           this._callCallback(error);
           return;
         }

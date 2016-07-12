@@ -4,5 +4,5 @@ module.exports = {
     'silk-core-version',
     'silk-sysutils',
     'silk-wifi',
-  ]
-}
+  ],
+};

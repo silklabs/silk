@@ -20,8 +20,8 @@
     "ws": "1.0.1"
   },
   "devDependencies": {
-    "babel-eslint": "6.0.4",
-    "eslint": "1.10.3",
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1",
     "mocha": "2.4.5",
     "node-webrtc": "git+ssh://github.com/silklabs/node-webrtc#master"
   },

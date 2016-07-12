@@ -28,7 +28,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
   routes.use(PREFIX, authorizeAccount({
     nonce: ctx.nonce,
-    accounts: ctx.accounts
+    accounts: ctx.accounts,
   }));
 
   routes.use(PREFIX, (req, res, next) => {
@@ -64,7 +64,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     // NOTE: This intentionally is identical to the format that influxdb itself
     // returns we make no attempt to transform or change the output.
     output: CrashMetadata.SCHEMA.record.keys({
-      id: Joi.string().required()
+      id: Joi.string().required(),
     }),
     input: Joi.object(),
   }, async (req, res) => {
@@ -72,7 +72,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     let result;
     try {
       result = await ctx.crashMeta.get(id);
-    } catch(e) {
+    } catch (e) {
       res.sendStatus(404);
       return;
     }
@@ -93,7 +93,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     // NOTE: This intentionally is identical to the format that influxdb itself
     // returns we make no attempt to transform or change the output.
     output: Joi.array().items(CrashMetadata.SCHEMA.record.keys({
-      id: Joi.string().required()
+      id: Joi.string().required(),
     }).optional()),
     input: CrashMetadata.SCHEMA.find,
   }, async (req, res) => {

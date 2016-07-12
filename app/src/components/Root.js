@@ -48,7 +48,6 @@ const routeToComponentMap = {
 };
 
 export default class Root extends AsyncComponent {
-
   state = {
     initialized: false,
     serverUrl: null,

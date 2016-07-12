@@ -45,7 +45,7 @@ export default class TeeStream extends Writable {
           // write). This can happen with network errors/etc... Remove stream
           // from the tee.
           this._removeHandle(handle);
-        }
+        },
       };
 
       stream.on('error', handle.onError);
@@ -137,7 +137,7 @@ export default class TeeStream extends Writable {
     let pending = this._streamHandles.length;
     if (!pending) {
       process.nextTick(cb);
-      return true;
+      return;
     }
 
     this._streamHandles.forEach((handle) => {

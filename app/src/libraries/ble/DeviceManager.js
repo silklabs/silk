@@ -300,6 +300,7 @@ export class DeviceSession extends RobustEventEmitter {
       this._model = data.model;
       this._version = data.version;
       // TODO: see https://github.com/silklabs/silk-app/issues/597
+      // eslint-disable-next-line no-constant-condition
       if (false && (`image` in data)) {
         this._image = new Buffer(data.image);
       }

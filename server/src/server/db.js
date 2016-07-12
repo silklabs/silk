@@ -7,6 +7,6 @@ export default async function (config) {
   // XXX: this could and may be async in the future.
   return mongo(config.db.connectionString, {
     loggerLevel: 'info',
-    reconnectTries: Infinity
+    reconnectTries: Infinity,
   });
 }

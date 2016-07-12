@@ -25,7 +25,7 @@ const CLAIM_SCHEMA = Joi.object().keys({
   // A request unique value (UUID).
   jti: Joi.string().guid().required(),
   // Issued time (as json date).
-  iat: Joi.date().required()
+  iat: Joi.date().required(),
 }).required().unknown(true);
 
 /**
@@ -113,7 +113,7 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
      * the client.
      */
     req.unsafeJwt = jwt.decode(signature, {
-      complete: true
+      complete: true,
     });
 
     let jwtHeader = req.unsafeJwt.header;
@@ -134,7 +134,7 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
     try {
       verified = jwt.verify(signature, new Buffer(publicKey, 'hex'), {
         algorithms: ['ed25519'],
-        jwa
+        jwa,
       });
     } catch (err) {
       log.error('JWT validation fail', req.path, req.method, err);
@@ -180,7 +180,7 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
        * allow some extra buffer since timing is somewhat fuzzy from machine to
        * machine.
        */
-      expires: new Date(Date.now() + (TOKEN_LIFETIME * 2))
+      expires: new Date(Date.now() + (TOKEN_LIFETIME * 2)),
     });
 
     req.publicKey = publicKey;

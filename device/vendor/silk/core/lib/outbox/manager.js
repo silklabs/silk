@@ -127,7 +127,7 @@ export class Outbox {
     let defaultOptions = {
       concurrency: DEFAULT_QUEUE_CONCURRENCY,
       maxRetries: DEFAULT_QUEUE_MAX_RETRIES,
-      maxEntries: DEFAULT_QUEUE_MAX_ENTRIES
+      maxEntries: DEFAULT_QUEUE_MAX_ENTRIES,
     };
 
     // higherPriorityQueueName defines another queue that should take precedence

@@ -315,7 +315,7 @@ class AudioDiag extends EventEmitter {
     let opts = {
       autoConnect: true,
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket'],
     };
     this.socket = require('socket.io-client')(serverUrl, opts); // eslint-disable-line import/no-require
 

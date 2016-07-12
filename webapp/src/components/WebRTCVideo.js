@@ -19,7 +19,7 @@ export class VideoRenderer extends React.Component {
     return (
       <section>
         <h1>{media.label}</h1>
-        <video ref="video" autoplay={true} />
+        <video ref="video" autoPlay={true} />
       </section>
     );
   }

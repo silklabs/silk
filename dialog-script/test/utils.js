@@ -48,7 +48,7 @@ export function testScript(generator, script) {
       let next;
       try {
         next = error ? generator.throw(error) : generator.next(provide);
-      } catch(e) {
+      } catch (e) {
         if (lastError) {
           assert.strictEqual(e, lastError);
           lastError = null;
@@ -64,7 +64,7 @@ export function testScript(generator, script) {
       } else {
         assert(!next.done, `Script[${index}] finished early`);
       }
-    } catch(error) {
+    } catch (error) {
       console.error(`State[${index}] Error: %s`, error); // eslint-disable-line no-console
       throw error;
     }
@@ -99,7 +99,7 @@ export async function testUserScript(dialogEngine, script): Promise<void> {
       assert.strictEqual(text, state.hear);
       assert.strictEqual(nextState, state.nextState);
     }
-  } catch(error) {
+  } catch (error) {
     console.error(`State[${index}] Error: %s`, error); // eslint-disable-line no-console
     throw error;
   }

@@ -5,5 +5,5 @@ module.exports = {
     'silk-alog',
     'silk-capture',
     'silk-sysutils',
-  ]
-}
+  ],
+};

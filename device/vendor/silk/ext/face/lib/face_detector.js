@@ -176,7 +176,7 @@ export default class FaceDetector extends EventEmitter {
                 y: hogFaceRect.forehead.y * yScale,
                 width: hogFaceRect.forehead.width * xScale,
                 height: hogFaceRect.forehead.height * yScale,
-              }
+              },
             });
           } else {
             resolve(null);

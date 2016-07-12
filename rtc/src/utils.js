@@ -89,7 +89,7 @@ export async function waitForDataChannel(
   name: string,
 ): Promise<RTCDataChannel> {
   let event;
-  while(
+  while (
     (event = await eventToPromise(peerConnection, 'datachannel'))
   ) {
     let { channel } = event;
@@ -111,7 +111,7 @@ export async function waitForDataChannels(
   let result = new Map();
 
   let event;
-  while(
+  while (
     remaining.length &&
     (event = await eventToPromise(peerConnection, 'datachannel'))
   ) {

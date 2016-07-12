@@ -29,6 +29,8 @@ async function httpCheck(res) {
   let text = await res.text();
   console.error(`Error in request`, text);
   process.exit(1);
+  // Make eslint happy ...
+  return false;
 }
 
 
@@ -183,6 +185,7 @@ async function main() {
     return await expandSourcemap(args);
   default:
     // no action...
+    return null;
   }
 }
 

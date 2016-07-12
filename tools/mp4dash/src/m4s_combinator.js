@@ -73,7 +73,7 @@ function main(): void {
 
   try {
     fs.statSync(inputDir);
-  } catch(err) {
+  } catch (err) {
     if (err.code !== `ENOENT`) {
       throw err;
     }
@@ -90,7 +90,7 @@ function main(): void {
     let stats;
     try {
       stats = fs.statSync(outputPath);
-    } catch(err) {
+    } catch (err) {
       if (err.code !== `ENOENT`) {
         throw err;
       }
@@ -107,7 +107,7 @@ function main(): void {
     let stats;
     try {
       stats = fs.statSync(outputPath);
-    } catch(err) {
+    } catch (err) {
       if (err.code === `ENOENT`) {
         throw new Error(`Output directory '${outputPath}' does not exist`);
       }
@@ -128,7 +128,7 @@ function main(): void {
   let inputFiles;
   try {
     inputFiles = fs.readdirSync(inputDir);
-  } catch(err) {
+  } catch (err) {
     if (err.code !== `ENOTDIR`) {
       throw err;
     }
@@ -173,7 +173,7 @@ function main(): void {
 
 try {
   main();
-} catch(err) {
+} catch (err) {
   log.error(err.stack);
   process.exit(1); // eslint-disable-line no-process-exit
 }

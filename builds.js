@@ -178,6 +178,12 @@ const builds = {
     events: ['push', 'pr'],
     branches: ['master', 'next', 'release'],
   },
+  'lint': {
+    travis_yml: '.linttravis.yml',
+    files: ['**/.eslintrc', '**/.eslintignore', '**/*.js', '**/*.json'],
+    events: ['push', 'pr'],
+    branches: ['master', 'next', 'release'],
+  },
   'npm-dialog-test': runNpmTestForPackages([
     'dialog-engine',
     'dialog-script',

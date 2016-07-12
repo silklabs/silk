@@ -47,7 +47,7 @@ export default class Signer {
         table: tableName,
         account: creds.account,
         accessKey: creds.accessKey,
-        ...options
+        ...options,
       })]);
     }
 

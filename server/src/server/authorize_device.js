@@ -21,7 +21,7 @@ export type AuthorizeDeviceConfig = {
 export default function (ctx: AuthorizeDeviceConfig, options: ?MiddlewareOverrides): MiddlewareFn {
   const method = async (publicKey: string, req: any): Promise<?string> => {
     let device = await ctx.devices.findByPublicKey({
-      publicKey
+      publicKey,
     });
 
     if (!device) {

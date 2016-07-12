@@ -98,8 +98,8 @@ export default class Base {
     // TODO: Add more robust ids or messages.
     return {
       error: {
-        type: error
-      }
+        type: error,
+      },
     };
   }
 
@@ -117,7 +117,7 @@ export default class Base {
     }
 
     let options = {
-      allowUnknown: !strict
+      allowUnknown: !strict,
     };
 
     let validation = Joi.validate(object, schemaObject, options);

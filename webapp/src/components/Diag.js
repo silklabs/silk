@@ -81,7 +81,7 @@ class DiagImageTable extends React.Component {
       // resolve before the component is first rendered (unlikely) then the
       // incorrect view will be shown.
       if (imageFilter) {
-        this.state.imageFilter = imageFilter;
+        this.setState({ imageFilter });
         this.onDiagFrameFilterApply();
       }
     });
@@ -495,7 +495,7 @@ export default class Diag extends React.Component {
       // resolve before the component is first rendered (unlikely) then the
       // incorrect view will be shown.
       if (view) {
-        this.state.view = view;
+        this.setState({ view });
       }
     });
   }
@@ -698,7 +698,7 @@ class DiagLogcat extends DiagLog {
     let filterRx;
     try {
       filterRx = new RegExp(this.state.filter, 'i');
-    } catch(e) {
+    } catch (e) {
       filterRx = /INVALID/;
     }
     return (
@@ -710,6 +710,7 @@ class DiagLogcat extends DiagLog {
                // NOTE: ansi_to_html() will also escape HTML
                // characters (&, <) so using "dangerouslySetInnerHTML"
                // should be safe
+               // eslint-disable-next-line react/no-danger
                return <div dangerouslySetInnerHTML={{__html: html}} />;
              })
         }

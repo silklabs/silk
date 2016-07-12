@@ -64,7 +64,7 @@ async function inlineAssets(baseUrl) {
     if (type === '.html') {
       // Strip all external css file references for maximum email compat.
       inlined = await inline(content, {
-        url: baseUrl
+        url: baseUrl,
       });
     }
 
@@ -94,6 +94,7 @@ async function main() {
 export default main;
 
 if (process.mainModule === module) {
+  // eslint-disable-next-line no-console
   console.log('Building email templates...');
   main().catch(err => {
     setTimeout(() => {
@@ -101,4 +102,3 @@ if (process.mainModule === module) {
     });
   });
 }
-

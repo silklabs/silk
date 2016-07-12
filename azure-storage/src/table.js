@@ -163,6 +163,7 @@ function extractErrorCode(err: Object): ?string {
       return err.body['odata.error'].code;
     }
   }
+  return null;
 }
 
 const COMMON_HEADERS = {

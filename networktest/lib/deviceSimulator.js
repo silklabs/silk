@@ -142,7 +142,10 @@ export default class DeviceSimulator {
     };
 
     return api.metadataPublisher.create(metadata)
-    .then(result => this._previousId = result.id)
+    .then((result) => {
+      this._previousId = result.id;
+      return this._previousId;
+    })
     .catch(util.processthrow);
   }
 

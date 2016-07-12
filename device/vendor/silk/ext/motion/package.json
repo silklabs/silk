@@ -19,15 +19,14 @@
     "silk-babeldeps": "/babeldeps",
     "silk-buildjs": "/pub/buildjs",
     "silk-exttest": "/device/vendor/silk/exttest",
-    "silk-gonk-build-glue": "/device/vendor/silk/gonk-build-glue",
     "silk-log": "/pub/log"
   },
   "devDependencies": {
     "copy-webpack-plugin": "2.1.5",
     "event-to-promise": "0.7.0",
     "mocha": "2.4.5",
-    "eslint": "1.10.3",
-    "babel-eslint": "6.0.4"
+    "eslint": "2.13.1",
+    "babel-eslint": "6.1.0"
   },
   "private": true
 }

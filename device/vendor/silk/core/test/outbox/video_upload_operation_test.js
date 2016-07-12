@@ -24,7 +24,7 @@ suite('VideoUploadOperation', () => {
         startUTC: Date.now(),
         endUTC: Date.now() + 1000,
         data: {},
-      }
+      },
     });
 
     log.info('Uploading video');
@@ -34,7 +34,7 @@ suite('VideoUploadOperation', () => {
     let result = await account.metadata.findOneAfterTime({
       metaType: 'video',
       deviceId: device.accessToken.toString(),
-      time: 0
+      time: 0,
     });
     log.info('Found it:', result);
 

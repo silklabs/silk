@@ -32,7 +32,7 @@ module.exports = function(opts) {
         log.error('Error responding to route:', req.path, err.stack);
         res.status(500).json({
           // err.stack is nice string output useful for debugging...
-          error: err.stack
+          error: err.stack,
         });
       });
     };

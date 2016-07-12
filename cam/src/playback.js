@@ -52,8 +52,12 @@ export default class VideoPlayback {
     let error = null;
     let info = null;
     let mp4box = new MP4Box();
-    mp4box.onError = (err) => error = err;
-    mp4box.onReady = (moov) => info = moov;
+    mp4box.onError = (err) => {
+      error = err;
+    };
+    mp4box.onReady = (moov) => {
+      info = moov;
+    };
     (buffer: any).fileStart = 0; // MP4Box needs this
     mp4box.appendBuffer(buffer);
     mp4box.flush();

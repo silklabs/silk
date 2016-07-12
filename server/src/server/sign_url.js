@@ -38,7 +38,7 @@ export function parseUrl(url: string): BlobConfig {
     cloud: 'aws',
     region,
     bucket,
-    key
+    key,
   };
 }
 
@@ -60,6 +60,6 @@ export default function signUrl(url: string, expireInSeconds: number = SECONDS_I
     Key: key,
     Bucket: bucket,
     // Units in seconds...
-    Expires: expireInSeconds
+    Expires: expireInSeconds,
   });
 }

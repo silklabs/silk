@@ -53,7 +53,7 @@ suite('network_status', () => {
 
     let interval = 2000;
     let state = createNetworkStatus(interval, {
-      wifiOnline: true
+      wifiOnline: true,
     });
 
     /**

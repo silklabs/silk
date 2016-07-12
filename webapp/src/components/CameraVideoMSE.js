@@ -431,7 +431,7 @@ export default class CameraVideo extends React.Component {
                                    canvas.height / pixelRatio,
                                    videoStartTimestamp,
                                    videoEndTimestamp);
-        } catch(err) {
+        } catch (err) {
           log.warn(err);
         }
 
@@ -998,7 +998,9 @@ export default class CameraVideo extends React.Component {
           </div>
           <div className="form-group" style={styles.debugMenuFormGroup}>
             <ButtonInput
-              onClick={() => this.dropNextSegment = true}
+              onClick={() => {
+                this.dropNextSegment = true;
+              }}
               bsSize="small"
               standalone>
               Drop next segment

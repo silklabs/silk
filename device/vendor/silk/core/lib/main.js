@@ -68,7 +68,7 @@ import startCollectingProcessMetrics from './process_metrics';
 initProfiler();
 
 api.metrics.add(new JSStartup({
-  startupMS: new MetricTypes.Integer(Math.floor(process.uptime() * 1000))
+  startupMS: new MetricTypes.Integer(Math.floor(process.uptime() * 1000)),
 }));
 
 // Amount of time to wait for async shutdown before forcing power status change.
@@ -288,6 +288,7 @@ function main() {
         log.info('Load configuration');
         return config.init(server);
       }
+      return null;
     })
     .then(maybeAbortBoot)
     .then(() => {
@@ -358,23 +359,25 @@ server.on('cmd', cmd => {
   // server/device, move this processing into the diag/timeline/camera objects
   // themselves.
   case 'livestream':
-    log.info('livestream command:', JSON.stringify(cmd));
-    let flag = cmd.diag ? 1 : 0;
-    diag.setConfig({dash: flag, logcat: flag});
-    timeline.configLiveStream({
-      preview: !!cmd.preview,
-      video: !!cmd.video,
-      diag: !!cmd.diag,
-      objects: !!cmd.objects,
-    });
-    cameraClipRecorder.setDiag(!!cmd.diag);
+    {
+      log.info('livestream command:', JSON.stringify(cmd));
+      let flag = cmd.diag ? 1 : 0;
+      diag.setConfig({dash: flag, logcat: flag});
+      timeline.configLiveStream({
+        preview: !!cmd.preview,
+        video: !!cmd.video,
+        diag: !!cmd.diag,
+        objects: !!cmd.objects,
+      });
+      cameraClipRecorder.setDiag(!!cmd.diag);
 
-    // FIXME/TODO: we want to notify the audio assistant extension
-    // that livestream state has changed, but we don't want to notify
-    // *all* extensions ... so explicitly target the audio extension
-    // for now (if it happens to be loaded).
-    cmd.targetName = 'samsungtv';
-    ext.onCommand(cmd);
+      // FIXME/TODO: we want to notify the audio assistant extension
+      // that livestream state has changed, but we don't want to notify
+      // *all* extensions ... so explicitly target the audio extension
+      // for now (if it happens to be loaded).
+      cmd.targetName = 'samsungtv';
+      ext.onCommand(cmd);
+    }
     break;
   case 'reboot':
     log.info('reboot command:', JSON.stringify(cmd));
@@ -486,10 +489,11 @@ function shutdown(finalPromiseFactory) {
     return wifi.shutdown();
   })
   .then(() => {
-    if (btle) {
-      log.info('BTLE shutdown');
-      return btle.changeMode(btle.MODE_OFF);
+    if (!btle) {
+      return null;
     }
+    log.info('BTLE shutdown');
+    return btle.changeMode(btle.MODE_OFF);
   })
   .then(() => {
     log.info('Server disconnect');
@@ -538,6 +542,7 @@ function shutdown(finalPromiseFactory) {
 
     log.info('Powering off');
     util.setprop('sys.powerctl', 'shutdown');
+    return null;
   });
 }
 

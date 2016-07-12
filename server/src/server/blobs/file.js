@@ -37,7 +37,7 @@ function waitForPipe(writer) {
     eventToPromise(writer, 'error').then(err => {
       throw err;
     }),
-    eventToPromise(writer, 'finish')
+    eventToPromise(writer, 'finish'),
   ]);
 }
 
@@ -84,7 +84,7 @@ async function serveStatic(absolutePath, details, req, res) {
     length = (range.end - range.start) + 1;
     Object.assign(headers, {
       'Content-Range': rangeStr,
-      'Content-Length': length
+      'Content-Length': length,
     });
   } else {
     length = details.contentLength;
@@ -97,7 +97,7 @@ async function serveStatic(absolutePath, details, req, res) {
   res.status(isRange ? 206 : 200);
   let stream = fs.createReadStream(absolutePath, {
     start: range.start,
-    end: range.start + length
+    end: range.start + length,
   });
   stream.pipe(res);
   await waitForPipe(res);
@@ -148,12 +148,12 @@ class FileBlobHandler {
 
     const savedHeaders = {
       contentLength,
-      contentType
+      contentType,
     };
 
     try {
       await fs.writeFile(headersPath, JSON.stringify(savedHeaders));
-    } catch(err) {
+    } catch (err) {
       await unlinkIfExists(headersPath);
       throw err;
     }
@@ -163,7 +163,7 @@ class FileBlobHandler {
 
     const putHeaders = {
       'Content-Length': contentLength,
-      'Content-Type': contentType
+      'Content-Type': contentType,
     };
 
     let metadata = {
@@ -171,7 +171,7 @@ class FileBlobHandler {
       key,
       putUrl,
       contentLength,
-      contentType
+      contentType,
     };
 
     this.keyMap.set(key, metadata);
@@ -224,7 +224,7 @@ class FileBlobHandler {
 
     try {
       await waitForPipe(writer);
-    } catch(err) {
+    } catch (err) {
       log.warn(`Failed to write to '${blobPath}', unlinking`);
       await unlinkIfExists(blobPath);
       throw err;

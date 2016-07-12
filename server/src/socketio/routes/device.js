@@ -126,23 +126,25 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
         sendToDeviceRoom('preview', video);
         break;
       case 'mp4':
-        const received = Date.now();
-        const device = ensureValidDevice();
-        if (!device) {
-          return;
+        // Create lexical scope ...
+        {
+          const received = Date.now();
+          const device = ensureValidDevice();
+          if (!device) {
+            return;
+          }
+          sendToDeviceRoom('video', video, device, received);
+
+          let networkDuration = received - video.deviceEmitMs;
+
+          // This seems really unlikely but if the clock isn't perfect...
+          if (networkDuration < 0) {
+            log.warn(`Bad networkDuration: ${networkDuration}`);
+            networkDuration = 0;
+          }
+
+          ctx.metricsAgent.add(new VideoMetrics.Network(networkDuration));
         }
-        sendToDeviceRoom('video', video, device, received);
-
-        let networkDuration = received - video.deviceEmitMs;
-
-        // This seems really unlikely but if the clock isn't perfect...
-        if (networkDuration < 0) {
-          log.warn(`Bad networkDuration: ${networkDuration}`);
-          networkDuration = 0;
-        }
-
-        ctx.metricsAgent.add(new VideoMetrics.Network(networkDuration));
-
         break;
       default:
         log.error(`Unknown video type ${video.contents}`);

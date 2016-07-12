@@ -164,7 +164,7 @@ export default class StreamOperation extends Operation {
     try {
       await Promise.race([
         eventToPromise(writer, 'close'),
-        streamTimeout(writer, readable, this.constructor.MAX_UPLOAD_TIME)
+        streamTimeout(writer, readable, this.constructor.MAX_UPLOAD_TIME),
       ]);
     } catch (err) {
       // We have completely failed to write the stream for one reason or
@@ -173,7 +173,7 @@ export default class StreamOperation extends Operation {
     }
 
     log.info(`(${this.constructor.name}) finished write operation`, {
-      error
+      error,
     });
 
     // Successfully uploaded everything hooray...
@@ -187,7 +187,7 @@ export default class StreamOperation extends Operation {
   _getMetadata() {
     return Object.assign({
       createdAt: Date.now(),
-      arguments: this.arguments
+      arguments: this.arguments,
     });
   }
 

@@ -104,7 +104,8 @@ function getNPM() {
     let npm = require('npm/lib/npm');
     npm.load({}, (err) => {
       if (err) {
-        return reject(err);
+        reject(err);
+        return;
       }
       accept(npm);
     });
@@ -245,7 +246,8 @@ export class Packages {
 
       npm.commands.install(this.root, npmInstallList, (err) => {
         if (err) {
-          return reject(err);
+          reject(err);
+          return;
         }
 
         let globalPkgPath = path.join(this.nodeModulesPath, '../package.json');

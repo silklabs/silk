@@ -54,7 +54,7 @@ export default class SegmentProvider extends EventEmitter {
     let byteArray;
     try {
       byteArray = this._playback.processSegment(arrayBuffer);
-    } catch(err) {
+    } catch (err) {
       log.error(err);
       throw err;
     }

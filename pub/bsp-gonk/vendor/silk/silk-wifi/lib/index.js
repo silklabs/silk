@@ -225,22 +225,25 @@ class WpaMonitor extends EventEmitter {
           this._reconnect(cmd);
           break;
         case 'CTRL-EVENT-DISCONNECTED':
-          let reason = '';
-          if ((found = extra.match(/ reason=([0-9]+)/))) {
-            let reasonIndex = Number(found[1]);
-            reason = WIFI_DISCONNECT_REASONS[reasonIndex];
-            log.info(`wifi disconnect reason: ${reason}`);
-          }
+          // Lexical scope ...
+          {
+            let reason = '';
+            if ((found = extra.match(/ reason=([0-9]+)/))) {
+              let reasonIndex = Number(found[1]);
+              reason = WIFI_DISCONNECT_REASONS[reasonIndex];
+              log.info(`wifi disconnect reason: ${reason}`);
+            }
 
-          /**
-           * This event is emitted when wifi is disconnected from an access point
-           *
-           * @event disconnected
-           * @memberof silk-wifi
-           * @instance
-           * @property {string} reason reason for disconnection
-           */
-          this.emit('disconnected', reason);
+            /**
+             * This event is emitted when wifi is disconnected from an access point
+             *
+             * @event disconnected
+             * @memberof silk-wifi
+             * @instance
+             * @property {string} reason reason for disconnection
+             */
+            this.emit('disconnected', reason);
+          }
           break;
         case 'CTRL-EVENT-SCAN-STARTED':
           break;
@@ -331,6 +334,7 @@ function wpaCliGetNetworkIds() {
           if ((found = netInfo.match(/^([0-9]+)/))) {
             return found[1];
           }
+          return null;
         }
       );
       return Promise.resolve(ids.filter(notnull => notnull));
@@ -462,6 +466,7 @@ export class Wifi extends EventEmitter {
        * @instance
        */
       this.emit('online');
+      return null;
     })
     .catch(err => {
       log.warn(`Error: DHCP request failed: ${err.stack || err}, retrying...`);

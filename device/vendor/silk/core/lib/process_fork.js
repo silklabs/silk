@@ -160,7 +160,7 @@ function wrapSend(
     queue.push({
       message,
       handle,
-      callback
+      callback,
     });
 
     if (full) {

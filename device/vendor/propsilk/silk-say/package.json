@@ -16,7 +16,7 @@
     "silk-sysutils": "/pub/bsp-gonk/vendor/silk/silk-sysutils"
   },
   "devDependencies": {
-    "eslint": "1.10.3"
+    "eslint": "2.13.1"
   },
   "private": true
 }

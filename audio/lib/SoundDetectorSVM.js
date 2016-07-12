@@ -1,10 +1,7 @@
-import createLog from 'silk-log';
 import { EventEmitter } from 'events';
 import svmjs from 'svm';
 
 import FeatureVectorExtractor from './FeatureVectorExtractor';
-
-const log = createLog('audio-SoundDetectorSVM');
 
 class SoundClassDetector {
   cfg;
@@ -25,7 +22,7 @@ class SoundClassDetector {
     if (typeof cfg.model !== 'object') {
       throw new Error('SVM model must be a JSON object');
     }
-    this.svm.fromJSON(cfg.model);  
+    this.svm.fromJSON(cfg.model);
     this._reset();
   }
 
@@ -45,7 +42,7 @@ class SoundClassDetector {
       this.soundEventStartTime = startTime;
       this.events.emit('sound', {
         soundClass: this.cfg.soundClass,
-        startTime: this.soundEventStartTime
+        startTime: this.soundEventStartTime,
       });
     }
   };
@@ -62,7 +59,7 @@ class SoundClassDetector {
       this.events.emit('sound', {
         soundClass: this.cfg.soundClass,
         startTime: this.soundEventStartTime,
-        endTime: this.lastSonemeDetectTime
+        endTime: this.lastSonemeDetectTime,
       });
       this._reset();
     }

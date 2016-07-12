@@ -14,7 +14,7 @@ suite('APICallOperation', () => {
     await createApi();
     let operation = new APICallOperation({
       endpoint: 'device.socketioURL',
-      args: []
+      args: [],
     });
     await operation.write(null);
   });

@@ -12,14 +12,14 @@ parser.addArgument(['profile'], {
   help: 'Configuration profile',
   type: (value) => {
     return loadConfig(value);
-  }
+  },
 });
 
 parser.addArgument(['days'], {
   help: 'If data is older then given days will be purged...',
   type: (value) => {
     return parseInt(value, 10);
-  }
+  },
 });
 
 async function main() {
@@ -31,14 +31,18 @@ async function main() {
   let daysAgo = new Date();
   daysAgo.setDate(daysAgo.getDate() - args.days);
 
+  // eslint-disable-next-line no-console
   console.log(`Purging data older then ${daysAgo}`);
 
   let metas = await meta.collection.remove({
     startUTC: {
-      $lt: daysAgo.valueOf()
-    }
+      $lt: daysAgo.valueOf(),
+    },
   });
+  // eslint-disable-next-line no-console
   console.log(metas);
+
+  // eslint-disable-next-line no-process-exit
   process.exit();
 }
 

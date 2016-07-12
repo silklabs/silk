@@ -145,6 +145,7 @@ function* listenForCancel(
   }
 
   // Should never get here but this makes Flow happy.
+  // eslint-disable-next-line no-unreachable
   return true;
 }
 

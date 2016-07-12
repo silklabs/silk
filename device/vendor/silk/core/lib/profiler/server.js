@@ -29,7 +29,9 @@ function v8Profiler() {
 
 async function readJSON(stream) {
   let buffer = '';
-  stream.on('data', (data) => buffer += data);
+  stream.on('data', (data) => {
+    buffer += data;
+  });
   await eventToPromise(stream, 'end');
   return JSON.parse(buffer);
 }
@@ -40,7 +42,7 @@ function sendJSON(res, code, body, headers = {}) {
 
   res.writeHeader(code, Object.assign({}, headers, {
     'Content-Type': 'application/json',
-    'Content-Length': size
+    'Content-Length': size,
   }));
   res.end(content);
 }
@@ -60,7 +62,7 @@ class ProfileServer {
   async startCPU(req, res) {
     if (this.cpuProfile) {
       sendJSON(res, 400, {
-        error: 'CPU Profile already in progress'
+        error: 'CPU Profile already in progress',
       });
       return;
     }
@@ -80,7 +82,7 @@ class ProfileServer {
   async collectCPU(req, res) {
     if (!this.cpuProfile) {
       sendJSON(res, 400, {
-        error: 'CPU Profile not in progress'
+        error: 'CPU Profile not in progress',
       });
       return;
     }
@@ -92,7 +94,7 @@ class ProfileServer {
       let result = profiler.stopProfiling('1', true);
       profiler.deleteAllProfiles();
       res.writeHeader(200, {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       });
       result.export(res);
       this.cpuProfile = false;
@@ -116,14 +118,14 @@ class ProfileServer {
 
     if (path.extname(filePath) !== '.map') {
       sendJSON(res, 400, {
-        error: '.path must end in .map suffix'
+        error: '.path must end in .map suffix',
       });
       return;
     }
 
     if (filePath.indexOf('/system/silk') !== 0) {
       sendJSON(res, 400, {
-        error: 'Path must start with /system/silk'
+        error: 'Path must start with /system/silk',
       });
       return;
     }
@@ -135,7 +137,7 @@ class ProfileServer {
     }
 
     res.writeHead(200, {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
 
     fs.createReadStream(filePath).pipe(res);

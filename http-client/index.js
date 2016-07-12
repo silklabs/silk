@@ -149,7 +149,7 @@ export default class HttpClient {
           await this._sleep(retryDelay, retry, id);
         }
       }
-    } while(retry++ < this.maxRetries);
+    } while (retry++ < this.maxRetries);
 
     this._log(`Exhausted retries (${id}) ${method} ${url}`);
     throw lastErr;

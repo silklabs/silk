@@ -218,7 +218,7 @@ export class SilkApi {
 
 
     const metricsApi =
-      config.metrics.type === `device` ? this.device : this.account;
+      config.metrics.type === 'device' ? this.device : this.account;
     this.metrics =
       new MetricsAgent(metricsApi, this.canReachServer, config.metrics.tags);
   }

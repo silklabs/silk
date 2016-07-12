@@ -6,7 +6,7 @@
 
 import colors from 'cli-color';
 
-const NAME = `silk-cli`;
+const NAME = 'silk-cli';
 
 export function warn (message: string) {
   console.error(`[${colors.bold(NAME)}] ${colors.redBright('WARN')} : ${message}`);

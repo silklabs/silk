@@ -59,10 +59,10 @@ function loadPlugins(config: Config): {[key: string]: SubCommand} {
   // TODO: We could better split out canonical cli tools and extensions with
   // multiple top level sub parsers.
   let sub = parser.addSubparsers({
-    title: `Commands`,
+    title: 'Commands',
     help: `
     `,
-    dest: `subcommand`,
+    dest: 'subcommand',
   });
 
   for (let pluginPath of config.plugins) {

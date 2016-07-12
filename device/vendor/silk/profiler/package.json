@@ -19,10 +19,10 @@
     "source-map": "0.5.3"
   },
   "devDependencies": {
-    "babel-eslint": "6.0.4",
-    "eslint": "1.10.3",
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1",
     "eslint-plugin-import": "0.12.0",
-    "eslint-plugin-react": "3.16.1"
+    "eslint-plugin-react": "5.2.2"
   },
   "engines": {
     "node": "^4.1.12"

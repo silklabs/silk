@@ -16,7 +16,7 @@ import CrashReportOp from '../lib/outbox/crash_report_operation';
 
 import {
   Tombstones,
-  default as createCrashReporter
+  default as createCrashReporter,
 } from '../lib/crash_reporter';
 
 const FIXTURES = path.join(__dirname, '.crash_reporter');
@@ -58,7 +58,7 @@ suite('crash report', () => {
       assert.deepEqual(await subject.scan(), [
         tombstonePath('tombstone_1'),
         tombstonePath('tombstone_2'),
-        tombstonePath('tombstone_39')
+        tombstonePath('tombstone_39'),
       ]);
     });
 
@@ -92,7 +92,7 @@ suite('crash report', () => {
 
       assert.deepEqual(subject.fileQueue, [
         tombstonePath('tombstone_1'),
-        tombstonePath('tombstone_4')
+        tombstonePath('tombstone_4'),
       ]);
     });
 
@@ -133,7 +133,7 @@ suite('crash report', () => {
 
     function create(enabled = true) {
       let outbox = createOutbox({
-        storagePath: outboxPath
+        storagePath: outboxPath,
       });
       // Run the operations but do not actually hit the server...
       outbox.online = false;
@@ -142,7 +142,7 @@ suite('crash report', () => {
       let crash = createCrashReporter(outbox, {
         crashReporterEnabled: enabled,
         debuggerdSocketPath,
-        tombstonePath: tombstonesDir
+        tombstonePath: tombstonesDir,
       });
 
       return { crash, outbox };
@@ -255,7 +255,7 @@ suite('crash report', () => {
       let result = await accountApi.crash.findAll({
         deviceId: api.accessToken.toString(),
         type: 'tombstone',
-        limit: 1
+        limit: 1,
       });
 
       assert.equal(result.length, 1);

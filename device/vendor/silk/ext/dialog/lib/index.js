@@ -23,7 +23,7 @@ import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
 import player from 'silk-audioplayer';
 
-import type { 
+import type {
   DialogEngine,
   DialogEngineOptions,
   DialogState,

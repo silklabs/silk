@@ -174,10 +174,12 @@ export let run = ensureSetup({
     await api.restart();
     const tags = [
       'node:*',         // console.log()
-      'silk-init:*',
       'silk-camera:*',
-      'silk-wifi:*',
+      'silk-init:*',
+      'silk-input:*',
+      'silk-main:*',
       'silk-ntp:*',
+      'silk-wifi:*',
     ];
     const logcat = api.logcat(['-T1', '-v', 'time', '-s', ...tags]);
     logcat.stdout.pipe(process.stdout);

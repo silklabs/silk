@@ -181,8 +181,8 @@ export function createMilestone(
   });
 }
 
-const MAX_PR_MERGEABLE_RETRIES = 3;
-const PR_MERGEABLE_TIMEOUT_MS = 250;
+const MAX_PR_MERGEABLE_RETRIES = 4;
+const PR_MERGEABLE_TIMEOUT_MS = 500;
 
 /**
  * GitHub doesn't always immediately reply with a mergeable state, so

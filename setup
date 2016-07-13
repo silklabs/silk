@@ -22,6 +22,7 @@ export PATH=$ROOT/pub/cli:$PATH
 # WARNING: REPOCACHE_URLPREFIX is duplicated in builds.js
 export REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/
 export FULL_SERVICE=1
+export PATH=$ROOT/node_modules/.bin:$PATH
 
 # silk-caffe hack the find patches
 export SILK_CAFFE_PATCH_TREE=$ROOT/bsp-gonk/product/silk/patch/external

@@ -26,9 +26,7 @@ public class MainActivity extends Activity {
       mSilkService.start(new SilkAppSDKDelegate() {
         @Override
         public void onMessage(Bundle message) {
-          Log.i(TAG, "Received message: " + message.toString());
-          // Send the message right back.
-          mSilkService.postMessage(message);
+          Log.i(TAG, "Received message from SDK: " + message.toString());
         }
       });
     }

@@ -32,13 +32,13 @@ public class SilkAppSDKService extends Service {
   private ServiceBinder mBinder = new ServiceBinder();
   private ReactInstanceManager mReactInstanceManager;
   private SilkAppSDKDelegate mDelegate;
-  private Queue<Bundle> mInitQueue = new ArrayDeque<Bundle>();
+  private boolean mInitialized = false;
 
   public SilkAppSDKService() {
   }
 
   protected String getJSMainModuleName() {
-    return "src/index";
+    return "app-sdk/src/index";
   }
 
   protected boolean getUseDeveloperSupport() {
@@ -58,6 +58,7 @@ public class SilkAppSDKService extends Service {
 
   protected ReactInstanceManager createReactInstanceManager() {
     ReactInstanceManager.Builder builder = ReactInstanceManager.builder()
+      .setUseOldBridge(true)
       .setApplication(getApplication())
       .setJSMainModuleName(getJSMainModuleName())
       .setBundleAssetName(getBundleAssetName())
@@ -92,19 +93,19 @@ public class SilkAppSDKService extends Service {
     mReactInstanceManager.addReactInstanceEventListener(new ReactInstanceManager.ReactInstanceEventListener() {
       @Override
       public void onReactContextInitialized(ReactContext context) {
-        Queue<Bundle> queue = mInitQueue;
-        mInitQueue = null;
-        for (Bundle message : queue) {
-          postMessage(message);
-        }
+        mInitialized = true;
       }
     });
     mReactInstanceManager.createReactContextInBackground();
   }
 
   public void postMessage(Bundle message) {
-    if (mInitQueue != null) {
-      mInitQueue.add(message);
+    if (!mInitialized) {
+      Bundle bundle = new Bundle();
+      bundle.putString("type", "MESSAGE_ERROR");
+      bundle.putString("reason", "NOT_INITIALIZED");
+      bundle.putBundle("message", message);
+      mDelegate.onMessage(bundle);
       return;
     }
     mReactInstanceManager.getCurrentReactContext()

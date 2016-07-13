@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc
  */
 
+#import "RCTAssert.h"
 #import "RCTBridge.h"
 #import "RCTBridgeDelegate.h"
 
@@ -20,6 +21,7 @@
   RCTBridge *_bridge;
   id<SLKAppSDKDelegate> _delegate;
   SLKAppSDKEventEmitter *_eventEmitter;
+  BOOL _initialized;
 }
 
 RCT_NOT_IMPLEMENTED(- (instancetype)init)
@@ -30,12 +32,33 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
     _delegate = delegate;
     _eventEmitter = [[SLKAppSDKEventEmitter alloc] initWithDelegate:delegate];
     _bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:nil];
+    _initialized = NO;
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(javaScriptDidLoad:)
+                                                 name:RCTJavaScriptDidLoadNotification
+                                               object:_bridge];
+
   }
   return self;
 }
 
+- (void)javaScriptDidLoad:(NSNotification *)notification
+{
+  RCTAssertMainQueue();
+  _initialized = YES;
+}
+
 - (void)postMessage:(id)message
 {
+  if (!_initialized) {
+    [_delegate onMessage:@{
+      @"type": @"MESSAGE_ERROR",
+      @"reason": @"NOT_INITIALIZED",
+      @"message": message,
+    }];
+    return;
+  }
   [_eventEmitter sendEventWithName:@"silkAppSDKMessage" body:message];
 }
 
@@ -43,7 +66,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  return [NSURL URLWithString:@"http://localhost:8081/src/index.bundle?platform=ios&dev=true"];
+  return [NSURL URLWithString:@"http://localhost:8081/app-sdk/src/index.bundle?platform=ios&dev=true"];
 }
 
 - (NSArray *)extraModulesForBridge:(RCTBridge *)bridge

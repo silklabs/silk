@@ -15,4 +15,4 @@ include ':RCTWebRTC'
 project(':RCTWebRTC').projectDir = file("../../react-native-webrtc/android")
 
 include ':react-native-orientation'
-project(':react-native-orientation').projectDir = file('../node_modules/react-native-orientation/android')
+project(':react-native-orientation').projectDir = file('../../node_modules/react-native-orientation/android')

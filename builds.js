@@ -217,16 +217,18 @@ const builds = {
 
   // The React Native packager is fairly picky about duplicate packages in the
   // tree. Verify that the bundle still builds whenever package dependencies.
-  'app-bundle': npmPackageBuild('app', {
+  'app-bundle': {
     travis_yml: 'app/.travis-bundle.yml',
     files: [
+      'app/node_modules/**',
       '**/package.json',
       'node_modules/**',
-      'app/rn-cli.config.js',
-      'app/node_modules/**',
+      'rn-cli.config.js',
       'flow-interface/**',
     ],
-  }),
+    events: ['push', 'pr'],
+    branches: ['master', 'next', 'release'],
+  },
   'app-lint': npmPackageBuild('app', {
     // Always run lint when JS files change.
     travis_yml: 'app/.travis-lint.yml',
@@ -239,11 +241,12 @@ const builds = {
     // Only build the iOS app if relevant files changed.
     travis_yml: 'app/ios/travis/debug.yml',
     files: [
-      'app/rn-cli.config.js',
+      'rn-cli.config.js',
       'app/node_modules/**',
       'app/ios/**',
       'crypto/ios/**',
       'pub/react-native-blobs/ios/**',
+      'react-native-webrtc/ios/**',
     ],
     events: ['pr', 'push', 'nightly'],
   }),
@@ -255,11 +258,12 @@ const builds = {
     // On PRs only build the entire Android app if relevant files changed.
     travis_yml: 'app/android/travis/release.yml',
     files: [
-      'app/rn-cli.config.js',
+      'rn-cli.config.js',
       'app/node_modules/**',
       'app/android/**',
       'crypto/android/**',
       'pub/react-native-blobs/android/**',
+      'react-native-webrtc/android/**',
     ],
     events: ['pr'],
   }),
@@ -282,6 +286,9 @@ const builds = {
     files: [
       'app-sdk-example/ios/**',
       'app-sdk/ios/**',
+      'crypto/ios/**',
+      'pub/react-native-blobs/ios/**',
+      'react-native-webrtc/ios/**',
     ],
   }),
   'app-sdk-android': npmPackageBuild('app-sdk', {
@@ -290,6 +297,9 @@ const builds = {
     files: [
       'app-sdk-example/android/**',
       'app-sdk/android/**',
+      'crypto/android/**',
+      'pub/react-native-blobs/android/**',
+      'react-native-webrtc/android/**',
     ],
   }),
   'cli': npmPackageBuild('pub/cli'),

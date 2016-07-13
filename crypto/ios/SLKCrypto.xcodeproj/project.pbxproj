@@ -9,11 +9,7 @@
 /* Begin PBXBuildFile section */
 		352DCE901D18B7B50056D623 /* SLKCrypto.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 352DCE8F1D18B7B50056D623 /* SLKCrypto.h */; };
 		352DCE921D18B7B50056D623 /* SLKCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 352DCE911D18B7B50056D623 /* SLKCrypto.m */; };
-		352DCEAE1D18B9C70056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCE8C1D18B7B50056D623 /* libSLKCrypto.a */; };
 		352DCF2B1D18C95C0056D623 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCF2A1D18C95C0056D623 /* libsodium.a */; };
-		352DCF2C1D18C95C0056D623 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCF2A1D18C95C0056D623 /* libsodium.a */; };
-		352DCF951D19A0A50056D623 /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCF941D19A0800056D623 /* libReact.a */; };
-		352DCF971D19A1BB0056D623 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCF961D19A1BB0056D623 /* libc++.tbd */; };
 		352DCFAC1D19A6150056D623 /* SLKCryptoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 352DCFAB1D19A6150056D623 /* SLKCryptoTests.m */; };
 		352DCFAE1D19A6150056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCE8C1D18B7B50056D623 /* libSLKCrypto.a */; };
 		352DCFB51D19A66B0056D623 /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCF941D19A0800056D623 /* libReact.a */; };
@@ -21,13 +17,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		352DCEAF1D18B9C70056D623 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 352DCE841D18B7B50056D623 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 352DCE8B1D18B7B50056D623;
-			remoteInfo = SLKCrypto;
-		};
 		352DCF931D19A0800056D623 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 352DCF8F1D19A0800056D623 /* React.xcodeproj */;
@@ -119,7 +108,7 @@
 		352DCF271D18C95C0056D623 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		352DCF281D18C95C0056D623 /* sodium.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sodium.h; sourceTree = "<group>"; };
 		352DCF2A1D18C95C0056D623 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
-		352DCF8F1D19A0800056D623 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "../../app/node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
+		352DCF8F1D19A0800056D623 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "../../node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
 		352DCF961D19A1BB0056D623 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		352DCFA91D19A6150056D623 /* SLKCryptoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SLKCryptoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		352DCFAB1D19A6150056D623 /* SLKCryptoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SLKCryptoTests.m; sourceTree = "<group>"; };
@@ -132,17 +121,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				352DCF2B1D18C95C0056D623 /* libsodium.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		352DCEA61D18B9C70056D623 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				352DCF971D19A1BB0056D623 /* libc++.tbd in Frameworks */,
-				352DCF951D19A0A50056D623 /* libReact.a in Frameworks */,
-				352DCF2C1D18C95C0056D623 /* libsodium.a in Frameworks */,
-				352DCEAE1D18B9C70056D623 /* libSLKCrypto.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,9 +332,6 @@
 					352DCE8B1D18B7B50056D623 = {
 						CreatedOnToolsVersion = 7.3;
 					};
-					352DCEA81D18B9C70056D623 = {
-						CreatedOnToolsVersion = 7.3;
-					};
 					352DCFA81D19A6150056D623 = {
 						CreatedOnToolsVersion = 7.3;
 					};
@@ -397,13 +372,6 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
-		352DCEA71D18B9C70056D623 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		352DCFA71D19A6150056D623 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -422,13 +390,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		352DCEA51D18B9C70056D623 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		352DCFA51D19A6150056D623 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -440,11 +401,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		352DCEB01D18B9C70056D623 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 352DCE8B1D18B7B50056D623 /* SLKCrypto */;
-			targetProxy = 352DCEAF1D18B9C70056D623 /* PBXContainerItemProxy */;
-		};
 		352DCFB01D19A6150056D623 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 352DCE8B1D18B7B50056D623 /* SLKCrypto */;
@@ -541,7 +497,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"$(SRCROOT)/../../app/node_modules/react-native/React/**",
+					"$(SRCROOT)/../../node_modules/react-native/React/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../external/libsodium-ios/lib";
 				OTHER_LDFLAGS = "-ObjC";
@@ -556,7 +512,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"$(SRCROOT)/../../app/node_modules/react-native/React/**",
+					"$(SRCROOT)/../../node_modules/react-native/React/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../external/libsodium-ios/lib";
 				OTHER_LDFLAGS = "-ObjC";
@@ -571,7 +527,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"$(SRCROOT)/../../app/node_modules/react-native/React/**",
+					"$(SRCROOT)/../../node_modules/react-native/React/**",
 				);
 				INFOPLIST_FILE = SLKCryptoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -587,7 +543,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"$(SRCROOT)/../../app/node_modules/react-native/React/**",
+					"$(SRCROOT)/../../node_modules/react-native/React/**",
 				);
 				INFOPLIST_FILE = SLKCryptoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -625,6 +581,7 @@
 				352DCFB21D19A6150056D623 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

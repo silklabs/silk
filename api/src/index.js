@@ -1,4 +1,8 @@
 /**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc
+ *
  * @flow
  */
 import invariant from 'assert';

@@ -234,6 +234,11 @@ export default class RTCPeerConnection extends EventTarget(PEER_CONNECTION_EVENT
           return;
         }
         this.iceGatheringState = ev.iceGatheringState;
+
+        if (this.iceGatheringState === 'complete') {
+          this.dispatchEvent(new RTCIceCandidateEvent('icecandidate', null));
+        }
+
         this.dispatchEvent(new RTCEvent('icegatheringstatechange'));
       }),
       DeviceEventEmitter.addListener('peerConnectionDidOpenDataChannel', ev => {

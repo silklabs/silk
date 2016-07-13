@@ -99,7 +99,7 @@ However, if you find yourself rebuilding and redeploying the app frequently in y
 {
   "react-native": {
     "type": "remote",
-    "url": "http://<your computer's IP address>:8081/src/index.bundle?platform=ios&dev=true"
+    "url": "http://<your IP address>:8081/app/src/index.bundle?platform=ios&dev=true"
   }
 }
 ```
@@ -114,7 +114,7 @@ It may not always be convenient or possible to have the app load its JS bundle f
 {
   "react-native": {
     "type": "local",
-    "url": "http://localhost:8081/src/index.bundle?platform=ios&dev=true"
+    "url": "http://localhost:8081/app/src/index.bundle?platform=ios&dev=true"
   }
 }
 ```

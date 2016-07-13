@@ -59,4 +59,5 @@ FileWriter.prototype._onHeader = function (header) {
     if (err) return self.emit('error', err);
     self.emit('done');
   }
+  fs.open(this.path, 'r+', onOpen);
 };

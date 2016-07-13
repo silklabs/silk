@@ -93,7 +93,7 @@ class Recorder {
         channels: config.deviceMic.numChannels,
         bitDepth: config.deviceMic.bytesPerSample * 8,
       });
-      this._writer.on('header', () => {
+      this._writer.on('done', () => {
         log.info(`Finished saving audio recording`);
       });
       this._writer.on('error', err => {

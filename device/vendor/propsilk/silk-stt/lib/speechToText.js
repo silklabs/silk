@@ -268,7 +268,7 @@ export default class SpeechToText {
       channels: config.deviceMic.numChannels,
       bitDepth: config.deviceMic.bytesPerSample * 8,
     });
-    writer.on('header', () => {
+    writer.on('done', () => {
       log.info('Done saving speech file');
     });
     writer.on('error', err => {

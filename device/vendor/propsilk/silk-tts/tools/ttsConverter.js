@@ -35,9 +35,9 @@ function writeWavFile(pcmSamples, fileName) {
     channels: config.deviceMic.numChannels,
     bitDepth: config.deviceMic.bytesPerSample * 8,
   });
-  writer.on('header', () => {
+  writer.on('done', () => {
     log.info('Done');
-    setTimeout(() => process.exit(1), 1000); // eslint-disable-line
+    process.exit(1) // eslint-disable-line
   });
   writer.on('error', err => {
     log.error(err);

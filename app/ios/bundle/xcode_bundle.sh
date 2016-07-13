@@ -24,7 +24,7 @@ THIS_DIR=$(cd "$(dirname "$0")"; pwd)
 
 bundle_type="$($THIS_DIR/bundle_type)"
 if [[ "$bundle_type" == "local" ]]; then
-  $THIS_DIR/local_bundle "$DEST"
+  $THIS_DIR/local_bundle "$DEST_FILE"
   exit 0
 elif [[ "$bundle_type" != "bundle" ]]; then
   exit 0

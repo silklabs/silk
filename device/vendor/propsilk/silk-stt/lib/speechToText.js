@@ -170,19 +170,28 @@ export default class SpeechToText {
 
         invariant(response);
 
-        let text = ``;
-        let confidence = 0;
-        if (response.results && response.results.length > 0) {
-          const result = response.results[0];
-          text = result.name;
-          confidence = result.confidence;
-          log.info(`Confidence ${result.confidence}: '${text}'`);
-        } else {
-          log.warn(`No text`);
-          confidence = 1.0;
+        // Handle response error
+        if (response.header.status !== 'success' ) {
+          // Special case where no speech is considered a success
+          if (response.header.properties.NOSPEECH === '1') {
+            log.warn(`No text`);
+            this._callCallback(null, '', 1.0);
+          } else {
+            this._callCallback(new Error(
+                `Request failed with ${JSON.stringify(response.header.properties)}`));
+          }
+          return;
         }
 
-        this._callCallback(null, text, confidence);
+        if (response.results && response.results.length > 0) {
+          const result = response.results[0];
+          const text = result.name;
+          const confidence = result.confidence;
+          log.info(`Confidence ${result.confidence}: '${text}'`);
+          this._callCallback(null, text, confidence);
+        } else {
+          this._callCallback(new Error(`Request failed with empty results`));
+        }
       });
     });
 

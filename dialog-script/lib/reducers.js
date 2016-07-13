@@ -15,12 +15,14 @@ import {
 import babies from './babies/reducers';
 import food from './food/reducers';
 import timers from './timers/reducers';
+import weather from './weather/reducers';
 
 import type {Action} from 'redux';
 
 import type {State as BabiesState} from './babies/reducers';
 import type {State as FoodState} from './food/reducers';
 import type {State as TimersState} from './timers/reducers';
+import type {State as WeatherState} from './weather/reducers';
 
 /**
  * Reducers must be pure functions (i.e. functions that don't depend on any
@@ -37,6 +39,7 @@ export type State = {
   interpreting: boolean;
   food: FoodState,
   timers: TimersState;
+  weather: WeatherState;
 };
 
 // Simple state that records text currently playing through the speakers.
@@ -111,4 +114,5 @@ export default combineReducers({
   interpreting,
   food,
   timers,
+  weather,
 });

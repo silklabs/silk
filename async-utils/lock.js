@@ -1,4 +1,7 @@
 /**
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ *
  * Generic locking mechanism to be used in classes :
  *
  * import Lock from 'silk-utils/lock';

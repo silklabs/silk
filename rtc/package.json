@@ -5,6 +5,7 @@
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
     "silk-api": "/api",
+    "silk-async-utils": "/async-utils",
     "silk-azure-storage": "/azure-storage",
     "silk-device-core": "/device/vendor/silk/core",
     "silk-log": "/pub/log",

@@ -6,20 +6,21 @@
  * @private
  */
 
-import api from '../api';
 import assert from 'assert';
-import { BTLE_SOCKET_UUIDS } from 'silk-api';
-import ConfigSessionListener from './config_session_listener';
-import createLog from '../log';
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import fs from 'mz/fs';
-import getBTLE from '../btle/parent';
-import getDeviceId from '../deviceid';
 import * as Joi from 'joi';
-import makeDeferred from '../deferred';
-import NormalSessionListener from './normal_session_listener';
+import {BTLE_SOCKET_UUIDS} from 'silk-api';
+import {createDeferred} from 'silk-async-utils';
 import * as util from 'silk-sysutils';
 import wifi from 'silk-wifi';
+
+import api from '../api';
+import ConfigSessionListener from './config_session_listener';
+import createLog from '../log';
+import getBTLE from '../btle/parent';
+import getDeviceId from '../deviceid';
+import NormalSessionListener from './normal_session_listener';
 
 import type Server from '../server';
 
@@ -254,7 +255,7 @@ class DeviceConfig extends EventEmitter {
       // reject after a few failed attempts, and then race with that deferred.
       // ConfigSessionListener rejects the deferred by calling
       // |_stopRetryingWifiConnection|. The deferred will never be accepted.
-      const deferred = makeDeferred();
+      const deferred = createDeferred();
 
       assert(!this._wifiAbortConnection);
       this._wifiAbortConnection = deferred.reject;

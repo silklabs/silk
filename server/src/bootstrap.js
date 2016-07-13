@@ -1,10 +1,10 @@
 /**
  * @flow
  */
+import {timeout} from 'silk-async-utils';
 import createLog from 'silk-log';
 import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
-import timeout from 'silk-utils/timeout';
 
 import loadConfig from './server/config';
 

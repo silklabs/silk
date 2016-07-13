@@ -128,12 +128,14 @@ export async function autoMergePullRequest(
 
   switch (status.state) {
   case 'success':
-    log.info(`CI status is success, trying to merge...`);
-    let mergeResult = await r.pulls(result.number).merge.add({
-      sha: result.head.sha,
-      commit_message: 'automerge',
-    });
-    log.info(`successfully merged: ${mergeResult}`);
+    {
+      log.info(`CI status is success, trying to merge...`);
+      const mergeResult = await r.pulls(result.number).merge.add({
+        sha: result.head.sha,
+        commit_message: 'automerge',
+      });
+      log.info(`successfully merged: ${mergeResult}`);
+    }
     return;
 
   case 'failure':

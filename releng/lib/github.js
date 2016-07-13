@@ -67,7 +67,7 @@ export async function readFileAtCommit(
   try {
     contents = await repository.contents(filename).read({ref: sha});
     log.info(`read ${filename}`);
-  } catch(ex) {
+  } catch (ex) {
     log.info(`could not read ${filename}`);
   }
   return contents;

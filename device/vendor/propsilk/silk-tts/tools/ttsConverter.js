@@ -35,15 +35,9 @@ function writeWavFile(pcmSamples, fileName) {
     channels: config.deviceMic.numChannels,
     bitDepth: config.deviceMic.bytesPerSample * 8,
   });
-  writer.on('done', () => {
-    log.info('Done');
-    process.exit(1) // eslint-disable-line
-  });
-  writer.on('error', err => {
-    log.error(err);
-  });
-  writer.write(pcmSamples);
-  writer.end();
+  writer.writeAll(pcmSamples)
+  .then(() => process.exit(1)) // eslint-disable-line
+  .catch(err => log.error(err));
 }
 
 // Convert text to raw pcm data

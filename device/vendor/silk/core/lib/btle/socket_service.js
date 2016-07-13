@@ -208,7 +208,7 @@ export default class SocketService extends BlenoService {
 
     this._streams.delete(address);
 
-    stream._onDisconnect();
+    stream._onPeripheralDisconnect();
   };
 
   _onSubscribe(address: string): void {

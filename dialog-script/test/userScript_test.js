@@ -36,15 +36,20 @@ suite(`userScript`, () => {
     uninstallMocks;
   });
 
-  setup(() => {
-    invariant(reload);
-    reload();
+  setup(done => {
+    // Luis is rate limits at 5QPS.
+    // Run tests sequentially and wait a little between runs.
+    setTimeout(() => {
+      invariant(reload);
+      reload();
 
-    dialogEngine = mockDialogEngine.default();
-    invariant(dialogEngine);
+      dialogEngine = mockDialogEngine.default();
+      invariant(dialogEngine);
+      done();
+    }, 500);
   });
 
-  test(`Unknown intent`, async () => {
+  test(`Unknown intent`, async (done) => {
     await testUserScript(dialogEngine, [
       {
         speak: `Hello`,
@@ -52,9 +57,10 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
+    done();
   });
 
-  test(`Unknown intent multiple times`, async () => {
+  test(`Unknown intent multiple times`, async (done) => {
     await testUserScript(dialogEngine, [
       {
         speak: `Hello`,
@@ -66,9 +72,10 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
+    done();
   });
 
-  test(`Register baby`, async () => {
+  test(`Register baby`, async (done) => {
     const name = `emily`;
     await testUserScript(dialogEngine, [
       {
@@ -85,9 +92,10 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
+    done();
   });
 
-  test(`Register baby bad name`, async () => {
+  test(`Register baby bad name`, async (done) => {
     const name = `john`;
     await testUserScript(dialogEngine, [
       {
@@ -112,6 +120,7 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
+    done();
   });
 
 });

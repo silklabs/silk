@@ -16,7 +16,10 @@
   },
   "dependencies": {
     "react": "15.2.0",
-    "react-native": "0.30.0-rc.0"
+    "react-native": "0.30.0-rc.0",
+    "redux": "3.5.2",
+    "redux-actions": "0.10.1",
+    "redux-thunk": "2.1.0"
   },
   "devDependencies": {
     "babel-eslint": "6.1.0",

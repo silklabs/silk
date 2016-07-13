@@ -208,6 +208,7 @@ const builds = {
     'react-native-transformer',
     'streams',
     'tools/mp4dash',
+    'npm-extractor',
     'utils',
   ]),
 

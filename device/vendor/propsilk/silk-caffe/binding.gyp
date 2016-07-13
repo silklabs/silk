@@ -73,6 +73,7 @@
                 '-isystem <!(echo $PWD/caffe/src/)',
                 '-isystem <!(echo $PWD/caffe/include/)',
                 '-isystem <!(echo $PWD/caffe/build/include/)',
+                '-isystem <!(echo $PWD/caffe/include/ceres/internal/miniglog/)',
                 '-isystem <!(echo $PWD/protobuf/src)',
               ],
               "OTHER_LDFLAGS": [
@@ -107,6 +108,7 @@
             '-isystem <!(echo $PWD/caffe/src/)',
             '-isystem <!(echo $PWD/caffe/include/)',
             '-isystem <!(echo $PWD/caffe/build/include/)',
+            '-isystem <!(echo $PWD/caffe/include/ceres/internal/miniglog/)',
             '-isystem <!(echo $PWD/protobuf/src)',
           ],
           "ldflags": [

@@ -16,8 +16,7 @@ npm build node_modules/silk-dnn-models
 
 if [[ "$(uname)" == "Darwin" && -z $GET_OFF_MY_LAWN ]]; then
   # Following packages are needed by caffe module
-  brew install -vd snappy leveldb gflags glog szip lmdb libtool
-  brew install hdf5
+  brew install -vd snappy gflags szip libtool
   
   # OpenCV3 wants libwebp
   brew install webp
@@ -51,14 +50,10 @@ function package_exists {
 
 if [[ "$(uname)" == "Linux" && -z $GET_OFF_MY_LAWN ]]; then
   # Following packages are needed by caffe module
-  package_exists libleveldb-dev
   package_exists libsnappy-dev
-  package_exists libhdf5-serial-dev
   package_exists libatlas-base-dev
   package_exists libboost-all-dev
   package_exists libgflags-dev
-  package_exists libgoogle-glog-dev
-  package_exists liblmdb-dev
 
   # Following packages are needed by protobuf
   package_exists autoconf

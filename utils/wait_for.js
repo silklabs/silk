@@ -1,8 +1,7 @@
 /* @flow */
 
 import invariant from 'assert';
-
-import sleep from './sleep';
+import {sleep} from 'silk-async-utils';
 
 type Options = {
   timeout?: number;

@@ -7,7 +7,8 @@
     "lint": "eslint ."
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/pub/eslint-config"
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-async-utils": "/async-utils"
   },
   "devDependencies": {
     "babel-eslint": "6.1.0",

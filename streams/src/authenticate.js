@@ -8,6 +8,7 @@
 
 import invariant from 'assert';
 import {AccessToken} from 'silk-api';
+import {createDeferred} from 'silk-async-utils';
 import createLog from 'silk-log';
 
 import ClosingTransform from './closing_transform';
@@ -16,29 +17,15 @@ import DuplexTransform from './duplex_transform';
 import * as Metrics from './metrics';
 
 import type {Duplex} from 'stream';
+import type {Deferred} from 'silk-async-utils';
 import type {DuplexStreamOptions} from 'silk-streams';
 
 type TransformCallback = (error: ?Error, data?: Buffer | string) => void;
-
-type Deferred<T> = {
-  promise: Promise<T>,
-  accept: (value: Promise<T> | T) => void,
-  reject: (error: any) => void,
-};
 
 const PROPERTY_NAME = `_0--"_`;
 
 function isAuthData(data: Object): boolean {
   return data && (typeof data === `object`) && (PROPERTY_NAME in data);
-}
-
-function createDeferred<T>(): Deferred<T> {
-  const deferred = {};
-  deferred.promise = new Promise((accept, reject) => {
-    deferred.accept = accept;
-    deferred.reject = reject;
-  });
-  return deferred;
 }
 
 export class AuthenticateStreamBase extends ClosingTransform {

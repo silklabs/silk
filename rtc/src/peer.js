@@ -3,8 +3,8 @@
 import { EventEmitter } from 'events';
 import invariant from 'assert';
 import eventToPromise from 'event-to-promise';
+import {Lock} from 'silk-async-utils';
 import createLog from 'silk-log';
-import Lock from 'silk-utils/lock';
 
 import {
   webrtcPromise,

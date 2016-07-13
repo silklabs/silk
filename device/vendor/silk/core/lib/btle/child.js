@@ -48,11 +48,11 @@ import bleno from 'bleno';
 import invariant from 'assert';
 import * as net from 'net';
 import noble from 'noble';
+import {createDeferred} from 'silk-async-utils';
 import createBledroidConnection from 'silk-bledroid';
 import {MessagePackDuplexStream, SocketDuplexStream} from 'silk-streams';
 
 import {BluetoothLE} from './parent';
-import createDeferred from '../deferred';
 import {createMessage as createInternalMessage} from './socket_message_utils';
 import createLog from 'silk-log/device';
 import InternalMessageFilterStream from './internal_message_stream';
@@ -62,11 +62,11 @@ import SocketService from './socket_service';
 import validateMessage from './validate_process_message';
 
 import type {AdapterState, Peripheral} from 'noble';
+import type {Deferred} from 'silk-async-utils';
 import type {BledroidConnection} from 'silk-bledroid';
 
 import type {BeaconInfo, BluetoothMode} from './parent';
 import type SocketStream from './socket_stream';
-import type {Deferred} from '../deferred';
 
 type SessionInfo = {
   id: number;

@@ -13,12 +13,12 @@ import invariant from 'assert';
 import * as net from 'net';
 import path from 'path';
 import {unlinkSync} from 'fs';
+import {createDeferred} from 'silk-async-utils';
+import {getboolprop, getintprop, getstrprop} from 'silk-sysutils';
 
 import api from '../api';
-import createDeferred from '../deferred';
 import createLog from '../log';
 import fork from '../process_fork';
-import {getboolprop, getintprop, getstrprop} from 'silk-sysutils';
 import getDeviceId from '../deviceid';
 import * as Metrics from '../metrics/btle';
 import ParentSocketSession from './parent_socket_session';
@@ -26,8 +26,7 @@ import validateMessage from './validate_process_message';
 
 import type {ChildProcess} from 'child_process';
 import type {Server, Socket} from 'net';
-
-import type {Deferred} from '../deferred';
+import type {Deferred} from 'silk-async-utils';
 
 export type BluetoothMode = 'off' | 'on' | 'beacon';
 export type BeaconInfo = {

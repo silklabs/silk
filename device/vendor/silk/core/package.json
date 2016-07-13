@@ -13,6 +13,7 @@
   "symlinkDependencies": {
     "babel-preset-silk-node4": "/pub/babel-preset-silk-node4",
     "babel-core": "/pub/babel-core",
+    "silk-async-utils": "/async-utils",
     "silk-audio": "/audio",
     "silk-babeldeps": "/babeldeps",
     "silk-buildjs": "/pub/buildjs",

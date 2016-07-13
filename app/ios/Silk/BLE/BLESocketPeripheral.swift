@@ -70,7 +70,11 @@ internal class BLESocketPeripheral: NSObject,
   // Keeps track of which services should be available.
   private class ServiceInfo {
     let service: Service
-    var available = false
+
+    var adding: Bool = false
+    var added: Bool = false
+
+    var available: Bool = false
 
     init(service: Service) {
       self.service = service
@@ -133,6 +137,9 @@ internal class BLESocketPeripheral: NSObject,
   // A connection to the |RegionMonitor| lets us force region updates whenever
   // CoreBluetooth changes its power state.
   private let regionMonitor: RegionMonitor
+
+  // True when services have been added.
+  private var servicesAdded: Bool = false
 
   // The map of all services we may need to install. At present this can only be
   // one (the config service) or two (the account service).
@@ -204,10 +211,10 @@ internal class BLESocketPeripheral: NSObject,
 
       assert(self.services[serviceUuid] == nil)
 
-      self.services[serviceUuid] =
-        ServiceInfo(service: Service(type: serviceUuid))
+      let service = Service(type: serviceUuid)
+      self.services[serviceUuid] = ServiceInfo(service: service)
 
-      self.updateState()
+      self.updateScanningState()
     }
   }
 
@@ -225,7 +232,7 @@ internal class BLESocketPeripheral: NSObject,
       self.removeAndCleanupService(serviceUuid)
       self.services[serviceUuid] = nil
 
-      self.updateState()
+      self.updateScanningState()
     }
   }
 
@@ -249,7 +256,7 @@ internal class BLESocketPeripheral: NSObject,
         serviceInfo.available = true
       }
 
-      self.updateState()
+      self.updateScanningState()
     }
   }
 
@@ -272,7 +279,7 @@ internal class BLESocketPeripheral: NSObject,
         serviceInfo.available = false
       }
 
-      self.updateState()
+      self.updateScanningState()
     }
   }
 
@@ -282,7 +289,7 @@ internal class BLESocketPeripheral: NSObject,
       assert(!self.inForeground)
       self.inForeground = true
 
-      self.updateState()
+      self.updateScanningState()
     }
   }
 
@@ -292,7 +299,7 @@ internal class BLESocketPeripheral: NSObject,
       assert(self.inForeground)
       self.inForeground = false
 
-      self.updateState()
+      self.updateScanningState()
     }
   }
 
@@ -301,6 +308,8 @@ internal class BLESocketPeripheral: NSObject,
     self.enabled = enabled
 
     if enabled {
+      self.maybeAddServices()
+
       if self.unconfiguredDevicesInRange {
         log.info("Informing JS that there are unconfigured devices in range")
         self.socketManager.unconfiguredDevicesInRange(true)
@@ -309,10 +318,11 @@ internal class BLESocketPeripheral: NSObject,
         self.socketManager.unconfiguredDevicesInRange(false)
       }
     } else {
+      self.removeServices()
       self.unconfiguredDevicesInRange = false
     }
 
-    self.updateState()
+    self.updateScanningState()
   }
 
   func scanForUnconfiguredDevices(shouldScan: Bool) {
@@ -321,7 +331,7 @@ internal class BLESocketPeripheral: NSObject,
     let serviceInfo = self.services[BLESocketPeripheral.configServiceUuid]!
     serviceInfo.available = shouldScan
 
-    self.updateState()
+    self.updateScanningState()
   }
 
   func send(connectionId: Int, data: NSData) {
@@ -405,17 +415,62 @@ internal class BLESocketPeripheral: NSObject,
     self.cleanupConnection(self.connectionsById[connectionId]!)
   }
 
-  private func updateState() {
-    log.debug("updateState() " +
+  private func maybeAddServices() {
+    log.debug("maybeAddServices() " +
+              "peripheralState: \(self.peripheralManager.state.rawValue) " +
+              "enabled: \(self.enabled) " +
+              "servicesAdded: \(self.servicesAdded)")
+
+    if self.servicesAdded ||
+       self.peripheralManager.state != .PoweredOn ||
+       !self.enabled {
+      return
+    }
+
+    for (uuid, serviceInfo) in self.services {
+      assert(!serviceInfo.adding)
+      assert(!serviceInfo.added)
+
+      log.info("Adding service \(uuid)")
+      serviceInfo.adding = true
+
+      self.peripheralManager.addService(serviceInfo.service)
+    }
+
+    self.servicesAdded = true
+  }
+
+  private func removeServices() {
+    log.debug("removeServices()")
+
+    if !self.servicesAdded {
+      return
+    }
+
+    for serviceUuid in Array(self.services.keys) {
+      self.removeAndCleanupService(serviceUuid)
+    }
+
+    self.servicesAdded = false
+  }
+
+  private func updateScanningState() {
+    log.debug("updateScanningState() " +
               "centralState: \(self.centralManager.state.rawValue) " +
               "enabled: \(self.enabled) " +
               "inForeground: \(self.inForeground) " +
               "scanning: \(self.scanning)")
 
-    if self.centralManager.state != .PoweredOn ||
-       !self.enabled ||
-       !self.inForeground {
-      self.stopScanningAndCleanup()
+    if self.centralManager.state != .PoweredOn || !self.enabled {
+      self.stopScanning()
+
+      if !self.connectionsById.isEmpty {
+        for connection in Array(self.connectionsById.values) {
+          self.cleanupConnection(connection)
+        }
+        assert(self.connectionsById.isEmpty)
+      }
+
       return
     }
 
@@ -428,7 +483,7 @@ internal class BLESocketPeripheral: NSObject,
     }
 
     if servicesToScan.isEmpty {
-      self.stopScanningAndCleanup()
+      self.stopScanning()
       return
     }
 
@@ -438,8 +493,8 @@ internal class BLESocketPeripheral: NSObject,
     self.scanning = true
   }
 
-  private func stopScanningAndCleanup() {
-    log.debug("stopScanningAndCleanup() scanning = \(self.scanning)")
+  private func stopScanning() {
+    log.debug("stopScanning(), scanning = \(self.scanning)")
 
     if !self.scanning {
       return
@@ -450,25 +505,23 @@ internal class BLESocketPeripheral: NSObject,
 
     self.centralManager.stopScan()
 
-    for peripheral in self.pendingPeripherals {
-      self.cancelPeripheralConnection(peripheral)
+    if !self.pendingPeripherals.isEmpty {
+      for peripheral in self.pendingPeripherals {
+        self.cancelPeripheralConnection(peripheral)
+      }
+      self.pendingPeripherals.removeAll()
     }
-    self.pendingPeripherals.removeAll()
-
-    let connections = Array(self.connectionsById.values)
-    for connection in connections {
-      self.cleanupConnection(connection)
-    }
-    assert(self.connectionsById.isEmpty)
-
-    self.peripheralManager.removeAllServices()
   }
 
   private func removeAndCleanupService(serviceUuid: CBUUID) {
     log.debug("removeAndCleanupService(\(serviceUuid))")
 
-    if let service = self.services[serviceUuid]?.service {
-      self.peripheralManager.removeService(service)
+    if let serviceInfo = self.services[serviceUuid] {
+      if serviceInfo.adding || serviceInfo.added {
+        self.peripheralManager.removeService(serviceInfo.service)
+        serviceInfo.adding = false
+        serviceInfo.added = false
+      }
     }
 
     var connectionsToCleanUp = [Connection]()
@@ -504,27 +557,10 @@ internal class BLESocketPeripheral: NSObject,
       }
     }
 
-    let serviceUuid = connection.peripheralServiceUuid
-
-    var removeService = true
-    for otherConnection in self.connectionsById.values {
-      if otherConnection.peripheralServiceUuid == serviceUuid {
-        removeService = false
-        break
-      }
-    }
-
-    if removeService {
-      let service = self.services[serviceUuid]?.service
-      if service != nil {
-        self.peripheralManager.removeService(service!)
-      }
-    }
-
     self.socketManager.disconnected(connection.id)
 
     self.centralManager.cancelPeripheralConnection(peripheral)
-    self.updateState()
+    self.updateScanningState()
   }
 
   private func sendOutgoingData(connection: Connection) {
@@ -646,25 +682,15 @@ internal class BLESocketPeripheral: NSObject,
     let serviceInfo = self.services[serviceUuid]!
     assert(serviceInfo.available)
 
-    var addService = true
-    for connection in self.connectionsById.values {
-      if connection.peripheralServiceUuid == service.UUID {
-        addService = false
-        break
-      }
-    }
-
     let connection = Connection(characteristic: characteristic)
     self.connectionsById[connection.id] = connection
     self.connectionsByPeripheral[peripheral] = connection
 
     self.pendingPeripherals.remove(peripheral)
 
-    if addService {
-      log.info("Adding service \(serviceUuid)")
-      self.peripheralManager.addService(serviceInfo.service)
-
+    if !serviceInfo.added {
       // |startConnection| will be called after the service is added.
+      assert(serviceInfo.adding)
       return
     }
 
@@ -686,16 +712,10 @@ internal class BLESocketPeripheral: NSObject,
   }
 
   func centralManagerDidUpdateState(central: CBCentralManager) {
-    log.info("CentralManager state changed: \(central.state.rawValue)")
+    log.info("centralManagerDidUpdateState \(central.state.rawValue)")
     assert(central === self.centralManager)
 
-    if (central.state == .PoweredOn) {
-      dispatch_async(dispatch_get_main_queue()) {
-        self.regionMonitor.updateState()
-      }
-    }
-
-    self.updateState()
+    self.updateScanningState()
   }
 
   func centralManager(central: CBCentralManager,
@@ -779,6 +799,18 @@ internal class BLESocketPeripheral: NSObject,
 
   func peripheralManagerDidUpdateState(peripheral: CBPeripheralManager) {
     log.debug("peripheralManagerDidUpdateState \(peripheral.state.rawValue)")
+    assert(peripheral === self.peripheralManager)
+
+    if peripheral.state != .PoweredOn && peripheral.state != .PoweredOff {
+      self.removeServices()
+      return
+    }
+
+    if peripheral.state != .PoweredOn {
+      return
+    }
+
+    self.maybeAddServices()
   }
 
   func peripheralManager(peripheral: CBPeripheralManager,
@@ -787,15 +819,30 @@ internal class BLESocketPeripheral: NSObject,
     log.debug("peripheralManager:didAddService \(service.UUID) \(error)")
     assert(peripheral === self.peripheralManager)
 
+    if self.services[service.UUID] == nil {
+      log.debug("Service must have been removed")
+      return
+    }
+
+    assert(self.enabled)
+
+    let serviceInfo = self.services[service.UUID]!
+    assert(!serviceInfo.added)
+
+    if !serviceInfo.adding {
+      log.debug("Service must have been cleaned up")
+      return
+    }
+
+    serviceInfo.adding = false
+
     if error != nil {
       log.error("Failed to add service \(service.UUID): \(error!)")
       self.removeAndCleanupService(service.UUID)
       return
     }
 
-    if !self.enabled {
-      return
-    }
+    serviceInfo.added = true
 
     for connection in self.connectionsById.values {
       self.startConnection(connection)

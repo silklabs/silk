@@ -4,7 +4,9 @@
   "author": "Silk Labs Inc.",
   "main": "./extract.js",
   "scripts": {
-    "test": "mocha $(find test -name '*_test.js')"
+    "mocha": "mocha $(find test -name '*_test.js')",
+    "lint": "eslint *.js test",
+    "test": "npm run lint && npm run mocha"
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config"

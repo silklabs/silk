@@ -4,9 +4,9 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import Sonos from './sonos';
-import Lifx from './lifx';
 import fs from 'mz/fs';
+import lifx from 'silk-lifx';
+import sonos from 'silk-sonos';
 
 const CONFIG_FILE = 'system/silk/media/welcome/config.json';
 
@@ -35,8 +35,8 @@ class Welcome {
 
     this.readConfig();
 
-    this._sonos = new Sonos(env);
-    this._lifx = new Lifx(env);
+    this._sonos = sonos;
+    this._lifx = lifx;
 
     log.info('welcome loaded \\o\/');
   }

@@ -6,7 +6,8 @@
 
 import LifxApi from 'node-lifx';
 
-let log;
+import createLog from 'silk-log/device';
+const log = createLog(`lifx`);
 
 // Scenes in this format:
 // {
@@ -45,15 +46,13 @@ const scenes = {
   },
 };
 
-export default class Lifx {
-  constructor(env) {
-    this._env = env;
+class Lifx {
+  constructor() {
     this._lights = {};
     this._scene = undefined;
     this._sceneStateIndex = undefined;
     this._sceneStateTimer = undefined;
     this._sceneIterationCnt = undefined;
-    log = env.log;
 
     log.info('initializing Lifx');
 
@@ -142,3 +141,5 @@ export default class Lifx {
     this._lifx = undefined;
   }
 }
+
+export default new Lifx();

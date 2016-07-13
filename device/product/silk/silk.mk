@@ -49,9 +49,11 @@ PRODUCT_PACKAGES += \
   silk-gc1 \
   silk-gonk-version \
   silk-kws \
+  silk-lifx \
   silk-modwatcher \
   silk-netstatus \
   silk-say \
+  silk-sonos \
   silk-stt \
   silk-tts \
   silk-update \

@@ -10,13 +10,13 @@
     "test": "echo \"\""
   },
   "symlinkDependencies": {
-    "silk-buildjs": "/pub/buildjs"
+    "silk-buildjs": "/pub/buildjs",
+    "silk-lifx": "/device/vendor/propsilk/silk-lifx",
+    "silk-sonos": "/device/vendor/propsilk/silk-sonos"
   },
   "dependencies": {
     "babel-runtime": "6.9.0",
-    "mz": "2.4.0",
-    "node-lifx": "0.4.0",
-    "sonos": "0.12.0"
+    "mz": "2.4.0"
   },
   "private": true,
   "devDependencies": {

@@ -5,9 +5,5 @@
  * before exporting...
  */
 
-// Must require above babel-register...
-// eslint-disable-next-line no-var
-var preset = require(__dirname + '/../pub/babel-preset-silk-node4');
-
 require(__dirname + '/../pub/babel-run/node')();
 module.exports = require('./src');

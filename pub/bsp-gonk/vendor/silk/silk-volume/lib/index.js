@@ -16,6 +16,15 @@ import { EventEmitter } from 'events';
  * volume.mute = false;
  */
 class Volume extends EventEmitter {
+  _level: number;
+  _mute: bool;
+
+  constructor() {
+    super();
+    this._level = util.getintprop('persist.silk.volume.level', 0);
+    this._mute = util.getboolprop('persist.silk.volume.mute', false);
+  }
+
   /**
    * Gets the current volume level (0..100).  Note that the value returned is
    * unaffected by the active mute setting.
@@ -24,7 +33,7 @@ class Volume extends EventEmitter {
    * @instance
    */
   get level(): number {
-    return util.getintprop('persist.silk.volume.level', 0);
+    return this._level;
   }
 
   /**
@@ -37,6 +46,7 @@ class Volume extends EventEmitter {
     if (newlevel < 0 || newlevel > 100) {
       throw new Error('Invalid volume level', newlevel);
     }
+    this._level = newlevel;
     util.setprop('persist.silk.volume.level', newlevel);
 
     /**
@@ -57,7 +67,7 @@ class Volume extends EventEmitter {
    * @instance
    */
   get mute(): boolean {
-    return util.getboolprop('persist.silk.volume.mute', false);
+    return this._mute;
   }
 
   /**
@@ -67,7 +77,9 @@ class Volume extends EventEmitter {
    * @instance
    */
   set mute(newmute: boolean): void {
+    this._mute = newmute;
     util.setprop('persist.silk.volume.mute', newmute);
+
     /**
      * Emitted when the volume mute changes
      *
@@ -85,7 +97,7 @@ class Volume extends EventEmitter {
    *
    * @private
    */
-  _throwyEmit(eventName, ...args) {
+  _throwyEmit(eventName: string, ...args: any): void {
     try {
       this.emit(eventName, ...args);
     } catch (err) {

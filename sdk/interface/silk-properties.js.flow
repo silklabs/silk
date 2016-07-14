@@ -7,6 +7,7 @@
  */
 
 declare export function get(name: string): string;
+declare export function set(name: string, value: string): void;
 
 /**
  * Silk system properties helper
@@ -29,4 +30,13 @@ declare export function get(name: string): string;
  * @memberof silk-properties
  * @param {string} key The name of the system property to fetch
  * @return {?string} Returns the value of a system property or null if no such property exists
+ */
+
+/**
+ * Set system property
+ *
+ * @name set
+ * @memberof silk-properties
+ * @param {string} key The name of the system property to set
+ * @param {string} value The value to set
  */

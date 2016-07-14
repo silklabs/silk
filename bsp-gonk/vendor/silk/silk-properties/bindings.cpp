@@ -30,10 +30,29 @@ NAN_METHOD(GetProperty) {
   );
 }
 
+#ifdef ANDROID
+NAN_METHOD(SetProperty) {
+  Nan::HandleScope scope;
+
+  if (info.Length() != 2 || !info[0]->IsString() || !info[1]->IsString()) {
+    return Nan::ThrowError("SetProperty expects two string arguments");
+  }
+
+  char *property_name = *Nan::Utf8String(info[0]);
+  char *property_value= *Nan::Utf8String(info[1]);
+  int result = property_set(property_name, property_value);
+  info.GetReturnValue().Set(Nan::New<v8::Number>(result));
+}
+#endif
+
 void init(v8::Handle<v8::Object> exports)
 {
   exports->Set(Nan::New<v8::String>("get").ToLocalChecked(),
     Nan::New<v8::FunctionTemplate>(GetProperty)->GetFunction());
+#ifdef ANDROID
+  exports->Set(Nan::New<v8::String>("set").ToLocalChecked(),
+    Nan::New<v8::FunctionTemplate>(SetProperty)->GetFunction());
+#endif
 }
 
 NODE_MODULE(properties, init)

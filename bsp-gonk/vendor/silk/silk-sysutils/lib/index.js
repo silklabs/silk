@@ -36,6 +36,9 @@ if (process.platform === 'android') {
       }
       return '';
     },
+    set(prop: string, value: string): void {
+      exec('setprop', [prop, value]);
+    },
   };
 }
 
@@ -236,7 +239,7 @@ export function getlistprop(
  * @memberof silk-sysutils
  */
 export function setprop(prop: string, value: PropTypes): void {
-  exec('setprop', [prop, value.toString()]);
+  props.set(prop, value.toString());
 }
 /**
  * This class provides helper utility to watch an android property and notify

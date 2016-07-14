@@ -857,7 +857,7 @@ export default class CameraVideo extends React.Component {
           transitionLeaveTimeout={300}
           style={styles.consoleMessages}>
           {messages}
-        </ReactCSSTransitionGroup>,
+        </ReactCSSTransitionGroup>
       );
     }
 

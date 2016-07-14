@@ -18,6 +18,10 @@ const PUBLIC_KEY = Joi.string().hex().required();
 const TYPE_SCHEMA = Joi.string().only(DEVICE_TYPES).required();
 // XXX: Max name length was chosen randomly...
 const NAME_SCHEMA = Joi.string().min(1).max(60).required();
+const MAX_ACCOUNT_DEVICE_NUMBER = 65535;
+
+const ACCOUNT_DEVICE_NUMBER_SCHEMA =
+  Joi.number().integer().min(1).max(MAX_ACCOUNT_DEVICE_NUMBER);
 
 export type Record = {
   _id: ObjectId;
@@ -26,6 +30,10 @@ export type Record = {
   type: string;
   accessToken: {
     publicKey: string;
+  };
+  registration: {
+    accountId: ?string;
+    accountDeviceNumber: ?number;
   }
   // TODO: finish type...
 };
@@ -34,6 +42,7 @@ export default class Devices extends Base {
 
   static NAME_SCHEMA = NAME_SCHEMA;
   static TYPE_SCHEMA = TYPE_SCHEMA;
+  static ACCOUNT_DEVICE_NUMBER_SCHEMA = ACCOUNT_DEVICE_NUMBER_SCHEMA;
 
   static COLLECTION = 'devices';
 
@@ -53,6 +62,16 @@ export default class Devices extends Base {
     {
       props: {
         'accountId': 1,
+      },
+    },
+    {
+      props: {
+        'registration.accountId': 1,
+        'registration.accountDeviceNumber': -1,
+      },
+      options: {
+        unique: true,
+        sparse: true,
       },
     },
   ];
@@ -103,6 +122,14 @@ export default class Devices extends Base {
       name: NAME_SCHEMA,
 
       registration: Joi.object().keys({
+        // We store a duplicate of accountId for the purposes of indexing certain
+        // other fields only when the device is fully registered.
+        accountId: Joi.object().type(ObjectId),
+
+        // When the device is broadcasting an ibeacon we need   an id which is not
+        // the same as the public key and can also fit in 2 bytes.
+        accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA,
+
         // If the registration of this device has been completed
         complete: Joi.boolean().required(),
 
@@ -146,8 +173,9 @@ export default class Devices extends Base {
       return this.error('invalidRegistrationToken');
     }
 
+    const accountId = new ObjectId(payload.accountId);
     let record = this.validate({
-      accountId: new ObjectId(payload.accountId),
+      accountId,
       createdAt: new Date(),
       type: payload.type,
       name: payload.name,
@@ -156,6 +184,7 @@ export default class Devices extends Base {
         publicKey: payload.publicKey,
       },
       registration: {
+        // accountId is set here only when register is complete.
         complete: false,
         token: payload.registrationToken,
       },
@@ -187,6 +216,13 @@ export default class Devices extends Base {
       {
         $set: {
           registered: false,
+        },
+        $unset: {
+          // Remove from the index... This will allow us in the future to re-use
+          // device id's if we ever need to.
+          'registration.accountDeviceNumber': '',
+          // This field should only be present when we are registered.
+          'registration.accountId': '',
         },
       }
     );
@@ -226,8 +262,33 @@ export default class Devices extends Base {
       payload.publicKey,
       payload.registrationToken
     );
+
     if (!tokenValid) {
       return this.error('invalidRegistrationToken');
+    }
+
+    // Calculate and assign a account unique number to this device.
+    // XXX: NOTE that we accept the possible race condition of failing to update
+    // the device as complete due to concurrent registration of devices. This is
+    // unlikely and should be handled by the client retries as this would result
+    // in a 500 error...
+    const highestDeviceNumber = await this.collection
+      .find({
+        accountId: device.accountId,
+        'registration.accountDeviceNumber': {
+          $exists: true,
+        },
+      })
+      .limit(1)
+      .sort({ 'registration.accountDeviceNumber': -1 });
+
+    const accountDeviceNumber = highestDeviceNumber[0] ?
+      highestDeviceNumber[0].registration.accountDeviceNumber + 1 : 1;
+
+    if (accountDeviceNumber > MAX_ACCOUNT_DEVICE_NUMBER) {
+      // TODO: Ideally we recycle ids when they become unused. That is relatively
+      // easy but highly unlikely given the number of devices we allow.
+      throw new Error(`Account has exceeded maximum number of beacon id's`);
     }
 
     let update = await this.collection.update(
@@ -235,6 +296,8 @@ export default class Devices extends Base {
       {
         $set: {
           'registration.complete': true,
+          'registration.accountDeviceNumber': accountDeviceNumber,
+          'registration.accountId': device.accountId,
         },
       }
     );
@@ -247,7 +310,7 @@ export default class Devices extends Base {
       `);
     }
 
-    return { success: true };
+    return { success: true, accountDeviceNumber };
   }
 
   /**

@@ -38,19 +38,37 @@ suite('devices', () => {
       });
     });
 
-    test('successfully authenticate token', async () => {
-      const registrationToken = await accountId.genSign(deviceId.toString());
-      let result = await subject.validateRegistration(accountId.toString(), {
-        publicKey: deviceId.toString(),
-        registrationToken,
-      });
-      assert.ok(result.success);
+    suite('normal lifecycle', function () {
 
-      let device = await subject.findByPublicKey({
-        publicKey: deviceId.toString(),
+      setup(async() => {
+        const registrationToken = await accountId.genSign(deviceId.toString());
+        let result = await subject.validateRegistration(accountId.toString(), {
+          publicKey: deviceId.toString(),
+          registrationToken,
+        });
+        assert.ok(result.success);
       });
-      assert.equal(device.registration.complete, true);
-      assert.equal(device.accountId.toString(), account.id);
+
+      test('successfully registers device', async () => {
+        let device = await subject.findByPublicKey({
+          publicKey: deviceId.toString(),
+        });
+        assert.equal(device.registration.complete, true);
+        assert.equal(device.accountId.toString(), account.id);
+        assert.equal(device.registration.accountDeviceNumber, 1);
+      });
+
+      test('removes accountDeviceNumber on delete', async () => {
+        await subject.unregister({
+          publicKey: deviceId.toString(),
+        });
+
+        let device = await subject.findByPublicKey({
+          publicKey: deviceId.toString(),
+        });
+
+        assert(device.registration.accountDeviceNumber === undefined);
+      });
     });
 
     test('signature mismatch', async () => {

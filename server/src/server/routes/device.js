@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
 import createLog from 'silk-log';
+import Devices from '../models/devices';
 
 import sharedRoutes from './shared';
 import authorizeDevice from '../authorize_device';
@@ -88,6 +89,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     description: 'Complete registration of the deivce',
     output: Joi.object().keys({
       success: Joi.boolean().required(),
+      accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.required(),
       beaconUUID: Joi.string().guid(),
     }),
     input: Joi.object().keys({
@@ -122,6 +124,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       log.info('validated registration', req.device.accountId);
       res.respond({
         success: true,
+        accountDeviceNumber: result.accountDeviceNumber,
         beaconUUID: account.beaconUUID,
       });
       return;

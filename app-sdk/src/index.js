@@ -25,7 +25,7 @@ eventEmitter.addListener('silkAppSDKMessage', (message) => {
   log.error('Received unknown message from native', message);
   eventEmitter.postMessage({
     type: 'MESSAGE_ERROR',
-    reason: 'INVALID_MESSAGE_TYPE',
+    error: 'INVALID_MESSAGE_TYPE',
     message,
   });
 });

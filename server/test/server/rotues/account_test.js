@@ -76,7 +76,6 @@ suite('account auth', () => {
     });
     assert.ok(complete.success);
     assert.ok(complete.beaconUUID);
-    assert.equal(complete.accountDeviceNumber, 1);
 
     let deviceAfterComplete = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString(),
@@ -106,9 +105,6 @@ suite('account auth', () => {
       api.accessToken = accountOne.accessToken;
       let result = await api.account.listDevices();
       assert.equal(result.devices.length, 2);
-
-      const ids = result.devices.map((device) => device.accountDeviceNumber).sort();
-      assert.deepEqual(ids, [1, 2]);
     });
 
     test('POST /unregister_device', async () => {

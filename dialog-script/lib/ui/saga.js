@@ -27,8 +27,10 @@ export function* requestFactoryReset(
   }
 
   if (event.intent === `confirm`) {
+    yield call(speak, 'ok', 'idle');
     factoryReset.start();
-    yield call(speak, '', 'idle');
+  } else {
+    yield call(speak, 'cancelled', 'idle');
   }
 }
 
@@ -48,7 +50,7 @@ export function* setUiMode(
   default:
     invariant(false, `Invalid mode: ${entities[0]}`);
   }
-  yield call(speak, '', 'idle');
+  yield call(speak, 'ok', 'idle');
 }
 
 export function* setVolume(

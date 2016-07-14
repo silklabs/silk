@@ -11,6 +11,7 @@ import {
   startSaga,
   cleanupFinishedSagas,
 } from './environment';
+
 import modifyBabies from './babies/saga';
 import startFeeding from './food/saga';
 import modifyTimers from './timers/saga';
@@ -19,6 +20,10 @@ import {
   setUiMode,
   setVolume,
 } from './ui/saga';
+import {getStockPrice} from './stocks/saga';
+import {getWeather, resetZipcode} from './weather/saga';
+import {pauseMusic, playMusic} from './music/saga';
+import {turnOnLight, turnOffLight} from './lights/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
@@ -31,9 +36,7 @@ import type {
 const log = createLog(`dialog-script-saga`);
 
 // Text that gets spoken whenever we can't figure out what the user wants.
-export const unknownText =
-  `Sorry, I'm not understanding you. Please check out the app for example ` +
-  `requests and questions and try again.`;
+export const unknownText = `Sorry, I'm not understanding you.`;
 
 /**
  * |independentIntents| lists those intents that will trigger sagas that will
@@ -65,6 +68,13 @@ const concurrentIntents: Set<string> = new Set([
   `setUiMode`,
   `setVolume`,
   `startTimer`,
+  `getStockPrice`,
+  `getWeather`,
+  `resetZipcode`,
+  `playMusic`,
+  `pauseMusic`,
+  `turnOn`,
+  `turnOff`,
 ]);
 
 // A simple saga that speaks the current time.
@@ -272,18 +282,46 @@ export default function*(
         sagaFunction = setUiMode;
         args.push(entities);
         break;
+      case `getStockPrice`:
+        sagaFunction = getStockPrice;
+        args.push(entities[0]);
+        break;
+      case `getWeather`:
+        sagaFunction = getWeather;
+        break;
+      case `resetZipcode`:
+        sagaFunction = resetZipcode;
+        break;
+      case `playMusic`:
+        sagaFunction = playMusic;
+        break;
+      case `pauseMusic`:
+        sagaFunction = pauseMusic;
+        break;
+      case `turnOn`:
+        if (entities[0] === 'light' || entities[0] === 'lights') {
+          sagaFunction = turnOnLight;
+        }
+        break;
+      case `turnOff`:
+        if (entities[0] === 'light' || entities[0] === 'lights') {
+          sagaFunction = turnOffLight;
+        }
+        break;
       default:
         throw new Error(`All intents in concurrentIntents must be handled!`);
       }
 
-      invariant(sagaFunction);
+      if (sagaFunction) {
+        // See comment about |startSaga| above.
+        sagas.concurrent = yield* startSaga(sagaFunction, environment, ...args);
+        invariant(sagas.concurrent);
 
-      // See comment about |startSaga| above.
-      sagas.concurrent = yield* startSaga(sagaFunction, environment, ...args);
-      invariant(sagas.concurrent);
+        // This intent has now been consumed, no need to pass it to others.
+        continue;
+      }
 
-      // This intent has now been consumed, no need to pass it to others.
-      continue;
+      // If reached here, intent has not been consumed, continue onward
     }
 
     /**

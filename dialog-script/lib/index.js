@@ -129,8 +129,18 @@ invariant(dialogEngine);
 dialogEngine.configure({
   customIntentions: textToIntention,
   luisOptions: {
-    id: `1049f242-aa89-4ed2-ac4b-5861754818dc`,
-    key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
+    apps: [
+      {
+        // Baby Luis app
+        id: `1049f242-aa89-4ed2-ac4b-5861754818dc`,
+        key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
+      },
+      {
+        // Silk demo Luis app
+        id: `ab071c9a-8169-4e3c-ad88-a1be06b8153f`,
+        key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
+      },
+    ],
   },
   speechOptions,
 });

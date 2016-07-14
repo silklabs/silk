@@ -17,9 +17,13 @@ export type Intention = {
   entities: Array<string>;
 };
 
-export type LuisOptions = {
+export type LuisApp = {
   id: string;
   key: string;
+};
+
+export type LuisOptions = {
+  apps: Array<LuisApp>;
 };
 
 export type CustomIntentions = {
@@ -56,6 +60,56 @@ export default class TextToIntention {
     this._options = options;
   }
 
+  _fetchIntention(text: string, id: string, key: string): Promise<Intention> {
+    return new Promise((resolve, reject) => {
+      const data = urlEncode({
+        id,
+        'subscription-key': key,
+        'q': text,
+      });
+
+      const opts = {
+        hostname: LUIS_HOSTNAME,
+        port: LUIS_PORT,
+        path: `${LUIS_PATH}?${data}`,
+        method: LUIS_METHOD,
+      };
+
+      log.info(`Issuing luis request`);
+      log.debug(`options`, opts);
+
+      const req = https.request(opts, (res) => {
+        let json = '';
+        res.once(`error`, (error) => reject(error));
+        res.on('data', (chunk) => {
+          json += chunk;
+        });
+        res.once('end', () => {
+          if (res.statusCode === 200) {
+            log.info(`Request complete`);
+            log.debug(json);
+
+            let intent;
+            try {
+              intent = this._parseResponse(json);
+            } catch (error) {
+              reject(error);
+              return;
+            }
+            resolve(intent);
+          } else {
+            let errorText = `Request failed with status code ${res.statusCode}`;
+            log.info(errorText);
+            reject(new Error(errorText));
+          }
+        });
+      });
+
+      req.write(data);
+      req.end();
+    });
+  }
+
   getIntent(text: string): Promise<Intention> {
     log.info(`Finding intent`, text);
 
@@ -68,53 +122,20 @@ export default class TextToIntention {
     }
 
     if (this._options.luisOptions) {
-      const {id, key} = this._options.luisOptions;
+      let promises = [];
+      this._options.luisOptions.apps.forEach(app => {
+        promises.push(this._fetchIntention(text, app.id, app.key));
+      });
 
-      return new Promise((resolve, reject) => {
-        const data = urlEncode({
-          id,
-          'subscription-key': key,
-          'q': text,
-        });
-
-        const opts = {
-          hostname: LUIS_HOSTNAME,
-          port: LUIS_PORT,
-          path: `${LUIS_PATH}?${data}`,
-          method: LUIS_METHOD,
-        };
-
-        log.info(`Issuing luis request`);
-        log.debug(`options`, opts);
-
-        const req = https.request(opts, (res) => {
-          let json = '';
-          res.once(`error`, (error) => reject(error));
-          res.on('data', (chunk) => {
-            json += chunk;
-          });
-          res.once('end', () => {
-            if (res.statusCode === 200) {
-              log.info(`Request complete`);
-              log.debug(json);
-
-              let intent;
-              try {
-                intent = this._parseResponse(json);
-              } catch (error) {
-                reject(error);
-                return;
-              }
-              resolve(intent);
-            } else {
-              reject(new Error(`Request failed with status code ` +
-                               `${res.statusCode}`));
-            }
-          });
-        });
-
-        req.write(data);
-        req.end();
+      return Promise.all(promises)
+      .then(intentions => {
+        let intention;
+        for (intention of intentions) {
+          if (intention.intent !== UNKNOWN_INTENT) {
+            break;
+          }
+        }
+        return intention;
       });
     }
 

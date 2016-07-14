@@ -4,10 +4,18 @@ import mock from 'mock-require';
 
 import * as mockDialogEngine from './mock/dialog-engine';
 import * as mockStorage from './mock/dialog-storage';
+import * as mockSonos from './mock/mock-silk-sonos';
+import * as mockLifx from './mock/mock-silk-lifx';
+
+import createLog from 'silk-log';
+const log = createLog(`dialog-script-test-utils`);
 
 export function installMocks() {
+  log.info('installing mocks');
   mock('silk-dialog-engine', mockDialogEngine);
   mock('silk-dialog-storage', mockStorage);
+  mock('silk-sonos', mockSonos);
+  mock('silk-lifx', mockLifx);
 }
 
 export function uninstallMocks() {
@@ -111,4 +119,52 @@ export function makeMicEvent(text = ``, intent = `unknown`, entities = []) {
     intent,
     entities,
   };
+}
+
+export class UserScriptTester {
+  constructor() {
+    this._dialogEngine = null;
+    this._reload = null;
+  }
+
+  suiteSetup() {
+    installMocks();
+    mockDialogEngine.createDialogEngine({});
+
+    // This configures the dialog engine.
+    this._reload = require('../lib/index').reload;
+    assert(this._reload);
+  }
+
+  suiteTeardown() {
+    uninstallMocks();
+  }
+
+  setup() {
+    assert(this._reload);
+    this._reload();
+
+    this._dialogEngine = mockDialogEngine.default();
+    assert(this._dialogEngine);
+  }
+
+  speak(text) {
+    this._dialogEngine._mockInterpret(text);
+  }
+
+  listen() {
+    return eventToPromise(this._dialogEngine, `mock-speech`, {array: true});
+  }
+
+  async listenCheck(regexText, finished) {
+    let results = {};
+    [results.text, results.finished] = await this.listen();
+
+    log.info(`Reponse: ${results.text} ${results.finished}`);
+    assert.equal(results.finished, finished,
+        `Expecting: '${finished}', got: '${results.finished}'`);
+
+    let match = results.text.match(RegExp(regexText, 'i'));
+    assert(match, `Expecting: '${regexText}', got: '${results.text}'`);
+  }
 }

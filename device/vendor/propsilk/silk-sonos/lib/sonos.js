@@ -6,13 +6,11 @@
 
 import SonosApi from 'sonos';
 
-let log;
+import createLog from 'silk-log/device';
+const log = createLog('sonos');
 
-export default class Sonos {
-  constructor(env) {
-    this._env = env;
-    log = env.log;
-
+export class Sonos {
+  constructor() {
     log.info('initializing Sonos');
     this.startSearch();
   }
@@ -109,8 +107,6 @@ export default class Sonos {
       }
     });
   }
-
-  willUnload() {
-    this.stopSearch();
-  }
 }
+
+export default new Sonos();

@@ -147,7 +147,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     list = list.map((device) => {
       return {
         name: device.name,
-        accountDeviceNumber: device.accountDeviceNumber,
+        accountDeviceNumber: device.registration.accountDeviceNumber,
         publicKey: device.accessToken.publicKey,
         deviceId: device.accessToken.publicKey,
       };

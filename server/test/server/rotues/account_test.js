@@ -85,18 +85,24 @@ suite('account auth', () => {
   });
 
   suite('with devices', () => {
-    let deviceOne, deviceTwo;
-    setup(async () => {
+    const numberOfDevices = 15;
+    let devices;
+
+    setup(async function () {
+      this.timeout('30s');
       api.accessToken = accountOne.accessToken;
-      [deviceOne, deviceTwo] = await Promise.all([
-        context.registeredDevice(accountOne.accessToken),
-        context.registeredDevice(accountOne.accessToken),
-      ]);
+
+      const ops = [];
+      for (let i = 0; i < numberOfDevices; i++) {
+        ops.push(context.registeredDevice(accountOne.accessToken));
+      }
+
+      devices = await Promise.all(ops);
 
       // Create another account just to be sure we are not contaminating our
       // state.
       api.accessToken = accountTwo.accessToken;
-      context.registeredDevice(accountTwo.accessToken);
+      await context.registeredDevice(accountTwo.accessToken);
 
       // Do not assume a particular account in the below tests...
       api.accessToken = null;
@@ -105,25 +111,30 @@ suite('account auth', () => {
     test('POST /list_devices', async () => {
       api.accessToken = accountOne.accessToken;
       let result = await api.account.listDevices();
-      assert.equal(result.devices.length, 2);
+      assert.equal(result.devices.length, numberOfDevices);
 
-      const ids = result.devices.map((device) => device.accountDeviceNumber).sort();
-      assert.deepEqual(ids, [1, 2]);
+      const ids = result.devices.map((device) => device.accountDeviceNumber);
+      const expected = [];
+      ids.sort((a, b) => {
+        return a - b;
+      });
+      for (let i = 1; i <= numberOfDevices; i++) {
+        expected.push(i);
+      }
+      assert.deepEqual(ids, expected);
     });
 
     test('POST /unregister_device', async () => {
       api.accessToken = accountOne.accessToken;
       await api.account.unregisterDevice({
-        devicePublicKey: deviceOne.accessToken.toString(),
+        devicePublicKey: devices[0].accessToken.toString(),
       });
 
-      let { devices } = await api.account.listDevices();
-      assert.equal(devices.length, 1);
-      assert.deepEqual(
-        devices[0].publicKey,
-        deviceTwo.accessToken.toString()
-      );
+      let list = await api.account.listDevices();
+      assert.equal(list.devices.length, 14);
 
+
+      api.accessToken = devices[0].accessToken;
       // Make sure that the device can no longer make api calls.
       let err;
       try {

@@ -55,7 +55,7 @@ suite('devices', () => {
         });
         assert.equal(device.registration.complete, true);
         assert.equal(device.accountId.toString(), account.id);
-        assert.equal(device.accountDeviceNumber, 1);
+        assert.equal(device.registration.accountDeviceNumber, 1);
       });
 
       test('removes accountDeviceNumber on delete', async () => {
@@ -67,7 +67,7 @@ suite('devices', () => {
           publicKey: deviceId.toString(),
         });
 
-        assert(device.accountDeviceNumber === undefined);
+        assert(device.registration.accountDeviceNumber === undefined);
       });
     });
 

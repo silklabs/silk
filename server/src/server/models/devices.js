@@ -30,6 +30,10 @@ export type Record = {
   type: string;
   accessToken: {
     publicKey: string;
+  };
+  registration: {
+    accountId: ?string;
+    accountDeviceNumber: ?number;
   }
   // TODO: finish type...
 };
@@ -62,13 +66,11 @@ export default class Devices extends Base {
     },
     {
       props: {
-        'accountDeviceNumber': 1,
-        'accountId': 1,
+        'registration.accountId': 1,
+        'registration.accountDeviceNumber': -1,
       },
       options: {
-        // We must have a unique accountDeviceNumber per account ...
         unique: true,
-        // The accountDeviceNumber can be omitted so we use sparse indexing ...
         sparse: true,
       },
     },
@@ -101,10 +103,6 @@ export default class Devices extends Base {
       // The account which this device belongs to.
       accountId: Joi.object().type(ObjectId).required(),
 
-      // When the device is broadcasting an ibeacon we need   an id which is not
-      // the same as the public key and can also fit in 2 bytes.
-      accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA,
-
       // Is this device currently registered.
       registered: Joi.boolean().required(),
 
@@ -124,6 +122,14 @@ export default class Devices extends Base {
       name: NAME_SCHEMA,
 
       registration: Joi.object().keys({
+        // We store a duplicate of accountId for the purposes of indexing certain
+        // other fields only when the device is fully registered.
+        accountId: Joi.object().type(ObjectId),
+
+        // When the device is broadcasting an ibeacon we need   an id which is not
+        // the same as the public key and can also fit in 2 bytes.
+        accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA,
+
         // If the registration of this device has been completed
         complete: Joi.boolean().required(),
 
@@ -167,8 +173,9 @@ export default class Devices extends Base {
       return this.error('invalidRegistrationToken');
     }
 
+    const accountId = new ObjectId(payload.accountId);
     let record = this.validate({
-      accountId: new ObjectId(payload.accountId),
+      accountId,
       createdAt: new Date(),
       type: payload.type,
       name: payload.name,
@@ -177,6 +184,7 @@ export default class Devices extends Base {
         publicKey: payload.publicKey,
       },
       registration: {
+        // accountId is set here only when register is complete.
         complete: false,
         token: payload.registrationToken,
       },
@@ -212,7 +220,9 @@ export default class Devices extends Base {
         $unset: {
           // Remove from the index... This will allow us in the future to re-use
           // device id's if we ever need to.
-          accountDeviceNumber: '',
+          'registration.accountDeviceNumber': '',
+          // This field should only be present when we are registered.
+          'registration.accountId': '',
         },
       }
     );
@@ -265,15 +275,15 @@ export default class Devices extends Base {
     const highestDeviceNumber = await this.collection
       .find({
         accountId: device.accountId,
-        accountDeviceNumber: {
+        'registration.accountDeviceNumber': {
           $exists: true,
         },
       })
       .limit(1)
-      .sort({ accountDeviceNumber: 1 });
+      .sort({ 'registration.accountDeviceNumber': -1 });
 
     const accountDeviceNumber = highestDeviceNumber[0] ?
-      highestDeviceNumber[0].accountDeviceNumber + 1 : 1;
+      highestDeviceNumber[0].registration.accountDeviceNumber + 1 : 1;
 
     if (accountDeviceNumber > MAX_ACCOUNT_DEVICE_NUMBER) {
       // TODO: Ideally we recycle ids when they become unused. That is relatively
@@ -286,7 +296,8 @@ export default class Devices extends Base {
       {
         $set: {
           'registration.complete': true,
-          accountDeviceNumber,
+          'registration.accountDeviceNumber': accountDeviceNumber,
+          'registration.accountId': device.accountId,
         },
       }
     );

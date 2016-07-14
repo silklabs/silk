@@ -112,7 +112,6 @@ export default async function main (config: any): any {
     timeMeta,
     nonce,
     accounts,
-    devices,
   ].map(model => model.ensureIndexes()));
 
   // Create the developer account...

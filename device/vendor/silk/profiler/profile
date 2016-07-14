@@ -2,5 +2,5 @@
 
 'use strict';
 
-require('../../../../babel-run/node')();
+require('silk-babel-run/node')();
 require('.');

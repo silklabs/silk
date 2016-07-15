@@ -1,0 +1,28 @@
+#!/bin/bash -e
+
+source build/envsetup.sh
+
+set -x
+source ../pub/version/branch
+test -n $BRANCH
+
+test -n $SILK_BOARD
+
+rm -rf ota-internal_dist
+mkdir ota-internal_dist
+ls -l $ANDROID_PRODUCT_OUT/*.zip
+
+if [ -f $ANDROID_PRODUCT_OUT/*-ota-*.zip ]; then # [ not [[, due to pathname expansion
+  # Full OTA package not available for all gonks
+  cp -v $ANDROID_PRODUCT_OUT/*-ota-*.zip ota-internal_dist/
+fi
+cp -v $ANDROID_PRODUCT_OUT/*-silkota-*.zip ota-internal_dist/
+
+./travis/build_ota_manifest.sh $BRANCH $SILK_BOARD $ANDROID_PRODUCT_OUT/system ota-internal_dist
+../s3-artifacts/bin/upload \
+    update.silklabs.com \
+    $(readlink -f ota-internal_dist) \
+    ota-internal/$BRANCH \
+    --credentials update.silklabs.com_ota-internal
+
+exit 0

@@ -151,7 +151,7 @@ function createJSONIndex(dest, tree) {
 
 async function main() {
   let { directory, bucket, prefix, lossy } = parser.parseArgs();
-  assert(await fs.exists(directory), 'directory must exist...');
+  assert(await fs.exists(directory), `directory must exist: ${directory}`);
 
   let s3 = new S3({ bucket, logger: process.stdout });
   let tree = await buildTree(prefix, directory);

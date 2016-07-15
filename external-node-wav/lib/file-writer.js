@@ -32,6 +32,23 @@ function FileWriter (path, opts) {
 inherits(FileWriter, Writer);
 
 /**
+ * Writes the pcm data in the wav file and close the stream. Returns
+ * a promise that is resolved when the file is finished writing.
+ */
+FileWriter.prototype.writeAll = function (chunk) {
+  return new Promise((resolve, reject) => {
+    this.on('done', () => {
+      resolve();
+    });
+    this.on('error', err => {
+      reject(err);
+    });
+    this.write(chunk);
+    this.end();
+  });
+}
+
+/**
  * Writes the updated WAVE header to the beginning of the file.
  * Emits a "done" event when everything is all good.
  *
@@ -59,4 +76,5 @@ FileWriter.prototype._onHeader = function (header) {
     if (err) return self.emit('error', err);
     self.emit('done');
   }
+  fs.open(this.path, 'r+', onOpen);
 };

@@ -529,13 +529,6 @@ export default class KeywordSpotting extends EventEmitter {
       channels: this._numChannels,
       bitDepth: this._bytesPerSample * 8,
     });
-    writer.on('header', () => {
-      log.debug('Keyword saved');
-    });
-    writer.on('error', err => {
-      log.error(err);
-    });
-    writer.write(wavData);
-    writer.end();
+    writer.writeAll(wavData).catch(err => log.error(err));
   }
 }

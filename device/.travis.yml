@@ -51,12 +51,12 @@ deploy:
   provider: s3
   access_key_id: $S3_ACCESS_KEY_ID
   secret_access_key: $S3_SECRET_ACCESS_KEY
-  bucket: "silk-device"
-  region: us-west-2
+  bucket: "update.silklabs.com"
+  region: us-east-1
   skip_cleanup: true
   acl: public_read
   local-dir: dist/
-  upload-dir: $TRAVIS_BRANCH/latest
+  upload-dir: internal-802b92d68dc1f8c14ef381/ota/$TRAVIS_BRANCH
   on:
     all_branches: true
     condition: "$TRAVIS_PULL_REQUEST/$TRAVIS_OS_NAME == false/linux"

@@ -165,10 +165,6 @@ export default class Timeline extends EventEmitter {
     this.diagFrameFilterNames = [];
     this.diagFrameFilterSkips = [];
 
-    this.eventTracker = new EventTracker(this.outbox);
-    this.eventTracker.on('active', this._onEventTrackerActive);
-    this.eventTracker.on('inactive', this._onEventTrackerInactive);
-
     this.lastPreviewFrame = null;
     this.lastPreviewFrameWhen = 0;
     this.lastPreviewKeyframeWhen = 0;
@@ -187,6 +183,13 @@ export default class Timeline extends EventEmitter {
       break;
     }
     log.info('AV upload type:', this.videoUploadType);
+
+    // Only enable event tracking if video will be uploaded
+    if (this.videoUploadType !== 'none') {
+      this.eventTracker = new EventTracker(this.outbox);
+      this.eventTracker.on('active', this._onEventTrackerActive);
+      this.eventTracker.on('inactive', this._onEventTrackerInactive);
+    }
 
     server.on('disconnect', () => {
       log.info('Turning off any live streaming');
@@ -498,7 +501,9 @@ export default class Timeline extends EventEmitter {
    * @private
    */
   _processEvents(objects: Array<TimelineEventObject>) {
-    objects.forEach(object => this.eventTracker.record(object));
+    if (this.eventTracker) {
+      objects.forEach(object => this.eventTracker.record(object));
+    }
     this._emitEvents(objects);
   }
 

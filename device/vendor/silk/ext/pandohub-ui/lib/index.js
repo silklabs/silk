@@ -6,68 +6,6 @@
  * @flow
  */
 
-/*
-  LEDs
-  ----
-
-  The pando hub has seven LP55321 controllers to manage its LEDs.  For more details on
-  this controller, see http://www.ti.com/lit/ds/symlink/lp55231.pdf
-
-  The nightlight driven by three controllers: 1-0032, 1-0033, 1-0034:
-
-    1-0032
-      1: D3002 (W)
-      2: D3004 (W)
-      3: -
-      4: -
-      5: D509 (W)
-      6: D510 (W)
-      7: D3011 (R)
-      8: D3012 (R)
-
-    1-0033:
-      1: D3001 (W)
-      2: D3010 (W)
-      3: D3003 (G)
-      4: D3005 (G)
-      5: D3013 (B)
-      6: D3014 (B)
-      7: -
-      8: -
-
-    1-0034:
-      1: D501 (W)
-      2: D502 (W)
-      3: D504 (G)
-      4: D505 (B)
-      5: D507 (G)
-      6: D508 (B)
-      7: -
-      8: D503 (R)
-      9: D506 (R)
-
-
-  The light ring is driven by four controllers, 5-0032..5-0034, which all
-  have the same LED mapping:
-      1: G
-      2: B
-      3: G
-      4: B
-      5: G
-      6: B
-      7: R
-      8: R
-      9: R
-
-  The light right controller orientation is as follows, where 12 o'clock points to the
-  power button:
-      5-0032: 5 o'clock
-      5-0033: 7 o'clock
-      5-0034: 2 o'clock
-      5-0035: 11 o'clock
-*/
-
-import path from 'path';
 import fs from 'fs';
 import invariant from 'assert';
 
@@ -78,8 +16,14 @@ import volume from 'silk-volume';
 import type { Env, UiState } from 'silk-exttest';
 import { genDialogEngine } from 'silk-dialog-engine';
 import type { DialogEngine, DialogUiModeEventCallback } from 'silk-dialog-engine';
+import { Nightlight, Ring } from './leds';
 
 const log = createLog('silkext-pandohubui');
+
+const VOLUME_STEPS = 12;
+const VOLUME_STEP_INC = 8;
+const VOLUME_MAX = VOLUME_STEPS * VOLUME_STEP_INC;
+invariant(VOLUME_MAX <= 100);
 
 const CONNECTING_TIMEOUT__LITTLE_SLOW = 30 * 1000;           // 30 seconds
 const CONNECTING_TIMEOUT__SOMETHINGS_WRONG = 10 * 60 * 1000; // 10 minutes
@@ -87,7 +31,6 @@ const CONNECTING_TIMEOUT__SOMETHINGS_WRONG = 10 * 60 * 1000; // 10 minutes
 type InputEventCallback = (event: { keyId: string }) => void;
 type UiStateEventCallback = (state: string) => void;
 type ConnectingSubstate = 'ok' | 'littleSlow' | 'somethingsWrong';
-
 
 type Alert = 'configStarted' |
              'volumeChanged' |
@@ -99,42 +42,36 @@ type DialogState = 'idle' |
                    'speaking' |
                    'speaking_network_error';
 
-type RGB = {
-  r: number; // 0..255
-  g: number; // 0..255
-  b: number; // 0..255
-};
-
-
-function clamp(v, min, max) {
+function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.floor(v)));
 }
 
 class PandoHubUi {
   input: Input;
   deviceUiState: UiState;
-  dialogEngine: ?DialogEngine;
+  dialogEngine: DialogEngine;
   dialogState: DialogState;
   connectingSubstate: ConnectingSubstate;
   brightness: number; // 0 .. 255
-  nightlightRGB: RGB;
   connectingTimer: ?number;
   alertTimer: ?number;
   ledsPresent: bool;
+  nightlight: Nightlight;
+  ring: Ring;
+  rendering: bool;
+  renderReentered: bool;
+  renderReenteredAlert: ?Alert;
 
   constructor(env: Env) {
     this.input = new Input();
     this.deviceUiState = 'bootanimation';
     this.dialogState = 'idle';
-    this.dialogEngine = null;
     this.brightness = clamp(0, 255, sysutil.getintprop('persist.pandohubui.brightness', 128));
-    this.nightlightRGB = {r: 0, b: 255, g: 200};
     this.connectingTimer = null;
     this.alertTimer = null;
     this.ledsPresent = false;
-    fs.access('/sys/bus/i2c/drivers/lp5523x', err => {
-      this.ledsPresent = !err;
-    });
+    this.rendering = false;
+    this.renderReentered = false;
 
     this.input.on('down', this.onKeyPress);
     this.onDeviceUiState(env.ui.getState());
@@ -148,12 +85,26 @@ class PandoHubUi {
 
     volume.on('level', this.onVolumeLevel);
 
+    this.rendering = true; // Halt rendering until async init is complete
     genDialogEngine()
     .then(dialogEngine => {
       this.dialogEngine = dialogEngine;
       dialogEngine.on('ui-mode', this.onDialogUiMode);
       volume.mute = dialogEngine.uiMode === 'mute';
-      this.render();
+      fs.access('/sys/bus/i2c/drivers/lp5523x', async (err) => {
+        if (!err) {
+          const [nightlight, ring] = await Promise.all([
+            Nightlight.create(),
+            Ring.create(),
+          ]);
+          this.nightlight = nightlight;
+          this.ring = ring;
+
+          this.ledsPresent = true;
+        }
+        this.rendering = false;
+        this.render();
+      });
     });
   }
 
@@ -184,34 +135,32 @@ class PandoHubUi {
   onDialogFinished: (() => void) = () => {
     log.info('finished_processing_speech');
     this.dialogState = 'idle';
-    this.startAlert('dialogDone');
-    this.render();
+    this.render('dialogDone');
   };
 
   onVolumeLevel: (() => void) = () => {
-    this.startAlert('volumeChanged');
-    this.render();
+    this.render('volumeChanged');
   }
 
   onKeyPress: InputEventCallback = event => {
-
     log.info('key event:', event);
+    if (!this.dialogEngine) {
+      return;
+    }
     switch (event.keyId) {
     case 'volumedown':
-      volume.level = Math.max(0, volume.level - 10);
+      volume.level = Math.max(0, volume.level - VOLUME_STEP_INC);
       break;
     case 'volumeup':
-      volume.level = Math.min(100, volume.level + 10);
+      volume.level = Math.min(VOLUME_MAX, volume.level + VOLUME_STEP_INC);
       break;
     case 'mute':
-      if (this.dialogEngine) {
-        if (this.dialogEngine.uiMode === 'mute') {
-          this.dialogEngine.uiMode = 'normal';
-          volume.mute = false;
-        } else {
-          this.dialogEngine.uiMode = 'mute';
-          volume.mute = true;
-        }
+      if (this.dialogEngine.uiMode === 'mute') {
+        this.dialogEngine.uiMode = 'normal';
+        volume.mute = false;
+      } else {
+        this.dialogEngine.uiMode = 'mute';
+        volume.mute = true;
       }
       break;
     case 'brightnessdown':
@@ -229,191 +178,203 @@ class PandoHubUi {
     }
   };
 
-  startAlert(alert: Alert) {
-    if (this.alertTimer) {
-      clearTimeout(this.alertTimer);
-      this.alertTimer = null;
-    }
-    let alertTimeMs;
-    switch (alert) {
-    case 'configStarted':
-      alertTimeMs = 2000;
-      // TODO: Start LED pattern
-      break;
-    case 'volumeChanged':
-      alertTimeMs = 1000;
-      // TODO: Start LED pattern
-      break;
-    case 'dialogDone':
-      alertTimeMs = 500;
-      // TODO: Start LED pattern
-      break;
-    default:
-      invariant(false, 'Unknown alert:', alert);
-    }
-    log.info('alert started:', alert);
-    this.alertTimer = setTimeout(
-      () => {
-        log.info('alert complete:', alert);
-        this.alertTimer = null;
-        this.render();
-      },
-      alertTimeMs
-    );
-  }
-
-  render(): void {
-
-    log.info('deviceUiState:', this.deviceUiState);
-    log.info('connectingSubstate:', this.connectingSubstate);
-    log.info('dialogState:', this.dialogState);
-    if (this.dialogEngine) {
-      log.info('dialogUiMode:', this.dialogEngine.uiMode);
-    }
-    log.info('alert:', this.alertTimer !== null);
-    log.info('volume:', volume.level);
-    log.info('volume mute:', volume.mute);
-    log.info('brightness:', this.brightness);
-
-    if (this.alertTimer !== null) {
+  async render(alert: ?Alert): Promise<void> {
+    if (this.rendering) {
+      this.renderReentered = true;
+      if (alert) {
+        this.renderReenteredAlert = alert;
+      }
       return;
     }
-    if (volume.mute) {
-      this.renderRing({r: 255, g: 0, b: 255});
-    } else {
-      switch (this.deviceUiState) {
-      case 'bootanimation':
-        this.renderRing({r: 192, g: 192, b: 192});
-        break;
-      case 'charging':
-        this.renderRing({r: 64, g: 64, b: 64});
-        break;
-      case 'unconfigured':
-        this.renderRing({r: 255, g: 0, b: 0});
-        break;
+    this.rendering = true;
+    try {
+      await this.renderInternal(alert);
+    } finally {
+      this.rendering = false;
+    }
+
+    if (this.renderReentered) {
+      alert = this.renderReenteredAlert;
+      this.renderReentered = false;
+      this.renderReenteredAlert = null;
+      this.render(alert);
+    }
+  }
+
+
+  async renderInternal(alert: ?Alert): Promise<void> {
+    if (!this.dialogEngine || !this.ledsPresent) {
+      return;
+    }
+
+    // Alerts are temporary notifications that are rendered over the normal UI
+    // state
+    if (alert) {
+      log.verbose('New alert:', alert);
+      if (this.alertTimer) {
+        clearTimeout(this.alertTimer);
+        this.alertTimer = null;
+      }
+
+      let alertTimeMs;
+      switch (alert) {
       case 'configStarted':
-      case 'configRegistering':
-        this.renderRing({r: 0, g: 255, b: 255});
+        alertTimeMs = 2250;
+        await this.ring.unconfiguredPing();
         break;
-      case 'connecting':
-        switch (this.connectingSubstate) {
-        case 'ok':
-          this.renderRing({r: 255, g: 255, b: 0});
+      case 'volumeChanged':
+        {
+          alertTimeMs = 2000;
+          const volumeIndex = clamp(volume.level / VOLUME_STEP_INC, 0, VOLUME_STEPS);
+          log.info(`volume is ${volume.level} (${volumeIndex}/${VOLUME_STEPS})`);
+          await this.ring.volume(volumeIndex);
           break;
-        case 'littleSlow':
-          this.renderRing({r: 255, g: 255, b: 128});
-          break;
-        case 'somethingsWrong':
-          this.renderRing({r: 255, g: 255, b: 255});
-          break;
-        default:
-          invariant(false, 'Unknown substate: ' + this.connectingSubstate);
         }
-        break;
-      case 'online':
-        // TODO: check this.dialogEngine.uiMode...
-        this.renderRing({r: 0, g: 255, b: 0});
-        break;
-      case 'powerdown':
-        this.renderRing({r: 128, g: 128, b: 128});
+      case 'dialogDone':
+        alertTimeMs = 1000;
+        await Promise.all([
+          this.ring.finishedDialog(),
+          this.nightlight.blue(),
+        ]);
         break;
       default:
-        invariant(false, 'Unknown UI state', this.deviceUiState);
+        invariant(false, 'Unknown alert:', alert);
       }
-    }
-    this.renderNightlight();
-  }
 
-  writeLED(ledId: string, brightness: number) {
-    if (!this.ledsPresent) {
+      this.alertTimer = setTimeout(
+        () => {
+          log.verbose('Alert complete:', alert);
+          this.alertTimer = null;
+          this.render();
+        },
+        alertTimeMs
+      );
       return;
     }
-    const filepath = path.join('/sys/bus/i2c/drivers/lp5523x', ledId, 'brightness');
-    log.verbose('Writing to', filepath, 'with', brightness.toString());
-    try {
-      fs.writeFileSync(filepath, brightness.toString());
-    } catch (e) {
-      log.warn(e.stack || e);
+
+    log.debug('deviceUiState:', this.deviceUiState);
+    log.debug('connectingSubstate:', this.connectingSubstate);
+    log.debug('dialogState:', this.dialogState);
+    log.debug('dialogUiMode:', this.dialogEngine.uiMode);
+    log.debug('alert:', this.alertTimer !== null);
+    log.debug('volume:', volume.level);
+    log.debug('volume mute:', volume.mute);
+    log.debug('brightness:', this.brightness);
+
+    if (this.alertTimer !== null) {
+      // Alert is still pending, don't disturb it
+      return;
     }
-  }
+    switch (this.deviceUiState) {
+    case 'bootanimation':
+    case 'charging':
+      await Promise.all([
+        this.ring.initializing(),
+        this.nightlight.blue(),
+      ]);
+      break;
+    case 'unconfigured':
+    case 'configStarted':
+      await Promise.all([
+        this.ring.unconfigured(),
+        this.nightlight.orange(),
+      ]);
+      break;
+    case 'configRegistering':
+      await Promise.all([
+        this.ring.configuring(),
+        this.nightlight.orange(),
+      ]);
+      break;
+    case 'connecting':
+      switch (this.connectingSubstate) {
+      case 'ok':
+        await Promise.all([
+          this.ring.processing(),
+          this.nightlight.blueWithGlow(),
+        ]);
+        break;
+      case 'littleSlow':
+        await Promise.all([
+          this.ring.speakingError(),
+          this.nightlight.orange(),
+        ]);
+        break;
+      case 'somethingsWrong':
+        await Promise.all([
+          this.ring.online(),
+          this.nightlight.white(this.brightness),
+        ]);
+        break;
+      default:
+        invariant(false, 'Unknown substate: ' + this.connectingSubstate);
+      }
+      break;
+    case 'online':
+      if (this.dialogEngine.uiMode === 'mute') {
+        await Promise.all([
+          this.ring.mute(),
+          this.nightlight.red(),
+        ]);
+        break;
+      }
 
-  renderNightlight() {
-    const nightlightBrightness = this.brightness;
-    const brightnessPercent = this.brightness / 255;
-    const r = clamp(this.nightlightRGB.r * brightnessPercent, 0, 255);
-    const g = clamp(this.nightlightRGB.g * brightnessPercent, 0, 255);
-    const b = clamp(this.nightlightRGB.b * brightnessPercent, 0, 255);
-
-    // Top
-    this.writeLED('1-0034/leds/d501:W', nightlightBrightness);
-    this.writeLED('1-0034/leds/d502:W', nightlightBrightness);
-    this.writeLED('1-0032/leds/d509:W', nightlightBrightness);
-    this.writeLED('1-0032/leds/d510:W', nightlightBrightness);
-    this.writeLED('1-0034/leds/d503:R', r);
-    this.writeLED('1-0034/leds/d506:R', r);
-    this.writeLED('1-0034/leds/d504:G', g);
-    this.writeLED('1-0034/leds/d507:G', g);
-    this.writeLED('1-0034/leds/d505:B', b);
-    this.writeLED('1-0034/leds/d508:B', b);
-
-    // Bottom
-    this.writeLED('1-0033/leds/d3001:W', nightlightBrightness);
-    this.writeLED('1-0032/leds/d3002:W', nightlightBrightness);
-    this.writeLED('1-0032/leds/d3004:W', nightlightBrightness);
-    this.writeLED('1-0033/leds/d3010:W', nightlightBrightness);
-    this.writeLED('1-0032/leds/d3011:R', r);
-    this.writeLED('1-0032/leds/d3012:R', r);
-    this.writeLED('1-0033/leds/d3003:G', g);
-    this.writeLED('1-0033/leds/d3005:G', g);
-    this.writeLED('1-0033/leds/d3013:B', b);
-    this.writeLED('1-0033/leds/d3014:B', b);
-  }
-
-  renderRing(rgb: RGB) {
-    const brightnessPercent = this.brightness / 255;
-    const r = clamp(rgb.r * brightnessPercent, 0, 255);
-    const g = clamp(rgb.g * brightnessPercent, 0, 255);
-    const b = clamp(rgb.b * brightnessPercent, 0, 255);
-
-    this.writeLED('5-0032/leds/d601:R', r);
-    this.writeLED('5-0032/leds/d601:G', g);
-    this.writeLED('5-0032/leds/d601:B', b);
-    this.writeLED('5-0032/leds/d602:R', r);
-    this.writeLED('5-0032/leds/d602:G', g);
-    this.writeLED('5-0032/leds/d602:B', b);
-    this.writeLED('5-0032/leds/d603:R', r);
-    this.writeLED('5-0032/leds/d603:G', g);
-    this.writeLED('5-0032/leds/d603:B', b);
-
-    this.writeLED('5-0033/leds/d604:R', r);
-    this.writeLED('5-0033/leds/d604:G', g);
-    this.writeLED('5-0033/leds/d604:B', b);
-    this.writeLED('5-0033/leds/d605:R', r);
-    this.writeLED('5-0033/leds/d605:G', g);
-    this.writeLED('5-0033/leds/d605:B', b);
-    this.writeLED('5-0033/leds/d606:R', r);
-    this.writeLED('5-0033/leds/d606:G', g);
-    this.writeLED('5-0033/leds/d606:B', b);
-
-    this.writeLED('5-0035/leds/d610:R', r);
-    this.writeLED('5-0035/leds/d610:G', g);
-    this.writeLED('5-0035/leds/d610:B', b);
-    this.writeLED('5-0035/leds/d611:R', r);
-    this.writeLED('5-0035/leds/d611:G', g);
-    this.writeLED('5-0035/leds/d611:B', b);
-    this.writeLED('5-0035/leds/d612:R', r);
-    this.writeLED('5-0035/leds/d612:G', g);
-    this.writeLED('5-0035/leds/d612:B', b);
-
-    this.writeLED('5-0034/leds/d607:R', r);
-    this.writeLED('5-0034/leds/d607:G', g);
-    this.writeLED('5-0034/leds/d607:B', b);
-    this.writeLED('5-0034/leds/d608:R', r);
-    this.writeLED('5-0034/leds/d608:G', g);
-    this.writeLED('5-0034/leds/d608:B', b);
-    this.writeLED('5-0034/leds/d609:R', r);
-    this.writeLED('5-0034/leds/d609:G', g);
-    this.writeLED('5-0034/leds/d609:B', b);
+      switch (this.dialogState) {
+      case 'idle':
+        switch (this.dialogEngine.uiMode) {
+        case 'normal':
+          await Promise.all([
+            this.ring.online(),
+            this.nightlight.white(this.brightness),
+          ]);
+          break;
+        case 'dnd':
+          await Promise.all([
+            this.ring.silent(),
+            this.nightlight.blue(),
+          ]);
+          break;
+        default:
+          invariant(false);
+        }
+        break;
+      case 'listening':
+        await Promise.all([
+          this.ring.listening(),
+          this.nightlight.blue(),
+        ]);
+        break;
+      case 'processing_speech':
+        await Promise.all([
+          this.ring.processing(),
+          this.nightlight.blueWithGlow(),
+        ]);
+        break;
+      case 'speaking':
+        await Promise.all([
+          this.ring.speaking(),
+          this.nightlight.blue(),
+        ]);
+        break;
+      case 'speaking_network_error':
+        await Promise.all([
+          this.ring.speakingError(),
+          this.nightlight.orange(),
+        ]);
+        break;
+      default:
+        invariant(false, 'Unknown state: ' + this.dialogState);
+      }
+      break;
+    case 'powerdown':
+      await Promise.all([
+        this.ring.online(),
+        this.nightlight.white(0),
+      ]);
+      break;
+    default:
+      invariant(false, 'Unknown UI state', this.deviceUiState);
+    }
   }
 
   onDeviceUiState: UiStateEventCallback = deviceUiState => {
@@ -426,17 +387,18 @@ class PandoHubUi {
     this.connectingSubstate = 'ok';
 
     switch (this.deviceUiState) {
-    case 'config started':
-      this.startAlert('configStarted');
+    case 'configStarted':
+      log.info('         CONFIG STARTED');
+      this.render('configStarted');
       break;
     case 'connecting':
       this.connectingTimer = setTimeout(this.onNotConnectedYet,
         CONNECTING_TIMEOUT__LITTLE_SLOW);
-      break;
+      //fallthrough
     default:
+      this.render();
       break;
     }
-    this.render();
   };
 
   onNotConnectedYet: (() => void) = () => {

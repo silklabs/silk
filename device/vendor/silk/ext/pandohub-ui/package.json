@@ -8,6 +8,9 @@
     "silk-build": "silk-buildjs .",
     "test": "npm run lint"
   },
+  "dependencies": {
+    "mz": "2.4.0"
+  },
   "symlinkDependencies": {
     "silk-babeldeps": "/babeldeps",
     "silk-buildjs": "/pub/buildjs",

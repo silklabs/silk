@@ -180,7 +180,7 @@ export class DialogEngine extends EventEmitter {
       return;
     }
 
-    const tts = new TextToSpeech(text);
+    const tts = new TextToSpeech();
     const stream = new ClosingPassThrough();
 
     let ttsError: ?Error = null;
@@ -264,7 +264,7 @@ export class DialogEngine extends EventEmitter {
       });
     };
 
-    const stt = new SpeechToText(finish);
+    const stt = new SpeechToText();
 
     errorListener = (error) => {
       log.error(`Stream error`, error);

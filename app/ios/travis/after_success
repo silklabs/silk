@@ -7,7 +7,7 @@ if [[ "$TRAVIS_PULL_REQUEST" = "false" ]]; then
         $TRAVIS_BRANCH/latest \
         $(pwd)/dist/ \
         --credentials temporary_artifacts \
-        --noindex \ 
+        --noindex \
         --lossy
   fi
 fi

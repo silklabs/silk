@@ -6,6 +6,6 @@ if [[ "$TRAVIS_PULL_REQUEST" = false" ]; then
       $TRAVIS_BRANCH/latest \
       $(pwd)/android/app/build/outputs/apk/
       --credentials temporary_artifacts \
-      --noindex \ 
+      --noindex \
       --lossy
 fi

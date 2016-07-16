@@ -65,7 +65,7 @@ fi
 ./s3-artifacts/bin/upload \
   silk-releng-us-east-1 \
   $BRANCH \
-  $(readlink -f deploy) \
+  $(pwd)/deploy \
   --credentials temporary_artifacts \
   --lossy \
   --noindex \

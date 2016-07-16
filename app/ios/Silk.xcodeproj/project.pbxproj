@@ -17,8 +17,6 @@
 		352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCEBA1D18BB810056D623 /* libSLKCrypto.a */; };
 		356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 356CF7211D28AAF900BE44CF /* libRCTOrientation.a */; };
 		357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357AF0361D20E27E0075394A /* libSLKBlobs.a */; };
-		35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222301CB493710015FD5C /* libRCTWebRTC.a */; };
-		35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222791CB49DAE0015FD5C /* libWebRTC.a */; };
 		35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222901CB4A0350015FD5C /* libstdc++.tbd */; };
 		35A222941CB4A0510015FD5C /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222931CB4A0510015FD5C /* libsqlite3.tbd */; };
 		35A222961CB4A0580015FD5C /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222951CB4A0580015FD5C /* VideoToolbox.framework */; };
@@ -257,6 +255,13 @@
 			remoteGlobalIDString = 0CF68AC01AF0540F00FF9E5C;
 			remoteInfo = ART;
 		};
+		5792FED61D3A1CFF00BA2646 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 35A2221E1CB493700015FD5C;
+			remoteInfo = RCTWebRTC;
+		};
 		78C398B81ACF4ADC00677621 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */;
@@ -388,8 +393,6 @@
 				35A222961CB4A0580015FD5C /* VideoToolbox.framework in Frameworks */,
 				35A222941CB4A0510015FD5C /* libsqlite3.tbd in Frameworks */,
 				35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */,
-				35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */,
-				35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */,
 				6C5839051C1D15380004EC78 /* libc++.tbd in Frameworks */,
 				35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */,
 				5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */,
@@ -763,6 +766,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				5792FED71D3A1CFF00BA2646 /* PBXTargetDependency */,
 				5758F3341B6098AA00C18E5D /* PBXTargetDependency */,
 				5758F1611B5DD40D00C18E5D /* PBXTargetDependency */,
 				5758F1631B5DD40D00C18E5D /* PBXTargetDependency */,
@@ -1189,6 +1193,11 @@
 			isa = PBXTargetDependency;
 			name = ART;
 			targetProxy = 5758F3331B6098AA00C18E5D /* PBXContainerItemProxy */;
+		};
+		5792FED71D3A1CFF00BA2646 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RCTWebRTC;
+			targetProxy = 5792FED61D3A1CFF00BA2646 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

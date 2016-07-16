@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-if [[ "$TRAVIS_PULL_REQUEST" = false" ]; then
+if [[ "$TRAVIS_PULL_REQUEST" = false" ]]; then
   ../s3-artifacts/bin/upload \
       silk-app \
       $TRAVIS_BRANCH/latest \

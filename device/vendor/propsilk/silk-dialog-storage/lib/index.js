@@ -32,6 +32,7 @@ import invariant from 'assert';
 import fs from 'mz/fs';
 import mkdirp from 'mkdirp-promise';
 import msgpack from 'msgpack-lite';
+import writeFileAtomic from 'write-file-atomic';
 
 type DialogStorageOptions = {
   // Path to the data file.
@@ -147,7 +148,19 @@ export class DialogStorage {
     }
 
     await mkdirp(dirname(path));
-    await fs.writeFile(path, encodedData);
+    await this._writeFileAtomic(path, encodedData);
+  }
+
+  _writeFileAtomic(path: string, encodedData: Buffer) {
+    return new Promise((resolve, reject) => {
+      writeFileAtomic(path, encodedData, err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 }
 

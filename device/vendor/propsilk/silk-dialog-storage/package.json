@@ -12,6 +12,7 @@
     "test": "npm run lint && npm run mocha && npm run mocha-prod"
   },
   "dependencies": {
+    "write-file-atomic": "1.1.4",
     "msgpack-lite": "0.1.13",
     "mz": "2.4.0"
   },

@@ -7,7 +7,7 @@
 LOCAL_PATH=$(dirname $(readlink -f $0))
 
 BRANCH=$1
-GONK=$2
+BOARD=$2
 SYSTEM_DIR=$3
 OTA_DIR=$4
 
@@ -16,8 +16,8 @@ if [[ -z "$BRANCH" ]]; then
   exit 1
 fi
 
-if [[ -z "$GONK" ]]; then
-  echo Error: GONK not specified >&2
+if [[ -z "$BOARD" ]]; then
+  echo Error: BOARD not specified >&2
   exit 1
 fi
 
@@ -31,7 +31,7 @@ if [[ ! -d $OTA_DIR ]]; then
   exit 1
 fi
 
-SERVER_PATH="https://silk-device.s3.amazonaws.com/$BRANCH/latest/"
+SERVER_PATH="http://update.silklabs.com/ota-internal/$BRANCH/"
 BUILD_PROP=$SYSTEM_DIR/build.prop
 
 BASE_VERSION_JS=$(readlink -f $LOCAL_PATH/../vendor/propsilk/silk-gonk-version/gonk_version.js)
@@ -39,11 +39,11 @@ SILK_CORE_VERSION_JSON=$(readlink -f $SYSTEM_DIR/silk/node_modules/silk-core-ver
 BASE_VERSION=$(node -p "require('$BASE_VERSION_JS')")
 CORE_VERSION=$(node -p "require('$SILK_CORE_VERSION_JSON').fingerprint")
 
-ota_manifest="${OTA_DIR}/${GONK}_ota.json"
+ota_manifest="${OTA_DIR}/${BOARD}.json"
 
 echo Manifest: $ota_manifest
 echo "{" > $ota_manifest
-echo "  \"${GONK}\": {" >> $ota_manifest
+echo "  \"${BOARD}\": {" >> $ota_manifest
 
 for zip in $(shopt -s nullglob; echo $OTA_DIR/*.zip); do
   zip_size=`wc -c < "${zip}"`

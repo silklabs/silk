@@ -18,6 +18,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PROPERTY_OVERRIDES += \
   persist.logd.size=16M \
+  ro.silk.update.manifest_url=http://update.silklabs.com/ota-internal/{channel}/{device}.json \
 
 # Add default IP address for eth0 (disabled by default)
 # Add "persist.silk.eth0.static.enable=1" to target gonk to enable static eth0

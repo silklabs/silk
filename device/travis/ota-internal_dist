@@ -21,8 +21,8 @@ cp -v $ANDROID_PRODUCT_OUT/*-silkota-*.zip ota-internal_dist/
 ./travis/build_ota_manifest.sh $BRANCH $SILK_BOARD $ANDROID_PRODUCT_OUT/system ota-internal_dist
 ../s3-artifacts/bin/upload \
     update.silklabs.com \
-    $(readlink -f ota-internal_dist) \
     ota-internal/$BRANCH \
+    $(readlink -f ota-internal_dist) \
     --credentials update.silklabs.com_ota-internal
 
 exit 0

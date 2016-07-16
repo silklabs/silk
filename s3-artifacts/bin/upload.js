@@ -74,6 +74,16 @@ parser.addArgument(
   }
 );
 
+parser.addArgument(
+  ['--noindex'],
+  {
+    action: 'storeTrue',
+    help: `
+      Skip index file generation.
+    `
+  }
+);
+
 /**
  * Builds the tree to be uploaded...
  */
@@ -150,13 +160,15 @@ function createJSONIndex(dest, tree) {
 }
 
 async function main() {
-  let { directory, bucket, prefix, lossy } = parser.parseArgs();
+  let { directory, bucket, prefix, lossy, noindex } = parser.parseArgs();
   assert(await fs.exists(directory), `directory must exist: ${directory}`);
 
   let s3 = new S3({ bucket, logger: process.stdout });
   let tree = await buildTree(prefix, directory);
-  tree.push(createHTMLIndex(prefix, tree));
-  tree.push(createJSONIndex(prefix, tree));
+  if (!noindex) {
+    tree.push(createHTMLIndex(prefix, tree));
+    tree.push(createJSONIndex(prefix, tree));
+  }
 
   log(`Uploading files from ${directory} to s3 bucket ${bucket}/${prefix}`);
 

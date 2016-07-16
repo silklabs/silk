@@ -13,10 +13,6 @@
            remote="silkssh"
            revision="master"/>
 
-  <!--
-    Inline msm8909-la121.xml.
-    If you modify anything below consider updating msm8909-la121.xml too.
-  -->
   <remote name="silkssh"
           fetch="ssh://git@github.com/silklabs/"
           revision="Always invalid.  Contact releng for more details"

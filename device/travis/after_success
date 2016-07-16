@@ -8,5 +8,6 @@ popd
 ../s3-artifacts/bin/upload \
   $ARTIFACT_BUCKET \
   $CCACHE_ARTIFACT_PATH \
-  $HOME/ccache_dist \ 
-  --credentials $ARTIFACT_CREDENTIALS
+  $HOME/ccache_dist \
+  --credentials $ARTIFACT_CREDENTIALS \
+

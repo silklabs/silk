@@ -30,15 +30,5 @@ after_script:
   - ios/travis/remove-key.sh
   - ios/travis/raygun-dsym.sh
 
-deploy:
-  provider: s3
-  access_key_id: $S3_ACCESS_KEY_ID
-  secret_access_key: $S3_SECRET_ACCESS_KEY
-  bucket: "silk-app"
-  region: us-west-2
-  skip_cleanup: true
-  acl: public_read
-  local-dir: dist/
-  upload-dir: $TRAVIS_BRANCH/latest
-  on:
-    all_branches: true
+after_success: 
+  - ios/travis/after_success

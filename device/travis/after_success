@@ -11,3 +11,9 @@ popd
   $HOME/ccache_dist \
   --credentials $ARTIFACT_CREDENTIALS \
 
+if [[ "$TRAVIS_PULL_REQUEST" = "false" ]] && [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
+  ./travis/deploy
+fi
+
+exit 0
+

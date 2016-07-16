@@ -1,0 +1,24 @@
+#!/bin/bash -e
+
+source build/envsetup.sh
+
+set -x
+source ../pub/version/branch
+test -n $BRANCH
+test -n $SILK_BOARD
+
+if [[ -n $TRAVIS ]]; then
+  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space because $250 per month is not enough
+fi
+
+./travis/ota-internal_dist
+
+./travis/build_device_archive.sh $SILK_BOARD dist
+../s3-artifacts/bin/upload \
+    $BRANCH/latest \
+    $(readlink -f dist) \
+    --credentials temporary_artifacts \
+    --noindex \
+    --lossy \
+
+exit 0

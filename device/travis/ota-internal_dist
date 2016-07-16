@@ -23,6 +23,8 @@ cp -v $ANDROID_PRODUCT_OUT/*-silkota-*.zip ota-internal_dist/
     update.silklabs.com \
     ota-internal/$BRANCH \
     $(readlink -f ota-internal_dist) \
-    --credentials update.silklabs.com_ota-internal
+    --credentials update.silklabs.com_ota-internal \
+    --noindex \
+    --lossy \
 
 exit 0

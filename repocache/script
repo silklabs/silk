@@ -55,4 +55,19 @@ cd ..
 
 mkdir -p deploy/repocache
 mv bsp-gonk/*tgz deploy/repocache/
+
+source pub/version/branch
+if [[ -z $BRANCH ]]; then
+  echo BRANCH not defined, skipping upload
+  exit 1
+fi
+
+./s3-artifacts/bin/upload \
+  silk-releng-us-east-1 \
+  $BRANCH \
+  $(readlink -f deploy) \
+  --credentials temporary_artifacts \
+  --lossy \
+  --noindex \
+
 exit 0

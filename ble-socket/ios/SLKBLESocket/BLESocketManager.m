@@ -18,4 +18,8 @@
   RCT_EXTERN_METHOD(disconnect:(NSInteger)connectionId)
 
   RCT_EXTERN_METHOD(scanForUnconfiguredDevices:(BOOL)shouldScan)
+
+  RCT_EXTERN_METHOD(scanForDevice:(NSString *)serviceUuid
+              accountDeviceNumber:(NSInteger)accountDeviceNumber
+                       shouldScan:(BOOL)shouldScan)
 @end

@@ -23,6 +23,11 @@ type RssiUpdateMessage = {
 type InRangeMessage = {
   inRange: boolean;
 };
+type BeaconingMessage = {
+  serviceUuid: string;
+  deviceNumber: number;
+  beaconing: boolean;
+};
 type EndMessage = ConnectMessage;
 type DisconnectMessage = ConnectMessage;
 
@@ -111,6 +116,8 @@ export class SocketManager extends RobustEventEmitter {
                                    this.onDisconnect);
     DeviceEventEmitter.addListener('silk-blesocketmanager-unconfigured-devices',
                                    this.onUnconfiguredDevicesInRange);
+    DeviceEventEmitter.addListener('silk-blesocketmanager-devices-beaconing',
+                                   this.onDevicesBeaconing);
   }
 
   onConnect: ((args: ConnectMessage) => void) = (args) => {
@@ -186,6 +193,19 @@ export class SocketManager extends RobustEventEmitter {
     // TODO: Something smarter here.
     process.nextTick(() =>
       BLESocketManager.scanForUnconfiguredDevices(inRange));
+  };
+
+  onDevicesBeaconing: ((args: BeaconingMessage) => void) = (args) => {
+    const {
+      serviceUuid,
+      deviceNumber,
+      beaconing,
+    } = args;
+    log.debug(`SocketManager.onDevicesBeaconing('${serviceUuid}', ` +
+              `${deviceNumber}, ${beaconing})`);
+
+    const eventName = beaconing ? `beacon-started` : `beacon-stopped`;
+    this.emit(eventName, serviceUuid, deviceNumber);
   };
 
   send(id: number, data: Buffer) {

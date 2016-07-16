@@ -116,6 +116,12 @@ class AppDelegate : UIResponder,
     self.bleSocketPeripheral!.regionExited(uuid)
   }
 
+  func regionBeacons(regionMonitor: RegionMonitor, uuid: NSUUID, deviceNumbers: Set<Int>) {
+    assert(regionMonitor === self.regionMonitor!)
+    assert(self.bleSocketPeripheral != nil)
+    self.bleSocketPeripheral!.regionBeacons(uuid, deviceNumbers: deviceNumbers)
+  }
+
   // RCTBridgeDelegate
 
   func sourceURLForBridge(bridge: RCTBridge!) -> NSURL! {

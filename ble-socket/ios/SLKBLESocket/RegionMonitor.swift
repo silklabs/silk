@@ -5,6 +5,9 @@ protocol RegionMonitorDelegate {
   func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID)
   func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID)
   func regionExited(regionMonitor: RegionMonitor, uuid: NSUUID)
+  func regionBeacons(regionMonitor: RegionMonitor,
+                     uuid: NSUUID,
+                     deviceNumbers: Set<Int>)
 }
 
 private let log = DebugLog.create("silk-RegionMonitor")
@@ -23,7 +26,10 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
   private class RegionInfo {
     let uuid: NSUUID
     let region: CLBeaconRegion
+    var ranging: Bool = false
+    var monitoring: Bool = false
     var state: CLRegionState = .Unknown
+    var deviceNumbersBeaconing: Set<Int>? = nil
 
     init(uuid: NSUUID, region: CLBeaconRegion) {
       self.uuid = uuid
@@ -35,7 +41,6 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
   private var monitoringEnabled: Bool = false
   private var regions: [String: RegionInfo] = [:]
   private var monitoring: Bool = false
-  private let rangingSupported: Bool;
 
   let delegate: RegionMonitorDelegate
 
@@ -55,6 +60,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     self.delegate = delegate
 
     if CLLocationManager.isMonitoringAvailableForClass(CLBeaconRegion) {
+      assert(CLLocationManager.isRangingAvailable())
       self.locationManager = CLLocationManager()
 
       var beaconUuids: [NSUUID] = [RegionMonitor.configBeaconUuid]
@@ -77,15 +83,12 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
         let identifier = beaconUuid.UUIDString
         let region =
           CLBeaconRegion(proximityUUID: beaconUuid, identifier: identifier)
-        region.notifyEntryStateOnDisplay = true
         self.regions[identifier] = RegionInfo(uuid: beaconUuid, region: region)
       }
     } else {
-      log.error("Device does not support monitoring iBeacons");
+      log.error("Device does not support monitoring iBeacons")
       self.locationManager = nil
     }
-
-    self.rangingSupported = CLLocationManager.isRangingAvailable()
 
     super.init()
 
@@ -128,10 +131,8 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       locationManager.startMonitoringForRegion(region)
     }
 
-    if self.rangingSupported {
-      // Kick iOS into high gear until the state of the region is determined.
-      locationManager.startRangingBeaconsInRegion(region)
-    }
+    locationManager.startRangingBeaconsInRegion(region)
+    self.regions[region.identifier]!.ranging = true
 
     log.info("Requesting update for region '\(region.identifier)'")
     locationManager.requestStateForRegion(region)
@@ -161,7 +162,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     log.debug("start()")
 
     if self.locationManager == nil {
-      return;
+      return
     }
 
     assert(!self.monitoringEnabled)
@@ -180,7 +181,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(beaconUuid != RegionMonitor.configBeaconUuid)
 
     if self.locationManager == nil {
-      return;
+      return
     }
 
     let identifier = beaconUuid.UUIDString
@@ -191,7 +192,6 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
     let region =
       CLBeaconRegion(proximityUUID: beaconUuid, identifier: identifier)
-    region.notifyEntryStateOnDisplay = true
     self.regions[identifier] = RegionInfo(uuid: beaconUuid, region: region)
 
     let userDefaults = NSUserDefaults.standardUserDefaults()
@@ -218,7 +218,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(beaconUuid != RegionMonitor.configBeaconUuid)
 
     if self.locationManager == nil {
-      return;
+      return
     }
 
     let identifier = beaconUuid.UUIDString
@@ -252,8 +252,9 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     if self.monitoring {
       log.info("Stopped monitoring region '\(identifier)'")
       self.locationManager!.stopMonitoringForRegion(regionInfo.region)
-      if self.rangingSupported {
+      if regionInfo.ranging {
         self.locationManager!.stopRangingBeaconsInRegion(regionInfo.region)
+        regionInfo.ranging = false
       }
 
       self.delegate.regionRemoved(self, uuid: beaconUuid)
@@ -264,7 +265,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     log.debug("reset()")
 
     if self.locationManager == nil {
-      return;
+      return
     }
 
     let locationManager = self.locationManager!
@@ -279,8 +280,9 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
         if self.monitoring {
           log.info("Stopped monitoring region '\(identifier)'")
           locationManager.stopMonitoringForRegion(regionInfo.region)
-          if self.rangingSupported {
+          if regionInfo.ranging {
             locationManager.stopRangingBeaconsInRegion(regionInfo.region)
+            regionInfo.ranging = false
           }
         }
 
@@ -373,21 +375,41 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
                        forRegion region: CLRegion) {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
+
     if let regionInfo = self.regions[region.identifier] {
       log.info("didDetermineState(\(state.rawValue), \(region.identifier))")
 
-      if state != .Unknown && self.rangingSupported {
-        self.locationManager!.stopRangingBeaconsInRegion(regionInfo.region)
+      if state == .Unknown {
+        return
       }
 
-      let stateToReport = state == .Unknown ? .Outside : state
+      let isConfigRegion = regionInfo.uuid == RegionMonitor.configBeaconUuid
 
-      if regionInfo.state != stateToReport {
-        regionInfo.state = stateToReport
+      if !regionInfo.monitoring {
+        assert(regionInfo.ranging)
 
-        if stateToReport == .Inside {
+        regionInfo.monitoring = true
+
+        if isConfigRegion || state == .Outside {
+          self.locationManager!.stopRangingBeaconsInRegion(regionInfo.region)
+          regionInfo.ranging = false
+        }
+      }
+
+      if regionInfo.state != state {
+        regionInfo.state = state
+
+        if state == .Inside {
+          if !isConfigRegion && !regionInfo.ranging {
+            self.locationManager!.startRangingBeaconsInRegion(regionInfo.region)
+            regionInfo.ranging = true
+          }
           self.delegate.regionEntered(self, uuid: regionInfo.uuid)
         } else {
+          if regionInfo.ranging {
+            self.locationManager!.stopRangingBeaconsInRegion(regionInfo.region)
+            regionInfo.ranging = false
+          }
           self.delegate.regionExited(self, uuid: regionInfo.uuid)
         }
       }
@@ -404,6 +426,11 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       log.info("didEnterRegion(\(region.identifier)")
       if regionInfo.state != .Inside {
         regionInfo.state = .Inside
+        if regionInfo.uuid != RegionMonitor.configBeaconUuid &&
+           !regionInfo.ranging {
+          self.locationManager!.startRangingBeaconsInRegion(regionInfo.region)
+          regionInfo.ranging = true
+        }
         self.delegate.regionEntered(self, uuid: regionInfo.uuid)
       }
     }
@@ -419,6 +446,10 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
       log.info("didExitRegion(\(region.identifier)")
       if regionInfo.state != .Outside {
         regionInfo.state = .Outside
+        if regionInfo.ranging {
+          self.locationManager!.stopRangingBeaconsInRegion(regionInfo.region)
+          regionInfo.ranging = false
+        }
         self.delegate.regionExited(self, uuid: regionInfo.uuid)
       }
     }
@@ -430,22 +461,38 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
     if let regionInfo = self.regions[region.identifier] {
-      if regionInfo.state != .Unknown {
+      if !regionInfo.ranging {
         return
       }
 
       log.debug("didRangeBeacons(\(beacons.count), \(region.identifier))")
 
-      let stateToReport: CLRegionState = beacons.isEmpty ? .Outside : .Inside
-
-      if regionInfo.state != stateToReport {
-        regionInfo.state = stateToReport
-
-        if stateToReport == .Inside {
-          self.delegate.regionEntered(self, uuid: regionInfo.uuid)
-        } else {
-          self.delegate.regionExited(self, uuid: regionInfo.uuid)
+      if !regionInfo.monitoring {
+        let state: CLRegionState = beacons.isEmpty ? .Outside : .Inside
+        if regionInfo.state != state {
+          regionInfo.state = state
+          if state == .Inside {
+            self.delegate.regionEntered(self, uuid: regionInfo.uuid)
+          } else {
+            self.delegate.regionExited(self, uuid: regionInfo.uuid)
+          }
         }
+      }
+
+      if regionInfo.uuid == RegionMonitor.configBeaconUuid {
+        return
+      }
+
+      var deviceNumbers: Set<Int> = []
+      for beacon in beacons {
+        deviceNumbers.insert(beacon.minor as Int)
+      }
+
+      if deviceNumbers != regionInfo.deviceNumbersBeaconing {
+        regionInfo.deviceNumbersBeaconing = deviceNumbers
+        self.delegate.regionBeacons(self,
+                                    uuid: regionInfo.uuid,
+                                    deviceNumbers: deviceNumbers)
       }
     }
   }

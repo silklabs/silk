@@ -10,17 +10,3 @@ before_install:
 
 script:
   - repocache/script $BOARD $PRODUCT
-
-before_deploy:
-  - mkdir -p deploy/
-
-deploy:
-  - provider: s3
-    access_key_id: $S3_ACCESS_KEY_ID
-    secret_access_key: $S3_SECRET_ACCESS_KEY
-    bucket: "silk-releng-us-east-1"
-    region: us-east-1
-    skip_cleanup: true
-    acl: public_read
-    local-dir: deploy/
-    upload-dir: $TRAVIS_BRANCH

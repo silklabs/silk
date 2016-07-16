@@ -134,7 +134,7 @@ export class DialogStorage {
     const path = this._options.path;
     invariant(path);
 
-    if (encodedData === undefined) {
+    if ((encodedData === undefined) || (!encodedData.length)) {
       // Just delete the file.
       try {
         await fs.unlink(path);

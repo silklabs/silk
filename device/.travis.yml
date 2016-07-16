@@ -43,20 +43,3 @@ after_success:
 
 after_script:
   travis/after_script
-
-before_deploy:
-  travis/before_deploy
-
-deploy:
-  provider: s3
-  access_key_id: $S3_ACCESS_KEY_ID
-  secret_access_key: $S3_SECRET_ACCESS_KEY
-  bucket: "silk-device"
-  region: us-west-2
-  skip_cleanup: true
-  acl: public_read
-  local-dir: dist/
-  upload-dir: $TRAVIS_BRANCH/latest
-  on:
-    all_branches: true
-    condition: "$TRAVIS_PULL_REQUEST/$TRAVIS_OS_NAME == false/linux"

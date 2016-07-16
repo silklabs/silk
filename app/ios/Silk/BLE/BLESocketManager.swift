@@ -127,11 +127,11 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
-  internal func unconfiguredDevicesNearby(nearby: Bool) {
-    log.debug("unconfiguredDevicesNearby(\(nearby))")
+  internal func unconfiguredDevicesInRange(inRange: Bool) {
+    log.debug("unconfiguredDevicesInRange(\(inRange))")
 
     let name = "silk-blesocketmanager-unconfigured-devices"
-    let body = ["nearby": nearby]
+    let body = ["inRange": inRange]
     self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
@@ -193,8 +193,8 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     }
   }
 
-  func send(id: NSInteger, dataBase64: NSString) {
-    log.debug("send(\(id))")
+  func send(connectionId: NSInteger, dataBase64: NSString) {
+    log.debug("send(\(connectionId))")
 
     let decodingOptions = NSDataBase64DecodingOptions(rawValue: 0)
     let data = NSData(base64EncodedString: dataBase64 as String,
@@ -205,31 +205,31 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     }
 
     if data!.length != 0 {
-      BLESocketManager.bleSocketPeripheral!.send(id, data: data!)
+      BLESocketManager.bleSocketPeripheral!.send(connectionId, data: data!)
     }
   }
 
-  func enableRssiUpdates(id: NSInteger, enable: Bool) {
-    log.debug("enableRssiUpdates(\(id), \(enable))")
+  func enableRssiUpdates(connectionId: NSInteger, enable: Bool) {
+    log.debug("enableRssiUpdates(\(connectionId), \(enable))")
 
-    BLESocketManager.bleSocketPeripheral!.enableRssiUpdates(id,
+    BLESocketManager.bleSocketPeripheral!.enableRssiUpdates(connectionId,
                                                             enable:enable)
   }
 
-  func finish(id: NSInteger) {
-    log.debug("finish(\(id))")
+  func finish(connectionId: NSInteger) {
+    log.debug("finish(\(connectionId))")
 
-    BLESocketManager.bleSocketPeripheral!.finish(id)
+    BLESocketManager.bleSocketPeripheral!.finish(connectionId)
   }
 
-  func disconnect(id: NSInteger) {
-    log.debug("disconnect(\(id))")
+  func disconnect(connectionId: NSInteger) {
+    log.debug("disconnect(\(connectionId))")
 
-    BLESocketManager.bleSocketPeripheral!.disconnect(id)
+    BLESocketManager.bleSocketPeripheral!.disconnect(connectionId)
   }
 
-  func acceptConfigConnections(accept: Bool) {
-    log.debug("acceptConfigConnections(\(accept))")
-    BLESocketManager.bleSocketPeripheral!.acceptConfigConnections(accept)
+  func scanForUnconfiguredDevices(shouldScan: Bool) {
+    log.debug("scanForUnconfiguredDevices(\(shouldScan))")
+    BLESocketManager.bleSocketPeripheral!.scanForUnconfiguredDevices(shouldScan)
   }
 }

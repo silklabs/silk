@@ -29,11 +29,9 @@ import type {Server, Socket} from 'net';
 import type {Deferred} from 'silk-async-utils';
 
 export type BluetoothMode = 'off' | 'on' | 'beacon';
-export type BeaconInfo = {
-  major: number;
-  minor: number;
-  measuredPower: number;
+export type AdvertisingInfo = {
   uuid: string;
+  id: number;
 };
 
 type sendMessage = Object;
@@ -45,12 +43,13 @@ type QueuedMessage = {
 };
 
 const BT_HW_ENABLED = getboolprop('ro.silk.bt.hw.enabled', true);
+const BT_MANUFACTURER_CODE = getintprop(`ro.silk.bt.manufacturer`, 0x517c);
+const BT_DEVICE_TYPE = getintprop(`ro.silk.bt.deviceType`, 0);
 
 // TODO: This needs to be measured and customized for each type of device we
 //       ship.
 // This is the transmit power measured against a Nexus 4 at 1 meter distance.
-const DEFAULT_BEACON_POWER: number =
-  getintprop(`persist.silk.bt.txpower`, -60);
+const BT_BEACON_POWER: number = getintprop(`ro.silk.bt.txPower`, -60);
 
 // This works because our cwd is / on device and something accessible on sim. If
 // we ever change cwd this will break...
@@ -77,7 +76,7 @@ export class BluetoothLE extends EventEmitter {
 
   _mode: BluetoothMode = BluetoothLE.MODE_OFF;
   _publicKeys: Array<string> = [];
-  _beaconInfo: ?BeaconInfo = null;
+  _advertisingInfo: ?AdvertisingInfo = null;
 
   _childProcessDeferred: Deferred<void> = createDeferred();
   _childProcessInitialized: boolean = false;
@@ -117,33 +116,29 @@ export class BluetoothLE extends EventEmitter {
     this._publicKeys = value;
   }
 
-  get beaconInfo(): BeaconInfo {
-    return Object.assign({}, this._beaconInfo);
+  get advertisingInfo(): AdvertisingInfo {
+    return {...this._advertisingInfo};
   }
 
-  set beaconInfo(value: BeaconInfo) {
+  set advertisingInfo(value: AdvertisingInfo) {
     invariant(this._mode === BluetoothLE.MODE_OFF);
 
-    const beaconInfo: BeaconInfo = {
+    const advertisingInfo: AdvertisingInfo = {
       uuid: ``,
-      major: 0,
-      minor: 0,
-      measuredPower: 0,
+      id: 0,
     };
 
-    beaconInfo.uuid = value.uuid;
-    beaconInfo.major = value.major || beaconInfo.major;
-    beaconInfo.minor = value.minor || beaconInfo.minor;
-    beaconInfo.measuredPower = value.measuredPower || DEFAULT_BEACON_POWER;
+    advertisingInfo.uuid = value.uuid;
+    advertisingInfo.id = value.id;
 
     if (BT_HW_ENABLED) {
       this._sendMessage({
-        name: `beaconInfo`,
-        beaconInfo,
+        name: `advertisingInfo`,
+        advertisingInfo,
       });
     }
 
-    this._beaconInfo = beaconInfo;
+    this._advertisingInfo = advertisingInfo;
   }
 
   changeMode(mode: BluetoothMode): Promise<void> {
@@ -160,7 +155,7 @@ export class BluetoothLE extends EventEmitter {
 
     case BluetoothLE.MODE_ON:
     case BluetoothLE.MODE_BEACON:
-      invariant(this._beaconInfo);
+      invariant(this._advertisingInfo);
       break;
 
     default:
@@ -446,10 +441,12 @@ export class BluetoothLE extends EventEmitter {
       serverPath: SOCKET_PATH,
       mode: this._mode,
       publicKeys: this._publicKeys,
-      defaultBeaconPower: DEFAULT_BEACON_POWER,
+      manufacturerCode: BT_MANUFACTURER_CODE,
+      deviceType: BT_DEVICE_TYPE,
+      beaconPower: BT_BEACON_POWER,
     };
-    if (this._beaconInfo) {
-      message.beaconInfo = this._beaconInfo;
+    if (this._advertisingInfo) {
+      message.advertisingInfo = this._advertisingInfo;
     }
 
     validateMessage.out(message);

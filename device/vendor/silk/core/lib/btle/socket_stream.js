@@ -199,10 +199,13 @@ export default class SocketStream extends Duplex {
             this.emit(`metrics`, new Metrics.StreamSubscribeFailure());
           });
           this._emitError(new Error(`Failed to subscribe for notifications`));
-        } else {
-          log.warn(`Failed to unsubscribe`);
+          return;
         }
-        return;
+
+        log.warn(`Failed to unsubscribe`);
+
+        // Pretend that we succeeded.
+        isSubscribed = false;
       }
 
       invariant(this._subscribed !== isSubscribed);

@@ -29,14 +29,17 @@ const log = createLog('config');
 const CONFIG_PATH = 'data/silk/config/config.json';
 
 const REGISTRATION_RESPONSE_SCHEMA = Joi.object().keys({
-  success:
-    Joi.boolean().required(),
-  beaconUUID:
-    Joi.any().when(`success`, {
-      is: true,
-      then: Joi.string().guid().required(),
-      otherwise: Joi.string().optional(),
-    }),
+  success: Joi.boolean().required(),
+  beaconUUID: Joi.any().when(`success`, {
+    is: true,
+    then: Joi.string().guid().required(),
+    otherwise: Joi.string().optional(),
+  }),
+  accountDeviceNumber: Joi.any().when(`success`, {
+    is: true,
+    then: Joi.number().integer().min(1).max(65535).required(),
+    otherwise: Joi.string().optional(),
+  }),
 }).required();
 
 // maps wifi states to a connection status string that is sent to the app
@@ -111,8 +114,7 @@ class DeviceConfig extends EventEmitter {
 
   static CONFIG_BEACON_INFO = {
     uuid: BTLE_SOCKET_UUIDS.service,
-    major: 0,
-    minor: 0,
+    id: 0,
   };
 
   _initialized = false;
@@ -158,7 +160,7 @@ class DeviceConfig extends EventEmitter {
     try {
       this._config = JSON.parse(await fs.readFile(CONFIG_PATH, 'utf8'));
     } catch (error) {
-      log.warn(`Failed to parse config, removing`, error.stack);
+      log.warn(`Failed to parse config, removing`, error);
       await fs.unlink(CONFIG_PATH);
       this._config = null;
     }
@@ -351,7 +353,7 @@ class DeviceConfig extends EventEmitter {
     await this._btle.changeMode(this._btle.MODE_OFF);
 
     this._btle.publicKeys = [this._config.registrarPublicKey];
-    this._btle.beaconInfo = this._getBeaconInfo();
+    this._btle.advertisingInfo = this._getAdvertisingInfo();
 
     this._server.addListener(`connect`, this._onConfiguredServerConnect);
     this._server.addListener(`disconnect`, this._onConfiguredServerDisconnect);
@@ -392,17 +394,15 @@ class DeviceConfig extends EventEmitter {
     await this._btle.changeMode(this._btle.MODE_BEACON);
   };
 
-  _getBeaconInfo() {
+  _getAdvertisingInfo() {
     if (this._config && this._config.success) {
-      log.debug(`Returning beacon uuid '${this._config.beaconUUID}'`);
+      log.debug(`Returning advertising uuid '${this._config.beaconUUID}'`);
       return {
         uuid: this._config.beaconUUID,
-        // TODO: Store major/minor
-        major: 0,
-        minor: 0,
+        id: this._config.accountDeviceNumber || 0,
       };
     }
-    log.debug(`Returning beacon uuid ` +
+    log.debug(`Returning advertising uuid ` +
               `'${DeviceConfig.CONFIG_BEACON_INFO.uuid}'`);
     return DeviceConfig.CONFIG_BEACON_INFO;
   }
@@ -613,7 +613,7 @@ class DeviceConfig extends EventEmitter {
 
     this._btle.on(`socketSession`,
                   (socketSession) => this._onSocketSession(socketSession));
-    this._btle.beaconInfo = this._getBeaconInfo();
+    this._btle.advertisingInfo = this._getAdvertisingInfo();
 
     if (this._config && this._config.success) {
       log.info(`Already configured`, this._config);
@@ -696,7 +696,7 @@ class DeviceConfig extends EventEmitter {
     log.debug(`Turning off bluetooth`);
     await this._btle.changeMode(this._btle.MODE_OFF);
 
-    const beaconInfo = this._getBeaconInfo();
+    const beaconInfo = this._getAdvertisingInfo();
     assert(beaconInfo === DeviceConfig.CONFIG_BEACON_INFO);
 
     this._btle.beaconInfo = beaconInfo;

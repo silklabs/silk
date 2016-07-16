@@ -21,8 +21,8 @@ type RssiUpdateMessage = {
   id: number;
   rssi: number;
 };
-type NearbyMessage = {
-  nearby: boolean;
+type InRangeMessage = {
+  inRange: boolean;
 };
 type EndMessage = ConnectMessage;
 type DisconnectMessage = ConnectMessage;
@@ -111,7 +111,7 @@ export class SocketManager extends RobustEventEmitter {
     DeviceEventEmitter.addListener('silk-blesocketmanager-disconnect',
                                    this.onDisconnect);
     DeviceEventEmitter.addListener('silk-blesocketmanager-unconfigured-devices',
-                                   this.onUnconfiguredDevicesNearby);
+                                   this.onUnconfiguredDevicesInRange);
   }
 
   onConnect: ((args: ConnectMessage) => void) = (args) => {
@@ -180,11 +180,13 @@ export class SocketManager extends RobustEventEmitter {
     }
   };
 
-  onUnconfiguredDevicesNearby: ((args: NearbyMessage) => void) = (args) => {
-    const {nearby} = args;
-    log.debug(`SocketManager.onUnconfiguredDevicesNearby(${nearby})`);
+  onUnconfiguredDevicesInRange: ((args: InRangeMessage) => void) = (args) => {
+    const {inRange} = args;
+    log.debug(`SocketManager.onUnconfiguredDevicesInRange(${inRange})`);
 
-    process.nextTick(() => BLESocketManager.acceptConfigConnections(nearby));
+    // TODO: Something smarter here.
+    process.nextTick(() =>
+      BLESocketManager.scanForUnconfiguredDevices(inRange));
   };
 
   send(id: number, data: Buffer) {

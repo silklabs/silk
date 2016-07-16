@@ -11,13 +11,11 @@ import Joi from 'joi';
 const MODE_SCHEMA =
   Joi.string().only([`off`, `on`, `beacon`]);
 const KEY_SCHEMA = Joi.string().hex().length(64);
-const BEACON_VERSION_SCHEMA = Joi.number().integer().min(0).max(65535);
+const UINT16_SCHEMA = Joi.number().integer().min(0).max(65535);
 const BEACON_POWER_SCHEMA = Joi.number().integer().min(-100).max(0);
-const BEACON_INFO_SCHEMA = Joi.object({
+const ADVERTISING_INFO_SCHEMA = Joi.object({
   uuid: Joi.string().guid().required(),
-  major: BEACON_VERSION_SCHEMA.required(),
-  minor: BEACON_VERSION_SCHEMA.required(),
-  measuredPower: BEACON_POWER_SCHEMA.optional(),
+  id: UINT16_SCHEMA.required(),
 });
 const ERROR_SCHEMA = {
   message: Joi.string().required(),
@@ -67,16 +65,18 @@ const MESSAGES_FROM_PARENT = Object.assign({}, MESSAGES_FROM_BOTH, {
     serverPath: Joi.string().required(),
     mode: MODE_SCHEMA.required(),
     publicKeys: PUBLIC_KEYS_SCHEMA.required(),
-    defaultBeaconPower: BEACON_POWER_SCHEMA.required(),
-    beaconInfo: BEACON_INFO_SCHEMA.optional(),
+    manufacturerCode: UINT16_SCHEMA.required(),
+    deviceType: UINT16_SCHEMA.required(),
+    beaconPower: BEACON_POWER_SCHEMA.required(),
+    advertisingInfo: ADVERTISING_INFO_SCHEMA.optional(),
   }),
 
   publicKeys: messageSchema(`publicKeys`, {
     publicKeys: PUBLIC_KEYS_SCHEMA.required(),
   }),
 
-  beaconInfo: messageSchema(`beaconInfo`, {
-    beaconInfo: BEACON_INFO_SCHEMA.required(),
+  advertisingInfo: messageSchema(`advertisingInfo`, {
+    advertisingInfo: ADVERTISING_INFO_SCHEMA.required(),
   }),
 
   mode: promiseSchema(`mode`, {

@@ -65,7 +65,7 @@ import type {AdapterState, Peripheral} from 'noble';
 import type {Deferred} from 'silk-async-utils';
 import type {BledroidConnection} from 'silk-bledroid';
 
-import type {BeaconInfo, BluetoothMode} from './parent';
+import type {AdvertisingInfo, BluetoothMode} from './parent';
 import type SocketStream from './socket_stream';
 
 type SessionInfo = {
@@ -76,6 +76,8 @@ type SessionInfo = {
 
 const log = createLog(`btle-child`);
 
+const MANUFACTURER_DATA_VERSION = 1;
+
 class BluetoothLEChild {
 
   // State that comes from the parent process.
@@ -83,8 +85,10 @@ class BluetoothLEChild {
   _serverPath: string = ``;
   _mode: BluetoothMode = BluetoothLE.MODE_OFF;
   _publicKeys: Array<string> = [];
-  _defaultBeaconPower: number = -100;
-  _beaconInfo: ?BeaconInfo = null;
+  _manufacturerCode: number = 0;
+  _deviceType: number = 0;
+  _beaconPower: number = -100;
+  _advertisingInfo: ?AdvertisingInfo = null;
 
   _desiredMode: BluetoothMode = BluetoothLE.MODE_OFF;
   _beaconActive: boolean = false;
@@ -204,8 +208,8 @@ class BluetoothLEChild {
       break;
     }
 
-    case `beaconInfo`: {
-      this._onBeaconInfo(message.beaconInfo);
+    case `advertisingInfo`: {
+      this._onAdvertisingInfo(message.advertisingInfo);
       break;
     }
 
@@ -227,10 +231,12 @@ class BluetoothLEChild {
 
     this._privateKey = message.privateKey;
     this._serverPath = message.serverPath;
-    this._defaultBeaconPower = message.defaultBeaconPower;
+    this._manufacturerCode = message.manufacturerCode;
+    this._deviceType = message.deviceType;
+    this._beaconPower = message.beaconPower;
 
     this._onPublicKeys(message.publicKeys);
-    this._onBeaconInfo(message.beaconInfo);
+    this._onAdvertisingInfo(message.advertisingInfo || null);
 
     this._desiredMode = message.mode;
 
@@ -251,19 +257,12 @@ class BluetoothLEChild {
     this._publicKeys = publicKeys;
   }
 
-  _onBeaconInfo(beaconInfo: ?BeaconInfo): void {
-    log.debug(`_onBeaconInfo`, beaconInfo);
+  _onAdvertisingInfo(advertisingInfo: ?AdvertisingInfo): void {
+    log.debug(`_onAdvertisingInfo`, advertisingInfo);
 
     invariant(this._mode === BluetoothLE.MODE_OFF);
 
-    if (beaconInfo) {
-      this._beaconInfo = {
-        measuredPower: this._defaultBeaconPower,
-        ...beaconInfo,
-      };
-    } else {
-      this._beaconInfo = null;
-    }
+    this._advertisingInfo = advertisingInfo;
   }
 
   _onMode(mode: BluetoothMode, promiseId: number): Promise<void> {
@@ -275,7 +274,7 @@ class BluetoothLEChild {
 
     case BluetoothLE.MODE_ON:
     case BluetoothLE.MODE_BEACON:
-      invariant(this._beaconInfo);
+      invariant(this._advertisingInfo);
       break;
 
     default:
@@ -338,7 +337,7 @@ class BluetoothLEChild {
     if (mode === BluetoothLE.MODE_OFF) {
       await this._off();
     } else {
-      invariant(this._beaconInfo);
+      invariant(this._advertisingInfo);
 
       await this._startAdvertising();
 
@@ -410,14 +409,12 @@ class BluetoothLEChild {
       log.info(`Waiting for beacon to stop`);
 
       const promise = new Promise((resolve) => {
-        const listener = (status) => {
-          this._bledroid.removeListener(`beaconStop`, listener);
+        this._bledroid.once(`beaconStop`, (status) => {
           if (status) {
             log.warn(`Failed to stop beacon, status = ${status}`);
           }
           resolve();
-        };
-        this._bledroid.addListener(`beaconStop`, listener);
+        });
         this._bledroid.command(`stopBeacon`);
       });
 
@@ -476,16 +473,66 @@ class BluetoothLEChild {
     invariant(!this._bledroidCrashDeferred);
     this._bledroidCrashDeferred = bledroidCrash;
 
-    invariant(this._beaconInfo);
-    const service = new SocketService(noble, bleno, this._beaconInfo.uuid);
+    invariant(this._advertisingInfo);
+    const service = new SocketService(noble, bleno, this._advertisingInfo.uuid);
 
     const promise = new Promise((resolve, reject) => {
+      log.debug(`Setting services`);
       const callback = error => error ? reject(error) : resolve();
       bleno.setServices([service], callback);
-    }).then(() => new Promise((resolve, reject) => {
-      const callback = error => error ? reject(error) : resolve();
-      bleno.startAdvertising(`Silk`, [service.uuid], callback);
-    }));
+    }).then(() => {
+      log.debug(`Starting advertising`);
+
+      const advertisingInfo = this._advertisingInfo;
+      invariant(advertisingInfo);
+
+      // $FlowFixMe: Flow doesn't know about |Buffer.allocUnsafe|.
+      const data = Buffer.allocUnsafe(7);
+
+      let index = 0;
+
+      // Manufacturer code.
+      data.writeUInt16LE(this._manufacturerCode, index);
+      index += 2;
+
+      // Manufacturer data version.
+      data.writeUInt8(MANUFACTURER_DATA_VERSION, index);
+      index += 1;
+
+      // Device type.
+      data.writeUInt16LE(this._deviceType, index);
+      index += 2;
+
+      // Device id.
+      data.writeUInt16LE(advertisingInfo.id, index);
+      index += 2;
+
+      invariant(index === data.length);
+
+      const command = [
+        `startAdvertising`,
+        `0`, // include_name
+        `0`, // include_txpower
+        `0`, // appearance
+        data.length,
+        data.toString('hex'),
+        `0`, // service_data_len
+        `1`, // service_uuid_len
+        service.uuid,
+      ].join(` `);
+
+      return new Promise((resolve, reject) => {
+        this._bledroid.once(`advertisingStart`, (status) => {
+          if (status) {
+            const message = `Failed to start advertising, status ${status}`;
+            reject(new Error(message));
+          } else {
+            resolve();
+          }
+        });
+        this._bledroid.command(command);
+      });
+    });
 
     try {
       await Promise.race([
@@ -509,43 +556,49 @@ class BluetoothLEChild {
       return;
     }
 
-    const beaconInfo = this._beaconInfo;
-    invariant(beaconInfo);
+    const advertisingInfo = this._advertisingInfo;
+    invariant(advertisingInfo);
 
-    const beaconUuid = beaconInfo.uuid.toLowerCase().replace(/[^\da-f]/g, ``);
+    const beaconUuid =
+      advertisingInfo.uuid.toLowerCase().replace(/[^\da-f]/g, ``);
     invariant(beaconUuid);
+    invariant(beaconUuid.length === 32, `Invalid uuid '${beaconUuid}'`);
 
-    const uuidBuffer = new Buffer(beaconUuid, 'hex');
-    invariant(uuidBuffer.length === 16, `Invalid uuid '${beaconUuid}'`);
-
-    const dataLength = 25;
-    const data = new Buffer(dataLength);
+    // iBeacon data is always 25 bytes long.
+    // $FlowFixMe: Flow doesn't know about |Buffer.allocUnsafe|.
+    const data = Buffer.allocUnsafe(25);
 
     let index = 0;
 
-    // iBeacon header.
-    data.writeUInt16LE(0x4c, index); // Apple company identifier.
+    // Apple company identifier
+    data.writeUInt16LE(0x4c, index);
     index += 2;
 
-    data.writeUInt8(0x02, index++); // iBeacon tag.
-    data.writeUInt8(0x15, index++); // Size of the iBeacon data.
+    // iBeacon tag.
+    data.writeUInt8(0x02, index);
+    index += 1;
+
+    // Size of the iBeacon data.
+    data.writeUInt8(0x15, index);
+    index += 1;
 
     // iBeacon uuid.
-    uuidBuffer.copy(data, index);
-    index += uuidBuffer.length;
+    data.write(beaconUuid, index, 16, 'hex');
+    index += 16;
 
     // iBeacon major.
-    data.writeUInt16BE(beaconInfo.major, index);
+    data.writeUInt16BE(this._deviceType, index);
     index += 2;
 
     // iBeacon minor.
-    data.writeUInt16BE(beaconInfo.minor, index);
+    data.writeUInt16BE(advertisingInfo.id, index);
     index += 2;
 
     // iBeacon measured power.
-    data.writeInt8(beaconInfo.measuredPower, index++);
+    data.writeInt8(this._beaconPower, index);
+    index += 1;
 
-    invariant(index === dataLength);
+    invariant(index === data.length);
 
     const bledroidCrash = createDeferred();
 
@@ -553,14 +606,12 @@ class BluetoothLEChild {
     this._bledroidCrashDeferred = bledroidCrash;
 
     const promise = new Promise((resolve) => {
-      const listener = (status) => {
-        this._bledroid.removeListener(`beaconStart`, listener);
+      this._bledroid.once(`beaconStart`, (status) => {
         if (status) {
-          log.warn(`Failed to start beacon, status = ${status}`);
+          log.warn(`Failed to start beacon, status ${status}`);
         }
         resolve();
-      };
-      this._bledroid.addListener(`beaconStart`, listener);
+      });
       this._bledroid.command(`startBeacon ${data.toString('hex')}`);
     });
 
@@ -583,14 +634,12 @@ class BluetoothLEChild {
     }
 
     const promise = new Promise((resolve) => {
-      const listener = (status) => {
-        this._bledroid.removeListener(`beaconStop`, listener);
+      this._bledroid.once(`beaconStop`, (status) => {
         if (status) {
           log.warn(`Failed to stop beacon, status = ${status}`);
         }
         resolve();
-      };
-      this._bledroid.addListener(`beaconStop`, listener);
+      });
       this._bledroid.command(`stopBeacon`);
     });
 
@@ -644,6 +693,9 @@ class BluetoothLEChild {
       return;
     }
 
+    // Remove any bledroid listeners that may have been added before the crash.
+    this._bledroid.removeAllListeners();
+
     // Make sure that any mode changes wait for bledroid to reconnect.
     this._adapterStateDeferred = createDeferred();
     this._adapterStateDeferredAccepted = false;
@@ -676,13 +728,13 @@ class BluetoothLEChild {
       }
     } catch (error) {
       log.warn(error);
-    } finally {
-      // Ensure that our state is correct even if something above failed.
-      this._sessionInfoMap.clear();
-      this._socketService = null;
-      this._beaconActive = false;
-      this._mode = BluetoothLE.MODE_OFF;
     }
+
+    // Ensure that our state is correct even if something above failed.
+    this._sessionInfoMap.clear();
+    this._socketService = null;
+    this._beaconActive = false;
+    this._mode = BluetoothLE.MODE_OFF;
   };
 
   _onConnect: ((stream: SocketStream, peripheral: Peripheral) => void) = (

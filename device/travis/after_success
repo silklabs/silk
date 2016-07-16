@@ -5,4 +5,8 @@ pushd $HOME/.ccache/
 mkdir -p $HOME/ccache_dist/
 tar -czf $HOME/ccache_dist/ccache.tar.gz *
 popd
-../s3-artifacts/bin/upload $ARTIFACT_BUCKET $CCACHE_ARTIFACT_PATH $HOME/ccache_dist
+../s3-artifacts/bin/upload \
+  $ARTIFACT_BUCKET \
+  $CCACHE_ARTIFACT_PATH \
+  $HOME/ccache_dist \ 
+  --credentials $ARTIFACT_CREDENTIALS

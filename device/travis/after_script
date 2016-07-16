@@ -9,4 +9,10 @@ du -h -d 1 ..
 du -hs .
 
 # Deploy our per build artifacts...
-../s3-artifacts/bin/upload $ARTIFACT_BUCKET $ARTIFACT_REMOTE_PATH $ARTIFACT_DIR --lossy
+../s3-artifacts/bin/upload \
+  $ARTIFACT_BUCKET \
+  $ARTIFACT_REMOTE_PATH \
+  $ARTIFACT_DIR \
+  --lossy \
+  --credentials $ARTIFACT_CREDENTIALS
+

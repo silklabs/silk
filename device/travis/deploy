@@ -15,6 +15,7 @@ fi
 
 ./travis/build_device_archive.sh $SILK_BOARD dist
 ../s3-artifacts/bin/upload \
+    silk-device \
     $BRANCH/latest \
     $(readlink -f dist) \
     --credentials temporary_artifacts \

@@ -37,15 +37,14 @@ endif
 # vendor/silk/core/...
 PRODUCT_PACKAGES += \
   silk-device-core \
+  silk-props-json \
+  logo.png \
 
 # vendor/propsilk/...
 PRODUCT_PACKAGES += \
   silk-ab-updater \
   silk-caffe \
   silk-cv \
-  silk-dialog-engine \
-  silk-dialog-script \
-  silk-dialog-storage \
   silk-factory-reset \
   silk-gc1 \
   silk-gonk-version \
@@ -60,16 +59,28 @@ PRODUCT_PACKAGES += \
   silk-update \
   silk-vad \
 
-# vendor/silk/ext/...
-SILK_EXT := \
-  silkext-clapper \
-  silkext-clapper-sound \
-  silkext-detectcat \
-  silkext-detectcat-cascade \
+ifneq ($(strip $(SILK_FEATURE_DIALOG)),false)
+PRODUCT_PACKAGES += \
+  silk-dialog-engine \
+  silk-dialog-script \
+  silk-dialog-storage \
+
+endif
+
+# Extensions that are alway wanted for debug builds but should never ship in a
+# commercial product.
+ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
+PRODUCT_PACKAGES += \
+  silkext-voicerecorder \
+  silkext-samsungtv \
+
+endif
+
+# Extensions for video analytics
+ifneq ($(strip $(SILK_FEATURE_VIDEOANALYTICS)),false)
+PRODUCT_PACKAGES += \
   silkext-detectface-cascade-frontalface \
   silkext-detectface-shape_predictor_68_face_landmarks \
-  silkext-devicemotion \
-  silkext-dialog \
   silkext-dnn \
   silkext-dnn-googlenet-model \
   silkext-dnn-googlenet-proto \
@@ -79,32 +90,51 @@ SILK_EXT := \
   silkext-dnn-pedestrian-proto \
   silkext-face \
   silkext-motion \
-  silkext-motion-sound \
+
+endif
+
+# Demo extensions.
+ifneq ($(strip $(SILK_FEATURE_DEMOS)),false)
+PRODUCT_PACKAGES += \
+  silkext-clapper \
+  silkext-clapper-sound \
+  silkext-detectcat \
+  silkext-detectcat-cascade \
+  silkext-devicemotion \
   silkext-nightlight \
-  silkext-pandohub-ui \
   silkext-peddetector \
-  silkext-samsungtv \
+  silkext-welcome \
+  silkext-welcome-config \
+
+endif
+
+# Dialog/Hub extensions
+ifneq ($(strip $(SILK_FEATURE_DIALOG)),false)
+PRODUCT_PACKAGES += \
+  silkext-dialog \
+  silkext-pandohub-ui \
+
+endif
+
+# Extensions for audio analytics
+ifneq ($(strip $(SILK_FEATURE_AUDIOANALYTICS)),false)
+PRODUCT_PACKAGES += \
   silkext-svmsounds \
   silkext-svmsounds-babycry \
   silkext-svmsounds-clap \
   silkext-svmsounds-firealarm \
   silkext-svmsounds-glassbreak \
-  silkext-voicerecorder \
-  silkext-welcome \
-  silkext-welcome-config \
 
-PRODUCT_PACKAGES += $(SILK_EXT)
+endif
 
-# vendor/silk/gonk/...
-SILK_INIT := \
-  silk-props-json \
-
-SILK_GONK_PROGIES := \
+# vendor/silk/propgonk/...
+PRODUCT_PACKAGES += \
   silk-dash \
   silk-ir \
   silk-tts-native \
 
-SILK_UI_PACKAGES := \
+ifneq ($(strip $(SILK_FEATURE_UI_MOVIES)),false)
+PRODUCT_PACKAGES += \
   logo.png \
   bootanimation.zip \
   charging.zip \
@@ -113,9 +143,7 @@ SILK_UI_PACKAGES := \
   powerdown.zip \
   setup.zip \
 
-PRODUCT_PACKAGES += $(SILK_INIT)
-PRODUCT_PACKAGES += $(SILK_GONK_PROGIES)
-PRODUCT_PACKAGES += $(SILK_UI_PACKAGES)
+endif
 
 # external/...
 PRODUCT_PACKAGES += \
@@ -144,10 +172,13 @@ PRODUCT_PACKAGES += $(INTERNALONLY_PACKAGES)
 PRODUCT_PACKAGES += \
   lib__________node_webrtc_node_webrtc_gyp \
 
+ifneq ($(strip $(SILK_FEATURE_QDN)),false)
 # external/qualcomm-developer-network/...
 PRODUCT_PACKAGES += \
   libQSML-0.14.0 \
   libsymphony-cpu-1.0.0 \
+
+endif
 
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)

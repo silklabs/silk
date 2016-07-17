@@ -59,7 +59,7 @@ fetch)
            $PROGRESS \
            --retry-connrefused \
            --read-timeout=60 \
-           $REPOCACHE_URLPREFIX$repocache_urlsuffix -O - \
+           $REPOCACHE_URLPREFIX$repocache_urlsuffix -q -O - \
         | tar zx
     fi
   fi

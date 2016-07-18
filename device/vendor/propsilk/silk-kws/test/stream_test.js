@@ -14,6 +14,9 @@ import fs from 'mz/fs';
 import * as util from 'silk-sysutils';
 import { default as createLog, configureLog } from 'silk-log';
 configureLog('*');
+import { configureSpeechToText } from 'silk-stt';
+import * as speechOptions from 'silk-dialog-script/lib/speechAccessToken';
+configureSpeechToText(speechOptions);
 
 const audioFile = path.join(__dirname, 'long.wav');
 const log = createLog('stream_test');

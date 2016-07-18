@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-rewrite-require",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "Babel plugin for rewriting requires/imports",
   "repository": "silklabs/silk",
   "license": "MIT",

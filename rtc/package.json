@@ -1,6 +1,6 @@
 {
   "name": "silk-rtc",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "author": "Silk Labs, Inc",
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",

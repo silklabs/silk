@@ -30,5 +30,5 @@
     "start": "node ../node_modules/react-native/local-cli/cli.js start",
     "test": "npm run lint"
   },
-  "version": "0.19.0"
+  "version": "0.20.0"
 }

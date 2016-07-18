@@ -14,5 +14,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png
 
-# Exclude internal-only projects since this board is shared with partners
-PRODUCT_PACKAGES := $(filter-out $(INTERNALONLY_PACKAGES),$(PRODUCT_PACKAGES))
+# Exclude cereproc since this board is shared with partners
+SILK_FEATURE_TTS_CEREPROC := false
+

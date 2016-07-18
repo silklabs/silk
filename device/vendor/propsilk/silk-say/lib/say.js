@@ -15,17 +15,19 @@ const log = createLog('say');
 
 const TTS_SOCKET_NAME = '/dev/socket/tts';
 
+const TTS_LIB = util.getprop('persist.silk.say.lib', null);
+
 /**
  * This is a text to speech module for silk OS
  */
 class Say extends events.EventEmitter {
   constructor() {
     super();
-    util.setprop('ctl.start', 'silk-tts');
+    util.setprop('ctl.restart', 'silk-tts');
     this._ready = false;
     this._initConfig = {
       cmdName: 'init',
-      lib: 'ttscereproc',
+      lib: TTS_LIB,
       lang: 'eng',
       country: 'GBR',
       pitch: '90',

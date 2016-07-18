@@ -36,7 +36,7 @@ using namespace std;
 #define TTS_COMMAND_NAME "ttsCommand"
 #define MAX_MSG_SIZE 128
 
-#define TTS_ENGINE_LIB          "libttscereproc.so"
+#define TTS_ENGINE_LIB          "libttspico.so"
 #define DEFAULT_TTS_BUFFERSIZE  2048
 #define DEFAULT_SPEECH_RATE     "100"
 #define DEFAULT_PITCH           "100"
@@ -114,6 +114,7 @@ public:
   bool startCalled;
   sp<SynthesisPlaybackHandler> mPlaybackHandler;
   sp<TextToSpeechListener> mTextToSpeechListener;
+  bool mShouldApplyAudioFilter;
 
 private:
   int tts_init(Value& cmdData);
@@ -240,7 +241,7 @@ android_tts_callback_status_t synthesis_callback(void ** pUserData,
   TextToSpeechCommand *pMe = static_cast<TextToSpeechCommand*>(*pUserData);
 
   if (*pAudioBuffer != NULL && *pBufferSize > 0) {
-    if (shouldApplyAudioFilter(TTS_ENGINE_LIB)) {
+    if (pMe->mShouldApplyAudioFilter) {
       applyFilter(reinterpret_cast<int16_t*>(*pAudioBuffer), *pBufferSize / 2);
     }
 
@@ -290,11 +291,12 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
   string volume = PICO_MAX_VOLUME;
 
   /* Get command parameters */
-  if (!cmdData["lib"].isNull()) {
+  if (!cmdData["lib"].isNull() && cmdData["lib"].asString().length() != 0) {
     lib = "lib";
     lib += cmdData["lib"].asString();
     lib += ".so";
   }
+
   if (!cmdData["lang"].isNull()) {
     lang = cmdData["lang"].asString();
   }
@@ -341,6 +343,7 @@ int TextToSpeechCommand::tts_init(Value& cmdData) {
   ttsEngine = (*getTtsEngine)();
   LOG_ERROR((getTtsEngine == NULL), "%s Unable to get TTSEngine",
       __FUNCTION__);
+  mShouldApplyAudioFilter = shouldApplyAudioFilter(lib.c_str());
 
   android_tts_result_t result = ttsEngine->funcs->init(ttsEngine,
       synthesis_callback, NULL);

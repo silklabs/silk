@@ -20,14 +20,17 @@ usage () {
   echo
   if [[ -d board ]]; then
     cd board
+    echo Default board: $default_board
     echo Available boards:
     for board in *; do
       if [[ -r $board/gonk.sh ]]; then
-        maybe_default=
-        if [[ $default_board = $board ]]; then
-          maybe_default="(default)"
+        board_product=
+        if [[ -r $board/default_product ]]; then
+          board_product=$(cat $board/default_product)
+        else
+          board_product=$default_product
         fi
-        echo "  * $board $maybe_default"
+        printf " * %-24s %s\n" $board "(default product: $board_product)"
       fi
     done
     cd ..
@@ -41,11 +44,7 @@ usage () {
     echo Available products:
     for product in *; do
       if [[ -r $product/$product.xml ]]; then
-        maybe_default=
-        if [[ $default_product = $product ]]; then
-          maybe_default="(default)"
-        fi
-        echo "  * $product $maybe_default"
+        echo "  * $product"
       fi
     done
     cd ..
@@ -107,6 +106,10 @@ board=${arg_board:-$board}
 board=${board:-$default_board}
 
 product=${arg_product:-$product}
+if [[ -r board/$board/default_product ]]; then
+  board_product=$(cat board/$board/default_product)
+  product=${product:-$board_product}
+fi
 product=${product:-$default_product}
 
 [[ -n $board ]] || usage board is not defined

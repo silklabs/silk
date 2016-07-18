@@ -160,13 +160,17 @@ PRODUCT_PACKAGES += \
   libsodium \
   sodium \
 
+ifneq ($(strip $(SILK_FEATURE_TTS_CEREPROC)),false)
 # cereproc is internal-only, we don't have a license to distribute
-INTERNALONLY_PACKAGES += \
+PRODUCT_PACKAGES += \
   tts-cereproc-heather-license \
   tts-cereproc-heather-voice \
   libttscereproc \
 
-PRODUCT_PACKAGES += $(INTERNALONLY_PACKAGES)
+PRODUCT_PROPERTY_OVERRIDES += \
+  persist.silk.say.lib=ttscereproc \
+
+endif
 
 # Ugly gyp-generated package name for /node-webrtc
 PRODUCT_PACKAGES += \

@@ -1,6 +1,6 @@
 
-# Exclude internal-only projects since this board is shared with partners
-PRODUCT_PACKAGES := $(filter-out $(INTERNALONLY_PACKAGES),$(PRODUCT_PACKAGES))
+# Exclude cereproc since this board is shared with partners
+SILK_FEATURE_TTS_CEREPROC := false
 
 # Enable hub-only extensions by default
 PRODUCT_PROPERTY_OVERRIDES += \

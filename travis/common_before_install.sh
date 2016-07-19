@@ -15,7 +15,8 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
   # Update brew twice because the first run can fail: https://github.com/Homebrew/homebrew/issues/42553
   brew update; brew update
-  brew reinstall cmake coreutils libtool nvm xz
+  brew reinstall cmake coreutils libtool xz
+  brew install nvm
 
   source $(brew --prefix nvm)/nvm.sh
   npm config set spin=false

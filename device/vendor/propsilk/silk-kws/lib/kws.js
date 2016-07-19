@@ -61,7 +61,7 @@ const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG
 // the threshold to lower value to catch far utterances too.
 // Ignore predictions with probability lower than threshold
 const KWS_THRESHOLD = 'persist.silk.kws.threshold';
-let THRESHOLD = util.getintprop(KWS_THRESHOLD, 65);
+let THRESHOLD = util.getintprop(KWS_THRESHOLD, 95);
 
 const STT_CONFIDENCE_THRESHOLD = 0.35;
 

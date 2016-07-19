@@ -131,7 +131,8 @@ export default class TextToIntention {
       .then(intentions => {
         let intention;
         for (intention of intentions) {
-          if (intention.intent !== UNKNOWN_INTENT) {
+          if (intention.intent !== UNKNOWN_INTENT &&
+              intention.intent !== 'None') {
             break;
           }
         }

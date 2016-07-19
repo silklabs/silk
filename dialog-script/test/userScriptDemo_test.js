@@ -120,6 +120,13 @@ suite(`userScript`, () => {
     done();
   });
 
+  test(`Demo test - Test music - current song`, async (done) => {
+    tester.speak(`What's the current song playing`);
+    await tester.listenCheck(`The current song is the title by the artist`,
+        `idle`);
+    done();
+  });
+
   test(`Demo test - Test light - turn on`, async (done) => {
     tester.speak(`Turn on lights`);
     await tester.listenCheck(`Turning on`, `idle`);

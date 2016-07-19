@@ -17,6 +17,10 @@ class Sonos {
   playUri(uri) {
     log.info(`PlayUri ${uri}`);
   }
+
+  getTrackInfo() {
+    return Promise.resolve({artist: 'the artist', title: 'the title'});
+  }
 }
 
 let sonos = new Sonos();

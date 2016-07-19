@@ -20,10 +20,16 @@
       "name": "getStockPrice"
     },
     {
+      "name": "getCurrentSong"
+    },
+    {
       "name": "pauseMusic"
     },
     {
       "name": "None"
+    },
+    {
+      "name": "getArtist"
     },
     {
       "name": "getWeather"
@@ -47,11 +53,6 @@
   "regex_features": [],
   "utterances": [
     {
-      "text": "what's the temp today?",
-      "intent": "getWeather",
-      "entities": []
-    },
-    {
       "text": "how is google stock doing today?",
       "intent": "getStockPrice",
       "entities": [
@@ -61,6 +62,11 @@
           "endPos": 2
         }
       ]
+    },
+    {
+      "text": "reset zipcode",
+      "intent": "resetZipcode",
+      "entities": []
     },
     {
       "text": "what's the stock price of apple?",
@@ -74,174 +80,14 @@
       ]
     },
     {
-      "text": "how's microsoft stock doing?",
-      "intent": "getStockPrice",
-      "entities": [
-        {
-          "entity": "stock",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "how's the weather?",
-      "intent": "getWeather",
+      "text": "what music is on?",
+      "intent": "getCurrentSong",
       "entities": []
     },
     {
-      "text": "what time is it?",
-      "intent": "getCurrentTime",
+      "text": "what song is this?",
+      "intent": "getCurrentSong",
       "entities": []
-    },
-    {
-      "text": "how is amazon stock doing?",
-      "intent": "getStockPrice",
-      "entities": [
-        {
-          "entity": "stock",
-          "startPos": 2,
-          "endPos": 2
-        }
-      ]
-    },
-    {
-      "text": "how's mattel stock doing today?",
-      "intent": "getStockPrice",
-      "entities": [
-        {
-          "entity": "stock",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "what's the time now?",
-      "intent": "getCurrentTime",
-      "entities": []
-    },
-    {
-      "text": "what's the weather going to be today?",
-      "intent": "getWeather",
-      "entities": []
-    },
-    {
-      "text": "what's the weather like today?",
-      "intent": "getWeather",
-      "entities": []
-    },
-    {
-      "text": "what is the stock price of qualcomm",
-      "intent": "getStockPrice",
-      "entities": [
-        {
-          "entity": "stock",
-          "startPos": 6,
-          "endPos": 6
-        }
-      ]
-    },
-    {
-      "text": "what's the time?",
-      "intent": "getCurrentTime",
-      "entities": []
-    },
-    {
-      "text": "how's the weather today?",
-      "intent": "getWeather",
-      "entities": []
-    },
-    {
-      "text": "what time is it now?",
-      "intent": "getCurrentTime",
-      "entities": []
-    },
-    {
-      "text": "play music",
-      "intent": "playMusic",
-      "entities": []
-    },
-    {
-      "text": "start music",
-      "intent": "playMusic",
-      "entities": []
-    },
-    {
-      "text": "unpause music",
-      "intent": "playMusic",
-      "entities": []
-    },
-    {
-      "text": "start playing music",
-      "intent": "playMusic",
-      "entities": []
-    },
-    {
-      "text": "play more music",
-      "intent": "playMusic",
-      "entities": []
-    },
-    {
-      "text": "pause music",
-      "intent": "pauseMusic",
-      "entities": []
-    },
-    {
-      "text": "stop music",
-      "intent": "pauseMusic",
-      "entities": []
-    },
-    {
-      "text": "halt music",
-      "intent": "pauseMusic",
-      "entities": []
-    },
-    {
-      "text": "stop playing music",
-      "intent": "pauseMusic",
-      "entities": []
-    },
-    {
-      "text": "clear zipcode",
-      "intent": "resetZipcode",
-      "entities": []
-    },
-    {
-      "text": "reset zipcode",
-      "intent": "resetZipcode",
-      "entities": []
-    },
-    {
-      "text": "clear the zipcode",
-      "intent": "resetZipcode",
-      "entities": []
-    },
-    {
-      "text": "reset the zipcode",
-      "intent": "resetZipcode",
-      "entities": []
-    },
-    {
-      "text": "please reset the zipcode",
-      "intent": "resetZipcode",
-      "entities": []
-    },
-    {
-      "text": "reset zip",
-      "intent": "resetZipcode",
-      "entities": []
-    },
-    {
-      "text": "what's apple stock at?",
-      "intent": "getStockPrice",
-      "entities": [
-        {
-          "entity": "stock",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
     },
     {
       "text": "what's qualcomm stock at today?",
@@ -255,6 +101,11 @@
       ]
     },
     {
+      "text": "stop music",
+      "intent": "pauseMusic",
+      "entities": []
+    },
+    {
       "text": "what is microsoft stock at?",
       "intent": "getStockPrice",
       "entities": [
@@ -262,116 +113,6 @@
           "entity": "stock",
           "startPos": 2,
           "endPos": 2
-        }
-      ]
-    },
-    {
-      "text": "what is mattel stock at today?",
-      "intent": "getStockPrice",
-      "entities": [
-        {
-          "entity": "stock",
-          "startPos": 2,
-          "endPos": 2
-        }
-      ]
-    },
-    {
-      "text": "turn on the light",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "turn on the lights",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "turn the lights on",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 2,
-          "endPos": 2
-        }
-      ]
-    },
-    {
-      "text": "turn the light on",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 2,
-          "endPos": 2
-        }
-      ]
-    },
-    {
-      "text": "switch the light on",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 2,
-          "endPos": 2
-        }
-      ]
-    },
-    {
-      "text": "switch the lights on",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 2,
-          "endPos": 2
-        }
-      ]
-    },
-    {
-      "text": "turn off the light",
-      "intent": "turnOff",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "turn off the lights",
-      "intent": "turnOff",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "switch off the light",
-      "intent": "turnOff",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
         }
       ]
     },
@@ -387,8 +128,55 @@
       ]
     },
     {
-      "text": "turn the light off",
-      "intent": "turnOff",
+      "text": "play music",
+      "intent": "playMusic",
+      "entities": []
+    },
+    {
+      "text": "how's mattel stock doing today?",
+      "intent": "getStockPrice",
+      "entities": [
+        {
+          "entity": "stock",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "clear zipcode",
+      "intent": "resetZipcode",
+      "entities": []
+    },
+    {
+      "text": "how's the weather today?",
+      "intent": "getWeather",
+      "entities": []
+    },
+    {
+      "text": "what is mattel stock at today?",
+      "intent": "getStockPrice",
+      "entities": [
+        {
+          "entity": "stock",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "what time is it?",
+      "intent": "getCurrentTime",
+      "entities": []
+    },
+    {
+      "text": "what's playing right now?",
+      "intent": "getCurrentSong",
+      "entities": []
+    },
+    {
+      "text": "turn on lights",
+      "intent": "turnOn",
       "entities": [
         {
           "entity": "light",
@@ -396,6 +184,11 @@
           "endPos": 2
         }
       ]
+    },
+    {
+      "text": "halt music",
+      "intent": "pauseMusic",
+      "entities": []
     },
     {
       "text": "turn the lights off",
@@ -409,40 +202,7 @@
       ]
     },
     {
-      "text": "turn on a light",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "turn off a light",
-      "intent": "turnOff",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "turn on a lights",
-      "intent": "turnOn",
-      "entities": [
-        {
-          "entity": "light",
-          "startPos": 3,
-          "endPos": 3
-        }
-      ]
-    },
-    {
-      "text": "turn on lights",
+      "text": "turn the lights on",
       "intent": "turnOn",
       "entities": [
         {
@@ -464,6 +224,60 @@
       ]
     },
     {
+      "text": "what's apple stock at?",
+      "intent": "getStockPrice",
+      "entities": [
+        {
+          "entity": "stock",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "how's the weather?",
+      "intent": "getWeather",
+      "entities": []
+    },
+    {
+      "text": "what's the weather like today?",
+      "intent": "getWeather",
+      "entities": []
+    },
+    {
+      "text": "how's microsoft stock doing?",
+      "intent": "getStockPrice",
+      "entities": [
+        {
+          "entity": "stock",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "switch off the light",
+      "intent": "turnOff",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "how is amazon stock doing?",
+      "intent": "getStockPrice",
+      "entities": [
+        {
+          "entity": "stock",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
       "text": "turn off lights",
       "intent": "turnOff",
       "entities": [
@@ -475,6 +289,43 @@
       ]
     },
     {
+      "text": "turn on the lights",
+      "intent": "turnOn",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "turn the light on",
+      "intent": "turnOn",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "play more music",
+      "intent": "playMusic",
+      "entities": []
+    },
+    {
+      "text": "what song is playing now?",
+      "intent": "getCurrentSong",
+      "entities": []
+    },
+    {
+      "text": "start playing music",
+      "intent": "playMusic",
+      "entities": []
+    },
+    {
       "text": "turn off light",
       "intent": "turnOff",
       "entities": [
@@ -484,6 +335,226 @@
           "endPos": 2
         }
       ]
+    },
+    {
+      "text": "please reset the zipcode",
+      "intent": "resetZipcode",
+      "entities": []
+    },
+    {
+      "text": "turn on a lights",
+      "intent": "turnOn",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "unpause music",
+      "intent": "playMusic",
+      "entities": []
+    },
+    {
+      "text": "what is the stock price of qualcomm",
+      "intent": "getStockPrice",
+      "entities": [
+        {
+          "entity": "stock",
+          "startPos": 6,
+          "endPos": 6
+        }
+      ]
+    },
+    {
+      "text": "turn off the light",
+      "intent": "turnOff",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "pause music",
+      "intent": "pauseMusic",
+      "entities": []
+    },
+    {
+      "text": "reset zip",
+      "intent": "resetZipcode",
+      "entities": []
+    },
+    {
+      "text": "reset the zipcode",
+      "intent": "resetZipcode",
+      "entities": []
+    },
+    {
+      "text": "what's playing?",
+      "intent": "getCurrentSong",
+      "entities": []
+    },
+    {
+      "text": "stop playing music",
+      "intent": "pauseMusic",
+      "entities": []
+    },
+    {
+      "text": "turn the light off",
+      "intent": "turnOff",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "switch the light on",
+      "intent": "turnOn",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "what's the temp today?",
+      "intent": "getWeather",
+      "entities": []
+    },
+    {
+      "text": "what's the weather going to be today?",
+      "intent": "getWeather",
+      "entities": []
+    },
+    {
+      "text": "turn off a light",
+      "intent": "turnOff",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "what time is it now?",
+      "intent": "getCurrentTime",
+      "entities": []
+    },
+    {
+      "text": "what's the time now?",
+      "intent": "getCurrentTime",
+      "entities": []
+    },
+    {
+      "text": "turn on a light",
+      "intent": "turnOn",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "what's the time?",
+      "intent": "getCurrentTime",
+      "entities": []
+    },
+    {
+      "text": "turn off the lights",
+      "intent": "turnOff",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "turn on the light",
+      "intent": "turnOn",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "switch the lights on",
+      "intent": "turnOn",
+      "entities": [
+        {
+          "entity": "light",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "what's the current song being played right now?",
+      "intent": "getCurrentSong",
+      "entities": []
+    },
+    {
+      "text": "clear the zipcode",
+      "intent": "resetZipcode",
+      "entities": []
+    },
+    {
+      "text": "start music",
+      "intent": "playMusic",
+      "entities": []
+    },
+    {
+      "text": "what song is playing?",
+      "intent": "getCurrentSong",
+      "entities": []
+    },
+    {
+      "text": "who's the artist?",
+      "intent": "getArtist",
+      "entities": []
+    },
+    {
+      "text": "who's this artist?",
+      "intent": "getArtist",
+      "entities": []
+    },
+    {
+      "text": "what's the artist of this song?",
+      "intent": "getArtist",
+      "entities": []
+    },
+    {
+      "text": "who plays this song?",
+      "intent": "getArtist",
+      "entities": []
+    },
+    {
+      "text": "who's the artist for this song?",
+      "intent": "getArtist",
+      "entities": []
+    },
+    {
+      "text": "what song is this",
+      "intent": "getCurrentSong",
+      "entities": []
     }
   ]
 }

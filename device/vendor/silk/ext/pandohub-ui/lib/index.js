@@ -18,6 +18,7 @@ import type { UiState } from 'silk-device-ui';
 import { genDialogEngine } from 'silk-dialog-engine';
 import type { DialogEngine, DialogUiModeEventCallback } from 'silk-dialog-engine';
 import { Nightlight, Ring } from './leds';
+import { FactoryResetUi } from './factoryReset';
 
 const log = createLog('silkext-pandohubui');
 
@@ -62,6 +63,7 @@ class PandoHubUi {
   rendering: bool;
   renderReentered: bool;
   renderReenteredAlert: ?Alert;
+  factoryResetUi: FactoryResetUi;
 
   constructor(env: Env) {
     this.input = new Input();
@@ -73,8 +75,11 @@ class PandoHubUi {
     this.ledsPresent = false;
     this.rendering = false;
     this.renderReentered = false;
-
+    this.factoryResetUi = new FactoryResetUi(() => {
+      this.render('configStarted');
+    });
     this.input.on('down', this.onKeyPress);
+    this.input.on('up', this.onKeyRelease);
     this.onDeviceUiState(env.ui.getState());
 
     env.ui.on('state', this.onDeviceUiState);
@@ -144,10 +149,11 @@ class PandoHubUi {
   }
 
   onKeyPress: InputEventCallback = event => {
-    log.info('key event:', event);
+    log.verbose('key press:', event.keyId);
     if (!this.dialogEngine) {
       return;
     }
+    this.factoryResetUi.onKeyPress(event);
     switch (event.keyId) {
     case 'volumedown':
       volume.level = Math.max(0, volume.level - VOLUME_STEP_INC);
@@ -178,6 +184,11 @@ class PandoHubUi {
       break;
     }
   };
+
+  onKeyRelease: InputEventCallback = event => {
+    log.verbose('key release:', event.keyId);
+    this.factoryResetUi.onKeyRelease(event);
+  }
 
   async render(alert: ?Alert): Promise<void> {
     if (this.rendering) {
@@ -389,7 +400,6 @@ class PandoHubUi {
 
     switch (this.deviceUiState) {
     case 'configStarted':
-      log.info('         CONFIG STARTED');
       this.render('configStarted');
       break;
     case 'connecting':
@@ -423,6 +433,7 @@ class PandoHubUi {
       this.dialogEngine.removeListener('ui-mode', this.onDialogUiMode);
     }
     this.input.removeListener('down', this.onKeyPress);
+    this.input.removeListener('up', this.onKeyRelease);
     volume.removeListener('level', this.onVolumeLevel);
   }
 }

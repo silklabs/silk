@@ -32,7 +32,7 @@
     "babel-cli": "6.9.0",
     "babel-eslint": "6.1.0",
     "babel-plugin-transform-runtime": "6.4.3",
-    "flow-bin": "0.28.0",
+    "flow-bin": "0.29.0",
     "eslint": "2.13.1",
     "mocha": "2.4.5"
   },

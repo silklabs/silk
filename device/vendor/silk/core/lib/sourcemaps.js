@@ -14,10 +14,7 @@ const log = createLog('sourcemaps');
 export function install() {
   installSourceMapSupport();
 
-  // $FlowFixMe: Teach Flow about Error.prepareStackTrace
   const prepareStackTrace = Error.prepareStackTrace;
-
-  // $FlowFixMe: Teach Flow about Error.prepareStackTrace
   Error.prepareStackTrace = (error, stack) => {
     const startMs = util.uptime();
     const trace = prepareStackTrace(error, stack);

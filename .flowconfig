@@ -8,7 +8,7 @@ device/vendor/silk/ext/
 
 [libs]
 flow-lib/
-app/node_modules/react-native/Libraries/react-native/react-native-interface.js
+node_modules/react-native/Libraries/react-native/react-native-interface.js
 node_modules/fbjs/flow/lib/
 
 [ignore]
@@ -74,10 +74,6 @@ node_modules/fbjs/flow/lib/
 .*/node-webrtc/build-staging/.*
 .*/svm/models/.*
 
-# Ignore these modules which are present in both app/node_modules and node_modules/*
-.*/app/node_modules/fbjs.*
-.*/app-sdk/node_modules/fbjs.*
-
 [options]
 unsafe.enable_getters_and_setters=true
 module.system=haste
@@ -89,4 +85,4 @@ suppress_type=$FlowFixMe
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.28.0
+0.29.0

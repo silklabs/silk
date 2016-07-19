@@ -486,9 +486,7 @@ class BluetoothLEChild {
       const advertisingInfo = this._advertisingInfo;
       invariant(advertisingInfo);
 
-      // $FlowFixMe: Flow doesn't know about |Buffer.allocUnsafe|.
       const data = Buffer.allocUnsafe(7);
-
       let index = 0;
 
       // Manufacturer code.
@@ -565,9 +563,7 @@ class BluetoothLEChild {
     invariant(beaconUuid.length === 32, `Invalid uuid '${beaconUuid}'`);
 
     // iBeacon data is always 25 bytes long.
-    // $FlowFixMe: Flow doesn't know about |Buffer.allocUnsafe|.
     const data = Buffer.allocUnsafe(25);
-
     let index = 0;
 
     // Apple company identifier

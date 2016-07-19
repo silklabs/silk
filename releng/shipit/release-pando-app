@@ -36,6 +36,7 @@ WHITELIST=$(cat <<-EOF
   raygun
   react-native-transformer
   react-native-webrtc
+  rn-cli.config.js
   rtc
   silknpm.json
   streams

@@ -38,9 +38,9 @@ NAN_METHOD(SetProperty) {
     return Nan::ThrowError("SetProperty expects two string arguments");
   }
 
-  char *property_name = *Nan::Utf8String(info[0]);
-  char *property_value= *Nan::Utf8String(info[1]);
-  int result = property_set(property_name, property_value);
+  v8::String::Utf8Value property_name(info[0]);
+  v8::String::Utf8Value property_value(info[1]);
+  int result = property_set(*property_name, *property_value);
   info.GetReturnValue().Set(Nan::New<v8::Number>(result));
 }
 #endif

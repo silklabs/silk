@@ -50,11 +50,13 @@
            path="external/node-hid"
            revision="35d830b7810c87d32484d0a346621568c4849441"
            upstream="master"
-           remote="github" />
+           remote="github"
+           clone-depth="42"/>
   <project name="signal11/hidapi"
            path="external/node-hid/hidapi"
            revision="b5b2e1779b6cd2edda3066bbbf0921a2d6b1c3c0"
            upstream="master"
-           remote="github" />
+           remote="github"
+           clone-depth="42"/>
 
 </manifest>

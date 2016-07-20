@@ -4,5 +4,5 @@ SILK_FEATURE_TTS_CEREPROC := false
 
 # Enable hub-only extensions by default
 PRODUCT_PROPERTY_OVERRIDES += \
-  persist.silk.extensions=dialog,pandohub-ui
+  persist.silk.extensions=dialog,pandohub-ui,svmsounds
 

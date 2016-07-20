@@ -78,7 +78,7 @@ export function timerEntityToMs(entities: string): ?number {
  */
 export function* timerMonitorSaga(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   try {
     log.debug(`Starting timer monitor task`);
 
@@ -201,7 +201,7 @@ export default function* modifyTimers(
   environment: Environment,
   type: 'start' | 'cancel',
   entities: Array<string>
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {speak} = environment;
 
   // Attempt to understand the amount of time the user gave us.

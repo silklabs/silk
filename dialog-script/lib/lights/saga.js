@@ -13,7 +13,7 @@ const log = createLog(`script-generic-light-saga`);
 
 export function* turnOnLight(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;
@@ -27,7 +27,7 @@ export function* turnOnLight(
 
 export function* turnOffLight(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;

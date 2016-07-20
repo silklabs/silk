@@ -9,6 +9,16 @@ import SonosApi from 'sonos';
 import createLog from 'silk-log/device';
 const log = createLog('sonos');
 
+export type SonosTrackInfo = {
+  title?: string;
+  artist?: string;
+  album?: string;
+  albumArtURI?: string;
+  position?: number;
+  duration?: number;
+  albumArtURL?: string;
+}
+
 export class Sonos {
   constructor() {
     log.info('initializing Sonos');
@@ -105,6 +115,23 @@ export class Sonos {
       } else {
         log.error(`Sonos query failed: ${err}`);
       }
+    });
+  }
+
+  getTrackInfo() {
+    if (!this._sonos) {
+      return Promise.reject();
+    }
+
+    log.info(`Getting track info`);
+    return new Promise((resolve, reject) => {
+      this._sonos.currentTrack((err, track) => {
+        if (err) {
+          reject(new Error(`Sonos get track info: ${err}`));
+        } else {
+          resolve(track);
+        }
+      });
     });
   }
 }

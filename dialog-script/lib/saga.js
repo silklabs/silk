@@ -22,7 +22,7 @@ import {
 } from './ui/saga';
 import {getStockPrice} from './stocks/saga';
 import {getWeather, resetZipcode} from './weather/saga';
-import {pauseMusic, playMusic} from './music/saga';
+import {pauseMusic, playMusic, getCurrentSong, getArtist} from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
@@ -73,6 +73,8 @@ const concurrentIntents: Set<string> = new Set([
   `resetZipcode`,
   `playMusic`,
   `pauseMusic`,
+  `getCurrentSong`,
+  `getArtist`,
   `turnOn`,
   `turnOff`,
 ]);
@@ -80,7 +82,7 @@ const concurrentIntents: Set<string> = new Set([
 // A simple saga that speaks the current time.
 export function* sayCurrentTime(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {speak} = environment;
 
   // Get the current time and isolate individual components that we care about.
@@ -114,7 +116,7 @@ export function* sayCurrentTime(
  */
 export default function*(
   dialogEngine: DialogEngine,
-): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
+): Generator<Object | Array<Object>, void, any> {
   log.info(`Starting saga`);
 
   /**
@@ -297,6 +299,12 @@ export default function*(
         break;
       case `pauseMusic`:
         sagaFunction = pauseMusic;
+        break;
+      case `getCurrentSong`:
+        sagaFunction = getCurrentSong;
+        break;
+      case `getArtist`:
+        sagaFunction = getArtist;
         break;
       case `turnOn`:
         if (entities[0] === 'light' || entities[0] === 'lights') {

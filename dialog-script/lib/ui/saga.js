@@ -13,7 +13,7 @@ const log = createLog(`dialog-script-ui-saga`);
 
 export function* requestFactoryReset(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {micChannel, speak} = environment;
 
   yield call(speak, `Are you sure you want to factory reset this device?`, 'waiting');
@@ -37,7 +37,7 @@ export function* requestFactoryReset(
 export function* setUiMode(
   environment: Environment,
   entities: Array<string>
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {dialogEngine, speak} = environment;
 
   invariant(entities.length === 1);
@@ -56,7 +56,7 @@ export function* setUiMode(
 export function* setVolume(
   environment: Environment,
   entities: Array<string>
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {speak} = environment;
 
   invariant(entities.length === 1);

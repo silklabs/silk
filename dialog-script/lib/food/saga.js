@@ -22,7 +22,7 @@ const log = createLog(`dialog-script-food-saga`);
 export default function*(
   environment: Environment,
   type: ?('nursing' | 'bottle'),
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   // Extract the things we need from the environment.
   const {micChannel, speak} = environment;
 

@@ -44,7 +44,7 @@ export type SagasInProgress = {
 };
 
 export type SagaFunction =
-  (...args: Array<any>) => Generator<Object, any, any>; // eslint-disable-line no-undef
+  (...args: Array<any>) => Generator<Object, any, any>;
 
 export type Environment = {
   dialogEngine: DialogEngine;
@@ -89,7 +89,7 @@ export function createAudioEventChannel(dialogEngine: DialogEngine): Object {
 
 export function* audioEventSaga(
   dialogEngine: DialogEngine,
-): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
+): Generator<Object | Array<Object>, void, any> {
   try {
     log.debug(`Starting audio event saga`);
 
@@ -182,7 +182,7 @@ export function* startSaga(
   factory: SagaFunction,
   environment: Environment,
   ...args: Array<any>
-): Generator<Object | Array<Object>, SagaData, any> { // eslint-disable-line no-undef
+): Generator<Object | Array<Object>, SagaData, any> {
   const micChannel = yield call(channel, buffers.none());
   invariant(micChannel);
 
@@ -202,7 +202,7 @@ export function* startSaga(
 
 export function* cleanupFinishedSagas(
   sagas: SagasInProgress,
-): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
+): Generator<Object | Array<Object>, void, any> {
   const independent = sagas.independent;
   if (independent && !independent.saga.isRunning()) {
     independent.micChannel.close();
@@ -222,7 +222,7 @@ export function* cleanupFinishedSagas(
 
 export default function*(
   dialogEngine: DialogEngine,
-): Generator<Object | Array<Object>, Environment, any> { // eslint-disable-line no-undef
+): Generator<Object | Array<Object>, Environment, any> {
   invariant(dialogEngine);
 
   log.info(`Creating environment`);

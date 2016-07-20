@@ -31,8 +31,6 @@ base)
   export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$GONK.log
 
   $make
-  # No |lock_build_fingerprint| here since base build doesn't generate build.prop
-  $make silkota
 
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space or Travis falls down
 
@@ -63,8 +61,6 @@ base)
   ;;
 base.*)
   $make
-  # No |lock_build_fingerprint| here since base build doesn't generate build.prop
-  $make silkota
   ;;
 kenzo)
   $make

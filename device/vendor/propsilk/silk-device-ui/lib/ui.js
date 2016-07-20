@@ -60,7 +60,7 @@ export class Ui extends events.EventEmitter {
       switch (e.keyId) {
       case 'volumedown':
         this.emit('key', 'volumedown', 'up');
-        break;
+        //fallthrough
       case 'volumeup':
         if (volumeKeysPressed > 0) {
           volumeKeysPressed--;
@@ -86,7 +86,7 @@ export class Ui extends events.EventEmitter {
       switch (e.keyId) {
       case 'volumedown':
         this.emit('key', 'volumedown', 'down');
-        break;
+        //fallthrough
       case 'volumeup':
         volumeKeysPressed++;
         log.info(`down - volumeKeysPressed: ${volumeKeysPressed}`);

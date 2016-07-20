@@ -10,7 +10,7 @@ import gc1 from 'silk-gc1';
 import {install as installSourceMapSupport} from './sourcemaps.js';
 import version from 'silk-core-version';
 
-import ui from './ui';
+import ui from 'silk-device-ui';
 import * as util from 'silk-sysutils';
 import createLog from 'silk-log/device';
 

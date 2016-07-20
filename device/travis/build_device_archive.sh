@@ -132,17 +132,6 @@ else
 fi
 
 fastboot reboot
-set +x
-EOF
-  chmod +x $archiveDir/$buildId/flash.sh
-
-  # Create flash_hub script
-  cat > $archiveDir/$buildId/flash_hub.sh <<'EOF'
-#!/bin/bash -e
-# Hub device config
-
-echo Flash the build and clear userdata/cache partitions
-$(dirname $0)/flash.sh $@ -w
 
 echo Waiting for device to boot
 adb wait-for-device
@@ -152,18 +141,24 @@ adb wait-for-device
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
 
+set +x
+EOF
+  chmod +x $archiveDir/$buildId/flash.sh
+
+  # Create flash_noserver script
+  cat > $archiveDir/$buildId/flash_noserver.sh <<'EOF'
+#!/bin/bash -e
+# Hub device config
+
+echo Flash the build and clear userdata/cache partitions
+$(dirname $0)/flash.sh $@ -w
+
 echo Preparing build.prop...
 rm -f build.prop
 adb pull /system/build.prop
 
 echo persist.silk.dev.no_server=true >> build.prop
 echo persist.silk.update.enabled=false >> build.prop
-echo persist.silk.extensions=dialog,pandohub-ui >> build.prop
-echo persist.silk.kws.enabled=true >> build.prop
-echo persist.silk.dialog.tts.enabled=false >> build.prop
-echo persist.silk.volume.level=80 >> build.prop
-echo ro.silk.bt.hw.enabled=false >> build.prop
-echo ro.silk.camera.hw.enabled=false >> build.prop
 
 echo Pushing new build.prop ...
 adb remount
@@ -177,7 +172,7 @@ echo Device provisioning successful
 exit 0
 EOF
 
-  chmod +x $archiveDir/$buildId/flash_hub.sh
+  chmod +x $archiveDir/$buildId/flash_noserver.sh
 
   cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$buildId
 
@@ -230,7 +225,7 @@ if [ "\$1" = "-w" ]; then
   adb shell librecovery_test factoryReset
 else
   adb shell start
-fi  
+fi
 EOF
 
   chmod +x $archiveDir/$buildId/flash.sh

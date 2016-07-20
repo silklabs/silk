@@ -13,7 +13,7 @@ import makeLog from '../log';
 const log = makeLog('ranger');
 
 const ENABLED_PROP = 'persist.silk.ranger.enabled';
-const ENABLED = getboolprop(ENABLED_PROP);
+const ENABLED = getboolprop(ENABLED_PROP, false);
 
 // TODO: This should be unique to the each user's phone to enable individual
 //       tracking.

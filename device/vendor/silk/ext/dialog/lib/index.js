@@ -22,6 +22,7 @@ import fs from 'fs';
 import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
 import player from 'silk-audioplayer';
+import ui from 'silk-device-ui';
 
 import type {
   DialogEngine,
@@ -29,7 +30,6 @@ import type {
   DialogState,
   DialogUiModeEventCallback,
 } from 'silk-dialog-engine';
-import type { Ui } from 'silk-device-ui';
 import type {
   Env,
   Camera,
@@ -68,7 +68,6 @@ const KWS_TEST_MODE_PROP = 'persist.silk.kws.testmode';
 const log = createLog('silkext-dialog');
 let camera: Camera;
 let timeline: Timeline;
-let ui: Ui;
 let modLocation: string;
 
 /**
@@ -98,7 +97,6 @@ class Dialog {
   constructor(env: Env) {
     camera = env.camera;
     timeline = env.timeline;
-    ui = env.ui;
     this._monitor(true);
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, true);
     this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, false);
@@ -279,6 +277,7 @@ class Dialog {
    */
   _onSpeakBegin: SpeakBeginCallback = (text, nextState) => {
     log.debug(`_onSpeakBegin ${text} ${nextState}`);
+    ui.userActivity();
     this._emitEvent('speaking');
 
     const finish = (err) => {
@@ -309,6 +308,7 @@ class Dialog {
    */
   _onSpeak: SpeechEventCallback = (stream, nextState) => {
     log.debug(`Received stream to speak ${nextState}`);
+    ui.userActivity();
     this._emitEvent('speaking');
 
     let errorListener: ?Function = null;
@@ -376,6 +376,7 @@ class Dialog {
    */
   _onSpeechStart() {
     log.info(`onSpeechStart`);
+    ui.userActivity();
     if (this._dialogEngine.uiMode === 'mute') {
       log.verbose('UI muted');
       return;

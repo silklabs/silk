@@ -113,7 +113,7 @@ function createRequestPromise(options) {
         if (options.json) {
           try {
             body = JSON.parse(body);
-          } catch(e) {
+          } catch (e) {
             log.error(`Invalid server response: ${e.stack}`);
             reject();
             return;
@@ -339,13 +339,15 @@ function validateManifest(result) {
       }
       break;
     case 'full':
-      // Validate the fingerprint.
-      let fingerprint = buildMetadata.fingerprint;
-      if (!fingerprint) {
-        log.warn('Update server responded with no fingerprint');
-        return null;
+      {
+        // Validate the fingerprint.
+        let fingerprint = buildMetadata.fingerprint;
+        if (!fingerprint) {
+          log.warn('Update server responded with no fingerprint');
+          return null;
+        }
+        break;
       }
-      break;
     default:
       throw new Error(`Unknown buildType: ${buildType}`);
     }
@@ -549,6 +551,7 @@ function stageUpdate() {
         log.verbose(result.stdout);
         if (result.code === 0) {
           emitter.emit('staged');
+          running = false;
         } else {
           log.warn('Update failed to apply');
           log.info(result.stderr);
@@ -561,6 +564,7 @@ function stageUpdate() {
     return Promise.resolve();
   }
   emitter.emit('staged');
+  running = false;
   return Promise.resolve();
 }
 
@@ -708,7 +712,9 @@ function stop() {
 }
 
 function apply() {
-  if (!AB_UPDATE) {
+  if (AB_UPDATE) {
+    util.setprop('sys.powerctl', 'reboot');
+  } else {
     spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
   }
 

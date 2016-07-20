@@ -24,6 +24,10 @@ const POWER_KEY_ENABLED = util.getboolprop('ro.silk.ui.key.power', true);
 const DISPLAY_ENABLED = util.getboolprop('ro.silk.ui.display', true);
 const LIGHT_ENABLED = util.getboolprop('ro.silk.ui.light', false);
 
+// The device is considered idle if no user-facing activity has occurred for
+// this duration
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000;  // 5 minutes
+
 export type UiState = 'bootanimation' |
                       'unconfigured' |
                       'configStarted' |
@@ -34,12 +38,13 @@ export type UiState = 'bootanimation' |
                       'powerdown';
 
 export class Ui extends events.EventEmitter {
-
   movie: ?Movie;
   vib: Vibrator;
   currentState: UiState;
   currentMovieName: string;
   backlightTimer: ?number = null;
+  idleTimer: ?number = null;
+  idle: bool = true;
 
   constructor() {
     super();
@@ -56,10 +61,11 @@ export class Ui extends events.EventEmitter {
     let cancelVolumeKeys = () => {};
     let volumeKeysPressed = 0;
     input.on('up', e => {
+      this.userActivity();
       this._pokeBacklight();
       switch (e.keyId) {
       case 'volumedown':
-        this.emit('key', 'volumedown', 'up');
+        this._throwyEmit('key', 'volumedown', 'up');
         //fallthrough
       case 'volumeup':
         if (volumeKeysPressed > 0) {
@@ -77,6 +83,7 @@ export class Ui extends events.EventEmitter {
     });
 
     input.on('down', e => {
+      this.userActivity();
       this.vib.pattern(50);
       if (this._pokeBacklight()) {
         // The first key event with the backlight off does nothing but enable
@@ -85,7 +92,7 @@ export class Ui extends events.EventEmitter {
       }
       switch (e.keyId) {
       case 'volumedown':
-        this.emit('key', 'volumedown', 'down');
+        this._throwyEmit('key', 'volumedown', 'down');
         //fallthrough
       case 'volumeup':
         volumeKeysPressed++;
@@ -111,7 +118,7 @@ export class Ui extends events.EventEmitter {
               cancelPowerDown = reject;
             }),
           ])
-          .then(() => this.emit('key:powerdown'))
+          .then(() => this._throwyEmit('key:powerdown'))
           .catch(() => null);
         }
         break;
@@ -119,6 +126,22 @@ export class Ui extends events.EventEmitter {
         break;
       }
     });
+  }
+
+  /**
+   * Emit an event, and re-throw any exceptions to the process once the current
+   * call stack is unwound.
+   *
+   * @private
+   */
+  _throwyEmit(eventName: string, ...args: any) {
+    try {
+      this.emit(eventName, ...args);
+    } catch (err) {
+      process.nextTick(() => {
+        util.processthrow(err.stack || err);
+      });
+    }
   }
 
   _pokeBacklight() {
@@ -159,7 +182,7 @@ export class Ui extends events.EventEmitter {
     }
     this.currentState = state;
     log.info(`ui state: ${this.currentState}`);
-    this.emit('state', this.currentState);
+    this._throwyEmit('state', this.currentState);
 
     if (LIGHT_ENABLED) {
       let light = lights.notifications;
@@ -228,6 +251,27 @@ export class Ui extends events.EventEmitter {
     this._pokeBacklight();
     return true;
   }
+
+  isIdle(): bool {
+    return this.idle;
+  }
+
+  /**
+   * Indicate that the user was just active.
+   */
+  userActivity() {
+    log.verbose('user activity');
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+    }
+    this.idleTimer = setTimeout(() => {
+      log.verbose('user idle');
+      this.idleTimer = null;
+      this.idle = true;
+      this._throwyEmit('idle');
+    }, IDLE_TIMEOUT_MS);
+  }
+
 }
 
 let ui = new Ui();

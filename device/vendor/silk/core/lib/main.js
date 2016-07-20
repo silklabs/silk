@@ -548,8 +548,18 @@ function shutdown(finalPromiseFactory) {
 
 // Update service...
 update.on('staged', () => {
-  // An OTA update is ready to be applied.
-  shutdown(update.apply.bind(update));
+  // An OTA update is ready to be applied.  Start monitoring for UI idle
+  function applyUpdate() {
+    log.warn('Applying OTA update');
+    shutdown(update.apply.bind(update));
+  }
+
+  if (ui.isIdle()) {
+    applyUpdate();
+  } else {
+    log.info('OTA update is staged, waiting for ui idle');
+    ui.on('idle', applyUpdate);
+  }
 });
 
 // UI...

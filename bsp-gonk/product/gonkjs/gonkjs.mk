@@ -9,6 +9,11 @@ BUILD_VERSION_TAGS += $(BRANCH)
 # Add product name to ro.build.fingerprint
 BUILD_VERSION_TAGS += $(SILK_PRODUCT)
 
+# Build properties
+PRODUCT_PROPERTY_OVERRIDES += \
+ ro.silk.build.product=$(SILK_PRODUCT) \
+ ro.silk.build.board=$(SILK_BOARD) \
+
 # Services to start/stop with |adb shell start| and |adb shell stop|
 PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \

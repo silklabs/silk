@@ -179,32 +179,6 @@ EOF
 
   chmod +x $archiveDir/$buildId/flash_hub.sh
 
-  # Create flash_camera.sh script
-  cat > $archiveDir/$buildId/flash_camera.sh <<'EOF'
-#!/bin/bash
-# Camera device config
-
-echo Flash the build and clear userdata/cache partitions
-$(dirname $0)/flash.sh $@ -w
-
-echo Waiting for device to boot
-adb wait-for-device
-adb root
-adb wait-for-device
-
-echo Set device time to match host: $(date)
-adb shell time_genoff $(date +%s)000
-
-echo Rebooting to apply configuration...
-adb reboot
-adb wait-for-device
-echo Device provisioning successful
-exit 0
-
-EOF
-
-  chmod +x $archiveDir/$buildId/flash_camera.sh
-
   cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$buildId
 
   if [[ -d board/$SILK_BOARD/nhlos ]]; then

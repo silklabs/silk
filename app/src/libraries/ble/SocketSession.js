@@ -15,7 +15,7 @@ import * as Metrics from '../../metrics/BTLE';
 import Stream from './Stream';
 
 import type MetricsAgent from 'silk-api/src/metrics_agent';
-import type { Socket } from './SocketManager';
+import type {Socket} from 'silk-ble-socket';
 
 const log = makeLog(`btle-SocketSession`);
 

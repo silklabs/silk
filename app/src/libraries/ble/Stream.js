@@ -3,10 +3,10 @@
  */
 
 import invariant from 'assert';
-import { Duplex } from 'stream';
+import {Duplex} from 'stream';
 import makeLog from 'silk-log';
 
-import type { Socket } from './SocketManager';
+import type {Socket} from 'silk-ble-socket';
 
 const log = makeLog(`btle-stream`);
 

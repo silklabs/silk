@@ -1,7 +1,7 @@
 package com.silklabs.app;
 
-import com.silklabs.app.modules.BLESocketManager;
 import com.silklabs.app.modules.Util;
+import com.silklabs.react.blesocket.BLESocketManager;
 import com.silklabs.react.blobs.BlobModule;
 import com.silklabs.react.blobs.WebSocketModule;
 import com.silklabs.react.crypto.CryptoModule;

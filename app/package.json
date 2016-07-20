@@ -5,13 +5,15 @@
     "silk-api": "/api",
     "silk-core-version": "/pub/version",
     "silk-crypto": "/crypto",
+    "silk-ble-socket": "/ble-socket",
     "silk-mse-player": "/mse-player",
     "silk-log": "/pub/log",
     "silk-raygun": "/raygun",
     "silk-react-native-blobs": "/pub/react-native-blobs",
     "silk-react-native-transformer": "/react-native-transformer",
     "silk-rtc": "/rtc",
-    "silk-streams": "/streams"
+    "silk-streams": "/streams",
+    "silk-utils": "/utils"
   },
   "localDependencies": {
     "socket.io-client": "1.4.6"

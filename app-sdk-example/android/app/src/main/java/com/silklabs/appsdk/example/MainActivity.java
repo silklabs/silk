@@ -14,6 +14,9 @@ import android.widget.Button;
 import com.silklabs.appsdk.SilkAppSDKService;
 import com.silklabs.appsdk.SilkAppSDKDelegate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends Activity {
 
   private final String TAG = "SilkAppSDKExample";
@@ -25,7 +28,7 @@ public class MainActivity extends Activity {
       mSilkService = ((SilkAppSDKService.ServiceBinder)serviceBinder).getService();
       mSilkService.start(new SilkAppSDKDelegate() {
         @Override
-        public void onMessage(Bundle message) {
+        public void onMessage(Map<String, Object> message) {
           Log.i(TAG, "Received message from SDK: " + message.toString());
         }
       });
@@ -46,8 +49,8 @@ public class MainActivity extends Activity {
     final Button button = (Button) findViewById(R.id.hello_world_button);
     button.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
-        Bundle message = new Bundle();
-        message.putString("type", "HELLO_WORLD");
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "HELLO_WORLD");
         mSilkService.postMessage(message);
       }
     });

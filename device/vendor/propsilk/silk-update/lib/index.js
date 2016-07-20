@@ -29,9 +29,9 @@ const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/data/update.zip';
 
-const DEVICE = util.getprop('persist.silk.build.board',
-                            util.getprop('ro.build.silk.board'));
-const PRODUCT = util.getprop('ro.build.silk.product');
+const BOARD = util.getprop('persist.silk.build.board',
+                           util.getprop('ro.silk.build.board'));
+const PRODUCT = util.getprop('ro.silk.build.product');
 const FINGERPRINT = util.getprop('ro.build.fingerprint');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
@@ -41,7 +41,7 @@ const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
 const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP, silkCoreVersion.official);
 
 const isValidUpdateURLOptions = {
-  protocols: ['https'],
+  protocols: ['http', 'https'],
   require_protocol: true,                       // eslint-disable-line camelcase
   require_tld: true,                            // eslint-disable-line camelcase
 };
@@ -313,9 +313,10 @@ function validateManifest(result) {
     return Promise.reject();
   }
 
-  let deviceMetadata = result.body[DEVICE]; // Unsanitized server response
+  const key = `${BOARD}-${PRODUCT}`;
+  let deviceMetadata = result.body[key]; // Unsanitized server response
   if (!deviceMetadata) {
-    log.info(`Update server responded with nothing available for "${DEVICE}" ` +
+    log.info(`Update server responded with nothing available for "${key}" ` +
              'device');
     return Promise.reject();
   }

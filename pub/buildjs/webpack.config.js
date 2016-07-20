@@ -77,6 +77,7 @@ const externals = [
   'silk-camera',
   'silk-core-version',
   'silk-cv',
+  'silk-device-ui',
   'silk-dialog-engine',
   'silk-dialog-script',
   'silk-dialog-storage',

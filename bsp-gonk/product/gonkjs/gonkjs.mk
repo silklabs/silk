@@ -20,7 +20,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Volume defaults
 PRODUCT_PROPERTY_OVERRIDES += \
- persist.silk.volume.level=100 \
+ persist.silk.volume.level=75 \
  persist.silk.volume.mute=false \
 
 PRODUCT_PACKAGES += node

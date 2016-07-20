@@ -8,8 +8,9 @@ LOCAL_PATH=$(dirname $(readlink -f $0))
 
 BRANCH=$1
 BOARD=$2
-SYSTEM_DIR=$3
-OTA_DIR=$4
+PRODUCT=$3
+SYSTEM_DIR=$4
+OTA_DIR=$5
 
 if [[ -z "$BRANCH" ]]; then
   echo Error: BRANCH not specified >&2
@@ -18,6 +19,11 @@ fi
 
 if [[ -z "$BOARD" ]]; then
   echo Error: BOARD not specified >&2
+  exit 1
+fi
+
+if [[ -z "$PRODUCT" ]]; then
+  echo Error: PRODUCT not specified >&2
   exit 1
 fi
 
@@ -39,11 +45,11 @@ SILK_CORE_VERSION_JSON=$(readlink -f $SYSTEM_DIR/silk/node_modules/silk-core-ver
 BASE_VERSION=$(node -p "require('$BASE_VERSION_JS')")
 CORE_VERSION=$(node -p "require('$SILK_CORE_VERSION_JSON').fingerprint")
 
-ota_manifest="${OTA_DIR}/${BOARD}.json"
+ota_manifest="${OTA_DIR}/${BOARD}-${PRODUCT}.json"
 
 echo Manifest: $ota_manifest
 echo "{" > $ota_manifest
-echo "  \"${BOARD}\": {" >> $ota_manifest
+echo "  \"${BOARD}-${PRODUCT}\": {" >> $ota_manifest
 
 for zip in $(shopt -s nullglob; echo $OTA_DIR/*.zip); do
   zip_size=`wc -c < "${zip}"`

@@ -11,6 +11,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png
 
+# Little hacky.  silkhub.mk will disabled movies, but for kenzo it's nice to
+# have them since kenzo has a display so re-enable.
+SILK_FEATURE_UI_MOVIES := true
+
 # Exclude cereproc since this board is shared with partners
 SILK_FEATURE_TTS_CEREPROC := false
 

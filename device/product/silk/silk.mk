@@ -5,6 +5,9 @@
 # Generic Silk platform
 #
 
+# include board-specific silk makefile if exists
+-include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk
+
 # inherit from gonkjs product
 include product/gonkjs/gonkjs.mk
 SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/moved/
@@ -194,5 +197,3 @@ endif
 
 ANDROID_TOOLCHAIN_CMAKE := $(ANDROID_BUILD_TOP)/external/android-cmake/android.toolchain.cmake
 
-# include board-specific silk makefile if exists
--include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk

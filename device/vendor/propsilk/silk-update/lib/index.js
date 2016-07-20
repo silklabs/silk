@@ -24,14 +24,14 @@ const emitter = new EventEmitter();
 
 const MANIFEST_URL_PROP = 'ro.silk.update.manifest_url';
 const CHANNEL_PROP = 'persist.silk.update.channel';
-const DEVICEOVERRIDE_PROP = 'persist.silk.update.hardware';
-const DEVICE_PROP = 'ro.boot.hardware';
 const POLL_HOURS_PROP = 'ro.silk.update.poll_hours';
 const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/data/update.zip';
 
-const DEVICE = util.getprop(DEVICEOVERRIDE_PROP, util.getprop(DEVICE_PROP));
+const DEVICE = util.getprop('persist.silk.build.board',
+                            util.getprop('ro.build.silk.board'));
+const PRODUCT = util.getprop('ro.build.silk.product');
 const FINGERPRINT = util.getprop('ro.build.fingerprint');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
@@ -612,7 +612,8 @@ function poll(runImmediately) {
 
 function _expandManifestUrlVars() {
   manifestURL = MANIFEST_URL_TEMPLATE.replace('{channel}', CHANNEL);
-  manifestURL = manifestURL.replace('{device}', DEVICE);
+  manifestURL = manifestURL.replace('{board}', BOARD);
+  manifestURL = manifestURL.replace('{product}', PRODUCT);
 }
 
 function start() {

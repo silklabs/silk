@@ -9,9 +9,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.ui.light=true \
   ro.silk.ui.inputevents=event0,event6,event7 \
 
-PRODUCT_PROPERTY_OVERRIDES += \
-  persist.silk.update.hardware=kenzo
-
 PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png
 
 # Exclude cereproc since this board is shared with partners

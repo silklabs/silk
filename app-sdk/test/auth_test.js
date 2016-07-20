@@ -23,10 +23,6 @@ function makeStore() {
   return createStore(reducer, applyMiddleware(thunk));
 }
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled promise rejection', reason, promise);
-});
-
 function whenAuthenticated(store): Promise<void> {
   return new Promise((resolve) => {
     store.subscribe(() => store.getState().auth.authenticated && resolve());

@@ -103,7 +103,7 @@ public class SilkAppSDKService extends Service {
     if (!mInitialized) {
       Bundle bundle = new Bundle();
       bundle.putString("type", "MESSAGE_ERROR");
-      bundle.putString("reason", "NOT_INITIALIZED");
+      bundle.putString("error", "NOT_INITIALIZED");
       bundle.putBundle("message", message);
       mDelegate.onMessage(bundle);
       return;

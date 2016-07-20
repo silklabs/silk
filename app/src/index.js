@@ -1,5 +1,5 @@
 import 'silk-react-native-blobs';
-import './libraries/node_shims';
+import 'silk-react-native-transformer/globals';
 
 import CrashReporter from './libraries/CrashReporter';
 CrashReporter.start();

@@ -54,7 +54,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   if (!_initialized) {
     [_delegate onMessage:@{
       @"type": @"MESSAGE_ERROR",
-      @"reason": @"NOT_INITIALIZED",
+      @"error": @"NOT_INITIALIZED",
       @"message": message,
     }];
     return;

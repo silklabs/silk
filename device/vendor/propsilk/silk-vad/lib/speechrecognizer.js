@@ -10,6 +10,7 @@ import * as pocketsphinx from 'pocketsphinx';
 import { EventEmitter } from 'events';
 import createLog from 'silk-log/device';
 import config from 'silk-config';
+import path from 'path';
 
 import type { ConfigDeviceMic } from 'silk-config';
 
@@ -20,6 +21,10 @@ export type MicData = {
   when: number;
   frames: Buffer;
 };
+
+const MODEL_DIR = path.join(__dirname, '..', 'model');
+const VAD_SEARCH = 'vad';
+const KEYPHRASE = 'ok sense';
 
 /**
  * Implementattion of voice activity detection using pocketsphinx. This class
@@ -57,6 +62,46 @@ export default class SpeechRecognizer extends EventEmitter {
         this._numChannels;
 
     this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
+  }
+
+  init() {
+    // Bandwidth of Audio recorded from capture process is 16khz so use
+    // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
+    // Default configuration options are documented at:
+    //   https://github.com/watsonbox/pocketsphinx-ruby/wiki/Default-Pocketsphinx-Configuration
+    this.setAcousticModel(
+        path.join(MODEL_DIR, 'en-us-ptm-16khz'));
+
+    this.setDictionary(
+        path.join(MODEL_DIR, 'cmudict-en-us.dict'));
+
+    // Audio from capture process is recorded at 8khz samling rate so set
+    // the speechrecognizer's sample rate accordingly
+    this.setSampleRate(config.deviceMic.sampleRate);
+
+    // Threshold to tune for keyphrase to balance between false alarms and misses
+    // Higher the number more false alarms and less misses, lower the number
+    // less false alarms but higher misses (1e-30 > 1e-40)
+    this.setKeywordThreshold(1e-45);
+
+    // Use context-independent phonetic search, context-dependent is too slow
+    // for mobile
+    this.setBoolean('-allphone_ci', true);
+
+    // Enable voice activity detection
+    this.setBoolean('-remove_silence', true);
+    this.setBoolean('-remove_noise', true);
+
+    // Adjust VAD threshold. Higher number means ignore more sound. Default
+    // value of 2.0 is not sufficient as mic data on the phones are pretty
+    // sensitive in picking up stray noise like clock ticking, person breathing
+    // and so on.
+    this.setFloat('-vad_threshold', 3.2);
+
+    this.finishSetup();
+
+    // Add model searches
+    this.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
   }
 
   /**
@@ -187,15 +232,18 @@ export default class SpeechRecognizer extends EventEmitter {
   /**
    * Starts recognition. Does nothing if recognition is active.
    *
+   * TODO: Patch pocketsphinx to not required a search to be set to run
+   * vad detection. For now keyphrase search seems to be taking the least
+   * amount of time from among the other type of searches available
    * @return true if recognition was actually started
    */
-  startListening(searchName: string): boolean {
+  startListening(): boolean {
     if (this._listening) {
       return false;
     }
 
-    log.debug(`Start search ${searchName}`);
-    this._decoder.setSearch(searchName);
+    log.debug(`Start search ${VAD_SEARCH}`);
+    this._decoder.setSearch(VAD_SEARCH);
 
     this._decoder.startUtt(); // Start utterance processing
     this._pcmDataQueue.length = 0;
@@ -213,9 +261,9 @@ export default class SpeechRecognizer extends EventEmitter {
    *
    * @return true if recognition was actually started
    */
-  startListeningTimeout(searchName: string, timeout: number): boolean {
-    log.debug(`Start recognition ${searchName} with timeout ${timeout}`);
-    if (this.startListening(searchName)) {
+  startListeningTimeout(timeout: number): boolean {
+    log.debug(`Start recognition ${VAD_SEARCH} with timeout ${timeout}`);
+    if (this.startListening(VAD_SEARCH)) {
       // Stop listening after the provided timeout
       this._listenTimeout = setTimeout(() => {
         this.stop();

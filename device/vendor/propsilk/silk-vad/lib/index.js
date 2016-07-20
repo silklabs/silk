@@ -6,8 +6,6 @@
  * @flow
  */
 
-import path from 'path';
-import config from 'silk-config';
 import createLog from 'silk-log/device';
 import { EventEmitter } from 'events';
 
@@ -16,14 +14,7 @@ import type { MicData } from './speechrecognizer';
 
 const log = createLog('vad');
 
-const MODEL_DIR = path.join(__dirname, '..', 'model');
 const LISTEN_TIMEOUT = 5000; // In activity timeout after keyword is detected
-
-// Named searches allow to quickly reconfigure the decoder
-const VAD_SEARCH = 'vad';
-
-// Keyword we are looking for to activate menu
-const KEYPHRASE = 'ok sense';
 
 export type VadMode = 'continuous' | 'dialog';
 
@@ -82,47 +73,9 @@ export default class VoiceActivityDetector extends EventEmitter {
   _setupRecognizer(): void {
     log.info(`Setting up speech recognizer`);
 
-    // Configure with audio properties of the input data from mic. These
-    // properties must match the audio properties set in camera
+    // Instantiate voice activity detection
     this._speechRecognizer = new SpeechRecognizer();
-
-    // Bandwidth of Audio recorded from capture process is 16khz so use
-    // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
-    // Default configuration options are documented at:
-    //   https://github.com/watsonbox/pocketsphinx-ruby/wiki/Default-Pocketsphinx-Configuration
-    this._speechRecognizer.setAcousticModel(
-        path.join(MODEL_DIR, 'en-us-ptm-16khz'));
-
-    this._speechRecognizer.setDictionary(
-        path.join(MODEL_DIR, 'cmudict-en-us.dict'));
-
-    // Audio from capture process is recorded at 8khz samling rate so set
-    // the speechrecognizer's sample rate accordingly
-    this._speechRecognizer.setSampleRate(config.deviceMic.sampleRate);
-
-    // Threshold to tune for keyphrase to balance between false alarms and misses
-    // Higher the number more false alarms and less misses, lower the number
-    // less false alarms but higher misses (1e-30 > 1e-40)
-    this._speechRecognizer.setKeywordThreshold(1e-45);
-
-    // Use context-independent phonetic search, context-dependent is too slow
-    // for mobile
-    this._speechRecognizer.setBoolean('-allphone_ci', true);
-
-    // Enable voice activity detection
-    this._speechRecognizer.setBoolean('-remove_silence', true);
-    this._speechRecognizer.setBoolean('-remove_noise', true);
-
-    // Adjust VAD threshold. Higher number means ignore more sound. Default
-    // value of 2.0 is not sufficient as mic data on the phones are pretty
-    // sensitive in picking up stray noise like clock ticking, person breathing
-    // and so on.
-    this._speechRecognizer.setFloat('-vad_threshold', 3.2);
-
-    this._speechRecognizer.finishSetup();
-
-    // Add model searches
-    this._speechRecognizer.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
+    this._speechRecognizer.init();
 
     // Setup listeners
     this._onSpeechStart = (when) => {
@@ -167,7 +120,7 @@ export default class VoiceActivityDetector extends EventEmitter {
     this._speechRecognizer.on('speech_start', this._onSpeechStart);
     this._speechRecognizer.on('speech_stop', this._onSpeechStop);
     this._speechRecognizer.on('speech_timeout', this._onSpeechTimeout);
-    this._startSearch(VAD_SEARCH);
+    this._start();
   }
 
   /**
@@ -189,20 +142,16 @@ export default class VoiceActivityDetector extends EventEmitter {
 
   /**
    * Start the search
-   *
-   * TODO: Patch pocketsphinx to not required a search to be set to run
-   * vad detection. For now keyphrase search seems to be taking the least
-   * amount of time from among the other type of searches available
    */
-  _startSearch(): void {
+  _start(): void {
     this._speechRecognizer.stop();
 
     if (this._vadMode === 'dialog') {
       // Wait for LISTEN_TIMEOUT time for VAD start in a dialog mode
-      this._speechRecognizer.startListeningTimeout(VAD_SEARCH, LISTEN_TIMEOUT);
+      this._speechRecognizer.startListeningTimeout(LISTEN_TIMEOUT);
     } else {
       // Continue to wait for VAD start in a continuous mode
-      this._speechRecognizer.startListening(VAD_SEARCH);
+      this._speechRecognizer.startListening();
     }
   }
 

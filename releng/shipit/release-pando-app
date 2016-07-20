@@ -20,6 +20,7 @@ WHITELIST=$(cat <<-EOF
   app
   app-sdk
   app-sdk-example
+  async-utils
   azure-storage
   babeldeps
   cam

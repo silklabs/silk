@@ -91,7 +91,7 @@ function fetchWeather(zipcode: number): Promise<CurrentWeather> {
 
 export function* resetZipcode(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;
@@ -104,7 +104,7 @@ export function* resetZipcode(
 
 export function* getWeather(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {micChannel, speak} = environment;

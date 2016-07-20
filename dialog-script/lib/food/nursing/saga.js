@@ -30,7 +30,7 @@ const getNursing = (state) => Object.assign({}, state.food.nursing);
  */
 function* queryAlert(
   environment: Environment,
-): Generator<Object, ?boolean, any> {            // eslint-disable-line no-undef
+): Generator<Object, ?boolean, any> {
   const {micChannel, speak} = environment;
 
   let useTimer: ?boolean = null;
@@ -67,7 +67,7 @@ function* nursing(
   environment: Environment,
   alert: boolean,
   timePerSideSec: number,
-): Generator<Object, boolean, any> {             // eslint-disable-line no-undef
+): Generator<Object, boolean, any> {
   const {speak} = environment;
 
   let timeRemainingSec = timePerSideSec;
@@ -128,7 +128,7 @@ function* nursing(
  */
 function* listenForCancel(
   environment: Environment,
-): Generator<Object, boolean, any> {             // eslint-disable-line no-undef
+): Generator<Object, boolean, any> {
   const {micChannel} = environment;
 
   /**
@@ -156,7 +156,7 @@ function* listenForCancel(
  */
 export default function*(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;

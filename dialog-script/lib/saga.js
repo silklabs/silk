@@ -82,7 +82,7 @@ const concurrentIntents: Set<string> = new Set([
 // A simple saga that speaks the current time.
 export function* sayCurrentTime(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {speak} = environment;
 
   // Get the current time and isolate individual components that we care about.
@@ -116,7 +116,7 @@ export function* sayCurrentTime(
  */
 export default function*(
   dialogEngine: DialogEngine,
-): Generator<Object | Array<Object>, void, any> { // eslint-disable-line no-undef
+): Generator<Object | Array<Object>, void, any> {
   log.info(`Starting saga`);
 
   /**

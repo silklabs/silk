@@ -25,7 +25,7 @@ export const getBabies: ((state: Object) => Object) =
 export function* queryBabyName(
   environment: Environment,
   customQuery?: string,
-): Generator<Object, string, any> {              // eslint-disable-line no-undef
+): Generator<Object, string, any> {
   const {micChannel, speak} = environment;
   const query = customQuery || `What is the baby's name?`;
 
@@ -67,7 +67,7 @@ export function* queryBabyName(
 // This saga adds a new baby to our data store after asking its name.
 export function* add(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {speak} = environment;
 
   const name = yield call(queryBabyName, environment);
@@ -93,7 +93,7 @@ export function* add(
  */
 export function* rename(
   environment: Environment,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   const {speak} = environment;
 
   // First |select| to find all the current babies we know about.
@@ -165,7 +165,7 @@ export function* rename(
 export default function* (
   environment: Environment,
   type: 'add' | 'rename',
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   log.info(`Starting saga`, type);

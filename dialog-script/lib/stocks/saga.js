@@ -81,7 +81,7 @@ function fetchStockPrice(stock: string): Promise<CurrentStockPrice> {
 export function* getStockPrice(
   environment: Environment,
   stock: string,
-): Generator<Object, void, any> {                // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;

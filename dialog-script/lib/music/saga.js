@@ -14,7 +14,7 @@ const log = createLog(`script-generic-music-saga`);
 
 export function* playMusic(
   environment: Environment,
-): Generator<Object, void, any> {              // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;
@@ -28,7 +28,7 @@ export function* playMusic(
 
 export function* pauseMusic(
   environment: Environment,
-): Generator<Object, void, any> {              // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;
@@ -42,7 +42,7 @@ export function* pauseMusic(
 
 export function* getCurrentSong(
   environment: Environment,
-): Generator<Object, void, any> {              // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;
@@ -68,7 +68,7 @@ export function* getCurrentSong(
 
 export function* getArtist(
   environment: Environment,
-): Generator<Object, void, any> {              // eslint-disable-line no-undef
+): Generator<Object, void, any> {
   yield call(getCurrentSong);
 }
 

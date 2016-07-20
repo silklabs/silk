@@ -20,7 +20,9 @@ $(SILKOTA_PACKAGE): $(SILKOTA_UPDATER_SCRIPT) $(SILKOTA_UPDATE_BINARY) $(SILKOTA
 	@echo "Silk OTA files: $@"
 	$(hide) rm -rf $(@D)
 	$(hide) mkdir -p $(@D)/zip/META-INF/com/google/android
-	$(hide) $(ACP) $(SILKOTA_UPDATER_SCRIPT) $(@D)/zip/META-INF/com/google/android/updater-script
+	$(hide) echo "is_substring(getprop(\"ro.silk.build.product\"), \"$(SILK_PRODUCT)\") || abort(\"Incompatible product\");" >> $(@D)/zip/META-INF/com/google/android/updater-script
+	$(hide) echo "is_substring(getprop(\"ro.silk.build.board\"), \"$(SILK_BOARD)\") || abort(\"Incompatible board\");" >> $(@D)/zip/META-INF/com/google/android/updater-script
+	$(hide) cat $(SILKOTA_UPDATER_SCRIPT) >> $(@D)/zip/META-INF/com/google/android/updater-script
 	$(hide) $(ACP) $(SILKOTA_UPDATE_BINARY) $(@D)/zip/META-INF/com/google/android/update-binary
 	$(hide) rsync -a $(TARGET_OUT_SILK) $(@D)/zip
 	$(hide) (cd $(@D)/zip && zip -qry ../$(notdir $@) .)

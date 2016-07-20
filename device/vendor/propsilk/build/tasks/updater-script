@@ -1,15 +1,3 @@
-# Copyright (c) 2015-2016 Silk Labs, Inc.
-# All Rights Reserved.
-# Confidential and Proprietary - Silk Labs, Inc.
-
-#
-# TODO: Before proceeding confirm that:
-#   1. the current device is compatible
-#   2. the current gonk on the device is compatible
-#
-#is_substring(getprop("ro.product.device") + ",", "hammerhead,mako,shamu" + ",") ||
-#  abort("This package is unsupported for a \"" + getprop("ro.product.device") + "\" device.");
-
 show_progress(0.1, 1);
 ui_print("Mounting /mnt/system");
 

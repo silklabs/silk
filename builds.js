@@ -589,6 +589,20 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
+  'repocache-pandohub-silkhub': {
+    title: 'Updating repocache for pandohub/silkhub',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=pandohub',
+          'PRODUCT=silkhub',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
 };
 
 // Copy over the builds definition from SOS.

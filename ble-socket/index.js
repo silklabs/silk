@@ -3,12 +3,11 @@
  */
 
 import invariant from 'assert';
-import { NativeModules, DeviceEventEmitter } from 'react-native';
+import {NativeModules, DeviceEventEmitter} from 'react-native';
 import makeLog from 'silk-log';
+import RobustEventEmitter from 'silk-utils/robust_event_emitter';
 
-import RobustEventEmitter from './RobustEventEmitter';
-
-import type { EventEmitter } from 'events';
+import type {EventEmitter} from 'events';
 
 type ConnectMessage = {
   id: number;
@@ -29,7 +28,7 @@ type DisconnectMessage = ConnectMessage;
 
 const log = makeLog(`btle-SocketManager`);
 
-const { BLESocketManager } = NativeModules;
+const {BLESocketManager} = NativeModules;
 
 let singletonInstance = null;
 

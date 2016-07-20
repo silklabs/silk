@@ -6,8 +6,8 @@ import HttpClient from 'silk-http-client';
 import * as CryptoModule from 'silk-crypto';
 import * as StreamsModule from 'silk-streams';
 
+import {Socket, SocketManager} from 'silk-ble-socket';
 import BLEStream from './ble/Stream';
-import { Socket, SocketManager } from './ble/SocketManager';
 import { DeviceManager } from './ble/DeviceManager';
 
 import AsyncComponent from '../components/abstract/AsyncComponent';

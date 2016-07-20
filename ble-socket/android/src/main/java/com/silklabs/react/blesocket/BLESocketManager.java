@@ -1,4 +1,4 @@
-package com.silklabs.app.modules;
+package com.silklabs.react.blesocket;
 
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;

@@ -3,21 +3,21 @@
  */
 
 import invariant from 'assert';
-import getSocketManager from './SocketManager';
 import * as Joi from 'joi';
 import { Systrace } from 'react-native';
+import getSocketManager from 'silk-ble-socket';
 import mklog from 'silk-log';
+import RobustEventEmitter from 'silk-utils/robust_event_emitter';
 
 import * as Metrics from '../../metrics/BTLE';
-import RobustEventEmitter from './RobustEventEmitter';
 import SocketSession from './SocketSession';
 
-import type { EventEmitter } from 'events';
+import type {EventEmitter} from 'events';
 import type MetricsAgent from 'silk-api/src/metrics_agent';
+import type {Socket} from 'silk-ble-socket';
 
-import type { DeviceRecord } from '../../components/abstract/Devices';
-import type { Socket } from './SocketManager';
-import type { UserState } from '../UserState';
+import type {DeviceRecord} from '../../components/abstract/Devices';
+import type {UserState} from '../UserState';
 
 type DeviceStatus = {
   message: string;

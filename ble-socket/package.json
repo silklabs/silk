@@ -1,0 +1,23 @@
+{
+  "name": "silk-ble-socket",
+  "version": "0.20.0",
+  "description": "",
+  "license": "proprietary",
+  "main": "index.js",
+  "symlinkDependencies": {
+    "silk-log": "/pub/log",
+    "silk-utils": "/utils"
+  },
+  "devDependencies": {
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1"
+  },
+  "peerDependencies": {
+    "react-native": "0.30.0-rc.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "npm run lint"
+  },
+  "private": true
+}

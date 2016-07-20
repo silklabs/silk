@@ -21,16 +21,20 @@ ifneq (,$(filter $(MAKECMDGOALS),$(LOCALGOALS)))
 update:
 	set -xe; \
   [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$(readlink .repo/board); \
+  [[ -n $$SILK_PRODUCT ]] || SILK_PRODUCT=$$(readlink .repo/product); \
+  [[ -n $$TARGET_BUILD_VARIANT ]] || TARGET_BUILD_VARIANT=eng; \
   if [[ $$SILK_BOARD == base ]]; then SILK_BOARD=mako; fi; \
   if [[ $$SILK_BOARD == base.msm8909 ]]; then SILK_BOARD=msm8909; fi; \
   if [[ $$SILK_BOARD == base.kenzo ]]; then SILK_BOARD=kenzo; fi; \
   echo SILK_BOARD=$$SILK_BOARD;\
-  rm -rf out/prebuilt/$$SILK_BOARD; \
-  mkdir -p out/prebuilt/$$SILK_BOARD; \
-  cd out/prebuilt/$$SILK_BOARD; \
-  wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$$SILK_BOARD.tgz ; \
-  tar zxf $$SILK_BOARD.tgz; \
-  [[ $$SILK_BOARD == qemu ]] || ./*/$(or $(FLASH_SCRIPT),flash.sh); \
+  echo SILK_PRODUCT=$$SILK_PRODUCT;\
+  mkdir -p out/prebuilt; \
+  cd out/prebuilt; \
+  rm -rf $$SILK_BOARD-$$SILK_PRODUCT; \
+  rm -f $$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT; \
+  wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT.tgz ; \
+  tar zxf $$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT.tgz; \
+  [[ $$SILK_BOARD == qemu ]] || ./$$SILK_BOARD-$$SILK_PRODUCT/$(or $(FLASH_SCRIPT),flash.sh); \
 
 # Update the currently device with the latest prebuilt hub build
 .PHONY: hub

@@ -51,28 +51,20 @@ dir_exists "$ANDROID_BUILD_TOP" "Please run envsetup.sh first"
 dir_exists "$ANDROID_PRODUCT_OUT" "Please run lunch first"
 dir_exists "board/$SILK_BOARD" "Please run lunch first"
 
-if [[ -z $TARGET_PRODUCT ]]; then
-  echo "Error: TARGET_PRODUCT does not exist, need some |lunch|"
-  exit 1
-fi
-
 set -ex
-
 
 cd $ANDROID_BUILD_TOP
 
-archiveName=$buildId
+rm -rf $archiveDir/$buildId
+mkdir -p $archiveDir/$buildId
 
-rm -rf $archiveDir/$TARGET_PRODUCT
-mkdir -p $archiveDir/$TARGET_PRODUCT
-
-./repo manifest -r -o - > $archiveDir/$TARGET_PRODUCT/versioned.xml
+./repo manifest -r -o - > $archiveDir/$buildId/versioned.xml
 
 if [[ -f $ANDROID_PRODUCT_OUT/boot.img ]]; then
   # This is a full device build
 
   # Create flash script
-  cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<'EOF'
+  cat > $archiveDir/$buildId/flash.sh <<'EOF'
 #/bin/sh
 
 set -x
@@ -140,17 +132,6 @@ else
 fi
 
 fastboot reboot
-set +x
-EOF
-  chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
-
-  # Create flash_hub script
-  cat > $archiveDir/$TARGET_PRODUCT/flash_hub.sh <<'EOF'
-#!/bin/bash -e
-# Hub device config
-
-echo Flash the build and clear userdata/cache partitions
-$(dirname $0)/flash.sh $@ -w
 
 echo Waiting for device to boot
 adb wait-for-device
@@ -160,18 +141,24 @@ adb wait-for-device
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
 
+set +x
+EOF
+  chmod +x $archiveDir/$buildId/flash.sh
+
+  # Create flash_noserver script
+  cat > $archiveDir/$buildId/flash_noserver.sh <<'EOF'
+#!/bin/bash -e
+# Hub device config
+
+echo Flash the build and clear userdata/cache partitions
+$(dirname $0)/flash.sh $@ -w
+
 echo Preparing build.prop...
 rm -f build.prop
 adb pull /system/build.prop
 
 echo persist.silk.dev.no_server=true >> build.prop
 echo persist.silk.update.enabled=false >> build.prop
-echo persist.silk.extensions=dialog,pandohub-ui >> build.prop
-echo persist.silk.kws.enabled=true >> build.prop
-echo persist.silk.dialog.tts.enabled=false >> build.prop
-echo persist.silk.volume.level=80 >> build.prop
-echo ro.silk.bt.hw.enabled=false >> build.prop
-echo ro.silk.camera.hw.enabled=false >> build.prop
 
 echo Pushing new build.prop ...
 adb remount
@@ -185,61 +172,35 @@ echo Device provisioning successful
 exit 0
 EOF
 
-  chmod +x $archiveDir/$TARGET_PRODUCT/flash_hub.sh
+  chmod +x $archiveDir/$buildId/flash_noserver.sh
 
-  # Create flash_camera.sh script
-  cat > $archiveDir/$TARGET_PRODUCT/flash_camera.sh <<'EOF'
-#!/bin/bash
-# Camera device config
-
-echo Flash the build and clear userdata/cache partitions
-$(dirname $0)/flash.sh $@ -w
-
-echo Waiting for device to boot
-adb wait-for-device
-adb root
-adb wait-for-device
-
-echo Set device time to match host: $(date)
-adb shell time_genoff $(date +%s)000
-
-echo Rebooting to apply configuration...
-adb reboot
-adb wait-for-device
-echo Device provisioning successful
-exit 0
-
-EOF
-
-  chmod +x $archiveDir/$TARGET_PRODUCT/flash_camera.sh
-
-  cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$TARGET_PRODUCT
+  cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$buildId
 
   if [[ -d board/$SILK_BOARD/nhlos ]]; then
-    cp -r board/$SILK_BOARD/nhlos $archiveDir/$TARGET_PRODUCT
+    cp -r board/$SILK_BOARD/nhlos $archiveDir/$buildId
   fi
 
 elif [[ -f $ANDROID_PRODUCT_OUT/ramdisk.img ]]; then
   # This is a qemu full device build
 
-  cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$TARGET_PRODUCT
-  mkdir -p $archiveDir/$TARGET_PRODUCT/system
-  cp -r $ANDROID_PRODUCT_OUT/system/build.prop $archiveDir/$TARGET_PRODUCT/system
+  cp -r $ANDROID_PRODUCT_OUT/*.img $archiveDir/$buildId
+  mkdir -p $archiveDir/$buildId/system
+  cp -r $ANDROID_PRODUCT_OUT/system/build.prop $archiveDir/$buildId/system
 
-  cat > $archiveDir/$TARGET_PRODUCT/run.sh <<'EOF'
+  cat > $archiveDir/$buildId/run.sh <<'EOF'
 #/bin/sh
 
 set -x
 export ANDROID_PRODUCT_OUT=$(dirname $0)
 emulator -verbose -show-kernel
 EOF
-  chmod +x $archiveDir/$TARGET_PRODUCT/run.sh
+  chmod +x $archiveDir/$buildId/run.sh
 
 else
   # This is a base (partial) build
-  cp -r $ANDROID_PRODUCT_OUT/{system/,data/} $archiveDir/$TARGET_PRODUCT
+  cp -r $ANDROID_PRODUCT_OUT/{system/,data/} $archiveDir/$buildId
 
-  cat > $archiveDir/$TARGET_PRODUCT/flash.sh <<EOF
+  cat > $archiveDir/$buildId/flash.sh <<EOF
 #/bin/sh
 
 waitForDevice() {
@@ -260,20 +221,20 @@ adb remount
 adb shell stop
 adb shell rm -rf /system/silk
 adb push system /system
-if [ "$1" = "-w" ]; then
+if [ "\$1" = "-w" ]; then
   adb shell librecovery_test factoryReset
 else
   adb shell start
-fi  
+fi
 EOF
 
-  chmod +x $archiveDir/$TARGET_PRODUCT/flash.sh
+  chmod +x $archiveDir/$buildId/flash.sh
 
 fi
 
 
 cd $archiveDir
-tar zvcf $archiveName.tgz $TARGET_PRODUCT
-rm -rf $TARGET_PRODUCT
+tar zvcf $buildId.tgz $buildId
+rm -rf $buildId
 cd -
-ls -l $archiveDir/$archiveName.tgz
+ls -l $archiveDir/$buildId.tgz

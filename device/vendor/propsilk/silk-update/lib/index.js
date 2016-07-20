@@ -24,14 +24,14 @@ const emitter = new EventEmitter();
 
 const MANIFEST_URL_PROP = 'ro.silk.update.manifest_url';
 const CHANNEL_PROP = 'persist.silk.update.channel';
-const DEVICEOVERRIDE_PROP = 'persist.silk.update.hardware';
-const DEVICE_PROP = 'ro.boot.hardware';
 const POLL_HOURS_PROP = 'ro.silk.update.poll_hours';
 const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/data/update.zip';
 
-const DEVICE = util.getprop(DEVICEOVERRIDE_PROP, util.getprop(DEVICE_PROP));
+const BOARD = util.getprop('persist.silk.build.board',
+                           util.getprop('ro.silk.build.board'));
+const PRODUCT = util.getprop('ro.silk.build.product');
 const FINGERPRINT = util.getprop('ro.build.fingerprint');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
@@ -41,7 +41,7 @@ const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
 const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP, silkCoreVersion.official);
 
 const isValidUpdateURLOptions = {
-  protocols: ['https'],
+  protocols: ['http', 'https'],
   require_protocol: true,                       // eslint-disable-line camelcase
   require_tld: true,                            // eslint-disable-line camelcase
 };
@@ -113,7 +113,7 @@ function createRequestPromise(options) {
         if (options.json) {
           try {
             body = JSON.parse(body);
-          } catch(e) {
+          } catch (e) {
             log.error(`Invalid server response: ${e.stack}`);
             reject();
             return;
@@ -313,9 +313,10 @@ function validateManifest(result) {
     return Promise.reject();
   }
 
-  let deviceMetadata = result.body[DEVICE]; // Unsanitized server response
+  const key = `${BOARD}-${PRODUCT}`;
+  let deviceMetadata = result.body[key]; // Unsanitized server response
   if (!deviceMetadata) {
-    log.info(`Update server responded with nothing available for "${DEVICE}" ` +
+    log.info(`Update server responded with nothing available for "${key}" ` +
              'device');
     return Promise.reject();
   }
@@ -338,13 +339,15 @@ function validateManifest(result) {
       }
       break;
     case 'full':
-      // Validate the fingerprint.
-      let fingerprint = buildMetadata.fingerprint;
-      if (!fingerprint) {
-        log.warn('Update server responded with no fingerprint');
-        return null;
+      {
+        // Validate the fingerprint.
+        let fingerprint = buildMetadata.fingerprint;
+        if (!fingerprint) {
+          log.warn('Update server responded with no fingerprint');
+          return null;
+        }
+        break;
       }
-      break;
     default:
       throw new Error(`Unknown buildType: ${buildType}`);
     }
@@ -548,6 +551,7 @@ function stageUpdate() {
         log.verbose(result.stdout);
         if (result.code === 0) {
           emitter.emit('staged');
+          running = false;
         } else {
           log.warn('Update failed to apply');
           log.info(result.stderr);
@@ -560,6 +564,7 @@ function stageUpdate() {
     return Promise.resolve();
   }
   emitter.emit('staged');
+  running = false;
   return Promise.resolve();
 }
 
@@ -612,7 +617,8 @@ function poll(runImmediately) {
 
 function _expandManifestUrlVars() {
   manifestURL = MANIFEST_URL_TEMPLATE.replace('{channel}', CHANNEL);
-  manifestURL = manifestURL.replace('{device}', DEVICE);
+  manifestURL = manifestURL.replace('{board}', BOARD);
+  manifestURL = manifestURL.replace('{product}', PRODUCT);
 }
 
 function start() {
@@ -706,7 +712,9 @@ function stop() {
 }
 
 function apply() {
-  if (!AB_UPDATE) {
+  if (AB_UPDATE) {
+    util.setprop('sys.powerctl', 'reboot');
+  } else {
     spawnSync('librecovery_test', ['installFotaUpdate', UPDATE_FILE_PATH]);
   }
 

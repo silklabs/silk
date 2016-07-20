@@ -5,6 +5,9 @@
 # Generic Silk platform
 #
 
+# include board-specific silk makefile if exists
+-include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk
+
 # inherit from gonkjs product
 include product/gonkjs/gonkjs.mk
 SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/moved/
@@ -18,7 +21,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PROPERTY_OVERRIDES += \
   persist.logd.size=16M \
-  ro.silk.update.manifest_url=http://update.silklabs.com/ota-internal/{channel}/{device}.json \
+  persist.silk.kws.save=true \
+  ro.silk.update.manifest_url=http://update.silklabs.com/ota-internal/{channel}/{board}-{product}.json \
+  ro.silk.update.poll_hours=1 \
 
 # Add default IP address for eth0 (disabled by default)
 # Add "persist.silk.eth0.static.enable=1" to target gonk to enable static eth0
@@ -192,5 +197,3 @@ endif
 
 ANDROID_TOOLCHAIN_CMAKE := $(ANDROID_BUILD_TOP)/external/android-cmake/android.toolchain.cmake
 
-# include board-specific silk makefile if exists
--include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk

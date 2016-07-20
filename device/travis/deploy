@@ -6,6 +6,8 @@ set -x
 source ../pub/version/branch
 test -n $BRANCH
 test -n $SILK_BOARD
+test -n $SILK_PRODUCT
+test -n $TARGET_BUILD_VARIANT
 
 if [[ -n $TRAVIS ]]; then
   rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space because $250 per month is not enough
@@ -13,7 +15,7 @@ fi
 
 ./travis/ota-internal_dist
 
-./travis/build_device_archive.sh $SILK_BOARD dist
+./travis/build_device_archive.sh $SILK_BOARD-$SILK_PRODUCT-$BRANCH-$TARGET_BUILD_VARIANT dist
 ../s3-artifacts/bin/upload \
     silk-device \
     $BRANCH/latest \

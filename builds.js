@@ -461,12 +461,27 @@ const builds = {
     },
   }),
   */
-  'device-kenzo-nightly': nightlyBuild('device', {
+  'device-kenzo-silk': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
-    title: 'kenzo nightly',
+    title: 'kenzo silk',
     travis_config: {
       env: {
-        global: ['GONK=kenzo'],
+        global: [
+          'BOARD=kenzo',
+          'PRODUCT=silk',
+        ],
+      },
+    },
+  }),
+  'device-kenzo-silkhub': nightlyBuild('device', {
+    branches: ['master', 'next', 'release'],
+    title: 'kenzo silkhub',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=kenzo',
+          'PRODUCT=silkhub',
+        ],
       },
     },
   }),

@@ -1,8 +1,6 @@
 {
   "persist.silk.main": "silk-device-core",
-  "persist.silk.ranger.enabled": false,
-  "ro.silk.update.manifest_url": "http://update.silklabs.com/ota/{channel}/{device}.json",
-  "ro.silk.update.poll_hours": 3,
-  "persist.silk.kws.save": true,
-  "persist.silk.extensions": "*,-detectcat,-dnn,-svmsounds,-pandohub-ui,-peddetector,-voicerecorder"
+  "ro.silk.update.manifest_url": "http://update.silklabs.com/ota/{channel}/{board}-{product}.json",
+  "ro.silk.update.poll_hours": 24,
+  "persist.silk.extensions": "*"
 }

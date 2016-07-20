@@ -13,14 +13,10 @@ import config from 'silk-config';
 import path from 'path';
 
 import type { ConfigDeviceMic } from 'silk-config';
+import type { MicData } from '..';
 
 const log = createLog('vad');
 let ps = pocketsphinx.ps;
-
-export type MicData = {
-  when: number;
-  frames: Buffer;
-};
 
 const MODEL_DIR = path.join(__dirname, '..', 'model');
 const VAD_SEARCH = 'vad';
@@ -64,7 +60,7 @@ export default class SpeechRecognizer extends EventEmitter {
     this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
   }
 
-  init() {
+  init(): boolean {
     // Bandwidth of Audio recorded from capture process is 16khz so use
     // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
     // Default configuration options are documented at:
@@ -102,6 +98,7 @@ export default class SpeechRecognizer extends EventEmitter {
 
     // Add model searches
     this.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
+    return true;
   }
 
   /**

@@ -10,36 +10,43 @@ import createLog from 'silk-log/device';
 import { EventEmitter } from 'events';
 
 import SpeechRecognizer from './speechrecognizer';
-import type { MicData } from './speechrecognizer';
+import WebRtcVad from './webrtc_vad';
 
 const log = createLog('vad');
 
 const LISTEN_TIMEOUT = 5000; // In activity timeout after keyword is detected
 
 export type VadMode = 'continuous' | 'dialog';
+export type MicData = {
+  when: number;
+  frames: Buffer;
+};
+
+const VAD_ENGINE_PS = 'pocketsphinx';
+const VAD_ENGINE_WEBRTC = 'webrtc';
 
 /**
  * This class adds voice recognition functionality to silk devices
  */
 export default class VoiceActivityDetector extends EventEmitter {
 
-  _speechRecognizer: SpeechRecognizer;
+  _vad: SpeechRecognizer | WebRtcVad;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
   _vadMode: VadMode;
 
-  constructor() {
+  constructor(vadEngine: string = VAD_ENGINE_PS) {
     super();
-    this._setupRecognizer();
+    this._setupRecognizer(vadEngine);
   }
 
   /**
    * Call this function to add mic-data
    */
   addMicData(pkt: MicData) {
-    if (this._speechRecognizer) {
-      this._speechRecognizer.addMicData(pkt);
+    if (this._vad) {
+      this._vad.addMicData(pkt);
     }
   }
 
@@ -70,12 +77,20 @@ export default class VoiceActivityDetector extends EventEmitter {
    * Configure the recognizer to perform multiple searches of different kind and
    * switch between them
    */
-  _setupRecognizer(): void {
+  _setupRecognizer(vadEngine: string): void {
     log.info(`Setting up speech recognizer`);
 
     // Instantiate voice activity detection
-    this._speechRecognizer = new SpeechRecognizer();
-    this._speechRecognizer.init();
+    if (vadEngine === VAD_ENGINE_PS) {
+      this._vad = new SpeechRecognizer();
+    } else {
+      this._vad = new WebRtcVad();
+    }
+    const result = this._vad.init();
+    if (!result) {
+      log.error(`Failed to initialize ${vadEngine}`);
+      return;
+    }
 
     // Setup listeners
     this._onSpeechStart = (when) => {
@@ -117,9 +132,9 @@ export default class VoiceActivityDetector extends EventEmitter {
    */
   _startVoiceActivityDetection(): void {
     log.debug(`start vad`);
-    this._speechRecognizer.on('speech_start', this._onSpeechStart);
-    this._speechRecognizer.on('speech_stop', this._onSpeechStop);
-    this._speechRecognizer.on('speech_timeout', this._onSpeechTimeout);
+    this._vad.on('speech_start', this._onSpeechStart);
+    this._vad.on('speech_stop', this._onSpeechStop);
+    this._vad.on('speech_timeout', this._onSpeechTimeout);
     this._start();
   }
 
@@ -128,15 +143,15 @@ export default class VoiceActivityDetector extends EventEmitter {
    */
   _stopVoiceActivityDetection(): void {
     log.debug(`stop vad`);
-    this._speechRecognizer.stop();
+    this._vad.stop();
     if (this._onSpeechStart) {
-      this._speechRecognizer.removeListener('speech_start', this._onSpeechStart);
+      this._vad.removeListener('speech_start', this._onSpeechStart);
     }
     if (this._onSpeechStop) {
-      this._speechRecognizer.removeListener('speech_stop', this._onSpeechStop);
+      this._vad.removeListener('speech_stop', this._onSpeechStop);
     }
     if (this._onSpeechTimeout) {
-      this._speechRecognizer.removeListener('speech_timeout', this._onSpeechTimeout);
+      this._vad.removeListener('speech_timeout', this._onSpeechTimeout);
     }
   }
 
@@ -144,14 +159,14 @@ export default class VoiceActivityDetector extends EventEmitter {
    * Start the search
    */
   _start(): void {
-    this._speechRecognizer.stop();
+    this._vad.stop();
 
     if (this._vadMode === 'dialog') {
       // Wait for LISTEN_TIMEOUT time for VAD start in a dialog mode
-      this._speechRecognizer.startListeningTimeout(LISTEN_TIMEOUT);
+      this._vad.startListeningTimeout(LISTEN_TIMEOUT);
     } else {
       // Continue to wait for VAD start in a continuous mode
-      this._speechRecognizer.startListening();
+      this._vad.startListening();
     }
   }
 

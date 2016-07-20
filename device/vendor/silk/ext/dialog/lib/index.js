@@ -29,11 +29,11 @@ import type {
   DialogState,
   DialogUiModeEventCallback,
 } from 'silk-dialog-engine';
+import type { Ui } from 'silk-device-ui';
 import type {
   Env,
   Camera,
   Timeline,
-  Ui,
 } from 'silk-exttest';
 import { Duplex } from 'stream';
 

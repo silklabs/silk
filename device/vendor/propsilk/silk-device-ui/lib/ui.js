@@ -3,7 +3,6 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @private
  * @flow
  */
 

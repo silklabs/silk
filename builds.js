@@ -433,12 +433,15 @@ const builds = {
   },
 
   // Nightly device builds
-  'device-qemu-nightly': nightlyBuild('device', {
+  'device-qemu-silk': nightlyBuild('device', {
     branches: ['master', 'next'],
-    title: 'qemu nightly',
+    title: 'qemu silk',
     travis_config: {
       env: {
-        global: ['GONK=qemu'],
+        global: [
+          'BOARD=qemu',
+          'PRODUCT=silk',
+        ],
       },
     },
     // Also rebuild this every time the base version changes to ensure that
@@ -485,28 +488,45 @@ const builds = {
       },
     },
   }),
-  'device-base.kenzo-nightly': nightlyBuild('device', {
+  'device-base.kenzo-silk': nightlyBuild('device', {
     branches: ['master', 'next'],
-    title: 'base.kenzo nightly',
+    title: 'base.kenzo silk',
     travis_config: {
       env: {
-        global: ['GONK=base.kenzo'],
+        global: [
+          'BOARD=base.kenzo',
+          'PRODUCT=silk',
+        ],
       },
     },
   }),
-  'device-base.msm8909-nightly': nightlyBuild('device', {
+  'device-base.msm8909-silk': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
-    title: 'base.msm8909 nightly',
+    title: 'base.msm8909 silk',
     travis_config: {
       env: {
-        global: ['GONK=base.msm8909'],
+        global: [
+          'BOARD=base.msm8909',
+          'PRODUCT=silk',
+        ],
+      },
+    },
+  'device-base.msm8909-silkhub': nightlyBuild('device', {
+    branches: ['master', 'next', 'release'],
+    title: 'base.msm8909 silkhub',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=base.msm8909',
+          'PRODUCT=silkhub',
+        ],
       },
     },
   }),
 
   // Nightly repocache deploys to S3
-  'repocache-base': {
-    title: 'Updating repocache for base',
+  'repocache-base-silk': {
+    title: 'Updating repocache for base silk',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
@@ -517,8 +537,8 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
-  'repocache-base.msm8909': {
-    title: 'Updating repocache for base.msm8909',
+  'repocache-base.msm8909 silk': {
+    title: 'Updating repocache for base.msm8909 silk',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
@@ -529,8 +549,8 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
-  'repocache-msm8909-la121': {
-    title: 'Updating repocache for msm8909-la121',
+  'repocache-msm8909-la121-silk': {
+    title: 'Updating repocache for msm8909-la121 silk',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux'],
@@ -543,8 +563,8 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
-  'repocache-base.kenzo': {
-    title: 'Updating repocache for base.kenzo',
+  'repocache-base.kenzo-silk': {
+    title: 'Updating repocache for base.kenzo silk',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
@@ -555,8 +575,8 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
-  'repocache-mako-nightly': {
-    title: 'Updating repocache for mako',
+  'repocache-mako-silk': {
+    title: 'Updating repocache for mako silk',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
@@ -566,19 +586,22 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
-  'repocache-qemu-nightly': {
-    title: 'Updating repocache for qemu',
+  'repocache-qemu-silk': {
+    title: 'Updating repocache for qemu silk',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
-        global: ['BOARD=qemu'],
+        global: [
+          'BOARD=qemu',
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['nightly'],
     branches: ['master'],
   },
   'repocache-qemu-gonkjs': {
-    title: 'Updating repocache for qemu/gonkjs',
+    title: 'Updating repocache for qemu gonkjs',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       os: ['linux', 'osx'],
@@ -593,13 +616,27 @@ const builds = {
     branches: ['master'],
   },
   'repocache-kenzo-gonkjs': {
-    title: 'Updating repocache for kenzo/gonkjs',
+    title: 'Updating repocache for kenzo gonkjs',
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
         global: [
           'BOARD=kenzo',
           'PRODUCT=gonkjs',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
+  'repocache-kenzo-silk': {
+    title: 'Updating repocache for kenzo silk',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=kenzo',
+          'PRODUCT=silk',
         ],
       },
     },

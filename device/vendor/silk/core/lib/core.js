@@ -2,28 +2,20 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
- *
- * @private
  */
 
 /*
- * Version check the base device image before doing anything else
+ * Check the bsp api id before doing anything else
  */
-let baseversion = {
-  actual: 'unknown',
-  expected: require('silk-gonk-version'),  // eslint-disable-line import/no-require
-};
-try {
-  baseversion.actual = require('base_version'); // eslint-disable-line import/no-require
-} catch (e) {
-  console.error(`Unable to load base_version: ${e}`); // eslint-disable-line
-}
-if (baseversion.actual !== baseversion.expected) { // TODO: use semver
-  console.error('\n' + // eslint-disable-line
+const bspVersion = require('silk-bsp-version');
+const coreVersion = require('silk-core-version');
+
+if (bspVersion.bsp_api_id !== coreVersion.bsp_api_id) {
+  console.error('\n' + // eslint-disable-line no-console
                 '**********************************\n' +
-                ' Device base version mismatch\n' +
-                `   Expected base version: ${baseversion.expected}\n` +
-                `   Actual base version:   ${baseversion.actual}\n` +
+                ' BSP API id mismatch\n' +
+                `   Required: ${coreVersion.bsp_api_id}\n` +
+                `   Actual:   ${bspVersion.bsp_api_id}\n` +
                 '**********************************');
   throw new Error('Fatal error');
 }
@@ -33,4 +25,4 @@ if (baseversion.actual !== baseversion.expected) { // TODO: use semver
  * the first callback is invoked for an unknown reason. This issue is avoided by
  * using a setTimeout() to launch the main program
  */
-setTimeout(() => require('./main'), 0); // eslint-disable-line import/no-require
+setTimeout(() => require('./main'), 0);

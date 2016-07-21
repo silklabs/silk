@@ -21,7 +21,14 @@ fi
 cp -v $ANDROID_PRODUCT_OUT/*-silkota-*.zip \
   ota-internal_dist/$SILK_BOARD-$SILK_PRODUCT-silkota-$BRANCH-$TARGET_BUILD_VARIANT.zip
 
-./travis/build_ota_manifest.sh $BRANCH $SILK_BOARD $SILK_PRODUCT $ANDROID_PRODUCT_OUT/system ota-internal_dist
+./travis/build_ota_manifest.sh \
+  $BRANCH \
+  $SILK_BOARD \
+  $SILK_PRODUCT \
+  $TARGET_BUILD_VARIANT \
+  $ANDROID_PRODUCT_OUT/system \
+  ota-internal_dist
+
 ../s3-artifacts/bin/upload \
     update.silklabs.com \
     ota-internal/$BRANCH \

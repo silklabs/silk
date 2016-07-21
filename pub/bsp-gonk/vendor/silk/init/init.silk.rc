@@ -2,6 +2,7 @@ on init
     # Can't augment existing env vars, so set everything here
     export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin:/system/silk/bin
     export NODE_PATH /system/silk/node_modules
+    mkdir /mnt/system_ab 0700 root root
 
 service silk-gonksched /system/silk/bin/gonksched
     class late_start

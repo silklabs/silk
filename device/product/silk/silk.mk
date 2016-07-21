@@ -20,9 +20,9 @@ TARGET_SYSTEM_PROP = $(wildcard $(TARGET_DEVICE_DIR)/system.prop) \
                      product/silk/import.prop
 PRODUCT_PACKAGES += silk-build-prop
 
+# Only install silk-bsp-version in full builds
 ifneq ($(DEFAULT_GOAL),gonk_modules)
-# Only install silk-base-gonk-version in full device builds
-PRODUCT_PACKAGES += silk-base-gonk-version
+PRODUCT_PACKAGES += silk-bsp-version
 endif
 
 # vendor/silk/core/...

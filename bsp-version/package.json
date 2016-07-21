@@ -1,0 +1,11 @@
+{
+  "name": "silk-bsp-version",
+  "version": "0.20.0",
+  "description": "bsp version info",
+  "main": "index.json",
+  "scripts": {
+    "silk-build-gonk": "./build $@",
+    "postinstall": "./build"
+  },
+  "private": true
+}

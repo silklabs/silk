@@ -12,27 +12,13 @@
 include product/gonkjs/gonkjs.mk
 SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/moved/
 
-# Properties that are only read using getprop in sysutils.js
-# should be added to vendor/silk/core/silk-props.json instead
-PRODUCT_PROPERTY_OVERRIDES += \
- persist.silk.capture.mute=true \
-
-# Properties only for debug builds
-ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
-PRODUCT_PROPERTY_OVERRIDES += \
-  persist.logd.size=16M \
-  persist.silk.kws.save=true \
-  ro.silk.update.manifest_url=http://update.silklabs.com/ota-internal/{channel}/{board}-{product}.json \
-  ro.silk.update.poll_hours=1 \
-
-# Add default IP address for eth0 (disabled by default)
-# Add "persist.silk.eth0.static.enable=1" to target gonk to enable static eth0
-PRODUCT_PROPERTY_OVERRIDES += \
-  persist.silk.eth0.static.ip=192.168.1.199 \
-  persist.silk.eth0.basemask=192.168.1.0/24 \
-  persist.silk.eth0.dns.gw.ip=192.168.1.1 \
-
-endif
+# System properties that can be updated by a silkota
+#
+# Note: silk-debug-prop is not added to PRODUCT_PACKAGES here as it should only
+#      be present in userdebug or eng ubilds
+TARGET_SYSTEM_PROP = $(wildcard $(TARGET_DEVICE_DIR)/system.prop) \
+                     product/silk/import.prop
+PRODUCT_PACKAGES += silk-build-prop
 
 ifneq ($(DEFAULT_GOAL),gonk_modules)
 # Only install silk-base-gonk-version in full device builds
@@ -42,7 +28,6 @@ endif
 # vendor/silk/core/...
 PRODUCT_PACKAGES += \
   silk-device-core \
-  silk-props-json \
   logo.png \
 
 # vendor/propsilk/...

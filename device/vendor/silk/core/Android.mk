@@ -7,14 +7,3 @@ include $(BUILD_NODE_MODULE)
 else
 $(warning Not using vendor/silk/core)
 endif
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := silk-props-json
-LOCAL_INSTALLED_MODULE_STEM := silk-props.json
-LOCAL_MODULE_TAGS  := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK)
-LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/silk-props.json
-include $(BUILD_PREBUILT)
-
-

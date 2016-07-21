@@ -10,16 +10,13 @@
  */
 
 import invariant from 'assert';
-import { EventEmitter} from 'events';
-import {
-  AsyncStorage,
-  NativeModules,
-} from 'react-native';
-import { AccessToken } from 'silk-api';
+import {EventEmitter} from 'events';
+import {AsyncStorage, NativeModules} from 'react-native';
+import {AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 
 const log = createLog('UserState');
-const { BLESocketManager } = NativeModules;
+const {BLESocketManager} = NativeModules;
 
 const ACCESS_TOKEN_KEY = 'user.accessToken';
 const REGISTERED_DEVICES_KEY = 'user.registeredDevices';

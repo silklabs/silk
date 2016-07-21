@@ -6,17 +6,18 @@ import {applyMiddleware, createStore, combineReducers} from 'redux';
 import thunk from 'redux-thunk';
 import createLog from 'silk-log';
 
-import {reducer as api} from '../store/api';
-import {reducer as auth} from '../store/auth_reducers';
+import * as reducers from '../store/reducers';
 import {reducer as messages} from './reducers';
 
 import type {ApiState} from '../store/api';
 import type {AuthState} from '../store/auth_reducers';
+import type {DevicesState} from '../store/device_reducers';
 import type {MessagesState} from './reducers';
 
 export type State = {
   api: ApiState;
   auth: AuthState;
+  devices: DevicesState;
   messages: MessagesState;
 };
 
@@ -35,7 +36,7 @@ const logger = store => next => action => {
 };
 
 export default function createSDKStore(): Store {
-  const reducer = combineReducers({api, auth, messages});
+  const reducer = combineReducers({...reducers, messages});
   const store = createStore(reducer, applyMiddleware(thunk, logger));
 
   return {

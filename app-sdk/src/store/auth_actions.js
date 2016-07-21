@@ -108,6 +108,11 @@ function genSignOut(
   api.metrics.stop();
   api.accessToken = null;
 
+  // TODO: enable this once we have the BLE code in the SDK:
+  if (NativeModules.BLESocketManager) {
+    NativeModules.BLESocketManager.removeAllBeaconUuids();
+  }
+
   return AsyncStorage.multiRemove([
     ACCESS_TOKEN_KEY,
     REGISTERED_DEVICES_KEY,
@@ -134,3 +139,4 @@ export const restore = actionFromAsyncPayloadGen('AUTH_RESTORE', genRestore);
 export const signIn = actionFromAsyncPayloadGen('AUTH_SIGNIN', genSignIn);
 export const createAccount = actionFromAsyncPayloadGen('AUTH_CREATEACCOUNT', genCreateAccount);
 export const signOut = actionFromAsyncPayloadGen('AUTH_SIGNOUT', genSignOut);
+export const resetPassword = actionFromAsyncPayloadGen('AUTH_RESETPASSWORD', genResetPassword);

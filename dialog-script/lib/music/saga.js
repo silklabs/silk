@@ -8,7 +8,7 @@ import invariant from 'assert';
 import sonos from 'silk-sonos';
 
 import type {Environment} from '../environment';
-import type {SonosTrackInfo} from 'silk-sonos';
+import type {Track} from 'sonos';
 
 const log = createLog(`script-generic-music-saga`);
 
@@ -49,7 +49,7 @@ export function* getCurrentSong(
   invariant(speak);
 
   try {
-    let track: SonosTrackInfo = yield call(() => sonos.getTrackInfo());
+    let track: Track = yield call(() => sonos.getTrackInfo());
 
     if (track.title) {
       let artistString = (track.artist) ? ` by ${track.artist}` : '';

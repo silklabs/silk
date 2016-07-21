@@ -28,7 +28,7 @@ export const INSTANCE_ID = uuid.v4();
 export const INSTANCE_ID_NO_DASH = INSTANCE_ID.replace(/-/g, '');
 
 // specify STT service: true for CRIS, or false for normal Bing Speech
-export const STT_USE_CRIS = true;
+export const STT_USE_CRIS = false;
 
 const log = createLog(`dialog-token`);
 const RETRY_LIMIT = 3;

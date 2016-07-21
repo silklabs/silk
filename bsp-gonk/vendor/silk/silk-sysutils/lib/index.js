@@ -16,12 +16,10 @@
 import invariant from 'assert';
 import { EventEmitter } from 'events';
 import { execFile, spawn, spawnSync } from 'child_process';
-import fs from 'fs';
 
 import createLog from 'silk-log/device';
 
 const log = createLog('sysutils');
-const SILK_PROPS = 'system/silk/silk-props.json';
 
 let props;
 if (process.platform === 'android') {
@@ -40,16 +38,6 @@ if (process.platform === 'android') {
       exec('setprop', [prop, value]);
     },
   };
-}
-
-// Read silk.prop file
-let silkProps = {};
-try {
-  let silkPropsJson = fs.readFileSync(SILK_PROPS, {encoding: 'utf8'});
-  silkProps = JSON.parse(silkPropsJson);
-  log.debug(`silkProps: ${JSON.stringify(silkProps)}`);
-} catch (err) {
-  log.error(`Invalid ${SILK_PROPS} file`);
 }
 
 /**
@@ -160,10 +148,6 @@ type PropTypes = Array<PropTypes> | ScalarPropTypes;
 export function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
   let value = props.get(prop);
   if (value === '') {
-    // Check silk.prop to see if the property is available
-    if (prop in silkProps) {
-      return silkProps[prop];
-    }
     return (defaultValue === null || defaultValue === undefined) ? '' :
         defaultValue;
   }

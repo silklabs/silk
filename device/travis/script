@@ -13,7 +13,7 @@ lock_build_fingerprint() {
 }
 
 source build/envsetup.sh
-case $GONK in
+case $BOARD in
 qemu)
   $make
   lock_build_fingerprint
@@ -28,7 +28,7 @@ qemu)
 base)
   # Only enable ccache logging for the base gonk because Travis has a little disk
   # and doesn't like to talk about it
-  export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$GONK.log
+  export CCACHE_LOGFILE=$PWD/.artifacts/ccache-$BOARD.log
 
   $make
 

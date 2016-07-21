@@ -318,7 +318,10 @@ const builds = {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {
       env: {
-        global: ['GONK=base'],
+        global: [
+          'BOARD=base',
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['pr'],
@@ -331,7 +334,10 @@ const builds = {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {
       env: {
-        global: ['GONK=base.msm8909'],
+        global: [
+          'BOARD=base.msm8909',
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['pr'],
@@ -357,7 +363,10 @@ const builds = {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {
       env: {
-        global: ['GONK=mako'],
+        global: [
+          'BOARD=mako',
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['push'],
@@ -459,7 +468,10 @@ const builds = {
     travis_config: {
       os: ['osx'],
       env: {
-        global: ['GONK=base'],
+        global: [
+          'BOARD=base',
+          'PRODUCT=silk',
+        ],
       },
     },
   }),
@@ -532,7 +544,10 @@ const builds = {
     travis_config: {
       os: ['linux', 'osx'],
       env: {
-        global: ['BOARD=base'],
+        global: [
+          'BOARD=base',
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['nightly'],
@@ -544,7 +559,10 @@ const builds = {
     travis_config: {
       os: ['linux', 'osx'],
       env: {
-        global: ['BOARD=base.msm8909'],
+        global: [
+          'BOARD=base.msm8909',
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['nightly'],
@@ -558,6 +576,7 @@ const builds = {
       env: {
         global: [
           'BOARD=msm8909-la121',
+          'PRODUCT=silk',
         ],
       },
     },
@@ -570,7 +589,10 @@ const builds = {
     travis_config: {
       os: ['linux', 'osx'],
       env: {
-        global: ['BOARD=base.kenzo'],
+        global: [
+          'BOARD=base.kenzo',
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['nightly'],
@@ -581,7 +603,10 @@ const builds = {
     travis_yml: 'repocache/travis.yml',
     travis_config: {
       env: {
-        global: ['BOARD=mako'],
+        global: [
+          'BOARD=mako'
+          'PRODUCT=silk',
+        ],
       },
     },
     events: ['nightly'],

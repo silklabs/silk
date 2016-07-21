@@ -34,10 +34,7 @@ else
   echo "Failed to find ccache bundle at $CCACHE_URL"
 fi
 
-if [[ -n "$GONK_REPO" ]]; then
-  ( set -x; time git clone $GONK_REPO board/$GONK )
-fi
-( set -x; time ./sync $GONK )
+( set -x; time ./sync $BOARD $PRODUCT )
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
   export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
@@ -62,7 +59,7 @@ $PREBUILT_CCACHE -s
 
 # Reduce the disk space usage to avoid failures later on during full
 # builds
-if [[ $GONK != base ]]; then
+if [[ $BOARD != base ]]; then
   rm -rf \
     .repo/project-objects \
     .repo/projects \
@@ -85,7 +82,7 @@ if [[ $GONK != base ]]; then
 
   find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
 
-  if [[ $GONK != qemu ]]; then
+  if [[ $BOARD != qemu ]]; then
     # Careful not to remove the .git dirs, which are needed during the deploy step
     rm -rf \
       prebuilts/android-emulator/* \

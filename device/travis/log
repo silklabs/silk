@@ -1,6 +1,6 @@
 #! /bin/bash
 
-LOGFILE=.artifacts/build-$GONK.log
+LOGFILE=.artifacts/build-$BOARD.log
 
 # Helper to print dots to stdout so travis does not hate us...
 function keep_alive {

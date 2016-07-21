@@ -19,6 +19,7 @@
 
 declare module 'react-native' {
   // This is pretty lame, but good enough for now to get Flow to pass.
+  declare var AppRegistry: any;
   declare var AsyncStorage: any;
   declare var DeviceEventEmitter: any;
   declare var NativeEventEmitter: any;

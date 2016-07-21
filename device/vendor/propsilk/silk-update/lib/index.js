@@ -3,9 +3,12 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @private
+ * TODO: Please flow me
  */
 
+/* eslint camelcase: "off" */
+
+import invariant from 'assert';
 import crypto from 'crypto';
 import {EventEmitter} from 'events';
 import fs from 'fs';
@@ -63,6 +66,14 @@ let currentMetadata = null;
 let startedDownload = false;
 
 let manifestURL = null;
+
+// 'silk-core-version' loaded from the inactive system partition
+// (or null if not available)
+let inactiveSilkCoreVersion = null;
+
+// 'silk-bsp-version' loaded from the inactive system partition
+// (or null if not available)
+let inactiveSilkBspVersion = null;
 
 // Resolves with:
 //   null: when the timeout elapses.
@@ -409,29 +420,54 @@ function validateManifest(result) {
     const FORCE_UPDATE = false; // true can be helpful debugging
     switch (buildType) {
     case 'silk':
-      // Ensure the base gonk is compatible before accepting a partial /system
-      // update.
-      if (buildMetadata.bsp_api_id === silkBspVersion.bsp_api_id) {
-        if (buildMetadata.sha !== silkCoreVersion.sha || FORCE_UPDATE) {
-          // Different id, select this build
-          currentMetadata = buildMetadata;
-          log.info('Selected "silk" update');
+      {
+        let sha;
+        let bsp_api_id;
+
+        // Ensure the bsp is compatible before accepting a /system/silk
+        // update.
+        if (AB_UPDATE) {
+          if (!inactiveSilkBspVersion || !inactiveSilkCoreVersion) {
+            log.info('inactive partition in unknown state, "silk" update skipped');
+            break;
+          }
+          sha = inactiveSilkCoreVersion.sha;
+          bsp_api_id = inactiveSilkBspVersion.bsp_api_id;
         } else {
-          log.verbose('Already running the latest "silk" update');
+          sha = silkCoreVersion.sha;
+          bsp_api_id = silkBspVersion.bsp_api_id;
         }
-      } else {
-        log.verbose('base version mismatch for "silk" update');
+        if (buildMetadata.bsp_api_id === bsp_api_id) {
+          if (buildMetadata.sha !== sha || FORCE_UPDATE) {
+            // Different sha but same api id, select this build
+            currentMetadata = buildMetadata;
+            log.info('Selected "silk" update');
+          } else {
+            log.verbose('Already running the latest "silk" update');
+          }
+        } else {
+          log.verbose('bsp version mismatch,  "silk" update skipped');
+        }
+        break;
       }
-      break;
     case 'full':
-      if (buildMetadata.sha !== silkBspVersion.sha || FORCE_UPDATE) {
-        // Different fingerprint, select this build
-        currentMetadata = buildMetadata;
-        log.info('Selected "full" update');
-      } else {
-        log.verbose('Already running the latest "full" update');
+      {
+        let sha;
+        if (AB_UPDATE && inactiveSilkBspVersion) {
+          sha = inactiveSilkBspVersion.sha;
+        } else {
+          sha = silkBspVersion.sha;
+        }
+
+        if (buildMetadata.sha !== sha || FORCE_UPDATE) {
+          // Different sha, select this build
+          currentMetadata = buildMetadata;
+          log.info('Selected "full" update');
+        } else {
+          log.verbose('Already running the latest "full" update');
+        }
+        break;
       }
-      break;
     default:
       throw new Error(`Unknown buildType: ${buildType}`);
     }
@@ -619,9 +655,34 @@ function _expandManifestUrlVars() {
   manifestURL = manifestURL.replace('{variant}', VARIANT);
 }
 
+async function loadInactiveSystemInfo() {
+  if (!AB_UPDATE) {
+    return;
+  }
+
+  try {
+    await util.exec('silk-ab-updater', ['mount_system_ab']);
+    inactiveSilkCoreVersion = require('/mnt/system_ab/silk/node_modules/silk-core-version');
+    inactiveSilkBspVersion = require('/mnt/system_ab/node_modules/silk-bsp-version');
+    await util.exec('silk-ab-updater', ['umount_system_ab']);
+
+    invariant(inactiveSilkCoreVersion.branch === silkCoreVersion.branch,
+      'brach mismatch between system partitions');
+    invariant(inactiveSilkCoreVersion.bsp_api_id === inactiveSilkBspVersion.bsp_api_id,
+      'inactive system partition bsp_api_id mismatch');
+
+    log.verbose('Inactive silk-core-version', inactiveSilkCoreVersion);
+    log.verbose('Inactive silk-bsp-version', inactiveSilkBspVersion);
+  } catch (e) {
+    inactiveSilkBspVersion = null;
+    inactiveSilkCoreVersion = null;
+    log.warn('Unable to load inactive system info:', e.stack || e);
+  }
+}
+
 function start() {
   if (running) {
-    return Promise.resolve();
+    return;
   }
 
   // Signal that the last update was successful enough to arrive here
@@ -635,31 +696,31 @@ function start() {
 
   if (!MANIFEST_URL_TEMPLATE) {
     log.warn(`'${MANIFEST_URL_PROP}' is unset, disabling updates`);
-    return Promise.resolve();
+    return;
   }
 
   _expandManifestUrlVars();
 
   if (!validator.isURL(manifestURL, isValidUpdateURLOptions)) {
     log.warn(`invalid url "${manifestURL}", disabling updates`);
-    return Promise.resolve();
+    return;
   }
 
   if (!POLL_HOURS) {
     log.warn(`'${POLL_HOURS_PROP}' is unset, disabling updates`);
-    return Promise.resolve();
+    return;
   }
 
   let pollHours = parseInt(POLL_HOURS);
   if (isNaN(pollHours) || pollHours <= 0) {
     log.warn(`'${POLL_HOURS_PROP}' is set to an invalid value ` +
                `"${POLL_HOURS}", disabling updates`);
-    return Promise.resolve();
+    return;
   }
 
   if (!UPDATE_ENABLED) {
     log.warn(`'${UPDATE_ENABLED_PROP}' is unset, disabling updates`);
-    return Promise.resolve();
+    return;
   }
 
   running = true;
@@ -676,13 +737,16 @@ function start() {
     log.warn(`Failed to remove "${UPDATE_FILE_PATH}": ${err}`);
   });
 
-  log.info(`Update polling started for "${manifestURL}"`);
-  poll(/* runImmediately */ true);
+  loadInactiveSystemInfo()
+  .then(() => {
+    log.info(`Update polling started for "${manifestURL}"`);
+    poll(/* runImmediately */ true);
+  });
 
-  return Promise.resolve();
+  return;
 }
 
-function stop() {
+function stop(): Promise<void> {
   if (!running) {
     return Promise.resolve();
   }
@@ -708,7 +772,7 @@ function stop() {
   return promise.then(done, done);
 }
 
-function apply() {
+function apply(): Promise<void> {
   if (AB_UPDATE) {
     util.setprop('sys.powerctl', 'reboot');
   } else {

@@ -3,13 +3,15 @@
     "eslint-config-silk": "/pub/eslint-config",
     "react-native-webrtc": "/react-native-webrtc",
     "silk-api": "/api",
+    "silk-ble-socket": "/ble-socket",
     "silk-core-version": "/pub/version",
     "silk-crypto": "/crypto",
     "silk-log": "/pub/log",
     "silk-react-native-blobs": "/pub/react-native-blobs",
     "silk-react-native-transformer": "/react-native-transformer",
     "silk-rtc": "/rtc",
-    "silk-streams": "/streams"
+    "silk-streams": "/streams",
+    "silk-utils": "/utils"
   },
   "localDependencies": {
     "socket.io-client": "1.4.6"

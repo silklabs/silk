@@ -4,8 +4,8 @@
 
 import * as Util from '../libraries/Util';
 
-import type { DeviceWifiNetwork } from '../libraries/ble/DeviceManager';
-import type { Action, ThunkAction } from './types';
+import type {DeviceWifiNetwork} from 'silk-app-sdk/src/ble/device_manager';
+import type {Action, ThunkAction} from './types';
 
 export function clearState(): Action {
   return {type: 'CLEAR_STATE'};

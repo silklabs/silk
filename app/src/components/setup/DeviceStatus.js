@@ -1,10 +1,10 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import {Image, StyleSheet, View} from 'react-native';
+import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import Button from '../Button';
 import SetupScreen from './SetupScreen';
-import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 const CONNECTION_STATUS_LABELS = {
   'server_disconnected': 'Server disconnected',

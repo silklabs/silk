@@ -33,6 +33,8 @@ export { default as RssiSmoother } from './rssi_smoother';
 export { default as Metric } from './metric';
 export { default as MetricTypes } from './metric_types';
 
+export {MetricsAgent};
+
 export const BTLE_SOCKET_UUIDS = {
   service: 'cefa220253c74285ac1ba6e6eb00bb79',
   characteristic: 'fd30740d8bdc4a4dad5866b4343ea3c1',

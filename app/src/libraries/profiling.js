@@ -2,13 +2,12 @@ import { ec as ECDH } from 'elliptic';
 import { Systrace } from 'react-native';
 
 import { RssiSmoother } from 'silk-api';
-import HttpClient from 'silk-http-client';
-import * as CryptoModule from 'silk-crypto';
-import * as StreamsModule from 'silk-streams';
-
+import BLEStream from 'silk-app-sdk/src/ble/stream';
+import {DeviceManager} from 'silk-app-sdk/src/ble/device_manager';
 import {Socket, SocketManager} from 'silk-ble-socket';
-import BLEStream from './ble/Stream';
-import { DeviceManager } from './ble/DeviceManager';
+import * as CryptoModule from 'silk-crypto';
+import HttpClient from 'silk-http-client';
+import * as StreamsModule from 'silk-streams';
 
 import AsyncComponent from '../components/abstract/AsyncComponent';
 

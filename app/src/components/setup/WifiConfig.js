@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 import createLog from 'silk-log';
 
 import Button from '../Button';
@@ -16,7 +17,6 @@ import WifiNetworkIcon from './WifiNetworkIcon';
 import WifiNetworkSelector from './WifiNetworkSelector';
 import Selector from './Selector';
 import SetupScreen from './SetupScreen';
-import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 const log = createLog('WifiConfig');
 

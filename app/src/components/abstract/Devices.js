@@ -6,10 +6,10 @@ import {
   NativeModules,
 } from 'react-native';
 import { SilkApi } from 'silk-api';
+import getDeviceManager from 'silk-app-sdk/src/ble/device_manager';
 import createLog from 'silk-log';
 import * as rtc from 'silk-rtc';
 
-import getDeviceManager from '../../libraries/ble/DeviceManager';
 import SocketIO from '../../libraries/SocketIO';
 import { UserState } from '../../libraries/UserState';
 

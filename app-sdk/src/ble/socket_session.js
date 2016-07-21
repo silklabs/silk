@@ -11,8 +11,8 @@ import {
   MessagePackDuplexStream,
 } from 'silk-streams';
 
-import * as Metrics from '../../metrics/BTLE';
-import Stream from './Stream';
+import * as Metrics from './metrics';
+import Stream from './stream';
 
 import type MetricsAgent from 'silk-api/src/metrics_agent';
 import type {Socket} from 'silk-ble-socket';

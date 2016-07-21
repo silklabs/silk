@@ -3,21 +3,19 @@
  */
 
 import invariant from 'assert';
+import {EventEmitter} from 'events';
 import * as Joi from 'joi';
 import { Systrace } from 'react-native';
 import getSocketManager from 'silk-ble-socket';
 import mklog from 'silk-log';
 import RobustEventEmitter from 'silk-utils/robust_event_emitter';
 
-import * as Metrics from '../../metrics/BTLE';
-import SocketSession from './SocketSession';
+import * as Metrics from './metrics';
+import SocketSession from './socket_session';
 
-import type {EventEmitter} from 'events';
-import type MetricsAgent from 'silk-api/src/metrics_agent';
+// eslint-disable-next-line no-unused-vars
+import type {MetricsAgent, AccessToken} from 'silk-api';
 import type {Socket} from 'silk-ble-socket';
-
-import type {DeviceRecord} from '../../components/abstract/Devices';
-import type {UserState} from '../UserState';
 
 type DeviceStatus = {
   message: string;
@@ -47,6 +45,17 @@ type RegistrationInformation = {
 type DeviceSecret = {
   deviceId: string;
 };
+
+type RegisteredDevice = {
+  publicKey: string;
+};
+
+// TODO: eliminate dependency on UserState
+declare class UserState extends EventEmitter {
+  accessToken: ?AccessToken;
+  registeredDevices: Array<RegisteredDevice>;
+}
+
 
 const log = mklog('btle-DeviceManager');
 
@@ -619,6 +628,7 @@ export class DeviceManager extends RobustEventEmitter {
   _socketManager: EventEmitter;
   _metrics: MetricsAgent;
 
+  // TODO: eliminate dependency on UserState
   constructor(userState: UserState, metrics: MetricsAgent) {
     log.debug(`DeviceManager()`);
 
@@ -630,13 +640,16 @@ export class DeviceManager extends RobustEventEmitter {
     this._metrics = metrics;
     this._socketManager = getSocketManager();
 
-    invariant(userState.accessToken.priv);
-    this.privateKey = userState.accessToken.priv;
     this._initialize(userState);
   }
 
   async _initialize(userState: UserState) {
-    const isValid = await userState.accessToken.genIsValid();
+    const {accessToken} = userState;
+    invariant(accessToken);
+    invariant(accessToken.priv);
+    this.privateKey = accessToken.priv;
+
+    const isValid = await accessToken.genIsValid();
     invariant(isValid);
     this._socketManager.on(`connect`, this._onConnect);
     this._socketManager.on(`disconnect`, this._onDisconnect);
@@ -664,7 +677,7 @@ export class DeviceManager extends RobustEventEmitter {
     this._devices.delete(socket);
   };
 
-  _onRegisteredUpdatedDevices: ((deviceRecords: Array<DeviceRecord>) => void) = (deviceRecords) => {
+  _onRegisteredUpdatedDevices: ((deviceRecords: Array<RegisteredDevice>) => void) = (deviceRecords) => {
     log.debug(`DeviceManager._onRegisteredUpdatedDevices()`);
 
     invariant(Array.isArray(deviceRecords));

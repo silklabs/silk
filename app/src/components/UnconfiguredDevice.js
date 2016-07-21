@@ -1,10 +1,10 @@
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
+import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 
 import Button from './Button';
-import { Colors } from './CommonStyles';
-import { DeviceSession } from '../libraries/ble/DeviceManager';
+import {Colors} from './CommonStyles';
 
 export default class UnconfiguredDevice extends React.Component {
 

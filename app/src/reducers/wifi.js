@@ -5,9 +5,9 @@
 import invariant from 'assert';
 import createLog from 'silk-log';
 
-import type { WifiInfo } from '../libraries/Util.js';
-import type { DeviceWifiNetwork } from '../libraries/ble/DeviceManager';
-import type { Action } from '../actions/types';
+import type {DeviceWifiNetwork} from 'silk-app-sdk/src/ble/device_manager';
+import type {WifiInfo} from '../libraries/Util.js';
+import type {Action} from '../actions/types';
 
 const log = createLog('reducer-wifi');
 

@@ -1,12 +1,12 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
+import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import Button from '../Button';
-import { Colors } from '../CommonStyles';
+import {Colors} from '../CommonStyles';
 import SetupScreen from './SetupScreen';
 
-import { DeviceSession } from '../../libraries/ble/DeviceManager';
 
 export default class DeviceTouch extends AsyncComponent {
 

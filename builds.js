@@ -604,7 +604,7 @@ const builds = {
     travis_config: {
       env: {
         global: [
-          'BOARD=mako'
+          'BOARD=mako',
           'PRODUCT=silk',
         ],
       },

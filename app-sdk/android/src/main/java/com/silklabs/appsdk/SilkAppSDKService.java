@@ -19,12 +19,19 @@ import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.shell.MainReactPackage;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 public class SilkAppSDKService extends Service {
@@ -99,17 +106,62 @@ public class SilkAppSDKService extends Service {
     mReactInstanceManager.createReactContextInBackground();
   }
 
-  public void postMessage(Bundle message) {
+  private static WritableMap toWritableMap(Map<String, Object> map) {
+    WritableMap writableMap = new WritableNativeMap();
+    for (Map.Entry<String, Object> entry : map.entrySet()) {
+      Object item = entry.getValue();
+      if (item == null) {
+        writableMap.putNull(entry.getKey());
+      } else if (item instanceof Boolean) {
+        writableMap.putBoolean(entry.getKey(), (Boolean)item);
+      } else if (item instanceof Integer) {
+        writableMap.putInt(entry.getKey(), (Integer)item);
+      } else if (item instanceof Double) {
+        writableMap.putDouble(entry.getKey(), (Double) item);
+      } else if (item instanceof String) {
+        writableMap.putString(entry.getKey(), (String) item);
+      } else if (item instanceof ArrayList) {
+        writableMap.putArray(entry.getKey(), toWritableArray((ArrayList) item));
+      } else if (item instanceof Map) {
+        writableMap.putMap(entry.getKey(), toWritableMap((Map)item));
+      }
+    }
+    return writableMap;
+  }
+
+  private static WritableArray toWritableArray(ArrayList list) {
+    WritableArray array = new WritableNativeArray();
+    for (Object item: list) {
+      if (item == null) {
+        array.pushNull();
+      } else if (item instanceof Boolean) {
+        array.pushBoolean((Boolean)item);
+      } else if (item instanceof Integer) {
+        array.pushInt((Integer)item);
+      } else if (item instanceof Double) {
+        array.pushDouble((Double)item);
+      } else if (item instanceof String) {
+        array.pushString((String)item);
+      } else if (item instanceof ArrayList) {
+        array.pushArray(toWritableArray((ArrayList)item));
+      } else if (item instanceof Map) {
+        array.pushMap(toWritableMap((Map)item));
+      }
+    }
+    return array;
+  }
+
+  public void postMessage(Map<String, Object> message) {
     if (!mInitialized) {
-      Bundle bundle = new Bundle();
-      bundle.putString("type", "MESSAGE_ERROR");
-      bundle.putString("error", "NOT_INITIALIZED");
-      bundle.putBundle("message", message);
-      mDelegate.onMessage(bundle);
+      Map<String, Object> errorMsg = new HashMap<>();
+      errorMsg.put("type", "MESSAGE_ERROR");
+      errorMsg.put("error", "NOT_INITIALIZED");
+      errorMsg.put("message", message);
+      mDelegate.onMessage(errorMsg);
       return;
     }
     mReactInstanceManager.getCurrentReactContext()
       .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-      .emit("silkAppSDKMessage", Arguments.fromBundle(message));
+      .emit("silkAppSDKMessage", toWritableMap(message));
   }
 }

@@ -6,13 +6,13 @@
 
 package com.silklabs.appsdk;
 
-import android.os.Bundle;
+import java.util.Map;
 
 public interface SilkAppSDKDelegate {
 
   /**
    * Receive message from SDK.
    */
-  void onMessage(Bundle message);
+  void onMessage(Map<String, Object> message);
 
 }

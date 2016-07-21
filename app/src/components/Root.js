@@ -9,9 +9,7 @@ import {
 } from 'react-native';
 import { lockToPortrait } from 'react-native-orientation';
 
-// Inject global shims, native cryptographic signature
-// implementations, and profiler hooks.
-import '../libraries/BrowserShims';
+// Inject profiler hooks.
 import '../libraries/profiling';
 
 import Config from '../libraries/config';

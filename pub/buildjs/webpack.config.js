@@ -62,7 +62,6 @@ if (!main) {
 
 const externals = [
   // TODO: auto generate these ...
-  'base_version',
   'bleno',
   'mic',
   'noble',
@@ -74,6 +73,7 @@ const externals = [
   'silk-audioplayer',
   'silk-battery',
   'silk-bledroid',
+  'silk-bsp-version',
   'silk-camera',
   'silk-core-version',
   'silk-cv',

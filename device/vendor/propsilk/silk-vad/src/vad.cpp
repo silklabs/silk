@@ -6,7 +6,7 @@
 
 #define LOG_TAG "silk-vad-native"
 #ifdef ANDROID
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 #include <utils/Log.h>
 #else
 #define ALOGV(fmt, args...) fprintf(stderr, LOG_TAG ": " fmt, ##args); fprintf(stderr, "\n");

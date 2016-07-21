@@ -511,6 +511,7 @@ const builds = {
         ],
       },
     },
+  }),
   'device-base.msm8909-silkhub': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
     title: 'base.msm8909 silkhub',

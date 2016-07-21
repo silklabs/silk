@@ -9,6 +9,8 @@
 #include <hardware/hardware.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
+#include <sys/mount.h>
 
 #include "install.h"
 #include "roots.h"
@@ -79,8 +81,7 @@ int main(int argc, char **argv) {
     ALOGE("Expected one argument, received %d", argc);
     return 1;
   }
-  char const *update_package = argv[1];
-  ALOGI("Update package: %s", update_package);
+  const char *maybe_cmd = argv[1];
 
   const hw_module_t *hw_module;
   boot_control_module_t *module;
@@ -89,6 +90,7 @@ int main(int argc, char **argv) {
     ALOGE("Error getting bootctrl module.");
     return 1;
   }
+
   module = (boot_control_module_t*) hw_module;
   module->init(module);
   int num_slots = module->getNumberSlots(module);
@@ -99,6 +101,40 @@ int main(int argc, char **argv) {
     return 1;
   }
   ALOGI("Active slot: %d  Inactive slot: %d", cur_slot, other_slot);
+
+  if (0 == strcmp(maybe_cmd, "mount_system_ab")) {
+    const char *system_ab;
+    if (other_slot == 0) {
+      system_ab = "/dev/block/bootdevice/by-name/system_a";
+    } else {
+      system_ab = "/dev/block/bootdevice/by-name/system_b";
+    }
+
+    ALOGI("Mounting %s", system_ab);
+    int status = mount(system_ab, "/mnt/system_ab", "ext4",
+      MS_RDONLY | MS_NOEXEC, "");
+    if (status != 0) {
+      ALOGE("Unable to mount system_ab: %d (errno=%d)", status, errno);
+      return 1;
+    }
+    return 0;
+  }
+  if (0 == strcmp(maybe_cmd, "umount_system_ab")) {
+    ALOGI("Unmounting /mnt/system_ab");
+    int status = umount("/mnt/system_ab");
+    if (status != 0) {
+      ALOGE("Unable to umount system_ab: %d (errno=%d)", status, errno);
+      return 1;
+    }
+    return 0;
+  }
+
+  char const *update_package = maybe_cmd;
+  if (access(update_package, F_OK) != 0) {
+    ALOGE("Update package does not exist: %s", update_package);
+    return 1;
+  }
+  ALOGI("Update package: %s", update_package);
 
   // Mark the inactive slot is unbootable, as it's about to get an update
   // written into it

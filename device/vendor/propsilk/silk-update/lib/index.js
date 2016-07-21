@@ -32,6 +32,7 @@ const UPDATE_FILE_PATH = '/data/update.zip';
 const BOARD = util.getprop('persist.silk.build.board',
                            util.getprop('ro.silk.build.board'));
 const PRODUCT = util.getprop('ro.silk.build.product');
+const VARIANT = util.getprop('ro.build.type');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
@@ -312,7 +313,7 @@ function validateManifest(result) {
     return Promise.reject();
   }
 
-  const key = `${BOARD}-${PRODUCT}`;
+  const key = `${BOARD}-${PRODUCT}-${VARIANT}`;
   let deviceMetadata = result.body[key]; // Unsanitized server response
   if (!deviceMetadata) {
     log.info(`Update server responded with nothing available for "${key}" ` +
@@ -615,6 +616,7 @@ function _expandManifestUrlVars() {
   manifestURL = MANIFEST_URL_TEMPLATE.replace('{channel}', CHANNEL);
   manifestURL = manifestURL.replace('{board}', BOARD);
   manifestURL = manifestURL.replace('{product}', PRODUCT);
+  manifestURL = manifestURL.replace('{variant}', VARIANT);
 }
 
 function start() {

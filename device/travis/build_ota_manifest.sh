@@ -9,8 +9,9 @@ LOCAL_PATH=$(dirname $(readlink -f $0))
 BRANCH=$1
 BOARD=$2
 PRODUCT=$3
-SYSTEM_DIR=$4
-OTA_DIR=$5
+TARGET_BUILD_VARIANT=$4
+SYSTEM_DIR=$5
+OTA_DIR=$6
 
 if [[ -z "$BRANCH" ]]; then
   echo Error: BRANCH not specified >&2
@@ -24,6 +25,11 @@ fi
 
 if [[ -z "$PRODUCT" ]]; then
   echo Error: PRODUCT not specified >&2
+  exit 1
+fi
+
+if [[ -z "$TARGET_BUILD_VARIANT" ]]; then
+  echo Error: TARGET_BUILD_VARIANT not specified >&2
   exit 1
 fi
 
@@ -46,11 +52,11 @@ SILK_CORE_FINGERPRINT=$(node -p "require('$SILK_CORE_VERSION_JSON').fingerprint"
 SILK_BSP_API_ID=$(node -p "require('$SILK_CORE_VERSION_JSON').bsp_api_id")
 BUILD_SHA=$(node -p "require('$SILK_CORE_VERSION_JSON').sha")
 
-ota_manifest="${OTA_DIR}/${BOARD}-${PRODUCT}.json"
+ota_manifest="${OTA_DIR}/${BOARD}-${PRODUCT}-${TARGET_BUILD_VARIANT}.json"
 
 echo Manifest: $ota_manifest
 echo "{" > $ota_manifest
-echo "  \"${BOARD}-${PRODUCT}\": {" >> $ota_manifest
+echo "  \"${BOARD}-${PRODUCT}-${TARGET_BUILD_VARIANT}\": {" >> $ota_manifest
 
 for zip in $(shopt -s nullglob; echo $OTA_DIR/*.zip); do
   zip_size=`wc -c < "${zip}"`

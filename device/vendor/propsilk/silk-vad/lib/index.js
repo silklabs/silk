@@ -14,7 +14,8 @@ import WebRtcVad from './webrtc_vad';
 
 const log = createLog('vad');
 
-const LISTEN_TIMEOUT = 5000; // In activity timeout after keyword is detected
+const INACTIVITY_TIMEOUT = 5000;
+const SPEECH_DURATION = 10000;
 
 export type VadMode = 'continuous' | 'dialog';
 export type MicData = {
@@ -35,6 +36,8 @@ export default class VoiceActivityDetector extends EventEmitter {
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
   _vadMode: VadMode;
+  _inactivityTimeout: ?number;
+  _speechDurationTimeout: ?number;
 
   constructor(vadEngine: string = VAD_ENGINE_PS) {
     super();
@@ -100,10 +103,6 @@ export default class VoiceActivityDetector extends EventEmitter {
     this._onSpeechStop = (when) => {
       this._handleEndOfSpeech(when);
     };
-
-    this._onSpeechTimeout = () => {
-      this._handleTimeout();
-    };
   }
 
   /**
@@ -134,7 +133,6 @@ export default class VoiceActivityDetector extends EventEmitter {
     log.debug(`start vad`);
     this._vad.on('speech_start', this._onSpeechStart);
     this._vad.on('speech_stop', this._onSpeechStop);
-    this._vad.on('speech_timeout', this._onSpeechTimeout);
     this._start();
   }
 
@@ -162,12 +160,19 @@ export default class VoiceActivityDetector extends EventEmitter {
     this._vad.stop();
 
     if (this._vadMode === 'dialog') {
-      // Wait for LISTEN_TIMEOUT time for VAD start in a dialog mode
-      this._vad.startListeningTimeout(LISTEN_TIMEOUT);
-    } else {
-      // Continue to wait for VAD start in a continuous mode
-      this._vad.startListening();
+      // Set an inactivity timeout
+      this._inactivityTimeout = this._startTimer(INACTIVITY_TIMEOUT, 'inactivity');
     }
+    this._vad.startListening();
+  }
+
+  /**
+   * Handle timer expired event
+   */
+  _startTimer(timeout: number, reason: string): number {
+    return setTimeout(() => {
+      this._handleTimeout(reason);
+    }, timeout);
   }
 
   /**
@@ -175,6 +180,20 @@ export default class VoiceActivityDetector extends EventEmitter {
    */
   _handleBeginningOfSpeech(when: number): void {
     log.debug(`Speech begin`);
+
+    // Clear voice inactivity timeout if exists
+    if (this._inactivityTimeout) {
+      clearTimeout(this._inactivityTimeout);
+      this._inactivityTimeout = null;
+    }
+
+    // Start a speech duration timer to not allow to be in speech forever in a
+    // noisy environment.
+    if (this._vadMode === 'dialog') {
+      this._speechDurationTimeout = this._startTimer(SPEECH_DURATION,
+          'speech duration exceeded');
+    }
+
     this.emit('speech_start', when);
   }
 
@@ -189,14 +208,19 @@ export default class VoiceActivityDetector extends EventEmitter {
     // event is received
     if (this._vadMode === 'dialog') {
       this._stopVoiceActivityDetection();
+
+      if (this._speechDurationTimeout) {
+        clearTimeout(this._speechDurationTimeout);
+        this._speechDurationTimeout = null;
+      }
     }
   }
 
   /**
    * No text spoken within the given time
    */
-  _handleTimeout(): void {
-    log.debug(`speech timeout`);
+  _handleTimeout(reason: string): void {
+    log.debug(`speech timeout due to ${reason}`);
     this.emit('speech_timeout');
 
     if (this._vadMode === 'dialog') {

@@ -48,7 +48,6 @@ export default class WebrtcVad extends EventEmitter {
   _processingInProgress: boolean;
   _backlogMinSizeInBytes: number;
   _inSpeech: boolean = false;
-  _listenTimeout: ?number;
 
   constructor() {
     super();
@@ -87,38 +86,16 @@ export default class WebrtcVad extends EventEmitter {
 
   /**
    * Start listening for voice activity
-   * @return true if vad was actually started
    */
-  startListening(): boolean {
+  startListening() {
     if (this._listening) {
-      return false;
+      return;
     }
 
     this._pcmDataQueue.length = 0;
     this._pcmDataQueueSizeInBytes = 0;
     this._listening = true;
     this._inSpeech = false;
-    return true;
-  }
-
-  /**
-   * Start listening for voice activity. After specified timeout listening
-   * stops and the endOfSpeech signals about that.
-   *
-   * @param timeout - timeout in milliseconds to listen
-   * @return true if recognition was actually started
-   */
-  startListeningTimeout(timeout: number): boolean {
-    log.debug(`Start recognition with timeout ${timeout}`);
-    if (this.startListening()) {
-      // Stop listening after the provided timeout
-      this._listenTimeout = setTimeout(() => {
-        this.stop();
-        this.emit('speech_timeout');
-      }, timeout);
-      return true;
-    }
-    return false;
   }
 
   /**
@@ -181,12 +158,6 @@ export default class WebrtcVad extends EventEmitter {
         if (this._inSpeech) {
           log.debug('===== Begin speech');
           this.emit('speech_start', when);
-
-          // Clear voice activity timeout if exists
-          if (this._listenTimeout) {
-            clearTimeout(this._listenTimeout);
-            this._listenTimeout = null;
-          }
         } else {
           log.debug('===== End speech');
           this.emit('speech_stop', when);

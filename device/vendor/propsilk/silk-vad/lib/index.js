@@ -45,7 +45,7 @@ export default class VoiceActivityDetector extends EventEmitter {
   _newEvent: SpeechEvent;
   _newEventWhen: number;
 
-  constructor(vadEngine: string = VAD_ENGINE_PS) {
+  constructor(vadEngine: string = VAD_ENGINE_WEBRTC) {
     super();
     this._setupRecognizer(vadEngine);
   }

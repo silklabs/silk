@@ -1,6 +1,0 @@
-{
-  "persist.silk.main": "silk-device-core",
-  "ro.silk.update.manifest_url": "http://update.silklabs.com/ota/{channel}/{board}-{product}.json",
-  "ro.silk.update.poll_hours": 24,
-  "persist.silk.extensions": "*"
-}

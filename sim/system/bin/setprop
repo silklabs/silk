@@ -8,7 +8,7 @@ if [ -z "$1" -o -z "$2" ]; then
   exit 1
 fi
 
-echo -n $2 > data/properties/$1
+echo -n "$2" > data/properties/$1
 if [ -f data/system/watchprops ]; then
   echo "$(date +%s) $1 = '$2'" >> data/system/watchprops
 fi

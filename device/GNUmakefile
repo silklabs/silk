@@ -36,16 +36,6 @@ update:
   tar zxf $$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT.tgz; \
   [[ $$SILK_BOARD == qemu ]] || ./$$SILK_BOARD-$$SILK_PRODUCT/$(or $(FLASH_SCRIPT),flash.sh); \
 
-# Update the currently device with the latest prebuilt hub build
-.PHONY: hub
-hub: FLASH_SCRIPT=flash_hub.sh
-hub: update
-
-# Update the currently device with the latest prebuilt camera build
-.PHONY: camera
-camera: FLASH_SCRIPT=flash_camera.sh
-camera: update
-
 # Download and run the emulator
 .PHONY: qemu
 qemu:
@@ -53,7 +43,9 @@ qemu:
 # However for all other gonks, the latest emulator build is downloaded from \
 # storage.
 	@if [[ $$SILK_BOARD != qemu ]]; then \
-    export ANDROID_PRODUCT_OUT=out/prebuilt/qemu/aosp_arm; \
+    export SILK_PRODUCT=silk; \
+    export TARGET_BUILD_VARIANT=eng; \
+    export ANDROID_PRODUCT_OUT=out/prebuilt/qemu-silk-master-eng; \
     if [[ ! -d $$ANDROID_PRODUCT_OUT ]]; then \
       SILK_BOARD=qemu $(MAKE) --no-print-directory update; \
     fi; \

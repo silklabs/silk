@@ -14,14 +14,17 @@ import WebRtcVad from './webrtc_vad';
 
 const log = createLog('vad');
 
-const INACTIVITY_TIMEOUT = 5000;
-const SPEECH_DURATION = 10000;
+const INACTIVITY_TIMEOUT = 5000; // Finish processing speech after inactivity for this time
+const SPEECH_DURATION = 10000; // Finish processing speech after this time
+const IGNORE_EVENT_DURATION = 150; // Ignore events that are shorter than this time
 
 export type VadMode = 'continuous' | 'dialog';
 export type MicData = {
   when: number;
   frames: Buffer;
 };
+
+type SpeechEvent = 'voice' | 'silence';
 
 const VAD_ENGINE_PS = 'pocketsphinx';
 const VAD_ENGINE_WEBRTC = 'webrtc';
@@ -38,6 +41,9 @@ export default class VoiceActivityDetector extends EventEmitter {
   _vadMode: VadMode;
   _inactivityTimeout: ?number;
   _speechDurationTimeout: ?number;
+  _currentEvent: SpeechEvent;
+  _newEvent: SpeechEvent;
+  _newEventWhen: number;
 
   constructor(vadEngine: string = VAD_ENGINE_PS) {
     super();
@@ -97,11 +103,15 @@ export default class VoiceActivityDetector extends EventEmitter {
 
     // Setup listeners
     this._onSpeechStart = (when) => {
-      this._handleBeginningOfSpeech(when);
+      if (this._notifyEvent('voice', when)) {
+        this._handleBeginningOfSpeech(this._newEventWhen);
+      }
     };
 
     this._onSpeechStop = (when) => {
-      this._handleEndOfSpeech(when);
+      if (this._notifyEvent('silence', when)) {
+        this._handleEndOfSpeech(this._newEventWhen);
+      }
     };
   }
 
@@ -131,6 +141,9 @@ export default class VoiceActivityDetector extends EventEmitter {
    */
   _startVoiceActivityDetection(): void {
     log.debug(`start vad`);
+    this._newEvent = 'silence';
+    this._currentEvent = 'silence';
+    this._newEventWhen = 0;
     this._vad.on('speech_start', this._onSpeechStart);
     this._vad.on('speech_stop', this._onSpeechStop);
     this._start();
@@ -179,7 +192,7 @@ export default class VoiceActivityDetector extends EventEmitter {
    * Handle start of speech event
    */
   _handleBeginningOfSpeech(when: number): void {
-    log.debug(`Speech begin`);
+    log.debug(`===== Speech begin`);
 
     // Clear voice inactivity timeout if exists
     if (this._inactivityTimeout) {
@@ -201,7 +214,7 @@ export default class VoiceActivityDetector extends EventEmitter {
    * Handle end of speech event
    */
   _handleEndOfSpeech(when: number): void {
-    log.debug(`Speech end`);
+    log.debug(`===== Speech end`);
     this.emit('speech_stop', when);
 
     // Suspend VAD activity if in a dialog mode until the next dialog_start
@@ -220,12 +233,39 @@ export default class VoiceActivityDetector extends EventEmitter {
    * No text spoken within the given time
    */
   _handleTimeout(reason: string): void {
-    log.debug(`speech timeout due to ${reason}`);
+    log.debug(`===== speech timeout due to ${reason}`);
     this.emit('speech_timeout');
 
     if (this._vadMode === 'dialog') {
       this._stopVoiceActivityDetection();
     }
+  }
+
+  /**
+   * Ignore speech events that are very short lived. This is done by only
+   * notifying the new event if it lasts longer than a fixed short duration
+   */
+  _notifyEvent(event: SpeechEvent, when: number): boolean {
+    // Save new event and ignore
+    if (this._newEvent !== event) {
+      this._newEvent = event;
+      this._newEventWhen = when;
+      return false;
+    }
+
+    // Check if the new event continues past the specified duration
+    if ((when - this._newEventWhen) <= IGNORE_EVENT_DURATION) {
+      return false;
+    }
+
+    // New event longer than the required duration so notify
+    // if different than the current event
+    if (this._newEvent !== this._currentEvent) {
+      this._currentEvent = this._newEvent;
+      return true;
+    }
+
+    return false;
   }
 }
 

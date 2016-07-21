@@ -39,7 +39,6 @@ export default class SpeechRecognizer extends EventEmitter {
   _pcmDataQueueSizeInBytes: number;
   _processingInProgress: boolean;
   _backlogMinSizeInBytes: number;
-  _inSpeech: boolean;
 
   constructor() {
     super();
@@ -245,7 +244,6 @@ export default class SpeechRecognizer extends EventEmitter {
     this._pcmDataQueue.length = 0;
     this._pcmDataQueueSizeInBytes = 0;
     this._listening = true;
-    this._inSpeech = this._decoder.getInSpeech();
   }
 
   /**
@@ -308,16 +306,11 @@ export default class SpeechRecognizer extends EventEmitter {
     this._pcmDataQueueSizeInBytes -= pcmData.length;
 
     this._decoder.processRaw(pcmData, false, false);
-    if (this._inSpeech !== this._decoder.getInSpeech()) {
-      this._inSpeech = this._decoder.getInSpeech();
 
-      if (this._inSpeech) {
-        log.debug('===== Begin speech');
-        this.emit('speech_start', when);
-      } else {
-        log.debug('===== End speech');
-        this.emit('speech_stop', when);
-      }
+    if (this._decoder.getInSpeech()) {
+      this.emit('speech_start', when);
+    } else {
+      this.emit('speech_stop', when);
     }
 
     this._processingInProgress = true;

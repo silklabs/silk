@@ -47,7 +47,6 @@ export default class WebrtcVad extends EventEmitter {
   _pcmDataQueueSizeInBytes: number; // Size of all the pcmData buffers in the queue
   _processingInProgress: boolean;
   _backlogMinSizeInBytes: number;
-  _inSpeech: boolean = false;
 
   constructor() {
     super();
@@ -95,7 +94,6 @@ export default class WebrtcVad extends EventEmitter {
     this._pcmDataQueue.length = 0;
     this._pcmDataQueueSizeInBytes = 0;
     this._listening = true;
-    this._inSpeech = false;
   }
 
   /**
@@ -153,15 +151,10 @@ export default class WebrtcVad extends EventEmitter {
         inSpeech = true;
       }
 
-      if (this._inSpeech !== inSpeech) {
-        this._inSpeech = inSpeech;
-        if (this._inSpeech) {
-          log.debug('===== Begin speech');
-          this.emit('speech_start', when);
-        } else {
-          log.debug('===== End speech');
-          this.emit('speech_stop', when);
-        }
+      if (inSpeech) {
+        this.emit('speech_start', when);
+      } else {
+        this.emit('speech_stop', when);
       }
 
       this._processingInProgress = true;

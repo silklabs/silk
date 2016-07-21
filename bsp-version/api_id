@@ -1,0 +1,11 @@
+# The BSP API identifier is used to determine of a silkota (which only replaces
+# /system/silk/...) can be applied on the device.
+#
+# If and only if the API version matches exactly between the device and the
+# silkota.zip file the silkota may be applied.
+#
+# Increment SILK_BSP_API_ID whenever there's an incompatible change to the
+# device bsp software that would necessitate a full OTA update. (eg. modifying
+# /init.silk.rc).
+#
+SILK_BSP_API_ID=1

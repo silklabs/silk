@@ -17,7 +17,7 @@
   },
   "symlinkDependencies": {
     "silk-core-version": "/pub/version",
-    "silk-gonk-version": "../silk-gonk-version",
+    "silk-bsp-version": "/bsp-version",
     "silk-log": "/pub/log",
     "silk-buildjs": "../../../../pub/buildjs/"
   },

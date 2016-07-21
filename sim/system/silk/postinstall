@@ -2,16 +2,12 @@
 
 cd $(dirname $0)/../..
 
-node_resolve() {
-  local pkg=$1
-  pkg=$(node -p "require.resolve('$pkg/package.json');")
-  dirname $pkg
-}
-
-node_resolve silk-gonk-version
-
-mkdir -p system/node_modules
-cp -f $(node_resolve silk-gonk-version)/gonk_version.js system/node_modules/base_version.js
+for mod in ../bsp-version ../pub/version; do
+  (
+    cd $mod
+    npm install
+  )
+done
 
 mkdir -p system/silk/bin
 rm -f system/silk/bin/node

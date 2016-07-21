@@ -11,10 +11,10 @@ import {EventEmitter} from 'events';
 import fs from 'fs';
 import request from 'request';
 import silkCoreVersion from 'silk-core-version';
+import silkBspVersion from 'silk-bsp-version';
 import {spawn, spawnSync} from 'child_process';
 import validator from 'validator';
 
-import baseversion from 'silk-gonk-version';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 
@@ -32,7 +32,6 @@ const UPDATE_FILE_PATH = '/data/update.zip';
 const BOARD = util.getprop('persist.silk.build.board',
                            util.getprop('ro.silk.build.board'));
 const PRODUCT = util.getprop('ro.silk.build.product');
-const FINGERPRINT = util.getprop('ro.build.fingerprint');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
 const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
@@ -329,20 +328,17 @@ function validateManifest(result) {
 
     switch (buildType) {
     case 'silk':
-      if (!buildMetadata.base_version) {
-        log.warn('Update server responded with no base_version');
-        return null;
-      }
-      if (!buildMetadata.core_version) {
-        log.warn('Update server responded with no core_version');
-        return null;
-      }
-      break;
     case 'full':
       {
-        // Validate the fingerprint.
-        let fingerprint = buildMetadata.fingerprint;
-        if (!fingerprint) {
+        if (!buildMetadata.bsp_api_id) {
+          log.warn('Update server responded with no bsp_api_id');
+          return null;
+        }
+        if (!buildMetadata.sha) {
+          log.warn('Update server responded with no sha');
+          return null;
+        }
+        if (!buildMetadata.fingerprint) {
           log.warn('Update server responded with no fingerprint');
           return null;
         }
@@ -353,7 +349,7 @@ function validateManifest(result) {
     }
 
     // Validate URL.
-    let url = buildMetadata.url;
+    let url = buildMetadata.zip_url;
     if (!url) {
       log.warn('Update server responded with no url');
       return null;
@@ -365,33 +361,33 @@ function validateManifest(result) {
     }
 
     // Validate size.
-    if (!buildMetadata.size) {
+    if (!buildMetadata.zip_size) {
       log.warn('Update server responded with empty size download');
       return null;
     }
 
-    let parsedSize = parseInt(buildMetadata.size);
+    let parsedSize = parseInt(buildMetadata.zip_size);
     if (isNaN(parsedSize)) {
       log.warn(`Update server responded with invalid size ${buildMetadata.size}`);
       return null;
     }
 
-    buildMetadata.size = parsedSize;
+    buildMetadata.zip_size = parsedSize;
 
     // Validate sha1.
-    if (!buildMetadata.sha1) {
+    if (!buildMetadata.zip_sha1) {
       log.warn('Update server responded with no sha1 hash');
       return null;
     }
 
-    if (!validator.isHexadecimal(buildMetadata.sha1)) {
+    if (!validator.isHexadecimal(buildMetadata.zip_sha1)) {
       // Bail out.
       log.warn('Update server responded with an invalid sha1: ' +
                `"${buildMetadata.sha1}"`);
       return null;
     }
 
-    buildMetadata.sha1 = buildMetadata.sha1.toLowerCase();
+    buildMetadata.zip_sha1 = buildMetadata.zip_sha1.toLowerCase();
     return buildMetadata;
   }
 
@@ -414,9 +410,9 @@ function validateManifest(result) {
     case 'silk':
       // Ensure the base gonk is compatible before accepting a partial /system
       // update.
-      if (buildMetadata.base_version === baseversion) {
-        if (buildMetadata.core_version !== silkCoreVersion.fingerprint || FORCE_UPDATE) {
-          // Different fingerprint, select this build
+      if (buildMetadata.bsp_api_id === silkBspVersion.bsp_api_id) {
+        if (buildMetadata.sha !== silkCoreVersion.sha || FORCE_UPDATE) {
+          // Different id, select this build
           currentMetadata = buildMetadata;
           log.info('Selected "silk" update');
         } else {
@@ -427,7 +423,7 @@ function validateManifest(result) {
       }
       break;
     case 'full':
-      if (buildMetadata.fingerprint !== FINGERPRINT || FORCE_UPDATE) {
+      if (buildMetadata.sha !== silkBspVersion.sha || FORCE_UPDATE) {
         // Different fingerprint, select this build
         currentMetadata = buildMetadata;
         log.info('Selected "full" update');
@@ -470,10 +466,10 @@ function fetchUpdate(/* removed */) {
   startedDownload = true;
 
   // Download new update file.
-  log.info(`Downloading "${currentMetadata.url}" to "${UPDATE_FILE_PATH}"`);
+  log.info(`Downloading "${currentMetadata.zip_url}" to "${UPDATE_FILE_PATH}"`);
 
   let { promise, cancel } =
-    createPipeRequestPromise(currentMetadata.url, UPDATE_FILE_PATH);
+    createPipeRequestPromise(currentMetadata.zip_url, UPDATE_FILE_PATH);
   cancelFunction = cancel;
   return promise;
 }
@@ -503,10 +499,10 @@ function validateUpdateSize(stats) {
     return Promise.reject();
   }
 
-  if (stats.size !== currentMetadata.size) {
+  if (stats.size !== currentMetadata.zip_size) {
     // Bail out.
     log.warn(`Update size is incorrect, downloaded ${stats.size} bytes but ` +
-             `expected ${currentMetadata.size} bytes`);
+             `expected ${currentMetadata.zip_size} bytes`);
     return Promise.reject();
   }
 
@@ -532,10 +528,10 @@ function validateUpdateHash(sha1) {
     return Promise.reject();
   }
 
-  if (sha1 !== currentMetadata.sha1) {
+  if (sha1 !== currentMetadata.zip_sha1) {
     // Bail out.
     log.warn(`Update sha1 is incorrect, got "${sha1}" but expected "` +
-             `${currentMetadata.sha1}"`);
+             `${currentMetadata.zip_sha1}"`);
     return Promise.reject();
   }
 
@@ -678,8 +674,7 @@ function start() {
     log.warn(`Failed to remove "${UPDATE_FILE_PATH}": ${err}`);
   });
 
-  log.info(`Update polling started for "${manifestURL}", fingerprint: "` +
-           `${FINGERPRINT}"`);
+  log.info(`Update polling started for "${manifestURL}"`);
   poll(/* runImmediately */ true);
 
   return Promise.resolve();

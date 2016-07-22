@@ -107,6 +107,7 @@ class SoundRecognizer {
       clearTimeout(event.timeoutId);
       delete this.currentEvents[e.soundClass];
       this.timeline.addObjects([{
+        source: 'svmsounds',
         id: event.eventId,
         tag: 'sound',
         name: e.soundClass,

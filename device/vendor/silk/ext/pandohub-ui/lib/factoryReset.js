@@ -15,9 +15,9 @@ const log = createLog('silkext-pandohubui-ftr');
 
 type InputEventCallback = (event: { keyId: string }) => void;
 type FactoryResetUiState = 'idle' |
-                           'mute_down' |
-                           'mute_held' |
-                           'mute_released' |
+                           'power_down' |
+                           'power_held' |
+                           'power_released' |
                            'volumekeys_held';
 
 export class FactoryResetUi {
@@ -42,15 +42,15 @@ export class FactoryResetUi {
     } else {
       switch (this._state) {
       case 'idle':
-        invariant(newstate === 'mute_down');
+        invariant(newstate === 'power_down');
         break;
-      case 'mute_down':
-        invariant(newstate === 'mute_held');
+      case 'power_down':
+        invariant(newstate === 'power_held');
         break;
-      case 'mute_held':
-        invariant(newstate === 'mute_released');
+      case 'power_held':
+        invariant(newstate === 'power_released');
         break;
-      case 'mute_released':
+      case 'power_released':
         invariant(newstate === 'volumekeys_held');
         break;
       case 'volumekeys_held':
@@ -88,7 +88,7 @@ export class FactoryResetUi {
     case 'volumedown':
     case 'volumeup':
       this._volumeKeysPressed = Math.min(2, this._volumeKeysPressed + 1);
-      if (this._state === 'mute_released') {
+      if (this._state === 'power_released') {
         if (this._volumeKeysPressed === 2) {
           this._goto('volumekeys_held');
         }
@@ -97,14 +97,14 @@ export class FactoryResetUi {
       }
       break;
 
-    case 'mute':
-      log.info('mute', this._volumeKeysPressed);
+    case 'power':
+      log.info('power', this._volumeKeysPressed);
       if (this._volumeKeysPressed === 0 && this._state === 'idle') {
-        this._goto('mute_down');
+        this._goto('power_down');
         this._timeout(10 * 1000)
         .then(() => {
-          if (this._state === 'mute_down') {
-            this._goto('mute_held');
+          if (this._state === 'power_down') {
+            this._goto('power_held');
             this._armedWarningCallback();
           }
         })
@@ -122,9 +122,9 @@ export class FactoryResetUi {
 
   onKeyRelease: InputEventCallback = event => {
     switch (event.keyId) {
-    case 'mute':
-      if (this._volumeKeysPressed === 0 && this._state === 'mute_held') {
-        this._goto('mute_released');
+    case 'power':
+      if (this._volumeKeysPressed === 0 && this._state === 'power_held') {
+        this._goto('power_released');
         this._timeout(2 * 1000)
         .then(() => {
           if (this._state === 'volumekeys_held') {

@@ -10,16 +10,17 @@ import * as pocketsphinx from 'pocketsphinx';
 import { EventEmitter } from 'events';
 import createLog from 'silk-log/device';
 import config from 'silk-config';
+import path from 'path';
 
 import type { ConfigDeviceMic } from 'silk-config';
+import type { MicData } from '..';
 
 const log = createLog('vad');
 let ps = pocketsphinx.ps;
 
-export type MicData = {
-  when: number;
-  frames: Buffer;
-};
+const MODEL_DIR = path.join(__dirname, '..', 'model');
+const VAD_SEARCH = 'vad';
+const KEYPHRASE = 'ok sense';
 
 /**
  * Implementattion of voice activity detection using pocketsphinx. This class
@@ -38,8 +39,6 @@ export default class SpeechRecognizer extends EventEmitter {
   _pcmDataQueueSizeInBytes: number;
   _processingInProgress: boolean;
   _backlogMinSizeInBytes: number;
-  _inSpeech: boolean;
-  _listenTimeout: ?number;
 
   constructor() {
     super();
@@ -57,6 +56,47 @@ export default class SpeechRecognizer extends EventEmitter {
         this._numChannels;
 
     this._config = new ps.Decoder.defaultConfig(); // eslint-disable-line new-cap
+  }
+
+  init(): boolean {
+    // Bandwidth of Audio recorded from capture process is 16khz so use
+    // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
+    // Default configuration options are documented at:
+    //   https://github.com/watsonbox/pocketsphinx-ruby/wiki/Default-Pocketsphinx-Configuration
+    this.setAcousticModel(
+        path.join(MODEL_DIR, 'en-us-ptm-16khz'));
+
+    this.setDictionary(
+        path.join(MODEL_DIR, 'cmudict-en-us.dict'));
+
+    // Audio from capture process is recorded at 8khz samling rate so set
+    // the speechrecognizer's sample rate accordingly
+    this.setSampleRate(config.deviceMic.sampleRate);
+
+    // Threshold to tune for keyphrase to balance between false alarms and misses
+    // Higher the number more false alarms and less misses, lower the number
+    // less false alarms but higher misses (1e-30 > 1e-40)
+    this.setKeywordThreshold(1e-45);
+
+    // Use context-independent phonetic search, context-dependent is too slow
+    // for mobile
+    this.setBoolean('-allphone_ci', true);
+
+    // Enable voice activity detection
+    this.setBoolean('-remove_silence', true);
+    this.setBoolean('-remove_noise', true);
+
+    // Adjust VAD threshold. Higher number means ignore more sound. Default
+    // value of 2.0 is not sufficient as mic data on the phones are pretty
+    // sensitive in picking up stray noise like clock ticking, person breathing
+    // and so on.
+    this.setFloat('-vad_threshold', 3.2);
+
+    this.finishSetup();
+
+    // Add model searches
+    this.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
+    return true;
   }
 
   /**
@@ -187,43 +227,23 @@ export default class SpeechRecognizer extends EventEmitter {
   /**
    * Starts recognition. Does nothing if recognition is active.
    *
+   * TODO: Patch pocketsphinx to not required a search to be set to run
+   * vad detection. For now keyphrase search seems to be taking the least
+   * amount of time from among the other type of searches available
    * @return true if recognition was actually started
    */
-  startListening(searchName: string): boolean {
+  startListening() {
     if (this._listening) {
-      return false;
+      return;
     }
 
-    log.debug(`Start search ${searchName}`);
-    this._decoder.setSearch(searchName);
+    log.debug(`Start search ${VAD_SEARCH}`);
+    this._decoder.setSearch(VAD_SEARCH);
 
     this._decoder.startUtt(); // Start utterance processing
     this._pcmDataQueue.length = 0;
     this._pcmDataQueueSizeInBytes = 0;
     this._listening = true;
-    this._inSpeech = this._decoder.getInSpeech();
-    return true;
-  }
-
-  /**
-   * Starts recognition. After specified timeout listening stops and the
-   * endOfSpeech signals about that. Does nothing if recognition is active.
-   *
-   * @timeout - timeout in milliseconds to listen.
-   *
-   * @return true if recognition was actually started
-   */
-  startListeningTimeout(searchName: string, timeout: number): boolean {
-    log.debug(`Start recognition ${searchName} with timeout ${timeout}`);
-    if (this.startListening(searchName)) {
-      // Stop listening after the provided timeout
-      this._listenTimeout = setTimeout(() => {
-        this.stop();
-        this.emit('speech_timeout');
-      }, timeout);
-      return true;
-    }
-    return false;
   }
 
   /**
@@ -286,22 +306,11 @@ export default class SpeechRecognizer extends EventEmitter {
     this._pcmDataQueueSizeInBytes -= pcmData.length;
 
     this._decoder.processRaw(pcmData, false, false);
-    if (this._inSpeech !== this._decoder.getInSpeech()) {
-      this._inSpeech = this._decoder.getInSpeech();
 
-      if (this._inSpeech) {
-        log.debug('===== Begin speech');
-        this.emit('speech_start', when);
-
-        // Clear voice activity timeout if exists
-        if (this._listenTimeout) {
-          clearTimeout(this._listenTimeout);
-          this._listenTimeout = null;
-        }
-      } else {
-        log.debug('===== End speech');
-        this.emit('speech_stop', when);
-      }
+    if (this._decoder.getInSpeech()) {
+      this.emit('speech_start', when);
+    } else {
+      this.emit('speech_stop', when);
     }
 
     this._processingInProgress = true;

@@ -6,49 +6,56 @@
  * @flow
  */
 
-import path from 'path';
-import config from 'silk-config';
 import createLog from 'silk-log/device';
 import { EventEmitter } from 'events';
 
 import SpeechRecognizer from './speechrecognizer';
-import type { MicData } from './speechrecognizer';
+import WebRtcVad from './webrtc_vad';
 
 const log = createLog('vad');
 
-const MODEL_DIR = path.join(__dirname, '..', 'model');
-const LISTEN_TIMEOUT = 5000; // In activity timeout after keyword is detected
-
-// Named searches allow to quickly reconfigure the decoder
-const VAD_SEARCH = 'vad';
-
-// Keyword we are looking for to activate menu
-const KEYPHRASE = 'ok sense';
+const INACTIVITY_TIMEOUT = 5000; // Finish processing speech after inactivity for this time
+const SPEECH_DURATION = 10000; // Finish processing speech after this time
+const IGNORE_EVENT_DURATION = 150; // Ignore events that are shorter than this time
 
 export type VadMode = 'continuous' | 'dialog';
+export type MicData = {
+  when: number;
+  frames: Buffer;
+};
+
+type SpeechEvent = 'voice' | 'silence';
+
+const VAD_ENGINE_PS = 'pocketsphinx';
+const VAD_ENGINE_WEBRTC = 'webrtc';
 
 /**
  * This class adds voice recognition functionality to silk devices
  */
 export default class VoiceActivityDetector extends EventEmitter {
 
-  _speechRecognizer: SpeechRecognizer;
+  _vad: SpeechRecognizer | WebRtcVad;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
   _onSpeechTimeout: () => void;
   _vadMode: VadMode;
+  _inactivityTimeout: ?number;
+  _speechDurationTimeout: ?number;
+  _currentEvent: SpeechEvent;
+  _newEvent: SpeechEvent;
+  _newEventWhen: number;
 
-  constructor() {
+  constructor(vadEngine: string = VAD_ENGINE_WEBRTC) {
     super();
-    this._setupRecognizer();
+    this._setupRecognizer(vadEngine);
   }
 
   /**
    * Call this function to add mic-data
    */
   addMicData(pkt: MicData) {
-    if (this._speechRecognizer) {
-      this._speechRecognizer.addMicData(pkt);
+    if (this._vad) {
+      this._vad.addMicData(pkt);
     }
   }
 
@@ -79,62 +86,32 @@ export default class VoiceActivityDetector extends EventEmitter {
    * Configure the recognizer to perform multiple searches of different kind and
    * switch between them
    */
-  _setupRecognizer(): void {
+  _setupRecognizer(vadEngine: string): void {
     log.info(`Setting up speech recognizer`);
 
-    // Configure with audio properties of the input data from mic. These
-    // properties must match the audio properties set in camera
-    this._speechRecognizer = new SpeechRecognizer();
-
-    // Bandwidth of Audio recorded from capture process is 16khz so use
-    // en-us-16khz model. Reference http://cmusphinx.sourceforge.net/wiki/faq
-    // Default configuration options are documented at:
-    //   https://github.com/watsonbox/pocketsphinx-ruby/wiki/Default-Pocketsphinx-Configuration
-    this._speechRecognizer.setAcousticModel(
-        path.join(MODEL_DIR, 'en-us-ptm-16khz'));
-
-    this._speechRecognizer.setDictionary(
-        path.join(MODEL_DIR, 'cmudict-en-us.dict'));
-
-    // Audio from capture process is recorded at 8khz samling rate so set
-    // the speechrecognizer's sample rate accordingly
-    this._speechRecognizer.setSampleRate(config.deviceMic.sampleRate);
-
-    // Threshold to tune for keyphrase to balance between false alarms and misses
-    // Higher the number more false alarms and less misses, lower the number
-    // less false alarms but higher misses (1e-30 > 1e-40)
-    this._speechRecognizer.setKeywordThreshold(1e-45);
-
-    // Use context-independent phonetic search, context-dependent is too slow
-    // for mobile
-    this._speechRecognizer.setBoolean('-allphone_ci', true);
-
-    // Enable voice activity detection
-    this._speechRecognizer.setBoolean('-remove_silence', true);
-    this._speechRecognizer.setBoolean('-remove_noise', true);
-
-    // Adjust VAD threshold. Higher number means ignore more sound. Default
-    // value of 2.0 is not sufficient as mic data on the phones are pretty
-    // sensitive in picking up stray noise like clock ticking, person breathing
-    // and so on.
-    this._speechRecognizer.setFloat('-vad_threshold', 3.2);
-
-    this._speechRecognizer.finishSetup();
-
-    // Add model searches
-    this._speechRecognizer.addKeyphraseSearch(VAD_SEARCH, KEYPHRASE);
+    // Instantiate voice activity detection
+    if (vadEngine === VAD_ENGINE_PS) {
+      this._vad = new SpeechRecognizer();
+    } else {
+      this._vad = new WebRtcVad();
+    }
+    const result = this._vad.init();
+    if (!result) {
+      log.error(`Failed to initialize ${vadEngine}`);
+      return;
+    }
 
     // Setup listeners
     this._onSpeechStart = (when) => {
-      this._handleBeginningOfSpeech(when);
+      if (this._notifyEvent('voice', when)) {
+        this._handleBeginningOfSpeech(this._newEventWhen);
+      }
     };
 
     this._onSpeechStop = (when) => {
-      this._handleEndOfSpeech(when);
-    };
-
-    this._onSpeechTimeout = () => {
-      this._handleTimeout();
+      if (this._notifyEvent('silence', when)) {
+        this._handleEndOfSpeech(this._newEventWhen);
+      }
     };
   }
 
@@ -164,10 +141,12 @@ export default class VoiceActivityDetector extends EventEmitter {
    */
   _startVoiceActivityDetection(): void {
     log.debug(`start vad`);
-    this._speechRecognizer.on('speech_start', this._onSpeechStart);
-    this._speechRecognizer.on('speech_stop', this._onSpeechStop);
-    this._speechRecognizer.on('speech_timeout', this._onSpeechTimeout);
-    this._startSearch(VAD_SEARCH);
+    this._newEvent = 'silence';
+    this._currentEvent = 'silence';
+    this._newEventWhen = 0;
+    this._vad.on('speech_start', this._onSpeechStart);
+    this._vad.on('speech_stop', this._onSpeechStop);
+    this._start();
   }
 
   /**
@@ -175,42 +154,59 @@ export default class VoiceActivityDetector extends EventEmitter {
    */
   _stopVoiceActivityDetection(): void {
     log.debug(`stop vad`);
-    this._speechRecognizer.stop();
+    this._vad.stop();
     if (this._onSpeechStart) {
-      this._speechRecognizer.removeListener('speech_start', this._onSpeechStart);
+      this._vad.removeListener('speech_start', this._onSpeechStart);
     }
     if (this._onSpeechStop) {
-      this._speechRecognizer.removeListener('speech_stop', this._onSpeechStop);
+      this._vad.removeListener('speech_stop', this._onSpeechStop);
     }
     if (this._onSpeechTimeout) {
-      this._speechRecognizer.removeListener('speech_timeout', this._onSpeechTimeout);
+      this._vad.removeListener('speech_timeout', this._onSpeechTimeout);
     }
   }
 
   /**
    * Start the search
-   *
-   * TODO: Patch pocketsphinx to not required a search to be set to run
-   * vad detection. For now keyphrase search seems to be taking the least
-   * amount of time from among the other type of searches available
    */
-  _startSearch(): void {
-    this._speechRecognizer.stop();
+  _start(): void {
+    this._vad.stop();
 
     if (this._vadMode === 'dialog') {
-      // Wait for LISTEN_TIMEOUT time for VAD start in a dialog mode
-      this._speechRecognizer.startListeningTimeout(VAD_SEARCH, LISTEN_TIMEOUT);
-    } else {
-      // Continue to wait for VAD start in a continuous mode
-      this._speechRecognizer.startListening(VAD_SEARCH);
+      // Set an inactivity timeout
+      this._inactivityTimeout = this._startTimer(INACTIVITY_TIMEOUT, 'inactivity');
     }
+    this._vad.startListening();
+  }
+
+  /**
+   * Handle timer expired event
+   */
+  _startTimer(timeout: number, reason: string): number {
+    return setTimeout(() => {
+      this._handleTimeout(reason);
+    }, timeout);
   }
 
   /**
    * Handle start of speech event
    */
   _handleBeginningOfSpeech(when: number): void {
-    log.debug(`Speech begin`);
+    log.debug(`===== Speech begin`);
+
+    // Clear voice inactivity timeout if exists
+    if (this._inactivityTimeout) {
+      clearTimeout(this._inactivityTimeout);
+      this._inactivityTimeout = null;
+    }
+
+    // Start a speech duration timer to not allow to be in speech forever in a
+    // noisy environment.
+    if (this._vadMode === 'dialog') {
+      this._speechDurationTimeout = this._startTimer(SPEECH_DURATION,
+          'speech duration exceeded');
+    }
+
     this.emit('speech_start', when);
   }
 
@@ -218,26 +214,58 @@ export default class VoiceActivityDetector extends EventEmitter {
    * Handle end of speech event
    */
   _handleEndOfSpeech(when: number): void {
-    log.debug(`Speech end`);
+    log.debug(`===== Speech end`);
     this.emit('speech_stop', when);
 
     // Suspend VAD activity if in a dialog mode until the next dialog_start
     // event is received
     if (this._vadMode === 'dialog') {
       this._stopVoiceActivityDetection();
+
+      if (this._speechDurationTimeout) {
+        clearTimeout(this._speechDurationTimeout);
+        this._speechDurationTimeout = null;
+      }
     }
   }
 
   /**
    * No text spoken within the given time
    */
-  _handleTimeout(): void {
-    log.debug(`speech timeout`);
+  _handleTimeout(reason: string): void {
+    log.debug(`===== speech timeout due to ${reason}`);
     this.emit('speech_timeout');
 
     if (this._vadMode === 'dialog') {
       this._stopVoiceActivityDetection();
     }
+  }
+
+  /**
+   * Ignore speech events that are very short lived. This is done by only
+   * notifying the new event if it lasts longer than a fixed short duration
+   */
+  _notifyEvent(event: SpeechEvent, when: number): boolean {
+    // Save new event and ignore
+    if (this._newEvent !== event) {
+      this._newEvent = event;
+      this._newEventWhen = when;
+      return false;
+    }
+
+    // Check if the new event continues past the specified duration
+    if ((when - this._newEventWhen) <= IGNORE_EVENT_DURATION) {
+      return false;
+    }
+
+    // New event longer than the required duration so notify
+    // if different than the current event
+    if (this._newEvent !== this._currentEvent) {
+      this._currentEvent = this._newEvent;
+      return true;
+    }
+
+    return false;
   }
 }
 

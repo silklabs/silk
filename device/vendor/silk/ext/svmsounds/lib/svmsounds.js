@@ -46,12 +46,12 @@ class SoundRecognizer {
       let cfg = cfgs[key];
       return loadModel(cfg);
     }))
-      .then(() => {
-        log.info('Loaded all models, creating detector');
-        this.soundDetector = createSoundDetectorSVM(svmFFTConfig, cfgs);
-        this.soundDetector.on('sound', this._onSoundEvent);
-        env.camera.on('mic-data', this._onMicData);
-      });
+    .then(() => {
+      log.info('Loaded all models, creating detector');
+      this.soundDetector = createSoundDetectorSVM(svmFFTConfig, cfgs);
+      this.soundDetector.on('sound', this._onSoundEvent);
+      env.camera.on('mic-data', this._onMicData);
+    });
   }
 
   _onSoundEvent = (e) => {

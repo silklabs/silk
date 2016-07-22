@@ -555,9 +555,10 @@ update.on('staged', () => {
   }
 
   if (ui.isIdle()) {
+    log.verbose('ui is already idle');
     applyUpdate();
   } else {
-    log.info('OTA update is staged, waiting for ui idle');
+    log.verbose('OTA update is staged, waiting for ui idle');
     ui.on('idle', applyUpdate);
   }
 });

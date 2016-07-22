@@ -261,6 +261,7 @@ export class Ui extends events.EventEmitter {
    */
   userActivity() {
     log.verbose('user activity');
+    this.idle = false;
     if (this.idleTimer) {
       clearTimeout(this.idleTimer);
     }

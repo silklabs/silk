@@ -403,11 +403,11 @@ function validateManifest(result) {
     return buildMetadata;
   }
 
-  // Select an update from options provided by the server.  Prefer the smaller
-  // 'silk' update which only affects /system/silk and falling back to a 'full'
-  // update of the entire device software.
+  // Select an update from options provided by the server.  Try the 'full'
+  // first, and if the bsp is up to date then check for the smaller 'silk'
+  // update.
   currentMetadata = null;
-  ['silk', 'full'].forEach(buildType => {
+  ['full', 'silk'].forEach(buildType => {
     if (currentMetadata) {
       return; // Already found a build
     }

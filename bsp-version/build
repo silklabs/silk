@@ -3,11 +3,10 @@
 # ( The android build system will pass us source, dest)
 DEST=${2:-.}
 
-
 if [[ "$DEST" != "." ]]; then
   mkdir -p $DEST/
   SOURCE_VERSION="$(git rev-parse HEAD)"
-  node -p "let v = require('./index.json'); v.sha = '$SOURCE_VERSION'; v;" > $DEST/index.json
+  node -p "v = require('./index.json'); v.sha = '$SOURCE_VERSION'; v;" > $DEST/index.json
   cp -f package.json $DEST/package.json
 fi
 cat $DEST/index.json

@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
+ */
+
 import createLog from 'silk-log';
 import { EventEmitter} from 'events';
 
@@ -59,11 +67,15 @@ export default class AudioAnalyzer extends EventEmitter {
   outputMagnitudes: Float32Array;
   sampleRate: number;
   windowOverlap: number;
+  sampleScale: number;
+  sampleOffset: number;
+
   // TODO: let the caller specify the windowing function?
   // TODO: smoothing?
 
   // This is a private API.  Use `createAudioAnalyzer()` below.
-  constructor(fftSize, windowOverlap, sampleRate, sampleScale, sampleOffset) {
+  constructor(fftSize: number, windowOverlap: number, sampleRate: number,
+      sampleScale: number, sampleOffset: number) {
     super();
     this.fftSize = fftSize;
     this.windowOverlap = windowOverlap;
@@ -85,7 +97,7 @@ export default class AudioAnalyzer extends EventEmitter {
    * and the number of magnitudes returned by the `'fftMagnitude*'`
    * events.
    */
-  get frequencyBinCount() {
+  get frequencyBinCount(): number {
     return this.fftSize / 2;
   }
 
@@ -96,7 +108,7 @@ export default class AudioAnalyzer extends EventEmitter {
    * results in filling one or more FFT windows, then the FFTs will be
    * computed and resulting events delivered to clients.
    */
-  appendSamples(samples, startTime) {
+  appendSamples(samples: Float32Array, startTime: number) {
     let inputWindowLength = this.inputWindow.length;
     if (this.inputToFill === inputWindowLength) {
       log.debug('First appendSamples() after reset');

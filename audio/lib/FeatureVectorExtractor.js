@@ -1,4 +1,14 @@
+/**
+ * Copyright (c) 2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
+ */
+
 import { EventEmitter } from 'events';
+import AudioAnalyzer from './AudioAnalyzer';
+import type { SvmSoundsConfig } from '..';
 
 /**
  * Return the value of the maximum element of `array`.
@@ -40,14 +50,14 @@ function max(array) {
  *    before emitting a 'quiet' event.
  */
 export default class FeatureVectorExtractor extends EventEmitter {
-  analyzer;
-  cfg;
-  currentLoudStartTime;
-  featureVector;
-  featureVectorIndex;
-  lastLoudEndTime;
+  analyzer: AudioAnalyzer;
+  cfg: SvmSoundsConfig;
+  currentLoudStartTime: number;
+  featureVector: Float32Array;
+  featureVectorIndex: number;
+  lastLoudEndTime: number;
 
-  constructor(analyzer, cfg) {
+  constructor(analyzer: AudioAnalyzer, cfg: SvmSoundsConfig) {
     super();
 
     this.analyzer = analyzer;
@@ -65,7 +75,7 @@ export default class FeatureVectorExtractor extends EventEmitter {
     this.removeAllListeners();
   }
 
-  _onFFTMagnitude = (magnitudes, startTime, endTime) => {
+  _onFFTMagnitude = (magnitudes: Float32Array, startTime: number, endTime: number) => {
     if (!this._detectingLoudSound) {
       let isLoud = max(magnitudes) > this.cfg.loudThreshold;
       if (!isLoud) {
@@ -99,15 +109,15 @@ export default class FeatureVectorExtractor extends EventEmitter {
     this.featureVectorIndex = 0;
   }
 
-  get _detectingLoudSound() {
+  get _detectingLoudSound(): boolean {
     return this.featureVectorIndex > 0;
   }
 
-  get _filledFeatureVector() {
+  get _filledFeatureVector(): boolean {
     return this.featureVectorIndex === this.featureVector.length;
   }
 
-  get _quietTimerRunning() {
+  get _quietTimerRunning(): boolean {
     return this.lastLoudEndTime > 0;
   }
 }

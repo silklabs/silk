@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
+ */
+
 import config from 'silk-config';
 import createLog from 'silk-log';
 
@@ -30,7 +38,7 @@ export const LOUD_SOUND_THRESHOLD_LINEAR = 0.01;
  *
  * If `params` are invalid, null is returned.
  */
-export function createAudioAnalyzer(params) {
+export function createAudioAnalyzer(params: SvmFFTConfig) {
   let { fftSize, windowOverlap, sampleRate, sampleMin, sampleMax } = params;
   if (!(0 <= fftSize
         && fftSize === (fftSize | 0)
@@ -58,7 +66,8 @@ const requiredParams = [
   'featureVectorFrameCount', 'fftType', 'loudThreshold',
   'model', 'soundClass',
 ];
-export function createSoundDetectorSVM(fftParams, svmParams) {
+export function createSoundDetectorSVM(fftParams: SvmFFTConfig,
+    svmParams: SvmSoundsConfigs) {
   let svmCfgs = { };
   Object.assign(svmCfgs, svmParams);
   let analyzer = createAudioAnalyzer(fftParams);
@@ -88,7 +97,7 @@ export function createSoundDetectorSVM(fftParams, svmParams) {
  * used with `createSoundDetectorSVM()` to create a sound event
  * detector.
  */
-export function parsePackedSVMModel(modelArrayBuffer) {
+export function parsePackedSVMModel(modelArrayBuffer: Buffer) {
   let array = new Float64Array(modelArrayBuffer);
   // The values that we extract from the packed SVM model have been
   // computed by the training process, and the actual parameters
@@ -305,3 +314,40 @@ export const svmSoundsConfigs = {
     },
   },
 };
+
+type ParsedModelType = {
+  N: number;
+  D: number;
+  b: number;
+  kernelType: string;
+  rbfSigma: number;
+  alpha: Float64Array;
+  labels: Float64Array;
+  data: Array<Float64Array>;
+}
+
+export type SvmSoundsConfig = {
+  enabled: boolean;
+  soundClass: string;
+  model: string | ParsedModelType;
+  fftType: string;
+  loudThreshold: number;
+  loudMinDuration: number;
+  featureVectorFrameCount: number;
+  hasSustain: boolean;
+  quietTimeout: number;
+  sonemeGapTimeout: number;
+  trainingOptions: {
+    rbfsigma: number;
+    C: number;
+    maxiter: number;
+    numpasses: number;
+    kernel: string;
+    tol: number;
+    alphatol: number;
+  };
+}
+
+export type SvmSoundsConfigs = {[key: string]: SvmSoundsConfig};
+export type SvmFFTConfig = typeof svmFFTConfig;
+export type { SoundDetectorSVM };

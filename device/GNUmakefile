@@ -22,7 +22,7 @@ update:
 	set -xe; \
   [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$(readlink .repo/board); \
   [[ -n $$SILK_PRODUCT ]] || SILK_PRODUCT=$$(readlink .repo/product); \
-  [[ -n $$TARGET_BUILD_VARIANT ]] || TARGET_BUILD_VARIANT=eng; \
+  [[ -n $$TARGET_BUILD_VARIANT ]] || TARGET_BUILD_VARIANT=userdebug; \
   if [[ $$SILK_BOARD == base ]]; then SILK_BOARD=mako; fi; \
   if [[ $$SILK_BOARD == base.msm8909 ]]; then SILK_BOARD=msm8909; fi; \
   if [[ $$SILK_BOARD == base.kenzo ]]; then SILK_BOARD=kenzo; fi; \
@@ -30,11 +30,11 @@ update:
   echo SILK_PRODUCT=$$SILK_PRODUCT;\
   mkdir -p out/prebuilt; \
   cd out/prebuilt; \
-  rm -rf $$SILK_BOARD-$$SILK_PRODUCT; \
-  rm -f $$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT; \
-  wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT.tgz ; \
-  tar zxf $$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT.tgz; \
-  [[ $$SILK_BOARD == qemu ]] || ./$$SILK_BOARD-$$SILK_PRODUCT/$(or $(FLASH_SCRIPT),flash.sh); \
+  BUILD=$$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT; \
+  rm -rf $$BUILD/ $$BUILD.tgz; \
+  wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$$BUILD.tgz ; \
+  tar zvxf $$BUILD.tgz; \
+  [[ $$SILK_BOARD == qemu ]] || ./$$BUILD/$(or $(FLASH_SCRIPT),flash.sh)
 
 # Download and run the emulator
 .PHONY: qemu

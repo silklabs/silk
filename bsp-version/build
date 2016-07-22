@@ -3,18 +3,11 @@
 # ( The android build system will pass us source, dest)
 DEST=${2:-.}
 
-SOURCE_VERSION="$(git rev-parse HEAD)"
-
-mkdir -p $DEST/
-cat > $DEST/index.json <<-EOF
-	{
-	  "bsp_api_id": "$(source api_id; echo $SILK_BSP_API_ID)",
-	  "semver": "$(node -p "require('./package.json').version")",
-	  "sha": "$SOURCE_VERSION"
-	}
-EOF
-cat $DEST/index.json
 
 if [[ "$DEST" != "." ]]; then
+  mkdir -p $DEST/
+  SOURCE_VERSION="$(git rev-parse HEAD)"
+  node -p "let v = require('./index.json'); v.sha = '$SOURCE_VERSION'; v;" > $DEST/index.json
   cp -f package.json $DEST/package.json
 fi
+cat $DEST/index.json

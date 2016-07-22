@@ -101,6 +101,8 @@ export default class API {
 
   async pushModule(name, directory, system = false) {
     const dest = path.join(system ? SILK_MODULE_ROOT : DATA_MODULE_ROOT, name);
+    await this.adb('root');
+    await this.adb('wait-for-device');
     if (system) {
       await this.adb('remount');
     }

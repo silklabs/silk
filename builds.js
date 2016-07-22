@@ -455,7 +455,7 @@ const builds = {
     },
     // Also rebuild this every time the base version changes to ensure that
     // subsequent PRs will have an up-to-date qemu image to test against.
-    files: ['bsp-version/index.json'],
+    files: ['bsp-version/**'],
     events: ['nightly', 'push'],
   }),
   // TODO: Enable OS X device build once Travis OS X machines have more disk space,

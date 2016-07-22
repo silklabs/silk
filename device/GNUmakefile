@@ -22,7 +22,7 @@ update:
 	set -xe; \
   [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$(readlink .repo/board); \
   [[ -n $$SILK_PRODUCT ]] || SILK_PRODUCT=$$(readlink .repo/product); \
-  [[ -n $$TARGET_BUILD_VARIANT ]] || TARGET_BUILD_VARIANT=eng; \
+  [[ -n $$TARGET_BUILD_VARIANT ]] || TARGET_BUILD_VARIANT=userdebug; \
   if [[ $$SILK_BOARD == base ]]; then SILK_BOARD=mako; fi; \
   if [[ $$SILK_BOARD == base.msm8909 ]]; then SILK_BOARD=msm8909; fi; \
   if [[ $$SILK_BOARD == base.kenzo ]]; then SILK_BOARD=kenzo; fi; \

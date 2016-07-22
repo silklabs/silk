@@ -23,6 +23,10 @@ PRODUCT_PACKAGES += silk-build-prop
 # Only install silk-bsp-version in full builds
 ifneq ($(DEFAULT_GOAL),gonk_modules)
 PRODUCT_PACKAGES += silk-bsp-version
+else
+# But sneak silk-debug-prop into base builds since they're always debug by
+# definition
+PRODUCT_PACKAGES += silk-debug-prop
 endif
 
 # vendor/silk/core/...

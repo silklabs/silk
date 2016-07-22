@@ -91,25 +91,25 @@ class Peddetector {
     // Load the pedestrian model
     try {
       // Check if all the required files exist on device
-      let exists = fs.exists(MODEL_PROTO);
+      let exists = await fs.exists(MODEL_PROTO);
       if (!exists) {
         log.error(`${MODEL_PROTO} not available on the device`);
         return;
       }
 
-      exists = fs.exists(MODEL_BIN);
+      exists = await fs.exists(MODEL_BIN);
       if (!exists) {
         log.error(`${MODEL_BIN} not available on the device`);
         return;
       }
 
-      exists = fs.exists(MODEL_MEAN);
+      exists = await fs.exists(MODEL_MEAN);
       if (!exists) {
         log.error(`${MODEL_MEAN} not available on the device`);
         return;
       }
 
-      exists = fs.exists(MODEL_DICTIONARY);
+      exists = await fs.exists(MODEL_DICTIONARY);
       if (!exists) {
         log.error(`${MODEL_DICTIONARY} not available on the device`);
         return;

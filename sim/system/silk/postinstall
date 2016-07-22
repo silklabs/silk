@@ -2,13 +2,6 @@
 
 cd $(dirname $0)/../..
 
-for mod in ../bsp-version ../pub/version; do
-  (
-    cd $mod
-    npm install
-  )
-done
-
 mkdir -p system/silk/bin
 rm -f system/silk/bin/node
 ln -sf $(which node) system/silk/bin/node

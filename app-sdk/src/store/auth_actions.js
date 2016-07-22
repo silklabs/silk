@@ -15,7 +15,11 @@ import {actionFromAsyncPayloadGen} from './action';
 
 import type {SilkApi} from 'silk-api';
 import type {RawPasswordInput} from 'silk-api/src/vip';
-import type {SignInOutput, CreateAccountOutput} from 'silk-api/src/gen/vip';
+import type {
+  SignInOutput,
+  CreateAccountOutput,
+  ResetPasswordInput,
+} from 'silk-api/src/gen/vip';
 
 import type {StateWithApi} from './api';
 
@@ -33,6 +37,7 @@ function genHandleSuccessfulAuth(
     api.accessToken = null;
     return Promise.resolve(false);
   }
+  api.metrics.start();
   const {accessToken} = api;
   invariant(accessToken);
   const json = JSON.stringify({
@@ -95,13 +100,33 @@ async function genCreateAccount(
   }
 }
 
-function genSignOut(): Promise<void> {
+function genSignOut(
+  state: StateWithApi
+): Promise<void> {
+  const {api} = state;
+  invariant(api);
+  api.metrics.stop();
+  api.accessToken = null;
+
   return AsyncStorage.multiRemove([
     ACCESS_TOKEN_KEY,
     REGISTERED_DEVICES_KEY,
   ]);
 }
 
+async function genResetPassword(
+  state: StateWithApi,
+  input: ResetPasswordInput
+): Promise<boolean> {
+  const {api} = state;
+  invariant(api);
+  try {
+    const {success} = await api.vip.resetPassword(input);
+    return success;
+  } finally {
+    this.api.accessToken = null;
+  }
+}
 
 // ThunkActions
 

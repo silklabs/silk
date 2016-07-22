@@ -133,10 +133,19 @@ fi
 
 fastboot reboot
 
+waitForDevice() {
+  adb wait-for-device
+  # adb sometimes errors out, if so, wait and try again
+  while [ $? -ne 0 ]; do
+    sleep 1
+    adb wait-for-device
+  done
+}
+
 echo Waiting for device to boot
-adb wait-for-device
+waitForDevice
 adb root
-adb wait-for-device
+waitForDevice
 
 echo Set device time to match host: $(date)
 adb shell time_genoff $(date +%s)000
@@ -153,6 +162,15 @@ EOF
 echo Flash the build and clear userdata/cache partitions
 $(dirname $0)/flash.sh $@ -w
 
+waitForDevice() {
+  adb wait-for-device
+  # adb sometimes errors out, if so, wait and try again
+  while [ $? -ne 0 ]; do
+    sleep 1
+    adb wait-for-device
+  done
+}
+
 echo Preparing build.prop...
 rm -f build.prop
 adb pull /system/build.prop
@@ -167,7 +185,7 @@ rm -f build.prop
 
 echo Rebooting to apply configuration...
 adb reboot
-adb wait-for-device
+waitForDevice
 echo Device provisioning successful
 exit 0
 EOF

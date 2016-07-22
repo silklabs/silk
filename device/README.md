@@ -56,6 +56,7 @@ hdiutil create -type SPARSE -fs 'Case-sensitive Journaled HFS+' -size 30g -volna
   $ ./sync                    # <-- Fetches the full bsp tree for the default board/product
   $ source build/envsetup.sh  # <-- Configures the BSP build environment
   $ make -j4                  # <-- Builds...
+  $ adb root
   $ adb remount ; adb sync    # <-- installs the build products onto a device connected over USB
 ```
 

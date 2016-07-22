@@ -89,6 +89,8 @@ echo "Installing local build into emulator at pid=$EMU_PID"
 echo
 (
   set -ex
+  adb root
+  adb wait-for-device
   adb remount
   adb wait-for-device
   adb shell stop

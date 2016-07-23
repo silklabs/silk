@@ -21,6 +21,7 @@ import {
   setVolume,
 } from './ui/saga';
 import {getStockPrice} from './stocks/saga';
+import {xkcd} from './xkcd/saga';
 import {getWeather, resetZipcode} from './weather/saga';
 import {pauseMusic, playMusic, getCurrentSong, getArtist} from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
@@ -47,11 +48,11 @@ export const unknownText = `Sorry, I'm not understanding you.`;
  * "concurrent" sagas, see below.
  */
 const independentIntents: Set<string> = new Set([
-  `startFeeding`,
-  `startNursing`,
-  `startBottleFeeding`,
   `register`,
   `rename`,
+  `startBottleFeeding`,
+  `startFeeding`,
+  `startNursing`,
 ]);
 
 /**
@@ -65,18 +66,19 @@ const concurrentIntents: Set<string> = new Set([
   `cancelTimer`,
   `currentTime`,
   `factoryReset`,
+  `getArtist`,
+  `getCurrentSong`,
+  `getStockPrice`,
+  `getWeather`,
+  `pauseMusic`,
+  `playMusic`,
+  `resetZipcode`,
+  `xkcd`,
   `setUiMode`,
   `setVolume`,
   `startTimer`,
-  `getStockPrice`,
-  `getWeather`,
-  `resetZipcode`,
-  `playMusic`,
-  `pauseMusic`,
-  `getCurrentSong`,
-  `getArtist`,
-  `turnOn`,
   `turnOff`,
+  `turnOn`,
 ]);
 
 // A simple saga that speaks the current time.
@@ -290,6 +292,10 @@ export default function*(
         break;
       case `getWeather`:
         sagaFunction = getWeather;
+        break;
+      case `xkcd`:
+        sagaFunction = xkcd;
+        args = args.concat(entities);
         break;
       case `resetZipcode`:
         sagaFunction = resetZipcode;

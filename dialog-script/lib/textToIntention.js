@@ -24,6 +24,8 @@ module.exports = {
   "what time is it":             { "intent": "currentTime", "entities": [] },
   "start a timer for 30 seconds":{ "intent": "startTimer", "entities": ["30 seconds"] },
   "cancel the timer":            { "intent": "cancelTimer", "entities": ["30 seconds"] },
+
+  // Device control dialogs
   "volume up":                   { "intent": "setVolume", "entities": ["up"] },
   "volume down":                 { "intent": "setVolume", "entities": ["down"] },
   "do not disturb":              { "intent": "setUiMode", "entities": ["dnd"] },
@@ -31,7 +33,9 @@ module.exports = {
   "normal":                      { "intent": "setUiMode", "entities": ["normal"] },
   "factory reset":               { "intent": "factoryReset", "entities": [] },
 
-  // Generic dialogs
+  // Demo dialogs
+  "make me a sandwich":          { "intent": "xkcd", "entities": ["149"] },
+  "sudo make me a sandwich":     { "intent": "xkcd", "entities": ["149", "sudo"] },
 
 /* Comment out to use luis
   // see stocks/saga.js for list of supported stocks

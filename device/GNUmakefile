@@ -44,8 +44,8 @@ qemu:
 # storage.
 	@if [[ $$SILK_BOARD != qemu ]]; then \
     export SILK_PRODUCT=silk; \
-    export TARGET_BUILD_VARIANT=eng; \
-    export ANDROID_PRODUCT_OUT=out/prebuilt/qemu-silk-master-eng; \
+    export TARGET_BUILD_VARIANT=userdebug; \
+    export ANDROID_PRODUCT_OUT=out/prebuilt/qemu-silk-$(BRANCH)-userdebug; \
     if [[ ! -d $$ANDROID_PRODUCT_OUT ]]; then \
       SILK_BOARD=qemu $(MAKE) --no-print-directory update; \
     fi; \

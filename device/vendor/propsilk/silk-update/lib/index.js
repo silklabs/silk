@@ -15,7 +15,7 @@ import fs from 'fs';
 import request from 'request';
 import silkCoreVersion from 'silk-core-version';
 import silkBspVersion from 'silk-bsp-version';
-import {spawn, spawnSync} from 'child_process';
+import {spawnSync} from 'child_process';
 import validator from 'validator';
 
 import createLog from 'silk-log/device';
@@ -686,12 +686,12 @@ function start() {
   }
 
   // Signal that the last update was successful enough to arrive here
-  let bootctl = spawn('bootctl', ['mark-boot-successful'], {
-    detached: true,
-    stdio: ['ignore'],
-  });
-  bootctl.on('error', error => {
-    log.warn('Failed to start bootctl', error.stack || error);
+  log.info('Marking boot successful');
+  util.exec('bootctl', ['mark-boot-successful'])
+  .then(result => {
+    if (result.code !== 0) {
+      log.warn('Failed to run bootctl: ', result);
+    }
   });
 
   if (!MANIFEST_URL_TEMPLATE) {

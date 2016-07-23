@@ -1,17 +1,27 @@
+/**
+ * Copyright (c) 2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
+ */
+
 import { EventEmitter } from 'events';
+import AudioAnalyzer from './AudioAnalyzer';
 import svmjs from 'svm';
+import type { SvmSoundsConfig, SvmSoundsConfigs } from '..';
 
 import FeatureVectorExtractor from './FeatureVectorExtractor';
 
 class SoundClassDetector {
-  cfg;
-  events;
-  featureVectorExtractor;
-  lastSonemeDetectTime;
-  soundEventStartTime;
-  svm;
+  cfg: SvmSoundsConfig;
+  events: ?EventEmitter;
+  featureVectorExtractor: FeatureVectorExtractor;
+  lastSonemeDetectTime: number;
+  soundEventStartTime: number;
+  svm: any;
 
-  constructor(events, analyzer, cfg) {
+  constructor(events: EventEmitter, analyzer: AudioAnalyzer, cfg: SvmSoundsConfig) {
     this.cfg = cfg;
     this.events = events;
     this.featureVectorExtractor = new FeatureVectorExtractor(analyzer, cfg);
@@ -31,7 +41,7 @@ class SoundClassDetector {
     this.featureVectorExtractor.destructor();
   }
 
-  _onLoudSound = (featureVector, startTime, endTime) => {
+  _onLoudSound = (featureVector, startTime: number, endTime: number) => {
     let isSoneme = this._detectSoneme(featureVector);
     if (!isSoneme) {
       this._maybeEndSoundEvent(endTime);
@@ -40,32 +50,36 @@ class SoundClassDetector {
     this.lastSonemeDetectTime = endTime;
     if (!this._inSoundEvent) {
       this.soundEventStartTime = startTime;
-      this.events.emit('sound', {
-        soundClass: this.cfg.soundClass,
-        startTime: this.soundEventStartTime,
-      });
+      if (this.events) {
+        this.events.emit('sound', {
+          soundClass: this.cfg.soundClass,
+          startTime: this.soundEventStartTime,
+        });
+      }
     }
   };
 
-  _onQuiet = (endTime) => {
+  _onQuiet = (endTime: number) => {
     this._maybeEndSoundEvent(endTime);
   };
 
-  _maybeEndSoundEvent(endTime) {
+  _maybeEndSoundEvent(endTime: number) {
     if (!this._inSoundEvent) {
       return;
     }
     if (endTime - this.lastSonemeDetectTime >= this.cfg.sonemeGapTimeout) {
-      this.events.emit('sound', {
-        soundClass: this.cfg.soundClass,
-        startTime: this.soundEventStartTime,
-        endTime: this.lastSonemeDetectTime,
-      });
+      if (this.events) {
+        this.events.emit('sound', {
+          soundClass: this.cfg.soundClass,
+          startTime: this.soundEventStartTime,
+          endTime: this.lastSonemeDetectTime,
+        });
+      }
       this._reset();
     }
   }
 
-  _detectSoneme(featureVector) {
+  _detectSoneme(featureVector): boolean {
     let [ prediction ] = this.svm.predict([ featureVector ]);
     return prediction === 1;
   }
@@ -75,16 +89,16 @@ class SoundClassDetector {
     this.soundEventStartTime = -1;
   }
 
-  get _inSoundEvent() {
+  get _inSoundEvent(): boolean {
     return this.soundEventStartTime > 0;
   }
 }
 
 export default class SoundDetectorSVM extends EventEmitter {
-  analyzer;
-  detectors = [ ];
+  analyzer: AudioAnalyzer;
+  detectors: Array<SoundClassDetector> = [];
 
-  constructor(analyzer, cfgs) {
+  constructor(analyzer: AudioAnalyzer, cfgs: SvmSoundsConfigs) {
     super();
 
     this.analyzer = analyzer;
@@ -100,7 +114,7 @@ export default class SoundDetectorSVM extends EventEmitter {
     this.removeAllListeners();
   }
 
-  appendSamples(samples, startTime) {
+  appendSamples(samples: Float32Array, startTime: number) {
     this.analyzer.appendSamples(samples, startTime);
   }
 }

@@ -4,6 +4,7 @@
   "description": "Demo of sound recognition with SVMs",
   "main": "./lib/svmsounds.js",
   "scripts": {
+    "lint": "eslint lib",
     "postinstall": "./bin/postinstall",
     "posttest": "eslint test lib",
     "silk-build": "silk-buildjs .",

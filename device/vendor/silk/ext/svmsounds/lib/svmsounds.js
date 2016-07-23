@@ -1,44 +1,65 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
+
 import invariant from 'assert';
-import { createSoundDetectorSVM, parsePackedSVMModel,
-         svmFFTConfig, svmSoundsConfigs } from 'silk-audio';
+import { createSoundDetectorSVM, parsePackedSVMModel, svmFFTConfig,
+         svmSoundsConfigs } from 'silk-audio';
 import fs from 'fs';
 import path from 'path';
+import createLog from 'silk-log/device';
+import type {Env, Timeline} from 'silk-exttest';
 
-let log;
+import type { SoundDetectorSVM, SvmSoundsConfig } from 'silk-audio';
+type MicData = {
+  when: number;
+  frames: Buffer;
+};
+
+const log = createLog('silkext-svmsounds');
 
 const EVENT_PING_INTERVAL_MS = 500;
 const MODEL_DIR = 'system/silk/media/svmsounds/model';
 
-function loadModel(svmCfg) {
+function loadModel(svmCfg: SvmSoundsConfig) {
   return new Promise((resolve, reject) => {
+    if (typeof svmCfg.model !== 'string') {
+      reject(new Error(`model name invalid`));
+      return;
+    }
     let modelPath = path.resolve(path.join(MODEL_DIR, svmCfg.model));
     log.info(`Reading model from ${modelPath}`);
     fs.readFile(modelPath, (err, model) => {
       if (err) {
-        log.error(`Failed to read model: ${err}`);
-        return reject(err);
+        log.error(`Failed to read model: `, err);
+        reject(err);
+        return;
       }
       log.info(`Fetched model ${modelPath}; ${model.length} bytes`);
       log.info(`  ${svmCfg.soundClass} is ${svmCfg.enabled ? 'enabled' : 'disabled'}`);
-      svmCfg.model = parsePackedSVMModel(model.buffer);
-      return resolve();
+      // $FlowFixMe: Flow doesn't understand model.buffer
+      let parsedModel = parsePackedSVMModel(model.buffer);
+      if (!parsedModel) {
+        reject(new Error('Failed to parse SVM model'));
+        return;
+      }
+      svmCfg.model = parsedModel;
+      resolve();
+      return;
     });
   });
 }
 
 class SoundRecognizer {
-  currentEvents = { };          // string -> { eventId, timerId }
-  soundDetector;
-  timeline;
+  currentEvents: {[key: string]: {eventId: number, timeoutId: ?null}} = {};
+  soundDetector: ?SoundDetectorSVM;
+  timeline: Timeline;
 
-  constructor(env) {
-    log = env.log;
-
+  constructor(env: Env) {
     this.timeline = env.timeline;
     let cfgs = { };
     Object.assign(cfgs, svmSoundsConfigs);
@@ -46,12 +67,16 @@ class SoundRecognizer {
       let cfg = cfgs[key];
       return loadModel(cfg);
     }))
-      .then(() => {
-        log.info('Loaded all models, creating detector');
-        this.soundDetector = createSoundDetectorSVM(svmFFTConfig, cfgs);
-        this.soundDetector.on('sound', this._onSoundEvent);
-        env.camera.on('mic-data', this._onMicData);
-      });
+    .then(() => {
+      log.info('Loaded all models, creating detector');
+      this.soundDetector = createSoundDetectorSVM(svmFFTConfig, cfgs);
+      if (!this.soundDetector) {
+        throw new Error(`Failed to create sound detector`);
+      }
+      this.soundDetector.on('sound', this._onSoundEvent);
+      env.camera.on('mic-data', this._onMicData);
+    })
+    .catch(err => log.error(err));
   }
 
   _onSoundEvent = (e) => {
@@ -82,6 +107,7 @@ class SoundRecognizer {
       clearTimeout(event.timeoutId);
       delete this.currentEvents[e.soundClass];
       this.timeline.addObjects([{
+        source: 'svmsounds',
         id: event.eventId,
         tag: 'sound',
         name: e.soundClass,
@@ -91,7 +117,7 @@ class SoundRecognizer {
     }
   };
 
-  _onMicData = (msg) => {
+  _onMicData = (msg: MicData) => {
     let time = msg.when / 1000;
     let rawSamples = msg.frames;
     // We're forced to do this slow manual copy because the node.js
@@ -104,4 +130,4 @@ class SoundRecognizer {
   };
 }
 
-module.exports = (env) => new SoundRecognizer(env);
+module.exports = (env: Env) => new SoundRecognizer(env);

@@ -38,9 +38,6 @@ maybe_enable_static_eth0() {
     info `ndc resolver setnetdns 101 localdomain $ETH0_DNS_GW_IP`
     info `ndc resolver setnetdns 101 localdomain 8.8.8.8`
 
-    info "Enabing ADB port 5555"
-    setprop service.adb.tcp.port 5555
-
     info "Marking eth0 static as configured"
     setprop eth0.static.configured 1
   fi

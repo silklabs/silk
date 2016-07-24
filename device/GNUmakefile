@@ -24,7 +24,7 @@ update:
   [[ -n $$SILK_PRODUCT ]] || SILK_PRODUCT=$$(readlink .repo/product); \
   [[ -n $$TARGET_BUILD_VARIANT ]] || TARGET_BUILD_VARIANT=userdebug; \
   if [[ $$SILK_BOARD == base ]]; then SILK_BOARD=mako; fi; \
-  if [[ $$SILK_BOARD == base.msm8909 ]]; then SILK_BOARD=msm8909; fi; \
+  if [[ $$SILK_BOARD == base.msm8909 ]]; then SILK_BOARD=pandohub; fi; \
   if [[ $$SILK_BOARD == base.kenzo ]]; then SILK_BOARD=kenzo; fi; \
   echo SILK_BOARD=$$SILK_BOARD;\
   echo SILK_PRODUCT=$$SILK_PRODUCT;\

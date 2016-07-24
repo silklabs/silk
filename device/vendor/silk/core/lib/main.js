@@ -118,6 +118,28 @@ async function readLogo() {
 }
 
 /**
+ * In debug builds register an mDNS service for ADB so that the device can be
+ * easily found by on the local network.
+ */
+async function publishMDnsAdbService() {
+  if (!util.getboolprop('ro.debuggable', false)) {
+    return;
+  }
+
+  log.info('Registering adb mDNS service');
+  const hostname = util.getstrprop('net.hostname');
+  try {
+    await util.exec('ndc', ['mdns', 'mdnssd', 'start-service']);
+    await util.exec('ndc', ['mdns', 'mdnssd', 'stop-sethostname', '1']);
+    await util.exec('ndc', ['mdns', 'mdnssd', 'sethostname', '1', hostname]);
+    await util.exec('ndc', ['mdns', 'mdnssd', 'stop-register', '2']);
+    await util.exec('ndc', ['mdns', 'mdnssd', 'register', '2', hostname, '_adb._tcp', '5555']);
+  } catch (err) {
+    log.warn('Unable to configure mDNS', err);
+  }
+}
+
+/**
  * This module is an entry point into core process. It waits for bootup and
  * initialize the device.
  * @private
@@ -443,6 +465,8 @@ async function onConfigured() {
   configured = true;
   camera.startRecording();
   await wifi.online();
+
+  publishMDnsAdbService();
 
   if (DEV_NO_SERVER_CONNECT) {
     ui.goto('online');

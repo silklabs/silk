@@ -934,6 +934,8 @@ internal class BLESocketPeripheral: NSObject,
     assert(connection.central! === central)
     connection.central = nil
 
+    self.connectionsByCentral[central] = nil
+
     self.socketManager.end(connection.id)
   }
 
@@ -970,7 +972,13 @@ internal class BLESocketPeripheral: NSObject,
 
       let connection = self.connectionsByCentral[request.central]
       if connection == nil {
-        log.debug("Received write request before subscribed")
+        log.debug("Received write request when not subscribed")
+        peripheral.respondToRequest(request, withResult: .WriteNotPermitted)
+        return
+      }
+
+      if connection!.central !== request.central {
+        log.debug("Received write request from a different central")
         peripheral.respondToRequest(request, withResult: .WriteNotPermitted)
         return
       }

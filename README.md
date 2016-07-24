@@ -2,9 +2,9 @@
 
 Silk is a free (as in free beer) firmware for a number of smartphones based on the open-source Android operating system with a nodejs layer on top of it that makes it possible to write programs and get access to hardware aspects using only simple JavaScript. We offer a wide range of APIs that make developing for the Internet of Things world using web technologies a present reality.
 
-## What is Silk (in plain English) ?
+## What is Silk?
 
-Silk is an IoT platform that aims to making programming and developing Internet of Things interfaces as easy as writing JavaScript via its modern JavaScript/node/npm environment.
+Silk is an IoT platform that aims to making programming and developing Internet of Things applications as easy as writing JavaScript via its modern JavaScript/node/npm environment.
 
 ## How to get started?
 
@@ -31,7 +31,7 @@ All you have to do then is create a new program with the Silk CLI by running<br>
 `silk init <program_name>`<br>
 It will create a new node package you can start hacking on immediately. Here's the full list of Silk commands that you can use with the CLI: [Silk Command Line Interface Reference](docs/tutorial/cli-reference.md).
 
-We offer a robuse set of API you can use in your Silk program. Check them all out: [Silk API reference](http://silklabs.github.io/silk/master/api/device/index.html).
+We offer a robust set of API you can use in your Silk program. Check them all out: [Silk API reference](http://silklabs.github.io/silk/master/api/device/index.html).
 
 Also don't forget to check out the links in the `Resources` of this page for all the code examples you can try right away.
 

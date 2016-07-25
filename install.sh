@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -x
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
@@ -72,7 +72,7 @@ for module_gyp in $(find -L node_modules -name 'binding.gyp' ) ; do
     continue
   fi
 
-  if [[ -z $(find $module -name '*.node') ]] ; then
+  if [[ "$FORCE" == 1 || -z "$(find $module -name '*.node')" ]] ; then
     JOBS=MAX npm build $module
   fi
 done

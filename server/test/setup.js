@@ -1,5 +1,5 @@
 import loadConfig from '../src/server/config';
-import mongo from 'promised-mongo';
+import { MongoClient } from 'mongodb';
 import emailGen from '../src/email_generate';
 
 process.env.SILK_HOST = 'localhost';
@@ -26,7 +26,7 @@ suiteSetup(async function() {
   require('scrypt');
 
   let config = loadConfig('test');
-  let db = mongo(config.db.connectionString);
+  let db = await MongoClient.connect(config.db.connectionString);
 
   await emailGen();
 

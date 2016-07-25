@@ -5,7 +5,7 @@
  */
 import * as Joi from 'joi';
 import uuid from 'uuid';
-import {ObjectId} from 'promised-mongo';
+import { ObjectID } from 'mongodb';
 import AccessToken from 'silk-api/src/access_token';
 import createLog from 'silk-log';
 
@@ -78,7 +78,7 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
 
 // XXX: Duplicating types so we can use them in flow too (lame).
 export type Record = {
-  _id: ObjectId;
+  _id: ObjectID;
   email: string;
   // TODO: finish type...
 }
@@ -238,9 +238,9 @@ export default class Accounts extends Base {
     payload = this.validate(payload, 'findByPublicKey');
     let { publicKey } = payload;
 
-    return await this.collection.findOne({
+    return await this.collection.find({
       'accountTokens.publicKey': publicKey,
-    });
+    }).limit(1).next();
   }
 
   /**
@@ -265,7 +265,7 @@ export default class Accounts extends Base {
    */
   async setBeaconUUIDIfMissing(publicKey: any): any {
     let id = uuid.v4();
-    let status = await this.collection.update(
+    let { result } = await this.collection.update(
       {
         'accountTokens.publicKey': publicKey,
         'beaconUUID': {
@@ -279,7 +279,7 @@ export default class Accounts extends Base {
       }
     );
 
-    if (status.nModified === 1) {
+    if (result.nModified === 1) {
       return id;
     }
     return null;
@@ -306,7 +306,7 @@ export default class Accounts extends Base {
 
     // Insert the document but do not override any other accounts with the same
     // email address!
-    let insert = await this.collection.update(
+    let insert = await this.collection.updateOne(
       {
         $or: [
           { email: payload.email },
@@ -316,11 +316,10 @@ export default class Accounts extends Base {
       { $setOnInsert: account },
       { upsert: true }
     );
-
-    let didInsert = insert.upserted;
-    if (didInsert && didInsert[0]._id) {
+    let didInsert = insert.upsertedId;
+    if (didInsert && didInsert._id) {
       return {
-        id: didInsert[0]._id.toString(),
+        id: didInsert._id.toString(),
         beaconUUID: account.beaconUUID,
       };
     }
@@ -370,7 +369,7 @@ export default class Accounts extends Base {
      * enforced not to have duplicate publicKeys at the collection level those
      * protections do not work within a single document.
      */
-    let update = await this.collection.update(
+    let { result: update } = await this.collection.update(
       {
         _id: account._id,
         'accountTokens.publicKey': {
@@ -419,7 +418,7 @@ export default class Accounts extends Base {
       return this.error('checkPasswordFailure');
     }
 
-    let update = await this.collection.update({
+    let { result: update } = await this.collection.updateOne({
       _id: account._id,
       'accountTokens.publicKey': payload.publicKey,
     }, {
@@ -486,7 +485,7 @@ export default class Accounts extends Base {
     let created = new Date();
     let expires = created.valueOf() + PASSWORD_RESET_EXPIRES_MS;
 
-    let update = await this.collection.update(
+    let { result: update } = await this.collection.updateOne(
       { _id: account._id },
       {
         $set: {
@@ -544,7 +543,7 @@ export default class Accounts extends Base {
 
     let password = await this.scryptHash(payload.passwordHash);
 
-    let update = await this.collection.update(
+    let { result: update } = await this.collection.updateOne(
       { _id: account._id },
       {
         // Tokens should only be used once to prevent abuses!

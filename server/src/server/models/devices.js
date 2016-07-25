@@ -7,7 +7,7 @@
  */
 import * as Joi from 'joi';
 import Base from './base';
-import { ObjectId } from 'promised-mongo';
+import { ObjectID } from 'mongodb';
 import AccessToken from 'silk-api/src/access_token';
 
 const DEVICE_TYPES = [
@@ -24,7 +24,7 @@ const ACCOUNT_DEVICE_NUMBER_SCHEMA =
   Joi.number().integer().min(1).max(MAX_ACCOUNT_DEVICE_NUMBER);
 
 export type Record = {
-  _id: ObjectId;
+  _id: ObjectID;
   accountId: string;
   name: string;
   type: string;
@@ -101,7 +101,7 @@ export default class Devices extends Base {
     // When the record is persisted to disk...
     record: Joi.object().keys({
       // The account which this device belongs to.
-      accountId: Joi.object().type(ObjectId).required(),
+      accountId: Joi.object().type(ObjectID).required(),
 
       // Is this device currently registered.
       registered: Joi.boolean().required(),
@@ -124,7 +124,7 @@ export default class Devices extends Base {
       registration: Joi.object().keys({
         // We store a duplicate of accountId for the purposes of indexing certain
         // other fields only when the device is fully registered.
-        accountId: Joi.object().type(ObjectId),
+        accountId: Joi.object().type(ObjectID),
 
         // When the device is broadcasting an ibeacon we need   an id which is not
         // the same as the public key and can also fit in 2 bytes.
@@ -173,7 +173,7 @@ export default class Devices extends Base {
       return this.error('invalidRegistrationToken');
     }
 
-    const accountId = new ObjectId(payload.accountId);
+    const accountId = new ObjectID(payload.accountId);
     let record = this.validate({
       accountId,
       createdAt: new Date(),
@@ -192,7 +192,7 @@ export default class Devices extends Base {
 
     // Insert the document but do not override any other accounts with the same
     // public key!
-    let insert = await this.collection.update(
+    let { result: insert } = await this.collection.update(
       { 'accessToken.publicKey': record.accessToken.publicKey }, // query
       { $setOnInsert: record }, // insert only if no duplicates...
       { upsert: true }
@@ -211,7 +211,7 @@ export default class Devices extends Base {
   async unregister(payload: any): any {
     payload = this.validate(payload, 'unregister');
 
-    let result = await this.collection.update(
+    let { result } = await this.collection.update(
       { 'accessToken.publicKey': payload.publicKey },
       {
         $set: {
@@ -280,7 +280,8 @@ export default class Devices extends Base {
         },
       })
       .limit(1)
-      .sort({ 'registration.accountDeviceNumber': -1 });
+      .sort({ 'registration.accountDeviceNumber': -1 })
+      .toArray();
 
     const accountDeviceNumber = highestDeviceNumber[0] ?
       highestDeviceNumber[0].registration.accountDeviceNumber + 1 : 1;
@@ -291,7 +292,7 @@ export default class Devices extends Base {
       throw new Error(`Account has exceeded maximum number of beacon id's`);
     }
 
-    let update = await this.collection.update(
+    let { result: update } = await this.collection.update(
       { _id: device._id },
       {
         $set: {
@@ -326,8 +327,8 @@ export default class Devices extends Base {
   }
 
   async findAllByAccount(accountId: any): any {
-    if (!(accountId instanceof ObjectId)) {
-      accountId = new ObjectId(accountId);
+    if (!(accountId instanceof ObjectID)) {
+      accountId = new ObjectID(accountId);
     }
 
     return await this.collection.find({
@@ -358,7 +359,7 @@ export default class Devices extends Base {
     let listedPublicKeys = (await this.collection.find(
       query,
       { 'accessToken.publicKey': 1 } // only return accessToken.publicKey
-    )).reduce((result, value) => {
+    ).toArray()).reduce((result, value) => {
       result.add(value.accessToken.publicKey);
       return result;
     }, new Set());

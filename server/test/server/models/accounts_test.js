@@ -21,10 +21,10 @@ suite('accounts', () => {
     };
 
     let account = await subject.create(input);
+    assert.ok(account.id);
     let byPublicKey = await subject.findByPublicKey({
       publicKey: input.publicKey,
     });
-    assert.ok(account.id);
     assert.equal(byPublicKey._id, account.id);
   });
 

@@ -50,7 +50,7 @@ suite('base model', () => {
 
   test('.ensureIndexes', async () => {
     await subject.ensureIndexes();
-    let indexes = await subject.collection.getIndexes();
+    let indexes = await subject.collection.indexes();
     let last = indexes.pop();
     assert.deepEqual(last.key, { 'models.foo': 1 });
     assert.ok(last.unique, 'is unique');

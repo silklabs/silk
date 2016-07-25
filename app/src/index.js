@@ -2,18 +2,14 @@
  * @flow
  */
 
+// Install globals and set defaults for logging.
 import 'silk-react-native-blobs';
 import 'silk-react-native-transformer/globals';
-
-import CrashReporter from './libraries/CrashReporter';
-CrashReporter.start();
+import './libraries/config';
 
 import {AppRegistry} from 'react-native';
-import {configureLog} from 'silk-log';
-
-import Config from './libraries/config';
 import Root from './components/Root';
+import CrashReporter from './libraries/CrashReporter';
 
-console.reportErrorsAsExceptions = false; // eslint-disable-line no-console
-configureLog(Config.getDefault().debug);
+CrashReporter.start();
 AppRegistry.registerComponent('Silk', () => Root);

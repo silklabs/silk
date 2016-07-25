@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
 import { AsyncStorage } from 'react-native';
-import createLog from 'silk-log';
+import createLog, {configureLog} from 'silk-log';
 
 const log = createLog('Config');
 
@@ -118,3 +118,6 @@ class Config extends EventEmitter {
 
 const config = new Config();
 export default config;
+
+configureLog(config.getDefault().debug);
+console.reportErrorsAsExceptions = false; // eslint-disable-line no-console

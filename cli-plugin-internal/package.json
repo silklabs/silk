@@ -3,7 +3,7 @@
   "version": "0.20.0",
   "description": "Silk command line tool",
   "scripts": {
-    "lint": "eslint build lib",
+    "lint": "eslint .",
     "postinstall": "../npm_postinstall",
     "preinstall": "../npm_preinstall",
     "test": "./test/sanity.sh",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "babel-eslint": "6.1.0",
+    "bonjour": "3.5.0",
     "event-to-promise": "0.7.0",
     "mkdirp-promise": "1.0.3",
     "mz": "2.4.0",

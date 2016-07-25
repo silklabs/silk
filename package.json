@@ -155,7 +155,8 @@
     "babel-preset-react-native": "1.9.0",
     "react-native": "0.30.0-rc.0",
     "react-native-orientation": "1.17.0",
-    "redux-actions": "0.10.1"
+    "redux-actions": "0.10.1",
+    "bonjour": "3.5.0"
   },
   "engines": {
     "node": "^4.1.2",

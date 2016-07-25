@@ -16,10 +16,12 @@ import readline from 'readline';
 import eventToPromise from 'event-to-promise';
 
 import createAdb from './adb';
+import {AdbScanner} from './adb_scanner';
 import DotConfig from './dot_config';
 import Account from './account';
 import Device from './device';
 import API from 'silk-sdk/src/api';
+import {exec} from 'silk-sysutils';
 
 import type {ListDevicesOutputDevices} from 'silk-api/src/gen/account';
 
@@ -41,7 +43,7 @@ const COMMON_ARGS: {[key: string]: ArgSpec} = {
   }],
   deviceSerialNumber: [['-s'], {
     type: 'string',
-    help: 'specific device to configure (from adb devices)',
+    help: 'specific device to use (from adb devices)',
     dest: 'deviceSerialNumber',
     metavar: 'deviceSerialNumber',
   }],
@@ -347,5 +349,49 @@ export const removeAll = {
       let success = await account.unregisterDevice(deviceToken);
       console.log(`Removal ${success ? 'success' : 'failed'}`);
     }
+  },
+};
+
+type AdbScanArgs = {
+  deviceSerialNumber?: string;
+};
+
+export const adbscan = {
+  help: `
+    Scans the network for mDNS-based adb services and automatically connects to
+    them.
+  `,
+  arguments: [
+    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
+    COMMON_ARGS.deviceSerialNumber,
+  ],
+  main: async (args: AdbScanArgs) => {
+    const {deviceSerialNumber} = args;
+
+    // Start by disconnecting all network adb devices
+    await exec('adb', ['disconnect']);
+
+    let scanner = new AdbScanner(deviceSerialNumber);
+    scanner.on('found', async (host) => {
+      const device = `${host.ip}:${host.port}`;
+      await exec('adb', ['connect', device]);
+      console.log('Connected to', device);
+    });
+    scanner.on('lost', async (host) => {
+      const device = `${host.ip}:${host.port}`;
+      await exec('adb', ['disconnect', device]);
+      console.log('Disconnected from', device);
+    });
+    scanner.start();
+
+    // Wait until the user wants to exit
+    let rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    rl.question(`adb network scanner started, press ENTER to exit\n`, () => {
+      rl.close();
+      process.exit(0);
+    });
   },
 };

@@ -22,7 +22,6 @@ import CrashMetadata from './models/crash_metadata';
 import TimeMetadata from './models/time_metadata';
 import Accounts from './models/accounts';
 import Devices from './models/devices';
-import Nonce from './models/nonce';
 import EmailSender from './email_sender';
 import InfluxDB from '../influxdb_client';
 import Scopes from './scopes';
@@ -32,7 +31,6 @@ import SasSigner from '../sas_signer';
 
 export type RouteContext = {
   app: any;
-  nonce: Nonce;
   accounts: Accounts;
   devices: Devices;
   emailSender: EmailSender;
@@ -102,7 +100,6 @@ export default async function main (config: any): any {
   let db = await createDb(config);
   let crashMeta = new CrashMetadata(db, blobHandler);
   let timeMeta = new TimeMetadata(db, blobHandler);
-  let nonce = new Nonce(db);
   let accounts = new Accounts(db);
   let devices = new Devices(db);
 
@@ -110,7 +107,6 @@ export default async function main (config: any): any {
   await Promise.all([
     crashMeta,
     timeMeta,
-    nonce,
     accounts,
     devices,
   ].map(model => model.ensureIndexes()));
@@ -134,7 +130,6 @@ export default async function main (config: any): any {
 
   const context: RouteContext = {
     app,
-    nonce,
     accounts,
     devices,
     emailSender,

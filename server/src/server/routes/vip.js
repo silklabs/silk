@@ -34,7 +34,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
    */
 
   routes.use(PREFIX, jwtMiddleware({
-    nonce: ctx.nonce,
+
     signatureProvider: null,
     publicKeyProvider: async publicKey => publicKey,
   }));

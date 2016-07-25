@@ -10,7 +10,6 @@ import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
 
 import type { ExpressRoutes } from 'api-schema';
-import type Nonce from '../models/nonce';
 import type Accounts from '../models/accounts';
 
 const PREFIX = '/v1/test/';
@@ -24,7 +23,6 @@ function sleep(amount) {
 type RouteContext = {
   test: Array<any>;
   accounts: Accounts;
-  nonce: Nonce;
 }
 
 export default function (ctx: RouteContext): ExpressRoutes {
@@ -39,7 +37,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
   });
 
   let options = {
-    nonce: ctx.nonce,
+
     signatureProvider: null,
     publicKeyProvider: async (publicKey) => {
       // Attempt to find an account with this id...

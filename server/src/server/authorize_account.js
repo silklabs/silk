@@ -7,7 +7,6 @@ import jwtMiddleware from './jwt';
 import createLog from 'silk-log';
 
 import type Account from './models/accounts';
-import type Nonce from './models/nonce';
 import type { MiddlewareFn } from './express_types';
 import type { MiddlewareOverrides } from './jwt';
 
@@ -15,7 +14,6 @@ const log = createLog('authorize:account');
 
 export type AuthorizeAccountConfig = {
   accounts: Account;
-  nonce: Nonce;
 }
 
 export default function (ctx: AuthorizeAccountConfig, overrides: ?MiddlewareOverrides): MiddlewareFn {
@@ -44,7 +42,7 @@ export default function (ctx: AuthorizeAccountConfig, overrides: ?MiddlewareOver
   let config = Object.assign(
     {},
     overrides,
-    { nonce: ctx.nonce, publicKeyProvider: method }
+    { publicKeyProvider: method }
   );
 
   return jwtMiddleware(config);

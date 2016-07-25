@@ -13,7 +13,6 @@ import mutateJWT from '../mutate_jwt';
 import testRoutes from '../../../src/server/routes/test';
 import jsonParser from '../../../src/server/json';
 import Accounts from '../../../src/server/models/accounts';
-import Nonce from '../../../src/server/models/nonce';
 
 
 /**
@@ -28,15 +27,13 @@ suite('security validation tests', () => {
   let canonicalURL;
 
   // Setup the canonical server resources...
-  let accounts, app, nonce;
+  let accounts, app;
   setup(async () => {
-    nonce = new Nonce(context.db);
     accounts = new Accounts(context.db);
     app = express();
     app.use(jsonParser);
     app.use(testRoutes({
       accounts,
-      nonce,
     }).app);
 
     canonicalURL = await launchApp(app);
@@ -106,47 +103,6 @@ suite('security validation tests', () => {
   teardown(() => {
     // Ensure timekeeper is reset so not to break other things.
     timekeeper.reset();
-  });
-
-  /**
-   * Our JWT tokens may be used in non-ssl situations while we use the http
-   * protocol below primarily we are verifying our implementation of how we
-   * check the JWT tokens.
-   */
-  test('unmodified request replay attack...', async () => {
-    // Initiate the request but do not wait for it to be completed...
-    testApi.aPut();
-
-    let req = await eventToPromise(intercept, 'request');
-    let canonicalReply = await req.send(canonicalURL);
-
-    // If the request has been sent to something we do not control (as intercept
-    // mimics) then sends it back to us we are unable to prevent this (how is
-    // the server supposed to know?)
-    assert.equal(canonicalReply.res.status, 200);
-
-    // Now attempt to replay the captured request.
-    let canonicalReplayReply = await req.send(canonicalURL);
-
-    // This should fail since the server has seen this particular request
-    // before.
-    assert.notEqual(canonicalReplayReply.res.status, 200);
-
-    // Purge all nonce(s) to simulate expired nonce values...
-    let del = await nonce.collection.remove({});
-    assert.ok(del.ok, 'deleted all nonce');
-
-    // Move internal time into the future to simulate a replay attack after the
-    // token has expired.
-    let future = new Date(Date.now() + 60 * 1000 * 2);
-    timekeeper.freeze(future);
-
-    // Now attempt to replay the captured request.
-    let canonicalReplayReplyExpired = await req.send(canonicalURL);
-
-    // Even though the server no longer remembers the token it should still fail
-    // because the token is now expired.
-    assert.notEqual(canonicalReplayReplyExpired.res.status, 200);
   });
 
   /**

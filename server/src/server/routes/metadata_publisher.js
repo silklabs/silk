@@ -19,7 +19,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   routes.use(PREFIX, authorizeDevice({
-    nonce: ctx.nonce,
+
     devices: ctx.devices,
   }));
 

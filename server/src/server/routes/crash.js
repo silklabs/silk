@@ -27,7 +27,6 @@ export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
 
   routes.use(PREFIX, authorizeAccount({
-    nonce: ctx.nonce,
     accounts: ctx.accounts,
   }));
 

@@ -26,7 +26,6 @@ import runMiddleware from '../run_middleware';
 
 import Devices from '../server/models/devices';
 import Accounts from '../server/models/accounts';
-import Nonce from '../server/models/nonce';
 import InfluxDB from '../influxdb_client';
 import MetricsAgent from '../metrics_agent';
 import Residents from './residents';
@@ -34,7 +33,6 @@ import ServerState from './server_state';
 
 export type RouteContext = {
   devices: Devices;
-  nonce: Nonce;
   accounts: Accounts;
   host: string;
   influxdb: ?InfluxDB;
@@ -52,7 +50,6 @@ function signatureProvider(req: any): ?string {
 async function main (config: any): any {
   let server = http.createServer(() => {} /* make flow happy */);
   const db = await createDb(config);
-  const nonce = new Nonce(db);
   const devices = new Devices(db);
   const accounts = new Accounts(db);
 
@@ -110,7 +107,6 @@ async function main (config: any): any {
   let host = `${config.signaling.host}:${port}`;
 
   const ctx: RouteContext = {
-    nonce,
     devices,
     accounts,
     influxdb,
@@ -136,8 +132,8 @@ async function main (config: any): any {
   residents.start();
 
   const auth = {
-    device: authorizeDevice({ devices, nonce }, { signatureProvider }),
-    account: authorizeAccount({ accounts, nonce }, { signatureProvider }),
+    device: authorizeDevice({ devices }, { signatureProvider }),
+    account: authorizeAccount({ accounts }, { signatureProvider }),
   };
 
   const setup = {

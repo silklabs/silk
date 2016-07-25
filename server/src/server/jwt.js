@@ -1,56 +1,13 @@
 /* @flow */
 
 import jwt from 'silk-jsonwebtoken';
-import * as Joi from 'joi';
 import createLog from 'silk-log';
 
 import jwa from './jwa';
 
-import type Nonce from './models/nonce';
 import type { RouteNextFn, MiddlewareFn } from './express_types';
 
 const log = createLog('routes:jwt');
-
-/**
- * The "lifetime" of a token this value must be plus or minus within this amount
- * of time (translates to up to 2 minutes the token is valid) to allow for time
- * drift.
- */
-const TOKEN_LIFETIME = 60 * 1000;
-
-/**
- * Validation rules for the claim values of the JWT.
- */
-const CLAIM_SCHEMA = Joi.object().keys({
-  // A request unique value (UUID).
-  jti: Joi.string().guid().required(),
-  // Issued time (as json date).
-  iat: Joi.date().required(),
-}).required().unknown(true);
-
-/**
- * Validates the basic form of the claim such as presence of jti/iss and
- * ensuring the token was issued reasonably recently.
- */
-function validateClaim(jwt) {
-  Joi.assert(jwt, CLAIM_SCHEMA);
-  let { jti, iat } = jwt;
-
-  let now = Date.now();
-  let issued = new Date(iat);
-  let delta = Math.abs(Date.now() - issued.valueOf());
-
-  if (delta > TOKEN_LIFETIME) {
-    throw new Error(`
-      Attmpted to use expired JWT token: ${jti}
-
-        Now: ${new Date(now)}
-        Issued: ${issued}
-    `);
-  }
-
-  return jti;
-}
 
 function getSignature(req: any): ?string {
   // Authorization header is required.
@@ -74,7 +31,6 @@ export type PublicKeyProvider = ((publicKey: string, req: any) => Promise<?strin
 export type SignatureProvider = ((req: any, res: any) => ?string);
 
 type MiddlewareOptions = {
-  nonce: Nonce;
   publicKeyProvider: PublicKeyProvider;
   signatureProvider: ?SignatureProvider;
 };
@@ -86,12 +42,9 @@ export type MiddlewareOverrides = {
 
 /**
  * JWT Authorization middleware.
- *
- * @param {Object} nonce database.
- * @param {Function} method to invoke to fetch public key.
  */
 export default function (options: MiddlewareOptions): MiddlewareFn {
-  let {nonce, publicKeyProvider, signatureProvider} = options || {};
+  let {publicKeyProvider, signatureProvider} = options || {};
   let signatureProviderFn = signatureProvider || getSignature;
 
 
@@ -158,30 +111,6 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
       res.sendStatus(400);
       return;
     }
-
-    // Validate the claim of the JWT....
-    let jti = validateClaim(verified);
-
-    // Check the nonce database...
-    let jtiUsed = await nonce.check({ value: jti });
-    if (jtiUsed) {
-      log.info('Attempted to use existing JTI token', jti);
-      res.sendStatus(400);
-      return;
-    }
-
-    await nonce.create({
-      value: jti,
-      created: new Date(),
-      /**
-       * This ensures the JWT cannot be used in a replay attack.
-       *
-       * We set the expiry intentionally to twice the lifetime of the token to
-       * allow some extra buffer since timing is somewhat fuzzy from machine to
-       * machine.
-       */
-      expires: new Date(Date.now() + (TOKEN_LIFETIME * 2)),
-    });
 
     req.publicKey = publicKey;
     req.signed = verified;

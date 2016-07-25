@@ -17,7 +17,6 @@ import authorizeAccount from '../server/authorize_account';
 import runMiddleware from '../run_middleware';
 import Devices from '../server/models/devices';
 import Accounts from '../server/models/accounts';
-import Nonce from '../server/models/nonce';
 import AccountRoom from './account_room';
 import InfluxDB from '../influxdb_client';
 import MetricsAgent from '../metrics_agent';
@@ -26,7 +25,6 @@ import type {Socket, Manager} from 'socket.io';
 
 export type RouteContext = {
   devices: Devices;
-  nonce: Nonce;
   accounts: Accounts;
   io: Manager;
   influxdb: ?InfluxDB;
@@ -50,7 +48,6 @@ export default async function main (config: any): any {
   });
 
   let db = await createDb(config);
-  let nonce = new Nonce(db);
   let devices = new Devices(db);
   let accounts = new Accounts(db);
 
@@ -63,7 +60,6 @@ export default async function main (config: any): any {
   }
 
   const ctx: RouteContext = {
-    nonce,
     devices,
     accounts,
     io,
@@ -78,8 +74,8 @@ export default async function main (config: any): any {
   }
 
   const auth = {
-    device: authorizeDevice({ devices, nonce }, { signatureProvider }),
-    account: authorizeAccount({ accounts, nonce }, { signatureProvider }),
+    device: authorizeDevice({ devices }, { signatureProvider }),
+    account: authorizeAccount({ accounts }, { signatureProvider }),
   };
 
   function getOrCreateRoom(accountId: string): AccountRoom {

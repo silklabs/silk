@@ -4,7 +4,7 @@
  * @flow weak
 */
 import * as Joi from 'joi';
-import mongo from 'promised-mongo';
+import { ObjectID } from 'mongodb';
 import Base from './base';
 
 const TYPES = Joi.string().only(['log', 'video', 'preview', 'event']).required();
@@ -14,7 +14,7 @@ const MONGO_ID_REGEX = /[0-9a-f]{24}/;
 
 function idQuery(id) {
   if (id.match(MONGO_ID_REGEX)) {
-    return {_id: new mongo.ObjectId(id)};
+    return {_id: new ObjectID(id)};
   }
   return {id};
 }
@@ -241,8 +241,8 @@ export default class TimeMetadata extends Base {
     if (payload.id) {
       return await this.createOrUpdate(payload);
     }
-    let newItem = await this.collection.insert(payload);
-    return { id: newItem._id.toString() };
+    const { ops } = await this.collection.insertOne(payload);
+    return { id: ops[0]._id.toString() };
   }
 
   async update(id, payload): Promise<MetadataId> {
@@ -261,11 +261,11 @@ export default class TimeMetadata extends Base {
     let existing = await this.collection.findOne({id});
     if (existing) {
       await this.collection.update(
-        { _id: new mongo.ObjectId(existing._id) },
+        { _id: new ObjectID(existing._id) },
         { $set: payload }
       );
     } else {
-      await this.collection.insert(payload);
+      await this.collection.insertOne(payload);
     }
     return { id };
   }

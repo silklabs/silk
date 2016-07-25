@@ -1,7 +1,7 @@
 /* @flow */
 
 import * as Joi from 'joi';
-import mongo from 'promised-mongo';
+import { ObjectID } from 'mongodb';
 import Base from './base';
 import createLog from 'silk-log';
 
@@ -54,9 +54,9 @@ export default class CrashMetadata extends Base {
       timeStamp: new Date(payload.timeStamp),
     });
 
-    let newItem = await this.collection.insert(record);
+    const { ops } = await this.collection.insertOne(record);
 
-    const id = newItem._id.toString();
+    const id = ops[0]._id.toString();
     log.debug(`Saved as id '${id}'`);
 
     return id;
@@ -65,7 +65,7 @@ export default class CrashMetadata extends Base {
   async get(id: any): any {
     let _id;
     try {
-      _id = new mongo.ObjectId(id);
+      _id = new ObjectID(id);
     } catch (e) {
       log.warn(`${e}: '%s'`, id);
       throw e;

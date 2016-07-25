@@ -59,7 +59,7 @@ suite('account auth', () => {
     // Idempotent but should not result in multiple devices in list.
     let allByPubKey = await devices.collection.find({
       'accessToken.publicKey': deviceAccessToken.toString(),
-    });
+    }).toArray();
     assert.equal(allByPubKey.length, 1);
 
     let device = await devices.findByPublicKey({

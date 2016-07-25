@@ -1,12 +1,13 @@
-import mongo from 'promised-mongo';
+import { MongoClient, Logger } from 'mongodb';
+
 
 /**
 Given a config return a database connection.
 */
 export default async function (config) {
+  Logger.setLevel('info');
   // XXX: this could and may be async in the future.
-  return mongo(config.db.connectionString, {
-    loggerLevel: 'info',
+  return MongoClient.connect(config.db.connectionString, {
     reconnectTries: Infinity,
   });
 }

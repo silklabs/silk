@@ -12,12 +12,12 @@
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 
-#import "RTCICEServer.h"
-#import "RTCPair.h"
-#import "RTCMediaConstraints.h"
-#import "RTCPeerConnection+Block.h"
-#import "RTCICECandidate.h"
-#import "RTCStatsReport.h"
+#import <WebRTC/RTCIceServer.h>
+#import <WebRTC/RTCMediaConstraints.h>
+#import <WebRTC/RTCIceCandidate.h>
+#import <WebRTC/RTCStatsReport.h>
+#import <WebRTC/RTCSessionDescription.h>
+#import <WebRTC/RTCConfiguration.h>
 
 #import "WebRTCModule+RTCMediaStream.h"
 #import "WebRTCModule+RTCPeerConnection.h"
@@ -38,11 +38,10 @@
 
 @implementation WebRTCModule (RTCPeerConnection)
 
-RCT_EXPORT_METHOD(peerConnectionInit:(NSDictionary *)configuration objectID:(nonnull NSNumber *)objectID)
+RCT_EXPORT_METHOD(peerConnectionInit:(RTCConfiguration*)configuration objectID:(nonnull NSNumber *)objectID)
 {
-  NSArray *iceServers = [self createIceServers:configuration[@"iceServers"]];
 
-  RTCPeerConnection *peerConnection = [self.peerConnectionFactory peerConnectionWithICEServers:iceServers constraints:[self defaultPeerConnectionConstraints] delegate:self];
+  RTCPeerConnection *peerConnection = [self.peerConnectionFactory peerConnectionWithConfiguration:configuration constraints:[self defaultPeerConnectionConstraints] delegate:self];
   peerConnection.reactTag = objectID;
   self.peerConnections[objectID] = peerConnection;
 }
@@ -57,8 +56,7 @@ RCT_EXPORT_METHOD(peerConnectionAddStream:(nonnull NSNumber *)streamID objectID:
   if (!peerConnection) {
     return;
   }
-  BOOL result = [peerConnection addStream:stream];
-  NSLog(@"result:%i", result);
+  [peerConnection addStream:stream];
 }
 
 RCT_EXPORT_METHOD(peerConnectionRemoveStream:(nonnull NSNumber *)streamID objectID:(nonnull NSNumber *)objectID)
@@ -82,16 +80,18 @@ RCT_EXPORT_METHOD(peerConnectionCreateOffer:(nonnull NSNumber *)objectID callbac
     return;
   }
 
-  [peerConnection createOfferWithCallback:^(RTCSessionDescription *sdp, NSError *error) {
+  RTCMediaConstraints *constraints = [self defaultOfferConstraints];
+  [peerConnection offerForConstraints: constraints completionHandler: ^(RTCSessionDescription *sdp, NSError *error) {
     if (error) {
       callback(@[@(NO),
                  @{@"type": @"CreateOfferFailed", @"message": error.userInfo[@"error"]}
                  ]);
     } else {
-      callback(@[@(YES), @{@"sdp": sdp.description, @"type": sdp.type}]);
+      NSString *type = [RTCSessionDescription stringForType:sdp.type];
+      callback(@[@(YES), @{@"sdp": sdp.sdp, @"type": type}]);
     }
 
-  } constraints:nil];
+  }];
 }
 
 - (RTCMediaConstraints *)defaultAnswerConstraints {
@@ -99,10 +99,11 @@ RCT_EXPORT_METHOD(peerConnectionCreateOffer:(nonnull NSNumber *)objectID callbac
 }
 
 - (RTCMediaConstraints *)defaultOfferConstraints {
-  NSArray *mandatoryConstraints = @[
-                                    [[RTCPair alloc] initWithKey:@"OfferToReceiveAudio" value:@"true"],
-                                    [[RTCPair alloc] initWithKey:@"OfferToReceiveVideo" value:@"true"]
-                                    ];
+  NSDictionary *mandatoryConstraints = @{
+    @"OfferToReceiveAudio": @"true",
+    @"OfferToReceiveVideo": @"true",
+  };
+
   RTCMediaConstraints* constraints =
   [[RTCMediaConstraints alloc]
    initWithMandatoryConstraints:mandatoryConstraints
@@ -111,9 +112,10 @@ RCT_EXPORT_METHOD(peerConnectionCreateOffer:(nonnull NSNumber *)objectID callbac
 }
 
 - (RTCMediaConstraints *)defaultPeerConnectionConstraints {
-  NSArray *optionalConstraints = @[
-                                   [[RTCPair alloc] initWithKey:@"DtlsSrtpKeyAgreement" value:@"true"]
-                                   ];
+  // Allow this for interoperability with firefox...
+  NSDictionary *optionalConstraints = @{
+    @"DtlsSrtpKeyAgreement": @"true"
+  };
   RTCMediaConstraints* constraints =
   [[RTCMediaConstraints alloc]
    initWithMandatoryConstraints:nil
@@ -128,27 +130,28 @@ RCT_EXPORT_METHOD(peerConnectionCreateAnswer:(nonnull NSNumber *)objectID callba
     return;
   }
 
-  [peerConnection createAnswerWithCallback:^(RTCSessionDescription *sdp, NSError *error) {
+  RTCMediaConstraints *constraints = [self defaultAnswerConstraints];
+  [peerConnection answerForConstraints: constraints completionHandler: ^(RTCSessionDescription *sdp, NSError *error) {
     if (error) {
       callback(@[@(NO),
-                 @{@"type": @"CreateAnsweFailed", @"message": error.userInfo[@"error"]}
+                 @{@"type": @"CreateAnswerFailed", @"message": error.userInfo[@"error"]}
                  ]);
     } else {
-      callback(@[@(YES), @{@"sdp": sdp.description, @"type": sdp.type}]);
+      NSString *type = [RTCSessionDescription stringForType:sdp.type];
+      callback(@[@(YES), @{@"sdp": sdp.sdp, @"type": type}]);
     }
 
-  } constraints:[self defaultAnswerConstraints]];
+  }];
 }
 
-RCT_EXPORT_METHOD(peerConnectionSetLocalDescription:(NSDictionary *)sdpJSON objectID:(nonnull NSNumber *)objectID callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(peerConnectionSetLocalDescription:(RTCSessionDescription *)sdp objectID:(nonnull NSNumber *)objectID callback:(RCTResponseSenderBlock)callback)
 {
-  RTCSessionDescription *sdp = [[RTCSessionDescription alloc] initWithType:sdpJSON[@"type"] sdp:sdpJSON[@"sdp"]];
   RTCPeerConnection *peerConnection = self.peerConnections[objectID];
   if (!peerConnection) {
     return;
   }
 
-  [peerConnection setLocalDescriptionWithCallback:^(NSError *error) {
+  [peerConnection setLocalDescription:sdp completionHandler: ^(NSError *error) {
     if (error) {
       id errorResponse = @{@"name": @"SetLocalDescriptionFailed",
                            @"message": error.localizedDescription};
@@ -156,17 +159,17 @@ RCT_EXPORT_METHOD(peerConnectionSetLocalDescription:(NSDictionary *)sdpJSON obje
     } else {
       callback(@[@(YES)]);
     }
-  } sessionDescription:sdp];
+  }];
 }
-RCT_EXPORT_METHOD(peerConnectionSetRemoteDescription:(NSDictionary *)sdpJSON objectID:(nonnull NSNumber *)objectID callback:(RCTResponseSenderBlock)callback)
+
+RCT_EXPORT_METHOD(peerConnectionSetRemoteDescription:(RTCSessionDescription *)sdp objectID:(nonnull NSNumber *)objectID callback:(RCTResponseSenderBlock)callback)
 {
-  RTCSessionDescription *sdp = [[RTCSessionDescription alloc] initWithType:sdpJSON[@"type"] sdp:sdpJSON[@"sdp"]];
   RTCPeerConnection *peerConnection = self.peerConnections[objectID];
   if (!peerConnection) {
     return;
   }
 
-  [peerConnection setRemoteDescriptionWithCallback:^(NSError *error) {
+  [peerConnection setRemoteDescription: sdp completionHandler: ^(NSError *error) {
     if (error) {
       id errorResponse = @{@"name": @"SetRemoteDescriptionFailed",
                            @"message": error.localizedDescription};
@@ -174,20 +177,19 @@ RCT_EXPORT_METHOD(peerConnectionSetRemoteDescription:(NSDictionary *)sdpJSON obj
     } else {
       callback(@[@(YES)]);
     }
-  } sessionDescription:sdp];
+  }];
 }
 
-RCT_EXPORT_METHOD(peerConnectionAddICECandidate:(NSDictionary*)candidateJSON objectID:(nonnull NSNumber *)objectID callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(peerConnectionAddICECandidate:(RTCIceCandidate*)candidate objectID:(nonnull NSNumber *)objectID callback:(RCTResponseSenderBlock)callback)
 {
-  RTCICECandidate *candidate = [[RTCICECandidate alloc] initWithMid:candidateJSON[@"sdpMid"] index:[candidateJSON[@"sdpMLineIndex"] integerValue] sdp:candidateJSON[@"candidate"]];
   RTCPeerConnection *peerConnection = self.peerConnections[objectID];
   if (!peerConnection) {
     return;
   }
 
-  BOOL result = [peerConnection addICECandidate:candidate];
-  NSLog(@"addICECandidateresult:%i, %@", result, candidate);
-  callback(@[@(result)]);
+  [peerConnection addIceCandidate:candidate];
+  NSLog(@"addICECandidateresult: %@", candidate);
+  callback(@[@true]);
 }
 
 RCT_EXPORT_METHOD(peerConnectionClose:(nonnull NSNumber *)objectID)
@@ -213,12 +215,15 @@ RCT_EXPORT_METHOD(peerConnectionGetStats:(nonnull NSNumber *)trackID objectID:(n
     return;
   }
 
-  BOOL result = [peerConnection getStatsWithCallback:^(NSArray *stats) {
+  [peerConnection statsForTrack:track
+                            statsOutputLevel: RTCStatsOutputLevelStandard
+                            completionHandler: ^(NSArray<RTCStatsReport *> *stats) {
     NSMutableArray *statsCollection = [NSMutableArray new];
     for (RTCStatsReport *statsReport in stats) {
       NSMutableArray *valuesCollection = [NSMutableArray new];
-      for (RTCPair *pair in statsReport.values) {
-        [valuesCollection addObject:@{pair.key: pair.value}];
+      for (NSString *key in statsReport.values) {
+        NSString *value = [statsReport.values objectForKey:key];
+        [valuesCollection addObject:@{key: value}];
       }
       [statsCollection addObject:@{
                                    @"id": statsReport.reportId,
@@ -228,91 +233,52 @@ RCT_EXPORT_METHOD(peerConnectionGetStats:(nonnull NSNumber *)trackID objectID:(n
                                    }];
     }
     callback(@[statsCollection]);
-    //    NSLog(@"getStatsWithCallback: %@, %@", streamID, stats);
-  } mediaStreamTrack:track statsOutputLevel:RTCStatsOutputLevelStandard];
-  NSLog(@"getStatsResult: %i", result);
+  }];
 }
 
-- (NSArray*)createIceServers:(NSArray*)iceServersConfiguration {
-  NSMutableArray *iceServers = [NSMutableArray new];
-  if (iceServersConfiguration) {
-    for (NSDictionary *iceServerConfiguration in iceServersConfiguration) {
-
-      NSString *username = iceServerConfiguration[@"username"];
-      if (!username) {
-        username = @"";
-      }
-      NSString *credential = iceServerConfiguration[@"credential"];
-      if (!credential) {
-        credential = @"";
-      }
-
-      if (iceServerConfiguration[@"url"]) {
-        NSString *url = iceServerConfiguration[@"url"];
-
-        RTCICEServer *iceServer = [[RTCICEServer alloc] initWithURI:[NSURL URLWithString:url] username:username password:credential];
-        [iceServers addObject:iceServer];
-      } else if (iceServerConfiguration[@"urls"]) {
-        if ([iceServerConfiguration[@"urls"] isKindOfClass:[NSString class]]) {
-          NSString *url = iceServerConfiguration[@"urls"];
-
-          RTCICEServer *iceServer = [[RTCICEServer alloc] initWithURI:[NSURL URLWithString:url] username:username password:credential];
-          [iceServers addObject:iceServer];
-        } else if ([iceServerConfiguration[@"urls"] isKindOfClass:[NSArray class]]) {
-          NSArray *urls = iceServerConfiguration[@"urls"];
-          for (NSString *url in urls) {
-            RTCICEServer *iceServer = [[RTCICEServer alloc] initWithURI:[NSURL URLWithString:url] username:username password:credential];
-            [iceServers addObject:iceServer];
-          }
-        }
-      }
-    }
-  }
-  return iceServers;
-}
-
-- (NSString *)stringForICEConnectionState:(RTCICEConnectionState)state {
+- (NSString *)stringForICEConnectionState:(RTCIceConnectionState)state {
   switch (state) {
-    case RTCICEConnectionNew: return @"new";
-    case RTCICEConnectionChecking: return @"checking";
-    case RTCICEConnectionConnected: return @"connected";
-    case RTCICEConnectionCompleted: return @"completed";
-    case RTCICEConnectionFailed: return @"failed";
-    case RTCICEConnectionDisconnected: return @"disconnected";
-    case RTCICEConnectionClosed: return @"closed";
+    case RTCIceConnectionStateNew: return @"new";
+    case RTCIceConnectionStateChecking: return @"checking";
+    case RTCIceConnectionStateConnected: return @"connected";
+    case RTCIceConnectionStateCompleted: return @"completed";
+    case RTCIceConnectionStateFailed: return @"failed";
+    case RTCIceConnectionStateDisconnected: return @"disconnected";
+    case RTCIceConnectionStateClosed: return @"closed";
+    case RTCIceConnectionStateCount: return @"count";
   }
   return nil;
 }
 
-- (NSString *)stringForICEGatheringState:(RTCICEGatheringState)state {
+- (NSString *)stringForICEGatheringState:(RTCIceGatheringState)state {
   switch (state) {
-    case RTCICEGatheringNew: return @"new";
-    case RTCICEGatheringGathering: return @"gathering";
-    case RTCICEGatheringComplete: return @"complete";
+    case RTCIceGatheringStateNew: return @"new";
+    case RTCIceGatheringStateGathering: return @"gathering";
+    case RTCIceGatheringStateComplete: return @"complete";
   }
   return nil;
 }
 
 - (NSString *)stringForSignalingState:(RTCSignalingState)state {
   switch (state) {
-    case RTCSignalingStable: return @"stable";
-    case RTCSignalingHaveLocalOffer: return @"have-local-offer";
-    case RTCSignalingHaveLocalPrAnswer: return @"have-local-pranswer";
-    case RTCSignalingHaveRemoteOffer: return @"have-remote-offer";
-    case RTCSignalingHaveRemotePrAnswer: return @"have-remote-pranswer";
-    case RTCSignalingClosed: return @"closed";
+    case RTCSignalingStateStable: return @"stable";
+    case RTCSignalingStateHaveLocalOffer: return @"have-local-offer";
+    case RTCSignalingStateHaveLocalPrAnswer: return @"have-local-pranswer";
+    case RTCSignalingStateHaveRemoteOffer: return @"have-remote-offer";
+    case RTCSignalingStateHaveRemotePrAnswer: return @"have-remote-pranswer";
+    case RTCSignalingStateClosed: return @"closed";
   }
   return nil;
 }
 
 #pragma mark - RTCPeerConnectionDelegate methods
 
-- (void)peerConnection:(RTCPeerConnection *)peerConnection signalingStateChanged:(RTCSignalingState)newState {
+- (void)peerConnection:(RTCPeerConnection *)peerConnection didChangeSignalingState:(RTCSignalingState)newState {
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"peerConnectionSignalingStateChanged" body:
    @{@"id": peerConnection.reactTag, @"signalingState": [self stringForSignalingState:newState]}];
 }
 
-- (void)peerConnection:(RTCPeerConnection *)peerConnection addedStream:(RTCMediaStream *)stream {
+- (void)peerConnection:(RTCPeerConnection *)peerConnection didAddStream:(RTCMediaStream *)stream {
   NSNumber *objectID = @(self.mediaStreamId++);
 
   stream.reactTag = objectID;
@@ -321,13 +287,13 @@ RCT_EXPORT_METHOD(peerConnectionGetStats:(nonnull NSNumber *)trackID objectID:(n
     NSNumber *trackId = @(self.trackId++);
     track.reactTag = trackId;
     self.tracks[trackId] = track;
-    [tracks addObject:@{@"id": trackId, @"kind": track.kind, @"label": track.label, @"enabled": @(track.isEnabled), @"remote": @(YES), @"readyState": @"live"}];
+    [tracks addObject:@{@"id": trackId, @"kind": track.kind, @"label": track.trackId, @"enabled": @(track.isEnabled), @"remote": @(YES), @"readyState": @"live"}];
   }
   for (RTCAudioTrack *track in stream.audioTracks) {
     NSNumber *trackId = @(self.trackId++);
     track.reactTag = trackId;
     self.tracks[trackId] = track;
-    [tracks addObject:@{@"id": trackId, @"kind": track.kind, @"label": track.label, @"enabled": @(track.isEnabled), @"remote": @(YES), @"readyState": @"live"}];
+    [tracks addObject:@{@"id": trackId, @"kind": track.kind, @"label": track.trackId, @"enabled": @(track.isEnabled), @"remote": @(YES), @"readyState": @"live"}];
   }
 
   self.mediaStreams[objectID] = stream;
@@ -335,7 +301,7 @@ RCT_EXPORT_METHOD(peerConnectionGetStats:(nonnull NSNumber *)trackID objectID:(n
    @{@"id": peerConnection.reactTag, @"streamId": stream.reactTag, @"tracks": tracks}];
 }
 
-- (void)peerConnection:(RTCPeerConnection *)peerConnection removedStream:(RTCMediaStream *)stream {
+- (void)peerConnection:(RTCPeerConnection *)peerConnection didRemoveStream:(RTCMediaStream *)stream {
   // TODO: remove stream from self.mediaStreams
   if (self.mediaStreams[stream.reactTag]) {
     RTCMediaStream *mediaStream = self.mediaStreams[stream.reactTag];
@@ -351,22 +317,22 @@ RCT_EXPORT_METHOD(peerConnectionGetStats:(nonnull NSNumber *)trackID objectID:(n
    @{@"id": peerConnection.reactTag, @"streamId": stream.reactTag}];
 }
 
-- (void)peerConnectionOnRenegotiationNeeded:(RTCPeerConnection *)peerConnection {
+- (void)peerConnectionShouldNegotiate:(RTCPeerConnection *)peerConnection {
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"peerConnectionOnRenegotiationNeeded" body:
    @{@"id": peerConnection.reactTag}];
 }
 
-- (void)peerConnection:(RTCPeerConnection *)peerConnection iceConnectionChanged:(RTCICEConnectionState)newState {
+- (void)peerConnection:(RTCPeerConnection *)peerConnection didChangeIceConnectionState:(RTCIceConnectionState)newState {
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"peerConnectionIceConnectionChanged" body:
    @{@"id": peerConnection.reactTag, @"iceConnectionState": [self stringForICEConnectionState:newState]}];
 }
 
-- (void)peerConnection:(RTCPeerConnection *)peerConnection iceGatheringChanged:(RTCICEGatheringState)newState {
+- (void)peerConnection:(RTCPeerConnection *)peerConnection didChangeIceGatheringState:(RTCIceGatheringState)newState {
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"peerConnectionIceGatheringChanged" body:
    @{@"id": peerConnection.reactTag, @"iceGatheringState": [self stringForICEGatheringState:newState]}];
 }
 
-- (void)peerConnection:(RTCPeerConnection *)peerConnection gotICECandidate:(RTCICECandidate *)candidate {
+- (void)peerConnection:(RTCPeerConnection *)peerConnection didGenerateIceCandidate:(RTCIceCandidate *)candidate {
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"peerConnectionGotICECandidate" body:
    @{@"id": peerConnection.reactTag, @"candidate": @{@"candidate": candidate.sdp, @"sdpMLineIndex": @(candidate.sdpMLineIndex), @"sdpMid": candidate.sdpMid}}];
 }

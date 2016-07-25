@@ -6,21 +6,22 @@
 #import "SLKBlobManager.h"
 
 #import "WebRTCModule+RTCDataChannel.h"
+#import <WebRTC/RTCDataChannelConfiguration.h>
 
 @implementation WebRTCModule (RTCDataChannel)
 
 RCT_EXPORT_METHOD(createDataChannel:(nonnull NSNumber *)peerConnectionId
                               label:(NSString *)label
-                             config:(RTCDataChannelInit *)config
+                             config:(RTCDataChannelConfiguration *)config
 {
   RTCPeerConnection *peerConnection = self.peerConnections[peerConnectionId];
-  RTCDataChannel *dataChannel = [peerConnection createDataChannelWithLabel:label config:config];
-  NSInteger dataChannelId = dataChannel.streamId;
+  RTCDataChannel *dataChannel = [peerConnection dataChannelForLabel:label configuration:config];
+  NSNumber *dataChannelId = [NSNumber numberWithInteger:dataChannel.channelId];
   // XXX RTP data channels are not defined by the WebRTC standard, have been
   // deprecated in Chromium, and Google have decided (in 2015) to no longer
   // support them (in the face of multiple reported issues of breakages).
-  if (-1 != dataChannelId) {
-    self.dataChannels[@(dataChannelId)] = dataChannel;
+  if (-1 != dataChannel.channelId) {
+    self.dataChannels[dataChannelId] = dataChannel;
     dataChannel.delegate = self;
   }
 })
@@ -52,10 +53,10 @@ RCT_EXPORT_METHOD(dataChannelSetBinaryType:(nonnull NSNumber *)dataChannelId bin
 - (NSString *)stringForDataChannelState:(RTCDataChannelState)state
 {
   switch (state) {
-    case kRTCDataChannelStateConnecting: return @"connecting";
-    case kRTCDataChannelStateOpen: return @"open";
-    case kRTCDataChannelStateClosing: return @"closing";
-    case kRTCDataChannelStateClosed: return @"closed";
+    case RTCDataChannelStateConnecting: return @"connecting";
+    case RTCDataChannelStateOpen: return @"open";
+    case RTCDataChannelStateClosing: return @"closing";
+    case RTCDataChannelStateClosed: return @"closed";
   }
   return nil;
 }
@@ -63,21 +64,21 @@ RCT_EXPORT_METHOD(dataChannelSetBinaryType:(nonnull NSNumber *)dataChannelId bin
 #pragma mark - RTCDataChannelDelegate methods
 
 // Called when the data channel state has changed.
-- (void)channelDidChangeState:(RTCDataChannel*)channel
+- (void)dataChannelDidChangeState:(RTCDataChannel*)channel
 {
-  NSDictionary *event = @{@"id": @(channel.streamId),
-                          @"state": [self stringForDataChannelState:channel.state]};
+  NSDictionary *event = @{@"id": @(channel.channelId),
+                          @"state": [self stringForDataChannelState:channel.readyState]};
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"dataChannelStateChanged"
                                                   body:event];
 }
 
 // Called when a data buffer was successfully received.
-- (void)channel:(RTCDataChannel*)channel didReceiveMessageWithBuffer:(RTCDataBuffer*)buffer
+-(void)dataChannel:(RTCDataChannel *)channel didReceiveMessageWithBuffer:(RTCDataBuffer *)buffer
 {
   NSString *type = @"text";
   id data;
   if (buffer.isBinary) {
-    if ([self.dataChannelBinaryTypeIsBlob objectForKey:@(channel.streamId)]) {
+    if ([self.dataChannelBinaryTypeIsBlob objectForKey:@(channel.channelId)]) {
       SLKBlobManager *blobManager = [[self bridge] moduleForClass:[SLKBlobManager class]];
       NSString *blobId = [blobManager store:buffer.data];
       data = @{
@@ -93,7 +94,7 @@ RCT_EXPORT_METHOD(dataChannelSetBinaryType:(nonnull NSNumber *)dataChannelId bin
   } else {
     data = [NSString stringWithUTF8String:buffer.data.bytes];
   }
-  NSDictionary *event = @{@"id": @(channel.streamId),
+  NSDictionary *event = @{@"id": @(channel.channelId),
                           @"type": type,
                           @"data": data};
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"dataChannelReceiveMessage"

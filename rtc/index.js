@@ -14,7 +14,7 @@ import type { Duplex } from 'stream';
 const PEER_CONFIG = {
   iceServers: [
     // TODO: Use our own stun servers.
-    { url: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun.l.google.com:19302' },
   ],
 };
 

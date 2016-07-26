@@ -8,8 +8,10 @@ set -e
 if [[ $TRAVIS_OS_NAME == osx ]]; then
   export CI_IGNORE_CASE_INSENSITIVE_FS=please
 else
-  # Required to compile zlib on travis
-  sudo ln -s /usr/include/asm-generic /usr/include/asm
+  if [[ -n $TRAVIS ]]; then
+    # Required to compile zlib on travis
+    sudo ln -s /usr/include/asm-generic /usr/include/asm
+  fi
 fi
 cmake -version
 java -version
@@ -23,11 +25,13 @@ function get_http_status() {
   curl -X HEAD -Is -w "%{http_code}" $1 -o /dev/null
 }
 
+export CCACHE_DIR=$PWD/.ccache
+
 CCACHE_URL="$ARTIFACT_WEBHOST/$CCACHE_ARTIFACT_PATH/ccache.tar.gz"
 if [[ "$(get_http_status $CCACHE_URL)" == "200" ]];
 then
-  mkdir -p $HOME/.ccache
-  cd $HOME/.ccache
+  mkdir -p $CCACHE_DIR
+  cd $CCACHE_DIR
   ( set -x; curl $CCACHE_URL | tar -xz )
   cd -
 else

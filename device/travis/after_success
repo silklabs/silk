@@ -1,15 +1,17 @@
 #!/bin/bash -ex
 
 # Deploy our ccache bundle updates only on success...
-pushd $HOME/.ccache/
-mkdir -p $HOME/ccache_dist/
-tar -czf $HOME/ccache_dist/ccache.tar.gz *
-popd
+CCACHE_DISTDIR=$PWD/ccache_dist
+mkdir -p $CCACHE_DISTDIR
+( cd $CCACHE_DIR; tar -czf $CCACHE_DISTDIR/ccache.tar.gz * )
 ../s3-artifacts/bin/upload \
   $ARTIFACT_BUCKET \
   $CCACHE_ARTIFACT_PATH \
-  $HOME/ccache_dist \
+  $CCACHE_DISTDIR \
   --credentials $ARTIFACT_CREDENTIALS \
+
+# Reclaim disk space for later
+rm -rf $CCACHE_DISTDIR $CCACHE_DIR
 
 if [[ "$TRAVIS_PULL_REQUEST" = "false" ]] && [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
   ./travis/deploy

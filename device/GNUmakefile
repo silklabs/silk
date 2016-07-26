@@ -4,7 +4,6 @@
 
 LOCALGOALS += \
   demo \
-  dist \
   emu \
   qemu \
   time \
@@ -56,17 +55,10 @@ qemu:
 emu: qemu
 
 
-# Builds a distribution archive from the current build products
-.PHONY: dist
-dist: | .repo/manifest.xml
-	$(call ENVSETUP,clean) # <-- drop all local patches before archiving
-	$(call ENVSETUP,np) && ./travis/build_device_archive.sh $(TARGET_PRODUCT)-$(shell date +%F_%H%M%S) dist
-
 # Set the device time
 .PHONY: time
 time:
-	@+$(ENVSETUP) ; \
-  set -ex ; \
+	set -ex ; \
   adb root ; \
   adb wait-for-device ; \
   adb shell time_genoff $(shell date +%s)000 ; \

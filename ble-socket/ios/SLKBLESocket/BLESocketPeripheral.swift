@@ -3,38 +3,65 @@ import CoreBluetooth
 
 private let log = DebugLog.create("silk-BLESocketPeripheral")
 
+private protocol ManufacturerData {
+  /**
+   * This will always be present.
+   */
+  var version: Int { get }
+
+  var deviceType: Int? { get }
+  var deviceNumber: Int? { get }
+}
+
 internal class BLESocketPeripheral: NSObject,
                                     CBCentralManagerDelegate,
                                     CBPeripheralManagerDelegate,
                                     CBPeripheralDelegate {
-
-  // This is the maximum characteristic length that can currently be handled by
-  // silk-device due to the way it uses a socket buffer with a small fixed size.
+  /**
+   * This is the maximum characteristic length that can currently be handled by
+   * silk-device due to the way it uses a socket buffer with a small fixed size.
+   */
   private static let kMaxCharacteristicBytes = 400
 
-  // The characteristic length that we would like to send has to be the less
-  // than kMaxCharacteristicLength but it should also be small enough that we
-  // don't starve the receiving side while it waits to receive a huge value.
-  // Each bluetooth packet contains at most 22 bytes of payload, so an even
-  // multiple of 22 should be used so that we don't waste space in a packet. Our
-  // encryption algorithm uses a block cipher that emits chunks of 16 bytes, and
-  // we always have to send the total length in a single byte, so each message
-  // should be |(16 * N) + 1| bytes. On average our messages tend to be ~48-64
-  // bytes, so two of them should be ~130 bytes. Thus we'd only be wasting 2
-  // bytes in a 6 packet message if we aim for 132 bytes desired length. We can
-  // of course tune this later if we need to.
+  /**
+   * The characteristic length that we would like to send has to be the less
+   * than kMaxCharacteristicLength but it should also be small enough that we
+   * don't starve the receiving side while it waits to receive a huge value.
+   * Each bluetooth packet contains at most 22 bytes of payload, so an even
+   * multiple of 22 should be used so that we don't waste space in a packet. Our
+   * encryption algorithm uses a block cipher that emits chunks of 16 bytes, and
+   * we always have to send the total length in a single byte, so each message
+   * should be |(16 * N) + 1| bytes. On average our messages tend to be ~48-64
+   * bytes, so two of them should be ~130 bytes. Thus we'd only be wasting 2
+   * bytes in a 6 packet message if we aim for 132 bytes desired length. We can
+   * of course tune this later if we need to.
+   */
   private static let kDesiredCharacteristicBytes = 132
 
   private static let kMaxWriteBytes = min(kMaxCharacteristicBytes,
                                           kDesiredCharacteristicBytes)
 
-  private static var instance: BLESocketPeripheral? = nil
+  /**
+   * Sorta looks like "Silk" if you squint hard enough.
+   */
+  private static let kAdvertisingManufacturerCode = 0x517c
 
-  // This will be the 'local name' for the device when advertising.
-  private static let deviceName = "Silk"
+  private static var instance: BLESocketPeripheral? = nil
 
   private static let configServiceUuid =
     CBUUID(NSUUID: RegionMonitor.configBeaconUuid)
+
+  private struct ManufacturerDataV1 : ManufacturerData {
+    let version: Int
+    let deviceType: Int?
+    let deviceNumber: Int?
+
+    init(version: UInt8, deviceType: UInt16, deviceNumber: UInt16) {
+      self.version = Int(version)
+      self.deviceType = Int(deviceType)
+      self.deviceNumber = Int(deviceNumber)
+    }
+  }
 
   private class Service: CBMutableService {
     // Must match BTLE_SOCKET_UUIDS.characteristic from silk-api.
@@ -67,49 +94,107 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  // Keeps track of which services should be available.
+  /**
+   * Keeps track of which services should be available for scanning.
+   */
   private class ServiceInfo {
+    /**
+     * The actual service instance.
+     */
     let service: Service
 
     var adding: Bool = false
     var added: Bool = false
 
-    var available: Bool = false
+    /**
+     * True when this service is enabled.
+     */
+    var enabled: Bool
 
-    init(service: Service) {
+    /**
+     * True when any beacon is detected.
+     */
+    var inBeaconRange: Bool = false
+
+    /**
+     * Set of account device numbers that are currently beaconing.
+     */
+    var deviceNumbersBeaconing: Set<Int> = []
+
+    /**
+     * Set of account device numbers for which JS has requested to scan.
+     */
+    var deviceNumbersRequested: Set<Int> = []
+
+    /**
+     * Simple heuristic to determine when we should actually be scanning for
+     * this service.
+     */
+    var shouldScan: Bool {
+      get {
+        assert(self.inBeaconRange || self.deviceNumbersBeaconing.isEmpty)
+
+        return self.enabled &&
+               (self.inBeaconRange || !self.deviceNumbersRequested.isEmpty)
+      }
+    }
+
+    init(service: Service, enabled: Bool) {
       self.service = service
+      self.enabled = enabled
     }
   }
 
-  // This class holds outgoing data until it can be sent.
+  /**
+   * This class holds outgoing data until it can be sent.
+   */
   private class Connection : Hashable {
-    // Monotonically increasing unique connection id.
+    /**
+     * Monotonically increasing unique connection id.
+     */
     private static var nextConnectionId = 0
 
-    // This connection's id.
+    /**
+     * This connection's id.
+     */
     let id: Int
 
-    // Objects that we must hold.
+    /**
+     * Objects that we must hold.
+     */
     let peripheral: CBPeripheral
     let peripheralServiceUuid: CBUUID
     let peripheralCharacteristic: CBCharacteristic
 
-    // Only set once we have subscribed to a central's characteristic.
+    /**
+     * Only set once we have subscribed to a central's characteristic.
+     */
     var central: CBCentral? = nil
     var rssiUpdatesEnabled: Bool = false
 
-    // Queue holding data that needs to be delivered.
+    /**
+     * Queue holding data that needs to be delivered.
+     */
     var outgoingQueue: [NSData] = [NSData]()
-    // Data that is currently being written to the central's characteristic.
+
+    /**
+     * Data that is currently being written to the central's characteristic.
+     */
     var currentOutgoingData: NSData?
 
-    // Set when JS decides that is is done sending data.
+    /**
+     * Set when JS decides that is is done sending data.
+     */
     var finished: Bool = false
 
-    // Set when iOS disconnects the central that we are connected to.
+    /**
+     * Set when iOS disconnects the central that we are connected to.
+     */
     var disconnected: Bool = false
 
-    // For |Hashable|.
+    /**
+     * For |Hashable|.
+     */
     var hashValue: Int {
       return self.id
     }
@@ -124,47 +209,77 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  // The event queue on which all our bluetooth code runs.
+  /**
+   * The event queue on which all our bluetooth code runs.
+   */
   private var queue: dispatch_queue_t
 
-  // iOS objects.
+  /**
+   * iOS objects.
+   */
   private var centralManager: CBCentralManager
   private var peripheralManager: CBPeripheralManager
 
-  // Our connection to JS.
+  /**
+   * Our connection to JS.
+   */
   private var socketManager: BLESocketManager
 
-  // A connection to the |RegionMonitor| lets us force region updates whenever
-  // CoreBluetooth changes its power state.
+  /**
+   * A connection to the |RegionMonitor| lets us force region updates whenever
+   * CoreBluetooth changes its power state.
+   */
   private let regionMonitor: RegionMonitor
 
-  // True when services have been added.
+  /**
+   * True when services have been added.
+   */
   private var servicesAdded: Bool = false
 
-  // The map of all services we may need to install. At present this can only be
-  // one (the config service) or two (the account service).
+  /**
+   * The map of all services we may need to install. At present this can only be
+   * one (the config service) or two (the account service).
+   */
   private var services: [CBUUID: ServiceInfo] = [:]
 
-  // Whether or not the app is currently in the foreground.
+  /**
+   * Whether or not the app is currently in the foreground.
+   */
   private var inForeground: Bool = false
 
-  // Whether or not we are currently scanning for peripherals.
+  /**
+   * Whether or not we are currently scanning for peripherals.
+   */
   private var scanning: Bool = false
 
-  // A list of peripherals that we are connected to but for which we haven't yet
-  // determined if we can open a socket connection.
+  /**
+   * A list of peripherals that we are connected to but for which we haven't yet
+   * determined if we can open a socket connection.
+   */
   private var pendingPeripherals = Set<CBPeripheral>()
 
-  // Whether or not JS is ready to accept incoming connections.
+  /**
+   * Whether or not JS is ready to accept incoming connections.
+   */
   private var enabled: Bool = false
 
-  // A flag indicating the presence of unconfigured devices at the time we last
-  // communicated with JS.
+  /**
+   * A flag indicating the presence of unconfigured devices at the time we last
+   * communicated with JS.
+   */
   private var unconfiguredDevicesInRange: Bool = false
 
-  // Connection info maps for easy lookups.
+  /**
+   * A flag indicating whether or not JS has requested us to scan for
+   * unconfigured devices.
+   */
+  private var shouldScanForUnconfiguredDevices: Bool = false
+
+  /**
+   * Connection info maps for easy lookups.
+   */
   private var connectionsById = [Int: Connection]()
-  //TODO: can we fold these into one by using Identifier?
+  // TODO: can we fold these into one by using Identifier?
   private var connectionsByCentral = [CBCentral: Connection]()
   private var connectionsByPeripheral = [CBPeripheral: Connection]()
 
@@ -192,14 +307,17 @@ internal class BLESocketPeripheral: NSObject,
 
     // Add config service.
     self.services[BLESocketPeripheral.configServiceUuid] =
-      ServiceInfo(service: Service(type: BLESocketPeripheral.configServiceUuid))
+      ServiceInfo(service: Service(type: BLESocketPeripheral.configServiceUuid),
+                  enabled: false)
   }
 
   func updateSocketManager(socketManager: BLESocketManager) {
     self.socketManager = socketManager
   }
 
-  // Called when JS adds new account uuids.
+  /**
+   * Called when JS adds new account uuids.
+   */
   func regionAdded(uuid: NSUUID) {
     if uuid == RegionMonitor.configBeaconUuid {
       return
@@ -212,7 +330,7 @@ internal class BLESocketPeripheral: NSObject,
       assert(self.services[serviceUuid] == nil)
 
       let service = Service(type: serviceUuid)
-      self.services[serviceUuid] = ServiceInfo(service: service)
+      self.services[serviceUuid] = ServiceInfo(service: service, enabled: true)
 
       self.updateScanningState()
     }
@@ -242,6 +360,7 @@ internal class BLESocketPeripheral: NSObject,
       log.debug("regionEntered(\(serviceUuid))")
 
       let serviceInfo = self.services[serviceUuid]!
+      serviceInfo.inBeaconRange = true
 
       if serviceUuid == BLESocketPeripheral.configServiceUuid {
         if !self.unconfiguredDevicesInRange {
@@ -252,8 +371,6 @@ internal class BLESocketPeripheral: NSObject,
             self.socketManager.unconfiguredDevicesInRange(true)
           }
         }
-      } else {
-        serviceInfo.available = true
       }
 
       self.updateScanningState()
@@ -266,6 +383,7 @@ internal class BLESocketPeripheral: NSObject,
       log.debug("regionExited(\(serviceUuid))")
 
       let serviceInfo = self.services[serviceUuid]!
+      serviceInfo.inBeaconRange = false
 
       if serviceUuid == BLESocketPeripheral.configServiceUuid {
         if self.unconfiguredDevicesInRange {
@@ -275,8 +393,35 @@ internal class BLESocketPeripheral: NSObject,
             self.socketManager.unconfiguredDevicesInRange(false)
           }
         }
-      } else {
-        serviceInfo.available = false
+      }
+
+      self.updateScanningState()
+    }
+  }
+
+  func regionBeacons(uuid: NSUUID, deviceNumbers: Set<Int>) {
+    dispatch_async(self.queue) {
+      let serviceUuid = CBUUID(NSUUID: uuid)
+      log.debug("regionBeacons(\(serviceUuid), \(deviceNumbers))")
+
+      let serviceInfo = self.services[serviceUuid]!
+
+      let foundDeviceNumbers =
+        deviceNumbers.subtract(serviceInfo.deviceNumbersBeaconing)
+      let lostDeviceNumbers =
+        serviceInfo.deviceNumbersBeaconing.subtract(deviceNumbers)
+
+      self.services[serviceUuid]!.deviceNumbersBeaconing = deviceNumbers
+
+      for foundDeviceNumber in foundDeviceNumbers {
+        self.socketManager.deviceBeaconing(serviceUuid.UUIDString,
+                                           deviceNumber: foundDeviceNumber,
+                                           beaconing: true)
+      }
+      for lostDeviceNumber in lostDeviceNumbers {
+        self.socketManager.deviceBeaconing(serviceUuid.UUIDString,
+                                           deviceNumber: lostDeviceNumber,
+                                           beaconing: false)
       }
 
       self.updateScanningState()
@@ -289,6 +434,9 @@ internal class BLESocketPeripheral: NSObject,
       assert(!self.inForeground)
       self.inForeground = true
 
+      let serviceInfo = self.services[BLESocketPeripheral.configServiceUuid]!
+      serviceInfo.enabled = self.shouldScanForUnconfiguredDevices
+
       self.updateScanningState()
     }
   }
@@ -298,6 +446,9 @@ internal class BLESocketPeripheral: NSObject,
       log.debug("setBackground()")
       assert(self.inForeground)
       self.inForeground = false
+
+      let serviceInfo = self.services[BLESocketPeripheral.configServiceUuid]!
+      serviceInfo.enabled = false
 
       self.updateScanningState()
     }
@@ -328,10 +479,33 @@ internal class BLESocketPeripheral: NSObject,
   func scanForUnconfiguredDevices(shouldScan: Bool) {
     log.debug("scanForUnconfiguredDevices(\(shouldScan))")
 
+    self.shouldScanForUnconfiguredDevices = shouldScan
+
     let serviceInfo = self.services[BLESocketPeripheral.configServiceUuid]!
-    serviceInfo.available = shouldScan
+    serviceInfo.enabled = shouldScan && self.inForeground
 
     self.updateScanningState()
+  }
+
+  func scanForDevice(serviceUuid: String,
+                     accountDeviceNumber: Int,
+                     shouldScan: Bool) {
+    log.debug("scanForDevice(\(serviceUuid), \(accountDeviceNumber), " +
+              "\(shouldScan))")
+
+    let uuid = CBUUID(string: serviceUuid)
+
+    let serviceInfo = self.services[uuid]
+    if serviceInfo === nil {
+      log.error("Invalid serviceUuid: '\(serviceUuid)'")
+      return
+    }
+
+    if shouldScan {
+      serviceInfo!.deviceNumbersRequested.insert(accountDeviceNumber)
+    } else {
+      serviceInfo!.deviceNumbersRequested.remove(accountDeviceNumber)
+    }
   }
 
   func send(connectionId: Int, data: NSData) {
@@ -477,7 +651,7 @@ internal class BLESocketPeripheral: NSObject,
     var servicesToScan = [CBUUID]()
 
     for (uuid, serviceInfo) in self.services {
-      if (serviceInfo.available) {
+      if (serviceInfo.shouldScan) {
         servicesToScan.append(uuid)
       }
     }
@@ -680,7 +854,7 @@ internal class BLESocketPeripheral: NSObject,
     assert(self.services[serviceUuid] != nil)
 
     let serviceInfo = self.services[serviceUuid]!
-    assert(serviceInfo.available)
+    assert(serviceInfo.shouldScan)
 
     let connection = Connection(characteristic: characteristic)
     self.connectionsById[connection.id] = connection
@@ -711,6 +885,68 @@ internal class BLESocketPeripheral: NSObject,
     peripheral.setNotifyValue(true, forCharacteristic: characteristic)
   }
 
+  private static func parseManufacturerData(rawData: NSData) -> ManufacturerData? {
+    log.debug("parseManufacturerData(\(rawData))")
+
+    var data =
+      Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>(rawData.bytes),
+                                count: rawData.length))
+    if data.count < 3 {
+      log.debug("Bad data length \(data.count)")
+      return nil
+    }
+
+    let manufacturer = Int(UInt16(data[0]) + UInt16(UInt16(data[1]) << 8))
+    if manufacturer != BLESocketPeripheral.kAdvertisingManufacturerCode {
+      log.debug("Unknown manufacturer")
+      return nil
+    }
+
+    let version = data[2]
+
+    data.removeFirst(2)
+
+    switch version {
+      case 1:
+        return self.parseManufacturerDataV1(data)
+      default:
+        log.debug("Unknown version \(version)")
+        return nil
+    }
+  }
+
+  private static func parseManufacturerDataV1(data: Array<UInt8>) -> ManufacturerDataV1? {
+    log.debug("parseManufacturerDataV1(\(data))")
+
+    if data.count != 5 {
+      log.debug("Invalid length \(data.count)")
+      return nil
+    }
+
+    var index: Int = 0
+
+    let version = data[index]
+    index += 1
+
+    assert(version == 1)
+
+    var deviceType = UInt16(data[index])
+    index += 1
+    deviceType += UInt16(UInt16(data[index]) << 8)
+    index += 1
+
+    var deviceNumber = UInt16(data[index])
+    index += 1
+    deviceNumber += UInt16(UInt16(data[index]) << 8)
+    index += 1
+
+    assert(index == 5)
+
+    return ManufacturerDataV1(version: version,
+                              deviceType: deviceType,
+                              deviceNumber: deviceNumber)
+  }
+
   func centralManagerDidUpdateState(central: CBCentralManager) {
     log.info("centralManagerDidUpdateState \(central.state.rawValue)")
     assert(central === self.centralManager)
@@ -727,7 +963,72 @@ internal class BLESocketPeripheral: NSObject,
               "\(peripheral.state.rawValue)")
     assert(central === self.centralManager)
 
-    if !self.enabled || peripheral.state != .Disconnected {
+    if !self.enabled {
+      log.debug("No longer enabled")
+      return
+    }
+
+    if peripheral.state != .Disconnected {
+      log.debug("Peripheral state is \(peripheral.state.rawValue)")
+      return
+    }
+
+    let manufacturerData =
+      advertisementData[CBAdvertisementDataManufacturerDataKey] as? NSData
+    if manufacturerData == nil {
+      log.debug("No manufacturer data advertised")
+      return
+    }
+
+    let parsedManufacturerData =
+      BLESocketPeripheral.parseManufacturerData(manufacturerData!)
+    if parsedManufacturerData == nil {
+      log.debug("Failed to parse manufacturer data: \(manufacturerData!)")
+      return
+    }
+
+    let deviceNumber = parsedManufacturerData!.deviceNumber
+    if deviceNumber == nil {
+      log.debug("No device number advertised")
+      return
+    }
+
+    let serviceUuids =
+      advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID]
+
+    if serviceUuids == nil || serviceUuids!.isEmpty {
+      log.debug("No serivces advertised")
+      return
+    }
+
+    var shouldConnect = false
+
+    for (serviceUuid, serviceInfo) in self.services {
+      if !serviceInfo.enabled {
+        continue
+      }
+
+      if serviceUuid == BLESocketPeripheral.configServiceUuid {
+        log.debug("Advertising the config service")
+        shouldConnect = true
+        break
+      }
+
+      if serviceInfo.deviceNumbersBeaconing.contains(deviceNumber!) {
+        log.debug("Device number \(deviceNumber!) is beaconing")
+        shouldConnect = true
+        break
+      }
+
+      if serviceInfo.deviceNumbersRequested.contains(deviceNumber!) {
+        log.debug("Connection requested to device number \(deviceNumber!)")
+        shouldConnect = true
+        break
+      }
+    }
+
+    if !shouldConnect {
+      log.debug("Not beaconing and connection not requested, ignoring")
       return
     }
 
@@ -750,7 +1051,7 @@ internal class BLESocketPeripheral: NSObject,
     let services = Array(self.services.keys)
     log.debug("Discovering services \(services)")
 
-    peripheral.delegate = self;
+    peripheral.delegate = self
     peripheral.discoverServices(services)
   }
 
@@ -889,7 +1190,7 @@ internal class BLESocketPeripheral: NSObject,
 
     if !self.enabled ||
        serviceInfo == nil ||
-       !serviceInfo!.available {
+       !serviceInfo!.shouldScan {
       self.cancelPeripheralConnection(centralAsPeripheral!)
       return
     }
@@ -1031,7 +1332,7 @@ internal class BLESocketPeripheral: NSObject,
   func peripheral(peripheral: CBPeripheral,
                   didDiscoverServices error: NSError?) {
     log.debug("peripheral:didDiscoverServices(" +
-              "\(peripheral.identifier.UUIDString), \(error))");
+              "\(peripheral.identifier.UUIDString), \(error))")
     assert(self.pendingPeripherals.contains(peripheral))
 
     if error != nil {
@@ -1058,8 +1359,7 @@ internal class BLESocketPeripheral: NSObject,
       let serviceUuid = discoveredService.UUID
       assert(self.services[serviceUuid] != nil)
 
-      let available = self.services[serviceUuid]!.available
-      if available {
+      if self.services[serviceUuid]!.shouldScan {
         service = discoveredService
         if serviceUuid != BLESocketPeripheral.configServiceUuid {
           break
@@ -1084,7 +1384,7 @@ internal class BLESocketPeripheral: NSObject,
                   error: NSError?) {
     log.debug("peripheral:didDiscoverCharacteristicsForService(" +
               "\(peripheral.identifier.UUIDString), \(service.UUID), " +
-              "\(error))");
+              "\(error))")
     assert(self.pendingPeripherals.contains(peripheral))
 
     if error != nil {
@@ -1096,7 +1396,7 @@ internal class BLESocketPeripheral: NSObject,
 
     if !self.enabled ||
        self.services[service.UUID] == nil ||
-       !self.services[service.UUID]!.available {
+       !self.services[service.UUID]!.shouldScan {
       self.cancelPeripheralConnection(peripheral)
       return
     }
@@ -1128,7 +1428,7 @@ internal class BLESocketPeripheral: NSObject,
     let peripheral = service.peripheral
     log.debug("peripheral:didUpdateNotificationStateForCharacteristic() " +
               "\(peripheral.identifier.UUIDString), \(service.UUID), " +
-              "\(error))");
+              "\(error))")
 
     if error != nil {
       log.error("Failed to set notify value, \(error!)")
@@ -1145,7 +1445,7 @@ internal class BLESocketPeripheral: NSObject,
     let peripheral = service.peripheral
     log.debug("peripheral:didWriteValueForCharacteristic() " +
               "\(peripheral.identifier.UUIDString), \(service.UUID), " +
-              "\(error))");
+              "\(error))")
 
     assert(self.connectionsByPeripheral[peripheral] != nil)
     let connection = self.connectionsByPeripheral[peripheral]!
@@ -1164,5 +1464,5 @@ internal class BLESocketPeripheral: NSObject,
 
 private func ==(lhs: BLESocketPeripheral.Connection,
                 rhs: BLESocketPeripheral.Connection) -> Bool {
-  return lhs.id == rhs.id
+  return lhs.hashValue == rhs.hashValue
 }

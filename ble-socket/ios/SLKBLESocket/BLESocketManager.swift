@@ -135,6 +135,20 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
   }
 
+  internal func deviceBeaconing(serviceUuid: String,
+                                deviceNumber: Int,
+                                beaconing: Bool) {
+    log.debug("deviceBeaconing(\(serviceUuid), \(deviceNumber), \(beaconing))")
+
+    let name = "silk-blesocketmanager-device-beaconing"
+    let body = [
+      "serviceUuid": serviceUuid as NSString,
+      "deviceNumber": deviceNumber as NSInteger,
+      "beaconing": beaconing,
+    ]
+    self.bridge!.eventDispatcher().sendDeviceEventWithName(name, body: body)
+  }
+
   func start() {
     log.debug("start()")
 
@@ -213,7 +227,7 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
     log.debug("enableRssiUpdates(\(connectionId), \(enable))")
 
     BLESocketManager.bleSocketPeripheral!.enableRssiUpdates(connectionId,
-                                                            enable:enable)
+                                                            enable: enable)
   }
 
   func finish(connectionId: NSInteger) {
@@ -231,5 +245,15 @@ public class BLESocketManager : NSObject, RCTBridgeModule {
   func scanForUnconfiguredDevices(shouldScan: Bool) {
     log.debug("scanForUnconfiguredDevices(\(shouldScan))")
     BLESocketManager.bleSocketPeripheral!.scanForUnconfiguredDevices(shouldScan)
+  }
+
+  func scanForDevice(serviceUuid: NSString,
+                     accountDeviceNumber: NSInteger,
+                     shouldScan: Bool) {
+    log.debug("scanForDevice(\(serviceUuid), \(accountDeviceNumber), " +
+              "\(shouldScan))")
+    BLESocketManager.bleSocketPeripheral!.scanForDevice(serviceUuid as String,
+                                                        accountDeviceNumber: accountDeviceNumber,
+                                                        shouldScan: shouldScan)
   }
 }

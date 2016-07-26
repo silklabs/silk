@@ -8,7 +8,8 @@
  */
 
 import * as sysutils from 'silk-sysutils';
-import createLog from './log';
+import createLog from 'silk-log/device';
+import invariant from 'assert';
 
 /**
  * Type of infrared modes
@@ -33,7 +34,7 @@ class Infrared {
 
   init() {
     this.setMode(Infrared.MODE.DAY);
-    log.info(`Infrared initialized`);
+    log.debug(`Infrared initialized`);
   }
 
   _execIr(args: Array<string>) {
@@ -70,7 +71,7 @@ class Infrared {
   }
 
   setMode(mode: Mode) {
-    log.info(`setting mode ${mode}`);
+    log.debug(`setting mode ${mode}`);
     let filter = false;
     let led = false;
     switch (mode) {
@@ -83,8 +84,7 @@ class Infrared {
       led = true;
       break;
     default:
-      log.warn(`bad mode ${mode}`);
-      return;
+      invariant(false);
     }
 
     this._setFilterAndLed(filter, led).then(() => {

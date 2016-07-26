@@ -38,16 +38,12 @@ export default class NormalSessionListener extends SessionListenerBase {
   _onData(data) {
     log.warn(`Unexpected data from app, disconnecting`, data);
 
-    // Don't allow this peripheral to get connected again.
-    this._socketSession.skip();
     this.disconnect();
   }
 
   _onRssiUpdate(/* rssi */) {
     log.warn(`Unexpected rssi update, disconnecting`);
 
-    // Don't allow this peripheral to get connected again.
-    this._socketSession.skip();
     this.disconnect();
   }
 }

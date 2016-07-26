@@ -306,7 +306,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
       log.warn(`Unknown message`, data);
     }
 
-    this._socketSession.skip();
     this._state = ConfigSessionListener.STATE_ERROR;
     this.disconnect();
   }

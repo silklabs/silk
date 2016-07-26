@@ -857,7 +857,7 @@ class BluetoothLEChild {
 
     switch (event) {
     case `error`: {
-      const error = args[0];
+      const [error] = args;
       log.error(`Session error`, error);
       socket.writeInternal(createInternalMessage({
         name: `error`,
@@ -869,9 +869,11 @@ class BluetoothLEChild {
     }
 
     case `authenticated`: {
+      const [publicKey] = args;
+      invariant(publicKey);
       socket.writeInternal(createInternalMessage({
         name: `authenticated`,
-        authenticated: true,
+        authenticatedPublicKey: publicKey,
       }));
       break;
     }
@@ -879,7 +881,7 @@ class BluetoothLEChild {
     case `unauthenticated`: {
       socket.writeInternal(createInternalMessage({
         name: `authenticated`,
-        authenticated: false,
+        authenticatedPublicKey: ``,
       }));
       break;
     }

@@ -190,6 +190,23 @@ const builds = {
     events: ['push', 'pr'],
     branches: ['master', 'next', 'release'],
   },
+
+  'bob-device-pandohub-silkhub': {
+    title: '',
+    travis_yml: 'bob/travis.yml',
+    travis_config: {
+      os: ['linux'],
+      env: {
+        global: [
+          'BOB_BUILD_COMMAND=bob/device-pandohub.sh',
+          'BOB_BUILD_HOST=silksd.ddns.net',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master', 'next', 'release'],
+  },
+
   'npm-dialog-test': runNpmTestForPackages([
     'dialog-engine',
     'dialog-script',

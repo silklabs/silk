@@ -156,7 +156,8 @@
     "react-native-orientation": "1.17.0",
     "redux-actions": "0.10.1",
     "bonjour": "3.5.0",
-    "mongodb": "2.2.4"
+    "mongodb": "2.2.4",
+    "redux-watch": "1.1.1"
   },
   "engines": {
     "node": "^4.1.2",

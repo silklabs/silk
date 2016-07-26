@@ -61,16 +61,17 @@ function handleAuthAction(
     };
   }
   const clientAuthStatus = action.payload ? 'AUTHENTICATED' : 'NOT_AUTHENTICATED';
-  if (state.CLIENT_STATUS.clientAuthStatus !== clientAuthStatus) {
-    return {
-      ...state,
-      CLIENT_STATUS: {
-        ...state.CLIENT_STATUS,
-        clientAuthStatus,
-      },
-    };
+  if (state.CLIENT_STATUS.clientAuthStatus === clientAuthStatus) {
+    return state;
   }
-  return state;
+
+  return {
+    ...state,
+    CLIENT_STATUS: {
+      ...state.CLIENT_STATUS,
+      clientAuthStatus,
+    },
+  };
 }
 
 function AUTH_SIGNOUT(
@@ -98,7 +99,8 @@ function NETWORK_SERVER_REACHABLE(
   action: Action<'NETWORK_SERVER_REACHABLE', boolean>
 ): MessagesState {
   if (action.requested) {
-    if (state.CLIENT_STATUS.clientConnectionStatus === 'CONNECTED') {
+    if (state.CLIENT_STATUS.clientConnectionStatus === 'CONNECTED' ||
+        state.CLIENT_STATUS.clientConnectionStatus === 'CONNECTING') {
       // Avoid flipping from 'CONNECTED' to 'CONNECTING'.
       return state;
     }
@@ -116,6 +118,12 @@ function NETWORK_SERVER_REACHABLE(
 
   const clientConnectionStatus = action.payload ? 'CONNECTED' : 'NOT_CONNECTED';
   const clientConnectionError = action.payload ? null : 'SERVER_UNREACHABLE';
+
+  if (state.CLIENT_STATUS.clientConnectionStatus === clientConnectionStatus &&
+      state.CLIENT_STATUS.clientConnectionError === clientConnectionError) {
+    return state;
+  }
+
   return {
     ...state,
     CLIENT_STATUS: {

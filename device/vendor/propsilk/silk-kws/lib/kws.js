@@ -507,7 +507,7 @@ export default class KeywordSpotting extends EventEmitter {
           return;
         }
         log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
-        let dir = (keywordTexts.indexOf(text) !== -1) ? POS_KWS_DIR : NEG_KWS_DIR;
+        let dir = this._isAKeyword(text, keywordTexts) ? POS_KWS_DIR : NEG_KWS_DIR;
         if (confidence >= STT_CONFIDENCE_THRESHOLD) {
           this._writeWavFile(dir, wavData);
         } else {
@@ -518,6 +518,22 @@ export default class KeywordSpotting extends EventEmitter {
       stt.write(wavData);
       stt.finish();
     }
+  }
+
+  /**
+   * Check if the text matches any of the strings or its substrings in the list
+   * of know keywords and its variants as returned by speech-to-text service
+   */
+  _isAKeyword(text: string, keywords: Array<string>) {
+    for (let i = 0; i < keywords.length; i++) {
+      let keyword = keywords[i];
+      if (text.indexOf(keyword) !== -1) {
+        log.debug(`Keyword match`);
+        return true;
+      }
+    }
+    log.debug(`No keyword match found`);
+    return false;
   }
 
   /**

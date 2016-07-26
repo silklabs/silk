@@ -16,6 +16,8 @@
 		35D7002B1D298EF700993A9C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35D700291D298EF700993A9C /* LaunchScreen.storyboard */; };
 		35D700361D298EF800993A9C /* SilkAppSDKExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700351D298EF800993A9C /* SilkAppSDKExampleTests.m */; };
 		35D700411D298EF800993A9C /* SilkAppSDKExampleUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700401D298EF800993A9C /* SilkAppSDKExampleUITests.m */; };
+		579C79551D46D99300A833E7 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; };
+		579C79561D46D99300A833E7 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +51,20 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		579C79571D46D99300A833E7 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				579C79561D46D99300A833E7 /* WebRTC.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		35D700181D298EF700993A9C /* SilkAppSDKExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SilkAppSDKExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		35D7001C1D298EF700993A9C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -66,7 +82,8 @@
 		35D7003C1D298EF800993A9C /* SilkAppSDKExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SilkAppSDKExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35D700401D298EF800993A9C /* SilkAppSDKExampleUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SilkAppSDKExampleUITests.m; sourceTree = "<group>"; };
 		35D700421D298EF800993A9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKAppSDK.xcodeproj; path = ../../app-sdk/ios/SLKAppSDK.xcodeproj; sourceTree = "<group>"; };
+		35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKAppSDK.xcodeproj; path = "../../app-sdk/ios/SLKAppSDK.xcodeproj"; sourceTree = "<group>"; };
+		579C794F1D46D88800A833E7 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebRTC.framework; path = "../../react-native-webrtc/ios/WebRTC.framework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +92,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3504D0611D2B969D00BB24A2 /* SLKAppSDK.framework in Frameworks */,
+				579C79551D46D99300A833E7 /* WebRTC.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,6 +179,7 @@
 		35D700961D29A9E500993A9C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				579C794F1D46D88800A833E7 /* WebRTC.framework */,
 				35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */,
 			);
 			name = Frameworks;
@@ -185,6 +204,7 @@
 				35D700141D298EF700993A9C /* Sources */,
 				35D700151D298EF700993A9C /* Frameworks */,
 				35D700161D298EF700993A9C /* Resources */,
+				579C79571D46D99300A833E7 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -389,6 +409,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -434,6 +455,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -473,6 +495,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
 				INFOPLIST_FILE = SilkAppSDKExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
@@ -484,6 +507,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
 				INFOPLIST_FILE = SilkAppSDKExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;

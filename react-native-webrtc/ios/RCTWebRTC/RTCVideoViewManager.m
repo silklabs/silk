@@ -7,9 +7,9 @@
 //
 
 #import "RTCVideoViewManager.h"
-#import "RTCEAGLVideoView.h"
-#import "RTCVideoTrack.h"
-#import "RTCMediaStream.h"
+#import <WebRTC/RTCEAGLVideoView.h>
+#import <WebRTC/RTCVideoTrack.h>
+#import <WebRTC/RTCMediaStream.h>
 #import "WebRTCModule.h"
 
 @interface UIView (WebRTCModule)

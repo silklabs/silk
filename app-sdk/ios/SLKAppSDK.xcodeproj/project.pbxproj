@@ -15,7 +15,6 @@
 		351041941D3D9E2700452CB2 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 351041911D3D9E0B00452CB2 /* libSLKCrypto.a */; };
 		351041A11D3D9E8400452CB2 /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 351041A01D3D9E7500452CB2 /* libRCTWebRTC.a */; };
 		351041A21D3D9E8400452CB2 /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3510419A1D3D9E6100452CB2 /* libSLKBlobs.a */; };
-		351041E31D3D9F1700452CB2 /* libWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 351041C31D3D9F1700452CB2 /* libWebRTC.a */; };
 		351041F71D3D9FBC00452CB2 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 351041F61D3D9FBC00452CB2 /* AVFoundation.framework */; };
 		351041F91D3D9FC200452CB2 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 351041F81D3D9FC200452CB2 /* AudioToolbox.framework */; };
 		351041FB1D3D9FCA00452CB2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 351041FA1D3D9FCA00452CB2 /* CoreGraphics.framework */; };
@@ -30,6 +29,7 @@
 		35D700D71D29AE8D00993A9C /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D700A61D29AB0500993A9C /* libReact.a */; };
 		35D700EB1D29AF1000993A9C /* libRCTNetwork.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D700E01D29AEBB00993A9C /* libRCTNetwork.a */; };
 		35D700EC1D29AF1000993A9C /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D700C71D29ADCF00993A9C /* libRCTWebSocket.a */; };
+		57E9BA081D46D5A000E9B3F5 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57E9BA071D46D5A000E9B3F5 /* WebRTC.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -118,6 +118,7 @@
 		35D700D31D29AE8200993A9C /* SLKAppSDKService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKAppSDKService.h; sourceTree = "<group>"; };
 		35D700D41D29AE8200993A9C /* SLKAppSDKService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKAppSDKService.m; sourceTree = "<group>"; };
 		35D700DB1D29AEBB00993A9C /* RCTNetwork.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTNetwork.xcodeproj; path = "../../node_modules/react-native/Libraries/Network/RCTNetwork.xcodeproj"; sourceTree = "<group>"; };
+		57E9BA071D46D5A000E9B3F5 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebRTC.framework; path = "../../react-native-webrtc/ios/WebRTC.framework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +126,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57E9BA081D46D5A000E9B3F5 /* WebRTC.framework in Frameworks */,
 				351042031D3D9FE500452CB2 /* VideoToolbox.framework in Frameworks */,
 				351042001D3D9FDF00452CB2 /* CoreAudio.framework in Frameworks */,
 				351042011D3D9FDF00452CB2 /* CoreVideo.framework in Frameworks */,
@@ -138,7 +140,6 @@
 				35D700EC1D29AF1000993A9C /* libRCTWebSocket.a in Frameworks */,
 				351041941D3D9E2700452CB2 /* libSLKCrypto.a in Frameworks */,
 				351041A21D3D9E8400452CB2 /* libSLKBlobs.a in Frameworks */,
-				351041E31D3D9F1700452CB2 /* libWebRTC.a in Frameworks */,
 				351041A11D3D9E8400452CB2 /* libRCTWebRTC.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -191,6 +192,7 @@
 		35D700721D29957E00993A9C = {
 			isa = PBXGroup;
 			children = (
+				57E9BA071D46D5A000E9B3F5 /* WebRTC.framework */,
 				351042021D3D9FE500452CB2 /* VideoToolbox.framework */,
 				351041FE1D3D9FDF00452CB2 /* CoreAudio.framework */,
 				351041FF1D3D9FDF00452CB2 /* CoreVideo.framework */,
@@ -585,6 +587,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -611,6 +614,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,

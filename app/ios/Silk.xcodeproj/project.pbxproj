@@ -17,8 +17,6 @@
 		352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCEBA1D18BB810056D623 /* libSLKCrypto.a */; };
 		356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 356CF7211D28AAF900BE44CF /* libRCTOrientation.a */; };
 		357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357AF0361D20E27E0075394A /* libSLKBlobs.a */; };
-		35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222301CB493710015FD5C /* libRCTWebRTC.a */; };
-		35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222791CB49DAE0015FD5C /* libWebRTC.a */; };
 		35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222901CB4A0350015FD5C /* libstdc++.tbd */; };
 		35A222941CB4A0510015FD5C /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222931CB4A0510015FD5C /* libsqlite3.tbd */; };
 		35A222961CB4A0580015FD5C /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222951CB4A0580015FD5C /* VideoToolbox.framework */; };
@@ -43,6 +41,9 @@
 		35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 35F768351CFFE290003EAF4D /* SLKConfig.m */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
 		5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* SLKConfig.swift */; };
+		57445D511D4693AE00DCA815 /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222301CB493710015FD5C /* libRCTWebRTC.a */; };
+		57445D571D4693CE00DCA815 /* WebRTC.framework in Embed Frameworks (1 item) */ = {isa = PBXBuildFile; fileRef = 57445D561D4693CE00DCA815 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		57445D581D4693FE00DCA815 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57445D561D4693CE00DCA815 /* WebRTC.framework */; };
 		5758F17A1B5DD47B00C18E5D /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		5758F17B1B5DD52800C18E5D /* libRCTImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302C01ABCB91800DB3ED1 /* libRCTImage.a */; };
 		5758F17C1B5DD52800C18E5D /* libRCTLinking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 78C398B91ACF4ADC00677621 /* libRCTLinking.a */; };
@@ -257,6 +258,13 @@
 			remoteGlobalIDString = 0CF68AC01AF0540F00FF9E5C;
 			remoteInfo = ART;
 		};
+		5792FED61D3A1CFF00BA2646 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 35A2221E1CB493700015FD5C;
+			remoteInfo = RCTWebRTC;
+		};
 		78C398B81ACF4ADC00677621 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */;
@@ -274,14 +282,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		571B2F4F1B813046005A4460 /* Embed Frameworks */ = {
+		571B2F4F1B813046005A4460 /* Embed Frameworks (1 item) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				57445D571D4693CE00DCA815 /* WebRTC.framework in Embed Frameworks (1 item) */,
 			);
-			name = "Embed Frameworks";
+			name = "Embed Frameworks (1 item)";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -337,6 +346,7 @@
 		35F768351CFFE290003EAF4D /* SLKConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKConfig.m; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
 		5741E0BF1B5A108D00F9376C /* SLKConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfig.swift; sourceTree = "<group>"; };
+		57445D561D4693CE00DCA815 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebRTC.framework; path = "../../react-native-webrtc/ios/WebRTC.framework"; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -375,6 +385,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57445D581D4693FE00DCA815 /* WebRTC.framework in Frameworks */,
+				57445D511D4693AE00DCA815 /* libRCTWebRTC.a in Frameworks */,
 				356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */,
 				357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */,
 				352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */,
@@ -388,8 +400,6 @@
 				35A222961CB4A0580015FD5C /* VideoToolbox.framework in Frameworks */,
 				35A222941CB4A0510015FD5C /* libsqlite3.tbd in Frameworks */,
 				35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */,
-				35A222741CB494770015FD5C /* libRCTWebRTC.a in Frameworks */,
-				35A2227A1CB49DAE0015FD5C /* libWebRTC.a in Frameworks */,
 				6C5839051C1D15380004EC78 /* libc++.tbd in Frameworks */,
 				35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */,
 				5774D7651B90D86B0071F187 /* libRCTWebSocket.a in Frameworks */,
@@ -680,6 +690,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				57445D561D4693CE00DCA815 /* WebRTC.framework */,
 				6C5839041C1D15380004EC78 /* libc++.tbd */,
 				35A222921CB4A03F0015FD5C /* Frameworks */,
 				35A222A51CB4A0B20015FD5C /* libjingle_peerconnection */,
@@ -757,12 +768,13 @@
 				5741E0BD1B5A04B000F9376C /* Configuration (config.local.json / raygun.json) */,
 				5741E1471B5DA53300F9376C /* Conditionally react-native bundle */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
-				571B2F4F1B813046005A4460 /* Embed Frameworks */,
+				571B2F4F1B813046005A4460 /* Embed Frameworks (1 item) */,
 				6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				5792FED71D3A1CFF00BA2646 /* PBXTargetDependency */,
 				5758F3341B6098AA00C18E5D /* PBXTargetDependency */,
 				5758F1611B5DD40D00C18E5D /* PBXTargetDependency */,
 				5758F1631B5DD40D00C18E5D /* PBXTargetDependency */,
@@ -1190,6 +1202,11 @@
 			name = ART;
 			targetProxy = 5758F3331B6098AA00C18E5D /* PBXContainerItemProxy */;
 		};
+		5792FED71D3A1CFF00BA2646 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RCTWebRTC;
+			targetProxy = 5792FED61D3A1CFF00BA2646 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -1270,6 +1287,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Raygun4iOS",
+					"$(PROJECT_DIR)/../../react-native-webrtc/ios/**",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1283,7 +1301,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Viblast",
-					"$(PROJECT_DIR)/../../react-native-webrtc/**",
+					"$(PROJECT_DIR)/../../react-native-webrtc/ios/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG -DRCT_DEBUG -DRCT_DEV";
@@ -1306,6 +1324,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Raygun4iOS",
+					"$(PROJECT_DIR)/../../react-native-webrtc/ios/**",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1319,7 +1338,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Viblast",
-					"$(PROJECT_DIR)/../../react-native-webrtc/**",
+					"$(PROJECT_DIR)/../../react-native-webrtc/ios/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "";

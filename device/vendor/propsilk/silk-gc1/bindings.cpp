@@ -12,7 +12,12 @@ NAN_METHOD(IdleNotification) {
     return Nan::ThrowError("Expected only one uint32 argument: idle_time_in_ms");
   }
   int idle_time_in_ms = info[0]->Uint32Value();
-  info.GetReturnValue().Set(Nan::IdleNotification(idle_time_in_ms));
+  info.GetReturnValue().Set(
+    // Note: not using Nan::IdleNotification(idle_time_in_ms)); as the Nan
+    //       version will now round to the nearest second even though v8
+    //       supports millisecond resolution still
+    v8::Isolate::GetCurrent()->IdleNotification(idle_time_in_ms)
+  );
 }
 
 void init(v8::Handle<v8::Object> exports)

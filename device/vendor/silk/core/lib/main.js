@@ -616,14 +616,14 @@ battery.on('out-of-power', shutdown);
 //
 const WATCHDOG_MS = 250;
 const BOGGED_DOWN_MS = WATCHDOG_MS * 2;
-let lastDogTick = Date.now();
+let lastDogTick = util.uptime();
 function watchdog() {
-  let diff = Date.now() - lastDogTick;
+  let diff = util.uptime(lastDogTick);
   //log.warn('tick');
   if (diff > BOGGED_DOWN_MS) {
-    log.warn(`====[ Main thread was bogged down for ${diff - WATCHDOG_MS}ms ]====`);
+    log.warn(`====[ Main thread was bogged down for ${Math.round(diff - WATCHDOG_MS)}ms ]====`);
   }
-  lastDogTick = Date.now();
+  lastDogTick = util.uptime();
   setTimeout(watchdog, WATCHDOG_MS);
 }
 watchdog();
@@ -639,14 +639,14 @@ const GC_MAX_RUN_TIME = 100;
 function runGC() {
   // Try to run the gc for less than this number of milliseconds
 
-  let gcStart = Date.now();
+  let gcStart = util.uptime();
   let gcDone;
   let gcStop = gcStart;
   let gcIterations = 0;
   do {
     gcDone = gc1.idleNotification(GC_MAX_RUN_TIME);
     gcIterations++;
-    gcStop = Date.now();
+    gcStop = util.uptime();
   } while (!gcDone && (gcStop - gcStart < GC_MAX_RUN_TIME));
 
   log.verbose(`GC ran for ${gcStop - gcStart}ms | ` +

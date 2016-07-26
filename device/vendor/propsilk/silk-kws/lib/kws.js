@@ -28,7 +28,7 @@ import type { VoiceActivityDetector } from 'silk-vad';
 const log = createLog('kws');
 
 const MODEL_PROTO = path.join(__dirname, '..', 'model', 'keyword.prototxt');
-const MODEL_BIN = path.join(__dirname, '..', 'model', 'keyword.caffemodel');
+const MODEL_BIN = path.join(__dirname, '..', 'model', 'aristotle.caffemodel');
 const MODEL_DICTIONARY = path.join(__dirname, '..', 'model', 'keyword.labels');
 const KEYWORDS = path.join(__dirname, '..', 'model', 'keywords.txt');
 const TOPK = 3; // Return top K predictions
@@ -61,7 +61,7 @@ const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG
 // the threshold to lower value to catch far utterances too.
 // Ignore predictions with probability lower than threshold
 const KWS_THRESHOLD = 'persist.silk.kws.threshold';
-let THRESHOLD = util.getintprop(KWS_THRESHOLD, 95);
+let THRESHOLD = util.getintprop(KWS_THRESHOLD, 50);
 
 const STT_CONFIDENCE_THRESHOLD = 0.35;
 
@@ -507,7 +507,7 @@ export default class KeywordSpotting extends EventEmitter {
           return;
         }
         log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
-        let dir = (keywordTexts.indexOf(text) !== -1) ? POS_KWS_DIR : NEG_KWS_DIR;
+        let dir = this._isAKeyword(text, keywordTexts) ? POS_KWS_DIR : NEG_KWS_DIR;
         if (confidence >= STT_CONFIDENCE_THRESHOLD) {
           this._writeWavFile(dir, wavData);
         } else {
@@ -518,6 +518,22 @@ export default class KeywordSpotting extends EventEmitter {
       stt.write(wavData);
       stt.finish();
     }
+  }
+
+  /**
+   * Check if the text matches any of the strings or its substrings in the list
+   * of know keywords and its variants as returned by speech-to-text service
+   */
+  _isAKeyword(text: string, keywords: Array<string>) {
+    for (let i = 0; i < keywords.length; i++) {
+      let keyword = keywords[i];
+      if (text.indexOf(keyword) !== -1) {
+        log.debug(`Keyword match`);
+        return true;
+      }
+    }
+    log.debug(`No keyword match found`);
+    return false;
   }
 
   /**

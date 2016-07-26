@@ -49,20 +49,8 @@ export default async function startDispatch() {
   });
 
   // Handle outgoing messages on state changes.
-  store.subscribeWithState((currentState, oldState) => {
-    // Carry on if message state didn't change.
-    if (!oldState) {
-      log.debug('Store is initializating, no dispatch needed.');
-      return;
-    }
-    if (currentState.messages === oldState.messages) {
-      log.debug('State did not change, no dispatch needed.');
-      return;
-    }
-
+  store.subscribeToPath('messages', (messages, oldMessages) => {
     // Figure out which message changed and dispatch it.
-    const oldMessages = oldState.messages;
-    const {messages} = currentState;
     for (let messageType in messages) {
       const message = messages[messageType];
       const oldMessage = oldMessages[messageType];

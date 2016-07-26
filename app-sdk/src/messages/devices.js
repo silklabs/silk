@@ -37,16 +37,11 @@ export type DeviceListMessage = {
 
 
 export function initialize(store: Store) {
-  // TODO: this feels heavy just to have something run whenever we
-  // go from unauthenticated to authenticated.
-  function onAuthenticated(currentState, oldState) {
-    if (!oldState || currentState.auth === oldState.auth) {
-      return;
-    }
-    if (currentState.auth.authenticated && !oldState.auth.authenticated) {
+  function onAuthenticated(authenticated: boolean) {
+    if (authenticated) {
       store.dispatch(actions.devices.fetchDeviceList());
     }
   }
 
-  store.subscribeWithState(onAuthenticated);
+  store.subscribeToPath('auth.authenticated', onAuthenticated);
 }

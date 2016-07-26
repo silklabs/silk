@@ -4,6 +4,7 @@
 
 import {applyMiddleware, createStore, combineReducers} from 'redux';
 import thunk from 'redux-thunk';
+import watch from 'redux-watch';
 import createLog from 'silk-log';
 
 import * as reducers from '../store/reducers';
@@ -21,11 +22,13 @@ export type State = {
   messages: MessagesState;
 };
 
+type PathSubscriber<T> = (newValue: T, oldValue: T, objectPath: string) => any;
+
 export type Store = {
   getState: () => State;
   dispatch: (action: any) => any;
   subscribe: (listener: (() => any)) => (() => void);
-  subscribeWithState: (listener: ((currentState: State, previousState: ?State) => any)) => (() => void);
+  subscribeToPath: (path: string, listener: PathSubscriber<*>) => (() => void);
 };
 
 const log = createLog('app-sdk-store');
@@ -41,16 +44,8 @@ export default function createSDKStore(): Store {
 
   return {
     ...store,
-
-    // Provide an additional API that lets listener get previous and
-    // current state of the store as arguments.
-    subscribeWithState: (listener) => {
-      let previousState = null;
-      const wrappedListener = () => {
-        const oldState = previousState;
-        previousState = store.getState();
-        listener(previousState, oldState);
-      };
+    subscribeToPath: (path, listener) => {
+      const wrappedListener = watch(store.getState, path)(listener);
       return store.subscribe(wrappedListener);
     },
   };

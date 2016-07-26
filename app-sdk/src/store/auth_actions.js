@@ -15,7 +15,11 @@ import {actionFromAsyncPayloadGen} from './action';
 
 import type {SilkApi} from 'silk-api';
 import type {RawPasswordInput} from 'silk-api/src/vip';
-import type {SignInOutput, CreateAccountOutput} from 'silk-api/src/gen/vip';
+import type {
+  SignInOutput,
+  CreateAccountOutput,
+  ResetPasswordInput,
+} from 'silk-api/src/gen/vip';
 
 import type {StateWithApi} from './api';
 
@@ -33,6 +37,7 @@ function genHandleSuccessfulAuth(
     api.accessToken = null;
     return Promise.resolve(false);
   }
+  api.metrics.start();
   const {accessToken} = api;
   invariant(accessToken);
   const json = JSON.stringify({
@@ -95,13 +100,38 @@ async function genCreateAccount(
   }
 }
 
-function genSignOut(): Promise<void> {
+function genSignOut(
+  state: StateWithApi
+): Promise<void> {
+  const {api} = state;
+  invariant(api);
+  api.metrics.stop();
+  api.accessToken = null;
+
+  // TODO: enable this once we have the BLE code in the SDK:
+  if (NativeModules.BLESocketManager) {
+    NativeModules.BLESocketManager.removeAllBeaconUuids();
+  }
+
   return AsyncStorage.multiRemove([
     ACCESS_TOKEN_KEY,
     REGISTERED_DEVICES_KEY,
   ]);
 }
 
+async function genResetPassword(
+  state: StateWithApi,
+  input: ResetPasswordInput
+): Promise<boolean> {
+  const {api} = state;
+  invariant(api);
+  try {
+    const {success} = await api.vip.resetPassword(input);
+    return success;
+  } finally {
+    this.api.accessToken = null;
+  }
+}
 
 // ThunkActions
 
@@ -109,3 +139,4 @@ export const restore = actionFromAsyncPayloadGen('AUTH_RESTORE', genRestore);
 export const signIn = actionFromAsyncPayloadGen('AUTH_SIGNIN', genSignIn);
 export const createAccount = actionFromAsyncPayloadGen('AUTH_CREATEACCOUNT', genCreateAccount);
 export const signOut = actionFromAsyncPayloadGen('AUTH_SIGNOUT', genSignOut);
+export const resetPassword = actionFromAsyncPayloadGen('AUTH_RESETPASSWORD', genResetPassword);

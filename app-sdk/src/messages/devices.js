@@ -4,7 +4,7 @@
 
 import * as actions from '../store/actions';
 
-import type {Store} from './store';
+import type {SDKStore} from './store';
 
 type DeviceConfigStatus = 'CONFIGURED' | 'UNCONFIGURED';
 type ConnectionStatus = 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED';
@@ -36,12 +36,10 @@ export type DeviceListMessage = {
 };
 
 
-export function initialize(store: Store) {
-  function onAuthenticated(authenticated: boolean) {
-    if (authenticated) {
+export function initialize(store: SDKStore) {
+  store.subscribeToPath('auth.isAuthenticated', (isAuthenticated) => {
+    if (isAuthenticated) {
       store.dispatch(actions.devices.fetchDeviceList());
     }
-  }
-
-  store.subscribeToPath('auth.authenticated', onAuthenticated);
+  });
 }

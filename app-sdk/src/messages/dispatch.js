@@ -4,9 +4,11 @@
 
 import createLog from 'silk-log';
 
+import * as actions from '../store/actions';
 import * as auth from './auth';
 import * as clientStatus from './client_status';
 import * as devices from './devices';
+import defaultConfig from '../config';
 import emitter from './emitter';
 import createStore from './store';
 
@@ -83,5 +85,6 @@ export default async function startDispatch() {
   process.nextTick(() => {
     clientStatus.initialize(store);
     devices.initialize(store);
+    store.dispatch(actions.config.setDefault(defaultConfig));
   });
 }

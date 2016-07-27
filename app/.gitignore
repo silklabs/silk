@@ -1,9 +1,1 @@
-# Ignore native module output ...
-/node_modules/bufferutil/build
-/node_modules/fsevents/build
-# fsevents also downloads to this location ...
-/node_modules/fsevents/lib
-/node_modules/utf-8-validate/build
-
-# Configs
 /config.local.json

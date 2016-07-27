@@ -2,6 +2,21 @@
  * @flow
  */
 
-// TODO: make this configurable via config.local.json
+import merge from 'lodash.merge';
 import {configureLog} from 'silk-log';
-configureLog('silk-*');
+
+const defaultConfig = {
+  debug: 'silk-*,-silk-*:debug',
+};
+
+let localConfig;
+try {
+  localConfig = require('../config.local.json');
+} catch (ex) {
+  localConfig = {};
+}
+
+const config = merge({}, defaultConfig, localConfig);
+export default config;
+
+configureLog(config.debug);

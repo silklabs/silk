@@ -12,12 +12,14 @@ import {reducer as messages} from './reducers';
 
 import type {ApiState} from '../store/api';
 import type {AuthState} from '../store/auth_reducers';
+import type {ConfigState} from '../store/config_reducers';
 import type {DevicesState} from '../store/device_reducers';
 import type {MessagesState} from './reducers';
 
 export type State = {
   api: ApiState;
   auth: AuthState;
+  config: ConfigState;
   devices: DevicesState;
   messages: MessagesState;
 };

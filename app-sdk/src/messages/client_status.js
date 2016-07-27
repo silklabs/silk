@@ -34,22 +34,31 @@ export type ClientStatusMessage = {
   clientAuthError: ?ClientAuthError;
 };
 
-function setupNetworkConnectivityHandlers(store: Store) {
+export function initialize(store: Store) {
+  let networkConnectivitySubscription = null;
   function checkNetworkConnectivity() {
     store.dispatch(actions.network.canReachServer());
   }
-  NetInfo.isConnected.addEventListener('change', checkNetworkConnectivity);
-  checkNetworkConnectivity();
-}
 
-export function initialize(store: Store) {
-  store.dispatch(actions.api.create({
-    metrics: {
-      type: 'account',
-      tags: {},
-    },
-  }));
-  setupNetworkConnectivityHandlers(store);
+  store.subscribeToPath('config.current', (config, oldConfig) => {
+    if (oldConfig && config.serverUrl === oldConfig.serverUrl) {
+      return;
+    }
+    store.dispatch(actions.api.create({
+      serverUrl: config.serverUrl,
+      metrics: {
+        type: 'account',
+        tags: {},
+      },
+    }));
+    store.dispatch(actions.auth.restore());
 
-  store.dispatch(actions.auth.restore());
+    if (networkConnectivitySubscription === null) {
+      networkConnectivitySubscription = NetInfo.isConnected.addEventListener(
+        'change',
+        checkNetworkConnectivity
+      );
+    }
+    checkNetworkConnectivity();
+  });
 }

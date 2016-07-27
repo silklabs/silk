@@ -28,8 +28,8 @@ time $SSH $BOB_BUILD_HOST " \
 # Transfer this workspace from Travis to the real build host
 time rsync -azr -e "$SSH" .  $BOB_BUILD_HOST:$BOB_BUILD_ROOT
 
-# Run the build command
-$SSH $BOB_BUILD_HOST " \
+# Run the build command with an interactive shell to pick up usual rc files
+$SSH $BOB_BUILD_HOST "bash -i -c '\
   cd $BOB_BUILD_ROOT; \
   export CI=true; \
   export TRAVIS_BRANCH=$TRAVIS_BRANCH; \
@@ -39,4 +39,4 @@ $SSH $BOB_BUILD_HOST " \
   export TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST; \
   export TRAVIS_REPO_SLUG=$TRAVIS_REPO_SLUG; \
   $BOB_BUILD_COMMAND \
-"
+'"

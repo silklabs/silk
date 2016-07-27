@@ -8,7 +8,7 @@ Right now, our work is based on Node v4.2.x, and NPM 2.x. If you don't have thos
 ```bash
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
 source ~/.nvm/nvm.sh
-nvm install 4.2.6
+nvm install 6.2
 ```
 
 cmake 3.x is required, add a PPA for it since Ubuntu 14.04 doesn't have it out of the box:

@@ -47,10 +47,6 @@ node_version_check()
     local patch=${BASH_REMATCH[3]}
 
     [[ $major -eq 6 ]] && return
-
-    if [[ $major -eq 4 ]]; then
-      [[ $minor -ge 1 ]] && return
-    fi
   fi
   poison_their_lunch Bad node version: $v
 }
@@ -64,7 +60,7 @@ npm_version_check()
     local minor=${BASH_REMATCH[2]}
     local patch=${BASH_REMATCH[3]}
 
-    [[ $major -ge 2 ]] && return
+    [[ $major -ge 3 ]] && return
   fi
   poison_their_lunch Bad npm version: $v
 }

@@ -149,7 +149,7 @@ export class Ui extends events.EventEmitter {
       return false;
     }
     let off = true;
-    let backlight = lights.backlight;
+    let backlight = lights.get('backlight');
 
     if (this.backlightTimer) {
       off = false;
@@ -164,10 +164,10 @@ export class Ui extends events.EventEmitter {
 
     this.backlightTimer = setTimeout(() => {
       log.debug('Backlight timeout');
-      backlight.set(backlight.BLACK);
+      backlight.set(lights.BLACK);
       this.backlightTimer = null;
     }, timeout);
-    backlight.set(backlight.WHITE);
+    backlight.set(lights.WHITE);
 
     return off; // return true if the backlight was just enabled
   }
@@ -185,28 +185,28 @@ export class Ui extends events.EventEmitter {
     this._throwyEmit('state', this.currentState);
 
     if (LIGHT_ENABLED) {
-      let light = lights.notifications;
+      let light = lights.get('notifications');
 
       switch (this.currentState) {
       case 'bootanimation':
-        light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
+        light.set(lights.BLUE, 'timed', 500, 500);
         break;
       case 'unconfigured':
       case 'configStarted':
       case 'configRegistering':
-        light.set(light.YELLOW, light.FLASH_TIMED, 500, 500);
+        light.set(lights.YELLOW, 'timed', 500, 500);
         break;
       case 'connecting':
-        light.set(light.GREEN, light.FLASH_TIMED, 2000, 1000);
+        light.set(lights.GREEN, 'timed', 2000, 1000);
         break;
       case 'online':
-        light.set(light.GREEN);
+        light.set(lights.GREEN);
         break;
       case 'powerdown':
-        light.set(light.BLUE, light.FLASH_TIMED, 500, 500);
+        light.set(lights.BLUE, 'timed', 500, 500);
         break;
       case 'charging':
-        light.set(light.BLACK);
+        light.set(lights.BLACK);
         break;
       default:
         assert(false, `Unknown state: ${this.currentState}`);

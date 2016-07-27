@@ -63,24 +63,33 @@ export default class Connections extends EventEmitter {
     if (!this._running) {
       return;
     }
+    switch (this.state) {
+    case 'disconnected':
+    case 'reconnecting':
+      log.info(`Scheduling reconnect`);
 
-    log.info(`Scheduling reconnect`);
+      // Ensure we try ASAP.
+      this._resetReconnects();
 
-    // Ensure we try ASAP.
-    this._resetReconnects();
+      // Reset any current reconnect timer.
+      if (this._reconnectTimer) {
+        clearTimeout(this._reconnectTimer);
+        this._reconnectTimer = null;
+      }
 
-    // Reset any current reconnect timer.
-    if (this._reconnectTimer) {
-      clearTimeout(this._reconnectTimer);
+      this._scheduleReconnect();
+      break;
+    default:
+      log.info(`Ignoring reconnect request, state is`, this.state);
+      break;
     }
-
-    this._scheduleReconnect();
   }
 
   start(): void {
     if (this._running) {
       return;
     }
+    invariant(this.state === 'disconnected');
 
     log.info('Connections start');
     this._running = true;
@@ -93,6 +102,7 @@ export default class Connections extends EventEmitter {
 
     if (this._reconnectTimer !== null) {
       clearTimeout(this._reconnectTimer);
+      this._reconnectTimer = null;
     }
 
     for (let connection of this._connections) {
@@ -103,6 +113,7 @@ export default class Connections extends EventEmitter {
       this._ws.close();
       this._wsDuplex = this._demux = this._ws = null;
     }
+    invariant(this.state === 'disconnected');
   }
 
   send(type: string, event: string, payload: Object) {
@@ -203,6 +214,7 @@ export default class Connections extends EventEmitter {
    * ping us directly ...
    */
   _scheduleReconnect(): void {
+    invariant(this.state === 'disconnected' || this.state === 'reconnecting');
     this._cleanupListeners();
     // If the .stop call has been made do not reconnect.
     if (!this._running) {
@@ -240,12 +252,20 @@ export default class Connections extends EventEmitter {
   };
 
   async _connect(): Promise<void> {
+    invariant(!this._ws);
+    invariant(this.state === 'disconnected' || this.state === 'reconnecting');
     this._setState('connecting');
     process.nextTick(() => {
       this.emit('connecting');
     });
 
-    const url = this._wsUrl = await this._getSignalingServerUrl();
+    let url;
+    try {
+      url = this._wsUrl = await this._getSignalingServerUrl();
+    } catch (err) {
+      this._onWsError(err);
+      return;
+    }
 
     // Possible we got a stop already ...
     if (!this._running) {
@@ -253,12 +273,16 @@ export default class Connections extends EventEmitter {
     }
 
     log.info(`Connecting to signaling server: ${url}`);
-    const signedUrl = await api.genSignSignalingUrl('device', url);
-    const ws = this._ws = new WebSocket(signedUrl);
+    try {
+      const signedUrl = await api.genSignSignalingUrl('device', url);
+      const ws = this._ws = new WebSocket(signedUrl);
 
-    ws.on('open', this._onWsOpen);
-    ws.on('error', this._onWsError);
-    ws.on('close', this._onWsClose);
+      ws.on('open', this._onWsOpen);
+      ws.on('error', this._onWsError);
+      ws.on('close', this._onWsClose);
+    } catch (err) {
+      this._onWsError(err);
+    }
   }
 
   _onSignaling: (stream: Duplex) => Promise<void> = async (stream) => {

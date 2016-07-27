@@ -13,6 +13,7 @@ import path from 'path';
 import mkdirp from 'mkdirp-promise';
 import fsextra from 'fs-extra';
 import crypto from 'crypto';
+import writeFileAtomic from 'write-file-atomic';
 
 const log = createLog('tts-cache');
 const CACHE_DIR_DATA = 'data/media/tts/';
@@ -26,8 +27,8 @@ const CACHE_DIR_SYSTEM = 'system/silk/media/tts/';
  */
 export default class TtsCache {
 
-  _cache: {[key: string]: Buffer} = {};
-  _cacheLoadingPromise: Promise<void> = Promise.resolve();
+  _cache: {[key: string]: {data: Buffer, mtime: number}} = {};
+  _cacheLoadingPromise: Promise<void>;
 
   constructor() {
     this._cacheLoadingPromise = this._init();
@@ -54,8 +55,10 @@ export default class TtsCache {
     let files = await fs.readdir(dir);
 
     let readFile = async (file) => {
-      let data = await fs.readFile(path.join(dir, file));
-      this._cache[file] = data;
+      let filePath = path.join(dir, file);
+      let data = await fs.readFile(filePath);
+      let stat = await fs.stat(filePath);
+      this._cache[file] = {data, mtime: stat.mtime.getTime()};
     };
 
     // Go through the list of files and populate the cache
@@ -75,7 +78,7 @@ export default class TtsCache {
   /**
    * Return the cached pcm buffer if the provided text is cached
    */
-  async get(text: string) {
+  async get(text: string): Promise<?Buffer> {
     try {
       // Wait for cache to be loaded if not finished loading already
       await this._cacheLoadingPromise;
@@ -85,9 +88,35 @@ export default class TtsCache {
       this._cacheLoadingPromise = this._init();
     }
     let key = this._getSha(text);
-    return this._cache[key];
+    let data = this._cache[key] ? this._cache[key].data : null;
+
+    // Update the time of the entry to prevent it from being removed from the cache
+    if (data) {
+      this._updateTime(CACHE_DIR_DATA, key);
+    }
+
+    return data;
   }
 
+  /**
+   * Update the timestamp of the cache entry
+   */
+  async _updateTime(dir: string, file: string) {
+    let filePath = path.join(CACHE_DIR_DATA, file);
+    let now = new Date();
+    try {
+      let fd = await fs.open(filePath, 'r');
+      await fs.futimes(fd, now, now); // Change the file timestamp
+      await fs.close(fd);
+      this._cache[file].mtime = now.getTime();
+    } catch (err) {
+      log.warn(err);
+    }
+  }
+
+  /**
+   * Delete the cache as something horribly went wrong
+   */
   _cleanup() {
     return new Promise((resolve, reject) => {
       fsextra.remove(CACHE_DIR_DATA, err => {
@@ -105,7 +134,12 @@ export default class TtsCache {
   add(text: string, data: Buffer) {
     log.debug(`Adding cache entry: ${text}`);
     let key = this._getSha(text);
-    this._cache[key] = data;
-    fs.writeFile(path.join(CACHE_DIR_DATA, key), data);
+    writeFileAtomic(path.join(CACHE_DIR_DATA, key), data, err => {
+      if (err) {
+        log.warn(err);
+      } else {
+        this._cache[key] = {data, mtime: Date.now()};
+      }
+    });
   }
 }

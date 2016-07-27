@@ -49,7 +49,6 @@ export default class TextToSpeech extends EventEmitter {
       this.emit(`end`);
       return;
     }
-    log.warn(`No entry found in the tts cache for ${text}`);
 
     let accessToken;
     try {

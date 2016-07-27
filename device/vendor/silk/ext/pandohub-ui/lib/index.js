@@ -315,7 +315,7 @@ class PandoHubUi {
       case 'somethingsWrong':
         await Promise.all([
           this.ring.online(),
-          this.nightlight.white(this.brightness),
+          this.nightlight.userColor(this.brightness),
         ]);
         break;
       default:
@@ -337,7 +337,7 @@ class PandoHubUi {
         case 'normal':
           await Promise.all([
             this.ring.online(),
-            this.nightlight.white(this.brightness),
+            this.nightlight.userColor(this.brightness),
           ]);
           break;
         case 'dnd':
@@ -381,7 +381,7 @@ class PandoHubUi {
     case 'powerdown':
       await Promise.all([
         this.ring.online(),
-        this.nightlight.white(0),
+        this.nightlight.userColor(this.brightness),
       ]);
       break;
     default:

@@ -5,6 +5,7 @@
 import { Nightlight, Ring } from '../lib/leds';
 import createLog from 'silk-log/device';
 import { sleep } from 'silk-async-utils';
+import lights from 'silk-lights';
 const log = createLog('main');
 
 log.info('led test');
@@ -20,17 +21,29 @@ process.on('unhandledRejection',
            (err) => handleError('unhandledRejection', err));
 
 async function nightlightLoop(nightlight) {
+
+  log.info('userColor yellow 100%');
+  lights.get('nightlight').set(lights.YELLOW);
+  nightlight.userColor(255);
+  await sleep(1000);
+
+  log.info('userColor red 50%');
+  lights.get('nightlight').set(lights.RED);
+  nightlight.userColor(128);
+  await sleep(1000);
+
+  log.info('userColor green 100%');
+  lights.get('nightlight').set(lights.GREEN);
+  nightlight.userColor(255);
+  await sleep(1000);
+
+  log.info('userColor 0%');
+  nightlight.userColor(0);
+  await sleep(1000);
+
   log.info('blueWithGlow');
   nightlight.blueWithGlow();
   await sleep(5000);
-
-  log.info('white 100%');
-  nightlight.white(255);
-  await sleep(1000);
-
-  log.info('white 0%');
-  nightlight.white(0);
-  await sleep(1000);
 
   log.info('orange');
   nightlight.orange();

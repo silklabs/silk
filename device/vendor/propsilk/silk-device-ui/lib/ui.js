@@ -9,7 +9,7 @@
 import assert from 'assert';
 import events from 'events';
 import Input from 'silk-input';
-import lights from 'silk-lights';
+import lights, {Light} from 'silk-lights';
 import {Movie} from 'silk-movie';
 import Vibrator from 'silk-vibrator';
 import factoryReset from 'silk-factory-reset';

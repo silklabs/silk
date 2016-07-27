@@ -17,6 +17,7 @@ import startFeeding from './food/saga';
 import modifyTimers from './timers/saga';
 import {
   requestFactoryReset,
+  setNightlightColor,
   setUiMode,
   setVolume,
 } from './ui/saga';
@@ -74,6 +75,7 @@ const concurrentIntents: Set<string> = new Set([
   `playMusic`,
   `resetZipcode`,
   `xkcd`,
+  `setNightlightColor`,
   `setUiMode`,
   `setVolume`,
   `startTimer`,
@@ -280,6 +282,10 @@ export default function*(
         break;
       case `setVolume`:
         sagaFunction = setVolume;
+        args.push(entities);
+        break;
+      case `setNightlightColor`:
+        sagaFunction = setNightlightColor;
         args.push(entities);
         break;
       case `setUiMode`:

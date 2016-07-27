@@ -6,6 +6,7 @@ import createLog from 'silk-log/device';
 import {call, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import volume from 'silk-volume';
+import lights from 'silk-lights';
 import factoryReset from 'silk-factory-reset';
 import type {Environment} from '../environment';
 
@@ -49,6 +50,37 @@ export function* setUiMode(
     break;
   default:
     invariant(false, `Invalid mode: ${entities[0]}`);
+  }
+  yield call(speak, 'ok', 'idle');
+}
+
+export function* setNightlightColor(
+  environment: Environment,
+  entities: Array<string>
+): Generator<Object, void, any> {
+  const {speak} = environment;
+
+  invariant(entities.length === 1);
+
+  const nightlight = lights.get('nightlight');
+  if (!nightlight) {
+    yield call(speak, `Unable to set Nightlight color`);
+    return;
+  }
+
+  switch (entities[0]) {
+  case 'red':
+    nightlight.set(lights.RED);
+    break;
+  case 'white':
+    nightlight.set(lights.WHITE);
+    break;
+  case 'blue':
+    nightlight.set(lights.BLUE);
+    break;
+  default:
+    yield call(speak, `Unsupported nightlight color: ${entities[0]}`, 'idle');
+    return;
   }
   yield call(speak, 'ok', 'idle');
 }

@@ -11,7 +11,8 @@ import type {Action} from './action';
 export type Config = {
   debug: string;
   serverUrl?: string;
-  showDevServers: boolean;
+  showServerPicker?: boolean;
+  showDevServers?: boolean;
   defaultEmail?: string;
   defaultPassword?: string;
   [key: string]: any;

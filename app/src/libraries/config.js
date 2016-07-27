@@ -22,22 +22,10 @@ const DEFAULT = {
     ],
   },
 
-  // If `true` list server.devChoices in the server picker as well
+  showServerPicker: true,
+
+  // If `true`, list server.devChoices in the server picker as well
   showDevServers: false,
-
-  /**
-   * Development preferences intended to be overriden in config.local.json
-   * (TODO: remove the `preferences` prefix for consistency with other settings
-   *        that are intended to be overriden in config.local.json)
-   */
-  'preferences': {
-    showLiveLag: false,
-
-    // Very verbose socket.io logging!
-    socketioLogs: false,
-
-    showServerPicker: true,
-  },
 };
 
 const STORAGE_KEY = 'app.config';

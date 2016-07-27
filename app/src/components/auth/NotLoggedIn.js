@@ -97,7 +97,7 @@ export default class NotLoggedIn extends AsyncComponent {
 
   _renderFirstScreen() {
     let serverPickerButton = null;
-    let { showServerPicker } = Config.get().preferences;
+    const { showServerPicker } = Config.get();
     if (showServerPicker) {
       serverPickerButton = (
         <Button

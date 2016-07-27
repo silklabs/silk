@@ -23,7 +23,7 @@ type MessageErrorMessage = {
   message: any;
 };
 
-type Message =
+type OutgoingMessage =
     InitializedMessage
   | MessageErrorMessage
   | ClientStatusMessage
@@ -37,7 +37,7 @@ export class SilkAppSDKEventEmitter extends NativeEventEmitter {
     super(NativeModules.SLKAppSDKEventEmitter);
   }
 
-  postMessage(message: Message) {
+  postMessage(message: OutgoingMessage) {
     NativeModules.SLKAppSDKEventEmitter.postMessage(message);
   }
 

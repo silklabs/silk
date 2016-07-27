@@ -4,37 +4,11 @@
 
 import {NetInfo} from 'react-native';
 
-import * as actions from '../store/actions';
+import * as actions from './store/actions';
 
-import type {SDKStore} from './store';
+import type {Store} from './store';
 
-type ClientConnectionStatus =
-    'NOT_CONNECTED'
-  | 'CONNECTING'
-  | 'CONNECTED'
-  ;
-type ClientConnectionError =
-    'SERVER_UNREACHABLE'
-  ;
-
-type ClientAuthStatus =
-    'NOT_AUTHENTICATED'
-  | 'AUTHENTICATING'
-  | 'AUTHENTICATED'
-  ;
-
-// TODO:
-type ClientAuthError = string;
-
-export type ClientStatusMessage = {
-  type: 'CLIENT_STATUS';
-  clientConnectionStatus: ClientConnectionStatus;
-  clientConnectionError: ?ClientConnectionError;
-  clientAuthStatus: ClientAuthStatus;
-  clientAuthError: ?ClientAuthError;
-};
-
-export function initialize(store: SDKStore) {
+function initNetworkAndAPI(store: Store<*>) {
   let networkConnectivitySubscription = null;
   function checkNetworkConnectivity() {
     store.dispatch(actions.network.canReachServer());
@@ -61,4 +35,17 @@ export function initialize(store: SDKStore) {
     }
     checkNetworkConnectivity();
   });
+}
+
+function initDevices(store: Store<*>) {
+  store.subscribeToPath('auth.isAuthenticated', (isAuthenticated) => {
+    if (isAuthenticated) {
+      store.dispatch(actions.devices.fetchDeviceList());
+    }
+  });
+}
+
+export function init(store: Store<*>) {
+  initNetworkAndAPI(store);
+  initDevices(store);
 }

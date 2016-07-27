@@ -45,7 +45,7 @@ public class SilkAppSDKService extends Service {
   }
 
   protected String getJSMainModuleName() {
-    return "app-sdk/src/index";
+    return "app-sdk/src/sdk/index";
   }
 
   protected boolean getUseDeveloperSupport() {

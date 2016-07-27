@@ -4,13 +4,10 @@
 
 import createLog from 'silk-log';
 
-import * as actions from '../store/actions';
 import * as auth from './auth';
-import * as clientStatus from './client_status';
-import * as devices from './devices';
-import defaultConfig from '../config';
 import emitter from './emitter';
-import createStore from './store';
+
+import type {SDKStore} from './store';
 
 const log = createLog('app-sdk-dispatch');
 
@@ -18,9 +15,7 @@ const messageHandlers = {
   ...auth.messageHandlers,
 };
 
-export default async function startDispatch() {
-  const store = createStore();
-
+export function init(store: SDKStore) {
   // Handle incoming messages.
   emitter.addListener('silkAppSDKMessage', (message) => {
     // TODO: validate messages against Joi schema
@@ -82,9 +77,4 @@ export default async function startDispatch() {
 
   // Startup initialization.
   emitter.postMessage({type: 'INITIALIZED'});
-  process.nextTick(() => {
-    clientStatus.initialize(store);
-    devices.initialize(store);
-    store.dispatch(actions.config.setDefault(defaultConfig));
-  });
 }

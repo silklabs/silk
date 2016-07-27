@@ -27,7 +27,7 @@ export type StateWithConfig = {
   config: ConfigState;
 };
 
-const initialState = {
+const initialState: ConfigState = {
   default: null,
   user: null,
   current: null,

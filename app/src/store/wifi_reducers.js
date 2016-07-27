@@ -4,14 +4,15 @@
 
 import invariant from 'assert';
 import createLog from 'silk-log';
+import {handleActions} from 'redux-actions';
 
+import type {Action, SuccessAction} from 'silk-app-sdk/src/store/action';
 import type {DeviceWifiNetwork} from 'silk-app-sdk/src/ble/device_manager';
 import type {WifiInfo} from '../libraries/Util.js';
-import type {Action} from '../actions/types';
 
 const log = createLog('reducer-wifi');
 
-type State = {
+export type WifiState = {
   /**
    * Possible values once received from native:
    * - null: the phone is connected to Wifi
@@ -62,7 +63,7 @@ type State = {
   secret: string;
 };
 
-const initialState: State = {
+const initialState: WifiState = {
   localWifiInfo: null,
   receivedLocalWifiInfo: false,
   deviceNetworks: null,
@@ -73,117 +74,153 @@ const initialState: State = {
   secret: '',
 };
 
-export default function wifiConfig(
-  state: State = initialState,
-  action: Action
-): State {
-  log.debug('Received action ' + action.type);
-  switch (action.type) {
-
-  case 'CLEAR_STATE':
-    state = Object.assign({}, initialState);
-    break;
-
-  case 'DETERMINED_LOCAL_WIFI_INFO':
-    state = Object.assign({}, state, {
-      localWifiInfo: action.wifiInfo,
-      receivedLocalWifiInfo: true,
-    });
-    findBestWifiMatch(state);
-    break;
-
-  case 'SCANNED_DEVICE_NETWORKS':
-    state = Object.assign({}, state, {
-      deviceNetworks: action.deviceNetworks,
-    });
-    findBestWifiMatch(state);
-    break;
-
-  case 'SELECT_DEVICE_NETWORK':
-    state = Object.assign({}, state, {
-      selectedDeviceNetwork: action.deviceNetwork,
-      secret: '',
-    });
-    break;
-
-  case 'SELECT_ENTER_MANUALLY':
-    state = Object.assign({}, state, {
-      manualEntry: true,
-      manualNetwork: {
-        ssid: '',
-        psk: true,
-      },
-      secret: '',
-    });
-    break;
-
-  case 'SELECT_CHOOSE_FROM_DEVICE_LIST':
-    state = Object.assign({}, state, {
-      manualEntry: false,
-      manualNetwork: null,
-      secret: '',
-    });
-    break;
-
-  case 'CHANGE_SECRET':
-    state = Object.assign({}, state, {
-      secret: action.secret,
-    });
-    break;
-
-  case 'CHANGE_MANUAL_NETWORK_SSID':
-    invariant(state.manualEntry);
-    state = Object.assign({}, state, {
-      manualNetwork: Object.assign({}, state.manualNetwork, {
-        ssid: action.ssid,
-      }),
-    });
-    break;
-
-  case 'CHANGE_MANUAL_NETWORK_PSK':
-    invariant(state.manualEntry);
-    state = Object.assign({}, state, {
-      manualNetwork: Object.assign({}, state.manualNetwork, {
-        psk: action.psk,
-      }),
-    });
-    break;
-
-  default:
-    break;
-  }
-
-  return state;
+function WIFI_CLEAR_STATE(
+  state: WifiState,
+  action: SuccessAction<'WIFI_CLEAR_STATE', void>
+): WifiState {
+  return {...initialState};
 }
 
-function findBestWifiMatch(state: State) {
-  const { localWifiInfo, deviceNetworks } = state;
+function WIFI_GET_LOCAL_INFO(
+  state: WifiState,
+  action: Action<'WIFI_GET_LOCAL_INFO', WifiInfo>
+): WifiState {
+  if (action.error || action.requested) {
+    return state;
+  }
+  return findBestWifiMatch({
+    ...state,
+    localWifiInfo: action.payload,
+    receivedLocalWifiInfo: true,
+  });
+}
+
+function WIFI_UPDATE_DEVICE_NETWORKS(
+  state: WifiState,
+  action: SuccessAction<'WIFI_UPDATE_DEVICE_NETWORKS', Array<DeviceWifiNetwork>>
+): WifiState {
+  return findBestWifiMatch({
+    ...state,
+    deviceNetworks: action.payload,
+  });
+}
+
+function WIFI_SELECT_FROM_LIST(
+  state: WifiState,
+  action: SuccessAction<'WIFI_SELECT_FROM_LIST', void>
+): WifiState {
+  return {
+    ...state,
+    manualEntry: false,
+    manualNetwork: null,
+    secret: '',
+  };
+}
+
+function WIFI_ENTER_MANUALLY(
+  state: WifiState,
+  action: SuccessAction<'WIFI_ENTER_MANUALLY', void>
+): WifiState {
+  return {
+    ...state,
+    manualEntry: true,
+    manualNetwork: {
+      ssid: '',
+      psk: true,
+    },
+    secret: '',
+  };
+}
+
+function WIFI_SET_NETWORK(
+  state: WifiState,
+  action: SuccessAction<'WIFI_SET_NETWORK', DeviceWifiNetwork>
+): WifiState {
+  return {
+    ...state,
+    selectedDeviceNetwork: action.payload,
+    secret: '',
+  };
+}
+
+function WIFI_SET_SECRET(
+  state: WifiState,
+  action: SuccessAction<'WIFI_SET_SECRET', string>
+): WifiState {
+  return {
+    ...state,
+    secret: action.payload,
+  };
+}
+
+function WIFI_SET_MANUAL_SSID(
+  state: WifiState,
+  action: SuccessAction<'WIFI_SET_MANUAL_SSID', string>
+): WifiState {
+  invariant(state.manualEntry);
+  return {
+    ...state,
+    manualNetwork: {
+      ...state.manualNetwork,
+      ssid: action.payload,
+    },
+  };
+}
+
+function WIFI_SET_MANUAL_PSK(
+  state: WifiState,
+  action: SuccessAction<'WIFI_SET_MANUAL_PSK', boolean>
+): WifiState {
+  invariant(state.manualEntry);
+  return {
+    ...state,
+    manualNetwork: {
+      ...state.manualNetwork,
+      psk: action.payload,
+    },
+  };
+}
+
+export const reducer = handleActions({
+  WIFI_CLEAR_STATE,
+  WIFI_GET_LOCAL_INFO,
+  WIFI_UPDATE_DEVICE_NETWORKS,
+  WIFI_SELECT_FROM_LIST,
+  WIFI_ENTER_MANUALLY,
+  WIFI_SET_NETWORK,
+  WIFI_SET_SECRET,
+  WIFI_SET_MANUAL_SSID,
+  WIFI_SET_MANUAL_PSK,
+}, initialState);
+
+function findBestWifiMatch(state: WifiState): WifiState {
+  const {localWifiInfo, deviceNetworks} = state;
 
   // If we have gotten a match before, or a manual entry, or if we
   // don't have all info yet, don't try to do any matching. But do
   // set newer values for either device or local WiFi info.
   if (state.attemptedWifiMatch) {
     log.debug('Already attempted to match WiFi networks, not trying again.');
-    return;
+    return state;
   }
   if (state.selectedDeviceNetwork) {
     log.debug('A WiFi network was already selected, not going to overwrite that.');
-    return;
+    return state;
   }
   if (!state.receivedLocalWifiInfo) {
     log.debug('Not received local WiFi info yet.');
-    return;
+    return state;
   }
   if (!deviceNetworks) {
     log.debug('Not received WiFi networks from device yet.');
-    return;
+    return state;
   }
 
   state.attemptedWifiMatch = true;
   if (!deviceNetworks.length) {
     log.debug('Device does not see a single WiFi network.');
     state.selectedDeviceNetwork = null;
-    return;
+    return state;
   }
 
   // Return strongest WiFi seen by device if the phone isn't
@@ -192,7 +229,7 @@ function findBestWifiMatch(state: State) {
     log.debug('Local phone/tablet is not connected to WiFi');
     state.selectedDeviceNetwork =
       deviceNetworks.slice().sort((a, b) => b.level - a.level)[0];
-    return;
+    return state;
   }
 
   let selectedDeviceNetwork =
@@ -200,11 +237,13 @@ function findBestWifiMatch(state: State) {
   if (selectedDeviceNetwork) {
     log.debug('Found match based on SSID:', selectedDeviceNetwork);
     state.selectedDeviceNetwork = selectedDeviceNetwork;
-    return;
+    return state;
   }
 
   selectedDeviceNetwork =
     deviceNetworks.slice().sort((a, b) => b.level - a.level)[0];
   log.debug('Resorting to WiFi with strongest RSSI:', selectedDeviceNetwork);
   state.selectedDeviceNetwork = selectedDeviceNetwork;
+
+  return state;
 }

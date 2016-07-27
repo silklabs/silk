@@ -260,7 +260,7 @@ export default class WifiConfig extends React.Component {
     if (!this.state.authTypeModalShown) {
       return null;
     }
-    const { manualNetwork } = this.state;
+    const { manualNetwork } = this.props;
     return (
       <Modal
         animationType="none"

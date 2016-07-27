@@ -99,10 +99,10 @@ export class Light extends events.EventEmitter {
     const args = [
       this._id,
       state.color.toString(),
-      state.flashMode,
+      state.flashMode.toString(),
       state.flashOnMS.toString(),
       state.flashOffMS.toString(),
-      state.brightnessMode,
+      state.brightnessMode.toString(),
     ];
 
     return exec(binary, args)

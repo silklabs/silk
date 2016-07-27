@@ -1,7 +1,8 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 source ~/.nvm/nvm.sh
-nvm use 4.2
+nvm use 6.2
+set -x
 
 node --version
 npm --version

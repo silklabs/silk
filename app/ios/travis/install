@@ -3,4 +3,4 @@
 brew install npm nvm
 export NVM_DIR="$PWD/.nvm"
 source $(brew --prefix nvm)/nvm.sh
-nvm install 4.2
+nvm install 6.2

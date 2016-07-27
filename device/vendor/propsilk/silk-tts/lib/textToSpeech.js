@@ -10,11 +10,13 @@
 import createLog from 'silk-log/device';
 import {EventEmitter} from 'events';
 import * as https from 'https';
+import TtsCache from './tts_cache';
 
 import type { SpeechOptions } from 'silk-dialog-script';
 
 const log = createLog('tts');
 let options: SpeechOptions;
+let ttsCache = new TtsCache();
 
 /**
  * Call this function once to configure the speech options
@@ -39,6 +41,15 @@ export default class TextToSpeech extends EventEmitter {
       this.emit(`error`, `Not configured?`);
       return;
     }
+
+    // Return cached sample if available
+    let samples = await ttsCache.get(text);
+    if (samples) {
+      this.emit(`data`, samples);
+      this.emit(`end`);
+      return;
+    }
+    log.warn(`No entry found in the tts cache for ${text}`);
 
     let accessToken;
     try {
@@ -71,9 +82,11 @@ export default class TextToSpeech extends EventEmitter {
     log.debug(`postData`, opts);
 
     const req = https.request(opts, res => {
+      let samples = new Buffer(0);
       res.once(`error`, (error) => this.emit(`error`, error));
       res.on(`data`, (chunk) => {
         this.emit(`data`, chunk);
+        samples = Buffer.concat([samples, chunk]);
       });
       res.once(`end`, () => {
         log.info(`Response complete ${res.statusCode}`);
@@ -82,6 +95,7 @@ export default class TextToSpeech extends EventEmitter {
                                        `${res.statusCode}`));
         } else {
           this.emit(`end`);
+          ttsCache.add(text, samples);
         }
       });
     });

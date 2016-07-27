@@ -76,11 +76,11 @@ FULL=false
 WIPE=false
 if [ "$1" = "-f" ]; then
   shift
+  WIPE=true
   if [ -d nhlos ]; then
     FULL=true
-    WIPE=true
   else
-    echo "No nhlos/, -f ignored"
+    echo "No nhlos/ found"
   fi
 fi
 if [ "$1" = "-w" ]; then

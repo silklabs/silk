@@ -92,7 +92,7 @@ RCT_EXPORT_METHOD(dataChannelSetBinaryType:(nonnull NSNumber *)dataChannelId bin
       type = @"binary";
     }
   } else {
-    data = [NSString stringWithUTF8String:buffer.data.bytes];
+    data = [[NSString alloc] initWithData:buffer.data encoding:NSUTF8StringEncoding];
   }
   NSDictionary *event = @{@"id": @(channel.channelId),
                           @"type": type,

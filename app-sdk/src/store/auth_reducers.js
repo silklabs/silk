@@ -30,14 +30,14 @@ export type AuthState = {
   /**
    * Whether we're successfully authenticated.
    */
-  authenticated: boolean;
+  isAuthenticated: boolean;
 };
 
 const initialState: AuthState = {
   restoreAttempted: false,
   inProgress: false,
   error: null,
-  authenticated: false,
+  isAuthenticated: false,
 };
 
 function AUTH_RESTORE(
@@ -54,14 +54,14 @@ function AUTH_RESTORE(
     return {
       ...state,
       restoreAttempted: true,
-      authenticated: false,
+      isAuthenticated: false,
     };
   }
   return {
     ...state,
     restoreAttempted: true,
     inProgress: false,
-    authenticated: action.payload,
+    isAuthenticated: action.payload,
     error: null,
   };
 }
@@ -78,7 +78,7 @@ function AUTH_SIGNOUT(
   }
   return {
     ...state,
-    authenticated: false,
+    isAuthenticated: false,
   };
 }
 
@@ -102,7 +102,7 @@ function AUTH_SIGNIN(
   return {
     ...state,
     error: null,
-    authenticated: action.payload,
+    isAuthenticated: action.payload,
   };
 }
 
@@ -122,7 +122,7 @@ function AUTH_CREATEACCOUNT(
   return {
     ...state,
     error: null,
-    authenticated: action.payload,
+    isAuthenticated: action.payload,
   };
 }
 

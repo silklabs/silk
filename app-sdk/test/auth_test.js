@@ -25,7 +25,7 @@ function makeStore() {
 
 function whenAuthenticated(store): Promise<void> {
   return new Promise((resolve) => {
-    store.subscribe(() => store.getState().auth.authenticated && resolve());
+    store.subscribe(() => store.getState().auth.isAuthenticated && resolve());
   });
 }
 

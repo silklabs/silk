@@ -37,11 +37,9 @@ export type DeviceListMessage = {
 
 
 export function initialize(store: Store) {
-  function onAuthenticated(authenticated: boolean) {
-    if (authenticated) {
+  store.subscribeToPath('auth.isAuthenticated', (isAuthenticated) => {
+    if (isAuthenticated) {
       store.dispatch(actions.devices.fetchDeviceList());
     }
-  }
-
-  store.subscribeToPath('auth.authenticated', onAuthenticated);
+  });
 }

@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash
 #
 # Builds the device build defined by the BOARD/PRODUCT environment variables
 #
@@ -13,6 +13,9 @@ if [[ -z $PRODUCT ]]; then
   exit 1
 fi
 
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh";
+
+set -e
 cd device/
 #
 # TODO: What follows is essentially a duplicate of ../device/.travis.yml

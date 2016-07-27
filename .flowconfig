@@ -65,8 +65,8 @@ node_modules/fbjs/flow/lib/
 # provide a minimal declaration in flow-lib/react-native.js.flow.
 .*/node_modules/react-native/.*
 
-# Ignore the native modules whose interface
-# files are present in top level flow-interfaces
+# Ignore the native modules whose interface files are present in top
+# level flow-interfaces.
 .*/device/vendor/propsilk/silk-caffe/.*
 .*/device/vendor/propsilk/silk-cv/.*
 

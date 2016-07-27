@@ -2,24 +2,22 @@
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
-import SonosApi from 'sonos';
-
+import invariant from 'assert';
+import {Sonos, search} from 'sonos';
 import createLog from 'silk-log/device';
+
+import type {Search, Track} from 'sonos';
+
 const log = createLog('sonos');
 
-export type SonosTrackInfo = {
-  title?: string;
-  artist?: string;
-  album?: string;
-  albumArtURI?: string;
-  position?: number;
-  duration?: number;
-  albumArtURL?: string;
-}
+export class SilkSonos {
+  _sonos: ?Sonos = null;
+  _sonosSearch: ?Search = null;
 
-export class Sonos {
   constructor() {
     log.info('initializing Sonos');
     this.startSearch();
@@ -27,44 +25,48 @@ export class Sonos {
 
   startSearch() {
     log.info('searching for Sonos...');
-    this._sonosSearch = SonosApi.search();
+    this._sonosSearch = search();
     this._sonosSearch.on('DeviceAvailable', this._onSonosFound);
   }
 
   stopSearch() {
-    this._sonosSearch.removeListener('DeviceAvailable', this._onSonosFound);
-    this._sonosSearch.destroy();
-    this._sonosSearch = undefined;
+    const sonosSearch = this._sonosSearch;
+    invariant(sonosSearch);
+    sonosSearch.removeListener('DeviceAvailable', this._onSonosFound);
+    sonosSearch.destroy();
+    this._sonosSearch = null;
   }
 
-  _onSonosFound = (device /*, model */) => {
+  _onSonosFound = (device: Sonos) => {
     log.info(`Sonos found: ${device.host}:${device.port}`);
-    this._sonos = new SonosApi.Sonos(device.host, device.port);
+    this._sonos = device;
   };
 
   pause() {
-    if (!this._sonos) {
+    const sonos = this._sonos;
+    if (!sonos) {
       return;
     }
 
-    this._sonos.pause((err, paused) => {
+    sonos.pause((err, paused) => {
       log.info(`Sonos now ${paused ? 'paused' : 'not paused'}` +
           `${err ? 'err: ' + err : ''}`);
     });
   }
 
   play() {
-    if (!this._sonos) {
+    const sonos = this._sonos;
+    if (!sonos) {
       return;
     }
 
-    this._sonos.play((err, playing) => {
+    sonos.play((err, playing) => {
       log.info(`Sonos now ${playing ? 'playing' : 'not playing'}` +
           `${err ? 'err: ' + err : ''}`);
     });
   }
 
-  playQuery(query, value) {
+  playQuery(query: string, value: string) {
     const validQueries = [
       'artists',
       'albumArtists',
@@ -81,11 +83,12 @@ export class Sonos {
       return;
     }
 
-    if (!this._sonos) {
+    const sonos = this._sonos;
+    if (!sonos) {
       return;
     }
 
-    this._sonos.getMusicLibrary(query, {start: 0}, (err, result) => {
+    sonos.getMusicLibrary(query, {start: 0}, (err, result) => {
       let uri;
       if (!err) {
         result.items.forEach(item => {
@@ -102,14 +105,15 @@ export class Sonos {
     });
   }
 
-  playUri(uri) {
-    if (!this._sonos) {
+  playUri(uri: string) {
+    const sonos = this._sonos;
+    if (!sonos) {
       return;
     }
 
     log.info(`Queueing Sonos for ${uri}`);
 
-    this._sonos.queueNext(uri, (err, queued) => {
+    sonos.queueNext(uri, (err, queued) => {
       if (!err) {
         this.play();
       } else {
@@ -118,14 +122,15 @@ export class Sonos {
     });
   }
 
-  getTrackInfo() {
-    if (!this._sonos) {
+  getTrackInfo(): Promise<Track> {
+    const sonos = this._sonos;
+    if (!sonos) {
       return Promise.reject();
     }
 
     log.info(`Getting track info`);
     return new Promise((resolve, reject) => {
-      this._sonos.currentTrack((err, track) => {
+      sonos.currentTrack((err, track) => {
         if (err) {
           reject(new Error(`Sonos get track info: ${err}`));
         } else {
@@ -136,4 +141,4 @@ export class Sonos {
   }
 }
 
-export default new Sonos();
+export default new SilkSonos();

@@ -17,6 +17,7 @@ cd device/
 #
 # TODO: What follows is essentially a duplicate of ../device/.travis.yml
 #
+source ../pub/travis/common_before_install.sh
 source travis/before_script
 echo For full build logs and other artifacts, please see $ARTIFACT_WEBHOST/$ARTIFACT_REMOTE_PATH
 set +e

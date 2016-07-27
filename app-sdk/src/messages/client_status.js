@@ -6,7 +6,7 @@ import {NetInfo} from 'react-native';
 
 import * as actions from '../store/actions';
 
-import type {Store} from './store';
+import type {SDKStore} from './store';
 
 type ClientConnectionStatus =
     'NOT_CONNECTED'
@@ -34,7 +34,7 @@ export type ClientStatusMessage = {
   clientAuthError: ?ClientAuthError;
 };
 
-export function initialize(store: Store) {
+export function initialize(store: SDKStore) {
   let networkConnectivitySubscription = null;
   function checkNetworkConnectivity() {
     store.dispatch(actions.network.canReachServer());

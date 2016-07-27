@@ -4,7 +4,7 @@
 
 import * as actions from '../store/actions';
 
-import type {Store} from './store';
+import type {SDKStore} from './store';
 
 export type AccountLoginPasswordMessage = {
   type: 'ACCOUNT_LOGIN';
@@ -17,7 +17,7 @@ export type AccountLogoutMessage = {
 };
 
 function ACCOUNT_LOGIN_PASSWORD(
-  store: Store,
+  store: SDKStore,
   message: AccountLoginPasswordMessage
 ) {
   store.dispatch(actions.auth.signIn({
@@ -28,7 +28,7 @@ function ACCOUNT_LOGIN_PASSWORD(
 }
 
 function ACCOUNT_CREATE(
-  store: Store,
+  store: SDKStore,
   message: AccountLoginPasswordMessage
 ) {
   store.dispatch(actions.auth.createAccount({
@@ -39,7 +39,7 @@ function ACCOUNT_CREATE(
 }
 
 function ACCOUNT_LOGOUT(
-  store: Store,
+  store: SDKStore,
   message: AccountLogoutMessage
 ) {
   store.dispatch(actions.auth.signOut());

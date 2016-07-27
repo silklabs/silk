@@ -2,10 +2,6 @@
  * @flow
  */
 
-import * as actions from '../store/actions';
-
-import type {SDKStore} from './store';
-
 type DeviceConfigStatus = 'CONFIGURED' | 'UNCONFIGURED';
 type ConnectionStatus = 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED';
 // TODO:
@@ -34,12 +30,3 @@ export type DeviceListMessage = {
   type: 'DEVICE_LIST';
   devices: Array<DeviceStatusMessage>;
 };
-
-
-export function initialize(store: SDKStore) {
-  store.subscribeToPath('auth.isAuthenticated', (isAuthenticated) => {
-    if (isAuthenticated) {
-      store.dispatch(actions.devices.fetchDeviceList());
-    }
-  });
-}

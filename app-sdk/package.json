@@ -17,6 +17,7 @@
     "socket.io-client": "1.4.6"
   },
   "dependencies": {
+    "lodash.merge": "3.3.2",
     "react": "15.2.0",
     "react-native": "0.30.0-rc.0",
     "redux": "3.5.2",

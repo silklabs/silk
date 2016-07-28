@@ -4,15 +4,15 @@
  * @flow
  */
 import { Router } from 'express';
-import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
-import authorizeAccount from '../authorize_account';
+import { expressApi } from 'silk-api-schema';
 import createLog from 'silk-log';
-import decorateUrl from '../decorate_url';
 
+import authorizeAccount from '../authorize_account';
+import decorateUrl from '../decorate_url';
 import CrashMetadata from '../models/crash_metadata';
 
-import type { ExpressRoutes } from 'api-schema';
+import type { ExpressRoutes } from 'silk-api-schema';
 import type { RouteContext } from '../server';
 
 const log = createLog('routes:crash');

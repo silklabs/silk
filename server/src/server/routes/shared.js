@@ -9,7 +9,7 @@ import invariant from 'assert';
 import version from 'silk-core-version';
 import formatURL from 'silk-utils/url_format';
 
-import type {ExpressRoutes} from 'api-schema';
+import type {ExpressRoutes} from 'silk-api-schema';
 import type {RouteContext} from '../server';
 
 const log = createLog('routes:account');

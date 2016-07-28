@@ -6,15 +6,15 @@
  */
 
 import { Router } from 'express';
-import { expressApi } from 'api-schema';
 import * as Joi from 'joi';
+import { expressApi } from 'silk-api-schema';
 import createLog from 'silk-log';
-import Devices from '../models/devices';
 
+import Devices from '../models/devices';
 import sharedRoutes from './shared';
 import authorizeDevice from '../authorize_device';
 
-import type { ExpressRoutes } from 'api-schema';
+import type { ExpressRoutes } from 'silk-api-schema';
 import type { RouteContext } from '../server';
 
 const log = createLog('routes:device');

@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "license": "proprietary",
   "symlinkDependencies": {
-    "api-schema": "/api-schema",
     "eslint-config-silk": "/pub/eslint-config",
+    "silk-api-schema": "/api-schema",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/pub/version",
     "silk-crypto": "/crypto",

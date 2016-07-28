@@ -4,7 +4,7 @@
  * @flow
  */
 import { Router } from 'express';
-import { expressApi } from 'api-schema';
+import { expressApi } from 'silk-api-schema';
 import * as Joi from 'joi';
 import createLog from 'silk-log';
 
@@ -12,7 +12,7 @@ import authorizeAccount from '../authorize_account';
 import decorateUrl from '../decorate_url';
 import TimeMetadata from '../models/time_metadata';
 
-import type { ExpressRoutes } from 'api-schema';
+import type { ExpressRoutes } from 'silk-api-schema';
 import type { RouteContext } from '../server';
 
 const PREFIX = '/v1/metadata/';

@@ -5,11 +5,11 @@
  */
 import assert from 'assert';
 import { Router } from 'express';
-import { expressApi } from 'api-schema';
+import { expressApi } from 'silk-api-schema';
 import * as Joi from 'joi';
 import jwtMiddleware from '../jwt';
 
-import type { ExpressRoutes } from 'api-schema';
+import type { ExpressRoutes } from 'silk-api-schema';
 import type Accounts from '../models/accounts';
 
 const PREFIX = '/v1/test/';

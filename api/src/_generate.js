@@ -4,10 +4,10 @@
  * post install setup and should not be included elsewhere (hence the _).
  */
 
+import fs from 'fs';
 import mkdirp from 'mkdirp';
 import path from 'path';
-import generateSchema from 'api-schema/src/gen';
-import fs from 'fs';
+import generateSchema from 'silk-api-schema/src/gen';
 
 const AUTOGEN_ROOT = path.join(__dirname, '/gen');
 

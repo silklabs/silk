@@ -12,6 +12,12 @@ import createLog from 'silk-log/device';
 
 import type { Socket } from 'net';
 
+export type ScanResult = {
+  ssid: string;
+  level: number;
+  psk: boolean;
+};
+
 const log = createLog('wifi');
 const USE_WIFI_STUB = util.getboolprop(
   'persist.silk.wifi.stub',
@@ -77,7 +83,7 @@ export type WifiState = 'disconnected' |
                         'four_way_handshake' |
                         'group_handshake' |
                         'completed';
-const WIFI_STATE_MAP = [
+const WIFI_STATE_MAP: Array<WifiState> = [
   'disconnected',
   'disabled',
   'inactive',
@@ -91,7 +97,43 @@ const WIFI_STATE_MAP = [
 ];
 
 // ref: external/wpa_supplicant_8/src/common/ieee802_11_defs.h
-const WIFI_DISCONNECT_REASONS = [
+export type WifiDisconnectReason = 'invalid_0' |
+                                   'unspecified' |
+                                   'prev_auth_not_valid' |
+                                   'deauth_leaving' |
+                                   'disassoc_due_to_inactivity' |
+                                   'disassoc_ap_busy' |
+                                   'class2_frame_from_nonauth_sta' |
+                                   'class3_frame_from_nonassoc_sta' |
+                                   'disassoc_sta_has_left' |
+                                   'sta_req_assoc_without_auth' |
+                                   'pwr_capability_not_valid' |
+                                   'supported_channel_not_valid' |
+                                   'invalid_12' |
+                                   'invalid_ie' |
+                                   'michael_mic_failure' |
+                                   '4way_handshake_timeout' |
+                                   'group_key_update_timeout' |
+                                   'ie_in_4way_differs' |
+                                   'group_cipher_not_valid' |
+                                   'pairwise_cipher_not_valid' |
+                                   'akmp_not_valid' |
+                                   'unsupported_rsn_ie_version' |
+                                   'invalid_rsn_ie_capab' |
+                                   'ieee_802_1x_auth_failed' |
+                                   'cipher_suite_rejected' |
+                                   'tdls_teardown_unreachable' |
+                                   'tdls_teardown_unspecified' |
+                                   'invalid_27' |
+                                   'invalid_28' |
+                                   'invalid_29' |
+                                   'invalid_30' |
+                                   'invalid_31' |
+                                   'invalid_32' |
+                                   'invalid_33' |
+                                   'disassoc_low_ack';
+
+const WIFI_DISCONNECT_REASONS: Array<WifiDisconnectReason> = [
   'invalid_0',
   'unspecified',
   'prev_auth_not_valid',
@@ -630,7 +672,7 @@ export class Wifi extends EventEmitter {
     lines.pop();
 
     // Parse each discovered network line
-    let bestNetworks = {};
+    let bestNetworks: Map<string, ScanResult> = new Map();
     for (const line of lines) {
       let info = line.split('\t');
       if (info.length !== 5) {
@@ -662,20 +704,16 @@ export class Wifi extends EventEmitter {
 
       const key = `${ssid}\0${String(psk)}`;
       level = parseInt(level, 10);
-      const existingNetwork = bestNetworks[key];
+      const existingNetwork = bestNetworks.get(key);
       if (existingNetwork && existingNetwork.level < level) {
         existingNetwork.level = level;
       } else {
-        bestNetworks[key] = {ssid, level, psk};
+        bestNetworks.set(key, {ssid, level, psk});
       }
     }
 
     // Rebuild scanResults with just the strongest ssids
-    let scanResults = [];
-    for (let key in bestNetworks) {
-      scanResults.push(bestNetworks[key]);
-    }
-
+    const scanResults: Array<ScanResult> = Array.from(bestNetworks.values());
     log.debug('scanResults', scanResults);
 
     /**
@@ -684,9 +722,8 @@ export class Wifi extends EventEmitter {
      * @event scanResults
      * @memberof silk-wifi
      * @instance
-     * @type {Object}
+     * @type {Array<ScanResult>}
      * @property {string} ssid name of the network
-     * @property {string} bssid basic service set identifier
      * @property {number} level signal level
      * @property {boolean} psk True if network requires WPA or PSK
      */
@@ -798,7 +835,7 @@ export class StubWifi extends EventEmitter {
     log.warn('StubWifi.scan not implemented');
   }
 
-  joinNetwork(ssid: string, psk: string): Promise<void> { //eslint-disable-line
+  joinNetwork(ssid: string, psk: ?string): Promise<void> { //eslint-disable-line
     return Promise.reject(new Error('StubWifi.joinNetwork not implemented'));
   }
 

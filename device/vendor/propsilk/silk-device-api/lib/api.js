@@ -4,10 +4,11 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @flow
  */
 
 import createApi from 'silk-api';
-import {getprop} from 'silk-sysutils';
+import {getstrprop} from 'silk-sysutils';
 import version from 'silk-core-version';
 
 export default createApi({
@@ -15,7 +16,8 @@ export default createApi({
     type: `device`,
     tags: {
       version: version.semver,
-      deviceType: getprop('ro.product.device'),
+      deviceType: getstrprop('ro.silk.build.board') + '-' +
+                  getstrprop('ro.silk.build.product'),
     },
   },
 });

@@ -11,7 +11,10 @@ import invariant from 'assert';
 import {AsyncStorage, NativeModules} from 'react-native';
 import {AccessToken} from 'silk-api';
 
-import {actionFromAsyncPayloadGen} from './action';
+import {
+  actionFromPayload,
+  actionFromAsyncPayloadGen,
+} from './action';
 
 import type {SilkApi} from 'silk-api';
 import type {RawPasswordInput} from 'silk-api/src/vip';
@@ -140,3 +143,7 @@ export const signIn = actionFromAsyncPayloadGen('AUTH_SIGNIN', genSignIn);
 export const createAccount = actionFromAsyncPayloadGen('AUTH_CREATEACCOUNT', genCreateAccount);
 export const signOut = actionFromAsyncPayloadGen('AUTH_SIGNOUT', genSignOut);
 export const resetPassword = actionFromAsyncPayloadGen('AUTH_RESETPASSWORD', genResetPassword);
+// TODO: eventually we actually want to abort the operation here, but
+// silk-api doesn't have a hook for that yet.
+export const abortOperation = actionFromPayload('AUTH_ABORT_OPERATION');
+export const ackError = actionFromPayload('AUTH_ACK_ERROR');

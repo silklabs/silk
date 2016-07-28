@@ -10,7 +10,7 @@ import StreamOperation from './stream_operation';
 
 import api from '../api';
 import fs from 'mz/fs';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import httpStream from '../streams/http';
 import assert from 'assert';
 import raygun from 'silk-raygun/node';

@@ -17,7 +17,7 @@ import wifi from 'silk-wifi';
 
 import api from '../api';
 import ConfigSessionListener from './config_session_listener';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import getBTLE from '../btle/parent';
 import getDeviceId from '../deviceid';
 import NormalSessionListener from './normal_session_listener';

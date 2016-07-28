@@ -15,7 +15,7 @@ import {
 } from 'silk-streams';
 
 import api from '../api';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import {createMessage as createInternalMessage} from './socket_message_utils';
 import InternalMessageFilterStream from './internal_message_stream';
 import * as Metrics from '../metrics/btle';

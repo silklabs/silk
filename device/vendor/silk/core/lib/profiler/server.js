@@ -8,7 +8,7 @@
 
 import http from 'http';
 import eventToPromise from 'event-to-promise';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import path from 'path';
 import fs from 'mz/fs';
 import { getboolprop } from 'silk-sysutils';

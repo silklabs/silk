@@ -9,7 +9,7 @@
 import {fork as nodeFork} from 'child_process';
 import invariant from 'assert';
 
-import createLog from './log';
+import createLog from 'silk-log/device';
 
 import type {ChildProcess} from 'child_process';
 

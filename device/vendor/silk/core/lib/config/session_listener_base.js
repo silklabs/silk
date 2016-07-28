@@ -9,7 +9,7 @@
 /* eslint-disable no-multi-spaces */
 
 import assert from 'assert';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import version from 'silk-core-version';
 
 const log = createLog('config-session-listener-base');

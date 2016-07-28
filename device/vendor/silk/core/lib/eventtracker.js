@@ -11,7 +11,7 @@ import crypto from 'crypto';
 
 import { EventEmitter } from 'events';
 import APICallOperation from './outbox/api_call_operation';
-import createLog from './log';
+import createLog from 'silk-log/device';
 const log = createLog('events');
 
 import type { TimelineEventObject } from './timeline';

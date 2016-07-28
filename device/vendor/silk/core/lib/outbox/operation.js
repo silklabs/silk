@@ -7,7 +7,7 @@
  */
 
 import assert from 'assert';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import fs from 'mz/fs';
 import path from 'path';
 import eventToPromise from 'event-to-promise';

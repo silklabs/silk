@@ -6,7 +6,7 @@
  * @private
  */
 
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import SessionListenerBase from './session_listener_base';
 
 const log = createLog('normal-session-listener');

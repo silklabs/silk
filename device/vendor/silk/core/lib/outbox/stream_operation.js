@@ -10,7 +10,7 @@ import TeeStream from '../streams/tee';
 import StoringStream from '../streams/store';
 import Operation from './operation';
 
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import eventToPromise from 'event-to-promise';
 import fs from 'fs';
 

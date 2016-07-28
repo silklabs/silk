@@ -10,7 +10,7 @@ import invariant from 'assert';
 import {Duplex} from 'stream';
 
 import * as Metrics from '../metrics/btle';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 
 import type {
   Characteristic,

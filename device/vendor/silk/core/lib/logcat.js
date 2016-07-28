@@ -14,7 +14,7 @@ import assert from 'assert';
 import { spawn } from 'child_process';
 import { PassThrough } from 'stream';
 import split from 'split';
-import createLog from './log';
+import createLog from 'silk-log/device';
 
 import LogcatStream from './streams/logcat';
 import LogcatToSyslog from './streams/logcat_to_syslog';

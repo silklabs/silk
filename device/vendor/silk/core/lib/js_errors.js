@@ -16,7 +16,7 @@
 
 import { getprop } from 'silk-sysutils';
 import { spawn } from 'child_process';
-import createLog from './log';
+import createLog from 'silk-log/device';
 import Store from './streams/store';
 import eventToPromise from 'event-to-promise';
 

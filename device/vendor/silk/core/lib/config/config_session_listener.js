@@ -7,7 +7,7 @@
  */
 
 import assert from 'assert';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import * as Joi from 'joi';
 import SessionListenerBase from './session_listener_base';
 import {

@@ -8,7 +8,7 @@
 
 import {spawn} from 'child_process';
 
-import createLog from './log';
+import createLog from 'silk-log/device';
 
 import type Server from './server.js';
 

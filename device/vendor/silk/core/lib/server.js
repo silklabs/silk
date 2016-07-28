@@ -11,7 +11,7 @@ import invariant from 'assert';
 import { EventEmitter } from 'events';
 
 import api from './api';
-import createLog from './log';
+import createLog from 'silk-log/device';
 import * as VideoMetrics from './metrics/video';
 
 import type { Socket } from 'socket.io-client';

@@ -14,7 +14,7 @@ import {
 import {BTLE_SOCKET_UUIDS} from 'silk-api';
 
 import SocketStream from './socket_stream';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 
 import type {
   Bleno,

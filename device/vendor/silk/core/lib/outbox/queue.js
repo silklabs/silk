@@ -12,7 +12,7 @@ import assert from 'assert';
 import fs from 'mz/fs';
 import { statSync } from 'fs';
 import path from 'path';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 
 import { EventEmitter } from 'events';
 import Operation from './operation';

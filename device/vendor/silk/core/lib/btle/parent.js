@@ -17,7 +17,7 @@ import {createDeferred} from 'silk-async-utils';
 import {getboolprop, getintprop, getstrprop} from 'silk-sysutils';
 
 import api from '../api';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import fork from '../process_fork';
 import getDeviceId from '../deviceid';
 import * as Metrics from '../metrics/btle';

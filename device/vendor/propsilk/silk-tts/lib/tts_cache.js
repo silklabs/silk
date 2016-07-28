@@ -18,7 +18,9 @@ import writeFileAtomic from 'write-file-atomic';
 const log = createLog('tts-cache');
 const CACHE_DIR_DATA = 'data/media/tts/';
 const CACHE_DIR_SYSTEM = 'system/silk/media/tts/';
-const CACHE_LENGTH = 500;
+const DATA_CACHE_LENGTH = 500;
+
+type CacheType = {[key: string]: {data: Buffer, mtime: number}};
 
 /**
  * This class provides a cache implementation for Text-To-Speech service to cache
@@ -28,7 +30,8 @@ const CACHE_LENGTH = 500;
  */
 export default class TtsCache {
 
-  _cache: {[key: string]: {data: Buffer, mtime: number}} = {};
+  _dataCache: CacheType = {};
+  _systemCache: CacheType = {};
   _cacheLoadingPromise: Promise<void>;
 
   constructor() {
@@ -37,18 +40,18 @@ export default class TtsCache {
 
   // Initialize the cache
   async _init() {
-    this._cache = {};
+    this._dataCache = {};
     if ((await fs.exists(CACHE_DIR_DATA)) === false) {
       await mkdirp(CACHE_DIR_DATA);
     }
-    await this._populateCacheFrom(CACHE_DIR_DATA);
-    await this._populateCacheFrom(CACHE_DIR_SYSTEM);
+    await this._populateCacheFrom(CACHE_DIR_DATA, this._dataCache);
+    await this._populateCacheFrom(CACHE_DIR_SYSTEM, this._systemCache);
   }
 
   /**
    * Populate the cache from the provided directory
    */
-  async _populateCacheFrom(dir: string) {
+  async _populateCacheFrom(dir: string, cache: CacheType) {
     if ((await fs.exists(dir)) === false) {
       log.warn(`cache dir ${dir} doesn't exist`);
       return;
@@ -59,7 +62,7 @@ export default class TtsCache {
       let filePath = path.join(dir, file);
       let data = await fs.readFile(filePath);
       let stat = await fs.stat(filePath);
-      this._cache[file] = {data, mtime: stat.mtime.getTime()};
+      cache[file] = {data, mtime: stat.mtime.getTime()};
     };
 
     // Go through the list of files and populate the cache
@@ -85,31 +88,53 @@ export default class TtsCache {
       await this._cacheLoadingPromise;
     } catch (err) {
       log.warn(`Failed to prepopulate cache: `, err);
-      await this._cleanup(CACHE_DIR_DATA);
+      await this._cleanupDataCache();
       this._cacheLoadingPromise = this._init();
     }
     let key = this._getSha(text);
-    let data = this._cache[key] ? this._cache[key].data : null;
+
+    // Check system cache first
+    let data = this._systemCache[key] ? this._systemCache[key].data : null;
+    if (data) {
+      return data;
+    }
+
+    // Check data cache
+    data = this._dataCache[key] ? this._dataCache[key].data : null;
 
     // Update the time of the entry to prevent it from being removed from the cache
     if (data) {
-      await this._updateTime(CACHE_DIR_DATA, key);
+      await this._updateDataCacheEntry(key);
     }
 
     return data;
   }
 
   /**
-   * Update the timestamp of the cache entry
+   * Cache the tts entry with hash of the text as the filename
    */
-  async _updateTime(dir: string, file: string) {
-    let filePath = path.join(dir, file);
+  async add(text: string, data: Buffer) {
+    log.debug(`Adding cache entry: ${text}`);
+
+    try {
+      await this._purgeDataCache(); // Purge the oldest entry
+      await this._addDataCacheEntry(text, data);  // Add the new entry
+    } catch (err) {
+      log.warn(err);
+    }
+  }
+
+  /**
+   * Update the timestamp of the data cache entry
+   */
+  async _updateDataCacheEntry(file: string) {
+    let filePath = path.join(CACHE_DIR_DATA, file);
     let now = new Date();
     try {
       let fd = await fs.open(filePath, 'r');
       await fs.futimes(fd, now, now); // Change the file timestamp
       await fs.close(fd);
-      this._cache[file].mtime = now.getTime();
+      this._dataCache[file].mtime = now.getTime();
     } catch (err) {
       log.warn(err);
     }
@@ -118,9 +143,9 @@ export default class TtsCache {
   /**
    * Delete the cache as something horribly went wrong
    */
-  _cleanup(dir: string) {
+  _cleanupDataCache() {
     return new Promise((resolve, reject) => {
-      fsextra.remove(dir, err => {
+      fsextra.remove(CACHE_DIR_DATA, err => {
         if (err) {
           return reject();
         }
@@ -132,61 +157,47 @@ export default class TtsCache {
   /**
    * Remove the oldest entry from the cache
    */
-  async _purgeCache(dir: string) {
-    if (Object.keys(this._cache).length >= CACHE_LENGTH) {
+  async _purgeDataCache() {
+    if (Object.keys(this._dataCache).length >= DATA_CACHE_LENGTH) {
       // Find the oldest entry
       let oldest = {key: '', mtime: Date.now()};
-      for (let key in this._cache) {
-        if (this._cache.hasOwnProperty(key)) {
-          if (this._cache[key].mtime < oldest.mtime) {
-            oldest = {key, mtime: this._cache[key].mtime};
+      for (let key in this._dataCache) {
+        if (this._dataCache.hasOwnProperty(key)) {
+          if (this._dataCache[key].mtime < oldest.mtime) {
+            oldest = {key, mtime: this._dataCache[key].mtime};
           }
         }
       }
-      await this._purgeCacheEntry(dir, oldest.key);
+      await this._purgeDataCacheEntry(oldest.key);
     }
   }
 
   /**
    * Purge a single entry from the cache
    */
-  async _purgeCacheEntry(dir: string, key: string) {
-    let filePath = path.join(dir, key);
+  async _purgeDataCacheEntry(key: string) {
+    let filePath = path.join(CACHE_DIR_DATA, key);
     try {
       await fs.unlink(filePath);
     } catch (err) {
       log.warn(err);
     }
-    delete this._cache[key];
+    delete this._dataCache[key];
   }
 
   /**
    * Add an entry to the cache
    */
-  _addCacheEntry(dir: string, text: string, data: Buffer): Promise<void> {
+  _addDataCacheEntry(text: string, data: Buffer): Promise<void> {
     return new Promise((resolve, reject) => {
       let key = this._getSha(text);
-      writeFileAtomic(path.join(dir, key), data, err => {
+      writeFileAtomic(path.join(CACHE_DIR_DATA, key), data, err => {
         if (err) {
           return reject(err);
         }
-        this._cache[key] = {data, mtime: Date.now()};
+        this._dataCache[key] = {data, mtime: Date.now()};
         return resolve();
       });
     });
-  }
-
-  /**
-   * Cache the tts entry with hash of the text as the filename
-   */
-  async add(text: string, data: Buffer) {
-    log.debug(`Adding cache entry: ${text}`);
-
-    try {
-      await this._purgeCache(CACHE_DIR_DATA); // Purge the oldest entry
-      await this._addCacheEntry(CACHE_DIR_DATA, text, data);  // Add the new entry
-    } catch (err) {
-      log.warn(err);
-    }
   }
 }

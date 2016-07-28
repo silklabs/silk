@@ -82,6 +82,24 @@ suite('account auth', () => {
       publicKey: deviceAccessToken.toString(),
     });
     assert.ok(deviceAfterComplete.registration.complete);
+    assert.ok(deviceAfterComplete.registered);
+
+    // The device is allowed to unregister itself
+    let unregister = await api.device.unregister();
+    assert.ok(unregister.success);
+    let deviceAfterUnregister = await devices.findByPublicKey({
+      publicKey: deviceAccessToken.toString(),
+    });
+    assert.ok(!deviceAfterUnregister.registered);
+
+    // ...but not twice
+    let err;
+    try {
+      await api.device.unregister();
+    } catch (error) {
+      err = error;
+    }
+    assert.equal(err.code, 403);
   });
 
   suite('with devices', () => {

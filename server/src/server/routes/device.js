@@ -133,5 +133,29 @@ export default function (ctx: RouteContext): ExpressRoutes {
     res.respond({ success: false });
   });
 
+  api.define({
+    path: 'unregister',
+    method: 'post',
+    params: [],
+    name: 'unregister',
+    description: 'Remove this device from the account',
+    input: Joi.object(),
+    output: Joi.object().keys({
+      success: Joi.boolean().required(),
+    }),
+  }, async (req, res) => {
+    let result = await ctx.devices.unregister({
+      publicKey: req.publicKey,
+    });
+
+    if (!result || result.error) {
+      log.info('Failed to unregister device', );
+      res.respond({ success: false });
+      return;
+    }
+
+    res.respond({ success: true });
+  });
+
   return api;
 }

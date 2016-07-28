@@ -7,7 +7,7 @@ const log = createLog('Config');
 
 // Default configuration...
 const DEFAULT = {
-  'debug': 'silk-*,-silk-*:debug',
+  'debug': 'silk-*',
   'react-native': {},
   'server': {
     choices: [

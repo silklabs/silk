@@ -6,7 +6,7 @@ import merge from 'lodash.merge';
 import {configureLog} from 'silk-log';
 
 const defaultConfig = {
-  debug: 'silk-*,-silk-*:debug',
+  debug: 'silk-*',
 };
 
 let localConfig;

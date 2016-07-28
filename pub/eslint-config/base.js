@@ -1,11 +1,14 @@
 module.exports = {
-  "extends": "eslint:recommended",
+  "extends": ["eslint:recommended", "plugin:silk/recommended"],
   "parserOptions": {
     "ecmaVersion": 7,
     "ecmaFeatures": {
       "modules": true
     }
   },
+  "plugins": [
+    "silk"
+  ],
   "env": {
     "es6": true,
     "node": true

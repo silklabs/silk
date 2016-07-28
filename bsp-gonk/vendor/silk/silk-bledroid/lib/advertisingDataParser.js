@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import assert from 'assert';
 import makeLog from 'debug';
 import uuid from 'uuid';

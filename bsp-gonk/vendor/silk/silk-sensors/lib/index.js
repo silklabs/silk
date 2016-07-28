@@ -1,9 +1,10 @@
 /**
  * @private
+ * @noflow
  */
 
 import * as util from 'silk-sysutils';
-import events from 'events';
+import {EventEmitter} from 'events';
 import net from 'net';
 import createLog from 'silk-log/device';
 
@@ -62,7 +63,7 @@ let SENSOR_TYPE = {
  *  log.info('Sensor values: + sensorEvent.values');
  * });
  */
-class Sensors extends events.EventEmitter {
+class Sensors extends EventEmitter {
   constructor() {
     super();
     this._ready = false;

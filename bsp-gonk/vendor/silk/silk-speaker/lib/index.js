@@ -128,7 +128,8 @@ export default class Speaker extends Writable {
   _write(chunk: Buffer, encoding: string, done: Function) {
     if (this._closed) {
       // close() has already been called. this should not be called
-      return done(new Error('write() call after close() call'));
+      done(new Error('write() call after close() call'));
+      return;
     }
 
     // Open native bindings
@@ -154,10 +155,12 @@ export default class Speaker extends Writable {
     let write = () => {
       if (this._closed) {
         log.debug(`Aborting remainder of write() call since speaker is closed`);
-        return done();
+        done();
+        return;
       }
       if (!left) {
-        return done();
+        done();
+        return;
       }
       buffer = left;
       if (buffer.length > this._chunkSize) {

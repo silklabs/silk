@@ -1,3 +1,6 @@
+/**
+ * @noflow
+ */
 
 import events from 'events';
 import createLog from 'silk-log/device';

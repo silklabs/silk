@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import assert from 'assert';
 import makeDebug from 'debug';
 import { validate } from 'joi';

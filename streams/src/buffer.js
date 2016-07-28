@@ -3,12 +3,17 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import { Readable } from 'stream';
 
 export default class BufferReadable extends Readable {
-  constructor(buffer) {
+
+  buffer: ?Buffer;
+
+  constructor(buffer: Buffer) {
     super();
     this.buffer = buffer;
   }

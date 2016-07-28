@@ -6,6 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @noflow
  */
 
 import { default as createLog, configureLog } from 'silk-log';

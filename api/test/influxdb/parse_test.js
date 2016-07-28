@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import parse from '../../src/influxdb/parse';
 import assert from 'assert';
 

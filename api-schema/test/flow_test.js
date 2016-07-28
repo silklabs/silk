@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import assert from 'assert';
 import * as Joi from 'joi';
 import joiToJsonSchema from 'joi-to-json-schema';

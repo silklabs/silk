@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @noflow
  */
 
 import api from 'silk-device-api';

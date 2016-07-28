@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 /* global suite, setup, suiteTeardown, test */
 
 import assert from 'assert';

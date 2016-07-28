@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * Flow disabled because `play-sound` package isn't normally installed.
- * @no-flow
+ * @noflow
  */
 
 import createPlayer from 'play-sound';

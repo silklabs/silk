@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @noflow
  */
 
 import StreamOperation from './stream_operation';

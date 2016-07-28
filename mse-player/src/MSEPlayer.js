@@ -19,8 +19,8 @@ import createLog from 'silk-log';
 import type { Segment } from 'silk-cam';
 
 type Props = {
-  onSegmentEnqueued: (segment: Segment) => any;
-  onReload: () => any;
+  onSegmentEnqueued?: (segment: Segment) => any;
+  onReload?: () => any;
 };
 
 type State = {

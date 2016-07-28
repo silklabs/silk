@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 import assert from 'assert';
 import tableFilter from '../src/table_filter';
 

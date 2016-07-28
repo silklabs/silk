@@ -6,7 +6,8 @@
   "scripts": {
     "postinstall": "./bin/postinstall",
     "clean": "rm -rf node_modules",
-    "posttest": "eslint test lib",
+    "lint": "eslint .",
+    "posttest": "npm run lint",
     "silk-build": "silk-buildjs .",
     "test": "echo \"\""
   },

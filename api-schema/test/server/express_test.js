@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import assert from 'assert';
 import bodyParser from 'body-parser';
 import eventToPromise from 'event-to-promise';

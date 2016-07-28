@@ -2,11 +2,7 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
-
- * @private
- * @flow
- */
-/**
+ *
  * This module provides a consistent indicator of network connectivity.  By
  * default this means we can connect to major Internet services, but the
  * connectivity test can be tailored.
@@ -19,7 +15,11 @@
  * });
  * netstatus.on('offline', () => {
  *   // offline
- * });*/
+ * });
+ *
+ * @private
+ * @flow
+ */
 
 import assert from 'assert';
 import createLog from 'silk-log/device';

@@ -4,9 +4,10 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @flow
  */
 
-import net from 'net';
+import * as net from 'net';
 import { TLSSocket } from 'tls';
 import createLog from 'silk-log/device';
 

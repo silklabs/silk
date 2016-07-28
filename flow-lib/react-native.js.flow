@@ -19,6 +19,8 @@
 
 declare module 'react-native' {
   // This is pretty lame, but good enough for now to get Flow to pass.
+  declare var findNodeHandle: any;
+  declare var requireNativeComponent: any;
   declare var ActionSheetIOS: any;
   declare var ActivityIndicator: any;
   declare var Alert: any;
@@ -43,5 +45,6 @@ declare module 'react-native' {
   declare var TouchableHighlight: any;
   declare var TouchableWithoutFeedback: any;
   declare var Text: any;
+  declare var UIManager: any;
   declare var View: any;
 }

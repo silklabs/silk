@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * Flow disabled because `speaker` package isn't normally installed.
- * @no-flow
+ * @noflow
  */
 
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';

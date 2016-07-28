@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import fetch from 'node-fetch';
 import URL from 'url';
 

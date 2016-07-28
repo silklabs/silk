@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import assert from 'assert';
 import eventToPromise from 'event-to-promise';
 import Blob from 'node-webrtc/lib/blob';

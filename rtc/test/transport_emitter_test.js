@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import TransportEmitter from '../src/transport_emitter';
 
 import { PassThrough } from 'stream';

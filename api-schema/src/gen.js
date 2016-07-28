@@ -3,6 +3,8 @@
  *
  * Note: All code here assumes the output (toJSON) output of types this allows
  * us to focus on cases where we may be using json from a server/etc...
+ *
+ * @noflow
  */
 
 import url from 'url';

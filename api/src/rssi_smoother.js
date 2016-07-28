@@ -1,6 +1,8 @@
 /**
  * Attempts to filter signal from noise in RSSI samples.  See long
  * comment below.
+ *
+ * @flow
  */
 export default class RssiSmoother {
   // MIN/MAX rssi readings (dbM) that drivers will report (neither is
@@ -19,7 +21,7 @@ export default class RssiSmoother {
 
   _samples = [ ];                // [ { timeMs, rssi } ]
 
-  _histogram(now) {
+  _histogram(now: number) {
     let minTimeMs = now - RssiSmoother.MAX_AGE_MS;
     this._samples = this._samples.filter(s => minTimeMs <= s.timeMs);
     if (0 === this._samples.length) {
@@ -38,11 +40,11 @@ export default class RssiSmoother {
     return h;
   }
 
-  get value() {
+  get value(): number {
     return this._computeValue();
   }
 
-  _computeValue() {
+  _computeValue(): number {
     let histogram = this._histogram(Date.now());
     if (!histogram) {
       return RssiSmoother.DEFAULT_RSSI;
@@ -103,7 +105,7 @@ export default class RssiSmoother {
     return rssi;
   }
 
-  update(rssi) {
+  update(rssi: number) {
     this._samples.push({ timeMs: Date.now(), rssi });
   }
 }

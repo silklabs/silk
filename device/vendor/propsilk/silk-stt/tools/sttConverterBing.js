@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @flow
  */
 
 import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
@@ -17,7 +18,7 @@ const log = createLog('sttConverterBing');
 
 configureSpeechToText(speechOptions);
 
-export default function main(fileName) {
+export default function main(fileName: string) {
   // Convert pcm data to text
   return new Promise((resolve, reject) => {
     log.info(`Converting \'${fileName}\' to text`);

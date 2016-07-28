@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @noflow
  */
 
 import StreamOperation from './stream_operation';
@@ -15,9 +16,6 @@ import assert from 'assert';
 
 const log = createLog('operation:blob_upload_operation');
 
-/**
- *
- */
 export class BlobUploadOperation extends StreamOperation {
 
   metadata = null;

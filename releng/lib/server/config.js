@@ -1,5 +1,7 @@
 /**
  * Deal with loading configuration profiles for the project.
+ *
+ * @noflow
  */
 
 import path from 'path';

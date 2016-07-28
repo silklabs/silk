@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import invariant from 'assert';
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';

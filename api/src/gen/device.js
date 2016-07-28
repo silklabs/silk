@@ -38,7 +38,15 @@ export type CompleteRegistrationInput = {
 
 export type CompleteRegistrationOutput = {
  success: bool;
+ accountDeviceNumber: number;
  beaconUUID: ?string;
+};
+
+export type UnregisterInput = {
+};
+
+export type UnregisterOutput = {
+ success: bool;
 };
 
 export default class Device extends BaseClass {
@@ -94,6 +102,19 @@ export default class Device extends BaseClass {
   completeRegistration(payload: CompleteRegistrationInput): Promise<CompleteRegistrationOutput> {
     let method = 'post';
     let url = '/v1/device/complete_registration';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Remove this device from the account
+
+  @param Object payload of request
+  */
+  unregister(payload: UnregisterInput): Promise<UnregisterOutput> {
+    let method = 'post';
+    let url = '/v1/device/unregister';
     // Perform url subtitutions:
 
     return this._apiRequestWithBody(method, url, payload);

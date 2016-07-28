@@ -5,7 +5,7 @@ import uuid from 'uuid';
 
 import { HttpApi } from '../types';
 
-const debug = makeDebug('express-schema');
+const debug = makeDebug('silk:express-schema');
 
 /**
  * A helper class which manages the internal http api state and adds routes to

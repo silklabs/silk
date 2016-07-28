@@ -49,7 +49,7 @@ class Player {
    * values are clamped to the closed interval [0.0, 1.0]. A value of 0.0
    * results in zero gain (silence), and a value of 1.0 means signal unchanged.
    * The default value is 1.0.
-   * @memberof silk-speaker
+   * @memberof silk-audioplayer
    * @instance
    *
    * @param gain output gain for all channels

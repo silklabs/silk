@@ -3,31 +3,38 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
+ * @flow
  * @private
  */
 
-/* eslint-disable no-multi-spaces */
-
 import createLog from 'silk-log/device';
-import invariant from 'assert';
 import * as Joi from 'joi';
 import version from 'silk-core-version';
+
+import type {ScanResult} from 'silk-wifi';
+import type {DeviceConfig} from './index';
+import type ParentSocketSession from '../btle/parent_socket_session';
+
+export type ValidMessageData = {
+  name: string;
+  [key: string]: any;
+}
 
 const log = createLog('config-session-listener-base');
 
 export default class SessionListenerBase {
 
-  _deviceConfig = null;
-  _socketSession = null;
-  _schema = null;
-  _disconnecting = false;
+  _deviceConfig: DeviceConfig;
+  _socketSession: ?ParentSocketSession;
+  _schema: Object;
+  _disconnecting: boolean = false;
 
-  constructor(deviceConfig, socketSession, schema) {
+  constructor(
+    deviceConfig: DeviceConfig,
+    socketSession: ParentSocketSession,
+    schema: Object,
+  ) {
     log.debug(`SessionListenerBase()`);
-
-    invariant(deviceConfig);
-    invariant(socketSession);
-    invariant(schema);
 
     this._deviceConfig = deviceConfig;
     this._socketSession = socketSession;
@@ -47,7 +54,7 @@ export default class SessionListenerBase {
     });
   }
 
-  _validateData(data: any): ?Object {
+  _validateData(data: any): ?ValidMessageData {
     if (!data || (typeof data !== `object`)) {
       log.warn(`Data is not an object`, data);
       return null;
@@ -84,7 +91,7 @@ export default class SessionListenerBase {
     return data;
   }
 
-  sendStatus(status) {
+  sendStatus(status: string): void {
     log.debug(`SessionListenerBase.sendStatus('${status}')`);
 
     this._send({
@@ -93,7 +100,7 @@ export default class SessionListenerBase {
     });
   }
 
-  sendWifiScanResults(scanResults) {
+  sendWifiScanResults(scanResults: Array<ScanResult>): void {
     log.debug(`SessionListenerBase.sendWifiScanResults()`);
 
     this._send({
@@ -102,7 +109,7 @@ export default class SessionListenerBase {
     });
   }
 
-  sendError(code) {
+  sendError(code: string): void {
     log.debug(`SessionListenerBase.sendStatus('${code}')`);
 
     this._send({
@@ -111,7 +118,7 @@ export default class SessionListenerBase {
     });
   }
 
-  disconnect() {
+  disconnect(): void {
     log.debug(`SessionListenerBase.disconnect()`);
 
     if (this._disconnecting) {
@@ -126,27 +133,28 @@ export default class SessionListenerBase {
     }
   }
 
-  _send(data) {
-    if (!this._socketSession) {
+  _send(data: ValidMessageData): void {
+    const socketSession = this._socketSession;
+    if (!socketSession) {
       log.warn(`Unable to send because socketSession has already disconnected`,
                data);
       return;
     }
 
     log.debug(`SessionListenerBase._send()`, data);
-    this._socketSession.write(data);
+    socketSession.write(data);
   }
 
-  _onError(error) {
+  _onError(error: Error): void {
     log.warn(`Session error, disconnecting`, error.stack);
     this.disconnect();
   }
 
-  _onData(/* data */) {
+  _onData(data: Object): void {
     throw new Error(`Subclasses must override _onData`);
   }
 
-  _onRssiUpdate(/* rssi */) {
+  _onRssiUpdate(rssi: number): void {
     throw new Error(`Subclasses must override _onRssiUpdate`);
   }
 }

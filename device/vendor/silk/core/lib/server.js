@@ -22,7 +22,7 @@ const log = createLog('server');
 
 type ServerAckType = 'diag' | 'info' | 'jpeg' | 'mp4' | 'mic' | 'objects';
 type ServerAcks = {[key: ServerAckType]: number};
-type ServerState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
+export type ServerState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
 
 /**
  * Server socket.io connection

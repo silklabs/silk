@@ -3,13 +3,18 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
+ * @flow
  * @private
  */
 
 import createLog from 'silk-log/device';
+import invariant from 'assert';
 import * as Joi from 'joi';
 
 import SessionListenerBase from './session_listener_base';
+
+import type {DeviceConfig} from './index';
+import type ParentSocketSession from '../btle/parent_socket_session';
 
 const log = createLog('normal-session-listener');
 
@@ -29,7 +34,7 @@ export default class NormalSessionListener extends SessionListenerBase {
 
   _error: boolean = false;
 
-  constructor(deviceConfig, socketSession) {
+  constructor(deviceConfig: DeviceConfig, socketSession: ParentSocketSession) {
     log.debug(`NormalSessionListener()`);
 
     // We're already configured so we require authenticated streams.
@@ -51,8 +56,10 @@ export default class NormalSessionListener extends SessionListenerBase {
     }
   }
 
-  _onData(data: Object): void {
+  _onData(unvalidatedData: Object): void {
     log.debug(`ConfigSessionListener._onData()`);
+
+    invariant(this._socketSession);
 
     if (!this._socketSession.authenticated) {
       log.warn(`Receiving data from an unauthenticated source`);
@@ -61,7 +68,7 @@ export default class NormalSessionListener extends SessionListenerBase {
       return;
     }
 
-    data = this._validateData(data);
+    const data = this._validateData(unvalidatedData);
     if (!data) {
       this._error = true;
       this.disconnect();

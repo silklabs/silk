@@ -31,7 +31,7 @@ export default class DuplexTransform extends Duplex {
 
   // Tell Flow that the |write| method can be hooked.
   write: (
-    chunk: string | Buffer,
+    chunk: string | Buffer | Object,
     encodingOrCallback?: string | Function,
     callback?: Function
   ) => boolean;

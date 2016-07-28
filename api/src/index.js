@@ -232,7 +232,7 @@ export class SilkApi {
   /**
    * Update the serverUrl or accessToken for all services.
    */
-  loadConfig(config: Config) {
+  loadConfig(config: $Shape<Config>) {
     config = loadConfig(config);
     this.config.update({
       serverUrl: config.serverUrl || this.config.serverUrl,

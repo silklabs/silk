@@ -3,20 +3,46 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
+ * @flow
  * @private
  */
 
-import assert from 'assert';
 import createLog from 'silk-log/device';
+import invariant from 'assert';
 import * as Joi from 'joi';
-import SessionListenerBase from './session_listener_base';
+import sensors from 'silk-sensors';
 import {
   exec,
   getboolprop,
 } from 'silk-sysutils';
-import sensors from 'silk-sensors';
 
-const log = createLog('config-session-listener');
+import SessionListenerBase from './session_listener_base';
+
+import type {
+  DeviceConfig,
+  Secret,
+} from './index';
+import type ParentSocketSession from '../btle/parent_socket_session';
+import type {ValidMessageData} from './session_listener_base';
+
+type State =
+  'idle' |
+  'register_requested' |
+  'registering' |
+  'registering_proximity' |
+  'registered' |
+  'complete' |
+  'dismissed' |
+  'error';
+
+const DISMISS_TIMEOUT_MS = 15000;
+const MAX_WIFI_ERRORS = 3;
+const RSSI_THRESHOLD = -60;
+
+// Minimum acceleration for "device motion" threshold (units are m/s^2).
+// This threshold was obtained by nudging a device IRL and may need to be
+// tuned and/or made device specific.
+const MOTION_THRESHOLD = 0.03;
 
 const ACCELEROMETER_GATE_DISABLED =
   getboolprop('persist.silk.accelgate.disabled', true);
@@ -51,31 +77,20 @@ const SCHEMA = {
   }).required(),
 };
 
+const log = createLog('config-session-listener');
+
 export default class ConfigSessionListener extends SessionListenerBase {
-  static STATE_IDLE = 0;
-  static STATE_REGISTER_REQUESTED = 1;
-  static STATE_REGISTERING = 2;
-  static STATE_REGISTERING_PROXIMITY = 3;
-  static STATE_REGISTERED = 5;
-  static STATE_COMPLETE = 6;
-  static STATE_DISMISSED = 7;
 
-  static STATE_ERROR = 10;
+  _state: State = 'idle';
+  _dismissTimeout: ?number = null;
+  _wifiErrorCount: number = 0;
 
-  static DISMISS_TIMEOUT_MS = 15000;
-  static MAX_WIFI_ERRORS = 3;
-  static RSSI_THRESHOLD = -60;
+  // Accelerometer data.
+  _lastx: number = NaN;
+  _lasty: number = NaN;
+  _lastz: number = NaN;
 
-  // Minimum acceleration for "device motion" threshold (units are m/s^2).
-  // This threshold was obtained by nudging a device IRL and may need to be
-  // tuned and/or made device specific.
-  static MOTION_THRESHOLD = 0.03;
-
-  _state = ConfigSessionListener.STATE_IDLE;
-  _dismissTimeout = null;
-  _wifiErrorCount = 0;
-
-  constructor(deviceConfig, socketSession) {
+  constructor(deviceConfig: DeviceConfig, socketSession: ParentSocketSession) {
     log.debug(`ConfigSessionListener()`);
 
     // We're attempting to configure this device so we can't use authenticated
@@ -88,56 +103,56 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._sendRegister();
   }
 
-  sendStatus(status) {
-    if (this._state !== ConfigSessionListener.STATE_REGISTERED) {
+  sendStatus(status: string): void {
+    if (this._state !== 'registered') {
       return;
     }
     super.sendStatus(status);
   }
 
-  _clearDismissTimeout() {
+  _clearDismissTimeout(): void {
     if (this._dismissTimeout) {
       clearTimeout(this._dismissTimeout);
       this._dismissTimeout = null;
     }
   }
 
-  _send(data) {
-    assert(this._state !== ConfigSessionListener.STATE_ERROR);
+  _send(data: ValidMessageData): void {
+    invariant(this._state !== 'error');
     super._send(data);
   }
 
-  _sendRegister() {
+  _sendRegister(): void {
     log.debug(`ConfigSessionListener._sendRegister()`);
 
-    assert(this._state === ConfigSessionListener.STATE_IDLE ||
-           this._state === ConfigSessionListener.STATE_REGISTERING ||
-           this._state === ConfigSessionListener.STATE_REGISTERING_PROXIMITY);
+    invariant(this._state === 'idle' ||
+              this._state === 'registering' ||
+              this._state === 'registering_proximity');
 
     this._send({
       name: `register`,
     });
-    this._state = ConfigSessionListener.STATE_REGISTER_REQUESTED;
+    this._state = 'register_requested';
   }
 
-  _completeRegistration(secret) {
+  _completeRegistration(secret: Secret) {
     log.debug(`ConfigSessionListener._completeRegistration()`);
 
-    assert(this._socketSession);
-    assert(this._state === ConfigSessionListener.STATE_REGISTERING_PROXIMITY);
+    invariant(this._socketSession);
+    invariant(this._state === 'registering_proximity');
 
-    this._state = ConfigSessionListener.STATE_REGISTERED;
+    this._state = 'registered';
 
     this._deviceConfig._onConfigured(secret);
   }
 
-  _dismiss() {
+  _dismiss(): void {
     log.debug(`ConfigSessionListener._dismiss()`);
 
-    assert(this._state === ConfigSessionListener.STATE_COMPLETE ||
-           this._state === ConfigSessionListener.STATE_DISMISSED);
+    invariant(this._state === 'complete' ||
+              this._state === 'dismissed');
 
-    if (this._state === ConfigSessionListener.STATE_DISMISSED) {
+    if (this._state === 'dismissed') {
       return;
     }
 
@@ -146,83 +161,86 @@ export default class ConfigSessionListener extends SessionListenerBase {
       this._dismissTimeout = null;
     }
 
-    this._state = ConfigSessionListener.STATE_DISMISSED;
+    this._state = 'dismissed';
 
     this._deviceConfig._onDismissed();
   }
 
-  _onError(error) {
+  _onError(error: Error): void {
     log.debug(`ConfigSessionListener._onError('${error.toString()}')`);
 
     super._onError(error);
 
     this._clearDismissTimeout();
 
-    // Set the STATE_ERROR state so that we ignore any further data.
-    this._state = ConfigSessionListener.STATE_ERROR;
+    // Set the 'error' state so that we ignore any further data.
+    this._state = 'error';
 
     this._deviceConfig.stopRetryingWifiConnection(error);
     sensors.removeListener('data', this._onAccelerometer);
   }
 
-  _onData(data) {
+  _onData(unvalidatedData: Object): void {
     log.debug(`ConfigSessionListener._onData()`);
 
-    assert(this._state !== ConfigSessionListener.STATE_IDLE);
+    invariant(this._state !== 'idle');
 
-    data = this._validateData(data);
+    const data = this._validateData(unvalidatedData);
     if (!data) {
-      this._state = ConfigSessionListener.STATE_ERROR;
+      this._state = 'error';
       this.disconnect();
       return;
     }
 
-    if (this._state === ConfigSessionListener.STATE_ERROR) {
+    if (this._state === 'error') {
       log.debug(`Received data while in the ERROR state, ignoring`);
       return;
     }
 
+    const socketSession = this._socketSession;
+    invariant(socketSession);
+
     switch (data.name) {
     case `decline`:
-      if (this._state !== ConfigSessionListener.STATE_REGISTER_REQUESTED) {
+      if (this._state !== 'register_requested') {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
       }
 
-      assert(!this._dismissTimeout);
-      assert(!this._wifiErrorCount);
+      invariant(!this._dismissTimeout);
+      invariant(!this._wifiErrorCount);
 
       log.info(`App declined to register this device, disconnecting`);
       break;
 
     case `accept`:
-      if (this._state !== ConfigSessionListener.STATE_REGISTER_REQUESTED) {
+      if (this._state !== 'register_requested') {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
         break;
       }
 
-      assert(!this._dismissTimeout);
-      assert(!this._wifiErrorCount);
+      invariant(!this._dismissTimeout);
+      invariant(!this._wifiErrorCount);
 
       log.info(`App agreed to register this device`);
 
       this._deviceConfig._beginConfigure(this);
 
-      this._state = ConfigSessionListener.STATE_REGISTERING;
-      this._socketSession.rssiUpdatesEnabled = true;
+      this._state = 'registering';
+      socketSession.rssiUpdatesEnabled = true;
       return;
 
     case `restart`:
-      if (this._state !== ConfigSessionListener.STATE_REGISTERING &&
-          this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
+      if (this._state !== 'registering' &&
+          this._state !== 'registering_proximity') {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
         break;
       }
 
-      assert(!this._dismissTimeout);
-      assert(!this._wifiErrorCount);
+      invariant(!this._dismissTimeout);
+      invariant(!this._wifiErrorCount);
 
       log.info(`App canceled registration of this device`);
-      this._socketSession.rssiUpdatesEnabled = false;
+      socketSession.rssiUpdatesEnabled = false;
       sensors.removeListener('data', this._onAccelerometer);
 
       this._deviceConfig._cancelConfigure();
@@ -231,15 +249,15 @@ export default class ConfigSessionListener extends SessionListenerBase {
 
     case `secret`:
       {
-        if (this._state !== ConfigSessionListener.STATE_REGISTERING_PROXIMITY) {
+        if (this._state !== 'registering_proximity') {
           log.warn(`Received '${data.name}' while in state ${this._state}`);
           break;
         }
 
-        assert(!this._dismissTimeout);
-        assert(!this._wifiErrorCount);
+        invariant(!this._dismissTimeout);
+        invariant(!this._wifiErrorCount);
 
-        const secret = {
+        const secret: Secret = {
           accessPoint: data.accessPoint,
           password: data.password,
           publicKey: data.publicKey,
@@ -257,13 +275,12 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
 
     case `dismiss`:
-      if (this._state !== ConfigSessionListener.STATE_COMPLETE &&
-          this._state !== ConfigSessionListener.STATE_DISMISSED) {
+      if (this._state !== 'complete' && this._state !== 'dismissed') {
         log.warn(`Received '${data.name}' while in state ${this._state}`);
         break;
       }
 
-      assert(!this._wifiErrorCount);
+      invariant(!this._wifiErrorCount);
 
       this._dismiss();
       return;
@@ -272,57 +289,64 @@ export default class ConfigSessionListener extends SessionListenerBase {
       log.warn(`Unknown message`, data);
     }
 
-    this._state = ConfigSessionListener.STATE_ERROR;
+    this._state = 'error';
     this.disconnect();
   }
 
-  _onRssiUpdate(rssi) {
+  _onRssiUpdate(rssi: number): void {
     log.debug(`ConfigSessionListener._onRssiUpdate(${rssi})`);
 
-    if (this._state === ConfigSessionListener.STATE_ERROR) {
+    if (this._state === 'error') {
       log.debug(`Received rssi update while in the ERROR state, ignoring`);
       return;
     }
 
-    assert(this._state === ConfigSessionListener.STATE_REGISTERING);
+    invariant(this._state === 'registering');
 
-    if (rssi < ConfigSessionListener.RSSI_THRESHOLD) {
+    if (rssi < RSSI_THRESHOLD) {
       return;
     }
 
     log.info(`Passed proximity gate`);
+
+    invariant(this._socketSession);
     this._socketSession.rssiUpdatesEnabled = false;
 
     if (ACCELEROMETER_GATE_DISABLED) {
       this._registeredProximity();
       return;
     }
-    this.lastx = this.lasty = this.lastz = NaN;
-    sensors.on('data', this._onAccelerometer);
+
+    this._lastx = this._lasty = this._lastz = NaN;
+    sensors.addListener('data', this._onAccelerometer);
   }
 
-  _onAccelerometer = (sensorEvent) => {
+  // TODO: Better Flow.
+  _onAccelerometer: ((sensorEvent: Object) => void) = (sensorEvent) => {
     if (sensorEvent.sensorType !== sensors.SENSOR_TYPE.ACCELEROMETER) {
       return;
     }
-    let [x, y, z] = sensorEvent.values;
-    const motion = Math.abs(x - this.lastx) +
-                   Math.abs(y - this.lasty) +
-                   Math.abs(z - this.lastz);
-    this.lastx = x;
-    this.lasty = y;
-    this.lastz = z;
+    const [x, y, z] = sensorEvent.values;
+    const motion = Math.abs(x - this._lastx) +
+                   Math.abs(y - this._lasty) +
+                   Math.abs(z - this._lastz);
+    this._lastx = x;
+    this._lasty = y;
+    this._lastz = z;
 
-    log.debug(`Current motion is ~${motion} m/s^2`);
-    if (motion > ConfigSessionListener.MOTION_THRESHOLD) {
-      log.info(`Passed motion gate.  Device moved ~${motion} m/s^2`);
-      sensors.removeListener('data', this._onAccelerometer);
-      this._registeredProximity();
+    if (motion < MOTION_THRESHOLD) {
+      log.debug(`Current motion is ~${motion} m/s^2`);
+      return;
     }
+
+    log.info(`Passed motion gate.  Device moved ~${motion} m/s^2`);
+    sensors.removeListener('data', this._onAccelerometer);
+
+    this._registeredProximity();
   };
 
-  _registeredProximity() {
-    this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
+  _registeredProximity(): void {
+    this._state = 'registering_proximity';
 
     this._send({
       name: `secret`,
@@ -330,55 +354,54 @@ export default class ConfigSessionListener extends SessionListenerBase {
     });
   }
 
-  _onDismissTimeout() {
+  _onDismissTimeout(): void {
     log.debug(`ConfigSessionListener._onDismissTimeout()`);
 
-    assert(this._state === ConfigSessionListener.STATE_COMPLETE);
+    invariant(this._state === 'complete');
 
     this._dismissTimeout = null;
 
     this._dismiss();
   }
 
-  disconnect() {
+  disconnect(): void {
     log.debug(`ConfigSessionListener.disconnect()`);
 
     if (this._disconnecting) {
       return;
     }
 
-    // Set the STATE_ERROR state so that we ignore any further data.
-    this._state = ConfigSessionListener.STATE_ERROR;
+    // Set the 'error' state so that we ignore any further data.
+    this._state = 'error';
 
     this._deviceConfig.stopRetryingWifiConnection(new Error(`Disconnecting`));
     super.disconnect();
   }
 
-  sendComplete() {
+  sendComplete(): void {
     log.debug(`ConfigSessionListener.sendComplete()`);
 
-    assert(this._state === ConfigSessionListener.STATE_REGISTERED);
-    assert(!this._dismissTimeout);
+    invariant(this._state === 'registered');
+    invariant(!this._dismissTimeout);
 
     this._send({
       name: `complete`,
     });
 
-    this._state = ConfigSessionListener.STATE_COMPLETE;
+    this._state = 'complete';
     this._wifiErrorCount = 0;
 
     this._dismissTimeout = setTimeout(() => this._onDismissTimeout,
-                                      ConfigSessionListener.DISMISS_TIMEOUT_MS);
+                                      DISMISS_TIMEOUT_MS);
   }
 
-  maybeSendRestart(errorMessage) {
+  maybeSendRestart(errorMessage: string): void {
     log.debug(`ConfigSessionListener.maybeSendRestart('${errorMessage}')`);
 
-    assert(this._state === ConfigSessionListener.STATE_IDLE ||
-           this._state === ConfigSessionListener.STATE_REGISTERED);
-    assert(!this._dismissTimeout);
+    invariant(this._state === 'idle' || this._state === 'registered');
+    invariant(!this._dismissTimeout);
 
-    if (this._state === ConfigSessionListener.STATE_IDLE) {
+    if (this._state === 'idle') {
       log.info(`No longer connected, cannot restart`);
       return;
     }
@@ -388,19 +411,19 @@ export default class ConfigSessionListener extends SessionListenerBase {
     });
 
     this._wifiErrorCount = 0;
-    this._state = ConfigSessionListener.STATE_REGISTERING_PROXIMITY;
+    this._state = 'registering_proximity';
   }
 
-  onWifiError(errorCode) {
+  onWifiError(errorCode: string): void {
     log.debug(`ConfigSessionListener.onWifiError('${errorCode}')`);
 
-    if (this._state !== ConfigSessionListener.STATE_REGISTERED) {
+    if (this._state !== 'registered') {
       return;
     }
 
     this._wifiErrorCount++;
 
-    if (this._wifiErrorCount === ConfigSessionListener.MAX_WIFI_ERRORS) {
+    if (this._wifiErrorCount === MAX_WIFI_ERRORS) {
       this.sendError(errorCode);
 
       const error =

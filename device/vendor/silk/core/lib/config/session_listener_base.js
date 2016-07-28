@@ -8,8 +8,9 @@
 
 /* eslint-disable no-multi-spaces */
 
-import assert from 'assert';
 import createLog from 'silk-log/device';
+import invariant from 'assert';
+import * as Joi from 'joi';
 import version from 'silk-core-version';
 
 const log = createLog('config-session-listener-base');
@@ -18,16 +19,19 @@ export default class SessionListenerBase {
 
   _deviceConfig = null;
   _socketSession = null;
+  _schema = null;
   _disconnecting = false;
 
-  constructor(deviceConfig, socketSession) {
+  constructor(deviceConfig, socketSession, schema) {
     log.debug(`SessionListenerBase()`);
 
-    assert(deviceConfig);
-    assert(socketSession);
+    invariant(deviceConfig);
+    invariant(socketSession);
+    invariant(schema);
 
     this._deviceConfig = deviceConfig;
     this._socketSession = socketSession;
+    this._schema = schema;
 
     socketSession.addListener(`data`, (data) => this._onData(data));
     socketSession.addListener(`error`, (error) => this._onError(error));
@@ -41,6 +45,43 @@ export default class SessionListenerBase {
       version: version.semver,
       image: new Uint8Array([ 0xfe, 0xfe, 0xfe, 0xfe ]),
     });
+  }
+
+  _validateData(data: any): ?Object {
+    if (!data || (typeof data !== `object`)) {
+      log.warn(`Data is not an object`, data);
+      return null;
+    }
+
+    if (!(`name` in data)) {
+      log.warn(`Data has no 'name' property`, data);
+      return null;
+    }
+
+    const name = data.name;
+
+    if (!(name in this._schema)) {
+      log.warn(`Data has unexpected 'name' property`, data);
+      return null;
+    }
+
+    log.debug(`Validating data: '${name}'`);
+
+    let error;
+    Joi.validate(data, this._schema[name], (err, value) => {
+      if (err) {
+        error = err;
+      } else {
+        data = value;
+      }
+    });
+
+    if (error) {
+      log.warn(`Data failed validation`, data, error);
+      return null;
+    }
+
+    return data;
   }
 
   sendStatus(status) {

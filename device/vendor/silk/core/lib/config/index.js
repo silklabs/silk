@@ -245,36 +245,7 @@ class DeviceConfig extends EventEmitter {
     this._setApiServerUrl(secret.serverUrl);
 
     try {
-      await wifi.forgetNetwork();
-      await wifi.joinNetwork(secret.accessPoint, secret.password);
-
-      // |wifi.joinNetwork()| resolves as soon as it has issued the commands to
-      // the wpa supplicant. It then tries to connect to the network over and
-      // over again even if such attempts are futile (e.g. the password is
-      // incorrect). We don't want to wait forever for the 'online' event below
-      // if we're in one of these loops, so we need a mechanism to break out of
-      // the connection loop. To do that we establish a deferred that we can
-      // reject after a few failed attempts, and then race with that deferred.
-      // ConfigSessionListener rejects the deferred by calling
-      // |_stopRetryingWifiConnection|. The deferred will never be accepted.
-      const deferred = createDeferred();
-
-      assert(!this._wifiAbortConnection);
-      this._wifiAbortConnection = deferred.reject;
-
-      log.info('Connecting to wifi');
-
-      await Promise.race([
-        // Race between a successful wifi connection and...
-        wifi.online(),
-
-        // ... the deferred rejection if we need to break out of a connection
-        // loop.
-        deferred.promise,
-      ]);
-
-      assert(this._wifiAbortConnection);
-      this._wifiAbortConnection = null;
+      await this.connectToWifi(secret.accessPoint, secret.password);
 
       log.info('Contacting the server');
       let response = await this._registerDevice(secret);
@@ -301,9 +272,8 @@ class DeviceConfig extends EventEmitter {
       // completely registered.
       await this._persistConfig(secret, response);
     } catch (error) {
-      log.warn('Failed to register device', error.stack || error);
-
-      this._stopRetryingWifiConnection(error);
+      log.warn('Failed to register device', error);
+      this.stopRetryingWifiConnection(error);
 
       await Promise.all([
         fs.exists(CONFIG_PATH)
@@ -332,16 +302,6 @@ class DeviceConfig extends EventEmitter {
     log.info('Configured');
     this.emit('configured');
   };
-
-  _stopRetryingWifiConnection(error) {
-    log.debug(`DeviceConfig._stopRetryingWifiConnection()`);
-
-    if (this._wifiAbortConnection) {
-      log.debug(`Rejecting wifi connection promise`, error);
-      this._wifiAbortConnection(error);
-      this._wifiAbortConnection = null;
-    }
-  }
 
   async _onDismissed() {
     log.debug(`DeviceConfig._onDismissed()`);
@@ -741,6 +701,71 @@ class DeviceConfig extends EventEmitter {
   async forceDefaultServerUrl() {
     this._config.serverUrl = undefined;
     await this._writeConfig(this._config);
+  }
+
+  /**
+   * Connects to a particular wifi network and doesn't resolve until that wifi
+   * network has been successfully connected. Can be canceled via
+   * |stopRetryingWifiConnection()|.
+   */
+  async connectToWifi(accessPoint: string, password: ?string): Promise<void> {
+    log.debug(`DeviceConfig.connectToWifi()`,
+              accessPoint,
+              password ? `(${password.length})` : password);
+
+    log.debug(`Forgetting previous network`);
+    await wifi.forgetNetwork();
+
+    log.debug(`Joining '${accessPoint}'`);
+    await wifi.joinNetwork(accessPoint, password);
+
+    // |wifi.joinNetwork()| resolves as soon as it has issued the commands to
+    // the wpa supplicant. It then tries to connect to the network over and
+    // over again even if such attempts are futile (e.g. the password is
+    // incorrect). We don't want to wait forever for the 'online' event below
+    // if we're in one of these loops, so we need a mechanism to break out of
+    // the connection loop. To do that we establish a deferred that we can
+    // reject after a few failed attempts, and then race with that deferred.
+    // The session listeners may reject the deferred by calling
+    // |_stopRetryingWifiConnection|, but the deferred is never accepted.
+    const deferred = createDeferred();
+
+    assert(!this._wifiAbortConnection);
+    this._wifiAbortConnection = deferred.reject;
+
+    log.info(`Connecting to '${accessPoint}'`);
+
+    await Promise.race([
+      // Race between a successful wifi connection...
+      wifi.online(),
+
+      // ...and the deferred rejection if we need to break out of a connection
+      // loop.
+      deferred.promise,
+    ]);
+
+    assert(this._wifiAbortConnection);
+    this._wifiAbortConnection = null;
+  }
+
+  /**
+   * Cancel wifi connection with the given error.
+   */
+  stopRetryingWifiConnection(error: Error): void {
+    if (!this._wifiAbortConnection) {
+      log.warn(`Unable to reject wifi connection promise`, error);
+      return;
+    }
+
+    log.debug(`Rejecting wifi connection promise`, error);
+    this._wifiAbortConnection(error);
+    this._wifiAbortConnection = null;
+  }
+
+  scanWifi(): void {
+    log.debug(`DeviceConfig.scanWifi()`);
+
+    wifi.scan();
   }
 }
 

@@ -7,11 +7,27 @@
  */
 
 import createLog from 'silk-log/device';
+import * as Joi from 'joi';
+
 import SessionListenerBase from './session_listener_base';
 
 const log = createLog('normal-session-listener');
 
+const SCHEMA = {
+  wifiScan: Joi.object().keys({
+    name: Joi.string().equal(`wifiScan`).required(),
+  }).required(),
+
+  wifiSelect: Joi.object().keys({
+    name: Joi.string().equal(`wifiSelect`).required(),
+    accessPoint: Joi.string().min(1).required(),
+    password: Joi.string().allow(null).required(),
+  }).required(),
+};
+
 export default class NormalSessionListener extends SessionListenerBase {
+
+  _error: boolean = false;
 
   constructor(deviceConfig, socketSession) {
     log.debug(`NormalSessionListener()`);
@@ -19,7 +35,7 @@ export default class NormalSessionListener extends SessionListenerBase {
     // We're already configured so we require authenticated streams.
     socketSession.allowUnauthenticated(false);
 
-    super(deviceConfig, socketSession);
+    super(deviceConfig, socketSession, SCHEMA);
 
     this._send({
       name: `registered`,
@@ -35,15 +51,48 @@ export default class NormalSessionListener extends SessionListenerBase {
     }
   }
 
-  _onData(data) {
-    log.warn(`Unexpected data from app, disconnecting`, data);
+  _onData(data: Object): void {
+    log.debug(`ConfigSessionListener._onData()`);
 
-    this.disconnect();
+    if (!this._socketSession.authenticated) {
+      log.warn(`Receiving data from an unauthenticated source`);
+      this._error = true;
+      this.disconnect();
+      return;
+    }
+
+    data = this._validateData(data);
+    if (!data) {
+      this._error = true;
+      this.disconnect();
+      return;
+    }
+
+    if (this._error) {
+      log.debug(`Received data after an error, ignoring`);
+      return;
+    }
+
+    switch (data.name) {
+    case `wifiScan`:
+      this._deviceConfig.scanWifi();
+      break;
+
+    case `wifiChange`:
+      this._deviceConfig.connectToWifi(data.accessPoint, data.password);
+      break;
+
+    default:
+      log.warn(`Unknown message`, data);
+      this._error = true;
+      this.disconnect();
+    }
   }
 
-  _onRssiUpdate(/* rssi */) {
+  _onRssiUpdate(rssi: number): void {
     log.warn(`Unexpected rssi update, disconnecting`);
 
+    this._error = true;
     this.disconnect();
   }
 }

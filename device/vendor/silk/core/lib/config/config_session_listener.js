@@ -82,7 +82,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     // streams yet.
     socketSession.allowUnauthenticated(true);
 
-    super(deviceConfig, socketSession);
+    super(deviceConfig, socketSession, SCHEMA);
 
     // Tell the app that we need to be configured.
     this._sendRegister();
@@ -105,40 +105,6 @@ export default class ConfigSessionListener extends SessionListenerBase {
   _send(data) {
     assert(this._state !== ConfigSessionListener.STATE_ERROR);
     super._send(data);
-  }
-
-  _validateData(data) {
-    log.debug(`ConfigSessionListener._validateData()`, data);
-
-    if (!data || (typeof data !== `object`)) {
-      return null;
-    }
-
-    if (!(`name` in data)) {
-      log.warn(`Data has no 'name' proptery`);
-      return null;
-    }
-
-    if (!(data.name in SCHEMA)) {
-      log.warn(`Data has unexpected 'name' property: '${data.name}'`);
-      return null;
-    }
-
-    let error;
-    Joi.validate(data, SCHEMA[data.name], (err, value) => {
-      if (err) {
-        error = err;
-      } else {
-        data = value;
-      }
-    });
-
-    if (error) {
-      log.warn(`Data failed validation`, error);
-      return null;
-    }
-
-    return data;
   }
 
   _sendRegister() {
@@ -195,7 +161,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     // Set the STATE_ERROR state so that we ignore any further data.
     this._state = ConfigSessionListener.STATE_ERROR;
 
-    this._deviceConfig._stopRetryingWifiConnection(error);
+    this._deviceConfig.stopRetryingWifiConnection(error);
     sensors.removeListener('data', this._onAccelerometer);
   }
 
@@ -384,7 +350,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     // Set the STATE_ERROR state so that we ignore any further data.
     this._state = ConfigSessionListener.STATE_ERROR;
 
-    this._deviceConfig._stopRetryingWifiConnection(new Error(`Disconnecting`));
+    this._deviceConfig.stopRetryingWifiConnection(new Error(`Disconnecting`));
     super.disconnect();
   }
 
@@ -440,7 +406,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
       const error =
         new Error(`Wifi unable to connect after ${this._wifiErrorCount} ` +
                   `attempts: '${errorCode}'`);
-      this._deviceConfig._stopRetryingWifiConnection(error);
+      this._deviceConfig.stopRetryingWifiConnection(error);
     }
   }
 }

@@ -92,6 +92,7 @@ function httpPost(opts: Object, data: string): Promise<Object> {
       });
     });
 
+    req.on(`error`, (error) => reject(error));
     req.write(data);
     req.end();
   });

@@ -203,6 +203,7 @@ export default class SpeechToText {
         }
       });
     });
+    req.once(`error`, (error) => this._callCallback(error));
 
     // Use large length since we don't know how much PCM data will be coming in.
     const hdr =

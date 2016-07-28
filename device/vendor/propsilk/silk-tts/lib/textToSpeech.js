@@ -86,6 +86,7 @@ export default class TextToSpeech extends EventEmitter {
       });
     });
 
+    req.once(`error`, (error) => this.emit(`error`, error));
     req.write(postData);
     req.end();
   }

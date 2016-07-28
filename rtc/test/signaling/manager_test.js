@@ -1,6 +1,6 @@
 import assert from 'assert';
 import eventToPromise from 'event-to-promise';
-import deviceApi from 'silk-device-core/lib/api';
+import deviceApi from 'silk-device-api';
 import Connections from 'silk-device-core/lib/connections';
 import createContext from 'silk-server/test/server/context';
 import skipOnTravis from 'silk-utils/skip_on_travis';

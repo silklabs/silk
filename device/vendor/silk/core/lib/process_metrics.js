@@ -7,7 +7,7 @@
  * @flow
  */
 
-import api from './api';
+import api from 'silk-device-api';
 import createLog from 'silk-log/device';
 import {exec} from 'silk-sysutils';
 import invariant from 'assert';

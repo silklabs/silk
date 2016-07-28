@@ -10,7 +10,7 @@
 import invariant from 'assert';
 import { EventEmitter } from 'events';
 
-import api from './api';
+import api from 'silk-device-api';
 import createLog from 'silk-log/device';
 import * as VideoMetrics from './metrics/video';
 

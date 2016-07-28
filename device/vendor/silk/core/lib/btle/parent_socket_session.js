@@ -14,7 +14,7 @@ import {
   SocketDuplexStream,
 } from 'silk-streams';
 
-import api from '../api';
+import api from 'silk-device-api';
 import createLog from 'silk-log/device';
 import {createMessage as createInternalMessage} from './socket_message_utils';
 import InternalMessageFilterStream from './internal_message_stream';

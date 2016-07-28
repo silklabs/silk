@@ -11,7 +11,7 @@ import network from './network';
 import config from './args';
 import url from 'url';
 import Table from 'easy-table';
-import api from 'silk-core/lib/api';
+import api from 'silk-device-api';
 import { default as createApi, AccessToken } from 'silk-api';
 
 const log = createLog('main');

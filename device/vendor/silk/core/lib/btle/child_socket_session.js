@@ -16,7 +16,7 @@ import {
 } from 'silk-streams';
 
 import createLog from 'silk-log/device';
-import api from '../api';
+import api from 'silk-device-api';
 import * as Metrics from '../metrics/btle';
 
 import type {Peripheral} from 'noble';

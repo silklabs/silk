@@ -8,7 +8,7 @@
 
 import StreamOperation from './stream_operation';
 
-import api from '../api';
+import api from 'silk-device-api';
 import fs from 'mz/fs';
 import createLog from 'silk-log/device';
 import httpStream from '../streams/http';

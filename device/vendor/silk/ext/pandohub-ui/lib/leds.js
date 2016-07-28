@@ -9,6 +9,8 @@
 import invariant from 'assert';
 import fs from 'mz/fs';
 import path from 'path';
+import lights, {Light} from 'silk-lights';
+import * as sysutil from 'silk-sysutils';
 
 /**
  * Opcodes for the LP55321 micro controller
@@ -726,13 +728,29 @@ export class Ring {
       8: D503 (R)
       9: D506 (R)
 */
-export class Nightlight {
+export class Nightlight extends Light {
   _ctl: Array<LedController>;
+  _userBrightness: number = 0;
 
   static async create(): Promise<Nightlight> {
     let nightlight = new Nightlight();
     await nightlight._init();
     return nightlight;
+  }
+
+  constructor() {
+    super('nightlight');
+    this._color = sysutil.getintprop('persist.pandohubui.light.rgb', lights.WHITE);
+    if (this._color < 0 || this._color > lights.WHITE) {
+      this._color = lights.WHITE;
+    }
+    lights.addCustomLight(this);
+  }
+
+  _update(): Promise<void> { // Overrides the Light._update() implementation
+    sysutil.setprop('persist.pandohubui.light.rgb', this._color);
+    this.userColor(this._userBrightness);
+    return Promise.resolve();
   }
 
   async _init(): Promise<void> {
@@ -775,21 +793,6 @@ export class Nightlight {
     ]);
   }
 
-  // Sets the all the RGB LEDs to the given brightness
-  async _loadRGBWhite(engineId: number, brightness: number): Promise<void> {
-    const progy = [
-      LedAsm.mux_map_next(),
-      LedAsm.set_pwm(brightness),
-    ];
-
-    let [ c32, c33, c34 ] = this._ctl;
-    await Promise.all([
-      c32.load(engineId, '000000110', progy),
-      c33.load(engineId, '001111000', progy),
-      c34.load(engineId, '001111011', progy),
-    ]);
-  }
-
   async _disableAll(): Promise<void> {
     await Promise.all(this._ctl.map(c => c.disableAll()));
   }
@@ -805,11 +808,75 @@ export class Nightlight {
     await Promise.all(runners);
   }
 
-  async white(brightness: number): Promise<void> {
+  async userColor(brightness: number): Promise<void> {
+    this._userBrightness = brightness;
+
+    // For now don't attempt to handle RGB LED intensity beyond binary, and rely
+    // just on the dedicated White LEDs to manage brightness
+    const maybeOff = brightness > 0 ? 1 : 0;
+
+    const red = maybeOff * ((this._color & 0xFF0000) >> 16);
+    const green = maybeOff * ((this._color & 0x00FF00) >> 8);
+    const blue = maybeOff * (this._color & 0x0000FF);
+
     await this._disableAll();
-    await this._loadPureWhite(1, brightness);
-    await this._loadRGBWhite(2, brightness);
-    await this._run(1, 2);
+
+    const progy32 = [
+      LedAsm.mux_sel(1),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(2),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(5),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(6),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(7),
+      LedAsm.set_pwm(red),
+      LedAsm.mux_sel(8),
+      LedAsm.set_pwm(red),
+    ];
+
+    const progy33 = [
+      LedAsm.mux_sel(1),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(2),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(3),
+      LedAsm.set_pwm(green),
+      LedAsm.mux_sel(4),
+      LedAsm.set_pwm(green),
+      LedAsm.mux_sel(5),
+      LedAsm.set_pwm(blue),
+      LedAsm.mux_sel(6),
+      LedAsm.set_pwm(blue),
+    ];
+
+    const progy34 = [
+      LedAsm.mux_sel(1),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(2),
+      LedAsm.set_pwm(brightness),
+      LedAsm.mux_sel(3),
+      LedAsm.set_pwm(green),
+      LedAsm.mux_sel(4),
+      LedAsm.set_pwm(blue),
+      LedAsm.mux_sel(5),
+      LedAsm.set_pwm(green),
+      LedAsm.mux_sel(6),
+      LedAsm.set_pwm(blue),
+      LedAsm.mux_sel(8),
+      LedAsm.set_pwm(red),
+      LedAsm.mux_sel(9),
+      LedAsm.set_pwm(red),
+    ];
+
+    let [ c32, c33, c34 ] = this._ctl;
+    await Promise.all([
+      c32.load(1, '000000000', progy32),
+      c33.load(1, '000000000', progy33),
+      c34.load(1, '000000000', progy34),
+    ]);
+    await this._run(1);
   }
 
   async blue(): Promise<void> {

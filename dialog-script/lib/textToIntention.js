@@ -32,6 +32,9 @@ module.exports = {
   "all sound off":               { "intent": "setUiMode", "entities": ["mute"] },
   "normal":                      { "intent": "setUiMode", "entities": ["normal"] },
   "factory reset":               { "intent": "factoryReset", "entities": [] },
+  "night light red":             { "intent": "setNightlightColor", "entities": ["red"] },
+  "night light white":           { "intent": "setNightlightColor", "entities": ["white"] },
+  "night light blue":            { "intent": "setNightlightColor", "entities": ["blue"] },
 
   // Demo dialogs
   "make me a sandwich":          { "intent": "xkcd", "entities": ["149"] },

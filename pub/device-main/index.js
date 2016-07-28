@@ -2,16 +2,16 @@
 'use strict';
 
 const path = require('path');
+const lights = require('silk-lights').default;
 const log = require('silk-alog');
-const wifi = require('silk-wifi').default;
+const ntp = require('silk-ntp').default;
 const util = require('silk-sysutils');
+const wifi = require('silk-wifi').default;
 const Battery = require('silk-battery').default;
+const Camera = require('silk-camera').default;
+const Input = require('silk-input').default;
 const Movie = require('silk-movie').Movie;
 const Vibrator = require('silk-vibrator').default;
-const ntp = require('silk-ntp').default;
-const Input = require('silk-input').default;
-const lights = require('silk-lights');
-const Camera = require('silk-camera').default;
 
 function bail(reason, err) {
   log.error('Exiting process due to ' + reason);
@@ -77,8 +77,8 @@ input.on('down', e => {
 });
 
 // Keep the backlight on
-let backlight = lights.backlight;
-backlight.set(backlight.WHITE);
+let backlight = lights.get('backlight');
+backlight.set(lights.WHITE);
 
 // Shutdown the device
 function shutdown() {

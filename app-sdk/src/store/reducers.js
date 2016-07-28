@@ -8,6 +8,14 @@ import type {ConfigState} from './config_reducers';
 import type {DevicesState} from './device_reducers';
 import type {NetworkState} from './network_reducers';
 
+export type {
+  ApiState,
+  AuthState,
+  ConfigState,
+  DevicesState,
+  NetworkState,
+};
+
 export type State = {
   api: ApiState;
   auth: AuthState;

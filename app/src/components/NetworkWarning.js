@@ -1,9 +1,14 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
-import { NetInfo, View } from 'react-native';
-import { SilkApi } from 'silk-api';
+import {View} from 'react-native';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import ErrorBar from './ErrorBar';
+
+import type {GlobalProps} from './Root';
 
 /**
  * Autonomous component that detects when there's no network availability and
@@ -11,32 +16,14 @@ import ErrorBar from './ErrorBar';
  */
 export default class NetworkWarning extends AsyncComponent {
 
-  static propTypes = {
-    api: React.PropTypes.instanceOf(SilkApi).isRequired,
-  };
+  props: GlobalProps;
 
-  state = {
-    hasNetwork: true,
-  };
-
-  componentWillMount() {
-    this.onConnectivityChange();
-    NetInfo.isConnected.addEventListener('change', this.onConnectivityChange);
+  shouldComponentUpdate(nextProps: GlobalProps): boolean {
+    return nextProps.network !== this.props.network;
   }
-
-  componentWillUnmount() {
-    NetInfo.isConnected.removeEventListener('change', this.onConnectivityChange);
-  }
-
-  onConnectivityChange = async () => {
-    // Use the API to figure out whether we can talk to our server or not.
-    // That's what matters to us, not whether the OS thinks we have interwebs.
-    let hasNetwork = await this.props.api.canReachServer();
-    this.setStateAsync({hasNetwork});
-  };
 
   render() {
-    if (this.state.hasNetwork) {
+    if (this.props.network.canReachServer) {
       return <View />;
     }
     return (

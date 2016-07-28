@@ -1,6 +1,7 @@
 {
   "extends": "eslint-config-silk",
   "globals": {
+    "$Shape": false,
     "__DEV__": false,
     "Blob": false,
     "URL": false,

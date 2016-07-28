@@ -1,8 +1,12 @@
 /**
  * Handles user email/password input dialogs.
+ *
+ * @flow
  */
 
+import invariant from 'assert';
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   Alert,
   StyleSheet,
@@ -11,11 +15,11 @@ import {
   View,
 } from 'react-native';
 
-import Config from '../../libraries/config';
-
 import AsyncComponent from '../abstract/AsyncComponent';
 import Button from '../Button';
 import { Colors } from '../CommonStyles';
+
+import type {GlobalProps} from '../Root';
 
 class StyledTextInput extends React.Component {
   render() {
@@ -42,13 +46,17 @@ class StyledTextInput extends React.Component {
   }
 }
 
+type AuthFormProps = GlobalProps & {
+  password: boolean;
+  verifyPassword: boolean;
+};
+
 export default class AuthForm extends AsyncComponent {
 
   static propTypes = {
     style: View.propTypes.style,
     password: React.PropTypes.bool.isRequired,
     verifyPassword: React.PropTypes.bool.isRequired,
-    inProgress: React.PropTypes.bool.isRequired,
     primaryLabel: React.PropTypes.string.isRequired,
     secondaryLabel: React.PropTypes.string.isRequired,
     textLinkLabel: React.PropTypes.string,
@@ -64,14 +72,20 @@ export default class AuthForm extends AsyncComponent {
     passwordVerification: '',
   };
 
-  constructor(props) {
+  props: AuthFormProps;
+
+  constructor(props: AuthFormProps) {
     super(props);
     if (!this.props.verifyPassword) {
-      let { defaultEmail, defaultPassword } = Config.get();
+      invariant(this.props.config.current);
+      let {defaultEmail, defaultPassword} = this.props.config.current;
       this.state.email = defaultEmail || '';
       this.state.password = defaultPassword || '';
     }
   }
+
+  // TODO: we can do better here and only compare the sub-state we care about
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   onEmailChange = (email) => this.setState({email});
   onPasswordChange = (password) => this.setState({password});
@@ -117,7 +131,7 @@ export default class AuthForm extends AsyncComponent {
     );
   }
 
-  focusInput(ref) {
+  focusInput(ref: string) {
     this.props.onChangeTextInputFocus();
     this.refs[ref].focus();
   }
@@ -195,7 +209,7 @@ export default class AuthForm extends AsyncComponent {
             style={styles.primaryButton}
             type="primary"
             onPress={this.handleSubmit}
-            disabled={this.haveInvalidInputs() || this.props.inProgress}
+            disabled={this.haveInvalidInputs() || !!this.props.auth.currentOperation}
           />
         </View>
       </View>

@@ -44,7 +44,6 @@ export default class Devices extends AsyncComponent {
 
   static propTypes = {
     api: React.PropTypes.instanceOf(SilkApi).isRequired,
-    userState: React.PropTypes.instanceOf(UserState).isRequired,
     socket: React.PropTypes.instanceOf(SocketIO),
     component: React.PropTypes.func.isRequired,
   };
@@ -70,8 +69,12 @@ export default class Devices extends AsyncComponent {
 
   componentWillMount() {
     this.mounted = true;
+
+    // TODO: get rid of this
+    this.userState = new UserState(this.props.api);
+
     this.bleDeviceManager =
-      getDeviceManager(this.props.userState, this.props.api.metrics);
+      getDeviceManager(this.userState, this.props.api.metrics);
     this.bleDeviceManager.on('connect', this.onBLEDeviceConnect);
     BLESocketManager.start();
 
@@ -175,7 +178,7 @@ export default class Devices extends AsyncComponent {
 
     let immutableDevices = newDevices.asImmutable();
     this.setStateAsync({devices: immutableDevices});
-    await this.props.userState.updateRegisteredDevices(immutableDevices.toArray());
+    await this.userState.updateRegisteredDevices(immutableDevices.toArray());
   }
 
   onVideoStreamNew = (msg) => {
@@ -227,7 +230,7 @@ export default class Devices extends AsyncComponent {
         unconfiguredDevices: unconfiguredDevices.delete(this.configuringDevice.bleDeviceSession),
       });
       this.configuringDevice = null;
-      this.props.userState.updateRegisteredDevices(devices.toArray());
+      this.userState.updateRegisteredDevices(devices.toArray());
       return;
     }
 

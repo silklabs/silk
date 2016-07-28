@@ -1,5 +1,10 @@
+/**
+ * @flow
+ */
+
 import moment from 'moment';
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   PixelRatio,
   ScrollView,
@@ -9,20 +14,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as actions from 'silk-app-sdk/src/store/actions';
 import silkVersion from 'silk-core-version';
-
-import { UserState } from '../libraries/UserState';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import { FormStyles, LayoutStyles, TitleBarStyles } from './CommonStyles';
+
+import type {GlobalProps} from './Root';
 
 const MIN_CONTENT_INSET_BOTTOM = 20;
 
 export default class WifiSettings extends AsyncComponent {
 
-  static propTypes = {
-    userState: React.PropTypes.instanceOf(UserState).isRequired,
-  };
+  props: GlobalProps;
+
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   _renderTitleBar() {
     return (
@@ -105,8 +111,8 @@ export default class WifiSettings extends AsyncComponent {
     this.props.navigator.popAsync();
   };
 
-  signOut = async () => {
-    await this.props.userState.signOut();
+  signOut = () => {
+    this.props.store.dispatch(actions.auth.signOut());
   };
 
 }

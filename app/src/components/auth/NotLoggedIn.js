@@ -1,4 +1,10 @@
+/**
+ * @flow
+ */
+
+import invariant from 'assert';
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   Alert,
   Image,
@@ -9,27 +15,19 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SilkApi } from 'silk-api';
-import createLog from 'silk-log';
-
-import Config from '../../libraries/config';
-import { UserState } from '../../libraries/UserState';
+import * as actions from 'silk-app-sdk/src/store/actions';
 
 import AsyncComponent from '../abstract/AsyncComponent';
 import AuthForm from './AuthForm';
 import Button from '../Button';
 import { Colors, LayoutStyles } from '../CommonStyles';
 import NetworkWarning from '../NetworkWarning';
-import LoginMetric from '../../metrics/Login';
 
-const log = createLog('NotLoggedIn');
+import type {GlobalProps} from '../Root';
 
 export default class NotLoggedIn extends AsyncComponent {
 
-  static propTypes = {
-    api: React.PropTypes.instanceOf(SilkApi).isRequired,
-    userState: React.PropTypes.instanceOf(UserState).isRequired,
-  };
+  props: GlobalProps;
 
   state = {
     controls: null, // null, 'signup', 'signin'
@@ -42,8 +40,35 @@ export default class NotLoggedIn extends AsyncComponent {
     this._subscriptions = [
       Keyboard.addListener('keyboardWillShow', this.onKeyboardShow),
       Keyboard.addListener('keyboardWillHide', this.onKeyboardHide),
+      {
+        remove: this.props.store.subscribeToPath(
+          'auth.currentOperation.error',
+          this._onAuthError
+        ),
+      },
     ];
   }
+
+  // TODO: we can do better here and only compare the sub-state we care about
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
+
+  _onAuthError = (error, previousError) => {
+    if (!error || previousError) {
+      return;
+    }
+
+    // TODO: inspect `error` here and provide more meaningful error
+    // messages.
+    Alert.alert(
+      'Could not complete operation',
+      'Check email address and/or password.',
+      [{text: 'Ok', onPress: this._ackError}]
+    );
+  };
+
+  _ackError = () => {
+    this.props.dispatch(actions.auth.ackError());
+  };
 
   componentWillUnmount() {
     this._subscriptions.forEach(sub => sub.remove());
@@ -97,7 +122,8 @@ export default class NotLoggedIn extends AsyncComponent {
 
   _renderFirstScreen() {
     let serverPickerButton = null;
-    const { showServerPicker } = Config.get();
+    invariant(this.props.config.current);
+    const {showServerPicker} = this.props.config.current;
     if (showServerPicker) {
       serverPickerButton = (
         <Button
@@ -131,8 +157,8 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          {...this.props}
           style={styles.authForm}
-          inProgress={this.state.inProgress}
           password={true}
           verifyPassword={true}
           primaryLabel="Sign Up"
@@ -145,30 +171,19 @@ export default class NotLoggedIn extends AsyncComponent {
     );
   }
 
-  _signUp = async (credentials) => {
-    let { userState } = this.props;
-    this.setStateAsync({ inProgress: true });
-    try {
-      let success = await userState.attemptSignup(credentials.email, credentials.password);
-      if (success) {
-        return;
-      }
-    } catch (err) {
-      log.info('Failed to sign up', err);
-    }
-    Alert.alert(
-      'Error',
-      'Something went wrong. Please try again.'
-    );
-    this.setStateAsync({ inProgress: false });
+  _signUp = (credentials) => {
+    this.props.dispatch(actions.auth.createAccount({
+      userAgent: 'app',
+      ...credentials,
+    }));
   };
 
   _renderSignIn() {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          {...this.props}
           style={styles.authForm}
-          inProgress={this.state.inProgress}
           password={true}
           verifyPassword={false}
           primaryLabel="Sign In"
@@ -187,8 +202,8 @@ export default class NotLoggedIn extends AsyncComponent {
     return (
       <View style={styles.controlsContainer}>
         <AuthForm
+          {...this.props}
           style={styles.authForm}
-          inProgress={this.state.inProgress}
           password={false}
           verifyPassword={false}
           primaryLabel="Reset Password"
@@ -202,54 +217,16 @@ export default class NotLoggedIn extends AsyncComponent {
   }
 
   _signIn = async (credentials) => {
-    const { userState } = this.props;
-    this.setStateAsync({ inProgress: true });
-    try {
-      const success = await userState.attemptSignIn(credentials.email, credentials.password);
-      if (success) {
-        this.props.api.metrics.add(new LoginMetric());
-        return;
-      }
-      Alert.alert(
-        'Error',
-        'Invalid username or password. Please try again'
-      );
-    } catch (err) {
-      log.info('Failed to sign in', err);
-      Alert.alert(
-        'Error',
-        'Could not connect to server. Please try again.'
-      );
-    }
-    this.setStateAsync({ inProgress: false });
+    this.props.dispatch(actions.auth.signIn({
+      userAgent: 'app',
+      ...credentials,
+    }));
   };
 
   _forgotPassword = async (credentials) => {
-    const { userState } = this.props;
-    this.setStateAsync({ inProgress: true });
-
-    let title = 'Error';
-    let message = 'Could not connect to server. Please try again.';
-
-    try {
-      const success = await userState.forgotPassword(credentials.email);
-      if (success) {
-        title = 'Success';
-        message = 'A password reset email has been sent!';
-        this.setStateAsync({ controls: 'signin' });
-      } else {
-        message = 'Failed to send password reset. Please try again.';
-      }
-    } catch (err) {
-      log.info('Failed to reset password', err);
-      if (err.code === 404) {
-        // Server will send 404 if it cannot find the account...
-        message = 'This email address is not registered with an account.';
-      }
-    } finally {
-      this.setStateAsync({ inProgress: false });
-      Alert.alert(title, message);
-    }
+    this.props.dispatch(actions.auth.resetPassword({
+      ...credentials,
+    }));
   };
 
   _renderControls() {
@@ -285,7 +262,7 @@ export default class NotLoggedIn extends AsyncComponent {
           style={styles.pattern}
         />
         <View style={LayoutStyles.statusBarPlaceholder} />
-        <NetworkWarning api={this.props.api} />
+        <NetworkWarning {...this.props} />
         <View style={styles.content}>
           {this._renderWordmark()}
           {this._renderControls()}

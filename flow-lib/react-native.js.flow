@@ -19,12 +19,25 @@
 
 declare module 'react-native' {
   // This is pretty lame, but good enough for now to get Flow to pass.
+  declare var Alert: any;
+  declare var Image: any;
   declare var AppRegistry: any;
   declare var AsyncStorage: any;
   declare var DeviceEventEmitter: any;
+  declare var Keyboard: any;
+  declare var LayoutAnimation: any;
   declare var NativeEventEmitter: any;
   declare var NativeModules: any;
+  declare var Navigator: any;
   declare var NetInfo: any;
   declare var Platform: any;
+  declare var PixelRatio: any;
+  declare var ScrollView: any;
+  declare var StyleSheet: any;
   declare var Systrace: any;
+  declare var TextInput: any;
+  declare var TouchableOpacity: any;
+  declare var TouchableHighlight: any;
+  declare var Text: any;
+  declare var View: any;
 }

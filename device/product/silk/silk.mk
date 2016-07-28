@@ -39,6 +39,7 @@ PRODUCT_PACKAGES += \
   silk-ab-updater \
   silk-caffe \
   silk-cv \
+  silk-device-api \
   silk-device-ui \
   silk-factory-reset \
   silk-gc1 \

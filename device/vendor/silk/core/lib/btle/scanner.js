@@ -8,8 +8,8 @@
  */
 
 import noble from 'noble';
-import api from '../api';
-import createLog from '../log';
+import api from 'silk-device-api';
+import createLog from 'silk-log/device';
 const decls = api.btleConfigService;
 
 const log = createLog('scanner');

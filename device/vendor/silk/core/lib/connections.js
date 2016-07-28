@@ -24,7 +24,7 @@ import {
 import type { Duplex } from 'stream';
 import type { Peer, UserMediaConstraints } from 'silk-rtc';
 
-import api from './api';
+import api from 'silk-device-api';
 
 const log = createLog('connections');
 const MAX_RECONNECT_SLEEP = 30 * 1000;
@@ -141,7 +141,7 @@ export default class Connections extends EventEmitter {
     }
 
     if (!this._serversTable) {
-      let { sas, publicUrl } = await api.device.getSasForSignaling();
+      let { sas, publicUrl } = await api.device.getSasForSignaling({});
 
       if (publicUrl) {
         this._serverUrl = publicUrl;
@@ -158,7 +158,7 @@ export default class Connections extends EventEmitter {
         }
 
         try {
-          const { sas } = await api.device.getSasForSignaling();
+          const { sas } = await api.device.getSasForSignaling({});
           return sas;
         } catch (err) {
           log.error(`Failed to get SAS tokens to find signaling servers: ${err.stack}`);

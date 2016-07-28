@@ -8,8 +8,8 @@
 
 import StreamOperation from './stream_operation';
 
-import api from '../api';
-import createLog from '../log';
+import api from 'silk-device-api';
+import createLog from 'silk-log/device';
 import httpStream from '../streams/http';
 import assert from 'assert';
 

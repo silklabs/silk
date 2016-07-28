@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import api from 'silk-core/lib/api';
+import api from 'silk-device-api';
 import Server from 'silk-core/lib/server';
 import * as util from 'silk-sysutils';
 import https from 'https';

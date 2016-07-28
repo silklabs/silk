@@ -7,8 +7,8 @@
  * @flow
  */
 
-import api from './api';
-import createLog from './log';
+import api from 'silk-device-api';
+import createLog from 'silk-log/device';
 import {exec} from 'silk-sysutils';
 import invariant from 'assert';
 import * as Metrics from './metrics/process.js';

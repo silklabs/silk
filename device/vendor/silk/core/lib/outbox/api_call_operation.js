@@ -6,7 +6,7 @@
  * @private
  */
 
-import api from '../api';
+import api from 'silk-device-api';
 import assert from 'assert';
 
 import Operation from './operation';

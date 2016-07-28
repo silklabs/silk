@@ -15,8 +15,8 @@ import {
   MessagePackDuplexStream,
 } from 'silk-streams';
 
-import createLog from '../log';
-import api from '../api';
+import createLog from 'silk-log/device';
+import api from 'silk-device-api';
 import * as Metrics from '../metrics/btle';
 
 import type {Peripheral} from 'noble';

@@ -10,7 +10,7 @@
 
 import assert from 'assert';
 import path from 'path';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import { getintprop, randBetween } from 'silk-sysutils';
 
 import Queue from './queue';

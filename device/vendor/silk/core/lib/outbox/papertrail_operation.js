@@ -8,7 +8,7 @@
 
 import net from 'net';
 import { TLSSocket } from 'tls';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 
 import StreamOperation from './stream_operation';
 

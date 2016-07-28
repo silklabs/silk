@@ -17,7 +17,7 @@ import mkdirp from 'mkdirp-promise';
 import path from 'path';
 import { AccessToken } from 'silk-api';
 
-import makeLog from './log';
+import makeLog from 'silk-log/device';
 
 const log = makeLog('deviceid');
 

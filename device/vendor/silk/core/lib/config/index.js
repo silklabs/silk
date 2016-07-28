@@ -15,9 +15,9 @@ import {createDeferred} from 'silk-async-utils';
 import * as util from 'silk-sysutils';
 import wifi from 'silk-wifi';
 
-import api from '../api';
+import api from 'silk-device-api';
 import ConfigSessionListener from './config_session_listener';
-import createLog from '../log';
+import createLog from 'silk-log/device';
 import getBTLE from '../btle/parent';
 import getDeviceId from '../deviceid';
 import NormalSessionListener from './normal_session_listener';

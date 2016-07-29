@@ -3,37 +3,6 @@
 const path = require('path');
 const CopyWebpack = require('copy-webpack-plugin');
 
-// TODO: Dynamically build this list from actual externals in build system.
-const external = [
-  'base_version',
-  'bleno',
-  'mic',
-  'noble',
-  'node-webrtc',
-  'opencv',
-  'segfault-handler',
-  'silk-alog',
-  'silk-battery',
-  'silk-camera',
-  'silk-core-version',
-  'silk-cv',
-  'silk-gc1',
-  'silk-input',
-  'silk-lights',
-  'silk-movie',
-  'silk-ntp',
-  'silk-properties',
-  'silk-sensors',
-  'silk-sysutils',
-  'silk-vibrator',
-  'silk-wifi',
-  'sodium',
-  'v8-profiler',
-].reduce((result, value) => {
-  result[value] = true;
-  return result;
-}, {});
-
 const config = {
   target: 'node',
   node: {
@@ -59,10 +28,6 @@ const config = {
       'json3': require.resolve('./lib/shims/json3.js'),
     },
   },
-  // Mark modules installed globally as external.
-  externals: [
-    external,
-  ],
   module: {
     loaders: [
       {

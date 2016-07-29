@@ -63,6 +63,7 @@ if (!main) {
 const externals = [
   // TODO: auto generate these ...
   'bleno',
+  'kissfft',
   'mic',
   'noble',
   'node-hid',
@@ -74,6 +75,7 @@ const externals = [
   'silk-battery',
   'silk-bledroid',
   'silk-bsp-version',
+  'silk-caffe',
   'silk-camera',
   'silk-core-version',
   'silk-cv',
@@ -98,16 +100,15 @@ const externals = [
   'silk-sonos',
   'silk-speaker',
   'silk-stt',
-  'silk-tts',
   'silk-sysutils',
+  'silk-tts',
+  'silk-update',
   'silk-vad',
   'silk-vibrator',
   'silk-volume',
-  'silk-update',
   'silk-wifi',
+  'sodium',
   'v8-profiler',
-  'kissfft',
-  'silk-caffe',
   (context, request, callback) => {
     if (resolve.isCore(request)) {
       callback(null, true);

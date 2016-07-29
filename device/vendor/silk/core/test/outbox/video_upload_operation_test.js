@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
 import skipOnTravis from '../skip-on-travis.js';
 
 import { VideoUploadOp } from '../../lib/outbox/blob_upload_operation';
-import mkLog from '../../lib/log'; const log = mkLog('ut');
+import mkLog from 'silk-log/device'; const log = mkLog('ut');
 
 suite('VideoUploadOperation', () => {
 

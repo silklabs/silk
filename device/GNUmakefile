@@ -43,7 +43,7 @@ update.f: FLASH_ARGS=-f
 .PHONY: update.f
 update.f: update
 
-update.w: FLASH_ARGS="flash.sh -w"
+update.w: FLASH_ARGS=-w
 .PHONY: update.w
 update.w: update
 

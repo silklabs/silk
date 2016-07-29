@@ -12,6 +12,7 @@ import invariant from 'assert';
 import {handleActions} from 'redux-actions';
 import createLog from 'silk-log';
 
+import type {Config as ApiConfig} from 'silk-api';
 import type {Action} from './action';
 
 const log = createLog('app-sdk-auth');
@@ -189,6 +190,15 @@ function AUTH_ACK_ERROR(
   };
 }
 
+function API_CREATE(
+  state: AuthState,
+  action: Action<'API_CREATE', ApiConfig>
+): AuthState {
+  return {
+    ...initialState,
+  };
+}
+
 export const reducer = handleActions({
   AUTH_RESTORE,
   AUTH_RESETPASSWORD,
@@ -197,4 +207,5 @@ export const reducer = handleActions({
   AUTH_CREATEACCOUNT,
   AUTH_ABORT_OPERATION,
   AUTH_ACK_ERROR,
+  API_CREATE,
 }, initialState);

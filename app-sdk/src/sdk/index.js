@@ -17,4 +17,5 @@ client.init(store);
 dispatch.init(store);
 process.nextTick(() => {
   store.dispatch(actions.config.setDefault(defaultConfig));
+  store.dispatch(actions.config.restoreUser());
 });

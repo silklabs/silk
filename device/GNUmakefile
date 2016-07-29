@@ -32,12 +32,11 @@ update:
   mkdir -p out/prebuilt; \
   BUILD=$$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT; \
   ( \
-    false; \
     cd out/prebuilt; \
     rm -rf $$BUILD/ $$BUILD.tgz; \
     wget https://s3-us-west-2.amazonaws.com/silk-device/$(BRANCH)/latest/$$BUILD.tgz ; \
-    tar zvxf $$BUILD.tgz; \
-  ) \
+    tar zvxf $$BUILD.tgz \
+  ); \
   [[ $$SILK_BOARD == qemu ]] || out/prebuilt/$$BUILD/$(or $(FLASH_SCRIPT),flash.sh) $(FLASH_ARGS)
 
 update.f: FLASH_ARGS=-f

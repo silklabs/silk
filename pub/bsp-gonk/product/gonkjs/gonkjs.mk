@@ -86,7 +86,7 @@ PRODUCT_PACKAGES += silk-player
 PRODUCT_PACKAGES += silk-properties
 
 # vendor/silk/stubs/
-PRODUCT_PACKAGES += fakeappops gonksched
+PRODUCT_PACKAGES += fakeappops fakeperm gonksched
 
 # vendor/silk/time_genoff/
 PRODUCT_PACKAGES += silk-time_genoff

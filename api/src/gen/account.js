@@ -47,6 +47,7 @@ export type ListDevicesInput = {
 
 export type ListDevicesOutputDevices = {
  name: string;
+ accountDeviceNumber: number;
  publicKey: string;
  deviceId: string;
 };

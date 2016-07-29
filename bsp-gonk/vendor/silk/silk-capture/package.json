@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "nan": "2.3.5",
+    "nan": "2.4",
     "opencv": "peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd"
   },
   "gypfile": true,

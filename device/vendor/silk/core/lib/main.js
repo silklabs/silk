@@ -87,7 +87,8 @@ let cameraClipRecorder;
 let logo = null;
 let server = null;
 let connections = null;
-let shutdownPromise = null;
+type ShutdownType = 'poweroff' | 'otaupdate' | 'factoryreset';
+let shutdownType: ?ShutdownType = null;
 let crashreporter;
 let outbox;
 let logcat;
@@ -160,7 +161,7 @@ function main() {
         log.verbose(`Offline as device is not configured`);
         return Promise.resolve(false);
       }
-      if (shutdownPromise) {
+      if (shutdownType) {
         log.verbose(`Offline as device is shutting down`);
         return Promise.resolve(false);
       }
@@ -206,7 +207,7 @@ function main() {
 
   const bootAbortedFlag = Symbol();
   const maybeAbortBoot = () => {
-    if (shutdownPromise) {
+    if (shutdownType) {
       throw bootAbortedFlag;
     }
   };
@@ -484,11 +485,13 @@ async function onConfigured() {
   update.start();
 }
 
-function shutdown(finalPromiseFactory) {
-  if (shutdownPromise) {
-    log.warn('Shutdown already in progress');
+
+async function shutdown(type: ShutdownType = 'poweroff') {
+  if (shutdownType) {
+    log.warn('Shutdown already in progress: ', shutdownType);
     return;
   }
+  shutdownType = type;
 
   log.info('Shutdown started');
   if (!ui.goto('powerdown')) {
@@ -502,6 +505,15 @@ function shutdown(finalPromiseFactory) {
   if (camera) {
     log.info('Camera stop');
     camera.stopRecording();
+  }
+
+  if (shutdownType === 'factoryreset') {
+    try {
+      const result = await api.device.unregister();
+      log.info('Server unregisteration', result.success ? 'succeeded' : 'failed');
+    } catch (err) {
+      log.warn('Unable to unregister device:', err);
+    }
   }
 
   // Outbox shutdown can take a while and runs async so begin right away
@@ -541,7 +553,7 @@ function shutdown(finalPromiseFactory) {
   let timeoutPromise = util.timeout(SHUTDOWN_TIMEOUT_MS)
   .then(() => STATUS_TIMEOUT);
 
-  shutdownPromise = Promise.race([ timeoutPromise, asyncWorkPromise ])
+  Promise.race([ timeoutPromise, asyncWorkPromise ])
   .catch(err => {
     log.error('Shutdown error:', err.stack || err);
     return STATUS_EXCEPTION;
@@ -560,13 +572,27 @@ function shutdown(finalPromiseFactory) {
       log.warn('Unknown status: %s', status);
     }
 
-    if (finalPromiseFactory) {
-      return finalPromiseFactory();
+    let shutdownPromise;
+    switch (shutdownType) {
+    case 'otaupdate':
+      shutdownPromise = update.apply();
+      break;
+    case 'factoryreset':
+      shutdownPromise = util.exec('librecovery_test', ['factoryReset']);
+      break;
+    default:
+      shutdownPromise = Promise.resolve();
+      break;
     }
 
-    log.info('Powering off');
-    util.setprop('sys.powerctl', 'shutdown');
-    return null;
+    return shutdownPromise
+    .catch(err => {
+      log.warn(`Shutdown promise rejected: ${err}`);
+    })
+    .then(() => {
+      log.info('Powering off');
+      util.setprop('sys.powerctl', 'shutdown');
+    });
   });
 }
 
@@ -575,7 +601,7 @@ update.on('staged', () => {
   // An OTA update is ready to be applied.  Start monitoring for UI idle
   function applyUpdate() {
     log.warn('Applying OTA update');
-    shutdown(update.apply.bind(update));
+    shutdown('otaupdate');
   }
 
   if (ui.isIdle()) {
@@ -591,23 +617,7 @@ update.on('staged', () => {
 ui.on('key:powerdown', shutdown);
 factoryReset.on('factory-reset', async () => {
   log.warn('!! Factory reset !!');
-
-  try {
-    const result = await api.device.unregister();
-    log.info('Server unregisteration', result.success ? 'succeeded' : 'failed');
-  } catch (err) {
-    log.warn('Unable to unregister device:', err);
-  }
-
-  const finalPromiseFactory = () => {
-    return util.exec('librecovery_test', ['factoryReset'])
-      .catch(err => {
-        log.warn(`Factory reset failed: ${err}`);
-        // Ouch, now what? Reboot I guess.
-        util.setprop('sys.powerctl', 'reboot');
-      });
-  };
-  shutdown(finalPromiseFactory);
+  shutdown('factoryreset');
 });
 
 // Battery monitoring

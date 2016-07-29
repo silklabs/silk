@@ -12,6 +12,10 @@ service silk-fakeappops /system/silk/bin/fakeappops
     class late_start
     user root
 
+service silk-fakeperm /system/silk/bin/fakeperm
+    class late_start
+    user root
+
 service silk /system/silk/bin/debug-wrapper /system/silk/bin/silk-init
     class late_start
     user root
@@ -58,7 +62,7 @@ service silk-sensors /system/silk/bin/debug-wrapper /system/silk/bin/silk-sensor
 
 service silk-capture /system/silk/bin/debug-wrapper /system/silk/bin/capture
     class late_start
-    user graphics
+    user camera
     group camera
     socket capturectl stream 0600 root root
     socket capturemic stream 0600 root root

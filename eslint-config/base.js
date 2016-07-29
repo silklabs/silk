@@ -17,6 +17,7 @@ module.exports = {
     "no-catch-shadow": 2,
     "no-const-assign": 2,
     "no-debugger": 2,
+    "no-dupe-class-members": 2,
     "no-labels": 2,
     "no-eval": 2,
     "no-extend-native": 2,

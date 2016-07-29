@@ -589,10 +589,17 @@ update.on('staged', () => {
 
 // UI...
 ui.on('key:powerdown', shutdown);
-factoryReset.on('factory-reset', () => {
+factoryReset.on('factory-reset', async () => {
   log.warn('!! Factory reset !!');
 
-  let finalPromiseFactory = () => {
+  try {
+    const result = await api.device.unregister();
+    log.info('Server unregisteration', result.success ? 'succeeded' : 'failed');
+  } catch (err) {
+    log.warn('Unable to unregister device:', err);
+  }
+
+  const finalPromiseFactory = () => {
     return util.exec('librecovery_test', ['factoryReset'])
       .catch(err => {
         log.warn(`Factory reset failed: ${err}`);
@@ -600,7 +607,6 @@ factoryReset.on('factory-reset', () => {
         util.setprop('sys.powerctl', 'reboot');
       });
   };
-
   shutdown(finalPromiseFactory);
 });
 

@@ -17,6 +17,7 @@ import invariant from 'assert';
 
 import Audio from './audio';
 import {createDialogEngine} from 'silk-dialog-engine';
+import netstatus from 'silk-netstatus';
 
 import type {DialogEngineOptions, DialogState} from 'silk-dialog-engine';
 
@@ -25,6 +26,8 @@ const log = createLog('dialog-demo');
 const options: DialogEngineOptions = {
   // TODO
 };
+
+netstatus.start();
 
 log.info(`Creating dialog engine`);
 const dialogEngine = createDialogEngine(options);

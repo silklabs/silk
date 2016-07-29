@@ -7,7 +7,7 @@
  * @private
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import * as https from 'https';
 import uuid from 'uuid';
 
@@ -69,6 +69,7 @@ function httpPost(opts: Object, data: string): Promise<Object> {
           } else {
             // Reset so that we try to get access token again when someone
             // needs it
+            log.warn(`Giving up trying to renew access token`);
             accessTokenPromise = null;
           }
           return;

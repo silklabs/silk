@@ -42,6 +42,10 @@ public:
 
     virtual status_t dump(int fd, const Vector<String16>& args);
     virtual bool checkPermission(const String16& permission, int32_t pid, int32_t uid);
+#ifdef TARGET_GE_MARSHMALLOW
+    virtual void getPackagesForUid(const uid_t uid, Vector<String16> &packages);
+    virtual bool isRuntimePermission(const String16& permission);
+#endif
 };
 
 FakePermissionService::FakePermissionService()
@@ -82,6 +86,24 @@ FakePermissionService::checkPermission(const String16& permission, int32_t pid, 
         String8(permission).string(), pid, uid);
     return false;
 }
+
+#ifdef TARGET_GE_MARSHMALLOW
+void
+FakePermissionService::getPackagesForUid(const uid_t uid, Vector<String16> &packages)
+{
+    (void) uid;
+    (void) packages;
+}
+
+bool
+FakePermissionService::isRuntimePermission(const String16& permission)
+{
+    (void) permission;
+    return false;
+}
+
+#endif
+
 }; // namespace android
 
 using namespace android;

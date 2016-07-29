@@ -30,6 +30,9 @@ LOCAL_MODULE       := fakeperm
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := fakeperm.cpp
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
+endif
 LOCAL_SHARED_LIBRARIES := libbinder libutils liblog
 include $(BUILD_SILK_EXECUTABLE)
 

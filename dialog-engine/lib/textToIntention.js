@@ -105,6 +105,7 @@ export default class TextToIntention {
         });
       });
 
+      req.once(`error`, (error) => reject(error));
       req.write(data);
       req.end();
     });

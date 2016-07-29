@@ -455,16 +455,16 @@ class Dialog {
     for (const dir of dialogScriptSearchDirs) {
       try {
         modLocation = fs.realpathSync(path.join(dir, DIALOGSCRIPT_MODNAME));
-      } catch (e) {
-        log.debug(e);
+      } catch (err) {
+        log.debug(err.message || err);
       }
 
       if (modLocation) {
         try {
           log.info(`Loading ${DIALOGSCRIPT_MODNAME} from ${modLocation}`);
           modwatcher.require(modLocation);
-        } catch (e) {
-          log.warn('Unable to load', DIALOGSCRIPT_MODNAME, ':', e.stack || e);
+        } catch (err) {
+          log.warn('Unable to load', DIALOGSCRIPT_MODNAME, ':', err.stack || err);
         }
         return;
       }

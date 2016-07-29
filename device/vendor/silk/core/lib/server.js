@@ -89,6 +89,13 @@ export default class Server extends EventEmitter {
     }
   }
 
+  _emitDisconnect() {
+    if (this.lastEmittedState !== 'disconnected') {
+      this.lastEmittedState = 'disconnected';
+      this.emit('disconnect');
+    }
+  }
+
   /**
    * XXX: The extra wrapping here might be useless since the api does retries.
    * @private
@@ -112,11 +119,7 @@ export default class Server extends EventEmitter {
     socket.on('disconnect', e => {
       log.warn(`server socket disconnect: ${e}`);
 
-      if (this.lastEmittedState !== 'disconnected') {
-        this.lastEmittedState = 'disconnected';
-        this.emit('disconnect');
-      }
-
+      this._emitDisconnect();
       this._resetAcks();
 
       switch (e) {
@@ -144,6 +147,7 @@ export default class Server extends EventEmitter {
     ['connect_error', 'connect_timeout'].forEach(event => {
       socket.on(event, err => {
         log.warn(`socket ${event}: retrying connection: ${err}`);
+        this._emitDisconnect();
         this.socket = null;
         this.connect();
         if (this.lastEmittedState !== 'reconnecting') {

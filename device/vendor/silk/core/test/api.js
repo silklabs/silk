@@ -1,5 +1,5 @@
 import { default as createApi, AccessToken } from 'silk-api';
-import realAPI from '../lib/api';
+import realAPI from 'silk-device-api';
 
 // Helper will use developer account and register a device...
 export default async function(config = {}) {

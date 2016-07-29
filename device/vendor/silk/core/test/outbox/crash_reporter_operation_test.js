@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'mz/fs';
 import mkdirp from 'mkdirp-promise';
 import fetch from 'node-fetch';
-import mkLog from '../../lib/log';
+import mkLog from 'silk-log/device';
 import skipOnTravis from '../skip-on-travis.js';
 
 const log = mkLog('ut');

@@ -1,8 +1,11 @@
+'use strict'
 
-var movie = require('./index')();
+let Movie = require('.').Movie;
 
 exports['sanity'] = function(test) {
   test.expect(2)
+
+  let movie = new Movie();
 
   movie.run("/system/media/bootanimation.zip", function() {
     console.log("Movie stopped");

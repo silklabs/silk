@@ -1,19 +1,20 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {Image, StyleSheet, Text, View} from 'react-native';
-import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 
+import * as actions from '../store/actions';
 import Button from './Button';
 import {Colors} from './CommonStyles';
 
 export default class UnconfiguredDevice extends React.Component {
 
-  static propTypes = {
-    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession),
-  };
-
-  static contextTypes = {
-    silkDevices: React.PropTypes.object.isRequired,
+  props: {
+    configDeviceId: number;
+    style: any;
   };
 
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
@@ -47,11 +48,13 @@ export default class UnconfiguredDevice extends React.Component {
   }
 
   _doIgnore = () => {
-    this.props.bleDeviceSession.declineRegistrationRequest();
+    const {configDeviceId} = this.props;
+    this.props.dispatch(actions.devices.config.accept(configDeviceId));
   };
 
   _doConfigure = () => {
-    this.context.silkDevices.configureDevice(this.props.bleDeviceSession);
+    const {configDeviceId} = this.props;
+    this.props.dispatch(actions.devices.config.accept(configDeviceId));
   };
 
 }

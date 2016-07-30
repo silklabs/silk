@@ -1,10 +1,16 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
 import {Image, StyleSheet, View} from 'react-native';
-import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 
+import * as actions from '../../store/actions';
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import Button from '../Button';
 import SetupScreen from './SetupScreen';
+
+import type {GlobalProps} from '../Root';
 
 const CONNECTION_STATUS_LABELS = {
   'server_disconnected': 'Server disconnected',
@@ -23,52 +29,28 @@ const CONNECTION_STATUS_LABELS = {
 
 export default class DeviceStatus extends AsyncComponent {
 
-  static propTypes = {
-    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
-  };
-
-  state = {
-    status: null, // see CONNECTION_STATUS_LABELS
-    registered: false,
-  };
-
-  componentDidMount() {
-    const {bleDeviceSession} = this.props;
-    bleDeviceSession.on('status', this.onBLEDeviceStatusChange);
-    bleDeviceSession.on('dismissed', this.onBLEDeviceRegistered);
-  }
-
-  onBLEDeviceStatusChange = (status) => {
-    if (!this.state.status !== status.message) {
-      this.setStateAsync({status: status.message});
-    }
-  };
-
-  onBLEDeviceRegistered = () => {
-    this.setStateAsync({registered: true});
-  };
-
-  componentWillUnmount() {
-    const {bleDeviceSession} = this.props;
-    bleDeviceSession.removeListener('status', this.onBLEDeviceStatusChange);
-    bleDeviceSession.removeListener('dismissed', this.onBLEDeviceRegistered);
-  }
+  props: GlobalProps;
 
   render() {
-    let status = CONNECTION_STATUS_LABELS[this.state.status] ||
-      'Configuring...';
-    if (this.state.registered) {
-      status = 'Ready!';
+    const {configuring} = this.props.devices;
+    let label = 'Configuring';
+    if (configuring &&
+        configuring.status &&
+        configuring.status.message in CONNECTION_STATUS_LABELS) {
+      label = CONNECTION_STATUS_LABELS[configuring.status.message];
+    }
+    if (!configuring || configuring.registered) {
+      label = 'Ready!';
     }
     return (
       <SetupScreen
         title="Setting up your device..."
-        subtitle={status}
+        subtitle={label}
         primaryButton={
           <Button
             type="primary"
-            disabled={!this.state.registered}
-            onPress={() => this.props.navigator.popToTopAsync()}
+            disabled={configuring && !configuring.registered}
+            onPress={this._onDone}
             label="Done"
           />
         }>
@@ -81,6 +63,10 @@ export default class DeviceStatus extends AsyncComponent {
       </SetupScreen>
     );
   }
+
+  _onDone = () => {
+    this.props.dispatch(actions.devices.config.finish());
+  };
 
 }
 

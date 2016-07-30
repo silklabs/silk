@@ -15,8 +15,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import * as actions from 'silk-app-sdk/src/store/actions';
 
+import * as actions from '../../store/actions';
 import AsyncComponent from '../abstract/AsyncComponent';
 import AuthForm from './AuthForm';
 import Button from '../Button';

@@ -1,4 +1,7 @@
-import { OrderedMap, OrderedSet } from 'immutable';
+/**
+ * @flow
+ */
+
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
@@ -9,17 +12,16 @@ import {
   Text,
   View,
 } from 'react-native';
-import { lockToLandscape, lockToPortrait } from 'react-native-orientation';
-import { SilkApi } from 'silk-api';
-
-import SocketIO from '../libraries/SocketIO';
+import {lockToLandscape, lockToPortrait} from 'react-native-orientation';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import CameraLiveVideo from './CameraLiveVideo';
-import CameraPreviewSocketIO from './CameraPreviewSocketIO';
-import CameraPreviewWebRTC from './CameraPreviewWebRTC';
-import { Colors } from './CommonStyles';
+import CameraPreview from './CameraPreview';
+import {Colors} from './CommonStyles';
 import UnconfiguredDevice from './UnconfiguredDevice';
+
+import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {GlobalProps} from './Root';
 
 // This is mostly a guestimate based on FUT hardware. Absolute values
 // not important here, the ratio is what matters.
@@ -32,14 +34,7 @@ export const DEFAULT_PREVIEW_SIZE = {
 
 export default class DeviceList extends AsyncComponent {
 
-  static propTypes = {
-    api: React.PropTypes.instanceOf(SilkApi).isRequired,
-    hasNetwork: React.PropTypes.bool.isRequired,
-    socket: React.PropTypes.instanceOf(SocketIO),
-
-    devices: React.PropTypes.instanceOf(OrderedMap),
-    unconfiguredDevices: React.PropTypes.instanceOf(OrderedSet),
-  };
+  props: GlobalProps;
 
   state = {
     fullscreenDeviceId: null,
@@ -48,16 +43,14 @@ export default class DeviceList extends AsyncComponent {
 
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
-  startFullscreenVideo = (fullscreenDeviceId) => {
+  startFullscreenVideo = (device: RegisteredDevice) => {
     if (Platform.OS === 'ios') {
-      this.setStateAsync({fullscreenDeviceId}).then(lockToLandscape);
+      this.setStateAsync({fullscreenDeviceId: device.devicdId})
+        .then(lockToLandscape);
     } else {
       this.props.navigator.pushAsync({
         name: 'CameraLiveVideo',
-        props: {
-          ...this.props,
-          deviceId: fullscreenDeviceId,
-        },
+        props: {device},
       });
     }
   };
@@ -67,33 +60,14 @@ export default class DeviceList extends AsyncComponent {
       .then(() => setTimeout(lockToPortrait, 0));
   };
 
-  _getPreviewSize(deviceId) {
-    let device = this.props.devices.get(deviceId);
-    if (device &&
-        device.previewSize &&
-        device.previewSize.width &&
-        device.previewSize.height) {
-      return device.previewSize;
-    }
-    return DEFAULT_PREVIEW_SIZE;
-  }
-
-  _getDeviceName(deviceId) {
-    let device = this.props.devices.get(deviceId);
-    return device ? device.name : 'unknown device';
-  }
-
   render() {
-    const {
-      hasNetwork,
-      devices,
-      unconfiguredDevices,
-    } = this.props;
+    const {network, devices} = this.props;
+    const {registered, unconfigured} = devices;
 
     // this.props.devices === null means we haven't fetched a list of devices yet,
     // so we're still loading from network.
-    if (!devices && !unconfiguredDevices.size) {
-      if (!hasNetwork) {
+    if (!registered && !unconfigured.size) {
+      if (!network.canReachServer) {
         return this._renderOffline();
       }
       return (
@@ -103,19 +77,19 @@ export default class DeviceList extends AsyncComponent {
       );
     }
 
-    if (devices && !devices.size && !unconfiguredDevices.size) {
+    if (registered && !registered.size && !unconfigured.size) {
       return this._renderNoDevices();
     }
 
     let { fullscreenDeviceId } = this.state;
     let fullscreenMonitor = null;
     if (fullscreenDeviceId) {
+      const device = registered.get(fullscreenDeviceId);
       fullscreenMonitor = (
         <CameraLiveVideo
-          {...this.props}
           onClose={this.stopFullscreenVideo}
-          deviceId={fullscreenDeviceId}
-          previewSize={this._getPreviewSize(fullscreenDeviceId)}
+          device={device}
+          previewSize={DEFAULT_PREVIEW_SIZE}
           startAtTime={this.state.fullscreenStartTime}
         />
       );
@@ -168,16 +142,17 @@ export default class DeviceList extends AsyncComponent {
   }
 
   _renderUnconfiguredDevices() {
-    const { unconfiguredDevices } = this.props;
-    if (!unconfiguredDevices.size) {
+    const {unconfigured} = this.props.devices;
+    if (!unconfigured.size) {
       return null;
     }
 
-    return unconfiguredDevices.toArray().map((bleDeviceSession, index) => (
+    return Array.from(unconfigured).map(([key, bleDeviceSession]) => (
       <UnconfiguredDevice
-        key={'unconfiguredDevice-' + index}
+        key={'unconfiguredDevice-' + key}
         style={styles.unconfiguredDevice}
-        bleDeviceSession={bleDeviceSession}
+        configDeviceId={bleDeviceSession.socketId}
+        dispatch={this.props.dispatch}
       />
     ));
   }
@@ -191,41 +166,24 @@ export default class DeviceList extends AsyncComponent {
         />
       );
     }
-    const { devices } = this.props;
-    if (!devices) {
+    const {registered} = this.props.devices;
+    if (!registered) {
       return null;
     }
-    return devices.map((device, deviceId) => (
-      <View key={deviceId}>
-        <View style={styles.cameraPreview}>
-          <Text style={styles.cameraPreviewLabel}>
-            {device.name} (socket.io)
-          </Text>
-          <CameraPreviewSocketIO
-            deviceId={deviceId}
-            previewSize={device.previewSize || DEFAULT_PREVIEW_SIZE}
-            width={this.state.cameraPreviewWidth}
-            hasNetwork={this.props.hasNetwork}
-            onPress={() => this.startFullscreenVideo(deviceId)}
-            socket={this.props.socket}
-            haveVideoStream={device.haveVideoStream}
-          />
-        </View>
-        <View style={styles.cameraPreview}>
-          <Text style={styles.cameraPreviewLabel}>
-            {device.name} (WebRTC)
-          </Text>
-          <CameraPreviewWebRTC
-            deviceId={deviceId}
-            previewSize={device.previewSize || DEFAULT_PREVIEW_SIZE}
-            width={this.state.cameraPreviewWidth}
-            hasNetwork={this.props.hasNetwork}
-            onPress={() => this.startFullscreenVideo(deviceId)}
-            rtcConnection={device.rtcConnection}
-          />
-        </View>
+    return Array.from(registered.values()).reverse().map((device) => (
+      <View style={styles.cameraPreview} key={device.deviceId}>
+        <Text style={styles.cameraPreviewLabel}>
+          {device.name}
+        </Text>
+        <CameraPreview
+          dispatch={this.props.dispatch}
+          device={device}
+          previewSize={DEFAULT_PREVIEW_SIZE}
+          width={this.state.cameraPreviewWidth}
+          onPress={() => this.startFullscreenVideo(device)}
+        />
       </View>
-    )).toArray().reverse();
+    ));
   }
 
 }

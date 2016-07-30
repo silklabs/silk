@@ -15,8 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as actions from 'silk-app-sdk/src/store/actions';
 
+import * as actions from '../../store/actions';
 import { FormStyles, LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
 import type {GlobalProps} from '../Root';

@@ -1,70 +1,46 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
-import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 
+import * as actions from '../../store/actions';
 import AsyncComponent from '../abstract/AsyncComponent.js';
 import Button from '../Button';
 import {Colors} from '../CommonStyles';
 import SetupScreen from './SetupScreen';
 
-
 export default class DeviceTouch extends AsyncComponent {
 
-  static propTypes = {
-    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
-    onCancel: React.PropTypes.func.isRequired,
-    onSave: React.PropTypes.func.isRequired,
-    onMounted: React.PropTypes.func.isRequired,
-  };
-
   state = {
-    touched: false,
     rssi: null,
   };
 
-  mounted = false;
-
   componentWillMount() {
-    this.mounted = true;
-    let { bleDeviceSession } = this.props;
-    bleDeviceSession.on('secret', this._onDeviceTouch);
-    bleDeviceSession.on('rssiUpdate', this._onRSSI);
-  }
-
-  componentDidMount() {
-    this.props.onMounted();
+    if (__DEV__) {
+      const {unconfigured, configuring} = this.props.devices;
+      const session = unconfigured.get(configuring.socketId);
+      session.on('rssiUpdate', this._onRSSI);
+    }
   }
 
   componentWillUnmount() {
-    this.mounted = false;
-    let { bleDeviceSession } = this.props;
-    bleDeviceSession.removeListener('secret', this._onDeviceTouch);
-    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
+    if (__DEV__) {
+      const {unconfigured, configuring} = this.props.devices;
+      const session = unconfigured.get(configuring.socketId);
+      session.removeListener('rssiUpdate', this._onRSSI);
+    }
   }
 
   _onRSSI = (rssi) => {
-    if (!this.mounted || !__DEV__) {
-      return;
-    }
     this.setStateAsync({rssi});
   };
 
-  _onDeviceTouch = (deviceSecret) => {
-    let { bleDeviceSession } = this.props;
-    bleDeviceSession.removeListener('secret', this._onDeviceTouch);
-    bleDeviceSession.removeListener('rssiUpdate', this._onRSSI);
-    if (!this.mounted) {
-      return;
-    }
-
-    this.setStateAsync({
-      touched: true,
-    });
-  };
-
   render() {
+    const {configuring} = this.props.devices;
     let phone;
-    if (this.state.touched) {
+    if (configuring.passedProximityGate) {
       phone = (
         <Image
           key="phone_green"
@@ -98,7 +74,7 @@ export default class DeviceTouch extends AsyncComponent {
         secondaryButton={
           <Button
             type="secondary"
-            onPress={this.props.onCancel}
+            onPress={this._onCancel}
             label="Cancel"
           />
         }>
@@ -113,6 +89,10 @@ export default class DeviceTouch extends AsyncComponent {
       </SetupScreen>
     );
   }
+
+  _onCancel = () => {
+    this.props.dispatch(actions.devices.config.abort());
+  };
 
 }
 

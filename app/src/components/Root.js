@@ -5,6 +5,7 @@
 import invariant from 'assert';
 import React from 'react';
 import {
+  Alert,
   Platform,
   StyleSheet,
   Text,
@@ -12,27 +13,26 @@ import {
 } from 'react-native';
 import {lockToPortrait} from 'react-native-orientation';
 import {connect, Provider} from 'react-redux';
-
+import * as client from 'silk-app-sdk/src/client';
 import version from 'silk-core-version';
 import createLog from 'silk-log';
 
 import defaultConfig from '../libraries/config';
 import createStore from '../store';
-import * as client from 'silk-app-sdk/src/client';
-import * as actions from 'silk-app-sdk/src/store/actions';
+import * as actions from '../store/actions';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import AsyncNavigator from './abstract/AsyncNavigator';
 import CameraLiveVideo from './CameraLiveVideo';
 import DeviceStatus from './setup/DeviceStatus';
 import DeviceTouch from './setup/DeviceTouch';
-import WifiConfig from './setup/WifiConfigWithState';
+import WifiConfig from './setup/WifiConfig';
 import Main from './Main';
 import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';
 import Settings from './Settings';
 
-import type {State, AppStore} from '../store';
+import type {AppState, AppStore} from '../store';
 
 export type Route = {
   name: string;
@@ -42,7 +42,7 @@ export type Route = {
 
 type Navigator = any; // TODO: try to do better here
 
-export type GlobalProps = State & {
+export type GlobalProps = AppState & {
   route: Route;
   navigator: Navigator;
   store: AppStore;
@@ -72,9 +72,12 @@ for (let componentName in routeToComponentMap) {
 const store = createStore();
 client.init(store);
 
+const AFTER_TOUCH_WAIT_MS = 250;
+
 class Root extends AsyncComponent {
 
-  props: State;
+  props: AppState;
+  _unsubscribers: Array<Function> = [];
 
   componentWillMount() {
     if (Platform.OS === 'ios') {
@@ -86,6 +89,38 @@ class Root extends AsyncComponent {
     log.info(`silk-core ${version.semver} (${version.sha})`);
     store.dispatch(actions.config.setDefault(defaultConfig));
     store.dispatch(actions.config.restoreUser());
+
+    // Navigation logic for the setup flow:
+
+    store.subscribeToPath('devices.configuring', (configuring, previous) => {
+      if (!previous && configuring) {
+        this.refs.navigator.pushAsync({name: 'DeviceTouch'});
+      } else if (previous && !configuring) {
+        this.refs.navigator.popToTopAsync();
+      }
+    });
+    store.subscribeToPath('devices.configuring.secret', (secret) => {
+      if (secret) {
+        setTimeout(
+          () => this.refs.navigator.replaceAsync({name: 'WifiConfig'}),
+          AFTER_TOUCH_WAIT_MS
+        );
+      }
+    });
+    store.subscribeToPath('devices.configuring.config', (config) => {
+      if (config) {
+        this.refs.navigator.replaceAsync({name: 'DeviceStatus'});
+      }
+    });
+    store.subscribeToPath('devices.configuring.error', (error) => {
+      if (error) {
+        Alert.alert(
+          'Error Configuring Device',
+          error.message,
+          [{text: 'Ok', onPress: () => store.dispatch(actions.devices.config.finish())}]
+        );
+      }
+    });
   }
 
   render() {
@@ -107,11 +142,12 @@ class Root extends AsyncComponent {
     const {accessToken} = this.props.api;
     const serverUrl = this.props.config.current.serverUrl || '';
     const accessTokenString = accessToken ? accessToken.toString() : '';
-    const key = serverUrl + ':' + accessTokenString;
+    const key = [serverUrl, isAuthenticated, accessTokenString].join(':');
 
     return (
       <AsyncNavigator
         key={key}
+        ref="navigator"
         initialRoute={{name: initialRoute, index: 0}}
         onForward={this.onForward}
         configureScene={this.configureScene}

@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
 import {
   ActivityIndicator,
@@ -9,57 +13,32 @@ import {
 } from 'react-native';
 import createLog from 'silk-log';
 
+import WebRTCDataChannelReceiver from './abstract/WebRTCDataChannelReceiver';
 import DashSegmentPlayer from './DashSegmentPlayer';
+
+import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+
+type Props = {
+  device: RegisteredDevice;
+  onClose?: Function;
+};
 
 const log = createLog('CameraLiveVideo');
 
-export default class CameraLiveVideo extends React.Component {
+export default class CameraLiveVideo extends WebRTCDataChannelReceiver {
 
-  static propTypes = {
-    deviceId: React.PropTypes.string.isRequired,
-    onClose: React.PropTypes.func,
-  };
+  props: Props;
 
   state = {
     playing: false,
   };
 
-  firstSegmentDurationMs = null;
+  channelName: string = 'video';
+  messageType = 'mp4';
 
-  mounted = false;
+  firstSegmentDurationMs: ?number = null;
 
-  componentDidMount() {
-    this.mounted = true;
-
-    const { socket, deviceId } = this.props;
-    const stream = `video-${deviceId}`;
-    socket.on(stream, this._receiveSegment);
-    socket.join(stream);
-  }
-
-  componentWillUnmount() {
-    this.mounted = false;
-
-    const { socket, deviceId } = this.props;
-    const stream = `video-${deviceId}`;
-    socket.off(stream, this._receiveSegment);
-    socket.leave(stream);
-  }
-
-  _receiveSegment = (message, ack) => {
-    if (!this.mounted) {
-      return;
-    }
-    if (typeof ack === 'function') {
-      ack();
-    }
-    // discard non video frames.
-    if (message.contents !== 'mp4') {
-      return;
-    }
-    if (this.videoStartTimestampDevice === null) {
-      this.videoStartTimestampDevice = message.when;
-    }
+  onMessage = (message) => {
     if (this.firstSegmentDurationMs === null) {
       this.firstSegmentDurationMs = message.durationMs;
     }

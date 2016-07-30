@@ -7,12 +7,16 @@ import createLog from 'silk-log';
 import {handleActions} from 'redux-actions';
 
 import type {Action, SimpleAction} from 'silk-app-sdk/src/store/action';
-import type {DeviceWifiNetwork} from 'silk-app-sdk/src/ble/device_session';
+import type {
+  default as DeviceSession,
+  DeviceWifiNetwork,
+} from 'silk-app-sdk/src/ble/device_session';
+
 import type {WifiInfo} from '../libraries/Util.js';
 
 const log = createLog('reducer-wifi');
 
-export type WifiState = {
+export type WifiConfigState = {
   /**
    * Possible values once received from native:
    * - null: the phone is connected to Wifi
@@ -58,12 +62,12 @@ export type WifiState = {
   };
 
   /**
-   * Wi-Fi passphrase
+   * Wi-Fi password
    */
-  secret: string;
+  password: string;
 };
 
-const initialState: WifiState = {
+const initialState: WifiConfigState = {
   localWifiInfo: null,
   receivedLocalWifiInfo: false,
   deviceNetworks: null,
@@ -71,20 +75,20 @@ const initialState: WifiState = {
   selectedDeviceNetwork: null,
   manualEntry: false,
   manualNetwork: null,
-  secret: '',
+  password: '',
 };
 
-function WIFI_CLEAR_STATE(
-  state: WifiState,
-  action: SimpleAction<'WIFI_CLEAR_STATE', void>
-): WifiState {
+function WIFICONFIG_CLEARSTATE(
+  state: WifiConfigState,
+  action: SimpleAction<'WIFICONFIG_CLEARSTATE', void>
+): WifiConfigState {
   return {...initialState};
 }
 
-function WIFI_GET_LOCAL_INFO(
-  state: WifiState,
-  action: Action<'WIFI_GET_LOCAL_INFO', void, WifiInfo>
-): WifiState {
+function WIFICONFIG_LOCALINFO(
+  state: WifiConfigState,
+  action: Action<'WIFIGET_LOCALINFO', void, WifiInfo>
+): WifiConfigState {
   if (action.error || action.requested) {
     return state;
   }
@@ -95,20 +99,20 @@ function WIFI_GET_LOCAL_INFO(
   });
 }
 
-function WIFI_UPDATE_DEVICE_NETWORKS(
-  state: WifiState,
-  action: SimpleAction<'WIFI_UPDATE_DEVICE_NETWORKS', Array<DeviceWifiNetwork>>
-): WifiState {
+function DEVICE_CONFIG_WIFISCANRESULTS(
+  state: WifiConfigState,
+  action: SimpleAction<'DEVICE_CONFIG_WIFISCANRESULTS', DeviceSession>
+): WifiConfigState {
   return findBestWifiMatch({
     ...state,
-    deviceNetworks: action.payload,
+    deviceNetworks: action.payload.wifiNetworks,
   });
 }
 
-function WIFI_SELECT_FROM_LIST(
-  state: WifiState,
-  action: SimpleAction<'WIFI_SELECT_FROM_LIST', void>
-): WifiState {
+function WIFICONFIG_SELECTLIST(
+  state: WifiConfigState,
+  action: SimpleAction<'WIFICONFIG_SELECTLIST', void>
+): WifiConfigState {
   return {
     ...state,
     manualEntry: false,
@@ -117,10 +121,10 @@ function WIFI_SELECT_FROM_LIST(
   };
 }
 
-function WIFI_ENTER_MANUALLY(
-  state: WifiState,
-  action: SimpleAction<'WIFI_ENTER_MANUALLY', void>
-): WifiState {
+function WIFICONFIG_ENTERMANUALLY(
+  state: WifiConfigState,
+  action: SimpleAction<'WIFICONFIG_ENTERMANUALLY', void>
+): WifiConfigState {
   return {
     ...state,
     manualEntry: true,
@@ -132,10 +136,10 @@ function WIFI_ENTER_MANUALLY(
   };
 }
 
-function WIFI_SET_NETWORK(
-  state: WifiState,
-  action: SimpleAction<'WIFI_SET_NETWORK', DeviceWifiNetwork>
-): WifiState {
+function WIFICONFIG_SETNETWORK(
+  state: WifiConfigState,
+  action: SimpleAction<'WIFICONFIG_SETNETWORK', DeviceWifiNetwork>
+): WifiConfigState {
   return {
     ...state,
     selectedDeviceNetwork: action.payload,
@@ -143,20 +147,20 @@ function WIFI_SET_NETWORK(
   };
 }
 
-function WIFI_SET_SECRET(
-  state: WifiState,
-  action: SimpleAction<'WIFI_SET_SECRET', string>
-): WifiState {
+function WIFICONFIG_SETPASSWORD(
+  state: WifiConfigState,
+  action: SimpleAction<'WIFICONFIG_SETPASSWORD', string>
+): WifiConfigState {
   return {
     ...state,
-    secret: action.payload,
+    password: action.payload,
   };
 }
 
-function WIFI_SET_MANUAL_SSID(
-  state: WifiState,
-  action: SimpleAction<'WIFI_SET_MANUAL_SSID', string>
-): WifiState {
+function WIFICONFIG_SETMANUALSSID(
+  state: WifiConfigState,
+  action: SimpleAction<'WIFICNOFIG_SETMANUALSSID', string>
+): WifiConfigState {
   invariant(state.manualEntry);
   return {
     ...state,
@@ -167,10 +171,10 @@ function WIFI_SET_MANUAL_SSID(
   };
 }
 
-function WIFI_SET_MANUAL_PSK(
-  state: WifiState,
-  action: SimpleAction<'WIFI_SET_MANUAL_PSK', boolean>
-): WifiState {
+function WIFICONFIG_SETMANUALPSK(
+  state: WifiConfigState,
+  action: SimpleAction<'WIFICONFIG_SETMANUALPSK', boolean>
+): WifiConfigState {
   invariant(state.manualEntry);
   return {
     ...state,
@@ -182,18 +186,18 @@ function WIFI_SET_MANUAL_PSK(
 }
 
 export const reducer = handleActions({
-  WIFI_CLEAR_STATE,
-  WIFI_GET_LOCAL_INFO,
-  WIFI_UPDATE_DEVICE_NETWORKS,
-  WIFI_SELECT_FROM_LIST,
-  WIFI_ENTER_MANUALLY,
-  WIFI_SET_NETWORK,
-  WIFI_SET_SECRET,
-  WIFI_SET_MANUAL_SSID,
-  WIFI_SET_MANUAL_PSK,
+  WIFICONFIG_CLEARSTATE,
+  WIFICONFIG_LOCALINFO,
+  DEVICE_CONFIG_WIFISCANRESULTS,
+  WIFICONFIG_SELECTLIST,
+  WIFICONFIG_ENTERMANUALLY,
+  WIFICONFIG_SETNETWORK,
+  WIFICONFIG_SETPASSWORD,
+  WIFICONFIG_SETMANUALSSID,
+  WIFICONFIG_SETMANUALPSK,
 }, initialState);
 
-function findBestWifiMatch(state: WifiState): WifiState {
+function findBestWifiMatch(state: WifiConfigState): WifiConfigState {
   const {localWifiInfo, deviceNetworks} = state;
 
   // If we have gotten a match before, or a manual entry, or if we

@@ -114,8 +114,8 @@ export default class PreviewQueue {
 
     if (this._lastDevicePreviewTime !== null) {
       // The preview frames are guaranteed to arrive in chronological order
-      // over socket.io.  However the device time could change at any time, at
-      // which point the relative time between frames becomes meaningless.
+      // over the channel.  However the device time could change at any time,
+      // at which point the relative time between frames becomes meaningless.
       let latestPreview = this._previewQueue[this._previewQueue.length - 1];
       let deviceTimeDiff = latestPreview.when - this._lastDevicePreviewTime;
 

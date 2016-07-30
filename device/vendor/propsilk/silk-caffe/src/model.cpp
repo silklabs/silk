@@ -545,11 +545,11 @@ vector<Prediction> Model::Classify(const cv::Mat& img, int topK) {
   cv::Mat newImg = Preprocess(img);
 
   // Convert opencv matrix to Blob
-  Blob<float>* blob = new Blob<float>(1, newImg.channels(), newImg.rows,
-      newImg.cols);
-  cvMatToBlob(newImg, blob);
+  std::unique_ptr<Blob<float>> blob(new Blob<float>(1, newImg.channels(), newImg.rows,
+      newImg.cols));
+  cvMatToBlob(newImg, blob.get());
 
-  return Predict(blob, topK);
+  return Predict(blob.get(), topK);
 }
 
 /**
@@ -560,10 +560,10 @@ vector<Prediction> Model::Classify(vector<vector<float>> &array, int topK) {
   int numColumns = array[0].size();
 
   // Convert vector to Blob
-  Blob<float>* blob = new Blob<float>(1, 1, numRows, numColumns);
-  arrayToBlob(array, blob);
+  std::unique_ptr<Blob<float>> blob(new Blob<float>(1, 1, numRows, numColumns));
+  arrayToBlob(array, blob.get());
 
-  return Predict(blob, topK);
+  return Predict(blob.get(), topK);
 }
 
 /**

@@ -221,19 +221,19 @@ export default class KeywordSpotting extends EventEmitter {
       return Promise.resolve([]);
     }
     return new Promise((resolve, reject) => {
-      let start = Date.now();
+      let start = util.uptime();
       this._netCaffe.predictTopK(mat, TOPK, (err, predictions) => {
         if (err) {
           reject(err);
         } else {
-          let diff = Date.now() - start;
-          log.debug(`Prediction: ${JSON.stringify(predictions)} in ${diff}ms`);
+          let diff = Math.round(util.uptime(start));
+          log.debug('Prediction:', predictions, 'in', diff, 'ms');
 
           const label = predictions[0].label;
-          const confidence = parseInt((predictions[0].confidence * 100).toFixed(2));
 
           // Emit event if a successful keyword is spotted
           if (label === HOT_KEYWORD) {
+            const confidence = parseInt((predictions[0].confidence * 100).toFixed(2));
             log.info(`***** ${label} spotted with confidence: ${confidence}%`);
             if (confidence >= THRESHOLD) {
               resolve([label, confidence]);
@@ -391,6 +391,7 @@ export default class KeywordSpotting extends EventEmitter {
    * @private
    */
   async _processNextWindow() {
+    assert(this._predicting);
     // Wait to collect enough samples before running keyword detection on it
     if (this._output.length < NUM_SAMPLES) {
       this._predicting = false;

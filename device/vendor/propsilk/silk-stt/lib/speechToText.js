@@ -73,6 +73,7 @@ export default class SpeechToText {
   _bufferedSamples: Array<Buffer> = [];
   _saveEnabled: boolean;
   _wavDataBuffer: Buffer;
+  _requestStartUptime: number;
 
   constructor() {
     this._saveEnabled = util.getboolprop(SAVE_SPEECH_WAV, false);
@@ -160,7 +161,8 @@ export default class SpeechToText {
         json += chunk;
       });
       res.once(`end`, () => {
-        log.info(`Response complete ${res.statusCode}`);
+        const requestDuration = Math.floor(util.uptime(this._requestStartUptime));
+        log.info(`Response complete ${res.statusCode} in ${requestDuration}ms`);
         log.debug(`Response`, json);
 
         if (res.statusCode !== 200) {
@@ -222,6 +224,7 @@ export default class SpeechToText {
 
     if (this._pendingFinish) {
       log.info(`Finishing pending request`);
+      this._requestStartUptime = util.uptime();
       req.end();
       return;
     }
@@ -256,6 +259,7 @@ export default class SpeechToText {
     }
 
     log.info(`Finishing request`);
+    this._requestStartUptime = util.uptime();
     req.end();
   }
 

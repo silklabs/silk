@@ -45,7 +45,7 @@ function initNetworkAndAPI(store: Store<*>) {
 function initDevices(store: Store<*>) {
   store.subscribeToPath('auth.isAuthenticated', (isAuthenticated) => {
     if (isAuthenticated) {
-      store.dispatch(actions.devices.fetchDeviceList());
+      store.dispatch(actions.devices.registered.fetchList());
     }
   });
 }

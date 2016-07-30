@@ -17,7 +17,7 @@ import SocketSession from './socket_session';
 import type {MetricsAgent, AccessToken} from 'silk-api';
 import type {Socket} from 'silk-ble-socket';
 
-type DeviceStatus = {
+export type DeviceStatus = {
   message: string;
   isError: boolean;
 };
@@ -42,7 +42,7 @@ type RegistrationInformation = {
   regToken: string;
 };
 
-type DeviceSecret = {
+export type DeviceSecret = {
   deviceId: string;
 };
 

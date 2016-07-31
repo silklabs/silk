@@ -347,7 +347,7 @@ const builds = {
       'sim/**',
     ],
   }),
-  'device-base-mako-pr': npmPackageBuild('device', {
+  'device-base-mako-silk': npmPackageBuild('device', {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {
       env: {
@@ -363,7 +363,7 @@ const builds = {
       'pub/bsp-gonk/**',
     ],
   }),
-  'device-base-msm8909-pr': npmPackageBuild('device', {
+  'device-base-msm8909-silk': npmPackageBuild('device', {
     package_json: 'device/vendor/silk/core/package.json',
     travis_config: {
       env: {
@@ -379,7 +379,7 @@ const builds = {
       'pub/bsp-gonk/**',
     ],
   }),
-  'device-vendor-silk-pr': npmPackageBuild('device', {
+  'device-vendor-silk': npmPackageBuild('device', {
     package_json: 'device/vendor/silk/core/package.json',
     travis_yml: 'device/vendor/silk/travis/travis.yml',
     cwd: 'device/vendor/silk',
@@ -388,24 +388,6 @@ const builds = {
       'device/vendor/silk/**',
       'device/vendor/propsilk/**',
       'pub/bsp-gonk/vendor/silk/**',
-    ],
-  }),
-  'device-push': npmPackageBuild('device', {
-    // Build the primary development device on a branch push.
-    // Secondary devices are built nightly (see below.)
-    package_json: 'device/vendor/silk/core/package.json',
-    travis_config: {
-      env: {
-        global: [
-          'BOARD=mako',
-          'PRODUCT=silk',
-        ],
-      },
-    },
-    events: ['push'],
-    files: [
-      'device/**',
-      'pub/bsp-gonk/**',
     ],
   }),
   'networktest': npmPackageBuild('networktest', {
@@ -509,6 +491,18 @@ const builds = {
     },
   }),
   */
+  'device-mako-silk': nightlyBuild('device', {
+    branches: ['master', 'next', 'release'],
+    title: 'mako silk',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=mako',
+          'PRODUCT=silk',
+        ],
+      },
+    },
+  }),
   'device-kenzo-silk': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
     title: 'kenzo silk',

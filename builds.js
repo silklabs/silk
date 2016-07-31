@@ -200,6 +200,7 @@ const builds = {
         global: [
           'BOB_BUILD_COMMAND=bob/device-pandohub.sh',
           'BOB_BUILD_HOST=silksd.ddns.net',
+          'BOB_BUILD_HOST_PORT=888',
         ],
       },
     },

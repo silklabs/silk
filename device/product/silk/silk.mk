@@ -8,6 +8,9 @@
 # include board-specific silk makefile if exists
 -include board/$(SILK_BOARD)/silk_$(SILK_BOARD).mk
 
+# TODO: Disable dialog by default until kws can co-exist with DNN
+SILK_FEATURE_DIALOG ?= false
+
 # inherit from gonkjs product
 include product/gonkjs/gonkjs.mk
 SILK_DEVICE_MAIN_PATH=# TODO: Remove this when vendor/silk/core is refactored/moved/

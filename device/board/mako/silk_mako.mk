@@ -13,6 +13,13 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.bt.socket.scan_dur_ms=5000 \
   ro.silk.bt.socket.max_simul=1 \
 
+# TODO: Currently the config service fails when trying to Mako into beacon mode.
+# BTLE support in Mako is sketchy at best, and it's not worth trying to debug
+# this at the moment so just turn off BT entirely for Mako.  Notably this means
+# that one needs to configure Mako using the silk-cli.
+PRODUCT_PROPERTY_OVERRIDES += \
+  ro.silk.bt.hw.enabled=false \
+
 # Keep the default mako build slim by excluding most extensions.  Currently
 # the extensions bring the mako system.img up around 370MB, which exceeds
 # the fastboot limit for .img file sizes)

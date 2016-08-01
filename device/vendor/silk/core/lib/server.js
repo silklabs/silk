@@ -149,11 +149,16 @@ export default class Server extends EventEmitter {
         log.warn(`socket ${event}: retrying connection: ${err}`);
         this._emitDisconnect();
         this.socket = null;
-        this.connect();
-        if (this.lastEmittedState !== 'reconnecting') {
-          this.lastEmittedState = 'reconnecting';
-          this.emit('reconnecting');
-        }
+        setTimeout(
+          () => {
+            this.connect();
+            if (this.lastEmittedState !== 'reconnecting') {
+              this.lastEmittedState = 'reconnecting';
+              this.emit('reconnecting');
+            }
+          },
+          1000
+        );
       });
     });
 

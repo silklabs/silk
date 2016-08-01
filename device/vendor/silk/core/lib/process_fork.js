@@ -256,6 +256,11 @@ export default function fork(
     options = Object.assign({}, argsOrOptions);
   }
 
+  // Never reuse stdin/stdout from the parent.  If the parent crashes, the child
+  // will remain connected to the IO even though the parent is now a zombie
+  // (at least when running under /system/bin/logwrapper)
+  options.silent = true;
+
   const child = nodeFork(modulePath, args, options);
 
   const log = createLog(logName(child, options));

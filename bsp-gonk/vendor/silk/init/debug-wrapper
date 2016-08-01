@@ -43,10 +43,10 @@ if [ "$VALGRIND_SERVICES" != "" ]; then
   done
 fi
 
-export LOGWRAPPER=
+LOGWRAPPER=
 if [ $PPID -eq 1 ]; then
   LOGWRAPPER="logwrapper"
 fi
 
-$LOGWRAPPER $VALGRIND $VALGRIND_ARGS $@
+exec $LOGWRAPPER $VALGRIND $VALGRIND_ARGS $@
 exit 1

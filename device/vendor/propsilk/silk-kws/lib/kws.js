@@ -90,7 +90,7 @@ export default class KeywordSpotting extends EventEmitter {
   _sampleRate:number;
   _bytesPerSample: number;
   _numChannels: number;
-  _pcmDataArray: Array<[number, Buffer]>;
+  _pcmDataArray: Array<Buffer>;
   _pcmDataSizeInBytes: number;
   _vib: Vibrator;
   _standAlone: boolean;
@@ -98,9 +98,6 @@ export default class KeywordSpotting extends EventEmitter {
   _saveEnabled: boolean;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
-  _speechStartWhen: number;
-  _speechStopWhen: number;
-  _waitingForPcmData: boolean = false;
   _voiceActivityDetector: VoiceActivityDetector;
   _ready: boolean = false;
   _vadEnabled: boolean = false;
@@ -124,13 +121,13 @@ export default class KeywordSpotting extends EventEmitter {
     this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, false);
     this._vadEnabled = util.getboolprop(VAD_ENABLED_PROP, false);
 
-    this._pcmDataArray = []; // Array of [when, pcmData] tuples
-    this._pcmDataSizeInBytes = STEP_SIZE; // Size of all the pcmData buffers in the queue
+    this._pcmDataArray = [];
+    this._pcmDataSizeInBytes = 0; // Size of all the pcmData buffers in the queue
     this._output = [];
     this._wavDataBuffer = new Buffer(0); // Array of raw pcmData
 
     this._onSpeechStart = when => {
-      this._resumeSpotting(when);
+      this._resumeSpotting();
     };
     this._onSpeechStop = when => {
       this._pauseSpotting(when);
@@ -174,7 +171,7 @@ export default class KeywordSpotting extends EventEmitter {
       this._voiceActivityDetector.on('speech_start', this._onSpeechStart);
       this._voiceActivityDetector.on('speech_stop', this._onSpeechStop);
     } else {
-      this._resumeSpotting(Date.now());
+      this._resumeSpotting();
     }
   }
 
@@ -188,7 +185,7 @@ export default class KeywordSpotting extends EventEmitter {
       this._voiceActivityDetector.removeListener('speech_start', this._onSpeechStart);
       this._voiceActivityDetector.removeListener('speech_stop', this._onSpeechStop);
     } else {
-      this._pauseSpotting(Date.now());
+      this._pauseSpotting();
     }
   }
 
@@ -305,7 +302,7 @@ export default class KeywordSpotting extends EventEmitter {
    * @private
    */
   _handleMicData(when: number, pcmData: Buffer) {
-    this._pcmDataArray.push([when, pcmData]);
+    this._pcmDataArray.push(pcmData);
     this._pcmDataSizeInBytes += pcmData.length;
 
     // Keep around PCM_BUFFER_SECS worth of data in the ring buffer
@@ -315,10 +312,7 @@ export default class KeywordSpotting extends EventEmitter {
         this._pcmDataSizeInBytes -= pcmData.length;
       }
     }
-
-    if (this._spotting && this._waitingForPcmData) {
-      process.nextTick(() => this._processNextSample());
-    }
+    process.nextTick(() => this._processNextSample());
   }
 
   /**
@@ -329,21 +323,13 @@ export default class KeywordSpotting extends EventEmitter {
       return;
     }
     if (this._pcmDataArray.length === 0) {
-      this._waitingForPcmData = true;
+      // Waiting for more PCM data
       return;
     }
-    this._waitingForPcmData = false;
 
     // Start processing pcm data
-    let [when, pcmData] = this._pcmDataArray.shift();
+    const pcmData = this._pcmDataArray.shift();
     this._pcmDataSizeInBytes -= pcmData.length;
-
-    // Stop processing after speech stop
-    if (when >= this._speechStopWhen + PCM_BUFFER_SECS) {
-      log.debug(`Stop processing sample`);
-      this._spotting = false;
-      return;
-    }
 
     // Convert the raw pcm data into Float32Array of [-1, 1]
     let samples = new Int16Array(pcmData.length / 2);
@@ -448,37 +434,31 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Stop listening for the keyword once we are finished processing all the
-   * mic-data up to the time when pause was called.
+   * Stop listening for the keyword
    */
-  _pauseSpotting(when: number) {
+  _pauseSpotting() {
     if (!this._spotting) {
+      log.warn(`Already not spotting`);
       return;
     }
-    log.debug(`Pause spotting ${when}`);
-    this._speechStopWhen = when;
+    log.debug(`Pause spotting`);
+    this._spotting = false;
   }
 
   /**
    * Start listening for the keyword
    */
-  _resumeSpotting(when: number) {
+  _resumeSpotting() {
     if (this._spotting) {
+      log.warn(`Already spotting`);
       return;
     }
-    log.debug(`Resume spotting ${when}`);
-    this._waitingForPcmData = false;
-    this._speechStartWhen = when;
-    this._speechStopWhen = Infinity;
-    if (this._spotting) {
-      log.error(`Previous processing in progress`);
-      return;
-    }
+    log.debug(`Resume spotting`);
     this._spotting = true;
-
+    this._pcmDataArray = [];
+    this._pcmDataSizeInBytes = 0;
     this._output = [];
     this._wavDataBuffer = new Buffer(0);
-    this._processNextSample();
   }
 
   /**
@@ -489,7 +469,7 @@ export default class KeywordSpotting extends EventEmitter {
       return;
     }
     this._output = []; // Clear buffer to stop predictions right away
-    this._speechStopWhen = 0;
+    this._spotting = false;
   }
 
   /**

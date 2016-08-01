@@ -379,6 +379,7 @@ class Dialog {
     ui.userActivity();
     if (this._dialogEngine.uiMode === 'mute') {
       log.verbose('UI muted');
+      this._onDialogDone();
       return;
     }
     switch (ui.getState()) {
@@ -387,6 +388,7 @@ class Dialog {
       break;
     default:
       log.verbose('Skipping due to UI state', ui.getState());
+      this._onDialogDone();
       return;
     }
 

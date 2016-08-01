@@ -840,7 +840,7 @@ export default class CameraVideo extends React.Component {
       let messages =
         this.state.consoleMessages.slice(-consoleMessageEntryCount);
       messages = messages.map((message, index) =>
-        <li key={(message.when + '-' + message.text)}>
+        <li key={(message.when + '-' + message.text + '-' + message.id)}>
           {formatConsoleTimestamp(message.when) + ' - ' + message.text}
         </li>
       );

@@ -1,6 +1,6 @@
 {
   "name": "silk-dialog-script",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "Customizable dialog script",
   "main": "lib/index.js",
   "scripts": {

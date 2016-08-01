@@ -1,6 +1,6 @@
 {
   "name": "silk-npm-extractor",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "author": "Silk Labs Inc.",
   "main": "./extract.js",
   "bin": {

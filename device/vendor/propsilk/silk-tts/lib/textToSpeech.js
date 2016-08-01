@@ -11,6 +11,7 @@ import createLog from 'silk-log/device';
 import {EventEmitter} from 'events';
 import * as https from 'https';
 import TtsCache from './tts_cache';
+import {uptime} from 'silk-sysutils';
 
 import type { SpeechOptions } from 'silk-dialog-script';
 
@@ -77,7 +78,8 @@ export default class TextToSpeech extends EventEmitter {
       },
     };
 
-    log.info(`Issuing new request`);
+    log.verbose(`Issuing new request`);
+    const requestStartUptime = uptime();
     log.debug(`postData`, opts);
 
     const req = https.request(opts, res => {
@@ -88,7 +90,8 @@ export default class TextToSpeech extends EventEmitter {
         samples = Buffer.concat([samples, chunk]);
       });
       res.once(`end`, () => {
-        log.info(`Response complete ${res.statusCode}`);
+        const requestDuration = Math.floor(uptime(requestStartUptime));
+        log.verbose(`Response complete ${res.statusCode} in ${requestDuration}ms`);
         if (res.statusCode !== 200) {
           this.emit(`error`, new Error(`Request failed with status code ` +
                                        `${res.statusCode}`));

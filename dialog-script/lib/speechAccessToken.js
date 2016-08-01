@@ -7,7 +7,8 @@
  * @private
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
+import {uptime} from 'silk-sysutils';
 import * as https from 'https';
 import uuid from 'uuid';
 
@@ -35,6 +36,7 @@ const RETRY_LIMIT = 3;
 
 let accessTokenPromise: ?Promise<Object> = null;
 let retryCounter = 0;
+let requestStartUptime;
 
 export function urlEncode(obj: Object): string {
   const list = [];
@@ -46,7 +48,8 @@ export function urlEncode(obj: Object): string {
 
 function httpPost(opts: Object, data: string): Promise<Object> {
   return new Promise((resolve, reject) => {
-    log.info(`Issuing access token request`);
+    log.verbose(`Issuing access token request`);
+    requestStartUptime = uptime();
 
     const req = https.request(opts, (res) => {
       let json = ``;
@@ -61,7 +64,7 @@ function httpPost(opts: Object, data: string): Promise<Object> {
 
           // Retry a few times to get access token
           if (retryCounter < RETRY_LIMIT) {
-            log.info(`Renewing access token ${retryCounter + 1}/${RETRY_LIMIT}`);
+            log.verbose(`Renewing access token ${retryCounter + 1}/${RETRY_LIMIT}`);
             retryCounter++;
             process.nextTick(() => {
               accessTokenPromise = httpPost(opts, data);
@@ -69,13 +72,16 @@ function httpPost(opts: Object, data: string): Promise<Object> {
           } else {
             // Reset so that we try to get access token again when someone
             // needs it
+            log.warn(`Giving up trying to renew access token`);
             accessTokenPromise = null;
           }
           return;
         }
         retryCounter = 0;
-        let token = JSON.parse(json);
-        log.debug(`Token expires in ${token.expires_in} secs`);
+        const token = JSON.parse(json);
+        const requestDuration = Math.floor(uptime(requestStartUptime));
+        log.verbose(`Access token expires in ${token.expires_in} secs. ` +
+                    `Request took ${requestDuration}ms`);
 
         // Renew access token a minute before expiring; just to be safe
         let renewTimer = (token.expires_in > 60) ? token.expires_in - 60 :
@@ -84,7 +90,7 @@ function httpPost(opts: Object, data: string): Promise<Object> {
 
         // Renew access token
         setTimeout(() => {
-          log.info(`Renewing access token`);
+          log.verbose(`Renewing access token`);
           accessTokenPromise = httpPost(opts, data);
         }, renewTimer);
 

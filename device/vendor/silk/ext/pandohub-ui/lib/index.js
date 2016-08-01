@@ -141,6 +141,12 @@ class PandoHubUi {
   onDialogFinished: (() => void) = () => {
     log.info('finished_processing_speech');
     this.dialogState = 'idle';
+
+    if (this.connectingSubstate === 'somethingsWrong') {
+      // Move back to 'littleSlow' to give the user some feedback about the
+      // error they just likely encountered
+      this.onNotConnectedYet();
+    }
     this.render('dialogDone');
   };
 
@@ -413,6 +419,7 @@ class PandoHubUi {
   };
 
   onNotConnectedYet: (() => void) = () => {
+    invariant(this.deviceUiState === 'connecting');
     this.connectingSubstate = 'littleSlow';
     this.connectingTimer = setTimeout(this.onStillNotConnectedYet,
       CONNECTING_TIMEOUT__SOMETHINGS_WRONG);
@@ -420,6 +427,7 @@ class PandoHubUi {
   };
 
   onStillNotConnectedYet: (() => void) = () => {
+    invariant(this.deviceUiState === 'connecting');
     this.connectingSubstate = 'somethingsWrong';
     this.render();
   };

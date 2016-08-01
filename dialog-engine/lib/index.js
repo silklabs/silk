@@ -28,6 +28,7 @@ import type {
 } from './textToIntention';
 
 import type { SpeechOptions } from 'silk-dialog-script';
+import netstatus from 'silk-netstatus';
 
 export type DialogEngineOptions = {
   localTts?: boolean;
@@ -140,6 +141,7 @@ export class DialogEngine extends EventEmitter {
    * @memberof silk-dialog-engine.DialogEngine
    */
   configure(scriptOptions: DialogScriptOptions) {
+    invariant(!this._scriptOptions);
     this._scriptOptions = scriptOptions;
 
     if (this._scriptOptions.speechOptions) {
@@ -149,6 +151,16 @@ export class DialogEngine extends EventEmitter {
     if (this._scriptOptions.speechOptions) {
       configureTextToSpeech(this._scriptOptions.speechOptions);
     }
+
+    netstatus.on('online', this._onOnline);
+    if (netstatus.online) {
+      this._onOnline();
+    }
+  }
+
+  _onOnline: (() => void) = () => {
+    // Opportunistically try acquire the access token once online
+    this._scriptOptions.speechOptions.getAccessToken();
   }
 
   // Returns intention from text (utterance)

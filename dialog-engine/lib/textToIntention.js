@@ -7,8 +7,9 @@
  * @private
  */
 
-import createLog from 'silk-log';
 import * as https from 'https';
+import createLog from 'silk-log/device';
+import {uptime} from 'silk-sysutils';
 
 import type {DialogScriptOptions} from './index';
 
@@ -75,8 +76,9 @@ export default class TextToIntention {
         method: LUIS_METHOD,
       };
 
-      log.info(`Issuing luis request`);
+      log.verbose(`Issuing luis request`);
       log.debug(`options`, opts);
+      const requestStartUptime = uptime();
 
       const req = https.request(opts, (res) => {
         let json = '';
@@ -86,7 +88,8 @@ export default class TextToIntention {
         });
         res.once('end', () => {
           if (res.statusCode === 200) {
-            log.info(`Request complete`);
+            const requestDuration = Math.floor(uptime(requestStartUptime));
+            log.verbose(`Luis request complete in ${requestDuration}ms`);
             log.debug(json);
 
             let intent;
@@ -99,7 +102,7 @@ export default class TextToIntention {
             resolve(intent);
           } else {
             let errorText = `Request failed with status code ${res.statusCode}`;
-            log.info(errorText);
+            log.warn(errorText);
             reject(new Error(errorText));
           }
         });
@@ -112,7 +115,7 @@ export default class TextToIntention {
   }
 
   getIntent(text: string): Promise<Intention> {
-    log.info(`Finding intent`, text);
+    log.verbose(`Finding intent`, text);
 
     if (this._options.customIntentions) {
       const intention = this._options.customIntentions[text];

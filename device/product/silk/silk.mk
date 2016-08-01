@@ -97,8 +97,6 @@ ifneq ($(strip $(SILK_FEATURE_DEMOS)),false)
 PRODUCT_PACKAGES += \
   silkext-clapper \
   silkext-clapper-sound \
-  silkext-detectcat \
-  silkext-detectcat-cascade \
   silkext-devicemotion \
   silkext-nightlight \
   silkext-peddetector \

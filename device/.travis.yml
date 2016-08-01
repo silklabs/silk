@@ -14,10 +14,12 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
       - kubuntu-backports
+      - git-core
     packages:
       - bc
       - g++-4.8
       - g++-4.8-multilib
+      - git
       - libcv-dev
       - libcvaux-dev
       - libhighgui-dev

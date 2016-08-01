@@ -91,7 +91,10 @@ export function* sayCurrentTime(
 
   // Get the current time and isolate individual components that we care about.
   const now = new Date();
-  const hour = now.getHours() % 12;
+  let hour = now.getHours() % 12;
+  if (hour === 0) {
+    hour = 12;
+  }
   const minutes = now.getMinutes();
   const am = now.getHours() < 12;
 

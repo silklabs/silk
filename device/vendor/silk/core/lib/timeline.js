@@ -83,6 +83,8 @@ export type TimelineEventObject = {
   durationMs?: number;
   rects?: Array<Rect>;
 };
+export type TimelineEventCallback = (when: number, rects: ?Array<Rect>,
+    source: string, name: string) => void;
 
 type DiagJpegFrame = {
   id: string;

@@ -18,6 +18,7 @@ import path from 'path';
 import type { Outbox } from 'silk-outbox';
 import type { Ui } from 'silk-device-ui';
 import type Sensors from 'silk-sensors';
+import type { TimelineEventCallback } from 'silk-core/lib/timeline';
 
 const log = createLog('TestFramework');
 
@@ -38,6 +39,7 @@ export type { Camera };
 export type { Say };
 export type { Sensors };
 export type { Timeline };
+export type { TimelineEventCallback };
 
 /**
  * Dummy environment class

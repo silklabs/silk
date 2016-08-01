@@ -54,12 +54,18 @@ class DialogScript {
 
     dialogEngine.rtc.on('echo', this._onRtcEcho);
     // End RTC example
+
+    dialogEngine.on('sound', this._onSoundEvent);
   }
 
   _onRtcEcho: ((payload: Object) => void) = (payload) => {
     log.info('echo', payload);
     dialogEngine.rtc.emit('echo', payload);
   }
+
+  _onSoundEvent: ((type: string, when: number) => void) = (type, when) => {
+    log.info(`${type} event detected at ${when}`);
+  };
 
   _start(dialogEngine: DialogEngine, store: Object): void {
     // It's possible that we were unloaded while loading the state from disk.
@@ -121,6 +127,7 @@ class DialogScript {
     this._mostRecentState = null;
 
     dialogEngine.rtc.removeListener('echo', this._onRtcEcho);
+    dialogEngine.removeListener('sound', this._onSoundEvent);
 
     if (this._persistTimeout) {
       clearTimeout(this._persistTimeout);

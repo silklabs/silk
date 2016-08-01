@@ -78,6 +78,10 @@ node_modules/fbjs/flow/lib/
 unsafe.enable_getters_and_setters=true
 module.system=haste
 module.use_strict=true
+module.file_ext=.js
+module.file_ext=.json
+module.file_ext=.ios.js
+module.name_mapper.extension='png' -> '<PROJECT_ROOT>/app/src/image_stub.js.flow'
 esproposal.class_instance_fields=ignore
 esproposal.class_static_fields=ignore
 suppress_type=$FlowIssue

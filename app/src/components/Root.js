@@ -1,23 +1,25 @@
+/**
+ * @flow
+ */
+
+import invariant from 'assert';
 import React from 'react';
 import {
-  NativeModules,
-  NetInfo,
   Platform,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { lockToPortrait } from 'react-native-orientation';
+import {lockToPortrait} from 'react-native-orientation';
+import {connect, Provider} from 'react-redux';
 
-// Inject profiler hooks.
-import '../libraries/profiling';
-
-import Config from '../libraries/config';
-import loadUserState from '../libraries/UserState';
-
-import createAPI from 'silk-api';
 import version from 'silk-core-version';
 import createLog from 'silk-log';
+
+import defaultConfig from '../libraries/config';
+import createStore from '../store';
+import * as client from 'silk-app-sdk/src/client';
+import * as actions from 'silk-app-sdk/src/store/actions';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import AsyncNavigator from './abstract/AsyncNavigator';
@@ -30,7 +32,21 @@ import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';
 import Settings from './Settings';
 
-const { SLKUtil } = NativeModules;
+import type {State, AppStore} from '../store';
+
+export type Route = {
+  name: string;
+  index: number;
+  props?: {[name: string]: any};
+};
+
+type Navigator = any; // TODO: try to do better here
+
+export type GlobalProps = State & {
+  route: Route;
+  navigator: Navigator;
+  store: AppStore;
+};
 
 const log = createLog('Root');
 
@@ -45,14 +61,20 @@ const routeToComponentMap = {
   DeviceStatus,
 };
 
-export default class Root extends AsyncComponent {
-  state = {
-    initialized: false,
-    serverUrl: null,
-    api: null,
-    userState: null,
-    accessToken: null,
-  };
+// Wrap each component so it's connected to the store.
+const connectToState = connect((state) => state);
+
+for (let componentName in routeToComponentMap) {
+  const Component = routeToComponentMap[componentName];
+  routeToComponentMap[componentName] = connectToState(Component);
+}
+
+const store = createStore();
+client.init(store);
+
+class Root extends AsyncComponent {
+
+  props: State;
 
   componentWillMount() {
     if (Platform.OS === 'ios') {
@@ -61,93 +83,32 @@ export default class Root extends AsyncComponent {
   }
 
   componentDidMount() {
-    Config.init();
-    Config.on('change', this.onConfigChange);
     log.info(`silk-core ${version.semver} (${version.sha})`);
+    store.dispatch(actions.config.setDefault(defaultConfig));
+    store.dispatch(actions.config.restoreUser());
   }
-
-  onConfigChange = async (config) => {
-    let serverUrl = config.serverUrl;
-    if (serverUrl === null || serverUrl === undefined) {
-      // Default to the first entry in server.choices
-      let { choices } = Config.get().server;
-      serverUrl = choices[0].value;
-      log.info('Selecting default server:', serverUrl);
-      Config.set({serverUrl});
-      return; // Wait for the next 'change' event to continue processing
-    }
-
-    let { userState } = this.pendingState;
-    if (userState !== null) {
-      userState.removeListener('authenticated', this.onAuthenticated);
-      userState.removeListener('unauthenticated', this.onUnauthenticated);
-    }
-
-    let apiOptions = {
-      metrics: {
-        type: `account`,
-        tags: {
-          version: version.semver,
-          iosSystemName: SLKUtil.systemName,
-          iosSystemVersion: SLKUtil.systemVersion,
-          iosModel: SLKUtil.model,
-        },
-      },
-    };
-    if (serverUrl !== '' /* use API default server */) {
-      apiOptions.serverUrl = serverUrl;
-    }
-
-    let api = createAPI(apiOptions);
-
-    // Hook up metrics to network state. This will give the metrics agent a kick
-    // each time network state changes (offline/online).
-    NetInfo.isConnected.addEventListener(
-      'change',
-      api.metrics.onConnectivityChange
-    );
-
-    userState = await loadUserState(api);
-
-    // If we already are logged in immediately start metrics agent.
-    if (userState.accessToken) {
-      api.metrics.start();
-    }
-
-    userState.on('authenticated', this.onAuthenticated);
-    userState.on('unauthenticated', this.onUnauthenticated);
-    this.setStateAsync({
-      initialized: true,
-      serverUrl,
-      api,
-      userState,
-      accessToken: userState.accessToken,
-    });
-  };
-
-  onAuthenticated = (accessToken) => {
-    this.setStateAsync({accessToken});
-    this.state.api.metrics.start();
-  };
-
-  onUnauthenticated = () => {
-    this.setStateAsync({accessToken: null});
-    this.state.api.metrics.stop();
-  };
 
   render() {
     // Do not create a navigator until we have loaded initial state from
     // disk... That process is fast enough that we do not need to do do any
     // loading/splash screen.
-    if (!this.state.initialized) {
+    if (!this.props.auth.restoreAttempted) {
       return <View />;
     }
 
-    let initialRoute = this.state.accessToken ? 'Main' : 'NotLoggedIn';
+    const {isAuthenticated} = this.props.auth;
+    const initialRoute = isAuthenticated ? 'Main' : 'NotLoggedIn';
+
     // By keying the navigator on the serverUrl and accessToken, a
     // change in either (e.g. logging in or changing the server
     // config) will trigger a complete re-render of the app.
-    let key = this.state.serverUrl + ':' + this.state.accessToken;
+    invariant(this.props.config.current);
+    invariant(this.props.api);
+    const {accessToken} = this.props.api;
+    const serverUrl = this.props.config.current.serverUrl || '';
+    const accessTokenString = accessToken ? accessToken.toString() : '';
+    const key = serverUrl + ':' + accessTokenString;
+
     return (
       <AsyncNavigator
         key={key}
@@ -160,7 +121,10 @@ export default class Root extends AsyncComponent {
     );
   }
 
-  renderScene = (route, navigator) => {
+  renderScene: (route: Route, navigator: Navigator) => React$Element<any>
+    = this.renderScene.bind(this);
+
+  renderScene(route: Route, navigator: Navigator): React$Element<any> {
     let Component = routeToComponentMap[route.name];
     if (!Component) {
       return (
@@ -172,19 +136,22 @@ export default class Root extends AsyncComponent {
       );
     }
     let props = {
-      api: this.state.api,
-      userState: this.state.userState,
+      store,
       navigator,
       route,
     };
-    return <Component {...props} {...route.props} />;
-  };
+    return (
+      <Provider store={store}>
+        <Component {...props} {...route.props} />
+      </Provider>
+    );
+  }
 
   onForward() {
     // --> Settings
   }
 
-  configureScene(route) {
+  configureScene(route: Route) {
     switch (route.name) {
     case 'Settings':
     case 'ServerPicker':
@@ -206,3 +173,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
 });
+
+const RootWithState = connectToState(Root);
+
+export default class RootProvider extends React.Component {
+
+  render() {
+    return (
+      <Provider store={store}>
+        <RootWithState {...this.props} />
+      </Provider>
+    );
+  }
+
+}

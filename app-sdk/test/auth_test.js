@@ -1,14 +1,17 @@
+/**
+ * @flow
+ */
+
 import assert from 'assert';
-import {applyMiddleware, createStore, combineReducers} from 'redux';
 import thunk from 'redux-thunk';
 import {SilkApi, AccessToken} from 'silk-api';
 import version from 'silk-core-version';
 import uuid from 'uuid';
 
+// $FlowFixMe: not sure why it doesn't like this.
 import createContext from '../../server/test/server/context';
 import * as actions from '../src/store/actions';
-import {reducer as apiReducer} from '../src/store/api';
-import {reducer as authReducer} from '../src/store/auth_reducers';
+import createStore from '../src/store';
 
 const API_CONFIG = {
   serverUrl: 'http://localhost:5000',
@@ -17,11 +20,6 @@ const API_CONFIG = {
     tags: {},
   },
 };
-
-function makeStore() {
-  const reducer = combineReducers({api: apiReducer, auth: authReducer});
-  return createStore(reducer, applyMiddleware(thunk));
-}
 
 function whenAuthenticated(store): Promise<void> {
   return new Promise((resolve) => {
@@ -45,7 +43,7 @@ suite('store', () => {
   const serverContext = createContext();
 
   test('api', () => {
-    const store = makeStore();
+    const store = createStore();
     assert.strictEqual(store.getState().api, null);
 
     store.dispatch(actions.api.create({
@@ -59,7 +57,7 @@ suite('store', () => {
   });
 
   test('createAccount success', async () => {
-    const store = makeStore();
+    const store = createStore();
     store.dispatch(actions.api.create({
       ...API_CONFIG,
       serverUrl: serverContext.url,
@@ -75,7 +73,7 @@ suite('store', () => {
 
   test('signIn success', async () => {
     const accountInfo = await genTestAccount(serverContext.api);
-    const store = makeStore();
+    const store = createStore();
     store.dispatch(actions.api.create({
       ...API_CONFIG,
       serverUrl: serverContext.url,

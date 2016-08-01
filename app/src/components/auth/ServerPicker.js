@@ -1,3 +1,8 @@
+/**
+ * @flow
+ */
+
+import invariant from 'assert';
 import React from 'react';
 import {
   Image,
@@ -10,23 +15,29 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-import Config from '../../libraries/config';
+import * as actions from 'silk-app-sdk/src/store/actions';
 
 import { FormStyles, LayoutStyles, TitleBarStyles } from '../CommonStyles';
 
+import type {GlobalProps} from '../Root';
+
 export default class ServerPicker extends React.Component {
 
+  props: GlobalProps;
+
   state = {
-    serverUrl: Config.get().serverUrl,
+    serverUrl: this.props.config.current.serverUrl,
   };
 
   _renderTitle() {
+    const {current} = this.props.config;
+    invariant(current);
+
     let saveButtonLabel = (
       <Text style={TitleBarStyles.titleBarButtonLabel}>Save</Text>
     );
     let saveButton;
-    if (this.state.serverUrl === Config.get().serverUrl) {
+    if (this.state.serverUrl === current.serverUrl) {
       saveButton = (
         <View style={[TitleBarStyles.titleBarRightButton, styles.disabledButton]}>
           {saveButtonLabel}
@@ -55,8 +66,11 @@ export default class ServerPicker extends React.Component {
   }
 
   _getServerChoices() {
-    let { choices, devChoices } = Config.get().server;
-    let { showDevServers } = Config.get();
+    const {current} = this.props.config;
+    invariant(current);
+
+    let {choices, devChoices} = current.server;
+    const {showDevServers} = current;
 
     if (showDevServers) {
       choices = choices.concat(devChoices);
@@ -164,7 +178,9 @@ export default class ServerPicker extends React.Component {
     this.props.navigator.popAsync();
   };
 
-  save = () => {
+  save: (() => void) = this.save.bind(this);
+
+  save() {
     let { serverUrl } = this.state;
     if (typeof serverUrl === 'string' &&
         serverUrl.length > 0 &&
@@ -172,9 +188,9 @@ export default class ServerPicker extends React.Component {
         serverUrl.indexOf('https://') !== 0) {
       serverUrl = 'http://' + serverUrl;
     }
-    Config.set({serverUrl});
+    this.props.store.dispatch(actions.config.setUser({serverUrl}));
     // Root view will take care of the rest.
-  };
+  }
 }
 
 const styles = StyleSheet.create({

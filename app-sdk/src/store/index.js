@@ -9,7 +9,14 @@ import createLog from 'silk-log';
 
 import * as builtinReducers from './reducers';
 
-export type {State} from './reducers';
+export type {
+  State,
+  ApiState,
+  AuthState,
+  ConfigState,
+  DevicesState,
+  NetworkState,
+} from './reducers';
 
 type PathSubscriber<T> = (newValue: T, oldValue: T, objectPath: string) => any;
 

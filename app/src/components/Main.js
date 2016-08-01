@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import { Navigator, StyleSheet, View } from 'react-native';
@@ -17,7 +21,7 @@ class MainView extends React.Component {
       <View style={styles.container}>
         <TopBar {...this.props} />
         <View style={styles.content}>
-          <NetworkWarning api={this.props.api} />
+          <NetworkWarning {...this.props} />
           <DeviceList {...this.props} />
         </View>
       </View>

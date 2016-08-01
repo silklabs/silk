@@ -14,12 +14,17 @@ function initNetworkAndAPI(store: Store<*>) {
     store.dispatch(actions.network.canReachServer());
   }
 
-  store.subscribeToPath('config.current', (config, oldConfig) => {
-    if (oldConfig && config.serverUrl === oldConfig.serverUrl) {
+  store.subscribeToPath('config', (config, oldConfig) => {
+    if (!config.user) {
+      // Don't do anything until we've restored user config.
+      return;
+    }
+    if (oldConfig.curent &&
+        config.current.serverUrl === oldConfig.current.serverUrl) {
       return;
     }
     store.dispatch(actions.api.create({
-      serverUrl: config.serverUrl,
+      serverUrl: config.current.serverUrl,
       metrics: {
         type: 'account',
         tags: {},

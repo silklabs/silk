@@ -1,0 +1,11 @@
+/**
+ * In Flow land, calls like require('foo.png') get rewritten so they import
+ * this module instead.
+ *
+ * @flow
+ */
+
+const stub = {
+  uri: 'stub.png'
+};
+export default stub;

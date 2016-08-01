@@ -19,7 +19,7 @@ function genRestoreUser(): Promise<Config> {
 
 function genSetUser(
   state: StateWithConfig,
-  input: Config
+  input: $Shape<Config>
 ): Promise<Config> {
   invariant(state.config.user !== null);
   const newUser = merge({}, state.config.user, input);
@@ -28,5 +28,5 @@ function genSetUser(
 }
 
 export const setDefault = actionFromPayload('CONFIG_SET_DEFAULT');
-export const restore = actionFromAsyncPayloadGen('CONFIG_RESTORE_USER', genRestoreUser);
+export const restoreUser = actionFromAsyncPayloadGen('CONFIG_RESTORE_USER', genRestoreUser);
 export const setUser = actionFromAsyncPayloadGen('CONFIG_SET_USER', genSetUser);

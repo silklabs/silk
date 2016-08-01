@@ -7,9 +7,22 @@
  *
  * @flow
  */
-import {handleActions} from 'redux-actions';
 
+import invariant from 'assert';
+import {handleActions} from 'redux-actions';
+import createLog from 'silk-log';
+
+import type {Config as ApiConfig} from 'silk-api';
 import type {Action} from './action';
+
+const log = createLog('app-sdk-auth');
+
+type AuthOperationType =
+    'AUTH_RESTORE'
+  | 'AUTH_SIGNIN'
+  | 'AUTH_CREATEACCOUNT'
+  | 'AUTH_RESETPASSWORD'
+  ;
 
 export type AuthState = {
   /**
@@ -18,14 +31,16 @@ export type AuthState = {
   restoreAttempted: boolean;
 
   /**
-   * Whether we're in the process of authenticating right now.
-   */
-  inProgress: boolean;
-
-  /**
    * The resulting error object, if authentication failed.
    */
-  error: ?Error,
+  currentOperation: ?{
+    type: AuthOperationType;
+    inProgress: true;
+  } | {
+    type: AuthOperationType;
+    inProgress: false;
+    error: Error;
+  },
 
   /**
    * Whether we're successfully authenticated.
@@ -35,41 +50,110 @@ export type AuthState = {
 
 const initialState: AuthState = {
   restoreAttempted: false,
-  inProgress: false,
-  error: null,
+  currentOperation: null,
   isAuthenticated: false,
 };
+
+function handleAuthAction<T: AuthOperationType>(
+  operationType: T,
+  state: AuthState,
+  action: Action<T, boolean>
+): AuthState {
+  invariant(!state.isAuthenticated);
+
+  if (action.requested) {
+    return {
+      ...state,
+      currentOperation: {
+        type: operationType,
+        inProgress: true,
+      },
+    };
+  }
+
+  if (!state.currentOperation ||
+      state.currentOperation.type !== operationType ||
+      !state.currentOperation.inProgress) {
+    log.debug(
+      'Ignoring invalid action, assuming operation was aborted',
+      action
+    );
+    return state;
+  }
+
+  if (action.error) {
+    return {
+      ...state,
+      isAuthenticated: false,
+      currentOperation: {
+        type: operationType,
+        inProgress: false,
+        error: action.payload,
+      },
+    };
+  }
+
+  const isAuthenticated = action.payload;
+  let currentOperation = null;
+  if (!isAuthenticated) {
+    currentOperation = {
+      type: operationType,
+      inProgress: false,
+      error: new Error('Invalid inputs for ' + operationType),
+    };
+  }
+
+  return {
+    ...state,
+    currentOperation,
+    isAuthenticated,
+  };
+}
 
 function AUTH_RESTORE(
   state: AuthState,
   action: Action<'AUTH_RESTORE', boolean>
 ): AuthState {
-  if (action.requested) {
+  const newState = handleAuthAction('AUTH_RESTORE', state, action);
+  if (newState === state) {
     return state;
   }
-  if (action.error) {
-    // If restoring failed, we just want to drop the error on the
-    // floor. There's no point in presenting it to the user. They'll
-    // have to log in again anyway.
-    return {
-      ...state,
-      restoreAttempted: true,
-      isAuthenticated: false,
-    };
+  if (!action.requested) {
+    newState.restoreAttempted = true;
+    if (!action.error) {
+      // Not having persistent information to restore is not a failure.
+      newState.currentOperation = null;
+    }
   }
-  return {
-    ...state,
-    restoreAttempted: true,
-    inProgress: false,
-    isAuthenticated: action.payload,
-    error: null,
-  };
+  return newState;
+}
+
+function AUTH_SIGNIN(
+  state: AuthState,
+  action: Action<'AUTH_SIGNIN', boolean>
+): AuthState {
+  return handleAuthAction('AUTH_SIGNIN', state, action);
+}
+
+function AUTH_CREATEACCOUNT(
+  state: AuthState,
+  action: Action<'AUTH_CREATEACCOUNT', boolean>
+): AuthState {
+  return handleAuthAction('AUTH_CREATEACCOUNT', state, action);
+}
+
+function AUTH_RESETPASSWORD(
+  state: AuthState,
+  action: Action<'AUTH_RESETPASSWORD', boolean>
+): AuthState {
+  return handleAuthAction('AUTH_RESETPASSWORD', state, action);
 }
 
 function AUTH_SIGNOUT(
   state: AuthState,
-  action: Action<'AUTH_SIGNOUT', boolean>
+  action: Action<'AUTH_SIGNOUT', void>
 ): AuthState {
+  invariant(!state.currentOperation);
   if (action.requested) {
     return state;
   }
@@ -82,53 +166,46 @@ function AUTH_SIGNOUT(
   };
 }
 
-function AUTH_SIGNIN(
+function AUTH_ABORT_OPERATION(
   state: AuthState,
-  action: Action<'AUTH_SIGNIN', boolean>
+  action: Action<'AUTH_SIGNOUT', void>
 ): AuthState {
-  if (action.requested) {
-    return {
-      ...state,
-      error: null,
-      inProgress: true,
-    };
-  }
-  if (action.error) {
-    return {
-      ...state,
-      error: action.payload,
-    };
-  }
+  invariant(state.currentOperation);
+  invariant(state.currentOperation.inProgress);
   return {
     ...state,
-    error: null,
-    isAuthenticated: action.payload,
+    currentOperation: null,
   };
 }
 
-function AUTH_CREATEACCOUNT(
+function AUTH_ACK_ERROR(
   state: AuthState,
-  action: Action<'AUTH_CREATEACCOUNT', boolean>
+  action: Action<'AUTH_SIGNOUT', void>
 ): AuthState {
-  if (action.requested) {
-    return state;
-  }
-  if (action.error) {
-    return {
-      ...state,
-      error: action.payload,
-    };
-  }
+  invariant(state.currentOperation);
+  invariant(!state.currentOperation.inProgress);
   return {
     ...state,
-    error: null,
-    isAuthenticated: action.payload,
+    currentOperation: null,
+  };
+}
+
+function API_CREATE(
+  state: AuthState,
+  action: Action<'API_CREATE', ApiConfig>
+): AuthState {
+  return {
+    ...initialState,
   };
 }
 
 export const reducer = handleActions({
   AUTH_RESTORE,
+  AUTH_RESETPASSWORD,
   AUTH_SIGNOUT,
   AUTH_SIGNIN,
   AUTH_CREATEACCOUNT,
+  AUTH_ABORT_OPERATION,
+  AUTH_ACK_ERROR,
+  API_CREATE,
 }, initialState);

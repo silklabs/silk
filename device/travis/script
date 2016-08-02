@@ -1,6 +1,9 @@
 #!/bin/bash -ex
 
-make="make -j2"
+if [[ -z MAKE_J ]]; then
+  MAKE_J="-j2"
+fi
+make="make $MAKE_J"
 
 lock_build_fingerprint() {
   local buildprop=$ANDROID_PRODUCT_OUT/system/build.prop

@@ -9,6 +9,7 @@ APIDOC_SOURCE_FILES=" \
   ../../bsp-gonk/vendor/propsilk/silk-netstatus/lib/index.js \
   ../../pub/bsp-gonk/vendor/silk/silk-lights/lib/index.js \
   ../../pub/bsp-gonk/vendor/silk/silk-volume/lib/index.js \
+  ../../pub/bsp-gonk/vendor/silk/silk-audioplayer/lib/index.js \
 "
 
 ./node_modules/.bin/documentation \

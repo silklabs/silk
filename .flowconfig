@@ -18,6 +18,7 @@ node_modules/fbjs/flow/lib/
 .*/node_modules/read-package-tree/test/.*
 .*/node_modules/silk-socket.io-client-node/.*
 .*/node_modules/node-inspector/.*
+.*/node_modules/protobufjs/.*
 
 # Ignore all sorts of dev dependencies that our code never imports
 # and doesn't need to get type checked against.
@@ -89,4 +90,4 @@ suppress_type=$FlowFixMe
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.29.0
+0.30.0

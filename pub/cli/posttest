@@ -2,8 +2,4 @@
 
 npm run lint
 
-if [[ $(npm --version | cut -b 1) -gt 1 ]]; then
-  npm run flow
-fi
-
 exit 0

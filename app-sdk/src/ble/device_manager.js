@@ -133,6 +133,7 @@ export class DeviceSession extends RobustEventEmitter {
 
   static RSSI_THRESHOLD = -60;
 
+  _id: number;
   _socketSession: SocketSession;
 
   _state: number = DeviceSession.STATE_UNKNOWN; // TODO number -> string enum
@@ -174,8 +175,13 @@ export class DeviceSession extends RobustEventEmitter {
     socketSession.addListener(`data`, this._onData);
     socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
 
+    this._id = socket.id;
     this._socketSession = socketSession;
     this._metrics = metrics;
+  }
+
+  get socketId(): number {
+    return this._id;
   }
 
   _validateData(data: MessageData): ?Error {

@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-silk",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "Silk eslint rules",
   "main": "index.js",
   "author": "Silk Labs Inc.",
@@ -13,7 +13,7 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "babel-eslint": "6.0.4",
+    "babel-eslint": "6.1.0",
     "eslint": "2.13.1",
     "eslint-plugin-react": "3.16.1"
   }

@@ -519,6 +519,7 @@ export class DeviceSession extends RobustEventEmitter {
     });
     this._socketSession.rssiUpdatesEnabled = true;
     this._state = DeviceSession.STATE_REGISTERING;
+    this.emit(`accepted`);
   }
 
   /**
@@ -540,6 +541,7 @@ export class DeviceSession extends RobustEventEmitter {
     this._socketSession.write({
       name: `decline`,
     });
+    this.emit(`declined`);
     this._forceDisconnect();
   }
 

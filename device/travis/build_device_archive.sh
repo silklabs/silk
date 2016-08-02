@@ -109,6 +109,7 @@ if $FULL; then
   cd ..
 fi
 
+fastboot oem set_active:_a || true
 fastboot flash boot boot.img
 fastboot flash system system.img
 if [ -r recovery.img ]; then

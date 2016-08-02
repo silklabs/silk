@@ -26,7 +26,7 @@ const LIGHT_ENABLED = util.getboolprop('ro.silk.ui.light', false);
 
 // The device is considered idle if no user-facing activity has occurred for
 // this duration
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000;  // 5 minutes
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 export type UiState = 'bootanimation' |
                       'unconfigured' |

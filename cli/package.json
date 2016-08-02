@@ -13,7 +13,6 @@
   "scripts": {
     "test": "PATH=$PWD/node_modules/.silk-node/bin:$PATH mocha $(find test -name '*_test.js')",
     "lint": "eslint src test main.js bootstrap",
-    "flow": "flow check",
     "postinstall": "./bootstrap",
     "posttest": "./posttest",
     "prepublish": "./prepublish"
@@ -28,11 +27,13 @@
   ],
   "author": "Silk Labs Inc.",
   "license": "MIT",
+  "symlinkDependencies": {
+    "silk-flow-bin": "../flow-bin"
+  },
   "devDependencies": {
     "babel-cli": "6.9.0",
     "babel-eslint": "6.1.0",
     "babel-plugin-transform-runtime": "6.4.3",
-    "flow-bin": "0.29.0",
     "eslint": "2.13.1",
     "mocha": "2.4.5"
   },

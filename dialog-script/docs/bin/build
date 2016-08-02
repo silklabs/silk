@@ -17,6 +17,7 @@ APIDOC_SOURCE_FILES=" \
   --project-version master \
   -f html \
   -o dist/dialog-script-api \
+  --shallow \
   -t node_modules/documentation-theme-default \
   --name silk-dialog-script-api
 

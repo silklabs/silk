@@ -96,12 +96,12 @@ export class DialogStorage {
 
     const promise = this._promise.then(func);
 
-    // Log errors here without interfering with the promise we hand the caller.
-    // Also attach a dummy promise on the end to make sure we don't hold the
-    // result around forever.
+    // Attach a dummy promise on the end to clear the promise chain on error
     this._promise =
       promise.catch((error) => {
-        log.warn(error);
+        process.nextTick(() => {
+          throw error;
+        });
       }).then(() => undefined);
 
     // Return the promise that actually resolves with the result.
@@ -135,8 +135,8 @@ export class DialogStorage {
     const path = this._options.path;
     invariant(path);
 
-    if ((encodedData === undefined) || (!encodedData.length)) {
-      // Just delete the file.
+    if (!encodedData || !encodedData.length) {
+      // Just delete the file
       try {
         await fs.unlink(path);
       } catch (error) {

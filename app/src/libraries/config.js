@@ -38,4 +38,5 @@ const config = merge({}, defaultConfig, localConfig);
 export default config;
 
 configureLog(config.debug);
+// $FlowFixMe: reportErrorsAsExceptions is unknown to flow.
 console.reportErrorsAsExceptions = false; // eslint-disable-line no-console

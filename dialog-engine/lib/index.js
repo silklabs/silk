@@ -9,6 +9,9 @@
 /**
  * Silk Dialog Engine
  * @module silk-dialog-engine
+ * @example
+ * const getDialogEngine = require('silk-dialog-engine').default;
+ * let dialogEngine = getDialogEngine();
  */
 
 import invariant from 'assert';
@@ -65,50 +68,57 @@ export class DialogEngine extends EventEmitter {
    * This event is emitted when the Speaker starts talking
    *
    * @event speak-begin
-   * @param text Text that is about to be spoken.
+   * @param {string} text Text that is about to be spoken.
    * @memberof silk-dialog-engine.DialogEngine
+   * @instance
    */
   /**
    * This event is emitted when the Speaker finishes talking
    *
    * @event speak-end
-   * @param text Text that was spoken.
-   * @param error Non-null if an error was generated during speech.
+   * @param {string} text Text that was spoken.
+   * @param {Error} error Non-null if an error was generated during speech.
    * @memberof silk-dialog-engine.DialogEngine
+   * @instance
    */
   /**
    * This event is emitted when the microphone activates
    *
    * @event interpret-begin
    * @memberof silk-dialog-engine.DialogEngine
+   * @instance
    */
   /**
    * This event is emitted when the microphone deactivates
    *
    * @event interpret-end
    * @memberof silk-dialog-engine.DialogEngine
+   * @instance
    */
   /**
    * This event is emitted after speech-to-text has run and we have a text result.
    *
    * @event text
-   * @param text Text that was interpreted.
+   * @param {string} text Text that was interpreted.
    * @memberof silk-dialog-engine.DialogEngine
+   * @instance
    */
   /**
    * This event is emitted once the text result has been run though intent analysis.
    *
    * @event intent
-   * @param intent Intent that was inferred from the text.
-   * @param entities A list of entities that were inferred from the text.
+   * @param {string} intent Intent that was inferred from the text.
+   * @param {Array<string>} entities A list of entities that were inferred from the text.
    * @memberof silk-dialog-engine.DialogEngine
+   * @instance
    */
   /**
    * This event is emitted when the UI mode changes
    *
    * @event ui-mode
-   * @param DialogUiMode The current ui mode.
+   * @param {`normal`|`dnd`|`mute`} dialogUiMode The current ui mode.
    * @memberof silk-dialog-engine.DialogEngine
+   * @instance
    */
 
   _uiMode: DialogUiMode;
@@ -329,13 +339,8 @@ export function genDialogEngine(): Promise<DialogEngine> {
 /**
  * Get the dialog engine
  *
- * @name default
  * @memberof silk-dialog-engine
  * @returns {DialogEngine}
- * @example
- *
- * const getDialogEngine = require('silk-dialog-engine'.default;
- * let dialogEngine = getDialogEngine();
  */
 export default function getDialogEngine(): DialogEngine {
   if (!instance) {

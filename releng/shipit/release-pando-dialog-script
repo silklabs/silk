@@ -26,6 +26,11 @@ git fetch --unshallow
 git subtree split --prefix dialog-script -b release-pando-dialog-script
 git remote add pando git@github.com:silklabs/release-pando-dialog-script
 
+# Test the release before pushing 
+git checkout release-pando-dialog-script
+npm install
+npm run test
+
 MABYEFORCE=
 if [[ $BRANCH = next ]]; then
   # Next branch needs to be forced as its history gets rewritten on every

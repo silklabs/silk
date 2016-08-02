@@ -1,5 +1,7 @@
 /* global suite */
 /* global setup */
+/* global suiteSetup */
+/* global suiteTeardown */
 /* global test */
 
 import assert from 'assert';
@@ -22,7 +24,7 @@ import modifyBabies from '../lib/babies/saga';
 import startFeeding from '../lib/food/saga';
 import {timerMonitorSaga} from '../lib/timers/saga';
 
-let saga; 
+let saga;
 let unknownText;
 
 suite(`saga`, () => {
@@ -42,7 +44,7 @@ suite(`saga`, () => {
 
   suiteTeardown(() => {
     uninstallMocks;
-  })
+  });
 
   setup(() => {
     sagaGenerator = saga(dialogEngine);

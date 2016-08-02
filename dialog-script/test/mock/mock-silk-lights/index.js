@@ -1,7 +1,5 @@
-import createLog from 'silk-log';
 import invariant from 'assert';
 import {EventEmitter} from 'events';
-const log = createLog(`mock-lights`);
 
 class Light extends EventEmitter {
   set color(val: number) {

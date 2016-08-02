@@ -39,8 +39,13 @@ function loadModel(svmCfg: SvmSoundsConfig) {
         reject(err);
         return;
       }
+      if (!svmCfg.enabled) {
+        log.info(`Skipping loading model ${svmCfg.soundClass} as it is disabled`);
+        resolve();
+        return;
+      }
       log.info(`Fetched model ${modelPath}; ${model.length} bytes`);
-      log.info(`  ${svmCfg.soundClass} is ${svmCfg.enabled ? 'enabled' : 'disabled'}`);
+
       // $FlowFixMe: Flow doesn't understand model.buffer
       let parsedModel = parsePackedSVMModel(model.buffer);
       if (!parsedModel) {

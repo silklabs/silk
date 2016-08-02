@@ -299,6 +299,10 @@ export let upgrade = {
         deps = pkg.devDependencies;
       }
 
+      if (pkg.peerDependencies && pkg.peerDependencies[args.package]) {
+        deps = pkg.peerDependencies;
+      }
+
       if (deps) {
         console.log(`Will upgrade ${pkgDir}`);
         hasPkg = true;

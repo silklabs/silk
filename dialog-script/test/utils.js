@@ -3,9 +3,12 @@ import eventToPromise from 'event-to-promise';
 import mock from 'mock-require';
 
 import * as mockDialogEngine from './mock/dialog-engine';
-import * as mockStorage from './mock/dialog-storage';
-import * as mockSonos from './mock/mock-silk-sonos';
+import * as mockFactoryReset from './mock/mock-silk-factory-reset';
 import * as mockLifx from './mock/mock-silk-lifx';
+import * as mockLights from './mock/mock-silk-lights';
+import * as mockSonos from './mock/mock-silk-sonos';
+import * as mockStorage from './mock/dialog-storage';
+import * as mockVolume from './mock/mock-silk-volume';
 
 import createLog from 'silk-log';
 const log = createLog(`dialog-script-test-utils`);
@@ -14,8 +17,11 @@ export function installMocks() {
   log.info('installing mocks');
   mock('silk-dialog-engine', mockDialogEngine);
   mock('silk-dialog-storage', mockStorage);
-  mock('silk-sonos', mockSonos);
+  mock('silk-factory-reset', mockFactoryReset);
   mock('silk-lifx', mockLifx);
+  mock('silk-lights', mockLights);
+  mock('silk-sonos', mockSonos);
+  mock('silk-volume', mockVolume);
 }
 
 export function uninstallMocks() {

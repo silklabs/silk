@@ -7,7 +7,9 @@
  * @flow
  */
 /**
- * Network connectivity status
+ * This module provides a consistent indicator of network connectivity.  By
+ * default this means we can connect to major Internet services, but the
+ * connectivity test can be tailored.
  * @module silk-netstatus
  * @example
  * import netstatus from 'silk-netstatus';
@@ -45,24 +47,20 @@ const IS_ONLINE = (): Promise<bool> => {
 
 export type IsOnLineTest = () => Promise<bool>;
 
-/**
- * This class provides a consistent indicator of network connectivity.  By
- * default this means can connect to major Internet services, but the
- * connectivity test can be tailored.
- * @memberof silk-netstatus
- */
 export class NetworkStatus extends EventEmitter {
   /**
    * `online` event. This event is emitted when the network is online
    *
    * @event online
-   * @memberof silk-netstatus.NetworkStatus
+   * @memberof silk-netstatus
+   * @instance
    */
   /**
    * `offline` event. This event is emitted when the network is online
    *
    * @event offline
-   * @memberof silk-netstatus.NetworkStatus
+   * @memberof silk-netstatus
+   * @instance
    */
   // Wifi module to use
   _wifi: Wifi | StubWifi;
@@ -89,7 +87,7 @@ export class NetworkStatus extends EventEmitter {
   /**
    * Is the device currently online?
    *
-   * @memberof silk-netstatus.NetworkStatus
+   * @memberof silk-netstatus
    * @instance
    */
   get online(): bool {
@@ -99,7 +97,9 @@ export class NetworkStatus extends EventEmitter {
   /**
    * Start background checking for online.  This only needs to be called once.
    *
-   * @memberof silk-netstatus.NetworkStatus
+   * @param {Function} isOnlineFn Function to test for connectivity of type `(): Promise<bool>`
+   * @param {number} [checkInterval=2000] How often in milliseconds to check for connectivity
+   * @memberof silk-netstatus
    * @instance
    */
   start(
@@ -124,7 +124,8 @@ export class NetworkStatus extends EventEmitter {
   /**
    * Manually check for online.
    *
-   * @memberof silk-netstatus.NetworkStatus
+   * @memberof silk-netstatus
+   * @return {Promise<void>}
    * @instance
    */
   check: () => Promise<void> = async (): Promise<void> => {
@@ -196,9 +197,5 @@ export class NetworkStatus extends EventEmitter {
   }
 }
 
-/**
- * Global NetworkStatus object
- * @memberof silk-netstatus
- */
 let netstatus = new NetworkStatus(silkWifi);
 export default netstatus;

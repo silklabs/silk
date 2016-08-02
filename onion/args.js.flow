@@ -1,0 +1,67 @@
+/**
+ * @flow
+ */
+
+import type {AccessToken} from 'silk-api';
+
+/**
+ * Encode and sign a payload, intended for a particular recipient, to be sent
+ * over a particular channel.
+ */
+export type EncodeArgs<T> = {|
+  senderIdentity: AccessToken;
+  recipientIdentity: AccessToken;
+  channel: string;
+  payload: T;
+|};
+
+/**
+ * Encode and sign a payload, intended for no recipient in particular,
+ * to be sent over a particular channel.
+ */
+export type EncodeForUnknownRecipientArgs<T> = {|
+  senderIdentity: AccessToken;
+  recipientIdentity?: AccessToken;
+  channel: string;
+  payload: T;
+|};
+
+/**
+ * Decode an incoming message and verify signature, channel, sender,
+ * and intended recipient.
+ */
+export type DecodeArgs = {|
+  input: Buffer;
+  allowedChannels: Array<string>;
+  allowedSenders: Array<AccessToken>;
+  recipientIdentity: AccessToken;
+|};
+
+/**
+ * Decode an incoming message that is meant for no recipient in
+ * particular, and verify signature, channel, and sender.
+ */
+export type DecodeArgsForUnknownRecipient = {|
+  input: Buffer;
+  allowedChannels: Array<string>;
+  allowedSenders: Array<AccessToken>;
+  recipientIdentity?: AccessToken;
+|};
+
+/**
+ * Decode an incoming message that is meant for no recipient in
+ * particular, send by an unknown sender, and verify signature and
+ * channel.
+ */
+export type DecodeArgsForUnknownParties = {|
+  input: Buffer;
+  allowedChannels: Array<string>;
+  allowedSenders?: Array<AccessToken>;
+  recipientIdentity?: AccessToken;
+|};
+
+export type ReceivedMessage<T> = {|
+  channel: string;
+  senderIdentity: AccessToken;
+  payload: T;
+|};

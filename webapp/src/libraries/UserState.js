@@ -79,7 +79,7 @@ export class UserState extends EventEmitter {
 
     const parsed = JSON.parse(accessTokenString);
     const accessToken = new AccessToken(parsed.publicKey, parsed.privateKey);
-    log.info('Using existing access token', accessToken);
+    log.info('Using existing access token', accessToken.pub);
     return accessToken;
   }
 

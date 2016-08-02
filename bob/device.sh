@@ -17,7 +17,7 @@ fi
 
 set -e
 cd device/
-MAKE_J="-j8"
+export MAKE_J="-j8"
 
 #
 # TODO: What follows is essentially a duplicate of ../device/.travis.yml

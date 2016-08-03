@@ -1,5 +1,7 @@
 /* global suite */
 /* global setup */
+/* global suiteSetup */
+/* global suiteTeardown */
 /* global test */
 
 import assert from 'assert';
@@ -8,6 +10,8 @@ import {call, fork, put, take} from 'redux-saga/effects';
 import {createMockTask as createMockSaga} from 'redux-saga/utils';
 
 import {
+  installMocks,
+  uninstallMocks,
   makeMicEvent,
   testScript,
 } from './utils';
@@ -16,13 +20,12 @@ import {
   cleanupFinishedSagas,
   createMicEventChannel,
 } from '../lib/environment';
-import {
-  default as saga,
-  unknownText,
-} from '../lib/saga';
 import modifyBabies from '../lib/babies/saga';
 import startFeeding from '../lib/food/saga';
 import {timerMonitorSaga} from '../lib/timers/saga';
+
+let saga;
+let unknownText;
 
 suite(`saga`, () => {
 
@@ -32,6 +35,16 @@ suite(`saga`, () => {
   let environment = null;
   let sagas = null;
   let sagaEnvironment = null;
+
+  suiteSetup(() => {
+    installMocks();
+    unknownText = require('../lib/saga').unknownText;
+    saga = require('../lib/saga').default;
+  });
+
+  suiteTeardown(() => {
+    uninstallMocks;
+  });
 
   setup(() => {
     sagaGenerator = saga(dialogEngine);

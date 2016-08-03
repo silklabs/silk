@@ -453,7 +453,8 @@ const builds = {
   'releng-shipit-pando-dialog-script': {
     title: 'Pando dialog script release',
     travis_yml: 'releng/shipit/travis.release-pando-dialog-script.yml',
-    events: ['nightly'],
+    events: ['nightly', 'pr'],
+    files: ['dialog-script/**'],
     branches: ['master', 'next', 'release'],
   },
 

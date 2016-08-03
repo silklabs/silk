@@ -10,8 +10,7 @@ import {
 
 import * as mockDialogEngine from './mock/dialog-engine';
 
-import {unknownText} from '../lib/saga';
-
+let unknownText;
 
 suite(`userScript`, () => {
 
@@ -30,6 +29,8 @@ suite(`userScript`, () => {
     // This configures the dialog engine.
     reload = require('../lib/index').reload;
     invariant(reload);
+
+    unknownText = require('../lib/saga').unknownText;
   });
 
   suiteTeardown(() => {

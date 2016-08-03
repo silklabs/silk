@@ -28,8 +28,8 @@ endif
 cflag_overrides = "-Wno-non-virtual-dtor"
 
 webrtc := $(ANDROID_BUILD_TOP)/external/silk-webrtc/
-webrtc_makefile := $(webrtc)/GypAndroid.mk
-nodewebrtc := $(webrtc)/third_party/node-webrtc
+webrtc_makefile := $(webrtc)GypAndroid.mk
+nodewebrtc := $(webrtc)third_party/node-webrtc
 
 $(nodewebrtc):
 	ln -sf $(abspath $(LOCAL_PATH)) $(nodewebrtc)

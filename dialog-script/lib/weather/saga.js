@@ -55,6 +55,11 @@ function fetchWeather(zipcode: number): Promise<CurrentWeather> {
             let result = JSON.parse(data);
             log.debug(result);
 
+            if (result.cod !== 200) {
+              reject(new Error(result.message));
+              return;
+            }
+
             let location = result.name;
             let temp = Math.round(result.main.temp);
             let weatherDesc = '';
@@ -145,10 +150,16 @@ export function* getWeather(
     return;
   }
 
-  let weather = yield call(fetchWeather, zipcode);
-  invariant(weather);
-
-  log.debug(weather);
+  let weather;
+  try {
+    weather = yield call(fetchWeather, zipcode);
+    invariant(weather);
+    log.debug(weather);
+  } catch (err) {
+    log.error(`${err}`);
+    yield call(speak, `Sorry, I'm unable to get the weather for ${zipcode}`, `idle`);
+    return;
+  }
 
   let text = `It's currently ${weather.temp} degrees`;
   if (weather.description === 'thunderstorms') {

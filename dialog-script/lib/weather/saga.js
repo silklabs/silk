@@ -8,7 +8,7 @@ import {call, put, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
 
 import type {Environment} from '../environment';
-import {urlEncodeParams} from '../utils';
+import {urlEncodeParams, encodeNumber} from '../utils';
 
 import {updateZipcode, clearZipcode} from './actions';
 
@@ -157,7 +157,7 @@ export function* getWeather(
     log.debug(weather);
   } catch (err) {
     log.error(`${err}`);
-    yield call(speak, `Sorry, I'm unable to get the weather for ${zipcode}`, `idle`);
+    yield call(speak, `Sorry, I'm unable to get the weather for ${encodeNumber(zipcode)}`, `idle`);
     return;
   }
 

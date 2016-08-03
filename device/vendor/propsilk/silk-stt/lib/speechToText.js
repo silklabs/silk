@@ -183,14 +183,8 @@ export default class SpeechToText {
 
         // Handle response error
         if (response.header.status !== 'success' ) {
-          // Special case where no speech is considered a success
-          if (response.header.properties.NOSPEECH === '1') {
-            log.warn(`No text`);
-            this._callCallback(null, '', 1.0);
-          } else {
-            this._callCallback(new Error(
-                `Request failed with ${JSON.stringify(response.header.properties)}`));
-          }
+          log.warn(response.header.properties);
+          this._callCallback(null, '', 1.0);
           return;
         }
 

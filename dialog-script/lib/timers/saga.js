@@ -2,7 +2,7 @@
  * @flow
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import {delay} from 'redux-saga';
 import {call, put, race, select, take} from 'redux-saga/effects';
 import invariant from 'assert';

@@ -2,7 +2,7 @@
  * @flow
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import {call, put, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import * as uuid from 'uuid';

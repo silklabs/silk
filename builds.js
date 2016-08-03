@@ -448,6 +448,7 @@ const builds = {
     title: 'Pando app release',
     travis_yml: 'releng/shipit/travis.release-pando-app.yml',
     events: ['nightly', 'push'],
+    files: ['app/**'], // TODO: Add more from the release-panp-app WHITELIST here
     branches: ['master', 'next', 'release'],
   },
   'releng-shipit-pando-dialog-script': {

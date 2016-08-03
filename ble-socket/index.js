@@ -62,6 +62,10 @@ export class Socket extends RobustEventEmitter {
     this._id = id;
   }
 
+  get id(): number {
+    return this._id;
+  }
+
   send(data: Buffer) {
     log.debug(`Socket.send(${data.length})`);
     invariant(singletonInstance);

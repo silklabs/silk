@@ -48,7 +48,9 @@ function genHandleSuccessfulAuth(
     privateKey: accessToken.priv,
   });
   return AsyncStorage.setItem(ACCESS_TOKEN_KEY, json).then(() => {
-    // TODO: enable this once we have the BLE code in the SDK:
+    // TODO: enable this once we have the BLE code in the SDK.
+    // Even better, move this to a store subscriber so these actions
+    // don't have any side-effects.
     if (NativeModules.BLESocketManager) {
       NativeModules.BLESocketManager.addBeaconUuid(beaconUUID);
     }

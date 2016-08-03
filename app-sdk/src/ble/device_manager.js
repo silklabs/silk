@@ -17,7 +17,7 @@ import SocketSession from './socket_session';
 import type {MetricsAgent, AccessToken} from 'silk-api';
 import type {Socket} from 'silk-ble-socket';
 
-type DeviceStatus = {
+export type DeviceStatus = {
   message: string;
   isError: boolean;
 };
@@ -42,7 +42,7 @@ type RegistrationInformation = {
   regToken: string;
 };
 
-type DeviceSecret = {
+export type DeviceSecret = {
   deviceId: string;
 };
 
@@ -133,6 +133,7 @@ export class DeviceSession extends RobustEventEmitter {
 
   static RSSI_THRESHOLD = -60;
 
+  _id: number;
   _socketSession: SocketSession;
 
   _state: number = DeviceSession.STATE_UNKNOWN; // TODO number -> string enum
@@ -174,8 +175,13 @@ export class DeviceSession extends RobustEventEmitter {
     socketSession.addListener(`data`, this._onData);
     socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
 
+    this._id = socket.id;
     this._socketSession = socketSession;
     this._metrics = metrics;
+  }
+
+  get socketId(): number {
+    return this._id;
   }
 
   _validateData(data: MessageData): ?Error {
@@ -513,6 +519,7 @@ export class DeviceSession extends RobustEventEmitter {
     });
     this._socketSession.rssiUpdatesEnabled = true;
     this._state = DeviceSession.STATE_REGISTERING;
+    this.emit(`accepted`);
   }
 
   /**
@@ -534,6 +541,7 @@ export class DeviceSession extends RobustEventEmitter {
     this._socketSession.write({
       name: `decline`,
     });
+    this.emit(`declined`);
     this._forceDisconnect();
   }
 

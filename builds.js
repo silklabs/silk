@@ -443,17 +443,17 @@ const builds = {
     ]
   },
 
-  // Pando app release runs nightly on master/next/release branches
+  // Pando releases runs on push (and nightly as backup)
   'releng-shipit-pando-app': {
     title: 'Pando app release',
     travis_yml: 'releng/shipit/travis.release-pando-app.yml',
-    events: ['nightly'],
+    events: ['nightly', 'push'],
     branches: ['master', 'next', 'release'],
   },
   'releng-shipit-pando-dialog-script': {
     title: 'Pando dialog script release',
     travis_yml: 'releng/shipit/travis.release-pando-dialog-script.yml',
-    events: ['nightly', 'pr'],
+    events: ['nightly', 'pr', 'push'],
     files: ['dialog-script/**'],
     branches: ['master', 'next', 'release'],
   },

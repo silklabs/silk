@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-SHA1=c453e90855c0042fbce5935f248d8fa6f012945e
+SHA1=0bdfa247e8e497daf6027cf43250f8bc9be67930
 
 if [[ -d silk-dnn ]]; then
   pushd silk-dnn 2>&1 > /dev/null

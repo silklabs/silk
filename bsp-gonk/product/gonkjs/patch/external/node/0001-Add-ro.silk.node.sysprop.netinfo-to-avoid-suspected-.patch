@@ -1,0 +1,99 @@
+From c2ece82d41eb53d1245c35ac3c1d7479103bb100 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 3 Aug 2016 13:23:37 -0700
+Subject: [PATCH] Add ro.silk.node.sysprop.netinfo to avoid suspected netlink
+ kernel bug
+
+https://github.com/nodejs/node-v0.x-archive/issues/7180
+---
+ src/node_os.cc | 71 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 71 insertions(+)
+
+diff --git a/src/node_os.cc b/src/node_os.cc
+index 9a995b3..295a812 100644
+--- a/src/node_os.cc
++++ b/src/node_os.cc
+@@ -185,9 +185,80 @@ static void GetLoadAvg(const FunctionCallbackInfo<Value>& args) {
+   args.GetReturnValue().Set(loads);
+ }
+ 
++#ifdef ANDROID
++#include <sys/system_properties.h>
++static void AddAndroidIface(Environment* env,
++                            Local<Object> ret,
++                            const char* name,
++                            const char* ip,
++                            const char* netmask)
++{
++  Local<Array> ifarr = Array::New(env->isolate());
++  ret->Set(OneByteString(env->isolate(), name), ifarr);
++
++  Local<Object> o = Object::New(env->isolate());
++  o->Set(env->address_string(), OneByteString(env->isolate(), ip));
++  o->Set(env->netmask_string(), OneByteString(env->isolate(), netmask));
++  o->Set(env->family_string(), env->ipv4_string()); // TODO: support IPv6
++  // TODO: Add mac address
++  o->Set(env->internal_string(), True(env->isolate()));
++  ifarr->Set(ifarr->Length(), o);
++}
++#endif
+ 
+ static void GetInterfaceAddresses(const FunctionCallbackInfo<Value>& args) {
+   Environment* env = Environment::GetCurrent(args);
++#ifdef ANDROID
++  char enabled[PROP_VALUE_MAX];
++  __system_property_get("ro.silk.node.sysprop.netinfo", enabled);
++  if (enabled[0] == 't') {
++    Local<Object> ret = Object::New(env->isolate());
++
++    AddAndroidIface(env, ret, "lo0", "127.0.0.1", "255.0.0.0");
++
++    char ip[PROP_VALUE_MAX];
++    char mask[PROP_VALUE_MAX];
++    int len;
++   
++    // Add wifi interface if it exists
++    char wifi_interface[PROP_VALUE_MAX];
++    len = __system_property_get("wifi.interface", wifi_interface);
++    if (len > 0) {
++      char key[PROP_NAME_MAX];
++      snprintf(key, sizeof(key), "dhcp.%s.ipaddress", wifi_interface);
++      len = __system_property_get(key, ip);
++      if (len > 0) {
++        snprintf(key, sizeof(key), "dhcp.%s.mask", wifi_interface);
++        len = __system_property_get(key, mask);
++      }
++      if (len > 0) {
++        AddAndroidIface(env, ret, wifi_interface, ip, mask);
++      }
++    }
++    
++    // Add static IP if it exists
++    char eth0_configured[PROP_VALUE_MAX];
++    len = __system_property_get("eth0.static.configured", eth0_configured);
++    if (len > 0) {
++      len = __system_property_get("persist.silk.eth0.static.ip", ip);
++      if (len > 0) {
++        len = __system_property_get("persist.silk.eth0.basemask", mask);
++        if (len > 0) {
++          char* c = mask;
++          while (*c != '\0' && *c != '/') {
++            c++;
++          }
++          *c = '\0';
++        }
++      }
++      if (len > 0) {
++        AddAndroidIface(env, ret, "eth0", ip, mask);
++      }
++    }
++    args.GetReturnValue().Set(ret);
++    return;
++  }
++#endif 
+   uv_interface_address_t* interfaces;
+   int count, i;
+   char ip[INET6_ADDRSTRLEN];
+-- 
+2.7.4 (Apple Git-66)
+

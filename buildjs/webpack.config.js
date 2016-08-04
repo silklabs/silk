@@ -94,6 +94,7 @@ const externals = [
   'silk-movie',
   'silk-netstatus',
   'silk-ntp',
+  'silk-outbox',
   'silk-properties',
   'silk-say',
   'silk-sensors',

@@ -58,7 +58,7 @@ module.exports = function createLog(libraryName) {
       func.log = function() {
         const args = Array.prototype.slice.call(arguments);
 
-        if (!process.env.LOGWRAPPER) {
+        if (!process.env.SILKLOG_NOCONSOLE) {
           consoleFunc.call(consoleFunc, `${prefix} ${args[0]}`);
         }
 

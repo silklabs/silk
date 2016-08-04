@@ -9,7 +9,7 @@ import path from 'path';
 import fs from 'mz/fs';
 import assert from 'assert';
 import mkdirp from 'mkdirp-promise';
-import Queue from '../../lib/outbox/queue';
+import { Queue } from 'silk-outbox';
 
 const FIXTURE_DIR = path.join(__dirname, '/outbox_fixture');
 

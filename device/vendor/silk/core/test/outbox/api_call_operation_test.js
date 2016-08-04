@@ -1,7 +1,7 @@
 import createApi from '../api';
 import skipOnTravis from '../skip-on-travis.js';
 
-import APICallOperation from '../../lib/outbox/api_call_operation';
+import { APICallOperation } from 'silk-outbox';
 
 suite('APICallOperation', () => {
 

@@ -7,27 +7,36 @@
  * @flow
  */
 
-import path from 'path';
-import createOutbox from './outbox/manager';
+import { getOutboxInstance } from 'silk-outbox';
 
-import CrashReportOp from './outbox/crash_report_operation';
-import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
-import PapertrailOp from './outbox/papertrail_operation';
-import APICallOp from './outbox/api_call_operation';
+import {
+  CrashReporterOperation,
+  BlobUploadOperation,
+  PapertrailOperation,
+  APICallOperation,
+} from 'silk-outbox';
 
 import type { NetworkStatus } from 'silk-netstatus';
-import type { Outbox } from './outbox/manager';
+import type { Outbox } from 'silk-outbox';
 
-const STORAGE_PATH = path.join('data', 'outbox');
+export class VideoUploadOperation extends BlobUploadOperation {
+  static NAME = 'video-upload';
+  static META_TYPE = 'video';
+  static CONTENT_TYPE = 'video/mp4';
+}
+
+export class PreviewUploadOperation extends BlobUploadOperation {
+  static NAME = 'preview-upload';
+  static META_TYPE = 'preview';
+  static CONTENT_TYPE = 'image/jpeg';
+}
 
 /**
  * Helper to initialize outbox and various operations...
  * @private
  */
 export default function(networkStatus: NetworkStatus): Outbox {
-  let outbox = createOutbox({
-    storagePath: STORAGE_PATH,
-  });
+  let outbox = getOutboxInstance();
 
   // The outbox has special queues specific to blob uploads so we don't clog
   // up the main queue with video/previews (which are running constantly).
@@ -48,11 +57,11 @@ export default function(networkStatus: NetworkStatus): Outbox {
   outbox.registerQueue('preview', previewOptions, 'event_preview');
 
   // Register all known operations so we can create them from disk as needed...
-  outbox.registerOperation(CrashReportOp);
-  outbox.registerOperation(PapertrailOp);
-  outbox.registerOperation(VideoUploadOp);
-  outbox.registerOperation(PreviewUploadOp);
-  outbox.registerOperation(APICallOp);
+  outbox.registerOperation(CrashReporterOperation);
+  outbox.registerOperation(PapertrailOperation);
+  outbox.registerOperation(VideoUploadOperation);
+  outbox.registerOperation(PreviewUploadOperation);
+  outbox.registerOperation(APICallOperation);
 
   // Optimistically start running pending operations...
   outbox.online = networkStatus.online;

@@ -84,15 +84,3 @@ export class BlobUploadOperation extends StreamOperation {
     };
   }
 }
-
-export class VideoUploadOp extends BlobUploadOperation {
-  static NAME = 'video-upload';
-  static META_TYPE = 'video';
-  static CONTENT_TYPE = 'video/mp4';
-}
-
-export class PreviewUploadOp extends BlobUploadOperation {
-  static NAME = 'preview-upload';
-  static META_TYPE = 'preview';
-  static CONTENT_TYPE = 'image/jpeg';
-}

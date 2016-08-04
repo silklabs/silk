@@ -62,10 +62,6 @@ export class Outbox {
     return this._online;
   }
 
-  constructor(options = {}) {
-    Object.assign(this, options);
-  }
-
   /**
    * Begin checking for operations...
    */
@@ -173,8 +169,26 @@ export class Outbox {
   }
 }
 
-export default function createOutbox(options) {
-  let outbox = new Outbox(Object.assign({}, options));
+let outboxInstance = null;
+export default function getOutboxInstance() {
+  if (!outboxInstance) {
+    outboxInstance = new Outbox();
+
+    // Register the default queue (mostly for legacy purposes over time we will
+    // migrate away from a single default queue).
+    outboxInstance.registerQueue(DEFUALT_QUEUE_NAME);
+  }
+
+  return outboxInstance;
+}
+
+/**
+ * Create a new instance of outbox
+ * NOTE: This function is to be only used by the tests
+ */
+export function createOutbox(options) {
+  let outbox = new Outbox();
+  Object.assign(outbox, options);
 
   // Register the default queue (mostly for legacy purposes over time we will
   // migrate away from a single default queue).

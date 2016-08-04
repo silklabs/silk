@@ -10,12 +10,12 @@
 import crypto from 'crypto';
 
 import { EventEmitter } from 'events';
-import APICallOperation from './outbox/api_call_operation';
+import { APICallOperation } from 'silk-outbox';
 import createLog from 'silk-log/device';
 const log = createLog('events');
 
 import type { TimelineEventObject } from './timeline';
-import type { Outbox } from './outbox/manager';
+import type { Outbox } from 'silk-outbox';
 
 type LocalEventRecord = {
   id: ?string;

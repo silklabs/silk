@@ -6,9 +6,7 @@
 
 import { exec } from 'mz/child_process';
 import path from 'path';
-import { default as createOutbox } from '../../lib/outbox/manager';
-import StreamOperation from '../../lib/outbox/stream_operation';
-import Operation from '../../lib/outbox/operation';
+import { createOutbox, StreamOperation, Operation } from 'silk-outbox';
 import fs from 'mz/fs';
 import assert from 'assert';
 import createStreamServer from '../stream_server';

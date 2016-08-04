@@ -16,7 +16,7 @@ import * as VideoMetrics from './metrics/video';
 import CameraRestart from './metrics/camera_restart';
 import {BufferReadable} from 'silk-streams';
 import EventTracker from './eventtracker';
-import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
+import { VideoUploadOperation, PreviewUploadOperation } from './outbox';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 
@@ -48,7 +48,7 @@ const PRE_EVENT_UPLOAD_MS = 5000;
 // The amount of time to collect objects before sending in a batch.
 const OBJECT_SEND_INTERVAL_MS = 250;
 
-import type { Outbox } from './outbox/manager';
+import type { Outbox } from 'silk-outbox';
 import type Server from './server.js';
 
 /**
@@ -635,7 +635,7 @@ export default class Timeline extends EventEmitter {
     // Storage
     const enqueueOp = () => {
       invariant(frame);
-      const op = new PreviewUploadOp({
+      const op = new PreviewUploadOperation({
         size: frame.length,
         metadata: {
           metaType: 'preview',
@@ -679,7 +679,7 @@ export default class Timeline extends EventEmitter {
 
     this._addUploadOp(when,
       () => {
-        const op = new VideoUploadOp({
+        const op = new VideoUploadOperation({
           size: frame.length,
           metadata: {
             metaType: 'video',

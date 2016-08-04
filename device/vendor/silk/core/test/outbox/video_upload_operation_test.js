@@ -4,7 +4,7 @@ import randomStream from '../random_stream';
 import fetch from 'node-fetch';
 import skipOnTravis from '../skip-on-travis.js';
 
-import { VideoUploadOp } from '../../lib/outbox/blob_upload_operation';
+import { VideoUploadOperation } from '../../lib/outbox';
 import mkLog from 'silk-log/device'; const log = mkLog('ut');
 
 suite('VideoUploadOperation', () => {
@@ -17,7 +17,7 @@ suite('VideoUploadOperation', () => {
     let { device, account } = await createApi();
     let { stream, buffer } = randomStream();
 
-    let operation = new VideoUploadOp({
+    let operation = new VideoUploadOperation({
       size: buffer.length,
       metadata: {
         metaType: 'video',

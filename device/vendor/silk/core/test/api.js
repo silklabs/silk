@@ -34,7 +34,7 @@ export default async function(config = {}) {
   }
 
   // register the device...
-  let token = accountApi.accessToken.sign(api.accessToken.toString());
+  let token = await accountApi.accessToken.genSign(api.accessToken.toString());
   await accountApi.account.registerDevice({
     devicePublicKey: api.accessToken.toString(),
     name: 'testing',

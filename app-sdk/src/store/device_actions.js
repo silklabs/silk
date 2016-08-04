@@ -5,41 +5,40 @@
 import invariant from 'assert';
 import {AsyncStorage, NativeModules} from 'react-native';
 import createLog from 'silk-log';
+import * as silkRTC from 'silk-rtc';
 
 import {
-  actionFromAsyncPayloadGen,
   actionFromPayload,
+  actionFromPayloadGen,
+  actionFromAsyncPayloadGen,
 } from './action';
 
 import type {
   ListDevicesOutput,
   UnregisterDeviceInput,
 } from 'silk-api/src/gen/account';
+import {Peer} from 'silk-rtc';
 
-import type {
-  DeviceSecret,
-  DeviceStatus,
-} from '../ble/device_manager';
 import type {StateWithApi} from './api';
+import type {DevicesState} from './device_reducers';
+import type {
+  default as DeviceSession,
+  RegistrationInformation,
+} from '../ble/device_session';
+
+type StateWithDevices = {
+  devices: DevicesState;
+};
+
+export type DeviceConfig = {
+  name: string;
+  wifiSSID: string;
+  wifiPassword: ?string;
+};
 
 export type UnregisterRegisteredDeviceResult = {
   deviceId: string;
   success: boolean;
-};
-
-export type ConfiguringDeviceProximityGate = {
-  socketId: number;
-  secret: DeviceSecret;
-};
-
-export type ConfiguringDeviceStatusUpdate = {
-  socketId: number;
-  status: DeviceStatus;
-};
-
-export type ConfiguringDeviceError = {
-  socketId: number;
-  error: Error;
 };
 
 export type RegisterConfiguringDeviceInput = {
@@ -88,6 +87,51 @@ function genUnregisterRegisteredDevice(
   }));
 }
 
+function configAccept(
+  state: StateWithDevices,
+  input: number
+): DeviceSession {
+  const {unconfigured} = state.devices;
+  const session = unconfigured.get(input);
+  invariant(session);
+  session.acceptRegistrationRequest();
+  return session;
+}
+
+function configDecline(
+  state: StateWithDevices,
+  input: number
+): DeviceSession {
+  const {unconfigured} = state.devices;
+  const session = unconfigured.get(input);
+  invariant(session);
+  session.declineRegistrationRequest();
+  return session;
+}
+
+function configAbort(
+  state: StateWithDevices,
+): DeviceSession {
+  const {unconfigured, configuring} = state.devices;
+  invariant(configuring);
+  const session = unconfigured.get(configuring.socketId);
+  invariant(session);
+  session.restart();
+  return session;
+}
+
+function sendConfig(
+  state: StateWithDevices,
+  input: RegistrationInformation
+): DeviceSession {
+  const {unconfigured, configuring} = state.devices;
+  invariant(configuring);
+  const session = unconfigured.get(configuring.socketId);
+  invariant(session);
+  session.sendRegistrationInformation(input);
+  return session;
+}
+
 async function genRegisterConfiguringDeviceWithServer(
   state: StateWithApi,
   input: RegisterConfiguringDeviceInput
@@ -131,6 +175,18 @@ async function genRegisterConfiguringDeviceWithServer(
   };
 }
 
+function genRTCSignalDevice(
+  state: StateWithApi,
+  input: string
+): Promise<Peer> {
+  const {api} = state;
+  invariant(api);
+
+  const peer = silkRTC.call(api, input);
+  return peer.connect().then(() => peer);
+}
+
+
 // Thunk Actions
 
 export const registered = {
@@ -144,19 +200,30 @@ export const registered = {
 // Most of these are meant to be fed from events emitted by the BLE
 // DeviceSession.
 
-export const unregistered = {
-  connected: actionFromPayload('DEVICE_UNREGISTERED_CONNECTED'),
-  disconnected: actionFromPayload('DEVICE_UNREGISTERED_DISCONNECTED'),
-  accepted: actionFromPayload('DEVICE_UNREGISTERED_ACCEPTED'),
-  declined: actionFromPayload('DEVICE_UNREGISTERED_DECLINED'),
+export const ble = {
+  // These actions are dispatched by events emitted by the BLE machinery.
+  connected: actionFromPayload('DEVICE_BLE_CONNECTED'),
+  disconnected: actionFromPayload('DEVICE_BLE_DISCONNECTED'),
 };
 
-export const configuring = {
-  aborted: actionFromPayload('DEVICE_CONFIGURING_ABORTED'),
-  passedProximity: actionFromPayload('DEVICE_CONFIGURING_PROXIMITYGATE'),
-  statusUpdated: actionFromPayload('DEVICE_CONFIGURING_STATUSUPDATED'),
-  registerWithServer: actionFromAsyncPayloadGen('DEVICE_CONFIGURING_REGISTERSERVER', genRegisterConfiguringDeviceWithServer),
-  registered: actionFromPayload('DEVICE_CONFIGURING_REGISTERED'),
-  error: actionFromPayload('DEVICE_CONFIGURING_ERROR'),
-  finish: actionFromPayload('DEVICE_CONFIGURING_FINISH'),
+export const config = {
+  accept: actionFromPayloadGen('DEVICE_CONFIG_ACCEPT', configAccept),
+  decline: actionFromPayloadGen('DEVICE_CONFIG_DECLINE', configDecline),
+  abort: actionFromPayloadGen('DEVICE_CONFIG_ABORT', configAbort),
+  setConfig: actionFromPayload('DEVICE_CONFIG_SETCONFIG'),
+  registerWithServer: actionFromAsyncPayloadGen('DEVICE_CONFIG_REGISTERSERVER', genRegisterConfiguringDeviceWithServer),
+  sendConfig: actionFromPayloadGen('DEVICE_CONFIG_SENDCONFIG', sendConfig),
+  finish: actionFromPayload('DEVICE_CONFIG_FINISH'),
+
+  // These actions are dispatched by events emitted by the BLE machinery.
+  passedProximity: actionFromPayload('DEVICE_CONFIG_PROXIMITYGATE'),
+  wifiScanResults: actionFromPayload('DEVICE_CONFIG_WIFISCANRESULTS'),
+  statusUpdated: actionFromPayload('DEVICE_CONFIG_STATUSUPDATED'),
+  registered: actionFromPayload('DEVICE_CONFIG_REGISTERED'),
+  error: actionFromPayload('DEVICE_CONFIG_ERROR'),
+};
+
+export const rtc = {
+  signal: actionFromAsyncPayloadGen('DEVICE_RTC_SIGNAL', genRTCSignalDevice),
+  connectionClosed: actionFromPayload('DEVICE_RTC_CONNECTIONCLOSED'),
 };

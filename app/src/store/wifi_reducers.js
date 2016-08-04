@@ -7,7 +7,7 @@ import createLog from 'silk-log';
 import {handleActions} from 'redux-actions';
 
 import type {Action, SimpleAction} from 'silk-app-sdk/src/store/action';
-import type {DeviceWifiNetwork} from 'silk-app-sdk/src/ble/device_manager';
+import type {DeviceWifiNetwork} from 'silk-app-sdk/src/ble/device_session';
 import type {WifiInfo} from '../libraries/Util.js';
 
 const log = createLog('reducer-wifi');

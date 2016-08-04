@@ -35,7 +35,23 @@ type ReducerMap = {
 const log = createLog('app-sdk-store');
 
 const logger = store => next => action => {
-  log.debug('Action:', action);
+  if (action.requested) {
+    log.debug(`${action.type} requested`);
+  } else if (action.error) {
+    log.error(`${action.type} errored:`, action.payload);
+  } else {
+    let {payload} = action;
+    // Stupid heuristic to get the most informative but least spammy
+    // log messages from actions.
+    if (typeof payload === 'object' && payload !== null) {
+      if (payload.constructor && payload.constructor.name === 'Object') {
+        payload = JSON.stringify(payload);
+      } else {
+        payload = `<${payload.constructor.name}>`;
+      }
+    }
+    log.debug(`${action.type} payload:`, payload);
+  }
   return next(action);
 };
 

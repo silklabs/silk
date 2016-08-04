@@ -59,8 +59,8 @@ export type SimpleAction<T, P> = SuccessAction<T, P, P>;
 export type InitAction = { type: '@@redux/INIT' };
 
 /**
- * ThunkActions are functions rather than objects like regular
- * actions. When called, a dispatch function is passed, which allows
+ * ThunkActions are functions, as opposed to regular actions which are
+ * objects. When called, a dispatch function is passed, which allows
  * the ThunkAction to dispatch zero, one, or multiple individual
  * actions to the store.
  */

@@ -14,7 +14,7 @@ import CBuffer from 'CBuffer';
 import api from 'silk-device-api';
 import * as VideoMetrics from './metrics/video';
 import CameraRestart from './metrics/camera_restart';
-import BufferStream from './streams/buffer';
+import {BufferReadable} from 'silk-streams';
 import EventTracker from './eventtracker';
 import { VideoUploadOp, PreviewUploadOp } from './outbox/blob_upload_operation';
 import createLog from 'silk-log/device';
@@ -649,7 +649,7 @@ export default class Timeline extends EventEmitter {
       });
       this.outbox.enqueue(this.eventTrackerActive ? 'event_preview' : 'preview',
                           op,
-                          new BufferStream(frame));
+                          new BufferReadable(frame));
     };
 
     if (isKeyFrame) {
@@ -691,7 +691,7 @@ export default class Timeline extends EventEmitter {
         // If for whatever reason this fails it will bubble up to the crash
         // reporter...
         this.outbox.enqueue(this.eventTrackerActive ? 'event_video' : 'video',
-          op, new BufferStream(frame));
+          op, new BufferReadable(frame));
       }
     );
   }

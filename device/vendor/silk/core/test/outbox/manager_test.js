@@ -12,7 +12,7 @@ import Operation from '../../lib/outbox/operation';
 import fs from 'mz/fs';
 import assert from 'assert';
 import createStreamServer from '../stream_server';
-import httpStream from '../../lib/streams/http';
+import {httpStream} from 'silk-streams';
 import eventToPromise from 'event-to-promise';
 import randomStream from '../random_stream';
 

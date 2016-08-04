@@ -10,7 +10,7 @@ import StreamOperation from './stream_operation';
 
 import api from 'silk-device-api';
 import createLog from 'silk-log/device';
-import httpStream from '../streams/http';
+import {httpStream} from 'silk-streams';
 import assert from 'assert';
 
 const log = createLog('operation:blob_upload_operation');

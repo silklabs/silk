@@ -16,8 +16,7 @@ import { PassThrough } from 'stream';
 import split from 'split';
 import createLog from 'silk-log/device';
 
-import LogcatStream from './streams/logcat';
-import LogcatToSyslog from './streams/logcat_to_syslog';
+import {LogcatStream, LogcatToSyslog} from 'silk-streams';
 import PapertrailOp from './outbox/papertrail_operation';
 import { getboolprop } from 'silk-sysutils';
 

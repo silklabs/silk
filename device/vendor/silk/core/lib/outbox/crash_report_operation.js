@@ -11,7 +11,7 @@ import StreamOperation from './stream_operation';
 import api from 'silk-device-api';
 import fs from 'mz/fs';
 import createLog from 'silk-log/device';
-import httpStream from '../streams/http';
+import {httpStream} from 'silk-streams';
 import assert from 'assert';
 import raygun from 'silk-raygun/node';
 

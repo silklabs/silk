@@ -15,7 +15,7 @@ import eventToPromise from 'event-to-promise';
 import assert from 'assert';
 import createLog from 'silk-log';
 
-import StoringStream from '../lib/streams/store';
+import {StoringStream} from 'silk-streams';
 import { EventEmitter } from 'events';
 
 const log = createLog('stream-server');

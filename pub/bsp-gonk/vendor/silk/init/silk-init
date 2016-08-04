@@ -56,6 +56,8 @@ if [ "$1" = "--debug-brk" ]; then
   shift
 fi
 
+export SILKLOG_NOCONSOLE=1
+
 if [ -z $1 ]; then
   info Starting Silk
 

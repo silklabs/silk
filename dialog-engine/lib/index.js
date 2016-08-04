@@ -16,7 +16,7 @@
 
 import invariant from 'assert';
 import {EventEmitter} from 'events';
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 

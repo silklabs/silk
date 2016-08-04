@@ -8,7 +8,7 @@
  * notifications.
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import {buffers, channel, eventChannel} from 'redux-saga';
 import {call, cancel, fork, put, take} from 'redux-saga/effects';
 import invariant from 'assert';

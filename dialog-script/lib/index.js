@@ -2,7 +2,7 @@
  * @flow
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import getDialogEngine from 'silk-dialog-engine';
 import invariant from 'assert';
 import storage from 'silk-dialog-storage';

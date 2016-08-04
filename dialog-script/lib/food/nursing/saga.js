@@ -2,7 +2,7 @@
  * @flow
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import {delay} from 'redux-saga';
 import {
   call,

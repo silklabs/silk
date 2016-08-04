@@ -2,7 +2,7 @@
  * @flow
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import {call} from 'redux-saga/effects';
 import invariant from 'assert';
 import sonos from 'silk-sonos';

@@ -2,13 +2,13 @@
  * @flow
  */
 
-import createLog from 'silk-log';
+import createLog from 'silk-log/device';
 import * as http from 'http';
 import {call, put, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
 
 import type {Environment} from '../environment';
-import {urlEncodeParams} from '../utils';
+import {urlEncodeParams, encodeNumber} from '../utils';
 
 import {updateZipcode, clearZipcode} from './actions';
 
@@ -54,6 +54,11 @@ function fetchWeather(zipcode: number): Promise<CurrentWeather> {
           try {
             let result = JSON.parse(data);
             log.debug(result);
+
+            if (result.cod !== 200) {
+              reject(new Error(result.message));
+              return;
+            }
 
             let location = result.name;
             let temp = Math.round(result.main.temp);
@@ -145,10 +150,16 @@ export function* getWeather(
     return;
   }
 
-  let weather = yield call(fetchWeather, zipcode);
-  invariant(weather);
-
-  log.debug(weather);
+  let weather;
+  try {
+    weather = yield call(fetchWeather, zipcode);
+    invariant(weather);
+    log.debug(weather);
+  } catch (err) {
+    log.error(`${err}`);
+    yield call(speak, `Sorry, I'm unable to get the weather for ${encodeNumber(zipcode)}`, `idle`);
+    return;
+  }
 
   let text = `It's currently ${weather.temp} degrees`;
   if (weather.description === 'thunderstorms') {

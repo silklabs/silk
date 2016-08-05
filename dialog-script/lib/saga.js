@@ -65,7 +65,7 @@ const independentIntents: Set<string> = new Set([
  */
 const concurrentIntents: Set<string> = new Set([
   `cancelTimer`,
-  `currentTime`,
+  `getCurrentTime`,
   `factoryReset`,
   `getArtist`,
   `getCurrentSong`,
@@ -269,7 +269,7 @@ export default function*(
       let args: Array<any> = [];
 
       switch (intent) {
-      case `currentTime`:
+      case `getCurrentTime`:
         sagaFunction = sayCurrentTime;
         break;
       case `startTimer`:

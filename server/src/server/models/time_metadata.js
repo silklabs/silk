@@ -7,7 +7,7 @@ import * as Joi from 'joi';
 import { ObjectID } from 'mongodb';
 import Base from './base';
 
-const TYPES = Joi.string().only(['log', 'video', 'preview', 'event']).required();
+const TYPES = Joi.string().only(['log', 'video', 'preview', 'event', 'keyword_pos', 'keyword_neg']).required();
 
 // Mongo IDs are 12 bytes long, 24 hex chars.
 const MONGO_ID_REGEX = /[0-9a-f]{24}/;

@@ -6,8 +6,8 @@ a dialog
 on the device for text to speech conversion instead of the cloud based TTS.
 * `persist.silk.kws.vad.enabled` (default: false) - If true, keyword is only
 spotted during a voice activity.
-* `persist.silk.kws.save` (default: true) - It true, every utterance of keyword
-is saved as a wav file at `data/media/kws` on the device.
+* `persist.silk.kws.upload` (default: false) - It true, every utterance of keyword
+is uploaded as a wav file to the server.
 * `persist.silk.kws.threshold` - (default: 65) Set the threshold for keyword
 spotting.
 * `persist.silk.speech.save` - (default: false) If set save the raw pcm data

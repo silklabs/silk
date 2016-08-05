@@ -1,6 +1,6 @@
 # Properties only for debug builds
 persist.logd.size=16M
-persist.silk.kws.save=true
+persist.silk.kws.upload=true
 ro.silk.update.manifest_url=http://update.silklabs.com/ota-internal/{channel}/{board}-{product}-{variant}.json
 ro.silk.update.poll_hours=1
 

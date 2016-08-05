@@ -17,13 +17,15 @@ import caffe from 'silk-caffe';
 import Vibrator from 'silk-vibrator';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
-import { MelFeatureExtractor, Framer, Normalizer } from 'mel-features';
-import mkdirp from 'mkdirp-promise';
+import {MelFeatureExtractor, Framer, Normalizer} from 'mel-features';
 import netstatus from 'silk-netstatus';
 import SpeechToText from 'silk-stt';
 import player from 'silk-audioplayer';
+import {BlobUploadOperation, getOutboxInstance} from 'silk-outbox';
+import {BufferReadable} from 'silk-streams';
 
-import type { VoiceActivityDetector } from 'silk-vad';
+import type {VoiceActivityDetector} from 'silk-vad';
+import type {Outbox} from 'silk-outbox';
 
 const log = createLog('kws');
 
@@ -65,16 +67,27 @@ let THRESHOLD = util.getintprop(KWS_THRESHOLD, 50);
 
 const STT_CONFIDENCE_THRESHOLD = 0.35;
 
-const SAVE_KEYWORD_WAV = 'persist.silk.kws.save';
+const UPLOAD_KEYWORD_WAV = 'persist.silk.kws.upload';
 const VAD_ENABLED_PROP = 'persist.silk.kws.vad.enabled';
 
-const POS_KWS_DIR = 'data/media/kws/pos/';
-const NEG_KWS_DIR = 'data/media/kws/neg/';
+type SampleType = 'pos' | 'neg';
 
 type MicData = {
   when: number;
   frames: Buffer;
 };
+
+class PosKeywordUploadOperation extends BlobUploadOperation {
+  static NAME = 'keyword-upload';
+  static META_TYPE = 'keyword_pos';
+  static CONTENT_TYPE = 'audio/wav';
+}
+
+class NegKeywordUploadOperation extends BlobUploadOperation {
+  static NAME = 'keyword-upload';
+  static META_TYPE = 'keyword_neg';
+  static CONTENT_TYPE = 'audio/wav';
+}
 
 /**
  * This class receives mic data stream and tries to detect a specific keyword
@@ -95,12 +108,13 @@ export default class KeywordSpotting extends EventEmitter {
   _vib: Vibrator;
   _standAlone: boolean;
   _wavDataBuffer: Buffer;
-  _saveEnabled: boolean;
+  _uploadEnabled: boolean;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
   _voiceActivityDetector: VoiceActivityDetector;
   _ready: boolean = false;
   _vadEnabled: boolean = false;
+  _outbox: Outbox;
 
   constructor(voiceActivityDetector: VoiceActivityDetector, standAlone: boolean = false) {
     super();
@@ -118,13 +132,17 @@ export default class KeywordSpotting extends EventEmitter {
       this._detectKeyword(signal);
     });
 
-    this._saveEnabled = util.getboolprop(SAVE_KEYWORD_WAV, false);
+    this._uploadEnabled = util.getboolprop(UPLOAD_KEYWORD_WAV, false);
     this._vadEnabled = util.getboolprop(VAD_ENABLED_PROP, false);
 
     this._pcmDataArray = [];
     this._pcmDataSizeInBytes = 0; // Size of all the pcmData buffers in the queue
     this._output = [];
     this._wavDataBuffer = new Buffer(0); // Array of raw pcmData
+
+    this._outbox = getOutboxInstance();
+    this._outbox.registerOperation(PosKeywordUploadOperation);
+    this._outbox.registerOperation(NegKeywordUploadOperation);
 
     this._onSpeechStart = when => {
       this._resumeSpotting();
@@ -281,14 +299,6 @@ export default class KeywordSpotting extends EventEmitter {
       }
       let keywordsJson = await fs.readFile(KEYWORDS);
       keywordTexts = JSON.parse(keywordsJson);
-
-      if (this._saveEnabled) {
-        if ((await fs.exists(POS_KWS_DIR)) === false) {
-          await mkdirp(POS_KWS_DIR);
-        } if ((await fs.exists(NEG_KWS_DIR)) === false) {
-          await mkdirp(NEG_KWS_DIR);
-        }
-      }
     } catch (err) {
       log.error(`Failed to load caffe model err: ${err}`);
       return;
@@ -342,7 +352,7 @@ export default class KeywordSpotting extends EventEmitter {
     }
 
     // Store raw PCM data
-    if (this._saveEnabled) {
+    if (this._uploadEnabled) {
       this._wavDataBuffer = Buffer.concat([this._wavDataBuffer, pcmData]);
     }
 
@@ -413,7 +423,7 @@ export default class KeywordSpotting extends EventEmitter {
 
     // Skip a few samples
     this._output.splice(0, skipCount);
-    if (this._saveEnabled) {
+    if (this._uploadEnabled) {
       let bytesToSkip = skipCount * STEP_SIZE * 2;
       this._wavDataBuffer = this._wavDataBuffer.slice(bytesToSkip);
     }
@@ -477,9 +487,9 @@ export default class KeywordSpotting extends EventEmitter {
    * samples to the file
    */
   _saveAsWav(): void {
-    if (this._saveEnabled && (netstatus.online || this._standAlone)) {
-      let wavData = new Buffer(WINDOW_SIZE_IN_BYTES);
-      this._wavDataBuffer.copy(wavData);
+    if (this._uploadEnabled && (netstatus.online || this._standAlone)) {
+      let pcmData = new Buffer(WINDOW_SIZE_IN_BYTES);
+      this._wavDataBuffer.copy(pcmData);
 
       let stt = new SpeechToText();
       stt.startRequest((error, text = '', confidence = 0) => {
@@ -488,15 +498,15 @@ export default class KeywordSpotting extends EventEmitter {
           return;
         }
         log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
-        let dir = this._isAKeyword(text, keywordTexts) ? POS_KWS_DIR : NEG_KWS_DIR;
+        let sampleType = this._isAKeyword(text, keywordTexts) ? 'pos' : 'neg';
         if (confidence >= STT_CONFIDENCE_THRESHOLD) {
-          this._writeWavFile(dir, wavData);
+          this._uploadWav(sampleType, pcmData);
         } else {
           log.warn(`Not saving the keyword ${confidence}`);
         }
       });
       log.debug(`Converting keyword to text`);
-      stt.write(wavData);
+      stt.write(pcmData);
       stt.finish();
     }
   }
@@ -518,14 +528,44 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Write wav data in a file
+   * Upload wav data to the server
    */
-  _writeWavFile(dir: string, wavData: Buffer): void {
-    let writer = new wav.FileWriter(`${dir}/${Date.now()}.wav`, {
+  _uploadWav(sampleType: SampleType, pcmData: Buffer): void {
+    let wavData = new Buffer(0);
+    let writer = new wav.Writer({
       sampleRate: this._sampleRate,
       channels: this._numChannels,
       bitDepth: this._bytesPerSample * 8,
     });
-    writer.writeAll(wavData).catch(err => log.error(err));
+    writer.on('data', samples => {
+      wavData = Buffer.concat([wavData, samples]);
+    });
+    writer.on('header', () => {
+      let op;
+      if (sampleType === 'pos' ) {
+        op = new PosKeywordUploadOperation({
+          size: wavData.length,
+          metadata: {
+            metaType: 'keyword_pos',
+            startUTC: Date.now(),
+          },
+        });
+      } else {
+        op = new NegKeywordUploadOperation({
+          size: wavData.length,
+          metadata: {
+            metaType: 'keyword_neg',
+            startUTC: Date.now(),
+          },
+        });
+      }
+
+      this._outbox.addToQueue(op, new BufferReadable(wavData));
+    });
+    writer.on('error', err => {
+      log.error(err);
+    });
+    writer.write(pcmData);
+    writer.end();
   }
 }

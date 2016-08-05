@@ -142,6 +142,12 @@ export default {
       },
       metrics: {
         path: 'tmp/metrics/'
+      },
+      keyword_pos: {
+        path: 'tmp/kws/pos'
+      },
+      keyword_neg: {
+        path: 'tmp/kws/neg'
       }
     },
 
@@ -183,6 +189,18 @@ export default {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: 'us-west-2',
         bucket: 'silk-blobs-dev-us-west-2'
+      },
+      keyword_pos: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: 'us-west-2',
+        bucket: 'silk-kws-dev-us-west-2/pos'
+      },
+      keyword_neg: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: 'us-west-2',
+        bucket: 'silk-kws-dev-us-west-2/neg'
       }
     },
 

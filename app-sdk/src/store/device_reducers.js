@@ -8,7 +8,7 @@ import {handleActions} from 'redux-actions';
 import type {ListDevicesOutput} from 'silk-api/src/gen/account';
 import type {Peer} from 'silk-rtc';
 
-import type {Action, SuccessAction} from './action';
+import type {Action, SimpleAction} from './action';
 import type {
   DeviceSession,
   DeviceSecret,
@@ -70,7 +70,7 @@ const initialState: DevicesState = {
 
 function DEVICE_REGISTERED_RESTORE(
   state: DevicesState,
-  action: Action<'DEVICE_REGISTERED_RESTORE', ?ListDevicesOutput>
+  action: Action<'DEVICE_REGISTERED_RESTORE', void, ?ListDevicesOutput>
 ): DevicesState {
   if (action.requested) {
     return state;
@@ -108,7 +108,7 @@ function DEVICE_REGISTERED_RESTORE(
 
 function DEVICE_REGISTERED_FETCH(
   state: DevicesState,
-  action: Action<'DEVICE_REGISTERED_FETCH', ListDevicesOutput>
+  action: Action<'DEVICE_REGISTERED_FETCH', void, ListDevicesOutput>
 ): DevicesState {
   if (action.requested) {
     return state;
@@ -151,7 +151,7 @@ function DEVICE_REGISTERED_FETCH(
 
 function DEVICE_REGISTERED_UNREGISTER(
   state: DevicesState,
-  action: Action<'DEVICE_REGISTERED_UNREGISTER', UnregisterRegisteredDeviceResult>
+  action: Action<'DEVICE_REGISTERED_UNREGISTER', *, UnregisterRegisteredDeviceResult>
 ): DevicesState {
   if (action.requested || action.error) {
     // TODO: anything we want to do here? Could optimistically remove
@@ -177,7 +177,7 @@ function DEVICE_REGISTERED_UNREGISTER(
 
 function DEVICE_UNREGISTERED_CONNECTED(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_UNREGISTERED_CONNECTED', DeviceSession>
+  action: SimpleAction<'DEVICE_UNREGISTERED_CONNECTED', DeviceSession>
 ): DevicesState {
   const session = action.payload;
   invariant(!state.unregistered.has(session.socketId));
@@ -191,7 +191,7 @@ function DEVICE_UNREGISTERED_CONNECTED(
 
 function DEVICE_UNREGISTERED_DISCONNECTED(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_UNREGISTERED_DISCONNECTED', DeviceSession>
+  action: SimpleAction<'DEVICE_UNREGISTERED_DISCONNECTED', DeviceSession>
 ): DevicesState {
   const session = action.payload;
   invariant(state.unregistered.has(session.socketId));
@@ -217,7 +217,7 @@ function DEVICE_UNREGISTERED_DISCONNECTED(
 
 function DEVICE_UNREGISTERED_ACCEPTED(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_UNREGISTERED_ACCEPTED', DeviceSession>
+  action: SimpleAction<'DEVICE_UNREGISTERED_ACCEPTED', DeviceSession>
 ): DevicesState {
   // We currently only support 1 configuring device.
   invariant(!state.configuring);
@@ -241,7 +241,7 @@ function DEVICE_UNREGISTERED_ACCEPTED(
 
 function DEVICE_CONFIGURING_ABORTED(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_CONFIGURING_ABORTED', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIGURING_ABORTED', DeviceSession>
 ): DevicesState {
   return {
     ...state,
@@ -251,7 +251,7 @@ function DEVICE_CONFIGURING_ABORTED(
 
 function DEVICE_CONFIGURING_PROXIMITYGATE(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_CONFIGURING_PROXIMITYGATE', ConfiguringDeviceProximityGate>
+  action: SimpleAction<'DEVICE_CONFIGURING_PROXIMITYGATE', ConfiguringDeviceProximityGate>
 ): DevicesState {
   const {socketId, secret} = action.payload;
   const {configuring} = state;
@@ -269,7 +269,7 @@ function DEVICE_CONFIGURING_PROXIMITYGATE(
 
 function DEVICE_CONFIGURING_STATUSUPDATED(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_CONFIGURING_STATUSUPDATED', ConfiguringDeviceStatusUpdate>
+  action: SimpleAction<'DEVICE_CONFIGURING_STATUSUPDATED', ConfiguringDeviceStatusUpdate>
 ): DevicesState {
   const {socketId, status} = action.payload;
   const {configuring} = state;
@@ -286,7 +286,7 @@ function DEVICE_CONFIGURING_STATUSUPDATED(
 
 function DEVICE_CONFIGURING_REGISTERSERVER(
   state: DevicesState,
-  action: Action<'DEVICE_CONFIGURING_REGISTERSERVER', RegisterConfiguringDeviceResult>
+  action: Action<'DEVICE_CONFIGURING_REGISTERSERVER', *, RegisterConfiguringDeviceResult>
 ): DevicesState {
   if (action.requested) {
     return state;
@@ -324,7 +324,7 @@ function DEVICE_CONFIGURING_REGISTERSERVER(
 
 function DEVICE_CONFIGURING_REGISTERED(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_CONFIGURING_REGISTERED', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIGURING_REGISTERED', DeviceSession>
 ): DevicesState {
   const {configuring} = state;
   const session = action.payload;
@@ -341,7 +341,7 @@ function DEVICE_CONFIGURING_REGISTERED(
 
 function DEVICE_CONFIGURING_ERROR(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_CONFIGURING_ERROR', ConfiguringDeviceError>
+  action: SimpleAction<'DEVICE_CONFIGURING_ERROR', ConfiguringDeviceError>
 ): DevicesState {
   const {socketId, error} = action.payload;
   const {configuring} = state;
@@ -358,7 +358,7 @@ function DEVICE_CONFIGURING_ERROR(
 
 function DEVICE_CONFIGURING_FINISH(
   state: DevicesState,
-  action: SuccessAction<'DEVICE_CONFIGURING_FINISH', void>
+  action: SimpleAction<'DEVICE_CONFIGURING_FINISH', void>
 ): DevicesState {
   const {configuring} = state;
   invariant(configuring);

@@ -6,7 +6,7 @@ import invariant from 'assert';
 import createLog from 'silk-log';
 import {handleActions} from 'redux-actions';
 
-import type {Action, SuccessAction} from 'silk-app-sdk/src/store/action';
+import type {Action, SimpleAction} from 'silk-app-sdk/src/store/action';
 import type {DeviceWifiNetwork} from 'silk-app-sdk/src/ble/device_manager';
 import type {WifiInfo} from '../libraries/Util.js';
 
@@ -76,14 +76,14 @@ const initialState: WifiState = {
 
 function WIFI_CLEAR_STATE(
   state: WifiState,
-  action: SuccessAction<'WIFI_CLEAR_STATE', void>
+  action: SimpleAction<'WIFI_CLEAR_STATE', void>
 ): WifiState {
   return {...initialState};
 }
 
 function WIFI_GET_LOCAL_INFO(
   state: WifiState,
-  action: Action<'WIFI_GET_LOCAL_INFO', WifiInfo>
+  action: Action<'WIFI_GET_LOCAL_INFO', void, WifiInfo>
 ): WifiState {
   if (action.error || action.requested) {
     return state;
@@ -97,7 +97,7 @@ function WIFI_GET_LOCAL_INFO(
 
 function WIFI_UPDATE_DEVICE_NETWORKS(
   state: WifiState,
-  action: SuccessAction<'WIFI_UPDATE_DEVICE_NETWORKS', Array<DeviceWifiNetwork>>
+  action: SimpleAction<'WIFI_UPDATE_DEVICE_NETWORKS', Array<DeviceWifiNetwork>>
 ): WifiState {
   return findBestWifiMatch({
     ...state,
@@ -107,7 +107,7 @@ function WIFI_UPDATE_DEVICE_NETWORKS(
 
 function WIFI_SELECT_FROM_LIST(
   state: WifiState,
-  action: SuccessAction<'WIFI_SELECT_FROM_LIST', void>
+  action: SimpleAction<'WIFI_SELECT_FROM_LIST', void>
 ): WifiState {
   return {
     ...state,
@@ -119,7 +119,7 @@ function WIFI_SELECT_FROM_LIST(
 
 function WIFI_ENTER_MANUALLY(
   state: WifiState,
-  action: SuccessAction<'WIFI_ENTER_MANUALLY', void>
+  action: SimpleAction<'WIFI_ENTER_MANUALLY', void>
 ): WifiState {
   return {
     ...state,
@@ -134,7 +134,7 @@ function WIFI_ENTER_MANUALLY(
 
 function WIFI_SET_NETWORK(
   state: WifiState,
-  action: SuccessAction<'WIFI_SET_NETWORK', DeviceWifiNetwork>
+  action: SimpleAction<'WIFI_SET_NETWORK', DeviceWifiNetwork>
 ): WifiState {
   return {
     ...state,
@@ -145,7 +145,7 @@ function WIFI_SET_NETWORK(
 
 function WIFI_SET_SECRET(
   state: WifiState,
-  action: SuccessAction<'WIFI_SET_SECRET', string>
+  action: SimpleAction<'WIFI_SET_SECRET', string>
 ): WifiState {
   return {
     ...state,
@@ -155,7 +155,7 @@ function WIFI_SET_SECRET(
 
 function WIFI_SET_MANUAL_SSID(
   state: WifiState,
-  action: SuccessAction<'WIFI_SET_MANUAL_SSID', string>
+  action: SimpleAction<'WIFI_SET_MANUAL_SSID', string>
 ): WifiState {
   invariant(state.manualEntry);
   return {
@@ -169,7 +169,7 @@ function WIFI_SET_MANUAL_SSID(
 
 function WIFI_SET_MANUAL_PSK(
   state: WifiState,
-  action: SuccessAction<'WIFI_SET_MANUAL_PSK', boolean>
+  action: SimpleAction<'WIFI_SET_MANUAL_PSK', boolean>
 ): WifiState {
   invariant(state.manualEntry);
   return {

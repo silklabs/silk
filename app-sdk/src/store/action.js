@@ -18,31 +18,40 @@
  * action creators below. The RequestAction is not part of the Flux
  * Standard Action "spec", but it's useful for async payload generators.
  */
-export type RequestAction<T> = {
+export type RequestAction<T, I> = {
   type: T;
+  input: I;
   requested: true;
   error?: false;
 };
 
-export type SuccessAction<T, P> = {
+export type SuccessAction<T, I, P> = {
   type: T;
+  input: I;
   payload: P;
   // The Flux Standard Action interface does not require this, but it
   // helps Flow figure out the type union better.
   error?: false;
 };
 
-export type ErrorAction<T> = {
+export type ErrorAction<T, I> = {
   type: T;
+  input: I;
   payload: Error;
   error: true;
 };
 
-export type Action<T, P> =
-    RequestAction<T>
-  | SuccessAction<T, P>
-  | ErrorAction<T>
+export type Action<T, I, P> =
+    RequestAction<T, I>
+  | SuccessAction<T, I, P>
+  | ErrorAction<T, I>
   ;
+
+/**
+ * Action where the input is simply passed on as the payload,
+ * synchronously.
+ */
+export type SimpleAction<T, P> = SuccessAction<T, P, P>;
 
 /**
  * This action is emitted by Flux itself upon startup.
@@ -57,8 +66,8 @@ export type InitAction = { type: '@@redux/INIT' };
  */
 export type Dispatch<A> = (action: A) => any;
 export type GetState<S> = () => S;
-export type ThunkAction<S, P, T> = (
-  dispatch: Dispatch<Action<T, P>>,
+export type ThunkAction<S, T, I, P> = (
+  dispatch: Dispatch<Action<T, I, P>>,
   getState: GetState<S>
 ) => P | Promise<P>;
 
@@ -70,11 +79,11 @@ export type ThunkAction<S, P, T> = (
  * const changeUsername = actionFromPayload('CHANGE_USERNAME');
  * changeUsername.
  */
-export function actionFromPayload<S, P, T>(
+export function actionFromPayload<S, T, P>(
   type: T
-): ((payload: P) => ThunkAction<S, P, T>) {
-  return (payload: P) => (dispatch: Dispatch<Action<T, P>>) => {
-    dispatch({type, payload});
+): ((payload: P) => ThunkAction<S, T, P, P>) {
+  return (payload: P) => (dispatch: Dispatch<SimpleAction<T, P>>) => {
+    dispatch({type, input: payload, payload});
     return payload;
   };
 }
@@ -83,20 +92,20 @@ export function actionFromPayload<S, P, T>(
  * Wraps a synchronous payload generator to return a ThunkAction that
  * emits Flux Standard Actions.
  */
-export function actionFromPayloadGen<S, I, P, T>(
+export function actionFromPayloadGen<S, T, I, P>(
   type: T,
   createPayload: (state: S, input: I) => P,
-): ((input: I) => ThunkAction<S, P, T>) {
-  return (input: I) => (dispatch: Dispatch<Action<T, P>>, getState: () => S) => {
+): ((input: I) => ThunkAction<S, T, I, P>) {
+  return (input: I) => (dispatch: Dispatch<Action<T, I, P>>, getState: () => S) => {
     let payload;
     try {
       payload = createPayload(getState(), input);
     } catch (ex) {
       const error: Error = ex; // because Flow
-      dispatch({type, payload: error, error: true});
+      dispatch({type, input, payload: error, error: true});
       throw ex;
     }
-    dispatch({type, payload});
+    dispatch({type, input, payload});
     return payload;
   };
 }
@@ -105,19 +114,19 @@ export function actionFromPayloadGen<S, I, P, T>(
  * Wraps an asynchronous payload generator to return a ThunkAction
  * that emits Flux Standard Actions.
  */
-export function actionFromAsyncPayloadGen<S, I, P, T>(
+export function actionFromAsyncPayloadGen<S, T, I, P>(
   type: T,
   genPayload: (state: S, input: I) => Promise<P>,
-): ((input: I) => ThunkAction<S, P, T>) {
-  return (input: I) => (dispatch: Dispatch<Action<T, P>>, getState: () => S) => {
-    dispatch({type, requested: true});
+): ((input: I) => ThunkAction<S, T, I, P>) {
+  return (input: I) => (dispatch: Dispatch<Action<T, I, P>>, getState: () => S) => {
+    dispatch({type, input, requested: true});
     return genPayload(getState(), input).then(
       (payload: P) => {
-        dispatch({type, payload});
+        dispatch({type, input, payload});
         return payload;
       },
       (error: Error) => {
-        dispatch({type, payload: error, error: true});
+        dispatch({type, input, payload: error, error: true});
         throw error;
       }
     );

@@ -6,7 +6,7 @@ import invariant from 'assert';
 import merge from 'lodash.merge';
 import {handleActions} from 'redux-actions';
 
-import type {Action} from './action';
+import type {SimpleAction, Action} from './action';
 
 export type Config = {
   debug: string;
@@ -36,7 +36,7 @@ const initialState: ConfigState = {
 
 function CONFIG_SET_DEFAULT(
   state: ConfigState,
-  action: Action<'CONFIG_SET_DEFAULT', Config>
+  action: SimpleAction<'CONFIG_SET_DEFAULT', Config>
 ): ConfigState {
   invariant(state.default === null);
   invariant(state.user === null);
@@ -52,7 +52,7 @@ function CONFIG_SET_DEFAULT(
 
 function CONFIG_SET_USER(
   state: ConfigState,
-  action: Action<'CONFIG_RESTORE_USER' | 'CONFIG_SET_USER', Config>
+  action: Action<'CONFIG_RESTORE_USER' | 'CONFIG_SET_USER', *, Config>
 ): ConfigState {
   if (action.requested || action.error) {
     return state;

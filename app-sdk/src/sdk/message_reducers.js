@@ -18,6 +18,8 @@ export type MessagesState = {
   DEVICES: DeviceListMessage,
 };
 
+type AuthActionTypes = 'AUTH_RESTORE' | 'AUTH_SIGNIN' | 'AUTH_CREATEACCOUNT';
+
 const initialState: MessagesState = {
   CLIENT_STATUS: {
     type: 'CLIENT_STATUS',
@@ -34,7 +36,7 @@ const initialState: MessagesState = {
 
 function handleAuthAction(
   state: MessagesState,
-  action: Action<'AUTH_RESTORE' | 'AUTH_SIGNIN' | 'AUTH_CREATEACCOUNT', boolean>
+  action: Action<AuthActionTypes, *, boolean>
 ): MessagesState {
   if (action.requested) {
     return {
@@ -76,7 +78,7 @@ function handleAuthAction(
 
 function AUTH_SIGNOUT(
   state: MessagesState,
-  action: Action<'AUTH_SIGNOUT', boolean>
+  action: Action<'AUTH_SIGNOUT', void, boolean>
 ): MessagesState {
   if (action.requested) {
     return state;
@@ -96,7 +98,7 @@ function AUTH_SIGNOUT(
 
 function NETWORK_SERVER_REACHABLE(
   state: MessagesState,
-  action: Action<'NETWORK_SERVER_REACHABLE', boolean>
+  action: Action<'NETWORK_SERVER_REACHABLE', void, boolean>
 ): MessagesState {
   if (action.requested) {
     if (state.CLIENT_STATUS.clientConnectionStatus === 'CONNECTED' ||
@@ -136,7 +138,7 @@ function NETWORK_SERVER_REACHABLE(
 
 function DEVICE_LIST_FETCH(
   state: MessagesState,
-  action: Action<'DEVICE_LIST_FETCH', ListDevicesOutput>
+  action: Action<'DEVICE_LIST_FETCH', void, ListDevicesOutput>
 ): MessagesState {
   if (action.requested) {
     return state;

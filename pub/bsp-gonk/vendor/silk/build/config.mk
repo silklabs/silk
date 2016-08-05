@@ -1,5 +1,6 @@
 $(info SILK_PRODUCT: $(SILK_PRODUCT))
 $(info SILK_BOARD: $(SILK_BOARD))
+$(info $(shell node -p "_=require('silk-core-version'); _.semver+' ('+_.branch+')'"))
 $(info ============================================)
 
 SILK_BUILD_FILES := $(dir $(lastword $(MAKEFILE_LIST)))

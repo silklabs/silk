@@ -553,6 +553,24 @@ class Cameras extends EventEmitter {
     this._updateStatus('Disconnected');
   }
 
+  async unregister(deviceId) {
+    const device = this._allDevices.find(device => device.deviceId === deviceId);
+    if (!device) {
+      log.error('Unable to find device:', deviceId);
+      return;
+    }
+    const devicePublicKey = device.publicKey;
+    try {
+      const result = await Api.account.unregisterDevice({devicePublicKey});
+      if (result.success !== true) {
+        log.error('Unable to unregisterDevice:', result);
+      }
+      await this._updateDeviceList();
+    } catch (err) {
+      log.error(err);
+    }
+  }
+
   // Merge |this._allDevices| and |this._liveDevices| into the public list of
   // devices: |this.camera|
   _update() {

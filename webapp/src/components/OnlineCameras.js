@@ -85,6 +85,14 @@ export class OnlineCamera extends React.Component {
     this.speakText = e.target.value;
   };
 
+  onClickRemoveDevice = e => {
+    //eslint-disable-next-line no-alert
+    const doit = confirm(`Do you really want to remove device ${this.deviceId}?`);
+    if (doit) {
+      Cameras.unregister(this.deviceId);
+    }
+  }
+
   onSpeak = (eventKey) => {
     this.props.camera.speak(eventKey, this.speakText);
   };
@@ -178,6 +186,9 @@ export class OnlineCamera extends React.Component {
           <input type="text" placeholder="Enter the text to speak" style={styles.speechText}
             onChange={this.handleTextChange}>
           </input>
+          <Button bsSize="xsmall" onClick={this.onClickRemoveDevice}>
+            <Glyphicon glyph="remove-circle" style={styles.glyphicon} />
+          </Button>
         </div>
     </div>
     );

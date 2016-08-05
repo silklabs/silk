@@ -19,6 +19,7 @@ import {
   audioEventSaga,
   cleanupFinishedSagas,
   createMicEventChannel,
+  wrapFork,
 } from '../lib/environment';
 import modifyBabies from '../lib/babies/saga';
 import startFeeding from '../lib/food/saga';
@@ -122,7 +123,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(startFeeding, sagaEnvironment, null),
+        expect: fork(wrapFork, startFeeding, sagaEnvironment, null),
       }, {
         provide: createMockSaga(),
         expect: take(environment.micChannel),
@@ -140,7 +141,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(startFeeding, sagaEnvironment, null),
+        expect: fork(wrapFork, startFeeding, sagaEnvironment, null),
       }, {
         provide: createMockSaga(),
         expect: take(environment.micChannel),
@@ -162,7 +163,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(startFeeding, sagaEnvironment, `nursing`),
+        expect: fork(wrapFork, startFeeding, sagaEnvironment, `nursing`),
       }, {
         provide: createMockSaga(),
         expect: take(environment.micChannel),
@@ -180,7 +181,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(startFeeding, sagaEnvironment, `bottle`),
+        expect: fork(wrapFork, startFeeding, sagaEnvironment, `bottle`),
       }, {
         provide: createMockSaga(),
         expect: take(environment.micChannel),
@@ -197,7 +198,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(modifyBabies, sagaEnvironment, `add`),
+        expect: fork(wrapFork, modifyBabies, sagaEnvironment, `add`),
       }, {
         provide: createMockSaga(),
         expect: take(environment.micChannel),
@@ -214,7 +215,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(modifyBabies, sagaEnvironment, `rename`),
+        expect: fork(wrapFork, modifyBabies, sagaEnvironment, `rename`),
       }, {
         provide: createMockSaga(),
         expect: take(environment.micChannel),
@@ -233,7 +234,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(startFeeding, sagaEnvironment, null),
+        expect: fork(wrapFork, startFeeding, sagaEnvironment, null),
       }, {
         provide: saga,
         expect: take(environment.micChannel),
@@ -270,7 +271,7 @@ suite(`saga`, () => {
         expect: call(channel, buffers.none()),
       }, {
         provide: sagaEnvironment.micChannel,
-        expect: fork(startFeeding, sagaEnvironment, `bottle`),
+        expect: fork(wrapFork, startFeeding, sagaEnvironment, `bottle`),
       }, {
         provide: createMockSaga(),
         expect: take(environment.micChannel),
@@ -282,5 +283,4 @@ suite(`saga`, () => {
       },
     ]);
   });
-
 });

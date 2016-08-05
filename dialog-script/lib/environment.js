@@ -23,6 +23,8 @@ import {timerMonitorSaga} from './timers/saga';
 
 import type {DialogEngine, DialogState} from 'silk-dialog-engine';
 
+const errorText = `Sorry, something went wrong.`;
+
 // Really a Task object...
 export type Saga = {
   isRunning(): boolean;
@@ -178,6 +180,27 @@ export function speak(
   });
 }
 
+/**
+ * Wrap the fork call with a `call` API to be able to catch
+ * the errors from a saga. Redux-saga doesn't have a way otherwise
+ * to report an exception to the parent of a forked saga
+ */
+export function* wrapFork(
+    factory: SagaFunction,
+    sagaEnvironment: Environment,
+    ...args: Array<any>
+): Generator<Object | Array<Object>, void, any> {
+  try {
+    yield call(factory, sagaEnvironment, ...args);
+  } catch (err) {
+    // Throw error to generate a tombstone to monitor the exceptions
+    process.nextTick(() => {
+      throw err;
+    });
+    yield call(speak, sagaEnvironment.dialogEngine, errorText, `idle`);
+  }
+}
+
 export function* startSaga(
   factory: SagaFunction,
   environment: Environment,
@@ -191,7 +214,7 @@ export function* startSaga(
     micChannel,
   };
 
-  const saga = yield fork(factory, sagaEnvironment, ...args);
+  const saga = yield fork(wrapFork, factory, sagaEnvironment, ...args);
   invariant(saga);
 
   return {

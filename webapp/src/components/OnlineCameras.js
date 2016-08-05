@@ -127,35 +127,40 @@ export class OnlineCamera extends React.Component {
         </Link>
         <div style={{...styles.toolbar, ...styles.toolbarCenter}}>
           <Button
-            bsSize="large"
+            bsSize="small"
             bsStyle={intercomStyle}
             active={this.state.intercomOn}
             onClick={this.onToggleIntercom}>
             <Glyphicon glyph="bullhorn" style={styles.glyphicon} />
           </Button>
           <Link to={`/diag/${this.deviceId}`}>
-            <Button bsSize="large" bsStyle="info">
+            <Button bsSize="small" bsStyle="info">
               <Glyphicon glyph="info-sign" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/avpipeline/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="indent-left" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/chunks/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="list" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/audiostudio/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="headphones" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/webrtc/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="facetime-video" style={styles.glyphicon} />
+            </Button>
+          </Link>
+          <Link to={`/datachannel/${this.deviceId}`}>
+            <Button bsSize="small">
+              <Glyphicon glyph="transfer" style={styles.glyphicon} />
             </Button>
           </Link>
         </div>

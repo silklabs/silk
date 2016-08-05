@@ -51,6 +51,11 @@ function tryGetMicStream() {
   if (micStreamPromise) {
     return micStreamPromise;
   }
+  if (!navigator.mediaDevices.getUserMedia) {
+    //eslint-disable-next-line no-alert
+    alert('null getUserMedia(). Chrome?  Use --unsafely-treat-insecure-origin-as-secure');
+    return Promise.reject();
+  }
   micStreamPromise = navigator.mediaDevices.getUserMedia({ audio: true })
     .then((stream) => {
       micStream = stream;

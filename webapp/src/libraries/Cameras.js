@@ -22,6 +22,7 @@ class Camera extends EventEmitter {
   previewImage = null;
   previewSize = null;
   previewTimestamp = null;
+  lastSeenAt: Date;
 
   _requestedRooms = { };
   _socket = null;
@@ -33,11 +34,10 @@ class Camera extends EventEmitter {
     super();
     this.name = name;
     this.id = id;
-    this.setOffline();
   }
 
   deinit() {
-    this.setOffline();
+    this.setOffline(this.lastSeenAt);
   }
 
   getPeer() {
@@ -81,7 +81,8 @@ class Camera extends EventEmitter {
     this._updateStreams();
   }
 
-  setOffline() {
+  setOffline(lastSeenAt: Date) {
+    this.lastSeenAt = lastSeenAt;
     if (!this.online) {
       return;
     }
@@ -580,7 +581,7 @@ class Cameras extends EventEmitter {
         newDevices[id].setOnline(this.socket, this._liveDevices[id]);
         unregisteredLiveDevices.splice(unregisteredLiveDevices.indexOf(id), 1);
       } else {
-        newDevices[id].setOffline();
+        newDevices[id].setOffline(new Date(device.lastSeenAt));
       }
     }
 

@@ -310,7 +310,7 @@ export default class CameraPreview extends React.Component {
       }
     } else {
       // Offline indicator.
-      context.fillText('Offline', canvasWidth - 5, 5);
+      context.fillText('Offline since ' + camera.lastSeenAt.toTimeString(), canvasWidth - 5, 5);
     }
 
     // Logo

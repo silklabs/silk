@@ -136,6 +136,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
         accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.required(),
         publicKey: Joi.string().hex().required(),
         deviceId: Joi.string().hex().required(),
+        lastSeenAt: Joi.date().required(),
       })),
     }),
     input: Joi.object().keys({
@@ -149,6 +150,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
         accountDeviceNumber: device.registration.accountDeviceNumber,
         publicKey: device.accessToken.publicKey,
         deviceId: device.accessToken.publicKey,
+        // TODO: Implement for real but this stub will let us move on for now.
+        lastSeenAt: new Date(),
       };
     });
 

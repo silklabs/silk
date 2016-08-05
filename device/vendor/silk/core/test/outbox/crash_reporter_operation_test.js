@@ -11,7 +11,7 @@ import skipOnTravis from '../skip-on-travis.js';
 
 const log = mkLog('ut');
 
-import CrashReporterOperation from '../../lib/outbox/crash_report_operation';
+import { CrashReporterOperation } from 'silk-outbox';
 
 const FIXTURE_DIR = path.join(__dirname, '/crash_reports');
 

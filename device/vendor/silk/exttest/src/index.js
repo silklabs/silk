@@ -5,8 +5,7 @@
  * @flow
  */
 
-import createOutbox from 'silk-core/lib/outbox';
-import netstatus from 'silk-netstatus';
+import { getOutboxInstance } from 'silk-outbox';
 import Timeline from 'silk-core/lib/timeline';
 import Server from 'silk-core/lib/server';
 import createLog from 'silk-log/device';
@@ -16,7 +15,7 @@ import opencv from 'opencv';
 import fs from 'fs';
 import path from 'path';
 
-import type { Outbox } from 'silk-core/lib/outbox/manager';
+import type { Outbox } from 'silk-outbox';
 import type { Ui } from 'silk-device-ui';
 import type Sensors from 'silk-sensors';
 import type Connections from 'silk-core/lib/connections';
@@ -62,7 +61,7 @@ export default class Env {
     this._name = name;
     this.camera = new Camera();
     this.server = new Server(this.connections);
-    this.outbox = createOutbox(netstatus);
+    this.outbox = getOutboxInstance();
     this.timeline = new Timeline(this.server, this.outbox, this.camera);
 
     this.camera.setPreviewFrame = (when, file) => this._loadPreviewFrame(when, file);

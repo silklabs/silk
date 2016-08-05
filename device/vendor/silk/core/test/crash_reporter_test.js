@@ -9,10 +9,8 @@ import {AccessToken} from 'silk-api';
 
 import createApi from './api';
 import randomStream from './random_stream';
-import createOutbox from '../lib/outbox/manager';
+import { createOutbox, CrashReporterOperation } from 'silk-outbox';
 import skipOnTravis from './skip-on-travis.js';
-
-import CrashReportOp from '../lib/outbox/crash_report_operation';
 
 import {
   Tombstones,
@@ -137,7 +135,7 @@ suite('crash report', () => {
       });
       // Run the operations but do not actually hit the server...
       outbox.online = false;
-      outbox.registerOperation(CrashReportOp);
+      outbox.registerOperation(CrashReporterOperation);
 
       let crash = createCrashReporter(outbox, {
         crashReporterEnabled: enabled,

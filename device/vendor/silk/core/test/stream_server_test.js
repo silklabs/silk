@@ -7,7 +7,7 @@
 import createStreamServer from './stream_server';
 import eventToPromise from 'event-to-promise';
 import assert from 'assert';
-import httpStream from '../lib/streams/http';
+import {httpStream} from 'silk-streams';
 import randomStream from './random_stream';
 import streams from 'stream';
 

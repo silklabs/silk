@@ -6,8 +6,7 @@
  * @private
  */
 
-import TeeStream from '../streams/tee';
-import StoringStream from '../streams/store';
+import {TeeStream, StoringStream} from 'silk-streams';
 import Operation from './operation';
 
 import createLog from 'silk-log/device';

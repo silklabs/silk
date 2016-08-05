@@ -16,9 +16,8 @@ import { PassThrough } from 'stream';
 import split from 'split';
 import createLog from 'silk-log/device';
 
-import LogcatStream from './streams/logcat';
-import LogcatToSyslog from './streams/logcat_to_syslog';
-import PapertrailOp from './outbox/papertrail_operation';
+import { LogcatStream, LogcatToSyslog } from 'silk-streams';
+import { PapertrailOperation } from 'silk-outbox';
 import { getboolprop } from 'silk-sysutils';
 
 const log = createLog('logcat');
@@ -70,7 +69,7 @@ export default class LogcatManager {
         // transform the logcat output to syslog
         pipe(new LogcatToSyslog(this.hostname));
 
-      let operation = new PapertrailOp();
+      let operation = new PapertrailOperation();
 
       await this.outbox.addToQueue(operation, uploadStream);
     } catch (err) {

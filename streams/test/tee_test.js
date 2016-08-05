@@ -4,7 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  */
 
-import TeeStream from '../../lib/streams/tee';
+import TeeStream from '../src/tee';
 import streams from 'stream';
 import eventToPromise from 'event-to-promise';
 import assert from 'assert';

@@ -19,7 +19,7 @@ import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
 import byline from 'byline';
 
-import CrashReportOp from './outbox/crash_report_operation';
+import { CrashReporterOperation } from 'silk-outbox';
 import { EventEmitter } from 'events';
 
 const log = createLog('crash_reporter');
@@ -424,7 +424,7 @@ export class CrashReporter {
 
       // construct the operation from the current deviceId + stats.
       let stats = await fs.stat(tombstonePath);
-      let operation = new CrashReportOp({
+      let operation = new CrashReporterOperation({
         size: stats.size,
         raygunMessage,
         metadata: {
@@ -481,7 +481,7 @@ export class CrashReporter {
       }, customData);
       const raygunMessage = raygun.buildMessage(error, customData);
 
-      let operation = new CrashReportOp({
+      let operation = new CrashReporterOperation({
         size: readableSize,
         raygunMessage,
         metadata: {

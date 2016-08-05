@@ -6,8 +6,7 @@
 
 import { exec } from 'mz/child_process';
 import path from 'path';
-import createOutbox from '../../lib/outbox/manager';
-import StreamOperation from '../../lib/outbox/stream_operation';
+import { createOutbox, StreamOperation } from 'silk-outbox';
 import streams from 'stream';
 import randomStream from '../random_stream';
 import fs from 'mz/fs';

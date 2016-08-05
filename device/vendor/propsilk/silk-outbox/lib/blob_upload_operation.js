@@ -10,7 +10,7 @@ import StreamOperation from './stream_operation';
 
 import api from 'silk-device-api';
 import createLog from 'silk-log/device';
-import httpStream from '../streams/http';
+import {httpStream} from 'silk-streams';
 import assert from 'assert';
 
 const log = createLog('operation:blob_upload_operation');
@@ -83,16 +83,4 @@ export class BlobUploadOperation extends StreamOperation {
       metadata: this.metadata,
     };
   }
-}
-
-export class VideoUploadOp extends BlobUploadOperation {
-  static NAME = 'video-upload';
-  static META_TYPE = 'video';
-  static CONTENT_TYPE = 'video/mp4';
-}
-
-export class PreviewUploadOp extends BlobUploadOperation {
-  static NAME = 'preview-upload';
-  static META_TYPE = 'preview';
-  static CONTENT_TYPE = 'image/jpeg';
 }

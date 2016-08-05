@@ -5,7 +5,7 @@ import path from 'path';
 import eventToPromise from 'event-to-promise';
 import split from 'split';
 
-import Logcat from '../../lib/streams/logcat';
+import Logcat from '../src/logcat';
 
 suite('logcat', () => {
   let subject;

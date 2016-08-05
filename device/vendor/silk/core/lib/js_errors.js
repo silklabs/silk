@@ -17,7 +17,7 @@
 import { getprop } from 'silk-sysutils';
 import { spawn } from 'child_process';
 import createLog from 'silk-log/device';
-import Store from './streams/store';
+import {StoringStream} from 'silk-streams';
 import eventToPromise from 'event-to-promise';
 
 const log = createLog('js_errors');
@@ -64,7 +64,7 @@ function drainLogcat(destination) {
 }
 
 export async function buildJSTombstone(type, err) {
-  const stream = new Store();
+  const stream = new StoringStream();
   const header = tombstoneHeader(type, err);
   stream.write(header);
   drainLogcat(stream);

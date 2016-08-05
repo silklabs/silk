@@ -188,7 +188,6 @@ export class OnlineCameras extends React.Component {
   state = {
     cameras: {},
     status: '',
-    webrtc: localStorage.webrtc === 'true',
   };
 
   componentWillMount() {
@@ -202,15 +201,6 @@ export class OnlineCameras extends React.Component {
 
   onCamerasStateChanged = state => {
     this.setState({ cameras: state.cameras, status: state.status });
-  };
-
-  _onToggleWebrtc = () => {
-    // XXX: Sorry! Temp code...
-    let state = !this.state.webrtc;
-    localStorage.webrtc = state;
-    console.log('set state', state);
-    this.setState({ webrtc: state });
-    Cameras.setWebRTC(state);
   };
 
   render() {
@@ -227,11 +217,6 @@ export class OnlineCameras extends React.Component {
         <Alert bsStyle="info">
           {this.state.status}<br/>
           <small>Server: {Api.config.serverUrl}</small>
-          <div>
-            <Button onClick={this._onToggleWebrtc}>
-              {this.state.webrtc ? 'Disable' : 'Enable'} WebRTC
-            </Button>
-          </div>
         </Alert>
         <div style={styles.flexRow}>{cameras}</div>
         <Link style={{float: 'right'}} to="/login">

@@ -439,34 +439,8 @@ class Cameras extends EventEmitter {
   cameras = {}; // indexed by device id
   _allDevices = []; // unmodified result from Api.account.listDevices()
   _liveDevices = {}; // indexed by device id
-  // XXX: Sorry temporary code
-  _webrtc = localStorage.webrtc === 'true';
 
   _deviceListUpdateTimer: number = null;
-
-  get webrtc() {
-    return this._webrtc;
-  }
-
-  setWebRTC(enabled) {
-    this._webrtc = enabled;
-    if (!enabled) {
-      log.info(`Disabling webrtc`);
-      for (let deviceId of this._webrtcConnections.keys()) {
-        this._webrtcDisconnect(deviceId);
-      }
-      this._webrtcConnections = new Map();
-      return;
-    }
-    log.info(`Enabling webrtc`);
-
-    for (let id in this.cameras) {
-      const camera = this.cameras[id];
-      if (camera.online && !this._webrtcConnections.has(id)) {
-        this._webrtcConnect(id);
-      }
-    }
-  }
 
   async _webrtcDisconnect(deviceId) {
     const devicePeer = this._webrtcConnections.get(deviceId);
@@ -482,10 +456,6 @@ class Cameras extends EventEmitter {
 
   // Connect to given deviceId.
   _webrtcConnect(deviceId) {
-    if (!this._webrtc) {
-      return;
-    }
-
     // TODO: We should not rely on socket.io in the future to detect
     // connected devices but for now this is very convient.
     const devicePeer = call(Api, deviceId);

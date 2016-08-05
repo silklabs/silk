@@ -17,7 +17,7 @@ import Queue from './queue';
 
 const log = createLog('outbox:manager');
 
-const DEFAULT_STORAGE_PATH = path.join(process.cwd(), '/.outbox');
+const DEFAULT_STORAGE_PATH = path.join('data', 'outbox');
 const DEFAULT_POLL_INTERVAL = 1000; // 1 second
 const OUTBOX_CONCURRENCY_PROP = 'persist.silk.outconcurrency';
 

@@ -442,6 +442,8 @@ class Cameras extends EventEmitter {
   // XXX: Sorry temporary code
   _webrtc = localStorage.webrtc === 'true';
 
+  _deviceListUpdateTimer: number = null;
+
   get webrtc() {
     return this._webrtc;
   }
@@ -498,14 +500,36 @@ class Cameras extends EventEmitter {
     }
   }
 
+  async _updateDeviceList() {
+    if (this._deviceListUpdateTimer) {
+      clearTimeout(this._deviceListUpdateTimer);
+      this._deviceListUpdateTimer = null;
+    }
+
+    try {
+      const result = await Api.account.listDevices();
+      this._allDevices = result.devices;
+      this._update();
+    } finally {
+      // Update the list of devices every minute
+      this._deviceListUpdateTimer = setTimeout(async () => {
+        this._deviceListUpdateTimer = null;
+        try {
+          await this._updateDeviceList();
+        } catch (e) {
+          console.log(e.stack || e);
+        }
+      }, 60 * 1000);
+    }
+  }
+
   async connect() {
     this.status = 'Connecting...';
 
     try {
       this._updateStatus('Fetching device list...');
-      const result = await Api.account.listDevices();
-      this._allDevices = result.devices;
-      this._update();
+      invariant(this._deviceListUpdateTimer === null);
+      await this._updateDeviceList();
 
       this.socket = Api.socketioClient(io, 'account');
       this.socket.open();
@@ -513,13 +537,13 @@ class Cameras extends EventEmitter {
       this.socket.on('connect', () => {
         log.info(`Connected to server`);
         this.socket.emit('join', 'video-streams');
-        this._update();
+        this._updateDeviceList();
       });
 
       this.socket.on('disconnect', e => {
         log.warn(`Disconnected from server: ${e}`);
         this._liveDevices = {};
-        this._update();
+        this._updateDeviceList();
       });
 
       this.socket.on('video-stream-new', (msg) => {
@@ -552,6 +576,10 @@ class Cameras extends EventEmitter {
       this.socket.disconnect();
     }
     this.socket = null;
+    if (this._deviceListUpdateTimer) {
+      clearTimeout(this._deviceListUpdateTimer);
+      this._deviceListUpdateTimer = null;
+    }
     this._updateStatus('Disconnected');
   }
 

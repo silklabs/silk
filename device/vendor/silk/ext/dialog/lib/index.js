@@ -50,7 +50,6 @@ type EventType = 'listening' | 'processing_speech' | 'speaking' |
                  'speaking_network_error' | 'finished_processing_speech';
 
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.wav');
-const SPEECH_END_SOUND_FILE = path.join(__dirname, '..', 'media', 'stopListen.wav');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'error.wav');
 
 const NETWORK_DOWN_SOUND_FILE = 'network_down.mp3';
@@ -147,7 +146,8 @@ class Dialog {
         this._kws.on('keyword', () => {
           log.debug(`Keyword detected`);
           this._kws.stop();
-          this._onSpeechStart();
+          this._playSound(KEYWORD_DETECTED_SOUND_FILE)
+          .then(() => this._onSpeechStart());
         });
         this._vad.on('speech_stop', (when) => {
           // Stop processing after mic data upto this time has been processed
@@ -167,7 +167,6 @@ class Dialog {
     // Preload sounds to reduce run time play latency
     try {
       await player.load(KEYWORD_DETECTED_SOUND_FILE);
-      await player.load(SPEECH_END_SOUND_FILE);
       await player.load(ERROR_SOUND_FILE);
     } catch (err) {
       log.error(err);
@@ -211,7 +210,8 @@ class Dialog {
       if (this._kwsEnabled) {
         this._kws.stop();
       }
-      this._onSpeechStart();
+      this._playSound(KEYWORD_DETECTED_SOUND_FILE)
+      .then(() => this._onSpeechStart());
     } else {
       if (!this._kwsEnabled) {
         this._onSpeechStop();
@@ -407,16 +407,13 @@ class Dialog {
     this._emitEvent('listening');
     this._stream = new ClosingPassThrough();
 
-    this._playSound(KEYWORD_DETECTED_SOUND_FILE)
-    .then(() => {
-      if (this._kwsEnabled) {
-        this._vad.startVad();
-      }
+    if (this._kwsEnabled) {
+      this._vad.startVad();
+    }
 
-      if (this._stream) {
-        this._dialogEngine.interpret(this._stream);
-      }
-    });
+    if (this._stream) {
+      this._dialogEngine.interpret(this._stream);
+    }
   }
 
   /**
@@ -436,7 +433,6 @@ class Dialog {
       this._stream.end();
       this._stream = null;
     }
-    this._playSound(SPEECH_END_SOUND_FILE);
   }
 
   /**

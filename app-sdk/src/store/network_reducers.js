@@ -17,7 +17,7 @@ const initialState: NetworkState = {
 
 function NETWORK_SERVER_REACHABLE(
   state: NetworkState,
-  action: Action<'NETWORK_SERVER_REACHABLE', boolean>
+  action: Action<'NETWORK_SERVER_REACHABLE', void, boolean>
 ): NetworkState {
   // canReachServer() should never throw. If it does, it's a bug.
   invariant(!action.error);

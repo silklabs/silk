@@ -13,7 +13,7 @@ import {handleActions} from 'redux-actions';
 import createLog from 'silk-log';
 
 import type {Config as ApiConfig} from 'silk-api';
-import type {Action} from './action';
+import type {Action, SimpleAction} from './action';
 
 const log = createLog('app-sdk-auth');
 
@@ -57,7 +57,7 @@ const initialState: AuthState = {
 function handleAuthAction<T: AuthOperationType>(
   operationType: T,
   state: AuthState,
-  action: Action<T, boolean>
+  action: Action<T, *, boolean>
 ): AuthState {
   invariant(!state.isAuthenticated);
 
@@ -112,7 +112,7 @@ function handleAuthAction<T: AuthOperationType>(
 
 function AUTH_RESTORE(
   state: AuthState,
-  action: Action<'AUTH_RESTORE', boolean>
+  action: Action<'AUTH_RESTORE', void, boolean>
 ): AuthState {
   const newState = handleAuthAction('AUTH_RESTORE', state, action);
   if (newState === state) {
@@ -130,28 +130,28 @@ function AUTH_RESTORE(
 
 function AUTH_SIGNIN(
   state: AuthState,
-  action: Action<'AUTH_SIGNIN', boolean>
+  action: Action<'AUTH_SIGNIN', *, boolean>
 ): AuthState {
   return handleAuthAction('AUTH_SIGNIN', state, action);
 }
 
 function AUTH_CREATEACCOUNT(
   state: AuthState,
-  action: Action<'AUTH_CREATEACCOUNT', boolean>
+  action: Action<'AUTH_CREATEACCOUNT', *, boolean>
 ): AuthState {
   return handleAuthAction('AUTH_CREATEACCOUNT', state, action);
 }
 
 function AUTH_RESETPASSWORD(
   state: AuthState,
-  action: Action<'AUTH_RESETPASSWORD', boolean>
+  action: Action<'AUTH_RESETPASSWORD', *, boolean>
 ): AuthState {
   return handleAuthAction('AUTH_RESETPASSWORD', state, action);
 }
 
 function AUTH_SIGNOUT(
   state: AuthState,
-  action: Action<'AUTH_SIGNOUT', void>
+  action: Action<'AUTH_SIGNOUT', void, void>
 ): AuthState {
   invariant(!state.currentOperation);
   if (action.requested) {
@@ -168,7 +168,7 @@ function AUTH_SIGNOUT(
 
 function AUTH_ABORT_OPERATION(
   state: AuthState,
-  action: Action<'AUTH_SIGNOUT', void>
+  action: SimpleAction<'AUTH_SIGNOUT', void>
 ): AuthState {
   invariant(state.currentOperation);
   invariant(state.currentOperation.inProgress);
@@ -180,7 +180,7 @@ function AUTH_ABORT_OPERATION(
 
 function AUTH_ACK_ERROR(
   state: AuthState,
-  action: Action<'AUTH_SIGNOUT', void>
+  action: SimpleAction<'AUTH_SIGNOUT', void>
 ): AuthState {
   invariant(state.currentOperation);
   invariant(!state.currentOperation.inProgress);
@@ -192,7 +192,7 @@ function AUTH_ACK_ERROR(
 
 function API_CREATE(
   state: AuthState,
-  action: Action<'API_CREATE', ApiConfig>
+  action: Action<'API_CREATE', *, ApiConfig>
 ): AuthState {
   return {
     ...initialState,

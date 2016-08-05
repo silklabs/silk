@@ -12,7 +12,7 @@ import {actionFromPayload} from './action';
 
 import type {SilkApi, Config as ApiConfig} from 'silk-api';
 
-import type {SuccessAction} from './action';
+import type {SimpleAction} from './action';
 
 // Actions
 
@@ -25,7 +25,7 @@ export type StateWithApi = {api: ApiState};
 
 function API_CREATE(
   state: ApiState,
-  action: SuccessAction<'API_CREATE', ApiConfig>
+  action: SimpleAction<'API_CREATE', ApiConfig>
 ): ApiState {
   return createApi(action.payload);
 }

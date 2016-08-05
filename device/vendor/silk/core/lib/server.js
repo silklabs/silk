@@ -10,6 +10,7 @@
 import invariant from 'assert';
 import { EventEmitter } from 'events';
 
+import * as util from 'silk-sysutils';
 import api from 'silk-device-api';
 import createLog from 'silk-log/device';
 import * as VideoMetrics from './metrics/video';
@@ -142,7 +143,9 @@ export default class Server extends EventEmitter {
       }
     });
 
-    socket.on('cmd', data => this.emit('cmd', data));
+    if (!util.getboolprop('ro.debuggable', false)) {
+      socket.on('cmd', data => this.emit('cmd', data));
+    }
 
     ['connect_error', 'connect_timeout'].forEach(event => {
       socket.on(event, err => {

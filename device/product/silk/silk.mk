@@ -51,6 +51,7 @@ PRODUCT_PACKAGES += \
   silk-lifx \
   silk-modwatcher \
   silk-netstatus \
+  silk-outbox \
   silk-say \
   silk-sonos \
   silk-stt \

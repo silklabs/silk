@@ -51,6 +51,11 @@ function tryGetMicStream() {
   if (micStreamPromise) {
     return micStreamPromise;
   }
+  if (!navigator.mediaDevices.getUserMedia) {
+    //eslint-disable-next-line no-alert
+    alert('null getUserMedia(). Chrome?  Use --unsafely-treat-insecure-origin-as-secure');
+    return Promise.reject();
+  }
   micStreamPromise = navigator.mediaDevices.getUserMedia({ audio: true })
     .then((stream) => {
       micStream = stream;
@@ -79,6 +84,14 @@ export class OnlineCamera extends React.Component {
   handleTextChange = e => {
     this.speakText = e.target.value;
   };
+
+  onClickRemoveDevice = e => {
+    //eslint-disable-next-line no-alert
+    const doit = confirm(`Do you really want to remove device ${this.deviceId}?`);
+    if (doit) {
+      Cameras.unregister(this.deviceId);
+    }
+  }
 
   onSpeak = (eventKey) => {
     this.props.camera.speak(eventKey, this.speakText);
@@ -127,35 +140,40 @@ export class OnlineCamera extends React.Component {
         </Link>
         <div style={{...styles.toolbar, ...styles.toolbarCenter}}>
           <Button
-            bsSize="large"
+            bsSize="small"
             bsStyle={intercomStyle}
             active={this.state.intercomOn}
             onClick={this.onToggleIntercom}>
             <Glyphicon glyph="bullhorn" style={styles.glyphicon} />
           </Button>
           <Link to={`/diag/${this.deviceId}`}>
-            <Button bsSize="large" bsStyle="info">
+            <Button bsSize="small" bsStyle="info">
               <Glyphicon glyph="info-sign" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/avpipeline/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="indent-left" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/chunks/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="list" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/audiostudio/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="headphones" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/webrtc/${this.deviceId}`}>
-            <Button bsSize="large">
+            <Button bsSize="small">
               <Glyphicon glyph="facetime-video" style={styles.glyphicon} />
+            </Button>
+          </Link>
+          <Link to={`/datachannel/${this.deviceId}`}>
+            <Button bsSize="small">
+              <Glyphicon glyph="transfer" style={styles.glyphicon} />
             </Button>
           </Link>
         </div>
@@ -168,6 +186,9 @@ export class OnlineCamera extends React.Component {
           <input type="text" placeholder="Enter the text to speak" style={styles.speechText}
             onChange={this.handleTextChange}>
           </input>
+          <Button bsSize="xsmall" onClick={this.onClickRemoveDevice}>
+            <Glyphicon glyph="remove-circle" style={styles.glyphicon} />
+          </Button>
         </div>
     </div>
     );
@@ -178,7 +199,6 @@ export class OnlineCameras extends React.Component {
   state = {
     cameras: {},
     status: '',
-    webrtc: localStorage.webrtc === 'true',
   };
 
   componentWillMount() {
@@ -192,15 +212,6 @@ export class OnlineCameras extends React.Component {
 
   onCamerasStateChanged = state => {
     this.setState({ cameras: state.cameras, status: state.status });
-  };
-
-  _onToggleWebrtc = () => {
-    // XXX: Sorry! Temp code...
-    let state = !this.state.webrtc;
-    localStorage.webrtc = state;
-    console.log('set state', state);
-    this.setState({ webrtc: state });
-    Cameras.setWebRTC(state);
   };
 
   render() {
@@ -217,11 +228,6 @@ export class OnlineCameras extends React.Component {
         <Alert bsStyle="info">
           {this.state.status}<br/>
           <small>Server: {Api.config.serverUrl}</small>
-          <div>
-            <Button onClick={this._onToggleWebrtc}>
-              {this.state.webrtc ? 'Disable' : 'Enable'} WebRTC
-            </Button>
-          </div>
         </Alert>
         <div style={styles.flexRow}>{cameras}</div>
         <Link style={{float: 'right'}} to="/login">

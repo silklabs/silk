@@ -22,6 +22,7 @@ class Camera extends EventEmitter {
   previewImage = null;
   previewSize = null;
   previewTimestamp = null;
+  lastSeenAt: Date;
 
   _requestedRooms = { };
   _socket = null;
@@ -33,11 +34,10 @@ class Camera extends EventEmitter {
     super();
     this.name = name;
     this.id = id;
-    this.setOffline();
   }
 
   deinit() {
-    this.setOffline();
+    this.setOffline(this.lastSeenAt);
   }
 
   getPeer() {
@@ -81,7 +81,8 @@ class Camera extends EventEmitter {
     this._updateStreams();
   }
 
-  setOffline() {
+  setOffline(lastSeenAt: Date) {
+    this.lastSeenAt = lastSeenAt;
     if (!this.online) {
       return;
     }
@@ -438,32 +439,8 @@ class Cameras extends EventEmitter {
   cameras = {}; // indexed by device id
   _allDevices = []; // unmodified result from Api.account.listDevices()
   _liveDevices = {}; // indexed by device id
-  // XXX: Sorry temporary code
-  _webrtc = localStorage.webrtc === 'true';
 
-  get webrtc() {
-    return this._webrtc;
-  }
-
-  setWebRTC(enabled) {
-    this._webrtc = enabled;
-    if (!enabled) {
-      log.info(`Disabling webrtc`);
-      for (let deviceId of this._webrtcConnections.keys()) {
-        this._webrtcDisconnect(deviceId);
-      }
-      this._webrtcConnections = new Map();
-      return;
-    }
-    log.info(`Enabling webrtc`);
-
-    for (let id in this.cameras) {
-      const camera = this.cameras[id];
-      if (camera.online && !this._webrtcConnections.has(id)) {
-        this._webrtcConnect(id);
-      }
-    }
-  }
+  _deviceListUpdateTimer: number = null;
 
   async _webrtcDisconnect(deviceId) {
     const devicePeer = this._webrtcConnections.get(deviceId);
@@ -479,10 +456,6 @@ class Cameras extends EventEmitter {
 
   // Connect to given deviceId.
   _webrtcConnect(deviceId) {
-    if (!this._webrtc) {
-      return;
-    }
-
     // TODO: We should not rely on socket.io in the future to detect
     // connected devices but for now this is very convient.
     const devicePeer = call(Api, deviceId);
@@ -497,14 +470,36 @@ class Cameras extends EventEmitter {
     }
   }
 
+  async _updateDeviceList() {
+    if (this._deviceListUpdateTimer) {
+      clearTimeout(this._deviceListUpdateTimer);
+      this._deviceListUpdateTimer = null;
+    }
+
+    try {
+      const result = await Api.account.listDevices();
+      this._allDevices = result.devices;
+      this._update();
+    } finally {
+      // Update the list of devices every minute
+      this._deviceListUpdateTimer = setTimeout(async () => {
+        this._deviceListUpdateTimer = null;
+        try {
+          await this._updateDeviceList();
+        } catch (e) {
+          console.log(e.stack || e);
+        }
+      }, 60 * 1000);
+    }
+  }
+
   async connect() {
     this.status = 'Connecting...';
 
     try {
       this._updateStatus('Fetching device list...');
-      const result = await Api.account.listDevices();
-      this._allDevices = result.devices;
-      this._update();
+      invariant(this._deviceListUpdateTimer === null);
+      await this._updateDeviceList();
 
       this.socket = Api.socketioClient(io, 'account');
       this.socket.open();
@@ -512,13 +507,13 @@ class Cameras extends EventEmitter {
       this.socket.on('connect', () => {
         log.info(`Connected to server`);
         this.socket.emit('join', 'video-streams');
-        this._update();
+        this._updateDeviceList();
       });
 
       this.socket.on('disconnect', e => {
         log.warn(`Disconnected from server: ${e}`);
         this._liveDevices = {};
-        this._update();
+        this._updateDeviceList();
       });
 
       this.socket.on('video-stream-new', (msg) => {
@@ -551,7 +546,29 @@ class Cameras extends EventEmitter {
       this.socket.disconnect();
     }
     this.socket = null;
+    if (this._deviceListUpdateTimer) {
+      clearTimeout(this._deviceListUpdateTimer);
+      this._deviceListUpdateTimer = null;
+    }
     this._updateStatus('Disconnected');
+  }
+
+  async unregister(deviceId) {
+    const device = this._allDevices.find(device => device.deviceId === deviceId);
+    if (!device) {
+      log.error('Unable to find device:', deviceId);
+      return;
+    }
+    const devicePublicKey = device.publicKey;
+    try {
+      const result = await Api.account.unregisterDevice({devicePublicKey});
+      if (result.success !== true) {
+        log.error('Unable to unregisterDevice:', result);
+      }
+      await this._updateDeviceList();
+    } catch (err) {
+      log.error(err);
+    }
   }
 
   // Merge |this._allDevices| and |this._liveDevices| into the public list of
@@ -580,7 +597,7 @@ class Cameras extends EventEmitter {
         newDevices[id].setOnline(this.socket, this._liveDevices[id]);
         unregisteredLiveDevices.splice(unregisteredLiveDevices.indexOf(id), 1);
       } else {
-        newDevices[id].setOffline();
+        newDevices[id].setOffline(new Date(device.lastSeenAt));
       }
     }
 

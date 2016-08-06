@@ -136,9 +136,9 @@ dialogEngine.configure({
         key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
       },
       {
-        // Silk demo Luis app
-        id: `ab071c9a-8169-4e3c-ad88-a1be06b8153f`,
-        key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
+        // 'Silk Demo' Luis App - engineering@silklabs.com
+        id: `77362118-061a-4713-adac-ed0498342935`,
+        key: `572e250e318e428d893cb19279d22a87`,
       },
     ],
   },

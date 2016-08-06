@@ -1,75 +1,105 @@
-/* eslint-disable key-spacing, quotes, comma-dangle */
+import createLog from 'silk-log';
+const log = createLog(`dialog-script-textToIntention`);
 
-module.exports = {
-  // Baby dialogs
-  "start feeding":               { "intent": "startFeeding", "entities": ["baby"] },
-  "i'm feeding the baby":        { "intent": "startFeeding", "entities": ["baby"] },
-  "i am feeding the baby":       { "intent": "startFeeding", "entities": ["baby"] },
-  "i'm nursing":                 { "intent": "startNursing", "entities": [] },
-  "i am nursing":                { "intent": "startNursing", "entities": [] },
-  "start nursing":               { "intent": "startNursing", "entities": [] },
-  "nursing":                     { "intent": "None", "entities": ["nursing"] },
-  "ok":                          { "intent": "confirm", "entities": [] },
-  "yes":                         { "intent": "confirm", "entities": [] },
-  "no":                          { "intent": "reject", "entities": [] },
-  "cancel":                      { "intent": "cancel", "entities": [] },
-  "i'm bottle feeding the baby": { "intent": "startBottleFeeding", "entities": ["baby"] },
-  "i am bottle feeding the baby":{ "intent": "startBottleFeeding", "entities": ["baby"] },
-  "bottle":                      { "intent": "None", "entities": ["bottle"] },
-  "formula":                     { "intent": "None", "entities": ["formula"] },
-  "breast milk":                 { "intent": "None", "entities": ["breast milk"] },
-  "100 ml":                      { "intent": "None", "entities": ["100 milliliters"] },
-  "register my baby":            { "intent": "register", "entities": ["baby"] },
-  "rename my baby":              { "intent": "rename", "entities": ["baby"] },
-  "what time is it":             { "intent": "getCurrentTime", "entities": [] },
-  "start a timer for 30 seconds":{ "intent": "startTimer", "entities": ["30 seconds"] },
-  "cancel the timer":            { "intent": "cancelTimer", "entities": ["30 seconds"] },
+let intentions = {};
 
-  // Device control dialogs
-  "volume up":                   { "intent": "setVolume", "entities": ["up"] },
-  "volume down":                 { "intent": "setVolume", "entities": ["down"] },
-  "do not disturb":              { "intent": "setUiMode", "entities": ["dnd"] },
-  "all sound off":               { "intent": "setUiMode", "entities": ["mute"] },
-  "normal":                      { "intent": "setUiMode", "entities": ["normal"] },
-  "factory reset":               { "intent": "factoryReset", "entities": [] },
-  "night light red":             { "intent": "setNightlightColor", "entities": ["red"] },
-  "night light white":           { "intent": "setNightlightColor", "entities": ["white"] },
-  "night light blue":            { "intent": "setNightlightColor", "entities": ["blue"] },
+// Utility to add intention. Possible usage:
+//   1) ai(phrase, intent)
+//   2) ai(phrase, intent, entity1Type, entity1Name, entity1Extra)
+//   3) ai(phrase, intent, entity1Type, entity1Name, entity2Extra,
+//          entity2Type, entity2Name, entity2Extra ...)
+function ai() {
+  let i = 0;
+  let phrase = arguments[i++];
+  let intent = arguments[i++];
+  let entities = [];
 
-  // Demo dialogs
-  "make me a sandwich":          { "intent": "xkcd", "entities": ["149"] },
-  "sudo make me a sandwich":     { "intent": "xkcd", "entities": ["149", "sudo"] },
+  log.debug(`Adding intention: '${phrase}' ${intent}`);
+  for (; i < arguments.length;) {
+    let type = arguments[i++];
+    let entity = arguments[i++];
+    let extras = arguments[i++];
 
-/* Comment out to use luis
-  // see stocks/saga.js for list of supported stocks
-  "what's the stock price of apple":  { "intent": "getStockPrice", "entities": ["apple"] },
-  "what is the stock price of microsoft": { "intent": "getStockPrice", "entities": ["microsoft"] },
-  "how's qualcomm stock doing":          { "intent": "getStockPrice", "entities": ["qualcomm"] },
-  "how is google stock doing":         { "intent": "getStockPrice", "entities": ["google"] },
-  "how's amazon stock doing today":    { "intent": "getStockPrice", "entities": ["amazon"] },
-  "how is mattel stock doing today":   { "intent": "getStockPrice", "entities": ["mattel"] },
+    log.debug(`  ... entity: ${type} ${entity} ${extras}`);
+    let startIndex = phrase.indexOf(entity);
+    let endIndex = startIndex + entity.length;
+    let e = Object.assign({}, { type, entity, startIndex, endIndex }, extras);
+    entities.push(e);
+  }
+  intentions[phrase] = { intent, entities };
+}
 
-  "what's the weather today?":        { "intent": "getWeather", "entities": [] },
-  "what's the weather like today?":   { "intent": "getWeather", "entities": [] },
-  "how's the weather?":               { "intent": "getWeather", "entities": [] },
-  "how's the weather today?":         { "intent": "getWeather", "entities": [] },
+// Baby dialogs
+ai(`start feeding`, 'startFeeding', 'baby', 'baby', {});
+ai(`i'm feeding the baby`, 'startFeeding', 'baby', 'baby', {});
+ai(`i'm feeding the baby`, 'startFeeding', 'baby', 'baby', {});
+ai(`i am feeding the baby`, 'startFeeding', 'baby', 'baby', {});
+ai(`i'm nursing`, 'startNursing');
+ai(`i am nursing`, 'startNursing');
+ai(`start nursing`, 'startNursing');
+ai(`nursing`, 'None', 'nursing', 'nursing');
+ai(`ok`, 'confirm');
+ai(`yes`, 'confirm');
+ai(`no`, 'reject');
+ai(`cancel`, 'cancel');
+ai(`i'm bottle feeding the baby`, 'startBottleFeeding', 'baby', 'baby', {});
+ai(`i am bottle feeding the baby`, 'startBottleFeeding', 'baby', 'baby', {});
+ai(`bottle`, 'None', 'bottle', 'bottle', {});
+ai(`formula`, 'None', 'formula', 'formula', {});
+ai(`breast milk`, 'None', 'breast milk', 'breast milk', {});
+ai(`100 ml`, 'None', 'number', '100 milliliters', {});
+ai(`register my baby`, 'register', 'baby', 'baby', {});
+ai(`rename my baby`, 'rename', 'baby', {});
 
-  "start music":                      { "intent": "playMusic", "entities": [] },
-  "play music":                       { "intent": "playMusic", "entities": [] },
-  "stop music":                       { "intent": "pauseMusic", "entities": [] },
-  "pause music":                      { "intent": "pauseMusic", "entities": [] },
+// Device control dialogs
+ai(`volume up`, 'setVolume', 'direction', 'up', {});
+ai(`volume down`, 'setVolume', 'direction', 'down', {});
+ai(`do not disturb`, 'setUiMode', 'mode', 'dnd', {});
+ai(`all sound off`, 'setUiMode', 'mode', 'mute', {});
+ai(`normal`, 'setUiMode', 'mode', 'normal', {});
+ai(`factory reset`, 'factoryReset');
+ai(`night light red`, 'setNightlightColor', 'color', 'red', {});
+ai(`night light white`, 'setNightlightColor', 'color', 'white', {});
+ai(`night light blue`, 'setNightlightColor', 'color', 'blue', {});
 
-  "turn on the light":                { "intent": "turnOn", "entities": ["light"] },
-  "turn on the lights":               { "intent": "turnOn", "entities": ["lights"] },
-  "turn the light on":                { "intent": "turnOn", "entities": ["light"] },
-  "turn the lights on":               { "intent": "turnOn", "entities": ["lights"] },
+// Demo dialogs
+ai(`make me a sandwich`, 'xkcd', 'number', '149', {});
+ai(`sudo make me a sandwich`, 'xkcd', 'number', '149', {}, 'type', 'sudo', {});
 
-  "turn off the light":               { "intent": "turnOff", "entities": ["light"] },
-  "turn off the lights":              { "intent": "turnOff", "entities": ["light"] },
-  "turn the light off":               { "intent": "turnOff", "entities": ["light"] },
-  "turn the lights off":              { "intent": "turnOff", "entities": ["lights"] },
+/*
+ai(`what time is it`, 'getCurrentTime');
+ai(`start a timer for 5 seconds`, 'startTimer', 'builtin.datetime.duration',
+    '5 seconds', { resolution: { duration: 'PT5S' } } );
+ai(`cancel the 5 seconds timer`, 'cancelTimer', 'builtin.datetime.duration',
+    '5 seconds', { resolution: { duration: 'PT5S' } } );
+
+ai(`what's the stock price?`, 'getStockPrice');
+ai(`what's the stock price of apple`, 'getStockPrice', 'stock', 'apple', {});
+ai(`what is the stock price of microsoft`,
+    'getStockPrice', 'stock', 'microsoft', {});
+ai(`how's qualcomm stock doing`, 'getStockPrice', 'stock', 'qualcomm', {});
+ai(`how is google stock doing`, 'getStockPrice', 'stock', 'google', {});
+ai(`how's amazon stock doing today`, 'getStockPrice', 'stock', 'amazon', {});
+ai(`how is mattel stock doing today`, 'getStockPrice', 'stock', 'mattel', {});
+ai(`what's the weather today?`, 'getWeather');
+ai(`what's the weather like today?`, 'getWeather');
+ai(`how's the weather?`, 'getWeather');
+ai(`how's the weather today?`, 'getWeather');
+
+ai(`start music`, 'playMusic');
+ai(`play music`, 'playMusic');
+ai(`stop music`, 'pauseMusic');
+ai(`pause music`, 'pauseMusic');
+
+ai(`turn on the light`, 'turnOn', 'light', 'light', {});
+ai(`turn on the lights`, 'turnOn', 'light', 'lights', {});
+ai(`turn the light on`, 'turnOn', 'light', 'light', {});
+ai(`turn the lights on`, 'turnOn', 'light', 'lights', {});
+
+ai(`turn off the light`, 'turnOff', 'light', 'light', {});
+ai(`turn off the lights`, 'turnOff', 'light', 'lights', {});
+ai(`turn the light off`, 'turnOff', 'light', 'light', {});
+ai(`turn the lights off`, 'turnOff', 'light', 'lights', {});
 */
 
-};
-
-/* eslint-enable */
+module.exports = intentions;

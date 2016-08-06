@@ -45,6 +45,13 @@ suite(`userScript`, () => {
     done();
   });
 
+  test(`Demo test - Test no stock`, async (done) => {
+    tester.speak(`What's the stock price?`);
+    await tester.listenCheck(
+        `Sorry, I'm not sure which stock you are asking about`, `idle`);
+    done();
+  });
+
   test(`Demo test - Test Apple stock`, async (done) => {
     tester.speak(`What's the stock price of Apple?`);
     await tester.listenCheck(`Apple`, `idle`);

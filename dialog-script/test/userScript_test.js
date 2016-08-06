@@ -68,7 +68,7 @@ suite(`userScript`, () => {
         hear: unknownText,
         nextState: `idle`,
       }, {
-        speak: `What's going on?`,
+        speak: `What's really going on?`,
         hear: unknownText,
         nextState: `idle`,
       },

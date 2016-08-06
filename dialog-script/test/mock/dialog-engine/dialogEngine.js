@@ -8,9 +8,12 @@ import createLog from 'silk-log';
 
 import type {Readable} from 'stream';
 
+export type Entity = EntityResponse;
+export type Entities = Array<Entity>;
+
 export type Intention = {
   intent: string;
-  entities: Array<string>;
+  entities: Entities;
 };
 
 export type LuisApp = {
@@ -40,6 +43,30 @@ type IntentResponse = {
   score: number;
 };
 
+type EntityResponse = {
+  type: string;
+  entity: string;
+  startIndex: number;
+  endIndex: number;
+  score: number;
+} | {
+  type: 'builtin.datetime.duration';
+  entity: string;
+  startIndex: number;
+  endIndex: number;
+  resoution: {
+    duration: string;
+  };
+} | {
+  type: 'builtin.datetime.date';
+  entity: string;
+  startIndex: number;
+  endIndex: number;
+  resoution: {
+    date: string;
+  };
+};
+
 export const UNKNOWN_INTENT = `unknownIntent`;
 
 const log = createLog(`mock-dialog-engine`);
@@ -67,6 +94,7 @@ export default class DialogEngine extends EventEmitter {
 
   _options: DialogEngineOptions;
   _scriptOptions: DialogScriptOptions;
+  uiMode = 'normal';
 
   constructor(options?: DialogEngineOptions = {}) {
     super();
@@ -186,7 +214,8 @@ export default class DialogEngine extends EventEmitter {
       .then(intentions => {
         let intention;
         for (intention of intentions) {
-          if (intention.intent !== UNKNOWN_INTENT) {
+          if (intention.intent !== UNKNOWN_INTENT &&
+              intention.intent !== 'None') {
             break;
           }
         }
@@ -216,10 +245,12 @@ export default class DialogEngine extends EventEmitter {
       };
     }
 
-    const entities = [];
-    for (let entity of response.entities) {
-      if (entity.score >= 0.35) {
-        entities.push(entity.entity);
+    const entities: Array<Entity> = [];
+    let entity: EntityResponse;
+    for (entity of response.entities) {
+      // builtins have undefined scores. Consider no score as high score
+      if (entity.score === undefined || entity.score >= 0.35) {
+        entities.push(entity);
       }
     }
 

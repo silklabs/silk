@@ -5,6 +5,7 @@
 import DialogEngine from './dialogEngine';
 
 import type {DialogEngineOptions} from './dialogEngine';
+export type {Intention, Entity, Entities} from './dialogEngine';
 
 let instance: ?DialogEngine = null;
 

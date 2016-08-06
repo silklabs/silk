@@ -9,6 +9,7 @@ import invariant from 'assert';
 
 import type {Environment} from '../environment';
 import {urlEncodeParams} from '../utils';
+import type {Entities} from 'silk-dialog-engine';
 
 const log = createLog(`script-generic-stock-saga`);
 
@@ -80,14 +81,22 @@ function fetchStockPrice(stock: string): Promise<CurrentStockPrice> {
 
 export function* getStockPrice(
   environment: Environment,
-  stock: string,
+  entities: Entities,
 ): Generator<Object, void, any> {
   invariant(environment);
 
   const {speak} = environment;
   invariant(speak);
 
-  log.info(`Starting stock saga for ${stock}`);
+  log.info(`Starting stock saga`);
+
+  if (entities.length === 0 || entities[0].type !== 'stock') {
+    yield call(speak,
+        `Sorry, I'm not sure which stock you are asking about`, `idle`);
+    return;
+  }
+
+  const stock = entities[0].entity;
   let stockPrice = yield call(fetchStockPrice, stock);
   invariant(stockPrice);
 

@@ -61,12 +61,14 @@ export default function*(
       const {intent, entities} = event;
 
       if ((intent === `startNursing`) ||
-          (intent === `None` && entities.some((e) => e === `nursing`))) {
+          (intent === `None` && entities.length === 1 &&
+           entities[0].entity === `nursing`)) {
         type = 'nursing';
         break;
       }
-      if (intent === `None` &&
-          entities.some((e) => e === `bottle` || e === `formula`)) {
+      if (intent === `None` && entities.length === 1 &&
+          (entities[0].entity === `bottle` ||
+           entities[0].entity === `formula`)) {
         type = 'bottle';
         break;
       }

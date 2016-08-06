@@ -67,6 +67,7 @@ export default class DialogEngine extends EventEmitter {
 
   _options: DialogEngineOptions;
   _scriptOptions: DialogScriptOptions;
+  uiMode = 'normal';
 
   constructor(options?: DialogEngineOptions = {}) {
     super();
@@ -186,7 +187,8 @@ export default class DialogEngine extends EventEmitter {
       .then(intentions => {
         let intention;
         for (intention of intentions) {
-          if (intention.intent !== UNKNOWN_INTENT) {
+          if (intention.intent !== UNKNOWN_INTENT &&
+              intention.intent !== 'None') {
             break;
           }
         }

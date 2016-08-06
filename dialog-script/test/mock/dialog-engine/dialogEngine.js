@@ -8,9 +8,12 @@ import createLog from 'silk-log';
 
 import type {Readable} from 'stream';
 
+export type Entity = EntityResponse;
+export type Entities = Array<Entity>;
+
 export type Intention = {
   intent: string;
-  entities: Array<string>;
+  entities: Entities;
 };
 
 export type LuisApp = {
@@ -38,6 +41,30 @@ export type DialogScriptOptions = {
 type IntentResponse = {
   intent: string;
   score: number;
+};
+
+type EntityResponse = {
+  type: string;
+  entity: string;
+  startIndex: number;
+  endIndex: number;
+  score: number;
+} | {
+  type: 'builtin.datetime.duration';
+  entity: string;
+  startIndex: number;
+  endIndex: number;
+  resoution: {
+    duration: string;
+  };
+} | {
+  type: 'builtin.datetime.date';
+  entity: string;
+  startIndex: number;
+  endIndex: number;
+  resoution: {
+    date: string;
+  };
 };
 
 export const UNKNOWN_INTENT = `unknownIntent`;
@@ -218,10 +245,12 @@ export default class DialogEngine extends EventEmitter {
       };
     }
 
-    const entities = [];
-    for (let entity of response.entities) {
-      if (entity.score >= 0.35) {
-        entities.push(entity.entity);
+    const entities: Array<Entity> = [];
+    let entity: EntityResponse;
+    for (entity of response.entities) {
+      // builtins have undefined scores. Consider no score as high score
+      if (entity.score === undefined || entity.score >= 0.35) {
+        entities.push(entity);
       }
     }
 

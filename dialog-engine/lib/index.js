@@ -24,6 +24,8 @@ import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
 import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
 import TextToIntention from './textToIntention';
 
+export type {Intention, Entity, Entities} from './textToIntention';
+
 import type {
   Intention,
   LuisOptions,

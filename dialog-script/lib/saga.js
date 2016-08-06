@@ -297,14 +297,14 @@ export default function*(
         break;
       case `getStockPrice`:
         sagaFunction = getStockPrice;
-        args.push(entities[0]);
+        args.push(entities);
         break;
       case `getWeather`:
         sagaFunction = getWeather;
         break;
       case `xkcd`:
         sagaFunction = xkcd;
-        args = args.concat(entities);
+        args.push(entities);
         break;
       case `resetZipcode`:
         sagaFunction = resetZipcode;
@@ -322,12 +322,12 @@ export default function*(
         sagaFunction = getArtist;
         break;
       case `turnOn`:
-        if (entities[0] === 'light' || entities[0] === 'lights') {
+        if (entities[0].type === 'light') {
           sagaFunction = turnOnLight;
         }
         break;
       case `turnOff`:
-        if (entities[0] === 'light' || entities[0] === 'lights') {
+        if (entities[0].type === 'light') {
           sagaFunction = turnOffLight;
         }
         break;

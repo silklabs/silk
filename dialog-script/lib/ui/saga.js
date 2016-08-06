@@ -9,6 +9,7 @@ import volume from 'silk-volume';
 import lights from 'silk-lights';
 import factoryReset from 'silk-factory-reset';
 import type {Environment} from '../environment';
+import type {Entities} from 'silk-dialog-engine';
 
 const log = createLog(`dialog-script-ui-saga`);
 
@@ -37,30 +38,33 @@ export function* requestFactoryReset(
 
 export function* setUiMode(
   environment: Environment,
-  entities: Array<string>
+  entities: Entities
 ): Generator<Object, void, any> {
   const {dialogEngine, speak} = environment;
 
   invariant(entities.length === 1);
-  switch (entities[0]) {
+  let entity = entities[0].entity;
+
+  switch (entity) {
   case 'normal':
   case 'mute':
   case 'dnd':
-    dialogEngine.uiMode = entities[0];
+    dialogEngine.uiMode = entity;
     break;
   default:
-    invariant(false, `Invalid mode: ${entities[0]}`);
+    invariant(false, `Invalid mode: ${entity}`);
   }
   yield call(speak, 'ok', 'idle');
 }
 
 export function* setNightlightColor(
   environment: Environment,
-  entities: Array<string>
+  entities: Entities
 ): Generator<Object, void, any> {
   const {speak} = environment;
 
   invariant(entities.length === 1);
+  let entity = entities[0].entity;
 
   const nightlight = lights.get('nightlight');
   if (!nightlight) {
@@ -68,7 +72,7 @@ export function* setNightlightColor(
     return;
   }
 
-  switch (entities[0]) {
+  switch (entity) {
   case 'red':
     nightlight.set(lights.RED);
     break;
@@ -79,7 +83,7 @@ export function* setNightlightColor(
     nightlight.set(lights.BLUE);
     break;
   default:
-    yield call(speak, `Unsupported nightlight color: ${entities[0]}`, 'idle');
+    yield call(speak, `Unsupported nightlight color: ${entity}`, 'idle');
     return;
   }
   yield call(speak, 'ok', 'idle');
@@ -87,13 +91,15 @@ export function* setNightlightColor(
 
 export function* setVolume(
   environment: Environment,
-  entities: Array<string>
+  entities: Entities
 ): Generator<Object, void, any> {
   const {speak} = environment;
 
   invariant(entities.length === 1);
-  log.error('SETVOL', entities[0]);
-  if (entities[0] === 'up') {
+  let entity = entities[0].entity;
+
+  log.error('SETVOL', entity);
+  if (entity === 'up') {
     volume.level = Math.min(volume.level + 10, 100);
   } else {
     volume.level = Math.max(volume.level - 10, 0);

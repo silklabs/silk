@@ -34,16 +34,12 @@ function* queryBottleType(
 
     const {intent, entities} = event;
 
-    if (intent === `None`) {
-      for (const entity of entities) {
-        if (entity === `breast milk`) {
-          type = `milk`;
-          break;
-        }
-        if (entity === `formula`) {
-          type = `formula`;
-          break;
-        }
+    if (intent === `None` && entities.length === 1) {
+      let entity = entities[0].entity;
+      if (entity === `breast milk`) {
+        type = `milk`;
+      } else if (entity === `formula`) {
+        type = `formula`;
       }
     }
 
@@ -82,7 +78,7 @@ function* queryAmount(
 
     if (intent === `None`) {
       for (const entity of entities) {
-        const tokens = entity.split(` `);
+        const tokens = entity.entity.split(` `);
         const num = parseInt(tokens[0]);
         if (!isNaN(num)) {
           amount = num;

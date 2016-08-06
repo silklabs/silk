@@ -17,6 +17,7 @@ import {
 
 import type {TimerState} from './reducers';
 import type {Environment} from '../environment';
+import type {Entity, Entities} from 'silk-dialog-engine';
 
 type WakeConditions = {
   modify: Object,
@@ -39,35 +40,48 @@ export function sortTimers(a: TimerState, b: TimerState): number {
              0;
 }
 
-// TODO Make this smarter.
-export function timerEntityToMs(entities: string): ?number {
-  const tokens = entities.split(` `);
-  if (!tokens.length) {
+export function timerEntityToMs(entity: Entity): ?number {
+  // `duration` encoding for builtin.datetime.duration
+  //   PT1H     - 1 hour
+  //   PT1M     - 1 minute
+  //   PT1H30M  - 1 hour 30 min
+  //   PT100S   - 100 seconds
+  //   PT10M10S - 10 minute 10 seconds
+
+  // Not supported for timers
+  //   P1D - 1 day
+  //   P1W - 1 week
+  //   P1M - 1 month
+  //   P1Y - 1 year
+
+  if (entity.type !== 'builtin.datetime.duration' ||
+      entity.resolution === undefined ||
+      entity.resolution.duration === undefined ||
+      entity.resolution.duration.substr(0, 2) !== 'PT') {
     return null;
   }
 
-  let [value, unit] = tokens;
-  value = parseInt(value);
-  if (isNaN(value)) {
-    return null;
+  let duration = entity.resolution.duration.substr(2);
+  let durationMs = 0;
+  let match;
+  while (match = duration.match(/^(\d+)([SMH])/)) { // eslint-disable-line no-cond-assign
+    log.debug(`duration: ${match[1]} ${match[2]}`);
+    switch (match[2]) {
+    case 'S':
+      durationMs += match[1] * 1000;
+      break;
+    case 'M':
+      durationMs += match[1] * 1000 * 60;
+      break;
+    case 'H':
+      durationMs += match[1] * 1000 * 60 * 60;
+      break;
+    default:
+      return null;
+    }
+    duration = duration.substring(match[0].length);
   }
-
-  switch (unit) {
-  case `second`:
-  case `seconds`:
-    return value * 1000;
-  case `minute`:
-  case `minutes`:
-    return value * 1000 * 60;
-  case `hour`:
-  case `hours`:
-    return value * 1000 * 60 * 60;
-  case `day`:
-  case `days`:
-    return value * 1000 * 60 * 60 * 24;
-  default:
-    return null;
-  }
+  return (durationMs === 0 ? null : durationMs);
 }
 
 /**
@@ -183,7 +197,7 @@ export function* timerMonitorSaga(
 
       if (dialogEngine.uiMode === 'normal') {
         // Alert the user.
-        yield call(speak, `Timer ${timer.id} has expired`);
+        yield call(speak, `Timer ${timer.id} has expired`, 'idle');
       }
     }
   } finally {
@@ -200,7 +214,7 @@ export function* timerMonitorSaga(
 export default function* modifyTimers(
   environment: Environment,
   type: 'start' | 'cancel',
-  entities: Array<string>
+  entities: Entities
 ): Generator<Object, void, any> {
   const {speak} = environment;
 
@@ -214,7 +228,7 @@ export default function* modifyTimers(
   }
 
   if (durationMs === null) {
-    yield call(speak, `Sorry, I didn't understand your request`, `idle`);
+    yield call(speak, `Sorry, I'm not understanding your timer request`, `idle`);
     return;
   }
 
@@ -222,6 +236,7 @@ export default function* modifyTimers(
 
   // Add a new timer via |put|.
   if (type === `start`) {
+    log.info(`Adding timer for ${durationMs / 1000} seconds`);
     yield put(addTimer(durationMs, Date.now() + durationMs));
     yield call(speak, `Ok, I've started a timer`, `idle`);
     return;

@@ -70,9 +70,9 @@ suite(`userScript`, () => {
     done();
   });
 
-  test(`Demo test - Test Google stock`, async (done) => {
-    tester.speak(`How is Google stock doing?`);
-    await tester.listenCheck(`Google`, `idle`);
+  test(`Demo test - Test Alphabet stock`, async (done) => {
+    tester.speak(`How is Alphabet stock doing?`);
+    await tester.listenCheck(`Alphabet`, `idle`);
     done();
   });
 

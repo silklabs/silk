@@ -18,22 +18,55 @@ export type CurrentStockPrice = {
   change: number
 };
 
-function fetchStockPrice(stock: string): Promise<CurrentStockPrice> {
-  log.info(`Getting current stock price for ${stock}`);
+function fetchStockTicker(stock: string): Promise<string> {
+  log.info(`Getting current stock ticker for ${stock}`);
 
-  // TODO, use service for this mapping
-  const ticker = {
-    'apple': 'nasdaq:aapl',
-    'qualcomm': 'nasdaq:qcom',
-    'google': 'nasdaq:goog',
-    'amazon': 'nasdaq:amzn',
-    'mattel': 'nasdaq:mat',
-    'microsoft': 'nasdaq:msft',
-  }[stock];
+  return new Promise((resolve, reject) => {
+    const params = urlEncodeParams({ 'query': stock });
+    const opts = {
+      hostname: 'autoc.finance.yahoo.com',
+      path: `/autoc?${params}&region=1&lang=en`,
+      method: 'GET',
+    };
 
-  if (!ticker) {
-    return Promise.resolve({ price: 0, change: 0});
-  }
+    log.debug(`Issuing http stock request`);
+    log.debug(`options`, opts);
+
+    const req = http.request(opts, (res) => {
+      let data = '';
+      res.once(`error`, (error) => reject(error));
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.once('end', () => {
+        log.debug(`Request complete ${res.statusCode}`);
+
+        if (res.statusCode === 200) {
+          try {
+            let results = JSON.parse(data).ResultSet.Result;
+            log.debug(results);
+
+            let ticker = results.find((result) => {
+              return result.exchDisp === 'NASDAQ';
+            });
+            if (!ticker) {
+              throw new Error(`Failed to get ticker`);
+            }
+            resolve(ticker.symbol);
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(new Error(`Request failed code: ${res.statusCode}`));
+        }
+      });
+    });
+    req.end();
+  });
+}
+
+function fetchStockPrice(ticker: string): Promise<CurrentStockPrice> {
+  log.debug(`Getting current stock price for ${ticker}`);
 
   return new Promise((resolve, reject) => {
     // http://www.google.com/finance/info?q=NASDAQ%3aqcom
@@ -44,7 +77,7 @@ function fetchStockPrice(stock: string): Promise<CurrentStockPrice> {
       method: 'GET',
     };
 
-    log.info(`Issuing http stock request`);
+    log.debug(`Issuing http stock request`);
     log.debug(`options`, opts);
 
     const req = http.request(opts, (res) => {
@@ -65,7 +98,7 @@ function fetchStockPrice(stock: string): Promise<CurrentStockPrice> {
             if ('l' in result[0] && 'cp' in result[0]) {
               resolve({price: result[0].l, change: result[0].cp});
             } else {
-              resolve({price: 0, change: 0});
+              reject(new Error(`${result}`));
             }
           } catch (error) {
             reject(error);
@@ -97,25 +130,26 @@ export function* getStockPrice(
   }
 
   const stock = entities[0].entity;
-  let stockPrice = yield call(fetchStockPrice, stock);
-  invariant(stockPrice);
-
-  log.debug(stockPrice);
-
-  if (stockPrice.price === 0) {
-    yield call(speak,
-        `Sorry, I'm unable to get the stock price of ${stock}`, `idle`);
-  } else {
-    let text;
-    if (stockPrice.change < 0) {
-      text = `is down ${Math.abs(stockPrice.change)}%`;
-    } else if (stockPrice.change === 0) {
-      text = `has not changed`;
-    } else {
-      text = `is up ${stockPrice.change}%`;
-    }
-    text = `${stock} ${text}, currently at $${stockPrice.price}`;
-    yield call(speak, text, `idle`);
+  let stockPrice;
+  try {
+    let ticker = yield call(fetchStockTicker, stock);
+    stockPrice = yield call(fetchStockPrice, ticker);
+    invariant(stockPrice);
+    log.debug(stockPrice);
+  } catch (err) {
+    log.error(`${err}`);
+    yield call(speak, `Sorry, I'm unable to get the stock price for ${stock}`, `idle`);
+    return;
   }
 
+  let text;
+  if (stockPrice.change < 0) {
+    text = `is down ${Math.abs(stockPrice.change)}%`;
+  } else if (stockPrice.change === 0) {
+    text = `has not changed`;
+  } else {
+    text = `is up ${stockPrice.change}%`;
+  }
+  text = `${stock} ${text}, currently at $${stockPrice.price}`;
+  yield call(speak, text, `idle`);
 }

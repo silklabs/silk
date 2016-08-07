@@ -457,7 +457,7 @@ class Cameras extends EventEmitter {
   // Connect to given deviceId.
   _webrtcConnect(deviceId) {
     // TODO: We should not rely on socket.io in the future to detect
-    // connected devices but for now this is very convient.
+    // connected devices but for now this is very convenient.
     const devicePeer = call(Api, deviceId);
     // XXX: This may fail and should be retired.
     devicePeer.connect();

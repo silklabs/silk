@@ -122,11 +122,16 @@ export function actionFromAsyncPayloadGen<S, T, I, P>(
     dispatch({type, input, requested: true});
     return genPayload(getState(), input).then(
       (payload: P) => {
-        dispatch({type, input, payload});
+        process.nextTick(() => dispatch({type, input, payload}));
         return payload;
       },
       (error: Error) => {
-        dispatch({type, input, payload: error, error: true});
+        process.nextTick(() => dispatch({
+          type,
+          input,
+          payload: error,
+          error: true,
+        }));
         throw error;
       }
     );

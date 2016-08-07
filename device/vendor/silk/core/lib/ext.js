@@ -527,6 +527,9 @@ class Env extends EventEmitter {
 
       this._addEvents('server', server, this.server, ['disconnect']);
 
+      // Very sorry!! Remove once connections.js is moved into its own module
+      this.server.connections = deviceObjects.server.connections;
+
       /**
        * Send the event named `event` with payload `data` to the
        * server.

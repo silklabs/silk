@@ -118,7 +118,9 @@ class Dialog {
       uiMode = 'mute';
       break;
     }
-    this._dialogEngine = createDialogEngine(options, uiMode);
+
+    const dialogRtc = env.server.connections.getChannel('dialog');
+    this._dialogEngine = createDialogEngine(options, uiMode, dialogRtc);
     this._loadDialogScript();
     this._input = new Input();
 

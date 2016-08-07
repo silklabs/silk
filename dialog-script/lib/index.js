@@ -39,6 +39,26 @@ class DialogScript {
     // Immediately kick off the async actions needed to load state from disk.
     log.debug(`Loading store`);
     getStore().then((store) => this._start(dialogEngine, store));
+
+    // Example real-time communication with any connected apps:
+    // - Broadcast the time every 10 seconds
+    // - Echo back anything sent
+    const broadcastTime = () => {
+      if (this._unloaded) {
+        return;
+      }
+      dialogEngine.rtc.emit('time', {now: Date.now()});
+      setTimeout(broadcastTime, 10 * 1000);
+    };
+    broadcastTime();
+
+    dialogEngine.rtc.on('echo', this._onRtcEcho);
+    // End RTC example
+  }
+
+  _onRtcEcho: ((payload: Object) => void) = (payload) => {
+    log.info('echo', payload);
+    dialogEngine.rtc.emit('echo', payload);
   }
 
   _start(dialogEngine: DialogEngine, store: Object): void {
@@ -99,6 +119,8 @@ class DialogScript {
 
     this._unloaded = true;
     this._mostRecentState = null;
+
+    dialogEngine.rtc.removeListener('echo', this._onRtcEcho);
 
     if (this._persistTimeout) {
       clearTimeout(this._persistTimeout);

@@ -127,12 +127,24 @@ export class DialogEngine extends EventEmitter {
   _options: DialogEngineOptions;
   _scriptOptions: DialogScriptOptions;
 
-  constructor(options: DialogEngineOptions, uiMode: DialogUiMode) {
+  /**
+   * Real-time communication channel with any apps that are currently connected
+   * to the device
+   */
+  rtc: EventEmitter;
+
+  constructor(options: DialogEngineOptions,
+              uiMode: DialogUiMode,
+              rtc: ?EventEmitter) {
 
     super();
 
     this._options = options;
     this._uiMode = uiMode;
+    if (!rtc) {
+      rtc = new EventEmitter();
+    }
+    this.rtc = rtc;
   }
 
   get uiMode(): DialogUiMode {
@@ -316,10 +328,11 @@ let resolveDialogEnginePromise = null;
 
 export function createDialogEngine(
   options: DialogEngineOptions,
-  uiMode: DialogUiMode = 'normal'
+  uiMode: DialogUiMode = 'normal',
+  rtcChannel: ?EventEmitter,
 ): DialogEngine {
   if (!instance) {
-    instance = new DialogEngine(options, uiMode);
+    instance = new DialogEngine(options, uiMode, rtcChannel);
     if (resolveDialogEnginePromise) {
       resolveDialogEnginePromise(instance);
       resolveDialogEnginePromise = null;

@@ -22,7 +22,7 @@ import {
 } from 'silk-streams';
 
 import type { Duplex } from 'stream';
-import type { Peer, UserMediaConstraints } from 'silk-rtc';
+import type { Peer, StructuredDataChannel, UserMediaConstraints } from 'silk-rtc';
 
 import api from 'silk-device-api';
 
@@ -31,6 +31,53 @@ const MAX_RECONNECT_SLEEP = 30 * 1000;
 const RECONNECT_SLEEP_INTERVAL = 250;
 
 type States = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
+
+
+export class ChannelEventEmitter extends EventEmitter {
+  _label: string;
+  _connections: Connections;
+
+  constructor(label: string, connections: Connections) {
+    super();
+    this._label = label;
+    this._connections = connections;
+    this.on('newListener', this._newListener);
+    // NOTE: Explicitly not bothering to register for 'removeListener' to clean
+    //       up the channel.on() registrations right now.  The number of
+    //       channels/events are expected to be quite low and static, and the
+    //       overhead of calling EventEmitter.emit() with no listeners is quite
+    //       low.
+  }
+
+  _emitLocalChannelEvent(event: string, payload:Object) {
+    super.emit(event, payload);
+  }
+
+  _newListener = (event: string, listener: Function) => {
+    for (let recipient of this._connections._connections) {
+      const channel = recipient.getChannel(this._label);
+      if (channel) {
+        channel.on(event, data => this._emitLocalChannelEvent(event, data));
+      }
+    }
+  };
+
+  _onChannel(channel: StructuredDataChannel) {
+    // $FlowFixMe: Flow thinks that EventEmitter.eventNames() doesn't exist, https://github.com/facebook/flow/pull/2206
+    const eventNames: Array<string> = this.eventNames();
+
+    eventNames.forEach(event => {
+      if (event !== 'newListener') {
+        channel.on(event, data => this._emitLocalChannelEvent(event, data));
+      }
+    });
+  }
+
+  emit(event: string, payload: Object): bool {
+    return this._connections.send(this._label, event, payload);
+  }
+}
+
 
 export default class Connections extends EventEmitter {
 
@@ -47,6 +94,7 @@ export default class Connections extends EventEmitter {
   _serverUrl: ?string;
   _demux: ?Duplex = null;
   _connections: Set<Peer> = new Set();
+  _channelEmitters: {[key: string]: ChannelEventEmitter} = {};
 
   get connected(): bool {
     if (!this._ws) {
@@ -116,16 +164,36 @@ export default class Connections extends EventEmitter {
     invariant(this.state === 'disconnected');
   }
 
-  send(type: string, event: string, payload: Object) {
+  /**
+   * Retrieves an EventEmitter for the requested channel
+   */
+  getChannel(label: string): EventEmitter {
+    let emitter = this._channelEmitters[label];
+    if (!emitter) {
+      emitter = this._channelEmitters[label] =
+        new ChannelEventEmitter(label, this);
+    }
+    return emitter;
+  }
+
+
+  /**
+   * TODO: Deprecate send() in favor of .getChannel()
+   */
+  send(channelName: string, event: string, payload: Object): bool {
+    let sent = false;
     for (let recipient of this._connections) {
-      const channel = recipient.getChannel(type);
+      const channel = recipient.getChannel(channelName);
       if (channel) {
         invariant(channel);
         channel.emit(event, payload);
-      } else {
-        log.warn(`Attempted to send on non-existant channel: ${type}`);
+        sent = true;
       }
     }
+    if (!sent) {
+      log.warn(`Attempted to send on non-existent channel: ${channelName}`);
+    }
+    return sent;
   }
 
   _setState(newState: States): void {
@@ -309,6 +377,16 @@ export default class Connections extends EventEmitter {
       stream.end();
     }
 
+    const onDataChannel = (channel: StructuredDataChannel) => {
+      log.verbose('new data channel', channel.label);
+
+      // Check if there is already interest in this channel
+      let emitter = this._channelEmitters[channel.label];
+      if (emitter) {
+        emitter._onChannel(channel);
+      }
+    };
+
     const onError = (err) => {
       log.error(`Error in signaling client: ${err}`);
       cleanup();
@@ -321,11 +399,13 @@ export default class Connections extends EventEmitter {
 
     const cleanup = () => {
       log.info('Cleaning up connection');
+      recipient.removeListener('datachannel', onDataChannel);
       recipient.removeListener('error', onError);
       recipient.removeListener('close', onClose);
       this._connections.delete(recipient);
     };
 
+    recipient.on('datachannel', onDataChannel);
     recipient.on('error', onError);
     recipient.on('close', onClose);
 
@@ -335,10 +415,17 @@ export default class Connections extends EventEmitter {
       return;
     }
 
+    // Connect any data channels that are already present
+    for (let label in this._channelEmitters) {
+      const channel = recipient.getChannel(label);
+      if (channel) {
+        onDataChannel(channel);
+      }
+    }
+
     this._connections.add(recipient);
     log.info('Registered a new client.');
     this.emit('connection', recipient);
-
   };
 
   _cleanupListeners: () => void = () => {

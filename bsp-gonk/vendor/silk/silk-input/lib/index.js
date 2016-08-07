@@ -89,8 +89,8 @@ let inputDevices = {};
  * const log = require('silk-alog');
  *
  * let input = new Input();
- * input.on('down', e => log.info('Key down event', JSON.stringify(e));
- * input.on('up', e => log.info('Key up event', JSON.stringify(e));
+ * input.on('down', e => log.info('Key down event', JSON.stringify(e)));
+ * input.on('up', e => log.info('Key up event', JSON.stringify(e)));
  */
 export default class Input extends events.EventEmitter {
   constructor() {

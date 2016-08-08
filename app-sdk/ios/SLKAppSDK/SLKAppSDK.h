@@ -14,3 +14,10 @@ FOUNDATION_EXPORT const unsigned char SLKAppSDKVersionString[];
 
 #import <SLKAppSDK/SLKAppSDKService.h>
 #import <SLKAppSDK/SLKAppSDKDelegate.h>
+
+
+// ObjC -> Swift bridging headers aren't possible in Frameworks, so this is a
+// work-around. If you add any files here, make sure you also add them to the
+// public section in the Headers build phase.
+#import "RCTBridge.h"
+#import "RCTEventDispatcher.h"

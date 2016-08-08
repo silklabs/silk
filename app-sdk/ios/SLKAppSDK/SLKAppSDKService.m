@@ -11,6 +11,7 @@
 #import "SLKAppSDKService.h"
 #import "SLKAppSDKDelegate.h"
 #import "SLKAppSDKEventEmitter.h"
+#import <SLKAppSDK/SLKAppSDK-Swift.h>
 
 @interface SLKAppSDKService () <RCTBridgeDelegate>
 
@@ -71,7 +72,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (NSArray *)extraModulesForBridge:(RCTBridge *)bridge
 {
-  return @[_eventEmitter];
+  return @[_eventEmitter, [BLESocketManager new]];
 }
 
 @end

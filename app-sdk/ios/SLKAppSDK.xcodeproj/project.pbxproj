@@ -7,6 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3504B09C1D5878F200C327FA /* BLESocketManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3504B0981D5878F200C327FA /* BLESocketManager.m */; };
+		3504B09D1D5878F200C327FA /* BLESocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3504B0991D5878F200C327FA /* BLESocketManager.swift */; };
+		3504B09E1D5878F200C327FA /* BLESocketPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3504B09A1D5878F200C327FA /* BLESocketPeripheral.swift */; };
+		3504B09F1D5878F200C327FA /* RegionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3504B09B1D5878F200C327FA /* RegionMonitor.swift */; };
+		3504B1001D587CDA00C327FA /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3504B0FE1D587CDA00C327FA /* DebugLog.swift */; };
+		3504B2151D587E9C00C327FA /* RCTBridge.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1451D587E8800C327FA /* RCTBridge.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504B2161D587EF500C327FA /* RCTBridgeDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1471D587E8800C327FA /* RCTBridgeDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504B2171D587EFD00C327FA /* RCTBridgeModule.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1491D587E8800C327FA /* RCTBridgeModule.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504B2181D587F0800C327FA /* RCTDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B14E1D587E8800C327FA /* RCTDefines.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504B2191D587F0E00C327FA /* RCTFrameUpdate.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1531D587E8800C327FA /* RCTFrameUpdate.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504B21A1D587F1300C327FA /* RCTInvalidating.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1571D587E8800C327FA /* RCTInvalidating.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504B21B1D587F1800C327FA /* RCTJavaScriptExecutor.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1581D587E8800C327FA /* RCTJavaScriptExecutor.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3504B21C1D587F9F00C327FA /* RCTEventDispatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1511D587E8800C327FA /* RCTEventDispatcher.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3504D0631D2B978100BB24A2 /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3504D0621D2B978100BB24A2 /* libstdc++.tbd */; };
 		3504D0731D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3504D0711D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.m */; };
 		3504D0741D2C4BA300BB24A2 /* SLKAppSDKDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504D06C1D2C0E1D00BB24A2 /* SLKAppSDKDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -92,6 +105,46 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3504B0981D5878F200C327FA /* BLESocketManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLESocketManager.m; sourceTree = "<group>"; };
+		3504B0991D5878F200C327FA /* BLESocketManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketManager.swift; sourceTree = "<group>"; };
+		3504B09A1D5878F200C327FA /* BLESocketPeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLESocketPeripheral.swift; sourceTree = "<group>"; };
+		3504B09B1D5878F200C327FA /* RegionMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionMonitor.swift; sourceTree = "<group>"; };
+		3504B0FE1D587CDA00C327FA /* DebugLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		3504B1411D587E8800C327FA /* RCTAssert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTAssert.h; sourceTree = "<group>"; };
+		3504B1441D587E8800C327FA /* RCTBridge+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RCTBridge+Private.h"; sourceTree = "<group>"; };
+		3504B1451D587E8800C327FA /* RCTBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTBridge.h; sourceTree = "<group>"; };
+		3504B1471D587E8800C327FA /* RCTBridgeDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTBridgeDelegate.h; sourceTree = "<group>"; };
+		3504B1481D587E8800C327FA /* RCTBridgeMethod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTBridgeMethod.h; sourceTree = "<group>"; };
+		3504B1491D587E8800C327FA /* RCTBridgeModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTBridgeModule.h; sourceTree = "<group>"; };
+		3504B14A1D587E8800C327FA /* RCTBundleURLProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTBundleURLProvider.h; sourceTree = "<group>"; };
+		3504B14C1D587E8800C327FA /* RCTConvert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTConvert.h; sourceTree = "<group>"; };
+		3504B14E1D587E8800C327FA /* RCTDefines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTDefines.h; sourceTree = "<group>"; };
+		3504B14F1D587E8800C327FA /* RCTDisplayLink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTDisplayLink.h; sourceTree = "<group>"; };
+		3504B1511D587E8800C327FA /* RCTEventDispatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTEventDispatcher.h; sourceTree = "<group>"; };
+		3504B1531D587E8800C327FA /* RCTFrameUpdate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTFrameUpdate.h; sourceTree = "<group>"; };
+		3504B1551D587E8800C327FA /* RCTImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTImageSource.h; sourceTree = "<group>"; };
+		3504B1571D587E8800C327FA /* RCTInvalidating.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTInvalidating.h; sourceTree = "<group>"; };
+		3504B1581D587E8800C327FA /* RCTJavaScriptExecutor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTJavaScriptExecutor.h; sourceTree = "<group>"; };
+		3504B1591D587E8800C327FA /* RCTJavaScriptLoader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTJavaScriptLoader.h; sourceTree = "<group>"; };
+		3504B15B1D587E8800C327FA /* RCTKeyCommands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTKeyCommands.h; sourceTree = "<group>"; };
+		3504B15D1D587E8800C327FA /* RCTLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTLog.h; sourceTree = "<group>"; };
+		3504B15E1D587E8800C327FA /* RCTLog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTLog.m; sourceTree = "<group>"; };
+		3504B15F1D587E8800C327FA /* RCTModuleData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTModuleData.h; sourceTree = "<group>"; };
+		3504B1611D587E8800C327FA /* RCTModuleMethod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTModuleMethod.h; sourceTree = "<group>"; };
+		3504B1631D587E8800C327FA /* RCTNullability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTNullability.h; sourceTree = "<group>"; };
+		3504B1641D587E8800C327FA /* RCTParserUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTParserUtils.h; sourceTree = "<group>"; };
+		3504B1651D587E8800C327FA /* RCTParserUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTParserUtils.m; sourceTree = "<group>"; };
+		3504B1661D587E8800C327FA /* RCTPerformanceLogger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTPerformanceLogger.h; sourceTree = "<group>"; };
+		3504B1681D587E8800C327FA /* RCTRootView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTRootView.h; sourceTree = "<group>"; };
+		3504B16A1D587E8800C327FA /* RCTRootViewDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTRootViewDelegate.h; sourceTree = "<group>"; };
+		3504B16B1D587E8800C327FA /* RCTRootViewInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTRootViewInternal.h; sourceTree = "<group>"; };
+		3504B16C1D587E8800C327FA /* RCTTouchEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTTouchEvent.h; sourceTree = "<group>"; };
+		3504B16E1D587E8800C327FA /* RCTTouchHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTTouchHandler.h; sourceTree = "<group>"; };
+		3504B1701D587E8800C327FA /* RCTURLRequestDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTURLRequestDelegate.h; sourceTree = "<group>"; };
+		3504B1711D587E8800C327FA /* RCTURLRequestHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTURLRequestHandler.h; sourceTree = "<group>"; };
+		3504B1721D587E8800C327FA /* RCTUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTUtils.h; sourceTree = "<group>"; };
+		3504B1741D587E8800C327FA /* RCTWebSocketProxy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTWebSocketProxy.h; sourceTree = "<group>"; };
+		3504B1751D587E8800C327FA /* RCTWebSocketProxyDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTWebSocketProxyDelegate.h; sourceTree = "<group>"; };
 		3504D0621D2B978100BB24A2 /* libstdc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libstdc++.tbd"; path = "usr/lib/libstdc++.tbd"; sourceTree = SDKROOT; };
 		3504D06C1D2C0E1D00BB24A2 /* SLKAppSDKDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SLKAppSDKDelegate.h; sourceTree = "<group>"; };
 		3504D0701D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKAppSDKEventEmitter.h; sourceTree = "<group>"; };
@@ -155,6 +208,78 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3504B0971D5878F200C327FA /* SLKBLESocket */ = {
+			isa = PBXGroup;
+			children = (
+				3504B0981D5878F200C327FA /* BLESocketManager.m */,
+				3504B0991D5878F200C327FA /* BLESocketManager.swift */,
+				3504B09A1D5878F200C327FA /* BLESocketPeripheral.swift */,
+				3504B09B1D5878F200C327FA /* RegionMonitor.swift */,
+			);
+			name = SLKBLESocket;
+			path = "../../../ble-socket/ios/SLKBLESocket";
+			sourceTree = "<group>";
+		};
+		3504B0FD1D587CDA00C327FA /* DebugLog */ = {
+			isa = PBXGroup;
+			children = (
+				3504B0FE1D587CDA00C327FA /* DebugLog.swift */,
+			);
+			name = DebugLog;
+			path = "../../../ble-socket/ios/DebugLog";
+			sourceTree = "<group>";
+		};
+		3504B13F1D587E8800C327FA /* React */ = {
+			isa = PBXGroup;
+			children = (
+				3504B1401D587E8800C327FA /* Base */,
+			);
+			name = React;
+			path = "../../../node_modules/react-native/React";
+			sourceTree = "<group>";
+		};
+		3504B1401D587E8800C327FA /* Base */ = {
+			isa = PBXGroup;
+			children = (
+				3504B1411D587E8800C327FA /* RCTAssert.h */,
+				3504B1441D587E8800C327FA /* RCTBridge+Private.h */,
+				3504B1451D587E8800C327FA /* RCTBridge.h */,
+				3504B1471D587E8800C327FA /* RCTBridgeDelegate.h */,
+				3504B1481D587E8800C327FA /* RCTBridgeMethod.h */,
+				3504B1491D587E8800C327FA /* RCTBridgeModule.h */,
+				3504B14A1D587E8800C327FA /* RCTBundleURLProvider.h */,
+				3504B14C1D587E8800C327FA /* RCTConvert.h */,
+				3504B14E1D587E8800C327FA /* RCTDefines.h */,
+				3504B14F1D587E8800C327FA /* RCTDisplayLink.h */,
+				3504B1511D587E8800C327FA /* RCTEventDispatcher.h */,
+				3504B1531D587E8800C327FA /* RCTFrameUpdate.h */,
+				3504B1551D587E8800C327FA /* RCTImageSource.h */,
+				3504B1571D587E8800C327FA /* RCTInvalidating.h */,
+				3504B1581D587E8800C327FA /* RCTJavaScriptExecutor.h */,
+				3504B1591D587E8800C327FA /* RCTJavaScriptLoader.h */,
+				3504B15B1D587E8800C327FA /* RCTKeyCommands.h */,
+				3504B15D1D587E8800C327FA /* RCTLog.h */,
+				3504B15E1D587E8800C327FA /* RCTLog.m */,
+				3504B15F1D587E8800C327FA /* RCTModuleData.h */,
+				3504B1611D587E8800C327FA /* RCTModuleMethod.h */,
+				3504B1631D587E8800C327FA /* RCTNullability.h */,
+				3504B1641D587E8800C327FA /* RCTParserUtils.h */,
+				3504B1651D587E8800C327FA /* RCTParserUtils.m */,
+				3504B1661D587E8800C327FA /* RCTPerformanceLogger.h */,
+				3504B1681D587E8800C327FA /* RCTRootView.h */,
+				3504B16A1D587E8800C327FA /* RCTRootViewDelegate.h */,
+				3504B16B1D587E8800C327FA /* RCTRootViewInternal.h */,
+				3504B16C1D587E8800C327FA /* RCTTouchEvent.h */,
+				3504B16E1D587E8800C327FA /* RCTTouchHandler.h */,
+				3504B1701D587E8800C327FA /* RCTURLRequestDelegate.h */,
+				3504B1711D587E8800C327FA /* RCTURLRequestHandler.h */,
+				3504B1721D587E8800C327FA /* RCTUtils.h */,
+				3504B1741D587E8800C327FA /* RCTWebSocketProxy.h */,
+				3504B1751D587E8800C327FA /* RCTWebSocketProxyDelegate.h */,
+			);
+			path = Base;
+			sourceTree = "<group>";
+		};
 		351041881D3D9E0B00452CB2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -220,6 +345,9 @@
 		35D7007E1D29957E00993A9C /* SLKAppSDK */ = {
 			isa = PBXGroup;
 			children = (
+				3504B13F1D587E8800C327FA /* React */,
+				3504B0FD1D587CDA00C327FA /* DebugLog */,
+				3504B0971D5878F200C327FA /* SLKBLESocket */,
 				35D7007F1D29957E00993A9C /* SLKAppSDK.h */,
 				35D700D31D29AE8200993A9C /* SLKAppSDKService.h */,
 				35D700D41D29AE8200993A9C /* SLKAppSDKService.m */,
@@ -288,6 +416,14 @@
 				3504D0741D2C4BA300BB24A2 /* SLKAppSDKDelegate.h in Headers */,
 				35D700801D29957E00993A9C /* SLKAppSDK.h in Headers */,
 				3504D0751D2C4BB500BB24A2 /* SLKAppSDKService.h in Headers */,
+				3504B2151D587E9C00C327FA /* RCTBridge.h in Headers */,
+				3504B2161D587EF500C327FA /* RCTBridgeDelegate.h in Headers */,
+				3504B2171D587EFD00C327FA /* RCTBridgeModule.h in Headers */,
+				3504B2181D587F0800C327FA /* RCTDefines.h in Headers */,
+				3504B21C1D587F9F00C327FA /* RCTEventDispatcher.h in Headers */,
+				3504B2191D587F0E00C327FA /* RCTFrameUpdate.h in Headers */,
+				3504B21A1D587F1300C327FA /* RCTInvalidating.h in Headers */,
+				3504B21B1D587F1800C327FA /* RCTJavaScriptExecutor.h in Headers */,
 				3504D0781D2C4FA900BB24A2 /* SLKAppSDKEventEmitter.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -466,8 +602,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3504B09D1D5878F200C327FA /* BLESocketManager.swift in Sources */,
 				35D700D61D29AE8200993A9C /* SLKAppSDKService.m in Sources */,
+				3504B1001D587CDA00C327FA /* DebugLog.swift in Sources */,
 				3504D0731D2C34CD00BB24A2 /* SLKAppSDKEventEmitter.m in Sources */,
+				3504B09E1D5878F200C327FA /* BLESocketPeripheral.swift in Sources */,
+				3504B09F1D5878F200C327FA /* RegionMonitor.swift in Sources */,
+				3504B09C1D5878F200C327FA /* BLESocketManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

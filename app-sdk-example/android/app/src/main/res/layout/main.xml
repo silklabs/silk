@@ -4,7 +4,9 @@
         android:layout_height="match_parent"
         android:paddingTop="16dp"
         android:paddingLeft="16dp"
-        android:paddingRight="16dp">
+        android:paddingRight="16dp"
+        android:clickable="true"
+        android:focusableInTouchMode="true">
 
         <TextView
             android:layout_width="wrap_content"
@@ -22,30 +24,56 @@
             android:layout_alignParentRight="true"
             android:paddingLeft="10dp" />
 
-        <TextView
+        <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/auth_status"
-            android:id="@+id/authStatusTextView"
-            android:layout_below="@id/networkStatusTextView"
-            android:singleLine="true" />
+            android:inputType="textEmailAddress"
+            android:ems="10"
+            android:id="@+id/emailText"
+            android:layout_below="@+id/networkStatusTextView"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
+            android:hint="@string/email"
+            android:layout_marginTop="10dp" />
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:ems="10"
+            android:id="@+id/passwordText"
+            android:layout_below="@+id/emailText"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
+            android:hint="@string/password" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/login"
+            android:id="@+id/loginButton"
+            android:layout_below="@id/passwordText"
+            android:layout_alignParentLeft="true" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/authStatusResultView"
-            android:layout_below="@id/networkStatusTextView"
-            android:layout_toRightOf="@+id/authStatusTextView"
+            android:layout_below="@id/passwordText"
+            android:layout_toRightOf="@+id/loginButton"
             android:singleLine="true"
             android:layout_alignParentRight="true"
-            android:paddingLeft="10dp" />
+            android:paddingLeft="10dp"
+            android:layout_marginTop="10dp" />
 
-    <Button
-            android:layout_width="match_parent"
+        <Button
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Hello World"
-            android:id="@+id/hello_world_button"
-            android:layout_below="@id/authStatusTextView"
-            android:layout_alignParentLeft="true" />
+            android:text="@string/logout"
+            android:id="@+id/logoutButton"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
+            android:layout_alignRight="@+id/authStatusResultView"
+            android:layout_alignEnd="@+id/authStatusResultView" />
 
 </RelativeLayout>

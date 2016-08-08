@@ -9,10 +9,13 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.EditText;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.view.View.OnClickListener;
 
 import com.silklabs.appsdk.SilkAppSDKService;
 import com.silklabs.appsdk.SilkAppSDKDelegate;
@@ -27,6 +30,8 @@ public class MainActivity extends Activity {
   private SilkAppSDKService mSilkService = null;
   private TextView networkStatusView = null;
   private TextView authStatusView = null;
+  private EditText emailText = null;
+  private EditText passwordText = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -40,13 +45,12 @@ public class MainActivity extends Activity {
 
           switch(messageType) {
             case "CLIENT_STATUS":
-              Log.i(TAG, "Handling CLIENT_STATUS");
               Object clientConnectionError = message.get("clientConnectionError");
               if (clientConnectionError == null) {
                 String clientConnectionStatus = message.get("clientConnectionStatus").toString();
                 onNetworkStatusChanged(clientConnectionStatus);
               } else {
-                onNetworkStatusChanged(clientConnectionError.toString());
+                onError(clientConnectionError.toString());
               }
 
               Object clientAuthError = message.get("clientAuthError");
@@ -54,21 +58,12 @@ public class MainActivity extends Activity {
                 String clientAuthStatus = message.get("clientAuthStatus").toString();
                 onAuthStatusChanged(clientAuthStatus);
               } else {
-                onAuthStatusChanged(clientAuthError.toString());
+                onError(clientAuthError.toString());
               }
               break;
             case "MESSAGE_ERROR":
               String errorMsg = message.get("error").toString();
-              AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
-              alertDialog.setTitle("Error");
-              alertDialog.setMessage(errorMsg);
-              alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                  new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                      dialog.dismiss();
-                    }
-                  });
-              alertDialog.show();
+              onError(errorMsg);
               break;
             default:
               Log.w(TAG, "Unknown message type: " + messageType);
@@ -97,6 +92,19 @@ public class MainActivity extends Activity {
       });
     }
 
+    private void onError(String errorMsg) {
+      AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+      alertDialog.setTitle("Error");
+      alertDialog.setMessage(errorMsg);
+      alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+          new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.dismiss();
+            }
+          });
+      alertDialog.show();
+    }
+
     @Override
     public void onServiceDisconnected(ComponentName name) {
       mSilkService = null;
@@ -108,18 +116,17 @@ public class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.main);
-
-    final Button button = (Button) findViewById(R.id.hello_world_button);
-    button.setOnClickListener(new View.OnClickListener() {
-      public void onClick(View v) {
-        Map<String, Object> message = new HashMap<>();
-        message.put("type", "HELLO_WORLD");
-        mSilkService.postMessage(message);
-      }
-    });
-
     networkStatusView = (TextView) findViewById(R.id.networkStatusResultView);
     authStatusView = (TextView) findViewById(R.id.authStatusResultView);
+    emailText = (EditText) findViewById(R.id.emailText);
+    passwordText = (EditText) findViewById(R.id.passwordText);
+    emailText.setOnFocusChangeListener(focusChangeListener);
+    passwordText.setOnFocusChangeListener(focusChangeListener);
+
+    final Button loginButton = (Button) findViewById(R.id.loginButton);
+    loginButton.setOnClickListener(loginButtonListener);
+    final Button logoutButton = (Button) findViewById(R.id.logoutButton);
+    logoutButton.setOnClickListener(logoutButtonListener);
 
     startService(new Intent(this, SilkAppSDKService.class)); // keep service alive for duration of process
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
@@ -132,4 +139,42 @@ public class MainActivity extends Activity {
     }
   }
 
+  /**
+   * Handle Login button click
+   */
+  private OnClickListener loginButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "ACCOUNT_LOGIN_PASSWORD");
+      message.put("email", emailText.getText().toString());
+      message.put("password", passwordText.getText().toString());
+      emailText.setText("");
+      passwordText.setText("");
+      mSilkService.postMessage(message);
+    }
+  };
+
+  /**
+   * Handle Logout button click
+   */
+  private OnClickListener logoutButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "ACCOUNT_LOGOUT");
+      mSilkService.postMessage(message);
+    }
+  };
+
+  /**
+   * Hide keyboard when clicked outside of the EditText
+   */
+  private View.OnFocusChangeListener focusChangeListener =  new View.OnFocusChangeListener() {
+    @Override
+    public void onFocusChange(View view, boolean hasFocus) {
+      if (!hasFocus) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+      }
+    }
+  };
 }

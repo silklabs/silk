@@ -92,6 +92,11 @@ export default class StructuredDataChannel extends EventEmitter {
     }
   }
 
+  get label(): string {
+    invariant(this._channel);
+    return this._channel.label;
+  }
+
   _sendPendingWrites() {
     for (let write of this._pendingWrites) {
       // XXX: Using explicit indexing to make flow happy.

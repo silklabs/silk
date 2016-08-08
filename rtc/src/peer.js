@@ -312,7 +312,7 @@ export default class Peer extends EventEmitter {
   }
 
   /**
-   * XXX: Consider making this return a promsie so we can be sure that remote has
+   * XXX: Consider making this return a promise so we can be sure that remote has
    *      removed the other side of the stream.
    */
   removeStream(label: string): bool {
@@ -378,7 +378,7 @@ export default class Peer extends EventEmitter {
    *
    * NOTE: The current convention is that only one side of the peer creates a
    * channel with a given name. If both sides are attempting to create a single
-   * channel with the same name will result in _two_ independant data channels.
+   * channel with the same name will result in _two_ independent data channels.
    */
   createChannel(label: string, config: RTCDataChannelInit = {}): StructuredDataChannel {
     let state = this._dataChannels.get(label);

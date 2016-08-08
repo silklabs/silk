@@ -16,7 +16,9 @@ import Cameras from '../libraries/Cameras';
 
 const log = createLog('datachannel');
 
-const AVAILABLE_CHANNEL_NAMES = ['video', 'diag', 'dialog'];
+const AVAILABLE_CHANNEL_NAMES = ['dialog', 'diag', 'video'];
+const DEFAULT_CHANNEL_NAME = 'dialog';
+const DEFAULT_CHANNEL_MESSAGE = 'time';
 
 export default class DataChannel extends React.Component {
 
@@ -25,8 +27,8 @@ export default class DataChannel extends React.Component {
     channel: null,
     helpText: '',
     validationState: '',
-    channelName: AVAILABLE_CHANNEL_NAMES[0],
-    message: 'jpeg',
+    channelName: DEFAULT_CHANNEL_NAME,
+    message: DEFAULT_CHANNEL_MESSAGE,
     payload: '',
     devicePayload: '',
   };
@@ -92,7 +94,7 @@ export default class DataChannel extends React.Component {
 
   onSend = e => {
     if (this.state.validationState === 'success') {
-      this.state.channel.emit(this.state.message, this.state.payload);
+      this.state.channel.emit(this.state.message, JSON.parse(this.state.payload));
     }
   };
 

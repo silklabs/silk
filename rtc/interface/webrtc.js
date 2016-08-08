@@ -103,6 +103,7 @@ declare export class RTCSessionDescription {
 }
 
 declare export class RTCDataChannel extends WebrtcEventTarget {
+  label: string;
   readyState: string;
   close: () => void;
   binaryType: string;

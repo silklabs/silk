@@ -1,11 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
-
-    <Button
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Hello World"
-        android:id="@+id/hello_world_button"/>
-</LinearLayout>
+        android:paddingTop="16dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/network_status"
+            android:id="@+id/networkStatusTextView"
+            android:singleLine="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/networkStatusResultView"
+            android:layout_toRightOf="@+id/networkStatusTextView"
+            android:singleLine="true"
+            android:layout_alignParentRight="true"
+            android:paddingLeft="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/auth_status"
+            android:id="@+id/authStatusTextView"
+            android:layout_below="@id/networkStatusTextView"
+            android:singleLine="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/authStatusResultView"
+            android:layout_below="@id/networkStatusTextView"
+            android:layout_toRightOf="@+id/authStatusTextView"
+            android:singleLine="true"
+            android:layout_alignParentRight="true"
+            android:paddingLeft="10dp" />
+
+    <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hello World"
+            android:id="@+id/hello_world_button"
+            android:layout_below="@id/authStatusTextView"
+            android:layout_alignParentLeft="true" />
+
+</RelativeLayout>

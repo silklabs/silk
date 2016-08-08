@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.silklabs.appsdk.SilkAppSDKService;
 import com.silklabs.appsdk.SilkAppSDKDelegate;
@@ -22,6 +23,9 @@ public class MainActivity extends Activity {
   private final String TAG = "SilkAppSDKExample";
 
   private SilkAppSDKService mSilkService = null;
+  private TextView networkStatusView = null;
+  private TextView authStatusView = null;
+
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
     public void onServiceConnected(ComponentName name, IBinder serviceBinder) {
@@ -30,6 +34,50 @@ public class MainActivity extends Activity {
         @Override
         public void onMessage(Map<String, Object> message) {
           Log.i(TAG, "Received message from SDK: " + message.toString());
+          String messageType = message.get("type").toString();
+
+          switch(messageType) {
+            case "CLIENT_STATUS":
+              Log.i(TAG, "Handling CLIENT_STATUS");
+              Object clientConnectionError = message.get("clientConnectionError");
+              if (clientConnectionError == null) {
+                String clientConnectionStatus = message.get("clientConnectionStatus").toString();
+                onNetworkStatusChanged(clientConnectionStatus);
+              } else {
+                onNetworkStatusChanged(clientConnectionError.toString());
+              }
+
+              Object clientAuthError = message.get("clientAuthError");
+              if (clientAuthError == null) {
+                String clientAuthStatus = message.get("clientAuthStatus").toString();
+                onAuthStatusChanged(clientAuthStatus);
+              } else {
+                onAuthStatusChanged(clientAuthError.toString());
+              }
+              break;
+            default:
+              Log.w(TAG, "Unknown message type: " + messageType);
+          }
+        }
+      });
+    }
+
+    private void onNetworkStatusChanged(final String networkStatus) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          if (networkStatusView != null) {
+            networkStatusView.setText(networkStatus);
+          }
+        }
+      });
+    }
+
+    private void onAuthStatusChanged(final String authStatus) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          if (authStatusView != null) {
+            authStatusView.setText(authStatus);
+          }
         }
       });
     }
@@ -54,6 +102,9 @@ public class MainActivity extends Activity {
         mSilkService.postMessage(message);
       }
     });
+
+    networkStatusView = (TextView) findViewById(R.id.networkStatusResultView);
+    authStatusView = (TextView) findViewById(R.id.authStatusResultView);
 
     startService(new Intent(this, SilkAppSDKService.class)); // keep service alive for duration of process
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);

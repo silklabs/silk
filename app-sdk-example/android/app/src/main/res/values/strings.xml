@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">Silk App SDK Example</string>
     <string name="blob_provider_authority">com.silklabs.appsdk.example.blobs</string>
+    <string name="network_status">Network Status:</string>
+    <string name="auth_status">Auth Status:</string>
 </resources>

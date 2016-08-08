@@ -400,6 +400,10 @@ export default class Peer extends EventEmitter {
       channel: structuredChannel,
     });
 
+    structuredChannel.on('close', () => {
+      log.info(`Removing closed channel: ${label}`);
+      this._dataChannels.delete(label);
+    });
     return structuredChannel;
   }
 

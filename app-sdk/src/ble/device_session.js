@@ -3,10 +3,8 @@
  */
 
 import invariant from 'assert';
-import {EventEmitter} from 'events';
 import * as Joi from 'joi';
-import { Systrace } from 'react-native';
-import getSocketManager from 'silk-ble-socket';
+import {Systrace} from 'react-native';
 import mklog from 'silk-log';
 import RobustEventEmitter from 'silk-utils/robust_event_emitter';
 
@@ -14,7 +12,7 @@ import * as Metrics from './metrics';
 import SocketSession from './socket_session';
 
 // eslint-disable-next-line no-unused-vars
-import type {MetricsAgent, AccessToken} from 'silk-api';
+import type {MetricsAgent, SilkApi} from 'silk-api';
 import type {Socket} from 'silk-ble-socket';
 
 export type DeviceStatus = {
@@ -35,27 +33,18 @@ type MessageData = {
   [arbitraryKey: string]: any;
 };
 
-type RegistrationInformation = {
+export type RegistrationInformation = {
   accessPoint: string;
   password: string;
   publicKey: string;
   regToken: string;
+  serverUrl: ?string;
+  time: number;
 };
 
 export type DeviceSecret = {
   deviceId: string;
 };
-
-type RegisteredDevice = {
-  publicKey: string;
-};
-
-// TODO: eliminate dependency on UserState
-declare class UserState extends EventEmitter {
-  accessToken: ?AccessToken;
-  registeredDevices: Array<RegisteredDevice>;
-}
-
 
 const log = mklog('btle-DeviceManager');
 
@@ -116,9 +105,7 @@ const SCHEMA = {
   }).required(),
 };
 
-let singletonInstance = null;
-
-export class DeviceSession extends RobustEventEmitter {
+export default class DeviceSession extends RobustEventEmitter {
   static STATE_UNKNOWN = 0;
   static STATE_ID_RECEIVED = 1;
   static STATE_REGISTER_REQUESTED = 2;
@@ -138,6 +125,7 @@ export class DeviceSession extends RobustEventEmitter {
 
   _state: number = DeviceSession.STATE_UNKNOWN; // TODO number -> string enum
   _secret: ?DeviceSecret = null;
+  _error: ?Error = null;
 
   _manufacturer: string = ``;
   _model: string = ``;
@@ -157,32 +145,40 @@ export class DeviceSession extends RobustEventEmitter {
   _metrics: MetricsAgent;
   _forceDisconnectReported: boolean = false;
 
-  constructor(socket: Socket, metrics: MetricsAgent) {
+  constructor(
+    socket: Socket,
+    api: SilkApi,
+    registeredDevicesPublicKeys: Array<string>
+  ) {
     log.debug(`DeviceSession()`);
-
-    invariant(socket);
-    invariant(metrics);
-
     super();
 
-    invariant(singletonInstance);
-    const privateKey = singletonInstance.privateKey;
-    const publicKeys = singletonInstance.registeredDevicePublicKeys;
+    this._id = socket.id;
+    socket.addListener(`disconnect`, this._onDisconnect);
 
-    const socketSession =
-      new SocketSession(socket, privateKey, publicKeys, metrics);
+    const {accessToken, metrics} = api;
+    invariant(socket);
+    invariant(accessToken);
+    invariant(accessToken.priv);
+    invariant(registeredDevicesPublicKeys);
+
+    const socketSession = new SocketSession(
+      socket,
+      accessToken.priv,
+      registeredDevicesPublicKeys,
+      metrics
+    );
     socketSession.addListener(`error`, this._onError);
     socketSession.addListener(`data`, this._onData);
     socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
-
-    this._id = socket.id;
     this._socketSession = socketSession;
+
     this._metrics = metrics;
   }
 
-  get socketId(): number {
-    return this._id;
-  }
+  _onDisconnect: (() => void) = () => {
+    this.emit(`disconnect`, this);
+  };
 
   _validateData(data: MessageData): ?Error {
     log.debug(`DeviceSession._validateData()`, data.name);
@@ -227,7 +223,7 @@ export class DeviceSession extends RobustEventEmitter {
     invariant(!this._connectEmitted);
     this._connectEmitted = true;
 
-    singletonInstance && singletonInstance.emit(`connect`, this);
+    this.emit(`connect`, this);
   }
 
   _emitRegistered() {
@@ -260,6 +256,7 @@ export class DeviceSession extends RobustEventEmitter {
     log.warn(`Session error, disconnecting`, error);
     this._forceDisconnect();
     this.emit(`error`, error);
+    this._error = error;
   };
 
   _onData: ((data: MessageData) => void) = (data) => {
@@ -278,8 +275,7 @@ export class DeviceSession extends RobustEventEmitter {
     const validationError = this._validateData(data);
     if (validationError) {
       log.warn(`Data validation failed`, validationError);
-      this._forceDisconnect();
-      this.emit(`error`, validationError);
+      this._onError(validationError);
       return;
     }
 
@@ -332,6 +328,7 @@ export class DeviceSession extends RobustEventEmitter {
       invariant(this._socketSession.authenticated);
 
       this._isRegistered = true;
+      this._deviceId = data.deviceId;
       this._state = DeviceSession.STATE_REGISTERED;
       this._emitConnect();
       this._emitRegistered();
@@ -459,6 +456,10 @@ export class DeviceSession extends RobustEventEmitter {
     this._maybeEmitSecret();
   };
 
+  get socketId(): number {
+    return this._id;
+  }
+
   get manufacturer(): string {
     return this._manufacturer;
   }
@@ -483,8 +484,20 @@ export class DeviceSession extends RobustEventEmitter {
     return this._deviceId;
   }
 
+  get secret(): ?DeviceSecret {
+    return this._secret;
+  }
+
+  get status(): ?DeviceStatus {
+    return this._status;
+  }
+
   get wifiNetworks(): ?Array<DeviceWifiNetwork> {
     return this._wifiNetworks;
+  }
+
+  get error(): ?Error {
+    return this._error;
   }
 
   /**
@@ -597,6 +610,8 @@ export class DeviceSession extends RobustEventEmitter {
     this._socketSession.write({
       name: `restart`,
     });
+
+    this.emit(`restarted`);
   }
 
   /**
@@ -625,89 +640,4 @@ export class DeviceSession extends RobustEventEmitter {
     this._state = DeviceSession.STATE_DISMISSED;
     this._socketSession.disconnect();
   };
-}
-
-export class DeviceManager extends RobustEventEmitter {
-
-  privateKey: string;
-  registeredDevicePublicKeys: Array<string> = [];
-
-  _devices: Map<Socket, DeviceSession> = new Map();
-  _socketManager: EventEmitter;
-  _metrics: MetricsAgent;
-
-  // TODO: eliminate dependency on UserState
-  constructor(userState: UserState, metrics: MetricsAgent) {
-    log.debug(`DeviceManager()`);
-
-    invariant(userState);
-    invariant(metrics);
-
-    super();
-
-    this._metrics = metrics;
-    this._socketManager = getSocketManager();
-
-    this._initialize(userState);
-  }
-
-  async _initialize(userState: UserState) {
-    const {accessToken} = userState;
-    invariant(accessToken);
-    invariant(accessToken.priv);
-    this.privateKey = accessToken.priv;
-
-    const isValid = await accessToken.genIsValid();
-    invariant(isValid);
-    this._socketManager.on(`connect`, this._onConnect);
-    this._socketManager.on(`disconnect`, this._onDisconnect);
-
-    userState.on(`registered-devices-updated`, this._onRegisteredUpdatedDevices);
-    this._onRegisteredUpdatedDevices(userState.registeredDevices);
-  }
-
-  _onConnect: ((socket: Socket) => void) = (socket) => {
-    log.debug(`DeviceManager._onConnect()`);
-
-    invariant(!this._devices.has(socket));
-
-    let device = new DeviceSession(socket, this._metrics);
-    this._devices.set(socket, device);
-  };
-
-  _onDisconnect: ((socket: Socket) => void) = (socket) => {
-    log.debug(`DeviceManager._onDisconnect()`);
-
-    let device = this._devices.get(socket);
-    if (device) {
-      device.emit(`disconnect`, this);
-    }
-    this._devices.delete(socket);
-  };
-
-  _onRegisteredUpdatedDevices: ((deviceRecords: Array<RegisteredDevice>) => void) = (deviceRecords) => {
-    log.debug(`DeviceManager._onRegisteredUpdatedDevices()`);
-
-    invariant(Array.isArray(deviceRecords));
-
-    this.registeredDevicePublicKeys =
-      deviceRecords.map((deviceRecord) => deviceRecord.publicKey);
-  };
-}
-
-export default function getDeviceManager(userState: UserState,
-                                         metrics: MetricsAgent): EventEmitter {
-  if (!singletonInstance) {
-    singletonInstance = new DeviceManager(userState, metrics);
-  }
-
-  let emitter = new RobustEventEmitter();
-  emitter.on('newListener', (event, listener) => {
-    singletonInstance && singletonInstance.addListener(event, listener);
-  });
-  emitter.on('removeListener', (event, listener) => {
-    singletonInstance && singletonInstance.removeListener(event, listener);
-  });
-
-  return emitter;
 }

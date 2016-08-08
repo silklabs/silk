@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
 import {
   ActivityIndicator,
@@ -9,7 +13,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import {DeviceSession} from 'silk-app-sdk/src/ble/device_manager';
 import createLog from 'silk-log';
 
 import Button from '../Button';
@@ -18,33 +21,15 @@ import WifiNetworkSelector from './WifiNetworkSelector';
 import Selector from './Selector';
 import SetupScreen from './SetupScreen';
 
+import * as actions from '../../store/actions';
+
+import type {GlobalProps} from '../Root';
+
 const log = createLog('WifiConfig');
 
 export default class WifiConfig extends React.Component {
 
-  static propTypes = {
-    bleDeviceSession: React.PropTypes.instanceOf(DeviceSession).isRequired,
-    onSave: React.PropTypes.func.isRequired,
-    onCancel: React.PropTypes.func.isRequired,
-
-    localWifiInfo: React.PropTypes.object,
-    deviceNetworks: WifiNetworkSelector.propTypes.deviceNetworks,
-    attemptedWifiMatch: React.PropTypes.bool.isRequired,
-    selectedDeviceNetwork: WifiNetworkSelector.propTypes.selectedNetwork,
-    manualEntry: React.PropTypes.bool.isRequired,
-    manualNetwork: React.PropTypes.object,
-    secret: React.PropTypes.string.isRequired,
-
-    clearState: React.PropTypes.func.isRequired,
-    getLocalWifiInfo: React.PropTypes.func.isRequired,
-    onDeviceWifiScan: React.PropTypes.func.isRequired,
-    onDeviceNetworkSelected: React.PropTypes.func.isRequired,
-    onSelectEnterManually: React.PropTypes.func.isRequired,
-    onSelectChooseFromDeviceList: React.PropTypes.func.isRequired,
-    onSecretChange: React.PropTypes.func.isRequired,
-    onManualNetworkSSIDChange: React.PropTypes.func.isRequired,
-    onManualNetworkPSKChange: React.PropTypes.func.isRequired,
-  };
+  props: GlobalProps;
 
   state = {
     secretShown: false,
@@ -53,22 +38,14 @@ export default class WifiConfig extends React.Component {
   };
 
   componentWillMount() {
-    let { bleDeviceSession } = this.props;
-    bleDeviceSession.on('wifiscan', this.props.onDeviceWifiScan);
-    log.debug('Initial device networks:', bleDeviceSession.wifiNetworks);
-    this.props.onDeviceWifiScan(bleDeviceSession.wifiNetworks);
-    this.props.getLocalWifiInfo();
-  }
-
-  componentWillUnmount() {
-    let { bleDeviceSession } = this.props;
-    bleDeviceSession.removeListener('wifiscan', this.props.onDeviceWifiScan);
-    this.props.clearState();
+    this.props.dispatch(actions.wifiConfig.clearState());
+    this.props.dispatch(actions.wifiConfig.getLocalInfo());
   }
 
   _renderSSIDControls() {
-    if (this.props.manualEntry) {
-      const { manualNetwork } = this.props;
+    const {wifiConfig} = this.props;
+    if (wifiConfig.manualEntry) {
+      const {manualNetwork} = wifiConfig;
       return (
         <View style={styles.ssidRow}>
           <TextInput
@@ -78,7 +55,7 @@ export default class WifiConfig extends React.Component {
             autoCapitalize="none"
             value={manualNetwork.ssid}
             style={styles.textInput}
-            onChangeText={this.props.onManualNetworkSSIDChange}
+            onChangeText={this._onManualNetworkSSIDChange}
           />
           <TouchableWithoutFeedback onPress={this._chooseFromList}>
             <Image
@@ -90,7 +67,7 @@ export default class WifiConfig extends React.Component {
       );
     }
 
-    if (!this.props.attemptedWifiMatch) {
+    if (!wifiConfig.attemptedWifiMatch) {
       return (
         <View style={styles.ssidRow}>
           <Text style={styles.ssidLabel}>Scanning...</Text>
@@ -105,7 +82,7 @@ export default class WifiConfig extends React.Component {
         </Text>
       </View>
     );
-    const { selectedDeviceNetwork } = this.props;
+    const {selectedDeviceNetwork} = wifiConfig;
     if (selectedDeviceNetwork) {
       ssidRow = (
         <View style={styles.ssidRow}>
@@ -129,7 +106,7 @@ export default class WifiConfig extends React.Component {
   }
 
   _renderSecretInputRow() {
-    const { secretShown } = this.state;
+    const {secretShown} = this.state;
     return (
       <View style={styles.secretRow}>
         <TextInput
@@ -138,9 +115,9 @@ export default class WifiConfig extends React.Component {
           autoCorrect={false}
           autoCapitalize="none"
           placeholder="Enter Wi-Fi password"
-          value={this.props.secret}
+          value={this.props.wifiConfig.password}
           style={styles.textInput}
-          onChangeText={this.props.onSecretChange}
+          onChangeText={this._onPasswordChange}
         />
         <TouchableWithoutFeedback
           onPress={() => this.setState({secretShown: !this.state.secretShown})}>
@@ -154,8 +131,9 @@ export default class WifiConfig extends React.Component {
   }
 
   _renderSecretControls() {
-    if (this.props.manualEntry) {
-      const { manualNetwork } = this.props;
+    const {wifiConfig} = this.props;
+    if (wifiConfig.manualEntry) {
+      const {manualNetwork} = wifiConfig;
       return (
         <View>
           <View style={styles.secretRow}>
@@ -172,7 +150,7 @@ export default class WifiConfig extends React.Component {
       );
     }
 
-    const { selectedDeviceNetwork } = this.props;
+    const {selectedDeviceNetwork} = wifiConfig;
     if (!selectedDeviceNetwork) {
       return null;
     }
@@ -197,7 +175,7 @@ export default class WifiConfig extends React.Component {
   };
 
   _selectNetwork = (network) => {
-    this.props.onDeviceNetworkSelected(network);
+    this.props.dispatch(actions.wifiConfig.selectFromList(network));
     this._dismissWifiModal();
   };
 
@@ -207,20 +185,29 @@ export default class WifiConfig extends React.Component {
 
   _enterManually = () => {
     log.debug('Entering Wi-Fi information manually.');
-    this.props.onSelectEnterManually();
+    this.props.dispatch(actions.wifiConfig.enterManually());
     this._dismissWifiModal();
   };
 
   _chooseFromList = () => {
     log.debug('Going back to choosing from a list.');
-    this.props.onSelectChooseFromDeviceList();
+    this.props.dispatch(actions.wifiConfig.selectFromList());
     this._showWifiModal();
+  };
+
+  _onManualNetworkSSIDChange = (ssid) => {
+    this.props.dispatch(actions.wifiConfig.setManualSSID(ssid));
+  };
+
+  _onPasswordChange = (password) => {
+    this.props.dispatch(actions.wifiConfig.setPassword(password));
   };
 
   _renderWifiModal() {
     if (!this.state.wifiModalShown) {
       return null;
     }
+    const {wifiConfig} = this.props;
     return (
       <Modal
         animationType="none"
@@ -233,8 +220,8 @@ export default class WifiConfig extends React.Component {
         </TouchableWithoutFeedback>
         <WifiNetworkSelector
           ref="wifiNetworkSelector"
-          deviceNetworks={this.props.deviceNetworks}
-          selectedNetwork={this.props.selectedDeviceNetwork}
+          deviceNetworks={wifiConfig.deviceNetworks}
+          selectedNetwork={wifiConfig.selectedDeviceNetwork}
           onSelectNetwork={this._selectNetwork}
           onSelectManually={this._enterManually}
           style={styles.wifiSelector}
@@ -252,7 +239,7 @@ export default class WifiConfig extends React.Component {
   };
 
   _onSelectAuthType = (psk) => {
-    this.props.onManualNetworkPSKChange(psk);
+    this.props.dispatch(actions.wifiConfig.setManualPSK(psk));
     this._dismissAuthTypeModal();
   };
 
@@ -260,7 +247,7 @@ export default class WifiConfig extends React.Component {
     if (!this.state.authTypeModalShown) {
       return null;
     }
-    const { manualNetwork } = this.props;
+    const {manualNetwork} = this.props.wifiConfig;
     return (
       <Modal
         animationType="none"
@@ -289,30 +276,32 @@ export default class WifiConfig extends React.Component {
     );
   }
 
-  _handleSave = () => {
-    const network = this.props.manualEntry ?
-      this.props.manualNetwork :
-      this.props.selectedDeviceNetwork;
-    const {manufacturer, model} = this.props.bleDeviceSession;
-    this.props.onSave({
-      name: `${manufacturer} ${model}`,
-      ssid: network.ssid,
-      secret: network.psk ? this.props.secret : null,
-    });
-    this.props.navigator.pushAsync({
-      name: 'DeviceStatus',
-      props: this.props,
-    });
+  _onCancel = () => {
+    this.props.dispatch(actions.devices.config.abort());
+  };
+
+  _onSave = () => {
+    const {wifiConfig} = this.props;
+    const network = wifiConfig.manualEntry ?
+      wifiConfig.manualNetwork :
+      wifiConfig.selectedDeviceNetwork;
+
+    this.props.dispatch(actions.devices.config.setConfig({
+      name: 'Silk Device',
+      wifiSSID: network.ssid,
+      wifiPassword: network.psk ? wifiConfig.password : null,
+    }));
   };
 
   render() {
-    const network = this.props.manualEntry ?
-      this.props.manualNetwork :
-      this.props.selectedDeviceNetwork;
+    const {wifiConfig} = this.props;
+    const network = wifiConfig.manualEntry ?
+      wifiConfig.manualNetwork :
+      wifiConfig.selectedDeviceNetwork;
     const saveButtonDisabled =
       !network ||
       !network.ssid ||
-      (network.psk && this.props.secret.length < 8);
+      (network.psk && wifiConfig.password.length < 8);
 
     return (
       <SetupScreen
@@ -321,7 +310,7 @@ export default class WifiConfig extends React.Component {
         secondaryButton={
           <Button
             type="secondary"
-            onPress={this.props.onCancel}
+            onPress={this._onCancel}
             label="Cancel"
             style={styles.cancelButton}
           />
@@ -329,7 +318,7 @@ export default class WifiConfig extends React.Component {
         primaryButton={
           <Button
             type="primary"
-            onPress={this._handleSave}
+            onPress={this._onSave}
             label="Save"
             style={styles.saveButton}
             disabled={saveButtonDisabled}

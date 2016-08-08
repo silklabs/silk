@@ -1,9 +1,12 @@
+/**
+ * @flow
+ */
+
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   ActionSheetIOS,
   ActivityIndicator,
-  Alert,
   Image,
   StyleSheet,
   Text,
@@ -11,125 +14,82 @@ import {
 } from 'react-native';
 import createLog from 'silk-log';
 
-import AsyncComponent from './abstract/AsyncComponent';
+import WebRTCDataChannelReceiver from './abstract/WebRTCDataChannelReceiver';
 import PreviewQueue from '../libraries/PreviewQueue';
+import * as actions from '../store/actions';
+
+import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+
+type Props = {
+  device: RegisteredDevice;
+  previewSize: {width: number, height: number};
+  width: number;
+  onPress?: Function;
+};
 
 const log = createLog('CameraPreview');
 
-const DEVICE_PREVIEW_TIMEOUT_MS = 10000;
+export default class CameraPreview extends WebRTCDataChannelReceiver {
 
-export default class CameraPreview extends AsyncComponent {
-  static propTypes = {
-    deviceId: React.PropTypes.string,
-    previewSize: React.PropTypes.shape({
-      width: React.PropTypes.number.isRequired,
-      height: React.PropTypes.number.isRequired,
-    }),
-    width: React.PropTypes.number.isRequired,
-    hasNetwork: React.PropTypes.bool.isRequired,
-    onPress: React.PropTypes.func,
-  };
-
-  static contextTypes = {
-    silkDevices: React.PropTypes.object.isRequired,
-  };
+  props: Props;
 
   state = {
     blob: null,
-    timedOut: false,
   };
 
-  mounted: false;
-  _timeoutTimer = null;
+  channelName: string = 'video';
+  messageType: string = 'jpeg';
+
+  _timeoutTimer: ?number = null;
 
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillMount() {
-    this.mounted = true;
-    this._queue = new PreviewQueue(this.props.label, frame => {
+    super.componentWillMount();
+    this._queue = new PreviewQueue(this.props.device.name, (blob) => {
       if (!this.mounted) {
         return;
       }
-      this.setStateAsync({
-        timedOut: false,
-        blob: frame,
-      });
+      this.setStateAsync({blob});
     });
-    this.startTimeoutTimer();
   }
 
   componentWillUnmount() {
-    this.mounted = false;
+    super.componentWillUnmount();
     if (this._queue) {
       this._queue.deinit();
       this._queue = null;
-    }
-    this.clearTimeoutTimer();
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (!this.props.hasNetwork && nextProps.hasNetwork) {
-      this.startTimeoutTimer();
-    }
-    if (this.props.hasNetwork && !nextProps.hasNetwork) {
-      this.clearTimeoutTimer();
-    }
-  }
-
-  startTimeoutTimer() {
-    this.clearTimeoutTimer();
-    let timeOut = DEVICE_PREVIEW_TIMEOUT_MS;
-    this._timeoutTimer = setTimeout(
-      () => {
-        if (!this.props.hasNetwork) {
-          return;
-        }
-        this.setStateAsync({timedOut: true, blob: null});
-      },
-      timeOut
-    );
-  }
-
-  clearTimeoutTimer() {
-    if (this._timeoutTimer) {
-      clearTimeout(this._timeoutTimer);
     }
   }
 
   /**
    * "API"
    */
-  resetTimeout() {
-    this.setState({timedOut: false, blob: null});
-    this.startTimeoutTimer();
-  }
-
-  pushFrame(frame) {
-    log.debug('preview frame', frame);
-    this._queue.push(frame);
-    this.startTimeoutTimer();
-  }
+  onMessage = (message) => {
+    log.debug('preview frame', message.frame);
+    this._queue.push(message.frame);
+  };
 
   _renderPreview() {
-    // TODO: display this.props.haveVideoStream visually in some way.
-    // See https://github.com/silklabs/silk-app/issues/526
-    if (this.state.blob) {
-      return (
-        <Image
-          style={styles.preview}
-          source={{uri: URL.createObjectURL(this.state.blob)}}
-          onLoadEnd={() => this.state.blob && this.state.blob.close()}
-        />
-      );
-    }
-    if (this.state.timedOut) {
+    const {rtc} = this.props.device;
+    if (!rtc.peer && !rtc.connecting) {
       return (
         <Text style={styles.timedOutLabel}>
           No preview available. Device appears to be offline.
         </Text>
       );
     }
-    return <ActivityIndicator color="white" />;
+    const {blob} = this.state;
+    if (rtc.connecting || !blob) {
+      return <ActivityIndicator color="white" />;
+    }
+    return (
+      <Image
+        style={styles.preview}
+        source={{uri: URL.createObjectURL(blob)}}
+        onLoadEnd={() => blob.close()}
+      />
+    );
   }
 
   render() {
@@ -149,7 +109,8 @@ export default class CameraPreview extends AsyncComponent {
   }
 
   _onPress = () => {
-    if (this.state.timedOut && this.props.deviceId) {
+    const {rtc} = this.props.device;
+    if (!rtc.peer && !rtc.connecting) {
       this._showRemoveDeviceSheet();
       return;
     }
@@ -164,23 +125,14 @@ export default class CameraPreview extends AsyncComponent {
       ],
       cancelButtonIndex: 1,
       destructiveButtonIndex: 0,
-    }, async (buttonIndex) => {
+    }, (buttonIndex) => {
       if (buttonIndex === 1) {
         return;
       }
-      // Display spinner again while we're attempting to unregister the device.
-      await this.setStateAsync({timedOut: false});
-
-      try {
-        await this.context.silkDevices.unregisterDevice(this.props.deviceId);
-      } catch (ex) {
-        Alert.alert(
-          'Error Unregistering Device',
-          'The device could not be unregistered. Please try again.'
-        );
-        // Restore timeout error message again.
-        await this.setStateAsync({timedOut: true});
-      }
+      const {deviceId} = this.props.device;
+      this.props.dispatch(
+        actions.devices.registered.unregister({devicePublicKey: deviceId})
+      );
     });
   };
 }

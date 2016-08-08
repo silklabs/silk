@@ -76,11 +76,12 @@ export default class AuthForm extends AsyncComponent {
 
   constructor(props: AuthFormProps) {
     super(props);
-    if (!this.props.verifyPassword) {
-      invariant(this.props.config.current);
-      let {defaultEmail, defaultPassword} = this.props.config.current;
-      this.state.email = defaultEmail || '';
-      this.state.password = defaultPassword || '';
+    invariant(this.props.config.current);
+    let {defaultEmail, defaultPassword} = this.props.config.current;
+    this.state.email = defaultEmail || '';
+    this.state.password = defaultPassword || '';
+    if (props.verifyPassword) {
+      this.state.passwordVerification = defaultPassword || '';
     }
   }
 

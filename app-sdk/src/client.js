@@ -1,19 +1,35 @@
 /**
+ * Business logic that's common to Silk clients (app, SDK, eventually
+ * hoepfully also the webapp). This is generally expressed in the form of
+ *
  * @flow
  */
 
-import {NetInfo} from 'react-native';
+import invariant from 'assert';
+import {NativeModules, NetInfo} from 'react-native';
+import getSocketManager from 'silk-ble-socket';
 
+import DeviceSession from './ble/device_session';
 import * as actions from './store/actions';
 
+import type {Socket} from 'silk-ble-socket';
 import type {Store} from './store';
 
+const RTC_SIGNAL_INTERVAL_MS = 60000;
+
+/**
+ * Automation for app initialization and network connectivity.
+ */
 function initNetworkAndAPI(store: Store<*>) {
   let networkConnectivitySubscription = null;
   function checkNetworkConnectivity() {
     store.dispatch(actions.network.canReachServer());
   }
 
+  // (Re-)initialize the SilkApi and hook up network connectivity
+  // events from the operating system to the store when the app config
+  // is loaded or updated (e.g. via config.local.json, local
+  // customizations, etc.)
   store.subscribeToPath('config', (config, oldConfig) => {
     if (!config.user) {
       // Don't do anything until we've restored user config.
@@ -42,15 +58,166 @@ function initNetworkAndAPI(store: Store<*>) {
   });
 }
 
-function initDevices(store: Store<*>) {
+/**
+ * Automation for interacting with registered devices, such
+ * maintaining a list of them, connecting to them, etc.
+ */
+function initRegisteredDevices(store: Store<*>) {
+  // Ensure we have the latest list of devices, and are attempting to
+  // signal them, when the circumstances call for it. For instance,
+  // right after logging in, right after the phone's network
+  // connection is restored, etc.
+  let rtcTimer = null;
+  function ensureDeviceConnection() {
+    const {auth, network} = store.getState();
+    if (!auth.isAuthenticated || !network.canReachServer) {
+      if (rtcTimer) {
+        clearInterval(rtcTimer);
+      }
+      rtcTimer = null;
+      return;
+    }
+    if (rtcTimer !== null) {
+      return;
+    }
+
+    // See if there are any new devices.
+    store.dispatch(actions.devices.registered.fetchList());
+
+    // Crude way of figuring out whether a device is online: just keep
+    // signaling it every 60s.
+    rtcTimer = setInterval(() => {
+      const {registered} = store.getState().devices;
+      if (!registered) {
+        return;
+      }
+      registered.forEach((device, deviceId) => {
+        if (device.rtc.peer || device.rtc.connecting) {
+          return;
+        }
+        store.dispatch(actions.devices.rtc.signal(deviceId));
+      });
+    }, RTC_SIGNAL_INTERVAL_MS);
+  }
+  store.subscribeToPath('auth.isAuthenticated', ensureDeviceConnection);
+  store.subscribeToPath('network.canReachServer', ensureDeviceConnection);
+
+  // Whenever a new registered device gets added to the current state,
+  // attempt to signal it immediately.
+  const {rtc} = actions.devices;
+  store.subscribeToPath('devices.registered', (newDevices, oldDevices) => {
+    if (!newDevices) {
+      return;
+    }
+    newDevices.forEach((newDevice, deviceId) => {
+      const oldDevice = oldDevices ? oldDevices.get(deviceId) : null;
+      if (!oldDevice) {
+        // Newly added device, so let's signal it.
+        store.dispatch(rtc.signal(deviceId));
+        return;
+      }
+
+      const oldPeer = oldDevice.rtc.peer;
+      const newPeer = newDevice.rtc.peer;
+      if (!oldPeer && newPeer) {
+        // Newly established connection, make sure we update state
+        // when it's torn down.
+        newPeer.on('close', () => {
+          store.dispatch(rtc.connectionClosed(deviceId));
+          // Try reconnecting right away.
+          store.dispatch(rtc.signal(deviceId));
+        });
+      }
+    });
+  });
+}
+
+/**
+ * Automation for the device setup process.
+ */
+function initDeviceConfig(store: Store<*>) {
+  // Whenever the UI has provided the config settings for the device
+  // currently being configured, register the device with the server.
+  store.subscribeToPath('devices.configuring.config', (config) => {
+    if (!config) {
+      return;
+    }
+
+    const {configuring} = store.getState().devices;
+    store.dispatch(actions.devices.config.registerWithServer({
+      devicePublicKey: configuring.secret.deviceId,
+      type: 'camera', // TODO: provide UI hooks for this
+      name: configuring.config.name,
+    }));
+  });
+
+  // When a new device has been registered with the server, send the
+  // device configuration and registration information to it.
+  store.subscribeToPath('devices.configuring.serverRegistrationResult', (result) => {
+    if (!result) {
+      return;
+    }
+
+    const {api, devices} = store.getState();
+    const {config} = devices.configuring;
+    invariant(api);
+    invariant(api.accessToken);
+    invariant(config);
+    store.dispatch(actions.devices.config.sendConfig({
+      accessPoint: config.wifiSSID,
+      password: config.wifiPassword,
+      publicKey: api.accessToken.pub,
+      regToken: result.registrationToken,
+      serverUrl: api.config.serverUrl,
+      time: Date.now(),
+    }));
+  });
+}
+
+/**
+ * Connect the BLE state machine in DeviceSession to the store.
+ */
+function initBLE(store: Store<*>) {
   store.subscribeToPath('auth.isAuthenticated', (isAuthenticated) => {
     if (isAuthenticated) {
-      store.dispatch(actions.devices.registered.fetchList());
+      NativeModules.BLESocketManager.start();
+    } else {
+      NativeModules.BLESocketManager.stop();
     }
   });
+
+  const {ble, config} = actions.devices;
+  const {dispatch} = store;
+
+  function onSocketConnect(socket: Socket) {
+    const {api, devices} = store.getState();
+    const registeredDevices = devices.registered ?
+      Array.from(devices.registered.values()) :
+      [];
+    const pubKeys = registeredDevices.map((device) => device.publicKey);
+    const session = new DeviceSession(socket, api, pubKeys);
+
+    session.on('connect', () => dispatch(ble.connected(session)));
+    session.on('disconnect', () => {
+      session.removeAllListeners();
+      dispatch(ble.disconnected(session));
+    });
+    session.on('secret', () => dispatch(config.passedProximity(session)));
+    session.on('wifiscan', () => dispatch(config.wifiScanResults(session)));
+    session.on('status', () => dispatch(config.statusUpdated(session)));
+    session.on('registered', () => {
+      session.dismiss();
+      dispatch(config.registered(session));
+    });
+    session.on('error', (error) => dispatch(config.error(session)));
+  }
+
+  getSocketManager().on('connect', onSocketConnect);
 }
 
 export function init(store: Store<*>) {
   initNetworkAndAPI(store);
-  initDevices(store);
+  initRegisteredDevices(store);
+  initDeviceConfig(store);
+  initBLE(store);
 }

@@ -10,28 +10,29 @@ import type {Peer} from 'silk-rtc';
 
 import type {Action, SimpleAction} from './action';
 import type {
-  DeviceSession,
+  default as DeviceSession,
   DeviceSecret,
   DeviceStatus,
-} from '../ble/device_manager';
+  RegistrationInformation,
+} from '../ble/device_session';
 import type {
+  DeviceConfig,
   UnregisterRegisteredDeviceResult,
   RegisterConfiguringDeviceResult,
-  ConfiguringDeviceProximityGate,
-  ConfiguringDeviceStatusUpdate,
-  ConfiguringDeviceError,
 } from './device_actions';
 
-type RegisteredDevice = {
+export type RegisteredDevice = {
   deviceId: string;
   publicKey: string;
   name: string;
-  rtcConnection: ?Peer;
-  bleDeviceSession: ?DeviceSession,
-
-  // Legacy state that we currently get via socket.io
-  previewSize: ?{width: number; height: number};
-  haveVideoStream: boolean,
+  rtc: {
+    connecting: boolean,
+    peer: ?Peer,
+    error: ?Error,
+  },
+  ble: {
+    session: ?DeviceSession,
+  },
 };
 
 export type DevicesState = {
@@ -46,12 +47,13 @@ export type DevicesState = {
    * tmeporarily -- for the runtime of the app -- unique) to a
    * DeviceSession object.
    */
-  unregistered: Map<number, DeviceSession>;
+  unconfigured: Map<number, DeviceSession>;
 
   configuring: ?{
     socketId: number;
     passedProximityGate: boolean;
     secret: ?DeviceSecret;
+    config: ?DeviceConfig;
     serverRegistrationResult: ?RegisterConfiguringDeviceResult;
     status: ?DeviceStatus;
     error: ?Error;
@@ -61,10 +63,20 @@ export type DevicesState = {
 
 const initialState: DevicesState = {
   registered: null,
-  unregistered: new Map(),
+  unconfigured: new Map(),
   configuring: null,
 };
 
+const registeredDeviceTemplate = {
+  rtc: {
+    connecting: false,
+    peer: null,
+    error: null,
+  },
+  ble: {
+    session: null,
+  },
+};
 
 // Registered devices
 
@@ -91,12 +103,8 @@ function DEVICE_REGISTERED_RESTORE(
   const registered = new Map();
   devices.forEach((storedRecord) => {
     const device = {
+      ...registeredDeviceTemplate,
       ...storedRecord,
-      rtcConnection: null,
-      bleDeviceSession: null,
-      // Legacy socket.io
-      previewSize: null,
-      haveVideoStream: false,
     };
     registered.set(device.deviceId, device);
   });
@@ -132,12 +140,8 @@ function DEVICE_REGISTERED_FETCH(
       };
     } else {
       device = {
+        ...registeredDeviceTemplate,
         ...serverRecord,
-        rtcConnection: null,
-        bleDeviceSession: null,
-        // Legacy socket.io
-        previewSize: null,
-        haveVideoStream: false,
       };
     }
     registered.set(device.deviceId, device);
@@ -161,8 +165,9 @@ function DEVICE_REGISTERED_UNREGISTER(
   }
 
   const {deviceId} = action.payload;
-  invariant(state.registered);
-  invariant(state.registered.get(deviceId));
+  if (!state.registered || !state.registered.has(deviceId)) {
+    return state;
+  }
 
   const registered = new Map(state.registered);
   registered.delete(deviceId);
@@ -173,61 +178,109 @@ function DEVICE_REGISTERED_UNREGISTER(
 }
 
 
-// Unregistered devices
+// BLE connections
 
-function DEVICE_UNREGISTERED_CONNECTED(
+function DEVICE_BLE_CONNECTED(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_UNREGISTERED_CONNECTED', DeviceSession>
+  action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
 ): DevicesState {
   const session = action.payload;
-  invariant(!state.unregistered.has(session.socketId));
-  const unregistered = new Map(state.unregistered);
-  unregistered.set(session.socketId, session);
+  if (!session.isRegistered) {
+    invariant(!state.unconfigured.has(session.socketId));
+    const unconfigured = new Map(state.unconfigured);
+    unconfigured.set(session.socketId, session);
+    return {
+      ...state,
+      unconfigured,
+    };
+  }
+
+  const {deviceId} = session;
+  invariant(deviceId);
+  if (!state.registered || !state.registered.has(deviceId)) {
+    return state;
+  }
+  const registered = new Map(state.registered);
+  const device = registered.get(deviceId);
+  invariant(device);
+  invariant(!device.ble.session);
+  registered.set(deviceId, {
+    ...device,
+    ble: {
+      ...device.ble,
+      session,
+    },
+  });
   return {
     ...state,
-    unregistered,
+    registered,
   };
 }
 
-function DEVICE_UNREGISTERED_DISCONNECTED(
+function DEVICE_BLE_DISCONNECTED(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_UNREGISTERED_DISCONNECTED', DeviceSession>
+  action: SimpleAction<'DEVICE_BLE_DISCONNECTED' | 'DEVICE_CONFIG_DECLINE', DeviceSession>
 ): DevicesState {
   const session = action.payload;
-  invariant(state.unregistered.has(session.socketId));
-  const unregistered = new Map(state.unregistered);
-  unregistered.delete(session.socketId);
+  let {registered, unconfigured, configuring} = state;
 
-  let {configuring} = state;
+  if (unconfigured.has(session.socketId)) {
+    unconfigured = new Map(unconfigured);
+    unconfigured.delete(session.socketId);
+  } else {
+    invariant(session.isRegistered);
+    const {deviceId} = session;
+    invariant(deviceId);
+    if (!state.registered || !state.registered.has(deviceId)) {
+      return state;
+    }
+    registered = new Map(registered);
+    const device = registered.get(deviceId);
+    invariant(device);
+    invariant(device.ble.session === session);
+    registered.set(deviceId, {
+      ...device,
+      ble: {
+        ...device.ble,
+        session: null,
+      },
+    });
+  }
+
   if (configuring &&
       configuring.socketId === session.socketId &&
       !configuring.registered) {
     configuring = {
       ...configuring,
-      error: new Error('BLE socket disconnected before'),
+      error: new Error('BLE socket disconnected before config completed.'),
     };
   }
 
   return {
     ...state,
-    unregistered,
+    registered,
+    unconfigured,
     configuring,
   };
 }
 
-function DEVICE_UNREGISTERED_ACCEPTED(
+// Device configuration
+
+function DEVICE_CONFIG_ACCEPT(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_UNREGISTERED_ACCEPTED', DeviceSession>
+  action: Action<'DEVICE_CONFIG_ACCEPT', number, DeviceSession>
 ): DevicesState {
-  // We currently only support 1 configuring device.
-  invariant(!state.configuring);
+  invariant(!action.requested && !action.error);
   const session = action.payload;
+  invariant(!state.configuring);
+  invariant(!session.isRegistered);
   return {
     ...state,
     configuring: {
       socketId: session.socketId,
       passedProximityGate: false,
       secret: null,
+      config: null,
       serverRegistrationResult: null,
       status: null,
       error: null,
@@ -236,57 +289,56 @@ function DEVICE_UNREGISTERED_ACCEPTED(
   };
 }
 
-
-// Currently configuring device
-
-function DEVICE_CONFIGURING_ABORTED(
+function DEVICE_CONFIG_ABORT(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIGURING_ABORTED', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIG_ABORT', DeviceSession>
 ): DevicesState {
+  const session = action.payload;
+  invariant(state.configuring);
+  invariant(state.configuring.socketId === session.socketId);
   return {
     ...state,
     configuring: null,
   };
 }
 
-function DEVICE_CONFIGURING_PROXIMITYGATE(
+function DEVICE_CONFIG_PROXIMITYGATE(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIGURING_PROXIMITYGATE', ConfiguringDeviceProximityGate>
+  action: SimpleAction<'DEVICE_CONFIG_PROXIMITYGATE', DeviceSession>
 ): DevicesState {
-  const {socketId, secret} = action.payload;
+  const session = action.payload;
   const {configuring} = state;
   invariant(configuring);
-  invariant(configuring.socketId === socketId);
-  invariant(!configuring.secret);
+  invariant(configuring.socketId === session.socketId);
   return {
     ...state,
     configuring: {
       ...configuring,
-      secret,
+      passedProximityGate: true,
+      secret: session.secret,
     },
   };
 }
 
-function DEVICE_CONFIGURING_STATUSUPDATED(
+function DEVICE_CONFIG_SETCONFIG(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIGURING_STATUSUPDATED', ConfiguringDeviceStatusUpdate>
+  action: SimpleAction<'DEVICE_CONFIG_SETCONFIG', DeviceConfig>
 ): DevicesState {
-  const {socketId, status} = action.payload;
+  const config = action.payload;
   const {configuring} = state;
   invariant(configuring);
-  invariant(configuring.socketId === socketId);
   return {
     ...state,
     configuring: {
       ...configuring,
-      status,
+      config,
     },
   };
 }
 
-function DEVICE_CONFIGURING_REGISTERSERVER(
+function DEVICE_CONFIG_REGISTERSERVER(
   state: DevicesState,
-  action: Action<'DEVICE_CONFIGURING_REGISTERSERVER', *, RegisterConfiguringDeviceResult>
+  action: Action<'DEVICE_CONFIG_REGISTERSERVER', *, RegisterConfiguringDeviceResult>
 ): DevicesState {
   if (action.requested) {
     return state;
@@ -322,12 +374,38 @@ function DEVICE_CONFIGURING_REGISTERSERVER(
   };
 }
 
-function DEVICE_CONFIGURING_REGISTERED(
+function DEVICE_CONFIG_SENDCONFIG(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIGURING_REGISTERED', DeviceSession>
+  action: Action<'DEVICE_CONFIG_SENDCONFIG', RegistrationInformation, DeviceSession>
 ): DevicesState {
-  const {configuring} = state;
+  invariant(!action.requested && !action.error);
+  // Nothing to do here.
+  return state;
+}
+
+function DEVICE_CONFIG_STATUSUPDATED(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED', DeviceSession>
+): DevicesState {
   const session = action.payload;
+  const {configuring} = state;
+  invariant(configuring);
+  invariant(configuring.socketId === session.socketId);
+  return {
+    ...state,
+    configuring: {
+      ...configuring,
+      status: session.status,
+    },
+  };
+}
+
+function DEVICE_CONFIG_REGISTERED(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_CONFIG_REGISTERED', DeviceSession>
+): DevicesState {
+  const session = action.payload;
+  const {configuring} = state;
   invariant(configuring);
   invariant(configuring.socketId === session.socketId);
   return {
@@ -339,30 +417,38 @@ function DEVICE_CONFIGURING_REGISTERED(
   };
 }
 
-function DEVICE_CONFIGURING_ERROR(
+function DEVICE_CONFIG_ERROR(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIGURING_ERROR', ConfiguringDeviceError>
+  action: SimpleAction<'DEVICE_CONFIG_ERROR', DeviceSession>
 ): DevicesState {
-  const {socketId, error} = action.payload;
+  const session = action.payload;
   const {configuring} = state;
-  invariant(configuring);
-  invariant(configuring.socketId === socketId);
+  if (!configuring || configuring.socketId === session.socketId) {
+    return state;
+  }
   return {
     ...state,
     configuring: {
       ...configuring,
-      error,
+      error: session.error,
     },
   };
 }
 
-function DEVICE_CONFIGURING_FINISH(
+function DEVICE_CONFIG_FINISH(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIGURING_FINISH', void>
+  action: SimpleAction<'DEVICE_CONFIG_FINISH', DeviceSession>
 ): DevicesState {
   const {configuring} = state;
   invariant(configuring);
-  invariant(configuring.registered);
+  invariant(configuring.registered || configuring.error);
+  if (configuring.error) {
+    return {
+      ...state,
+      configuring: null,
+    };
+  }
+
   invariant(configuring.secret);
   invariant(configuring.serverRegistrationResult);
 
@@ -372,12 +458,7 @@ function DEVICE_CONFIGURING_FINISH(
     deviceId,
     publicKey: deviceId,
     name: configuring.serverRegistrationResult.name,
-    rtcConnection: null,
-    // We don't count the unauthenticated BLE session that we're using
-    // to configure the device here.
-    bleDeviceSession: null,
-    previewSize: null,
-    haveVideoStream: false,
+    ...registeredDeviceTemplate,
   });
   return {
     ...state,
@@ -386,19 +467,121 @@ function DEVICE_CONFIGURING_FINISH(
   };
 }
 
+
+// WebRTC
+
+function DEVICE_RTC_SIGNAL(
+  state: DevicesState,
+  action: Action<'DEVICE_RTC_SIGNAL', string, Peer>
+): DevicesState {
+  const deviceId = action.input;
+  let {registered} = state;
+  if (!registered) {
+    return state;
+  }
+
+  let device = registered.get(deviceId);
+  if (!device) {
+    return state;
+  }
+
+  if (action.requested) {
+    device = {
+      ...device,
+      rtc: {
+        connecting: true,
+        peer: null,
+        error: null,
+      },
+    };
+  } else if (action.error) {
+    device = {
+      ...device,
+      rtc: {
+        connecting: false,
+        peer: null,
+        error: action.payload,
+      },
+    };
+  } else {
+    device = {
+      ...device,
+      rtc: {
+        connecting: false,
+        peer: action.payload,
+        error: null,
+      },
+    };
+  }
+  registered = new Map(registered);
+  registered.set(deviceId, device);
+  return {
+    ...state,
+    registered,
+  };
+}
+
+function DEVICE_RTC_CONNECTIONCLOSED(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_RTC_CONNECTIONCLOSED', string>
+): DevicesState {
+  const deviceId = action.payload;
+  if (!state.registered || !state.registered.has(deviceId)) {
+    return state;
+  }
+
+  const registered = new Map(state.registered);
+  const device = state.registered.get(deviceId);
+  registered.set(deviceId, {
+    ...device,
+    rtc: {
+      connecting: false,
+      peer: null,
+      error: null,
+    },
+  });
+  return {
+    ...state,
+    registered,
+  };
+}
+
+
+function AUTH_SIGNOUT(
+  state: DevicesState,
+  action: Action<'AUTH_SIGNOUT', void>
+): DevicesState {
+  const {registered} = state;
+  if (registered) {
+    registered.forEach((device) => {
+      if (device.rtc.peer) {
+        device.rtc.peer.destroy();
+      }
+    });
+  }
+  return {
+    ...initialState,
+  };
+}
+
 export const reducer = handleActions({
   DEVICE_REGISTERED_RESTORE,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER,
-  DEVICE_UNREGISTERED_CONNECTED,
-  DEVICE_UNREGISTERED_DISCONNECTED,
-  DEVICE_UNREGISTERED_ACCEPTED,
-  DEVICE_UNREGISTERED_DECLINED: DEVICE_UNREGISTERED_DISCONNECTED,
-  DEVICE_CONFIGURING_ABORTED,
-  DEVICE_CONFIGURING_PROXIMITYGATE,
-  DEVICE_CONFIGURING_REGISTERSERVER,
-  DEVICE_CONFIGURING_STATUSUPDATED,
-  DEVICE_CONFIGURING_REGISTERED,
-  DEVICE_CONFIGURING_ERROR,
-  DEVICE_CONFIGURING_FINISH,
+  DEVICE_BLE_CONNECTED,
+  DEVICE_BLE_DISCONNECTED,
+  DEVICE_CONFIG_ACCEPT,
+  DEVICE_CONFIG_DECLINE: DEVICE_BLE_DISCONNECTED,
+  DEVICE_CONFIG_ABORT,
+  DEVICE_CONFIG_PROXIMITYGATE,
+  DEVICE_CONFIG_SETCONFIG,
+  DEVICE_CONFIG_REGISTERSERVER,
+  DEVICE_CONFIG_SENDCONFIG,
+  DEVICE_CONFIG_STATUSUPDATED,
+  DEVICE_CONFIG_REGISTERED,
+  DEVICE_CONFIG_ERROR,
+  DEVICE_CONFIG_FINISH,
+  DEVICE_RTC_SIGNAL,
+  DEVICE_RTC_CONNECTIONCLOSED,
+  AUTH_SIGNOUT,
 }, initialState);

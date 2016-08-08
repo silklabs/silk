@@ -3,7 +3,7 @@ import { Systrace } from 'react-native';
 
 import { RssiSmoother } from 'silk-api';
 import BLEStream from 'silk-app-sdk/src/ble/stream';
-import {DeviceManager} from 'silk-app-sdk/src/ble/device_manager';
+import DeviceSession from 'silk-app-sdk/src/ble/device_session';
 import {Socket, SocketManager} from 'silk-ble-socket';
 import * as CryptoModule from 'silk-crypto';
 import HttpClient from 'silk-http-client';
@@ -126,7 +126,7 @@ if (__DEV__) {
     BLEStream,
     Socket,
     SocketManager,
-    DeviceManager,
+    DeviceSession,
   ].forEach(instrumentEventEmitterEmit);
 
   Systrace.measureMethods(

@@ -9,16 +9,9 @@ import {
 } from 'react-native';
 import { Colors } from './CommonStyles';
 
-const CONNECTION_STATES = ['connecting', 'connected', 'offline'];
-
 export default class TopBar extends React.Component {
 
-  static propTypes = {
-    socketConnectionState: React.PropTypes.oneOf(CONNECTION_STATES).isRequired,
-  };
-
   render() {
-    let connectionStyle = styles[this.props.socketConnectionState];
     return (
       <View style={styles.navBar}>
         <Image
@@ -37,11 +30,7 @@ export default class TopBar extends React.Component {
             </TouchableOpacity>
           </View>
           <Text style={styles.wordmark}>SILK</Text>
-          <View style={styles.spacer}>
-            <View style={styles.indicatorContainer}>
-              <View style={[styles.connectionStateMarker, connectionStyle]} />
-            </View>
-          </View>
+          <View style={styles.spacer} />
         </View>
       </View>
     );

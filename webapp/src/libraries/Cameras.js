@@ -5,6 +5,7 @@ import io from 'socket.io-client';
 import invariant from 'assert';
 import createLog from 'silk-log';
 import { call } from 'silk-rtc';
+import type { StructuredDataChannel } from 'silk-rtc';
 
 import Api from './Api';
 import ObjectCollector from './ObjectCollector';
@@ -25,6 +26,8 @@ class Camera extends EventEmitter {
   lastSeenAt: Date;
 
   _requestedRooms = { };
+  _logging: bool = false;
+  _diagChannel: ?StructuredDataChannel = null;
   _socket = null;
   _queue = null;
   _peer = null;
@@ -45,7 +48,7 @@ class Camera extends EventEmitter {
   }
 
   setPeer(peer) {
-    const channel = peer.getChannel('video');
+    const channel = peer ? peer.getChannel('video') : null;
     const previous = this._channel;
 
     this._peer = peer;
@@ -99,7 +102,7 @@ class Camera extends EventEmitter {
   }
 
   set logging(enabled) {
-    this._requestedRooms.diag = enabled;
+    this._logging = enabled;
     this._updateDiagStream();
   }
 
@@ -111,25 +114,39 @@ class Camera extends EventEmitter {
     this._updateObjectStream();
   }
 
+  get diagOnline(): bool {
+    return this._diagChannel && this._diagChannel.open;
+  }
+
   _updateDiagStream() {
-    const enabled = this._requestedRooms.diag;
-    const diagStream = 'diag-' + this.id;
-
-    if (this.online && enabled) {
-      log.info('Joining diag stream ' + diagStream);
-      this._socket.on(diagStream, this._onDiagStream);
-      this._socket.emit('join', diagStream);
-
+    const enabled = this._logging;
+    if (enabled && this._peer !== null) {
+      if (!this._diagChannel) {
+        this._diagChannel = this._peer.createChannel('diag', {});
+        this._diagChannel.on('close', this._onDiagChannelClose);
+        this._diagChannel.on('error', this._onDiagChannelError);
+        this._diagChannel.on('logchunk', this._onDiagChannel);
+        this._diagChannel.on('open', () => {
+          this._diagChannel.emit('hello', {});
+        });
+      }
     } else {
-      log.info('Leaving diag stream ' + diagStream);
-      if (this._socket) {
-        this._socket.removeListener(diagStream, this._onDiagStream);
-        this._socket.emit('leave', diagStream);
+      if (this._diagChannel) {
+        this._diagChannel.close();
+        this._diagChannel = null;
       }
     }
   }
 
-  _onDiagStream = (msg, ack) => {
+  _onDiagChannelError= (err) => {
+    log.error('Got diag channel error:', err.stack || err);
+  };
+
+  _onDiagChannelClose= () => {
+    log.warn('Got channel close');
+  };
+
+  _onDiagChannel = (msg, ack) => {
     if (typeof ack === 'function') {
       ack();
     }
@@ -140,7 +157,6 @@ class Camera extends EventEmitter {
         this.logs.dash = msg.log;
         break;
       case 'logcat':
-        // Lexical scope ...
         {
           const maxLines = 500;
 
@@ -231,21 +247,24 @@ class Camera extends EventEmitter {
   }
 
   _adjustRooms(event) {
-    let count = super.listeners(event).length;
-    let enabled = count > 0;
-
     switch (event) {
     case 'previewImage':
     case 'videoClip':
     case 'micData':
-      this._requestedRooms[event] = enabled;
-      this._updatePreviewImageStream();
-      this._updateVideoClipStream();
-      this._updateMicStream();
-      this._updateObjectStream();
-      break;
+      {
+        const count = super.listeners(event).length;
+        const enabled = count > 0;
+
+        this._requestedRooms[event] = enabled;
+        this._updatePreviewImageStream();
+        this._updateVideoClipStream();
+        this._updateMicStream();
+        this._updateObjectStream();
+        break;
+      }
     default:
-      log.verbose(`Unhandled event: ${event}`);
+      log.verbose(`_adjustRooms: unhandled event: ${event}`);
+      break;
     }
   }
 

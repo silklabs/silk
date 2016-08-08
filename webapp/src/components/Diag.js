@@ -494,7 +494,7 @@ export default class Diag extends React.Component {
       // TODO: This is a little racy but probably ok.  If this promise doesn't
       // resolve before the component is first rendered (unlikely) then the
       // incorrect view will be shown.
-      if (view) {
+      if (typeof view === 'string') {
         this.setState({ view });
       }
     });
@@ -550,7 +550,7 @@ export default class Diag extends React.Component {
     this.state.camera.reboot(channel);
   };
 
-  onView = (e, view) => {
+  onView = (view) => {
     localforage.setItem('diag-active-view', view);
     this.setState({view});
   };
@@ -567,7 +567,7 @@ export default class Diag extends React.Component {
     };
 
     let { camera, paused } = this.state;
-    if (!camera || !camera.online) {
+    if (!camera || !camera.diagOnline) {
       return <div>Waiting for camera {this.deviceId} to connect ...</div>;
     }
 
@@ -649,7 +649,7 @@ class DiagLog extends React.Component {
   style = {
     flex: 2,
     fontFamily: 'monospace',
-    fontSize: '8',
+    fontSize: '8px',
     overflowY: 'scroll',
     overflowX: 'hidden',
     margin: 2,
@@ -714,7 +714,7 @@ class DiagLogcat extends DiagLog {
                return <div dangerouslySetInnerHTML={{__html: html}} />;
              })
         }
-        <Input style={{fontFamily: 'monospace', fontSize: '8'}}
+        <Input style={{fontFamily: 'monospace', fontSize: '8px'}}
           ref="filter"
           type="text"
           placeholder="Filter regexp"

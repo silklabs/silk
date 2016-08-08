@@ -69,6 +69,8 @@ const STT_CONFIDENCE_THRESHOLD = 0.35;
 
 const UPLOAD_KEYWORD_WAV = 'persist.silk.kws.upload';
 const VAD_ENABLED_PROP = 'persist.silk.kws.vad.enabled';
+const WAV_HEADER_CHUNK_SIZE = 4;
+const WAV_HEADER_SUBCHUNK2_SIZE = 40;
 
 type SampleType = 'pos' | 'neg';
 
@@ -540,7 +542,12 @@ export default class KeywordSpotting extends EventEmitter {
     writer.on('data', samples => {
       wavData = Buffer.concat([wavData, samples]);
     });
-    writer.on('header', () => {
+    writer.on('header', header => {
+      // Overwrite the wav data length with the correct header information
+      let size = header.readInt32LE(WAV_HEADER_SUBCHUNK2_SIZE);
+      wavData.writeInt32LE(36 + size, WAV_HEADER_CHUNK_SIZE);
+      wavData.writeInt32LE(size, WAV_HEADER_SUBCHUNK2_SIZE);
+
       let op;
       if (sampleType === 'pos' ) {
         op = new PosKeywordUploadOperation({

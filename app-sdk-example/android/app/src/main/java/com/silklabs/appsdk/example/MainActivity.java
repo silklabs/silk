@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 
 import com.silklabs.appsdk.SilkAppSDKService;
 import com.silklabs.appsdk.SilkAppSDKDelegate;
@@ -54,6 +56,19 @@ public class MainActivity extends Activity {
               } else {
                 onAuthStatusChanged(clientAuthError.toString());
               }
+              break;
+            case "MESSAGE_ERROR":
+              String errorMsg = message.get("error").toString();
+              AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+              alertDialog.setTitle("Error");
+              alertDialog.setMessage(errorMsg);
+              alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                  new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                      dialog.dismiss();
+                    }
+                  });
+              alertDialog.show();
               break;
             default:
               Log.w(TAG, "Unknown message type: " + messageType);

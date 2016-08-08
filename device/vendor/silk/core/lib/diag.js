@@ -3,32 +3,50 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @private
+ * @flow
  */
 
 import {spawn} from 'child_process';
+import type {ChildProcess} from 'child_process';
+import {EventEmitter} from 'events';
 
 import createLog from 'silk-log/device';
-
-import type Server from './server.js';
 
 const log = createLog('diag');
 
 class DiagLogger {
+  channel: EventEmitter;
+  cmd: string;
+  data: string;
+  name: string;
+  params: Array<string>;
+  respawnDelaySecs: ?number;
+  respawnTimer: ?number;
+  sendIntervalId: ?number;
+  helper: ?ChildProcess;
+
   // respawnDelay specifies amount of time to wait after process dies before
   // running the command again. Use null for "streaming logs" that should be
   // running at all times.
-  constructor(name, cmd, params, respawnDelaySecs) {
-    this.name = name;
-    this.respawnTimer = null;
-    this.sendIntervalId = null;
-    this.helper = null;
-    this.server = null;
-    this.data = '';
-    this.config(cmd, params, respawnDelaySecs);
+  constructor(channel: EventEmitter,
+              name: string,
+              cmd: string,
+              params: Array<string>,
+              respawnDelaySecs: ?number) {
+    Object.assign(this, {
+      channel,
+      cmd,
+      data: '',
+      helper: null,
+      name,
+      params,
+      respawnDelaySecs,
+      respawnTimer: null,
+      sendIntervalId: null,
+    });
   }
 
-  _launch() {
+  start() {
     log.info('Spawning', this.cmd);
     let helper = spawn(this.cmd, this.params);
 
@@ -50,7 +68,7 @@ class DiagLogger {
         this.send(true);
         if (this.respawnDelaySecs) {
           this.respawnTimer = setTimeout( () => {
-            this._launch();
+            this.start();
             this.respawnTimer = null;
           }, this.respawnDelaySecs * 1000);
         }
@@ -60,13 +78,13 @@ class DiagLogger {
     this.helper = helper;
   }
 
-  send(dumpTologcat = false) {
+  send(dumpTologcat: bool = false) {
     if (this.data.length === 0) {
       return;
     }
 
-    if (this.server) {
-      this.server.send('diag', {
+    if (this.channel) {
+      this.channel.emit('logchunk', {
         log: this.data,
         name: this.name,
         type: 'log',
@@ -81,19 +99,11 @@ class DiagLogger {
     }
   }
 
-  config(cmd, params, respawnDelaySecs) {
-    this.cmd = cmd;
-    this.params = params;
-    this.respawnDelaySecs = respawnDelaySecs;
-    this._launch();
-    return this;
-  }
-
-  deinit() {
-    this.server = null;
-    if (this.helper) {
-      this.helper.removeAllListeners('close'); // to not respawn on close event
-      this.helper.kill();
+  stop() {
+    const helper = this.helper;
+    if (helper) {
+      helper.removeAllListeners('close'); // to not respawn on close event
+      helper.kill();
       this.helper = null;
     }
     if (this.respawnTimer) {
@@ -105,71 +115,43 @@ class DiagLogger {
       this.sendIntervalId = null;
     }
   }
+
 }
 
-export default class Diag {
-  server: Server;
+export default class Diag extends EventEmitter {
+  _channel: EventEmitter;
+  _loggers: Array<DiagLogger>
 
-  constructor(server: Server) {
-    this.server = server;
-    this.cfg = [];
+  constructor(channel: EventEmitter) {
+    super();
+    this._channel = channel;
 
-    this.loggers = [
-      new DiagLogger('logcat',
+    this._loggers = [
+      new DiagLogger(channel, 'logcat',
         'system/bin/logcat',
         /* "-T 0" to skip to the current tip of logcat data. Diag starts up
            immediately at boot before the device connects to the server so any
            existing scroll back will be lost anyway */
         ['-v', 'threadtime', '-T', '0']),
 
-      new DiagLogger('dash',
+      new DiagLogger(channel, 'dash',
         'system/silk/bin/dash', [], 60),
     ];
 
-    server.on('connect', () => {
-      this.start();
+    channel.on('hello', () => {
+      // Send the latest data immediately
+      this._loggers.forEach(logger => logger.send());
     });
-
-    server.on('disconnect', () => {
-      this.stop();
-    });
+    channel.on('reboot', (payload) => this.emit('reboot', payload));
   }
 
   start() {
     log.info('Starting diag service');
-    this._applyConfig();
+    this._loggers.forEach(logger => logger.start());
   }
 
   stop() {
     log.info('Stopping diag service');
-    this.loggers.map((logger) => {
-      logger.server = null;
-    });
-  }
-
-  setConfig(cfg) {
-    if (JSON.stringify(cfg) === JSON.stringify(this.cfg)) {
-      // No config change, nothing do to.
-      return;
-    }
-    log.info(`config: ${JSON.stringify(cfg)}`);
-    this.cfg = cfg;
-    this._applyConfig();
-  }
-
-  _applyConfig() {
-    this.loggers.map(logger => {
-      let name = logger.name;
-      if (name in this.cfg) {
-        if (this.cfg[name] === 1) {
-          log.info('Enabling', name);
-          logger.server = this.server;
-          logger.send(); // Send the latest data immediately
-        } else {
-          log.info('Disabling', name);
-          logger.server = null;
-        }
-      }
-    });
+    this._loggers.forEach(logger => logger.stop());
   }
 }

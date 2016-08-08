@@ -22,6 +22,7 @@ import createLog from 'silk-log/device';
 import getBTLE from '../btle/parent';
 import getDeviceId from '../deviceid';
 import NormalSessionListener from './normal_session_listener';
+import type Connections from '../connections';
 
 import type {
   ScanResult,
@@ -69,6 +70,7 @@ type AugmentedWifiState =
   'offline';
 
 type Status = AugmentedWifiState | ServerState;
+
 
 const log = createLog('config');
 
@@ -170,6 +172,7 @@ export class DeviceConfig extends EventEmitter {
   _config: ?ConfigData = null;
   _serverConnected: boolean = false;
   _server: Server = null;
+  _server: Connections = null;
   _socketSessionListeners: Array<SessionListenerBase> = [ ];
   _configuringSocketSessionListener: ?ConfigSessionListener = null;
   _sessionStatus: Status = ``;
@@ -581,7 +584,7 @@ export class DeviceConfig extends EventEmitter {
     this._socketSessionListeners.push(listener);
   }
 
-  async init(server: Server): Promise<void> {
+  async init(server: Connections): Promise<void> {
     log.debug(`init`);
     invariant(server);
 

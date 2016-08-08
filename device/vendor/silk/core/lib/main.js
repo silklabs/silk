@@ -188,8 +188,8 @@ function main() {
       online: false,
     };
   }
-  server.on('connect', netstatusOrStub.check);
-  server.on('disconnect', netstatusOrStub.check);
+  connections.on('connect', netstatusOrStub.check);
+  connections.on('disconnect', netstatusOrStub.check);
   netstatusOrStub.on('online', () => connections.reconnect());
   outbox = initOutbox(netstatusOrStub);
 
@@ -275,8 +275,6 @@ function main() {
     })
     .then(maybeAbortBoot)
     .then(async () => {
-      diag = new Diag(server);
-
       // Activate the accelerometer once for the entire system (issue #876),
       // polling every 250ms as we don't need super-high accuracy.
       sensors.activate(sensors.SENSOR_TYPE.ACCELEROMETER, 250);
@@ -309,7 +307,7 @@ function main() {
     .then(() => {
       if (!DEV_NO_SERVER_CONNECT) {
         log.info('Load configuration');
-        return config.init(server);
+        return config.init(connections);
       }
       return null;
     })
@@ -384,8 +382,6 @@ server.on('cmd', cmd => {
   case 'livestream':
     {
       log.info('livestream command:', JSON.stringify(cmd));
-      let flag = cmd.diag ? 1 : 0;
-      diag.setConfig({dash: flag, logcat: flag});
       timeline.configLiveStream({
         preview: !!cmd.preview,
         video: !!cmd.video,
@@ -401,21 +397,6 @@ server.on('cmd', cmd => {
       cmd.targetName = 'samsungtv';
       ext.onCommand(cmd);
     }
-    break;
-  case 'reboot':
-    log.info('reboot command:', JSON.stringify(cmd));
-    if (cmd.channel) {
-      log.info('  reboot: setting update channel to', cmd.channel);
-      util.setprop('persist.silk.update.channel', cmd.channel);
-      // When moving the device to a new update channel, it's likely that the
-      // serverUrl received from the app during initial configuration time will
-      // no longer be valid for the new update channel.  Clearing the serverUrl
-      // here reverts the device back to using the default server supplied by the
-      // current update channel.
-      config.forceDefaultServerUrl();
-    }
-    log.info('  rebooting ...');
-    util.setprop('sys.powerctl', 'reboot');
     break;
   case 'diagCommand':
     log.info('diagCommand:', JSON.stringify(cmd));
@@ -477,6 +458,24 @@ async function onConfigured() {
     connections.start();
     server.connect();
   }
+
+  diag = new Diag(connections.getChannel('diag'));
+  diag.start();
+  diag.on('reboot', (cmd) => {
+    log.info('reboot command:', JSON.stringify(cmd));
+    if (typeof cmd.channel === 'string') {
+      log.info('  reboot: setting update channel to', cmd.channel);
+      util.setprop('persist.silk.update.channel', cmd.channel);
+      // When moving the device to a new update channel, it's likely that the
+      // serverUrl received from the app during initial configuration time will
+      // no longer be valid for the new update channel.  Clearing the serverUrl
+      // here reverts the device back to using the default server supplied by the
+      // current update channel.
+      config.forceDefaultServerUrl();
+    }
+    log.info('  rebooting ...');
+    util.setprop('sys.powerctl', 'reboot');
+  });
 
   // Yield a pinch of time since updates don't need to start immediately,
   // |update.start()| is currently a little main thread heavy, and there's lots

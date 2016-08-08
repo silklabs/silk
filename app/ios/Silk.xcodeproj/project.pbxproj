@@ -646,7 +646,8 @@
 				57C30C2F1B92CE01003F9EFF /* DebugLog.swift */,
 				57C30C311B92CE10003F9EFF /* DebugLogTest.swift */,
 			);
-			path = DebugLog;
+			name = DebugLog;
+			path = "../../../ble-socket/ios/DebugLog";
 			sourceTree = "<group>";
 		};
 		78C398B11ACF4ADC00677621 /* Products */ = {

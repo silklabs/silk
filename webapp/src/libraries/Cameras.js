@@ -205,14 +205,11 @@ class Camera extends EventEmitter {
   }
 
   reboot(channel) {
-    if (!this.online) {
+    if (!this.diagOnline) {
+      log.warn('Diag not online, unable to reboot');
       return;
     }
-    let cmd = { id: this.id, msg: 'reboot' };
-    if (channel) {
-      cmd.channel = channel;
-    }
-    this._socket.emit('cmd', cmd);
+    this._diagChannel.emit('reboot', {"channel": channel});
   }
 
   diagCommand(subsystem: string, name: string, arg: string = '') {

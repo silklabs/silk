@@ -51,6 +51,7 @@ import getBTLE from './btle/parent';
 import getDeviceId from './deviceid';
 import makeCrashReporter from './crash_reporter';
 import Diag from './diag';
+import type {DiagRebootEventData} from './diag';
 import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
@@ -461,19 +462,24 @@ async function onConfigured() {
 
   diag = new Diag(connections.getChannel('diag'));
   diag.start();
-  diag.on('reboot', (cmd) => {
-    log.info('reboot command:', JSON.stringify(cmd));
-    if (typeof cmd.channel === 'string') {
-      log.info('  reboot: setting update channel to', cmd.channel);
-      util.setprop('persist.silk.update.channel', cmd.channel);
+  diag.on('reboot', (data: DiagRebootEventData) => {
+    switch (data.channel) {
+    case 'master':
+    case 'next':
+    case 'release':
+      log.info('  reboot: setting update channel to', data.channel);
+      util.setprop('persist.silk.update.channel', data.channel);
       // When moving the device to a new update channel, it's likely that the
       // serverUrl received from the app during initial configuration time will
       // no longer be valid for the new update channel.  Clearing the serverUrl
       // here reverts the device back to using the default server supplied by the
       // current update channel.
       config.forceDefaultServerUrl();
+      break;
+    default:
+      break;
     }
-    log.info('  rebooting ...');
+    log.info('rebooting ...');
     util.setprop('sys.powerctl', 'reboot');
   });
 

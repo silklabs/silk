@@ -14,6 +14,10 @@ import createLog from 'silk-log/device';
 
 const log = createLog('diag');
 
+type DiagRebootEventData = {
+  channel: ?string;  // If !null, move the device to the new update channel
+};
+
 class DiagLogger {
   channel: EventEmitter;
   cmd: string;
@@ -142,7 +146,7 @@ export default class Diag extends EventEmitter {
       // Send the latest data immediately
       this._loggers.forEach(logger => logger.send());
     });
-    channel.on('reboot', (payload) => this.emit('reboot', payload));
+    channel.on('reboot', this._onReboot);
   }
 
   start() {
@@ -153,5 +157,22 @@ export default class Diag extends EventEmitter {
   stop() {
     log.info('Stopping diag service');
     this._loggers.forEach(logger => logger.stop());
+  }
+
+  _onReboot = (untrusted: Object) => {
+    let data: DiagRebootEventData = {};
+    switch (untrusted.channel) {
+    case 'master':
+    case 'next':
+    case 'release':
+      data.channel = untrusted.channel;
+      break;
+    case '':
+      break;
+    default:
+      log.error('Invalid channel, ignoring command');
+      return;
+    }
+    this.emit('reboot', data);
   }
 }

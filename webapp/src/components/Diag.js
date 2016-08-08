@@ -546,7 +546,7 @@ export default class Diag extends React.Component {
     this.setState({paused});
   };
 
-  onReboot = (e, channel) => {
+  onReboot = (channel) => {
     this.state.camera.reboot(channel);
   };
 

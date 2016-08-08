@@ -163,20 +163,36 @@ export default class DataChannel extends React.Component {
         if (this.state.message.length > 0) {
           channel.removeListener(this.state.message, this.onDeviceMessage);
         }
+        channel.removeListener('error', this.onChannelError);
+        channel.removeListener('close', this.onChannelClose);
+        channel = null;
       }
 
       const peer = this.state.camera.getPeer();
       if (peer !== null) {
-        channel = peer.createChannel(channelName);
-        if (channel && this.state.message.length > 0) {
-          channel.on(this.state.message, this.onDeviceMessage);
-        } else {
-          log.warn('Channel does not exist', channelName);
+        if (this.state.message.length > 0) {
+          channel = peer.createChannel(channelName);
+          if (channel) {
+            channel.on(this.state.message, this.onDeviceMessage);
+            channel.on('error', this.onChannelError);
+            channel.on('close', this.onChannelClose);
+          } else {
+            log.warn('Channel does not exist', channelName);
+          }
         }
       }
 
       this.setState({channel, channelName, devicePayload: ''});
     }
+  };
+
+  onChannelError = (err) => {
+    log.error('Got channel error:', err.stack || err);
+  };
+
+  onChannelClose = () => {
+    log.warn('Got channel close');
+    this.setState({channel: null});
   };
 
   render() {

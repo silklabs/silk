@@ -155,17 +155,6 @@ class Main {
     this.processingPreview = false;
   };
 
-  onCommand(cmd) {
-    switch (cmd.msg) {
-    case 'addPerson':
-      this.faceRecognizer.addPerson(cmd.person);
-      break;
-    default:
-      log.verbose('Unknown command:', cmd);
-      break;
-    }
-  }
-
   onPropAddPerson = () => {
     const person = sysutils.getprop('silk.addperson');
     this.faceRecognizer.addPerson(person);

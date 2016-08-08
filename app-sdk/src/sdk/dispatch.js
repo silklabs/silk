@@ -5,6 +5,7 @@
 import createLog from 'silk-log';
 
 import * as auth from './auth';
+import * as devices from './devices';
 import emitter from './emitter';
 
 import type {SDKStore} from './store';
@@ -13,6 +14,7 @@ const log = createLog('app-sdk-dispatch');
 
 const messageHandlers = {
   ...auth.messageHandlers,
+  ...devices.messageHandlers,
 };
 
 export function init(store: SDKStore) {
@@ -42,7 +44,7 @@ export function init(store: SDKStore) {
     }
 
     log.debug('Dispatching incoming message', message);
-    handler(store, message);
+    handler(store, message, emitter);
   });
 
   // Handle outgoing messages on state changes.

@@ -165,6 +165,7 @@ function DEVICE_REGISTERED_UNREGISTER(
   }
 
   const {deviceId} = action.payload;
+  // TODO: look at success?
   if (!state.registered || !state.registered.has(deviceId)) {
     return state;
   }

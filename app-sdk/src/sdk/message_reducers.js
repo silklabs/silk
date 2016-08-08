@@ -7,11 +7,18 @@
 import invariant from 'assert';
 import {handleActions} from 'redux-actions';
 
-import type {ListDevicesOutput} from 'silk-api/src/gen/account';
+import emitter from './emitter';
 
-import type {Action} from '../store/action';
-import type {ClientStatusMessage} from './client_status';
-import type {DeviceListMessage} from './devices';
+import type {ListDevicesOutput} from 'silk-api/src/gen/account';
+import type {Peer} from 'silk-rtc';
+
+import type {Action, SimpleAction} from '../store/action';
+import type {
+  ClientStatusMessage,
+  DeviceListMessage,
+} from './outgoing';
+import type DeviceSession from '../ble/device_session';
+import type {UnregisterRegisteredDeviceResult} from '../store/device_actions';
 
 export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,
@@ -87,12 +94,7 @@ function AUTH_SIGNOUT(
     // Ignore.
   }
   return {
-    ...state,
-    CLIENT_STATUS: {
-      ...state.CLIENT_STATUS,
-      clientAuthStatus: 'NOT_AUTHENTICATED',
-      clientAuthError: null,
-    },
+    ...initialState,
   };
 }
 
@@ -136,9 +138,9 @@ function NETWORK_SERVER_REACHABLE(
   };
 }
 
-function DEVICE_LIST_FETCH(
+function DEVICE_REGISTERED_FETCH(
   state: MessagesState,
-  action: Action<'DEVICE_LIST_FETCH', void, ListDevicesOutput>
+  action: Action<'DEVICE_REGISTERED_FETCH', void, ListDevicesOutput>
 ): MessagesState {
   if (action.requested) {
     return state;
@@ -184,11 +186,277 @@ function DEVICE_LIST_FETCH(
   };
 }
 
+function DEVICE_REGISTERED_UNREGISTER(
+  state: MessagesState,
+  action: Action<'DEVICE_REGISTERED_UNREGISTER', *, UnregisterRegisteredDeviceResult>
+): MessagesState {
+  if (action.requested || action.error) {
+    return state;
+  }
+
+  const {deviceId} = action.payload; // TODO: look at success?
+  let {devices} = state.DEVICES;
+
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+  devices = devices.slice();
+  devices.splice(index, 1);
+
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+function DEVICE_BLE_CONNECTED(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
+): MessagesState {
+  const session = action.payload;
+  let {devices} = state.DEVICES;
+
+  if (session.isRegistered) {
+    const {deviceId} = session;
+    invariant(deviceId);
+    const index = devices.findIndex((device) => device.deviceId === deviceId);
+    if (index === -1) {
+      return state;
+    }
+    devices = devices.slice();
+    devices[index] = {
+      ...devices[index],
+      bleConnectionStatus: 'CONNECTED',
+    };
+  } else {
+    const unconfiguredDevice = {
+      type: 'DEVICE_STATUS',
+      deviceType: '',
+      deviceId: null,
+      deviceConfigId: session.socketId,
+      deviceConfigStatus: 'UNCONFIGURED',
+      wifiConnectionStatus: null,
+      wifiConnectionError: null,
+      serverConnectionStatus: null,
+      serverConnectionError: null,
+      bleConnectionStatus: 'CONNECTED',
+      bleConnectionError: null,
+      rtcConnectionStatus: null,
+      rtcConnectionError: null,
+    };
+    devices = devices.concat(unconfiguredDevice);
+  }
+
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+function DEVICE_BLE_DISCONNECTED(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_BLE_DISCONNECTED', DeviceSession>
+): MessagesState {
+  const session = action.payload;
+  let {devices} = state.DEVICES;
+
+  if (session.isRegistered) {
+    const {deviceId} = session;
+    invariant(deviceId);
+    const index = devices.findIndex((device) => device.deviceId === deviceId);
+    if (index === -1) {
+      return state;
+    }
+    devices = devices.slice();
+    devices[index] = {
+      ...devices[index],
+      bleConnectionStatus: 'NOT_CONNECTED',
+    };
+  } else {
+    const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
+    if (index === -1) {
+      return state;
+    }
+    devices = devices.slice();
+    devices.splice(index, 1);
+  }
+
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+function DEVICE_CONFIG_PROXIMITYGATE(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_CONFIG_PROXIMITYGATE', DeviceSession>
+): MessagesState {
+  const session = action.payload;
+  let {devices} = state.DEVICES;
+  const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
+  if (index === -1) {
+    return state;
+  }
+
+  // Set the 'deviceId' property in the device record to indicate that
+  // the proximity gate has been passed.
+  devices = devices.slice();
+  invariant(session.secret);
+  devices[index] = {
+    ...devices[index],
+    deviceId: session.secret.deviceId,
+  };
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+function DEVICE_CONFIG_WIFISCANRESULTS(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_CONFIG_WIFISCANRESULTS', DeviceSession>
+): MessagesState {
+  const session = action.payload;
+  invariant(session.wifiNetworks);
+  emitter.postMessage({
+    type: 'DEVICE_CONFIG_WIFI_NETWORKS',
+    deviceConfigId: session.socketId,
+    wifiNetworks: session.wifiNetworks,
+  });
+
+  // We don't actually change state...
+  return state;
+}
+
+function DEVICE_CONFIG_STATUSUPDATED(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED', DeviceSession>
+): MessagesState {
+  // TODO update device's wifiConnectionStatus
+  return state;
+}
+
+function DEVICE_CONFIG_REGISTERED(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_CONFIG_REGISTERED', DeviceSession>
+): MessagesState {
+  const session = action.payload;
+  let {devices} = state.DEVICES;
+  const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
+  if (index === -1) {
+    return state;
+  }
+
+  // Update the device's configuration status now that's it's registered.
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    deviceConfigStatus: 'CONFIGURED',
+  };
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+
+function DEVICE_RTC_SIGNAL(
+  state: MessagesState,
+  action: Action<'DEVICE_RTC_SIGNAL', string, Peer>
+): MessagesState {
+  const deviceId = action.input;
+  let {devices} = state.DEVICES;
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+
+  devices = devices.slice();
+  if (action.requested) {
+    devices[index] = {
+      ...devices[index],
+      rtcConnectionStatus: 'CONNECTING',
+      rtcConnectionError: null,
+    };
+  } else if (action.error) {
+    devices[index] = {
+      ...devices[index],
+      rtcConnectionStatus: 'NOT_CONNECTED',
+      rtcConnectionError: action.payload.message, // TODO
+    };
+  } else {
+    devices[index] = {
+      ...devices[index],
+      rtcConnectionStatus: 'CONNECTED',
+      rtcConnectionError: null,
+    };
+  }
+
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+function DEVICE_RTC_CONNECTIONCLOSED(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_RTC_CONNECTIONCLOSED', string>
+): MessagesState {
+  const deviceId = action.payload;
+  let {devices} = state.DEVICES;
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    rtcConnectionStatus: 'NOT_CONNECTED',
+  };
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+
 export const reducer = handleActions({
   AUTH_RESTORE: handleAuthAction,
   AUTH_SIGNIN: handleAuthAction,
   AUTH_CREATEACCOUNT: handleAuthAction,
   AUTH_SIGNOUT,
   NETWORK_SERVER_REACHABLE,
-  DEVICE_LIST_FETCH,
+  DEVICE_REGISTERED_FETCH,
+  DEVICE_REGISTERED_UNREGISTER,
+  DEVICE_BLE_CONNECTED,
+  DEVICE_BLE_DISCONNECTED,
+  DEVICE_CONFIG_PROXIMITYGATE,
+  DEVICE_CONFIG_WIFISCANRESULTS,
+  DEVICE_CONFIG_STATUSUPDATED,
+  DEVICE_CONFIG_REGISTERED,
+  DEVICE_RTC_SIGNAL,
+  DEVICE_RTC_CONNECTIONCLOSED,
 }, initialState);

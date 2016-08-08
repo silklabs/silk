@@ -124,15 +124,30 @@ export default class StructuredDataChannel extends EventEmitter {
       } catch (ex) {
         log.debug(`Wasn't able to set binaryType to 'blob'. Soldering on.`);
       }
+
+      channel.addEventListener('open', this._onOpen);
       channel.addEventListener('close', this._onClose);
       channel.addEventListener('error', this._onError);
       channel.addEventListener('message', this._onMessage);
-      process.nextTick(() => {
-        emit.call(this, 'open');
-      });
-      this._sendPendingWrites();
+
+      switch (channel.readyState) {
+      case 'open':
+        process.nextTick(this._onOpen);
+        break;
+      case 'closed':
+        process.nextTick(this._onClose);
+        break;
+      case 'connecting':
+      case 'closing':
+        break;
+      }
     }
   }
+
+  _onOpen: () => void = () => {
+    emit.call(this, 'open');
+    this._sendPendingWrites();
+  };
 
   _onClose: () => void = () => {
     emit.call(this, 'close');

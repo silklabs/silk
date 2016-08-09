@@ -368,11 +368,9 @@ export default class SocketStream extends Duplex {
     this._subscribed = false;
     this._subscribedChanging = false;
 
-    const disconnectHandler = this._disconnectHandler;
-    this._disconnectHandler = null;
-
-    if (disconnectHandler) {
-      disconnectHandler();
+    if (this._disconnectHandler) {
+      this._disconnectHandler();
+      invariant(!this._disconnectHandler);
     }
 
     if (!this._ended) {

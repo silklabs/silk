@@ -1,7 +1,7 @@
 package com.silklabs.app;
 
 import com.silklabs.app.modules.Util;
-import com.silklabs.react.blesocket.BLESocketManager;
+import com.silklabs.react.blesocket.BLESocketManagerBridge;
 import com.silklabs.react.blobs.BlobModule;
 import com.silklabs.react.blobs.WebSocketModule;
 import com.silklabs.react.crypto.CryptoModule;
@@ -24,7 +24,7 @@ public class SilkReactPackage implements ReactPackage {
   public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
     List<NativeModule> modules = new ArrayList<>();
     modules.add(new BlobModule(reactContext));
-    modules.add(new BLESocketManager(reactContext));
+    modules.add(new BLESocketManagerBridge(reactContext));
     modules.add(new CryptoModule(reactContext));
     modules.add(new Util(reactContext));
     modules.add(new WebSocketModule(reactContext));

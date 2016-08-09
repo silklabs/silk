@@ -6,6 +6,7 @@
 
 package com.silklabs.appsdk;
 
+import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
@@ -23,6 +24,7 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.shell.MainReactPackage;
 import com.oney.WebRTCModule.WebRTCModulePackage;
@@ -38,6 +40,13 @@ import java.util.Queue;
 public class SilkAppSDKService extends Service {
 
   private ServiceBinder mBinder = new ServiceBinder();
+  private DefaultHardwareBackBtnHandler mBackBtnHandler =
+    new DefaultHardwareBackBtnHandler() {
+      @Override
+      public void invokeDefaultOnBackPressed() {
+        // Empty.
+      }
+    };
   private ReactInstanceManager mReactInstanceManager;
   private SilkAppSDKDelegate mDelegate;
   private boolean mInitialized = false;
@@ -106,6 +115,18 @@ public class SilkAppSDKService extends Service {
       }
     });
     mReactInstanceManager.createReactContextInBackground();
+  }
+
+  public void onActivityPause() {
+    mReactInstanceManager.onHostPause();
+  }
+
+  public void onActivityResume(Activity activity) {
+    mReactInstanceManager.onHostResume(activity, mBackBtnHandler);
+  }
+
+  public void onActivityDestroy() {
+    mReactInstanceManager.onHostDestroy();
   }
 
   private static WritableMap toWritableMap(Map<String, Object> map) {

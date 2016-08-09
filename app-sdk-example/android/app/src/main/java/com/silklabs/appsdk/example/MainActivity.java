@@ -30,6 +30,7 @@ import java.util.Map;
 public class MainActivity extends Activity {
 
   private final String TAG = "SilkAppSDKExample";
+  private boolean mResumed = false;
 
   private SilkAppSDKService mSilkService = null;
   private TextView networkStatusView = null;
@@ -87,6 +88,11 @@ public class MainActivity extends Activity {
           }
         }
       });
+      if (mResumed) {
+        mSilkService.onActivityResume(MainActivity.this);
+      } else {
+        mSilkService.onActivityPause();
+      }
     }
 
     /**
@@ -173,11 +179,31 @@ public class MainActivity extends Activity {
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
   }
 
+  @Override
+  protected void onResume() {
+    super.onResume();
+    mResumed = true;
+    if (mSilkService != null) {
+      mSilkService.onActivityResume(this);
+    }
+  }
+
+  @Override
   protected void onPause() {
     super.onPause();
+    mResumed = false;
     if (mSilkService != null) {
-      unbindService(mSilkServiceConnection);
+      mSilkService.onActivityPause();
     }
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    if (mSilkService != null) {
+      mSilkService.onActivityDestroy();
+    }
+    unbindService(mSilkServiceConnection);
   }
 
   /**

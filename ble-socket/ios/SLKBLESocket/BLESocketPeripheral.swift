@@ -330,7 +330,14 @@ internal class BLESocketPeripheral: NSObject,
       assert(self.services[serviceUuid] == nil)
 
       let service = Service(type: serviceUuid)
-      self.services[serviceUuid] = ServiceInfo(service: service, enabled: true)
+      let serviceInfo = ServiceInfo(service: service, enabled: true)
+      self.services[serviceUuid] = serviceInfo;
+
+      if self.servicesAdded {
+        log.info("Adding service \(serviceUuid)")
+        self.peripheralManager.addService(service);
+        serviceInfo.adding = true
+      }
 
       self.updateScanningState()
     }
@@ -940,7 +947,7 @@ internal class BLESocketPeripheral: NSObject,
     deviceNumber += UInt16(UInt16(data[index]) << 8)
     index += 1
 
-    assert(index == 5)
+    assert(index == data.count)
 
     return ManufacturerDataV1(version: version,
                               deviceType: deviceType,
@@ -1003,8 +1010,9 @@ internal class BLESocketPeripheral: NSObject,
 
     var shouldConnect = false
 
-    for (serviceUuid, serviceInfo) in self.services {
-      if !serviceInfo.enabled {
+    for serviceUuid in serviceUuids! {
+      let serviceInfo = self.services[serviceUuid]
+      if serviceInfo == nil || !serviceInfo!.enabled {
         continue
       }
 
@@ -1014,13 +1022,13 @@ internal class BLESocketPeripheral: NSObject,
         break
       }
 
-      if serviceInfo.deviceNumbersBeaconing.contains(deviceNumber!) {
+      if serviceInfo!.deviceNumbersBeaconing.contains(deviceNumber!) {
         log.debug("Device number \(deviceNumber!) is beaconing")
         shouldConnect = true
         break
       }
 
-      if serviceInfo.deviceNumbersRequested.contains(deviceNumber!) {
+      if serviceInfo!.deviceNumbersRequested.contains(deviceNumber!) {
         log.debug("Connection requested to device number \(deviceNumber!)")
         shouldConnect = true
         break
@@ -1146,7 +1154,9 @@ internal class BLESocketPeripheral: NSObject,
     serviceInfo.added = true
 
     for connection in self.connectionsById.values {
-      self.startConnection(connection)
+      if connection.peripheralServiceUuid == service.UUID {
+        self.startConnection(connection)
+      }
     }
   }
 
@@ -1372,7 +1382,6 @@ internal class BLESocketPeripheral: NSObject,
       self.cancelPeripheralConnection(peripheral)
       return
     }
-
 
     log.debug("Discovering characteristics for service \(service!.UUID)")
     peripheral.discoverCharacteristics([Service.characteristicUuid],

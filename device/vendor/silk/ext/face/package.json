@@ -5,14 +5,10 @@
   "main": "./lib/main.js",
   "scripts": {
     "preinstall": "./bin/preinstall",
-    "postinstall": "./bin/postinstall",
     "pretest": "pretest",
     "silk-build": "silk-buildjs .",
     "test": "runtest",
-    "clean": "rm -rf node_modules",
-    "lint": "eslint tools/*.js",
-    "predict": "./bin/predict",
-    "heartrate": "./bin/heartrate",
+    "lint": "eslint .",
     "posttest": "eslint test lib"
   },
   "symlinkDependencies": {

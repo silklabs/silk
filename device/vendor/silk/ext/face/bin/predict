@@ -1,7 +1,0 @@
-#! /bin/bash -ex
-
-LOCAL_PATH=$(dirname $0)
-
-DEBUG=silk-face:* \
-  NODE_PATH=$LOCAL_PATH/../node_modules \
-  ../../../../../pub/babel-run/babel-node tools/facePredictor.js $*

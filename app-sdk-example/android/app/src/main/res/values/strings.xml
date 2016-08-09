@@ -6,4 +6,5 @@
     <string name="password">password</string>
     <string name="login">Login</string>
     <string name="logout">Logout</string>
+    <string name="send_echo_message">Send echo</string>
 </resources>

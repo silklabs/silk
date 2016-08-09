@@ -32,6 +32,7 @@
 #define BLE_COMMAND_NAME "BleCommand"
 #define MAX_MSG_SIZE 1024
 #define MAX_NOTIFICATION_DATA_SIZE 20
+#define MTU_SIZE 512
 
 #define BT_UNITS_PER_MS 1000 / 625
 
@@ -69,6 +70,7 @@ enum WaitType {
   WaitAdvertiseEnable,
   WaitAdvertiseData,
   WaitAdvertiseDisable,
+  WaitMTUChange,
 };
 
 // These wait types won't abort if waiting fails.
@@ -1770,6 +1772,8 @@ void gatt_client_listen_callback(int status, int server_if) {
 
 void gatt_client_configure_mtu_callback(int conn_id, int status, int mtu) {
   Tracer trc("gatt_client_configure_mtu_callback");
+  auto signal = mainThreadWaiter.autoSignal(WaitMTUChange, true, false);
+
   ALOGV("gatt_client_configure_mtu_callback: conn_id=%d status=%d mtu=%d",
         conn_id,
         status,
@@ -3069,6 +3073,10 @@ int bt_connect(char *&saveptr) {
 
     return BT_STATUS_FAIL;
   }
+
+  CALL_AND_WAIT_NO_RETURN(gatt->client->configure_mtu(client_if_during_connect,
+                                                      MTU_SIZE),
+                          WaitMTUChange);
 
   return BT_STATUS_SUCCESS;
 }

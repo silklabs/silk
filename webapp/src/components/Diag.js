@@ -183,7 +183,7 @@ class DiagImageTable extends React.Component {
   };
 
   onDiagFrameFilterApply = () => {
-    this.props.camera.diagCommand('timeline', 'imageFilter', this.state.imageFilter);
+    this.props.camera.diagTimelineCommand('imageFilter', this.state.imageFilter);
     localforage.setItem('diag-image-filter', this.state.imageFilter);
   };
 
@@ -246,7 +246,7 @@ class DiagCameraToolbar extends React.Component {
   };
 
   state = {
-    device: { // see CameraClipRecorderState in device/vendor/silk/core/lib/camera.js
+    device: { // see CameraClipRecorderState in device/vendor/silk/core/lib/camera_clip_recorder.js
       mode: 'live',
       availableClips: [],
       msg: '',
@@ -266,9 +266,9 @@ class DiagCameraToolbar extends React.Component {
       this.onDiagCameraState);
   }
 
-  onDiagCameraState = (state) => {
-    log.error('diagState:camera', JSON.stringify(state));
-    this.setState({device: state.clipRecorder});
+  onDiagCameraState = (device /*: CameraClipRecorderState*/) => {
+    log.error('diagState:camera', JSON.stringify(device));
+    this.setState({device});
   };
 
   sendCommand(name, arg) {

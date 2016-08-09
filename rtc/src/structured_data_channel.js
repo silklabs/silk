@@ -145,13 +145,15 @@ export default class StructuredDataChannel extends EventEmitter {
       case 'connecting':
       case 'closing':
         break;
+      default:
+        invariant(false);
       }
     }
   }
 
   _onOpen: () => void = () => {
-    emit.call(this, 'open');
     this._sendPendingWrites();
+    emit.call(this, 'open');
   };
 
   _onClose: () => void = () => {

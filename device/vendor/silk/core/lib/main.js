@@ -42,7 +42,6 @@ import silkconfig from 'silk-config';
 import sensors from 'silk-sensors';
 import factoryReset from 'silk-factory-reset';
 import infrared from './infrared';
-import Server from './server';
 import Connections from './connections';
 import fs from 'mz/fs';
 import say from 'silk-say';
@@ -84,40 +83,16 @@ let id = null;
 let btle = null;
 let timeline;
 let camera;
-let cameraClipRecorder;
-let logo = null;
-let server = null;
 let connections = null;
 type ShutdownType = 'poweroff' | 'otaupdate' | 'factoryreset';
 let shutdownType: ?ShutdownType = null;
 let crashreporter;
 let outbox;
 let logcat;
-let ext;
 let diag;
 
 // true once the device has a configuration and is ready for normal operation
 let configured = false;
-
-/**
- * Read vendor specific logo
- * @private
- */
-async function readLogo() {
-  if (logo) {
-    return;
-  }
-  for (const root of ['data', 'system']) {
-    const logoFile = root + '/silk/media/logo.png';
-    try {
-      logo = await fs.readFile(logoFile);
-      return; // Return once the first logo is successfully read
-    } catch (err) {
-      log.verbose(`No logo at ${logoFile}: ${err}`);
-    }
-  }
-  logo = [];
-}
 
 /**
  * In debug builds register an mDNS service for ADB so that the device can be
@@ -148,7 +123,6 @@ async function publishMDnsAdbService() {
  */
 function main() {
   connections = new Connections();
-  server = new Server(connections);
 
   // Start these ASAP so that unhandled exceptions in the boot sequence will
   // be properly recorded.
@@ -189,13 +163,21 @@ function main() {
       online: false,
     };
   }
-  connections.on('connect', netstatusOrStub.check);
-  connections.on('disconnect', netstatusOrStub.check);
+  connections.on('connect', () => {
+    netstatusOrStub.check();
+    ui.goto('online');
+  });
+  connections.on('disconnect', () => {
+    netstatusOrStub.check();
+    ui.goto('connecting');
+  });
   netstatusOrStub.on('online', () => connections.reconnect());
   outbox = initOutbox(netstatusOrStub);
 
   crashreporter = makeCrashReporter(outbox);
   jsErrors(crashreporter);
+
+  diag = new Diag(connections.getChannel('diag'));
 
   // Init metrics...
   netstatusOrStub.on('online', api.metrics.onConnectivityChange);
@@ -242,11 +224,18 @@ function main() {
     .then(() => {
       log.info('Initialize hardware');
 
-      assert(outbox, 'must have outbox when initializing timeline');
       camera = new Camera(silkconfig);
-      cameraClipRecorder = new CameraClipRecorder(camera, server);
-      camera.attachFrameReplacer(cameraClipRecorder);
-      timeline = new Timeline(server, outbox, camera);
+      camera.attachFrameReplacer(
+        new CameraClipRecorder(camera, connections.getChannel('diag'))
+      );
+
+      timeline = new Timeline(outbox, camera, {
+        diag: connections.getChannel('diag'),
+        mic: connections.getChannel('mic'),
+        objects: connections.getChannel('objects'),
+        preview: connections.getChannel('preview'),
+        video: connections.getChannel('video'),
+      });
 
       // Camera mute control
       const AUDIO_MUTE_PROP = 'persist.silk.capture.mute';
@@ -264,7 +253,6 @@ function main() {
           btle = btleInstance;
         }),
         infrared.init(),
-        readLogo(),
       ];
       if (process.platform === 'android') {
         hw = hw.concat([
@@ -293,7 +281,7 @@ function main() {
       }
 
       // Load extensions now that hardware is initialized
-      ext = await makeExtensions({
+      await makeExtensions({
         btle: btle,
         camera: camera,
         sensors: sensors,
@@ -301,7 +289,7 @@ function main() {
         timeline: timeline,
         ui: ui,
         say: say,
-        server: server,
+        dialogChannel: connections.getChannel('dialog'), // Very sorry!! Remove once connections.js is moved into its own module
       });
     })
     .then(maybeAbortBoot)
@@ -337,98 +325,14 @@ function main() {
     });
 }
 main();
-
-function emitDeviceInfo() {
-  if (server.connected) {
-    server.send('info', {
-      logo,
-      now: Date.now(),
-      videoSize: camera.videoSize,
-      previewSize: camera.available ? timeline.previewSize : null,
-      objectsSize: camera.getFrameSize(),
-    });
-  }
-}
-ntp.on('time', emitDeviceInfo);
-
-// Server related...
-server.on('connect', () => {
-  ui.goto('online');
-  emitDeviceInfo();
-});
-
-server.on('reconnecting', () => {
-  ui.goto('connecting');
-});
-
-server.on('cmd', cmd => {
-  // TODO: Use Joi to validate the inbound command
-
-  // Check if the command is intended for extensions
-  if (cmd.msgTarget === 'extensions') {
-    if (ext) {
-      ext.onCommand(cmd);
-    }
-    return;
-  }
-
-  switch (cmd.msg) {
-  // The 'livestream' command is sent by the server to request live streaming
-  // data from this device.
-  // Supported streams: preview, video, diag, mic, object.
-  //
-  // TODO: once the 'livestream' command is strongly typed between
-  // server/device, move this processing into the diag/timeline/camera objects
-  // themselves.
-  case 'livestream':
-    {
-      log.info('livestream command:', JSON.stringify(cmd));
-      timeline.configLiveStream({
-        preview: !!cmd.preview,
-        video: !!cmd.video,
-        diag: !!cmd.diag,
-        objects: !!cmd.objects,
-      });
-      cameraClipRecorder.setDiag(!!cmd.diag);
-
-      // FIXME/TODO: we want to notify the audio assistant extension
-      // that livestream state has changed, but we don't want to notify
-      // *all* extensions ... so explicitly target the audio extension
-      // for now (if it happens to be loaded).
-      cmd.targetName = 'samsungtv';
-      ext.onCommand(cmd);
-    }
-    break;
-  case 'diagCommand':
-    log.info('diagCommand:', JSON.stringify(cmd));
-    switch (cmd.subsystem) {
-    case 'timeline':
-      timeline.diagCommand(cmd.name, cmd.arg);
-      break;
-    case 'camera':
-      cameraClipRecorder.diagCommand(cmd.name, cmd.arg);
-      break;
-    case 'speak':
-      log.info('speak command:', JSON.stringify(cmd));
-      say.speak(cmd.name, cmd.arg);
-      break;
-    default:
-      log.warn('Unknown diag subsystem:', cmd.subsystem);
-      break;
-    }
-    break;
-  default:
-    log.error('Unknown command:', JSON.stringify(cmd));
-    break;
-  }
-});
+ntp.on('time', () => log.info('NTP time acquired'));
 
 // Config service...
 config.on('unconfigured', () => {
   configured = false;
   if (ui.goto('unconfigured')) {
     camera.stopRecording();
-    server.disconnect();
+    connections.stop();
   }
 });
 
@@ -457,10 +361,8 @@ async function onConfigured() {
     log.info(`Device ${id} connecting to server ${api.config.serverUrl} ...`);
     assert(api.accessToken, 'must have access token');
     connections.start();
-    server.connect();
   }
 
-  diag = new Diag(connections.getChannel('diag'));
   diag.start();
   diag.on('reboot', (data: DiagRebootEventData) => {
     switch (data.channel) {
@@ -507,10 +409,8 @@ async function shutdown(type: ShutdownType = 'poweroff') {
   const STATUS_EXCEPTION = 'exception';
   const STATUS_TIMEOUT = 'timeout';
 
-  if (camera) {
-    log.info('Camera stop');
-    camera.stopRecording();
-  }
+  camera.stopRecording();
+  connections.stop();
 
   if (shutdownType === 'factoryreset') {
     try {
@@ -537,8 +437,6 @@ async function shutdown(type: ShutdownType = 'poweroff') {
     return btle.changeMode(btle.MODE_OFF);
   })
   .then(() => {
-    log.info('Server disconnect');
-    server.disconnect();
     log.info('Crash reporter shutdown');
     return crashreporter.shutdown();
   })

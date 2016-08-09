@@ -1,7 +1,6 @@
 
 import config from 'silk-config';
 import { EventEmitter } from 'events';
-import io from 'socket.io-client';
 import invariant from 'assert';
 import createLog from 'silk-log';
 import { call } from 'silk-rtc';
@@ -21,84 +20,86 @@ class Camera extends EventEmitter {
   objects = null;
   online = false;
   previewImage = null;
-  previewSize = null;
+  previewSize = {
+    width: 320,
+    height: 180,
+  };
   previewTimestamp = null;
   lastSeenAt: Date;
+  publicKey: string;
+  _retryConnectTimeout = null;
 
-  _requestedRooms = { };
+  _requestedRooms = {};
   _logging: bool = false;
   _diagChannel: ?StructuredDataChannel = null;
-  _socket = null;
+  _micChannel: ?StructuredDataChannel = null;
+  _videoChannel: ?StructuredDataChannel = null;
+  _previewChannel: ?StructuredDataChannel = null;
+  _objectsChannel: ?StructuredDataChannel = null;
   _queue = null;
   _peer = null;
-  _channel = null;
 
-  constructor(name, id) {
+  constructor(device /*: ListDevicesOutputDevices*/) {
     super();
-    this.name = name;
-    this.id = id;
+    Object.assign(this, {
+      name: device.name,
+      id: device.deviceId,
+      publicKey: device.publicKey,
+      lastSeenAt: new Date(device.lastSeenAt),
+    });
+    this._connect();
+  }
+
+  _connect() {
+    invariant(this._peer === null);
+
+    const devicePeer = call(Api, this.id);
+
+    devicePeer.connect()
+    .catch(err => {
+      log.warn(`Peer connect failed for ${this.id}`);
+      this._onPeerClose();
+    });
+    devicePeer.on('connect', this._onPeerConnect);
+    devicePeer.on('close', this._onPeerClose);
+    this._peer = devicePeer;
+    this.emit('peer', this._peer);
   }
 
   deinit() {
-    this.setOffline(this.lastSeenAt);
+    if (this._peer) {
+      this._peer.destroy();
+      this._onPeerClose();
+    }
+    if (this._retryConnectTimeout !== null) {
+      clearTimeout(this._retryConnectTimeout);
+      this._retryConnectTimeout = null;
+    }
+    this.online = false;
+    this._updateStreams();
   }
 
   getPeer() {
     return this._peer;
   }
 
-  setPeer(peer) {
-    const channel = peer ? peer.getChannel('video') : null;
-    const previous = this._channel;
-
-    this._peer = peer;
-    this._channel = channel;
-    this.emit('peer', peer);
-
-    if (previous !== channel) {
-      log.info(`Updating webrtc status for ${this.id}`);
-      this._updateStreams();
-    }
-  }
-
-  setOnline(socket, opts) {
-    if (this.online) {
-      return;
-    }
+  _onPeerConnect = () => {
+    log.info(`Peer connected, updating webrtc status for ${this.id}`);
     this.online = true;
-    this._socket = socket;
-    this.previewSize = opts.previewSize;
-    this.objectsSize = opts.objectsSize;
-
-    const logo = opts.logo;
-    if (logo) {
-      const view = new Uint8Array(logo);
-      if (view.length) {
-        this.logoImage = new Blob([view], { type: 'image/png' });
-      }
-    }
-
-    const {width, height} = opts.objectsSize;
-    this.objects = new ObjectCollector(width, height);
-
     this._updateStreams();
   }
 
-  setOffline(lastSeenAt: Date) {
-    this.lastSeenAt = lastSeenAt;
-    if (!this.online) {
-      return;
-    }
+  _onPeerClose = () => {
+    this._peer = null;
     this.online = false;
+    log.info(`Peer closed, updating webrtc status for ${this.id}`);
+    this._updateStreams();
 
-    if (this._socket) {
-      this._updateStreams();
-    }
-
-    this.logoImage = null;
-    this.objects = null;
-    this.previewImage = null;
-    this._socket = null;
+    // Try calling the device again soon
+    this._retryConnectTimeout = setTimeout(
+      () => this._connect(),
+      10 * 1000
+    );
   }
 
   set logging(enabled) {
@@ -112,6 +113,7 @@ class Camera extends EventEmitter {
     this._updateVideoClipStream();
     this._updateMicStream();
     this._updateObjectStream();
+    this.emit('stateChanged');
   }
 
   get diagOnline(): bool {
@@ -120,36 +122,43 @@ class Camera extends EventEmitter {
 
   _updateDiagStream() {
     const enabled = this._logging;
-    if (enabled && this._peer !== null) {
-      if (!this._diagChannel) {
+    if (enabled && this.online) {
+      if (this._peer !== null && this._diagChannel === null) {
+        log.info('Creating diag channel');
         this._diagChannel = this._peer.createChannel('diag', {});
-        this._diagChannel.on('close', this._onDiagChannelClose);
-        this._diagChannel.on('error', this._onDiagChannelError);
-        this._diagChannel.on('logchunk', this._onDiagChannel);
         this._diagChannel.on('open', () => {
+          log.debug('Diag channel open');
           this._diagChannel.emit('hello', {});
+        });
+        this._diagChannel.on('close', () => {
+          log.info('Diag channel closed');
+        });
+        this._diagChannel.on('error', this._onChannelError);
+        this._diagChannel.on('logchunk', this._onDiagLogChunk);
+        this._diagChannel.on('timeline:state', (data) => {
+          this.emit('diagState:timeline', data);
+        });
+        this._diagChannel.on('timeline:jpegFrames', (data) => {
+          this.emit('diagJpegFrames', data.jpegFrames);
+        });
+        this._diagChannel.on('cameraClipRecorder:state', (data) => {
+          this.emit('diagState:camera', data);
         });
       }
     } else {
       if (this._diagChannel) {
+        log.info('Closing diag channel');
         this._diagChannel.close();
         this._diagChannel = null;
       }
     }
   }
 
-  _onDiagChannelError= (err) => {
-    log.error('Got diag channel error:', err.stack || err);
+  _onChannelError = (err) => {
+    log.error('Got channel error:', err.stack || err);
   };
 
-  _onDiagChannelClose= () => {
-    log.warn('Got channel close');
-  };
-
-  _onDiagChannel = (msg, ack) => {
-    if (typeof ack === 'function') {
-      ack();
-    }
+  _onDiagLogChunk = msg => {
     switch (msg.type) {
     case 'log':
       switch (msg.name) {
@@ -178,20 +187,6 @@ class Camera extends EventEmitter {
       }
       this.emit('diag');
       break;
-    case 'jpegFrames':
-      this.emit('diagJpegFrames', msg.frames);
-      break;
-    case 'state':
-      switch (msg.name) {
-      case 'camera':
-      case 'timeline':
-        this.emit(`diagState:${msg.name}`, msg.state);
-        break;
-      default:
-        log.warn(`Unknown diag state name: ${msg.name}`);
-        break;
-      }
-      break;
     default:
       log.warn(`Unknown diag type: ${msg.type}`);
       return;
@@ -205,30 +200,19 @@ class Camera extends EventEmitter {
   }
 
   reboot(channel) {
-    if (!this.diagOnline) {
+    if (!this._diagChannel) {
       log.warn('Diag not online, unable to reboot');
       return;
     }
-    this._diagChannel.emit('reboot', {"channel": channel});
+    this._diagChannel.emit('reboot', {channel});
   }
 
-  diagCommand(subsystem: string, name: string, arg: string = '') {
-    invariant(subsystem.length > 0);
-    invariant(name.length > 0);
-
-    if (!this.online) {
-      return;
-    }
-    let cmd = { id: this.id, msg: 'diagCommand', subsystem, name, arg };
-    this._socket.emit('cmd', cmd);
+  diagTimelineCommand(name: string, arg: string = '') {
+    this._diagChannel.emit('timeline:cmd', {name, arg});
   }
 
   diagCameraCommand(name: string, arg: string = '') {
-    this.diagCommand('camera', name, arg);
-  }
-
-  speak(lib: string, text: string) {
-    this.diagCommand('speak', text, lib);
+    this._diagChannel.emit('cameraClipRecorder:cmd', {name, arg});
   }
 
   addListener(event, listener) {
@@ -253,6 +237,9 @@ class Camera extends EventEmitter {
         const enabled = count > 0;
 
         this._requestedRooms[event] = enabled;
+        this._requestedRooms.objects = this._requestedRooms.previewImage ||
+          this._requestedRooms.videoClip;
+
         this._updatePreviewImageStream();
         this._updateVideoClipStream();
         this._updateMicStream();
@@ -260,49 +247,38 @@ class Camera extends EventEmitter {
         break;
       }
     default:
-      log.verbose(`_adjustRooms: unhandled event: ${event}`);
+      log.debug(`_adjustRooms: unhandled event: ${event}`);
       break;
     }
   }
 
   _updatePreviewImageStream() {
     const enabled = this._requestedRooms.previewImage;
-    const previewStream = 'preview-' + this.id;
+    if (enabled && this.online) {
+      if (this._peer !== null && this._previewChannel === null) {
+        log.info('Creating preview channel');
+        this._previewChannel = this._peer.createChannel('preview', {});
+        this._previewChannel.on('open', () => {
+          log.debug('Preview channel open');
+        });
+        this._previewChannel.on('close', this._onPreviewChannelClose);
+        this._previewChannel.on('error', this._onChannelError);
+        this._previewChannel.on('jpeg', this._onPreviewStream);
 
-    this.previewImage = null;
-
-    if (this.online && enabled) {
-      log.info('Joining preview stream ' + previewStream);
-
-      if (this._channel) {
-        console.log('using previews from webrtc!');
-        this._channel.on('jpeg', this._onPreviewStream);
-        this._socket.removeListener(previewStream, this._onPreviewStream);
-      } else {
-        this._socket.on(previewStream, this._onPreviewStream);
+        this._queue = new PreviewQueue(this.name, msg => {
+          if (msg.frame.size) {
+            this.previewImage = msg.frame;
+            this.previewTimestamp = new Date(msg.when);
+            this.emit('previewImage', this.previewImage);
+          }
+        });
       }
-      this._socket.emit('join', previewStream);
-
-      this._queue = new PreviewQueue(this.name, msg => {
-        if (msg.frame.size) {
-          this.previewImage = msg.frame;
-          this.previewTimestamp = new Date(msg.when);
-          this.emit('previewImage', this.previewImage);
-        }
-      });
-
     } else {
-      log.info('Leaving preview stream ' + previewStream);
-
-      if (this._channel) {
-        this._channel.removeListener('jpeg', this._onPreviewStream);
+      if (this._previewChannel) {
+        log.info('Closing preview channel');
+        this._previewChannel.close();
+        this._previewChannel = null;
       }
-
-      if (this._socket) {
-        this._socket.removeListener(previewStream, this._onPreviewStream);
-        this._socket.emit('leave', previewStream);
-      }
-
       if (this._queue) {
         this._queue.deinit();
         this._queue = null;
@@ -310,10 +286,12 @@ class Camera extends EventEmitter {
     }
   }
 
-  _onPreviewStream = (msg, ack) => {
-    if (typeof ack === 'function') {
-      ack();
-    }
+  _onPreviewChannelClose = () => {
+    log.info('Preview channel closed');
+  };
+
+
+  _onPreviewStream = (msg) => {
     if (msg.frame instanceof ArrayBuffer) {
       // socket.io still sends ArrayBuffer
       msg.frame = new Blob([msg.frame], { type: 'image/jpg' });
@@ -322,41 +300,39 @@ class Camera extends EventEmitter {
       log.warn('Received bad preview message', msg);
       return;
     }
-    log.info(`Received preview message networkLag=${Date.now() - msg.deviceEmitMs} ${msg}`);
+    log.info(`Received preview message networkLag=${Date.now() - msg.deviceEmitMs}ms`);
+    if (this._queue === null) {
+      log.warn('NULL preview queue');
+      return;
+    }
     this._queue.push(msg);
   };
 
   _updateVideoClipStream() {
     const enabled = this._requestedRooms.videoClip;
-    let videoStream = 'video-' + this.id;
-
-    if (this.online && enabled) {
-      log.info('Joining video stream ' + videoStream);
-      if (this._channel) {
-        console.log('using webrtc video stream...');
-        this._channel.on('mp4', this._onVideoStream);
-        this._socket.removeListener(videoStream, this._onVideoStream);
-      } else {
-        this._socket.on(videoStream, this._onVideoStream);
+    if (enabled && this.online) {
+      if (this._peer !== null && this._videoChannel === null) {
+        log.info('Creating video channel');
+        this._videoChannel = this._peer.createChannel('video', {});
+        this._videoChannel.on('open', () => {
+          log.debug('Video channel open');
+        });
+        this._videoChannel.on('close', () => {
+          log.debug('Video channel close');
+        });
+        this._videoChannel.on('error', this._onChannelError);
+        this._videoChannel.on('mp4', this._onVideoStream);
       }
-      this._socket.emit('join', videoStream);
     } else {
-      log.info('Leaving video stream ' + videoStream);
-      if (this._socket) {
-        this._socket.removeListener(videoStream, this._onVideoStream);
-        this._socket.emit('leave', videoStream);
-      }
-
-      if (this._channel) {
-        this._channel.removeListener('mp4', this._onVideoStream);
+      if (this._videoChannel) {
+        log.info('Closing video channel');
+        this._videoChannel.close();
+        this._videoChannel = null;
       }
     }
   }
 
-  _onVideoStream = (msg, ack) => {
-    if (typeof ack === 'function') {
-      ack();
-    }
+  _onVideoStream = (msg) => {
     if (!msg) {
       log.warn('_onVideoStream: null msg');
       return;
@@ -365,35 +341,33 @@ class Camera extends EventEmitter {
       log.warn('_onVideoStream: null msg.frame');
       return;
     }
-    log.debug(`Received video message networkLag=${Date.now() - msg.deviceEmitMs} ${msg}`);
+    log.debug(`Received video message networkLag=${Date.now() - msg.deviceEmitMs}`);
     this.emit('videoClip', msg.frame, msg.when);
   };
 
   _updateMicStream() {
     const enabled = this._requestedRooms.micData;
-    let stream = 'mic-' + this.id;
-
-    if (this.micData) {
-      this.micData = null;
-    }
-
-    if (this.online && enabled) {
-      log.info('Joining mic stream ' + stream);
-      this._socket.on(stream, this._onMicStream);
-      this._socket.emit('join', stream);
+    if (enabled && this.online) {
+      if (this._peer !== null && this._micChannel === null) {
+        this._micChannel = this._peer.createChannel('mic', {});
+        this._micChannel.on('open', () => {
+          log.debug('Mic channel open');
+        });
+        this._micChannel.on('close', () => {
+          log.debug('Mic channel close');
+        });
+        this._micChannel.on('error', this._onChannelError);
+        this._micChannel.on('pcm', this._onMicStream);
+      }
     } else {
-      log.info('Leaving mic stream ' + stream);
-      if (this._socket) {
-        this._socket.removeListener(stream, this._onMicStream);
-        this._socket.emit('leave', stream);
+      if (this._micChannel) {
+        this._micChannel.close();
+        this._micChannel = null;
       }
     }
   }
 
-  _onMicStream = (msg, ack) => {
-    if (typeof ack === 'function') {
-      ack();
-    }
+  _onMicStream = (msg) => {
     if (!msg) {
       log.warn('_onMicStream: null msg');
       return;
@@ -405,85 +379,65 @@ class Camera extends EventEmitter {
     } else {
       throw new Error(`Unhandled deviceMic configuration: ${config.deviceMic}`);
     }
-    this.micData = msg;
     this.emit('micData', msg);
   };
 
   _updateObjectStream() {
-    const enabled =
-      this._requestedRooms.videoClip || this._requestedRooms.previewImage;
-    const stream = 'objects-' + this.id;
-
-    if (this.online && enabled) {
-      log.info(`Joining '${stream}'`);
-      this._socket.on(stream, this._onObjectStream);
-      this._socket.emit('join', stream);
+    const enabled = this._requestedRooms.objects;
+    if (enabled && this.online) {
+      if (this._peer !== null && this._objectsChannel === null) {
+        this.objects = new ObjectCollector();
+        this._objectsChannel = this._peer.createChannel('objects', {});
+        this._objectsChannel.on('open', () => {
+          log.debug('Objects channel open');
+        });
+        this._objectsChannel.on('close', () => {
+          log.debug('Objects channel close');
+        });
+        this._objectsChannel.on('error', this._onChannelError);
+        this._objectsChannel.on('objects', this._onObjectStream);
+      }
     } else {
-      log.info(`Leaving '${stream}'`);
-      if (this._socket) {
-        this._socket.removeListener(stream, this._onObjectStream);
-        this._socket.emit('leave', stream);
+      if (this._objectsChannel) {
+        this._objectsChannel.close();
+        this._objectsChannel = null;
+        this.objects = null;
       }
     }
   }
 
-  _onObjectStream = (msg, ack) => {
+  _onObjectStream = (msg) => {
     log.debug(`_onObjectStream`, msg);
-
-    if (typeof ack === 'function') {
-      ack();
-    }
-
-    invariant(this.objects);
-
     if (!msg || !(`objects` in msg) || !Array.isArray(msg.objects)) {
       log.warn(`Bad objects`, msg);
       return;
     }
 
-    this.objects.push(msg.objects);
-    this.emit('objects', msg.objects);
+    const maxsize = msg.maxsize;
+    if (!(maxsize && maxsize.width && maxsize.height)) {
+      log.warn(`Bad object maxsize`, msg);
+      return;
+    }
+
+    if (!this.objects) {
+      log.warn('No ObjectCollector, ignoring new objects');
+      return;
+    }
+
+    this.objectsSize = maxsize; // TODO: This is terrible
+    this.objects.push(msg.objects, maxsize.width, maxsize.height);
   };
 }
 
 class Cameras extends EventEmitter {
 
   status = 'Initializing...';
-  socket = null;
 
-  _webrtcConnections = new Map();
   cameras = {}; // indexed by device id
-  _allDevices = []; // unmodified result from Api.account.listDevices()
-  _liveDevices = {}; // indexed by device id
-
   _deviceListUpdateTimer: number = null;
 
-  async _webrtcDisconnect(deviceId) {
-    const devicePeer = this._webrtcConnections.get(deviceId);
-    if (devicePeer) {
-      devicePeer.disconnect();
-      this._webrtcConnections.delete(deviceId);
-    }
-
-    if (this.cameras[deviceId]) {
-      this.cameras[deviceId].setPeer(null);
-    }
-  }
-
-  // Connect to given deviceId.
-  _webrtcConnect(deviceId) {
-    // TODO: We should not rely on socket.io in the future to detect
-    // connected devices but for now this is very convenient.
-    const devicePeer = call(Api, deviceId);
-    // XXX: This may fail and should be retired.
-    devicePeer.connect();
-    // XXX: Also sorta hacky... Indicate to the device to start sending video.
-    devicePeer.createChannel('video', {});
-
-    this._webrtcConnections.set(deviceId, devicePeer);
-    if (this.cameras[deviceId]) {
-      this.cameras[deviceId].setPeer(devicePeer);
-    }
+  get(deviceId: string): Camera {
+    return this.cameras[deviceId];
   }
 
   async _updateDeviceList() {
@@ -494,8 +448,38 @@ class Cameras extends EventEmitter {
 
     try {
       const result = await Api.account.listDevices();
-      this._allDevices = result.devices;
-      this._update();
+      const allDevices = result.devices;
+
+      let oldDevices = this.cameras;
+      let newDevices = {};
+
+      for (const device of allDevices) {
+        const id = device.deviceId;
+        if (newDevices[id]) {
+          throw new Error(`Duplicate device: ${id}`);
+        }
+
+        if (oldDevices[id]) {
+          newDevices[id] = oldDevices[id];
+          delete oldDevices[id];
+        } else {
+          newDevices[id] = new Camera(device);
+        }
+      }
+
+      // Cleanup any devices that no longer exist
+      Object.keys(oldDevices).map(id => oldDevices[id].deinit());
+
+      this.cameras = newDevices;
+
+      let status = `${allDevices.length} registered devices`;
+
+      // Avoid listener leak runtime warning with > 10 devices
+      this.setMaxListeners(allDevices.length * 2);
+      this._updateStatus(status);
+    } catch (err) {
+      log.error(err);
+      this._updateStatus(`Initialization failed: ${err}`);
     } finally {
       // Update the list of devices every minute
       this._deviceListUpdateTimer = setTimeout(async () => {
@@ -511,57 +495,17 @@ class Cameras extends EventEmitter {
 
   async connect() {
     this.status = 'Connecting...';
-
-    try {
-      this._updateStatus('Fetching device list...');
-      invariant(this._deviceListUpdateTimer === null);
-      await this._updateDeviceList();
-
-      this.socket = Api.socketioClient(io, 'account');
-      this.socket.open();
-
-      this.socket.on('connect', () => {
-        log.info(`Connected to server`);
-        this.socket.emit('join', 'video-streams');
-        this._updateDeviceList();
-      });
-
-      this.socket.on('disconnect', e => {
-        log.warn(`Disconnected from server: ${e}`);
-        this._liveDevices = {};
-        this._updateDeviceList();
-      });
-
-      this.socket.on('video-stream-new', (msg) => {
-        log.info(`Device online: ${msg.id} ` +
-                 `previewSize:${JSON.stringify(msg.previewSize)}` +
-                 `objectsSize:${JSON.stringify(msg.objectsSize)}`);
-        this._liveDevices[msg.id] = {
-          logo: msg.logo,
-          previewSize: msg.previewSize,
-          objectsSize: msg.objectsSize,
-        };
-        this._update();
-        this._webrtcConnect(msg.id);
-      });
-
-      this.socket.on('video-stream-delete', msg => {
-        log.info(`Device offline: ${msg.id}`);
-        delete this._liveDevices[msg.id];
-        this._update();
-        this._webrtcDisconnect(msg.id);
-      });
-    } catch (err) {
-      log.error(err);
-      this._updateStatus(`Initialization failed: ${err}`);
-    }
+    this._updateStatus('Fetching device list...');
+    invariant(this._deviceListUpdateTimer === null);
+    this._updateDeviceList();
   }
 
   disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
+    for (let camera in this.cameras) {
+      this.cameras[camera].deinit();
     }
-    this.socket = null;
+    this.cameras = {};
+
     if (this._deviceListUpdateTimer) {
       clearTimeout(this._deviceListUpdateTimer);
       this._deviceListUpdateTimer = null;
@@ -570,7 +514,7 @@ class Cameras extends EventEmitter {
   }
 
   async unregister(deviceId) {
-    const device = this._allDevices.find(device => device.deviceId === deviceId);
+    const device = this.cameras[deviceId];
     if (!device) {
       log.error('Unable to find device:', deviceId);
       return;
@@ -583,68 +527,12 @@ class Cameras extends EventEmitter {
       }
       await this._updateDeviceList();
     } catch (err) {
-      log.error(err);
+      log.error(err.stack);
     }
   }
 
-  // Merge |this._allDevices| and |this._liveDevices| into the public list of
-  // devices: |this.camera|
-  _update() {
-    let oldDevices = this.cameras;
-    let newDevices = {};
-
-    let unregisteredLiveDevices = Object.keys(this._liveDevices);
-    for (const device of this._allDevices) {
-      const id = device.deviceId;
-      if (newDevices[id]) {
-        // Server bug?  Sometimes the same device Id occurs multiple times
-        log.error(`Ignoring duplicate device: ${id}`);
-        continue;
-      }
-
-      if (oldDevices[id]) {
-        newDevices[id] = oldDevices[id];
-        delete oldDevices[id];
-      } else {
-        newDevices[id] = new Camera(device.name, id);
-      }
-
-      if (this._liveDevices[id]) {
-        newDevices[id].setOnline(this.socket, this._liveDevices[id]);
-        unregisteredLiveDevices.splice(unregisteredLiveDevices.indexOf(id), 1);
-      } else {
-        newDevices[id].setOffline(new Date(device.lastSeenAt));
-      }
-    }
-
-    // Cleanup any devices that no longer exist
-    Object.keys(oldDevices).map(id => oldDevices[id].deinit());
-
-    // There should never be any unregistered devices...
-    for (const id of unregisteredLiveDevices) {
-      newDevices[id] = new Camera('!! UNKNOWN DEVICE !!', id);
-      newDevices[id].setOnline(this.socket, this._liveDevices[id]);
-    }
-
-    this.cameras = newDevices;
-
-    let status = `${this._allDevices.length} registered devices, `;
-    if (this.socket && this.socket.connected) {
-      status += `${Object.keys(this._liveDevices).length} online`;
-      if (unregisteredLiveDevices.length > 0) {
-        status += `, ${unregisteredLiveDevices.length} online but unregistered`;
-      }
-    } else {
-      status += 'socket.io disconnected';
-    }
-
-    // Avoid listener leak runtime warning with > 10 devices
-    this.setMaxListeners(this._allDevices.length * 2);
-    this._updateStatus(status);
-  }
 
   _updateStatus(status) {
-    console.log('~~~ EMIT STATE CHANGE ~~~');
     this.status = status;
     this.emit('stateChanged', this);
   }

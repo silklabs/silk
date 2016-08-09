@@ -9,6 +9,7 @@
 import {spawn} from 'child_process';
 import type {ChildProcess} from 'child_process';
 import {EventEmitter} from 'events';
+import type {ChannelEventEmitter} from './connections';
 
 import createLog from 'silk-log/device';
 
@@ -19,7 +20,7 @@ type DiagRebootEventData = {
 };
 
 class DiagLogger {
-  channel: EventEmitter;
+  channel: ChannelEventEmitter;
   cmd: string;
   data: string;
   name: string;
@@ -32,7 +33,7 @@ class DiagLogger {
   // respawnDelay specifies amount of time to wait after process dies before
   // running the command again. Use null for "streaming logs" that should be
   // running at all times.
-  constructor(channel: EventEmitter,
+  constructor(channel: ChannelEventEmitter,
               name: string,
               cmd: string,
               params: Array<string>,
@@ -87,7 +88,7 @@ class DiagLogger {
       return;
     }
 
-    if (this.channel) {
+    if (this.channel.open) {
       this.channel.emit('logchunk', {
         log: this.data,
         name: this.name,
@@ -123,13 +124,10 @@ class DiagLogger {
 }
 
 export default class Diag extends EventEmitter {
-  _channel: EventEmitter;
   _loggers: Array<DiagLogger>
 
-  constructor(channel: EventEmitter) {
+  constructor(channel: ChannelEventEmitter) {
     super();
-    this._channel = channel;
-
     this._loggers = [
       new DiagLogger(channel, 'logcat',
         'system/bin/logcat',

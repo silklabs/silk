@@ -35,14 +35,9 @@ export default class ObjectCollector {
   _maxSmoothingAmount: number;
 
   constructor(
-    maxWidth: number,
-    maxHeight: number,
     interpolationMs?: number = 16,
     maxSmoothingAmount?: number = 50,
   ) {
-    invariant(maxWidth);
-    invariant(maxHeight);
-    this._maxArea = maxWidth * maxHeight;
     this._interpolationMs = Math.round(interpolationMs);
     this._maxSmoothingAmount = maxSmoothingAmount;
   }
@@ -169,9 +164,12 @@ export default class ObjectCollector {
     array.push(second);
   }
 
-  push(objects: Array<TimelineEventObject>): void {
+  push(objects: Array<TimelineEventObject>, maxWidth: number, maxHeight: number): void {
     log.debug(`Pushed ${objects.length} objects`);
     invariant(objects.length);
+    invariant(maxWidth);
+    invariant(maxHeight);
+    this._maxArea = maxWidth * maxHeight; // Sorry!
 
     objects.forEach((object) => {
       let array = this._objects.get(object.id);

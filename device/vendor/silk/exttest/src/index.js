@@ -5,9 +5,9 @@
  * @flow
  */
 
-import { getOutboxInstance } from 'silk-outbox';
+import {getOutboxInstance} from 'silk-outbox';
 import Timeline from 'silk-core/lib/timeline';
-import Server from 'silk-core/lib/server';
+import {default as Connections, ChannelEventEmitter} from 'silk-core/lib/connections';
 import createLog from 'silk-log/device';
 import Camera from 'silk-camera';
 import invariant from 'assert';
@@ -18,7 +18,6 @@ import path from 'path';
 import type { Outbox } from 'silk-outbox';
 import type { Ui } from 'silk-device-ui';
 import type Sensors from 'silk-sensors';
-import type Connections from 'silk-core/lib/connections';
 
 const log = createLog('TestFramework');
 
@@ -46,7 +45,6 @@ export type { Timeline };
 export default class Env {
   _name: string;
   camera: Camera;
-  server: Server;
   outbox: Outbox;
   ui: Ui;
   timeline: Timeline;
@@ -55,14 +53,23 @@ export default class Env {
   _previewCount: number;
   _previewTimeout: number | null;
   _log: Log;
-  connections: Connections;
 
   constructor(name: string) {
     this._name = name;
     this.camera = new Camera();
-    this.server = new Server(this.connections);
     this.outbox = getOutboxInstance();
-    this.timeline = new Timeline(this.server, this.outbox, this.camera);
+    let connections = new Connections();
+    this.timeline = new Timeline(
+      this.outbox,
+      this.camera,
+      {
+        diag: new ChannelEventEmitter('diag', connections),
+        mic: new ChannelEventEmitter('mic', connections),
+        objects: new ChannelEventEmitter('objects', connections),
+        preview: new ChannelEventEmitter('preview', connections),
+        video: new ChannelEventEmitter('video', connections),
+      }
+    );
 
     this.camera.setPreviewFrame = (when, file) => this._loadPreviewFrame(when, file);
     this.camera.startPlayback = (clipDirectory, rate = 'slow', callback) =>

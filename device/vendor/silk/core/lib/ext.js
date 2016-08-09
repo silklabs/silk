@@ -648,26 +648,6 @@ class Extensions {
   };
 
   /**
-   * Send the received command to the loaded extensions. Called when a command
-   * intended for extensions is received by the device
-   *
-   * @param {Object} cmd Command to be sent to the specified extension
-   */
-  onCommand(cmd) {
-    const targetName = `silkext-${cmd.targetName}`;
-    for (let key in this._loaded) {
-      let extension = this._loaded[key];
-      if (extension.env.name === targetName) {
-        try {
-          extension.mod.onCommand(cmd);
-        } catch (e) {
-          log.warn(`Error sending command to ${extension.env.name}, error: ${e}`);
-        }
-      }
-    }
-  }
-
-  /**
    * @private
    */
   _getModulePath(file) {

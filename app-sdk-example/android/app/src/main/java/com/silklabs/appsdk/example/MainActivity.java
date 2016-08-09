@@ -59,4 +59,11 @@ public class MainActivity extends Activity {
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
   }
 
+  protected void onPause() {
+    super.onPause();
+    if (mSilkService != null) {
+      unbindService(mSilkServiceConnection);
+    }
+  }
+
 }

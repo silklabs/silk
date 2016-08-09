@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Silk App SDK Example</string>
     <string name="blob_provider_authority">com.silklabs.appsdk.example.blobs</string>
+    <string name="network_status">Network Status:</string>
+    <string name="email">email</string>
+    <string name="password">password</string>
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
+    <string name="send_echo_message">Send echo</string>
 </resources>

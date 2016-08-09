@@ -25,6 +25,7 @@ import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.shell.MainReactPackage;
+import com.oney.WebRTCModule.WebRTCModulePackage;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -55,7 +56,8 @@ public class SilkAppSDKService extends Service {
   protected List<ReactPackage> getPackages() {
     return Arrays.<ReactPackage>asList(
       new MainReactPackage(),
-      new SilkAppSDKReactPackage(mDelegate));
+      new SilkAppSDKReactPackage(mDelegate),
+      new WebRTCModulePackage());
   }
 
   protected @Nullable

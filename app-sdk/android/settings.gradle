@@ -4,6 +4,9 @@ project(":silk-crypto").projectDir = file("../../crypto/android")
 apply from: '../../crypto/android/settings.gradle'
 project(':libsodium-jni').projectDir = file("../../crypto/external/libsodium-jni")
 
+include ":silk-ble-socket"
+project(":silk-ble-socket").projectDir = file("../../ble-socket/android")
+
 include ":silk-react-native-blobs"
 project(":silk-react-native-blobs").projectDir = file("../../pub/react-native-blobs/android")
 

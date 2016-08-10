@@ -1,6 +1,7 @@
 package com.silklabs.appsdk.example;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -46,6 +47,8 @@ public class MainActivity extends Activity {
   private Spinner configuredDeviceListSpinner = null;
   private Spinner unconfiguredDeviceListSpinner = null;
   private Button configureButton = null;
+  private Spinner ssidListSpinner = null;
+  private AlertDialog wifiDialog = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -102,6 +105,16 @@ public class MainActivity extends Activity {
               String deviceConfigId = Double.toString((Double) message.get("deviceConfigId"));
               String configError = (String) message.get("configError");
               onError("Failed to configure (" + deviceConfigId + "): " + configError);
+              break;
+            }
+            case "DEVICE_CONFIG_WIFI_NETWORKS": {
+              String wifiDeviceConfigId = (String) message.get("deviceConfigId");
+              String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+              if (!deviceConfigId.equals(wifiDeviceConfigId)) {
+                Log.w(TAG, "Received wifi network message for " + wifiDeviceConfigId);
+                return;
+              }
+              onWifiNetworksAvailable((ArrayList<Map<String, Object>>) message.get("wifiNetworks"));
               break;
             }
             default:
@@ -188,6 +201,28 @@ public class MainActivity extends Activity {
       });
     }
 
+    /**
+     * Handle DEVICE_CONFIG_WIFI_NETWORKS message
+     * @param networks
+     */
+    private void onWifiNetworksAvailable(final ArrayList<Map<String, Object>> networks) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          ArrayList<String> ssids = new ArrayList<String>();
+          for (int i = 0; i < networks.size(); i++) {
+            Map<String, Object> network = networks.get(i);
+            ssids.add((String) network.get("ssid"));
+          }
+
+          // Update the wifi ssid list
+          ArrayAdapter<String> ssidsAdapter = new ArrayAdapter<String>(getBaseContext(),
+            android.R.layout.simple_spinner_item, ssids);
+          ssidsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          ssidListSpinner.setAdapter(ssidsAdapter);
+        }
+      });
+    }
+
     @Override
     public void onServiceDisconnected(ComponentName name) {
       mSilkService = null;
@@ -232,6 +267,8 @@ public class MainActivity extends Activity {
 
     unconfiguredDeviceListSpinner = (Spinner) findViewById(R.id.unconfigDeviceList);
 
+    createWifiDialog();
+
     startService(new Intent(this, SilkAppSDKService.class)); // keep service alive for duration of process
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
   }
@@ -239,22 +276,23 @@ public class MainActivity extends Activity {
   /**
    * Display wifi credentials dialog
    */
-  protected void displayWifiDialog() {
+  protected void createWifiDialog() {
     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-    builder.setTitle(R.string.wifi_title);
+    wifiDialog = builder.create();
+
+    wifiDialog.setTitle(R.string.wifi_title);
     View viewInflated = LayoutInflater.from(getBaseContext()).inflate(R.layout.wifi,
       (ViewGroup) findViewById(android.R.id.content), false);
-    final EditText ssidEditText = (EditText) viewInflated.findViewById(R.id.ssidText);
+    ssidListSpinner = (Spinner) viewInflated.findViewById(R.id.ssidList);
     final EditText passwordEditText = (EditText) viewInflated.findViewById(R.id.wifiPasswordText);
 
-    builder.setView(viewInflated);
+    wifiDialog.setView(viewInflated);
 
-    // Set up the buttons
-    builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+    wifiDialog.setButton(Dialog.BUTTON_POSITIVE, "save", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         dialog.dismiss();
-        String ssid = ssidEditText.getText().toString();
+        String ssid = ssidListSpinner.getSelectedItem().toString();
         String password = passwordEditText.getText().toString();
         String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
         String deviceName = "test";
@@ -269,7 +307,7 @@ public class MainActivity extends Activity {
         mSilkService.postMessage(message);
       }
     });
-    builder.setNegativeButton(R.string.ignore, new DialogInterface.OnClickListener() {
+    wifiDialog.setButton(Dialog.BUTTON_NEGATIVE, "ignore", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
@@ -283,8 +321,6 @@ public class MainActivity extends Activity {
         dialog.cancel();
       }
     });
-
-    builder.show();
   }
 
   /**
@@ -344,6 +380,9 @@ public class MainActivity extends Activity {
       mSilkService.onActivityDestroy();
       unbindService(mSilkServiceConnection);
     }
+    if (wifiDialog != null) {
+      wifiDialog.cancel();
+    }
   }
 
   /**
@@ -402,7 +441,7 @@ public class MainActivity extends Activity {
       message.put("deviceConfigId", deviceConfigId);
       mSilkService.postMessage(message);
 
-      displayWifiDialog();
+      wifiDialog.show();
     }
   };
 

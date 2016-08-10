@@ -5,8 +5,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -30,6 +33,7 @@ import java.util.Map;
 public class MainActivity extends Activity {
 
   private final String TAG = "SilkAppSDKExample";
+  private final int REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW = 1234; // Random number
   private boolean mResumed = false;
 
   private SilkAppSDKService mSilkService = null;
@@ -153,7 +157,10 @@ public class MainActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    checkDrawOverlayPermission();
+  }
 
+  protected void initialize() {
     setContentView(R.layout.main);
     networkStatusView = (TextView) findViewById(R.id.networkStatusResultView);
     authStatusView = (TextView) findViewById(R.id.authStatusResultView);
@@ -177,6 +184,38 @@ public class MainActivity extends Activity {
 
     startService(new Intent(this, SilkAppSDKService.class)); // keep service alive for duration of process
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
+  }
+
+  /**
+   * Check to see if the app has permission to draw over the other apps. If not, request for the
+   * permission
+   */
+  public void checkDrawOverlayPermission() {
+    if(Build.VERSION.SDK_INT >= 23) {
+      // Check if we already  have permission to draw over other apps
+      if (!Settings.canDrawOverlays(this)) {
+        // If not construct intent to request permission
+        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+          Uri.parse("package:" + getPackageName()));
+        // request permission via start activity for result
+        startActivityForResult(intent, REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW);
+        return;
+      }
+    }
+    initialize();
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if(Build.VERSION.SDK_INT >= 23) {
+      if (requestCode == REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW) {
+        if (Settings.canDrawOverlays(this)) {
+          initialize();
+        } else {
+          onError("App can not run until the permission to draw over other apps is granted ");
+        }
+      }
+    }
   }
 
   @Override

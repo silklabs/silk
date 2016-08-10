@@ -36,7 +36,7 @@ export default class ParentSocketSession extends DuplexTransform {
   _rssiUpdatesEnabled: boolean = false;
   _rssiUpdatesKilled: boolean = false;
 
-  _authenticated: boolean = false;
+  _authenticatedPublicKey: ?string = null;
   _allowUnauthenticated: ?boolean = null;
   _emittedUnauthenticated: boolean = false;
 
@@ -113,19 +113,19 @@ export default class ParentSocketSession extends DuplexTransform {
     this.emit(`error`, error);
   }
 
-  _onAuthenticated(authenticated: boolean): void {
-    log.debug(`_onAuthenticated`, authenticated);
+  _onAuthenticated(authenticatedPublicKey: string): void {
+    log.debug(`_onAuthenticated`, authenticatedPublicKey);
 
     invariant(!this._emittedUnauthenticated);
 
-    if (authenticated) {
+    if (authenticatedPublicKey) {
       log.info(`Authenticated`);
-      this._authenticated = true;
-      this.emit(`authenticated`);
+      this._authenticatedPublicKey = authenticatedPublicKey;
+      this.emit(`authenticated`, authenticatedPublicKey);
       return;
     }
 
-    invariant(!this._authenticated);
+    invariant(!this._authenticatedPublicKey);
 
     if (this._allowUnauthenticated !== null) {
       log.debug(`Already informed child`);
@@ -218,7 +218,7 @@ export default class ParentSocketSession extends DuplexTransform {
     }
 
     case `authenticated`: {
-      this._onAuthenticated(message.authenticated);
+      this._onAuthenticated(message.authenticatedPublicKey);
       break;
     }
 
@@ -287,7 +287,11 @@ export default class ParentSocketSession extends DuplexTransform {
   }
 
   get authenticated(): boolean {
-    return this._authenticated;
+    return this._authenticatedPublicKey !== null;
+  }
+
+  get authenticatedPublicKey(): ?string {
+    return this._authenticatedPublicKey;
   }
 
   allowUnauthenticated(allow: boolean): void {
@@ -299,42 +303,6 @@ export default class ParentSocketSession extends DuplexTransform {
     this._internalStream.writeInternal(createInternalMessage({
       name: `allowUnauthenticated`,
       allow,
-    }));
-  }
-
-  startScanning(): void {
-    log.debug(`startScanning`);
-
-    this._internalStream.writeInternal(createInternalMessage({
-      name: `scan`,
-      enabled: true,
-    }));
-  }
-
-  stopScanning(): void {
-    log.debug(`stopScanning`);
-
-    this._internalStream.writeInternal(createInternalMessage({
-      name: `scan`,
-      enabled: false,
-    }));
-  }
-
-  skip() {
-    log.debug(`skip`);
-
-    this._internalStream.writeInternal(createInternalMessage({
-      name: `skip`,
-      enabled: true,
-    }));
-  }
-
-  unskip() {
-    log.debug(`unskip`);
-
-    this._internalStream.writeInternal(createInternalMessage({
-      name: `skip`,
-      enabled: false,
     }));
   }
 }

@@ -32,7 +32,7 @@ const MESSAGES_FROM_CHILD = {
   }),
 
   authenticated: messageSchema(`authenticated`, {
-    authenticated: Joi.boolean().required(),
+    authenticatedPublicKey: Joi.string().allow(``).required(),
   }),
 
   flatline: messageSchema(`flatline`),

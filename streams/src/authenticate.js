@@ -115,8 +115,8 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
 
   _publicKeys: ?Array<string> = null;
   _sharedSecret: ?string = null;
-  _authenticated: boolean = false;
   _receivedAuthData: boolean = false;
+  _authenticatedPublicKey: ?string = null;
 
   constructor(
     cryptoStream: CryptoDuplexStream,
@@ -183,7 +183,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
 
     this._receivedAuthData = true;
 
-    invariant(!this._authenticated);
+    invariant(!this.authenticated);
 
     // Auth data never get pushed into the stream.
     const authData: string = data[PROPERTY_NAME];
@@ -204,7 +204,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
 
     invariant(this._publicKeys);
     invariant(this._sharedSecret);
-    invariant(!this._authenticated);
+    invariant(!this.authenticated);
 
     try {
       await this._verifyAuthData(authData);
@@ -230,26 +230,32 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     AuthenticateReadStream.log.debug(`_verifyAuthData`, authData);
 
     invariant(this._publicKeys);
-    invariant(!this._authenticated);
+    invariant(!this.authenticated);
 
     const sharedSecret = this._sharedSecret;
     invariant(sharedSecret);
 
+    const publicKeys = this._publicKeys.slice();
+    AuthenticateReadStream.log.debug(`Attempting to verify signature`,
+                                     publicKeys);
+
     // Try to verify the signature against all public keys known to us.
     const verifyResults = await Promise.all(
-      this._publicKeys.map((publicKey) => {
-        AuthenticateReadStream.log.debug(`Attempting to verify signature ` +
-                                         `with '${publicKey}'`);
+      publicKeys.map((publicKey) => {
         const id = AccessToken.importPub(publicKey);
         return id.genVerify(sharedSecret, authData);
       })
     );
 
-    if (verifyResults.some((result) => result)) {
-      AuthenticateReadStream.log.info(`Receiving authenticated data`);
-      this._authenticated = true;
-      this.emit(`authenticated`);
-      return;
+    for (let index = 0; index < verifyResults.length; index++) {
+      if (verifyResults[index]) {
+        const publicKey = publicKeys[index];
+        AuthenticateReadStream.log.info(`Receiving authenticated data`,
+                                        publicKey);
+        this._authenticatedPublicKey = publicKey;
+        this.emit(`authenticated`, publicKey);
+        return;
+      }
     }
 
     AuthenticateReadStream.log.debug(
@@ -279,8 +285,13 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
   }
 
   get authenticated(): boolean {
-    return this._authenticated;
+    return this._authenticatedPublicKey !== null;
   }
+
+  get authenticatedPublicKey(): ?string {
+    return this._authenticatedPublicKey;
+  }
+
 }
 
 export class AuthenticateWriteStream extends AuthenticateStreamBase {
@@ -415,11 +426,12 @@ export class AuthenticateDuplexStream extends DuplexTransform {
 
     super(wrappedStream, wrappedStream, reader, writer, options);
 
-    reader.once(`authenticated`, () => {
-      AuthenticateDuplexStream.log.debug(`This stream is authenticated`);
+    reader.once(`authenticated`, (publicKey) => {
+      AuthenticateDuplexStream.log.debug(`This stream is authenticated`,
+                                         publicKey);
       invariant(this.authenticated);
       writer.setAuthenticated(true);
-      this.emit(`authenticated`);
+      this.emit(`authenticated`, publicKey);
     });
 
     reader.once(`unauthenticated`, () => {
@@ -443,4 +455,9 @@ export class AuthenticateDuplexStream extends DuplexTransform {
   get authenticated(): boolean {
     return this.__reader.authenticated;
   }
+
+  get authenticatedPublicKey(): ?string {
+    return this.__reader.authenticatedPublicKey;
+  }
+
 }

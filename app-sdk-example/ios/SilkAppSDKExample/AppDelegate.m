@@ -34,6 +34,14 @@
   return YES;
 }
 
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+  [silkService applicationDidBecomeActive];
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+  [silkService applicationDidEnterBackground];
+}
+
 // SLKAppSDKDelegate methods
 
 - (void)onMessage:(NSDictionary<NSString *, id> *)message {

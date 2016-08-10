@@ -13,10 +13,11 @@ private protocol ManufacturerData {
   var deviceNumber: Int? { get }
 }
 
-internal class BLESocketPeripheral: NSObject,
-                                    CBCentralManagerDelegate,
-                                    CBPeripheralManagerDelegate,
-                                    CBPeripheralDelegate {
+@objc(BLESocketPeripheral)
+public class BLESocketPeripheral: NSObject,
+                                  CBCentralManagerDelegate,
+                                  CBPeripheralManagerDelegate,
+                                  CBPeripheralDelegate {
   /**
    * This is the maximum characteristic length that can currently be handled by
    * silk-device due to the way it uses a socket buffer with a small fixed size.
@@ -283,7 +284,7 @@ internal class BLESocketPeripheral: NSObject,
   private var connectionsByCentral = [CBCentral: Connection]()
   private var connectionsByPeripheral = [CBPeripheral: Connection]()
 
-  init(regionMonitor: RegionMonitor) {
+  public init(regionMonitor: RegionMonitor) {
     log.debug("BLESocketPeripheral()")
 
     self.regionMonitor = regionMonitor
@@ -311,14 +312,14 @@ internal class BLESocketPeripheral: NSObject,
                   enabled: false)
   }
 
-  func updateSocketManager(socketManager: BLESocketManager) {
+  public func updateSocketManager(socketManager: BLESocketManager) {
     self.socketManager = socketManager
   }
 
   /**
    * Called when JS adds new account uuids.
    */
-  func regionAdded(uuid: NSUUID) {
+  public func regionAdded(uuid: NSUUID) {
     if uuid == RegionMonitor.configBeaconUuid {
       return
     }
@@ -343,7 +344,7 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func regionRemoved(uuid: NSUUID) {
+  public func regionRemoved(uuid: NSUUID) {
     if uuid == RegionMonitor.configBeaconUuid {
       return
     }
@@ -361,7 +362,7 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func regionEntered(uuid: NSUUID) {
+  public func regionEntered(uuid: NSUUID) {
     dispatch_async(self.queue) {
       let serviceUuid = CBUUID(NSUUID: uuid)
       log.debug("regionEntered(\(serviceUuid))")
@@ -384,7 +385,7 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func regionExited(uuid: NSUUID) {
+  public func regionExited(uuid: NSUUID) {
     dispatch_async(self.queue) {
       let serviceUuid = CBUUID(NSUUID: uuid)
       log.debug("regionExited(\(serviceUuid))")
@@ -406,7 +407,7 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func regionBeacons(uuid: NSUUID, deviceNumbers: Set<Int>) {
+  public func regionBeacons(uuid: NSUUID, deviceNumbers: Set<Int>) {
     dispatch_async(self.queue) {
       let serviceUuid = CBUUID(NSUUID: uuid)
       log.debug("regionBeacons(\(serviceUuid), \(deviceNumbers))")
@@ -435,7 +436,7 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func setForeground() {
+  public func setForeground() {
     dispatch_async(self.queue) {
       log.debug("setForeground()")
       assert(!self.inForeground)
@@ -448,7 +449,7 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func setBackground() {
+  public func setBackground() {
     dispatch_async(self.queue) {
       log.debug("setBackground()")
       assert(self.inForeground)
@@ -954,17 +955,17 @@ internal class BLESocketPeripheral: NSObject,
                               deviceNumber: deviceNumber)
   }
 
-  func centralManagerDidUpdateState(central: CBCentralManager) {
+  public func centralManagerDidUpdateState(central: CBCentralManager) {
     log.info("centralManagerDidUpdateState \(central.state.rawValue)")
     assert(central === self.centralManager)
 
     self.updateScanningState()
   }
 
-  func centralManager(central: CBCentralManager,
-                      didDiscoverPeripheral peripheral: CBPeripheral,
-                      advertisementData: [String : AnyObject],
-                      RSSI: NSNumber) {
+  public func centralManager(central: CBCentralManager,
+                             didDiscoverPeripheral peripheral: CBPeripheral,
+                             advertisementData: [String : AnyObject],
+                             RSSI: NSNumber) {
     log.debug("centralManager:didDiscoverPeripheral " +
               "\(peripheral.identifier.UUIDString), " +
               "\(peripheral.state.rawValue)")
@@ -1044,8 +1045,8 @@ internal class BLESocketPeripheral: NSObject,
     self.pendingPeripherals.insert(peripheral)
   }
 
-  func centralManager(central: CBCentralManager,
-                      didConnectPeripheral peripheral: CBPeripheral) {
+  public func centralManager(central: CBCentralManager,
+                             didConnectPeripheral peripheral: CBPeripheral) {
     log.debug("centralManager:didConnectPeripheral " +
               "\(peripheral.identifier.UUIDString)")
     assert(central === self.centralManager)
@@ -1063,9 +1064,9 @@ internal class BLESocketPeripheral: NSObject,
     peripheral.discoverServices(services)
   }
 
-  func centralManager(central: CBCentralManager,
-                      didFailToConnectPeripheral peripheral: CBPeripheral,
-                      error: NSError?) {
+  public func centralManager(central: CBCentralManager,
+                             didFailToConnectPeripheral peripheral: CBPeripheral,
+                             error: NSError?) {
     log.debug("centralManager:didFailToConnectPeripheral " +
               "\(peripheral.identifier.UUIDString) \(error)")
     assert(central === self.centralManager)
@@ -1084,9 +1085,9 @@ internal class BLESocketPeripheral: NSObject,
     central.connectPeripheral(peripheral, options: nil)
   }
 
-  func centralManager(central: CBCentralManager,
-                      didDisconnectPeripheral peripheral: CBPeripheral,
-                      error: NSError?) {
+  public func centralManager(central: CBCentralManager,
+                             didDisconnectPeripheral peripheral: CBPeripheral,
+                             error: NSError?) {
     log.debug("centralManager:didDisconnectPeripheral " +
               "\(peripheral.identifier.UUIDString) \(error)")
     assert(central === self.centralManager)
@@ -1106,7 +1107,7 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func peripheralManagerDidUpdateState(peripheral: CBPeripheralManager) {
+  public func peripheralManagerDidUpdateState(peripheral: CBPeripheralManager) {
     log.debug("peripheralManagerDidUpdateState \(peripheral.state.rawValue)")
     assert(peripheral === self.peripheralManager)
 
@@ -1122,9 +1123,9 @@ internal class BLESocketPeripheral: NSObject,
     self.maybeAddServices()
   }
 
-  func peripheralManager(peripheral: CBPeripheralManager,
-                         didAddService service: CBService,
-                         error: NSError?) {
+  public func peripheralManager(peripheral: CBPeripheralManager,
+                                didAddService service: CBService,
+                                error: NSError?) {
     log.debug("peripheralManager:didAddService \(service.UUID) \(error)")
     assert(peripheral === self.peripheralManager)
 
@@ -1160,10 +1161,10 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func peripheralManager(peripheral: CBPeripheralManager,
-                         central: CBCentral,
-                         didSubscribeToCharacteristic
-                         characteristic: CBCharacteristic) {
+  public func peripheralManager(peripheral: CBPeripheralManager,
+                                central: CBCentral,
+                                didSubscribeToCharacteristic
+                                characteristic: CBCharacteristic) {
     log.debug("peripheralManager:didSubscribeToCharacteristic() " +
               "\(central.identifier.UUIDString)")
     assert(peripheral === self.peripheralManager)
@@ -1222,10 +1223,10 @@ internal class BLESocketPeripheral: NSObject,
     self.socketManager.connect(connection.id)
   }
 
-  func peripheralManager(peripheral: CBPeripheralManager,
-                         central: CBCentral,
-                         didUnsubscribeFromCharacteristic
-                         characteristic: CBCharacteristic) {
+  public func peripheralManager(peripheral: CBPeripheralManager,
+                                central: CBCentral,
+                                didUnsubscribeFromCharacteristic
+                                characteristic: CBCharacteristic) {
     log.debug("peripheralManager:didUnsubscribeFromCharacteristic() " +
               "\(central.identifier.UUIDString)")
     assert(peripheral === self.peripheralManager)
@@ -1250,15 +1251,15 @@ internal class BLESocketPeripheral: NSObject,
     self.socketManager.end(connection.id)
   }
 
-  func peripheralManager(peripheral: CBPeripheralManager,
-                         didReceiveReadRequest request: CBATTRequest) {
+  public func peripheralManager(peripheral: CBPeripheralManager,
+                                didReceiveReadRequest request: CBATTRequest) {
     log.error("Received read request \(request.characteristic.UUID)")
     assert(peripheral === self.peripheralManager)
     peripheral.respondToRequest(request, withResult: .ReadNotPermitted)
   }
 
-  func peripheralManager(peripheral: CBPeripheralManager,
-                         didReceiveWriteRequests requests: [CBATTRequest]) {
+  public func peripheralManager(peripheral: CBPeripheralManager,
+                                didReceiveWriteRequests requests: [CBATTRequest]) {
     assert(peripheral === self.peripheralManager)
 
     // If any request fails then we are supposed to pretend like all of them
@@ -1311,9 +1312,9 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func peripheral(peripheral: CBPeripheral,
-                  didReadRSSI RSSI: NSNumber,
-                  error: NSError?) {
+  public func peripheral(peripheral: CBPeripheral,
+                         didReadRSSI RSSI: NSNumber,
+                         error: NSError?) {
     log.debug("peripheral:didReadRSSI(\(peripheral.identifier.UUIDString), " +
               "\(RSSI), \(error))")
 
@@ -1339,8 +1340,8 @@ internal class BLESocketPeripheral: NSObject,
     peripheral.readRSSI()
   }
 
-  func peripheral(peripheral: CBPeripheral,
-                  didDiscoverServices error: NSError?) {
+  public func peripheral(peripheral: CBPeripheral,
+                         didDiscoverServices error: NSError?) {
     log.debug("peripheral:didDiscoverServices(" +
               "\(peripheral.identifier.UUIDString), \(error))")
     assert(self.pendingPeripherals.contains(peripheral))
@@ -1388,9 +1389,9 @@ internal class BLESocketPeripheral: NSObject,
                                        forService: service!)
   }
 
-  func peripheral(peripheral: CBPeripheral,
-                  didDiscoverCharacteristicsForService service: CBService,
-                  error: NSError?) {
+  public func peripheral(peripheral: CBPeripheral,
+                         didDiscoverCharacteristicsForService service: CBService,
+                         error: NSError?) {
     log.debug("peripheral:didDiscoverCharacteristicsForService(" +
               "\(peripheral.identifier.UUIDString), \(service.UUID), " +
               "\(error))")
@@ -1429,10 +1430,10 @@ internal class BLESocketPeripheral: NSObject,
     self.cancelPeripheralConnection(peripheral)
   }
 
-  func peripheral(peripheral: CBPeripheral,
-                  didUpdateNotificationStateForCharacteristic
-                  characteristic: CBCharacteristic,
-                  error: NSError?) {
+  public func peripheral(peripheral: CBPeripheral,
+                         didUpdateNotificationStateForCharacteristic
+                         characteristic: CBCharacteristic,
+                         error: NSError?) {
     let service = characteristic.service
     let peripheral = service.peripheral
     log.debug("peripheral:didUpdateNotificationStateForCharacteristic() " +
@@ -1446,10 +1447,10 @@ internal class BLESocketPeripheral: NSObject,
     }
   }
 
-  func peripheral(peripheral: CBPeripheral,
-                  didWriteValueForCharacteristic
-                  characteristic: CBCharacteristic,
-                  error: NSError?) {
+  public func peripheral(peripheral: CBPeripheral,
+                         didWriteValueForCharacteristic
+                         characteristic: CBCharacteristic,
+                         error: NSError?) {
     let service = characteristic.service
     let peripheral = service.peripheral
     log.debug("peripheral:didWriteValueForCharacteristic() " +

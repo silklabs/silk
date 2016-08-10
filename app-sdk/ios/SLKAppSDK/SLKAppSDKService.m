@@ -81,7 +81,8 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  return [NSURL URLWithString:@"http://192.168.1.7:8081/app-sdk/src/sdk/index.bundle?platform=ios&dev=true"];
+  // Change this |localhost| to your machine's ip address.
+  return [NSURL URLWithString:@"http://localhost:8081/app-sdk/src/sdk/index.bundle?platform=ios&dev=true"];
 }
 
 - (NSArray *)extraModulesForBridge:(RCTBridge *)bridge

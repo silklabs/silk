@@ -1,6 +1,7 @@
 import CoreLocation
 
-protocol RegionMonitorDelegate {
+@objc(RegionMonitorDelegate)
+public protocol RegionMonitorDelegate {
   func regionAdded(regionMonitor: RegionMonitor, uuid: NSUUID)
   func regionRemoved(regionMonitor: RegionMonitor, uuid: NSUUID)
   func regionEntered(regionMonitor: RegionMonitor, uuid: NSUUID)
@@ -14,7 +15,8 @@ private let log = DebugLog.create("silk-RegionMonitor")
 
 // This class monitors enter/exit from our home region and report state back via
 // RegionUpdatesDelegate
-internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
+@objc(RegionMonitor)
+public class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   private static let beaconUuidsKey = "silk-regionmonitor-beacon-uuids"
   internal static let configBeaconUuid =
@@ -44,7 +46,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   let delegate: RegionMonitorDelegate
 
-  init(delegate: RegionMonitorDelegate) {
+  public init(delegate: RegionMonitorDelegate) {
     log.debug("RegionMonitor()")
 
     assert(RegionMonitor.instance === nil,
@@ -158,7 +160,7 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     }
   }
 
-  func start() {
+  public func start() {
     log.debug("start()")
 
     if self.locationManager == nil {
@@ -317,8 +319,8 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     }
   }
 
-  func locationManager(manager: CLLocationManager,
-                       didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+  public func locationManager(manager: CLLocationManager,
+                              didChangeAuthorizationStatus status: CLAuthorizationStatus) {
     assert(manager === self.locationManager!)
     if status == .AuthorizedAlways {
       log.debug("User granted 'always' location permission")
@@ -330,15 +332,15 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     }
   }
 
-  func locationManager(manager: CLLocationManager,
-                       didStartMonitoringForRegion region: CLRegion) {
+  public func locationManager(manager: CLLocationManager,
+                              didStartMonitoringForRegion region: CLRegion) {
     assert(manager === self.locationManager!)
     log.debug("didStartMonitoringForRegion \(region.identifier)")
   }
 
-  func locationManager(manager: CLLocationManager,
-                       monitoringDidFailForRegion region: CLRegion?,
-                       withError error: NSError) {
+  public func locationManager(manager: CLLocationManager,
+                              monitoringDidFailForRegion region: CLRegion?,
+                              withError error: NSError) {
     assert(manager === self.locationManager!)
 
     if region == nil {
@@ -370,9 +372,9 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   // When we launch this will read the current state of the region since we
   // might have missed the enter/exit notifications
-  func locationManager(manager: CLLocationManager,
-                       didDetermineState state: CLRegionState,
-                       forRegion region: CLRegion) {
+  public func locationManager(manager: CLLocationManager,
+                              didDetermineState state: CLRegionState,
+                              forRegion region: CLRegion) {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
 
@@ -418,8 +420,8 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   // Entering the region is immediate and re-launches the app if we aren't
   // currently running
-  func locationManager(manager: CLLocationManager,
-                       didEnterRegion region: CLRegion) {
+  public func locationManager(manager: CLLocationManager,
+                              didEnterRegion region: CLRegion) {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
     if let regionInfo = self.regions[region.identifier] {
@@ -438,8 +440,8 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
 
   // Leaving the region occurs after a timeout when the last beacon in the
   // region goes out of range
-  func locationManager(manager: CLLocationManager,
-                       didExitRegion region: CLRegion) {
+  public func locationManager(manager: CLLocationManager,
+                              didExitRegion region: CLRegion) {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
     if let regionInfo = self.regions[region.identifier] {
@@ -455,9 +457,9 @@ internal class RegionMonitor: NSObject, CLLocationManagerDelegate {
     }
   }
 
-  func locationManager(manager: CLLocationManager,
-                       didRangeBeacons beacons: [CLBeacon],
-                       inRegion region: CLBeaconRegion) {
+  public func locationManager(manager: CLLocationManager,
+                              didRangeBeacons beacons: [CLBeacon],
+                              inRegion region: CLBeaconRegion) {
     assert(manager === self.locationManager!)
     assert(self.monitoring)
     if let regionInfo = self.regions[region.identifier] {

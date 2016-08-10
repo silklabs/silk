@@ -11,6 +11,10 @@
 
 - (instancetype)initWithDelegate:(id<SLKAppSDKDelegate>)delegate NS_DESIGNATED_INITIALIZER;
 
+- (void)applicationDidBecomeActive;
+
+- (void)applicationDidEnterBackground;
+
 - (void)postMessage:(NSDictionary<NSString *, id> *)message;
 
 @end

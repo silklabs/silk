@@ -13,7 +13,7 @@
 #import "SLKAppSDKEventEmitter.h"
 #import <SLKAppSDK/SLKAppSDK-Swift.h>
 
-@interface SLKAppSDKService () <RCTBridgeDelegate>
+@interface SLKAppSDKService () <RCTBridgeDelegate, RegionMonitorDelegate>
 
 @end
 
@@ -22,6 +22,8 @@
   RCTBridge *_bridge;
   id<SLKAppSDKDelegate> _delegate;
   SLKAppSDKEventEmitter *_eventEmitter;
+  RegionMonitor *_regionMonitor;
+  BLESocketPeripheral *_socketPeripheral;
   BOOL _initialized;
 }
 
@@ -32,8 +34,12 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   if ((self = [super init])) {
     _delegate = delegate;
     _eventEmitter = [[SLKAppSDKEventEmitter alloc] initWithDelegate:delegate];
+    _regionMonitor = [[RegionMonitor alloc] initWithDelegate:self];
     _bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:nil];
+    _socketPeripheral = [[BLESocketPeripheral alloc] initWithRegionMonitor:_regionMonitor];
     _initialized = NO;
+
+    [_regionMonitor start];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(javaScriptDidLoad:)
@@ -42,6 +48,14 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
   }
   return self;
+}
+
+- (void)applicationDidBecomeActive {
+  [_socketPeripheral setForeground];
+}
+
+- (void)applicationDidEnterBackground {
+  [_socketPeripheral setBackground];
 }
 
 - (void)javaScriptDidLoad:(NSNotification *)notification
@@ -67,12 +81,34 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  return [NSURL URLWithString:@"http://localhost:8081/app-sdk/src/sdk/index.bundle?platform=ios&dev=true"];
+  return [NSURL URLWithString:@"http://192.168.1.7:8081/app-sdk/src/sdk/index.bundle?platform=ios&dev=true"];
 }
 
 - (NSArray *)extraModulesForBridge:(RCTBridge *)bridge
 {
   return @[_eventEmitter, [BLESocketManager new]];
+}
+
+// RegionMonitorDelegate
+
+- (void)regionAdded:(RegionMonitor *)regionMonitor uuid:(NSUUID *)uuid {
+  [_socketPeripheral regionAdded:uuid];
+}
+
+- (void)regionRemoved:(RegionMonitor *)regionMonitor uuid:(NSUUID *)uuid {
+  [_socketPeripheral regionRemoved:uuid];
+}
+
+- (void)regionEntered:(RegionMonitor *)regionMonitor uuid:(NSUUID *)uuid {
+  [_socketPeripheral regionEntered:uuid];
+}
+
+- (void)regionExited:(RegionMonitor *)regionMonitor uuid:(NSUUID *)uuid {
+  [_socketPeripheral regionExited:uuid];
+}
+
+- (void)regionBeacons:(RegionMonitor *)regionMonitor uuid:(NSUUID *)uuid deviceNumbers:(NSSet<NSNumber *> *)deviceNumbers {
+  [_socketPeripheral regionBeacons:uuid deviceNumbers:deviceNumbers];
 }
 
 @end

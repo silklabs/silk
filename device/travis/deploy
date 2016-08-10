@@ -14,12 +14,17 @@ test -n $TRAVIS_COMMIT
 
 BUILD_NAME=$SILK_BOARD-$SILK_PRODUCT-$BRANCH-$TARGET_BUILD_VARIANT
 
-
 mkdir -p dist/$BUILD_NAME/$TRAVIS_COMMIT
 (
   cd dist/$BUILD_NAME/$TRAVIS_COMMIT
   wget https://s3-us-west-2.amazonaws.com/silk-device/$BRANCH/$BUILD_NAME/last || true
 )
+LAST_TRAVIS_COMMIT=$(cat dist/$BUILD_NAME/$TRAVIS_COMMIT/last)
+if [[ "$LAST_TRAVIS_COMMIT" = "$TRAVIS_COMMIT" ]]; then
+  echo Gracias por nada
+  exit 0
+fi
+
 echo $TRAVIS_COMMIT > dist/$BUILD_NAME/last
 
 mv -v $ANDROID_PRODUCT_OUT/obj/PACKAGING/target_files_intermediates/*.zip \

@@ -48,24 +48,24 @@ public class MainActivity extends Activity {
         @Override
         public void onMessage(Map<String, Object> message) {
           Log.i(TAG, "Received message from SDK: " + message.toString());
-          String messageType = message.get("type").toString();
+          String messageType = (String) message.get("type");
 
           switch(messageType) {
             case "CLIENT_STATUS": {
               Object clientConnectionError = message.get("clientConnectionError");
               if (clientConnectionError == null) {
-                String clientConnectionStatus = message.get("clientConnectionStatus").toString();
+                String clientConnectionStatus = (String) message.get("clientConnectionStatus");
                 onNetworkStatusChanged(clientConnectionStatus);
               } else {
-                onError(clientConnectionError.toString());
+                onError((String) clientConnectionError);
               }
 
               Object clientAuthError = message.get("clientAuthError");
               if (clientAuthError == null) {
-                String clientAuthStatus = message.get("clientAuthStatus").toString();
+                String clientAuthStatus = (String) message.get("clientAuthStatus");
                 onAuthStatusChanged(clientAuthStatus);
               } else {
-                onError(clientAuthError.toString());
+                onError((String) clientAuthError);
               }
               break;
             }
@@ -73,13 +73,13 @@ public class MainActivity extends Activity {
               onDeviceListAvailable((ArrayList<Map<String, Object>>) message.get("devices"));
               break;
             case "MESSAGE_ERROR": {
-              String errorMsg = message.get("error").toString();
+              String errorMsg = (String) message.get("error");
               onError(errorMsg);
               break;
             }
             case "DEVICE_MESSAGE_ERROR": {
-              String errorMsg = message.get("error").toString();
-              String deviceId = message.get("deviceId").toString();
+              String errorMsg = (String) message.get("error");
+              String deviceId = (String) message.get("deviceId");
               onError("device (" + deviceId.substring(0, 5) + "...)" + ": " + errorMsg);
               break;
             }
@@ -133,7 +133,7 @@ public class MainActivity extends Activity {
           ArrayList<String> deviceIds = new ArrayList<String>();
           for (int i = 0; i < devices.size(); i++) {
             Map<String, Object> device = devices.get(i);
-            String deviceId = device.get("deviceId").toString();
+            String deviceId = (String) device.get("deviceId");
             deviceIds.add(deviceId);
           }
           ArrayAdapter<String> adapter = new ArrayAdapter<String>(getBaseContext(),

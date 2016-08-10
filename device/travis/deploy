@@ -8,17 +8,29 @@ test -n $BRANCH
 test -n $SILK_BOARD
 test -n $SILK_PRODUCT
 test -n $TARGET_BUILD_VARIANT
-
-if [[ -n $TRAVIS ]]; then
-  rm -rf $ANDROID_PRODUCT_OUT/obj/ # Reclaim some disk space because $250 per month is not enough
-fi
+test -n $TRAVIS_COMMIT
 
 ./travis/ota-internal_dist
 
-./travis/build_device_archive.sh $SILK_BOARD-$SILK_PRODUCT-$BRANCH-$TARGET_BUILD_VARIANT dist
+BUILD_NAME=$SILK_BOARD-$SILK_PRODUCT-$BRANCH-$TARGET_BUILD_VARIANT
+
+
+mkdir -p dist/$BUILD_NAME/$TRAVIS_COMMIT
+(
+  cd dist/$BUILD_NAME/$TRAVIS_COMMIT
+  wget https://s3-us-west-2.amazonaws.com/silk-device/$BRANCH/$BUILD_NAME/last || true
+)
+echo $TRAVIS_COMMIT > dist/$BUILD_NAME/last
+
+mv -v $ANDROID_PRODUCT_OUT/obj/PACKAGING/target_files_intermediates/*.zip \
+  dist/$BUILD_NAME/$TRAVIS_COMMIT/target_files.zip
+
+./travis/build_device_archive.sh $BUILD_NAME dist/latest
+ln dist/latest/* dist/$BUILD_NAME/$TRAVIS_COMMIT/
+
 ../s3-artifacts/bin/upload \
     silk-device \
-    $BRANCH/latest \
+    $BRANCH
     $(readlink -f dist) \
     --credentials temporary_artifacts \
     --noindex \

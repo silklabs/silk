@@ -66,7 +66,7 @@ base.*)
   $make
   ;;
 kenzo)
-  $make
+  $make target-files-package
   lock_build_fingerprint
   $make otatools
 
@@ -78,7 +78,7 @@ kenzo)
   $make silkota otapackage
   ;;
 *)
-  $make
+  $make target-files-package
   lock_build_fingerprint
   $make silkota
   $make otapackage

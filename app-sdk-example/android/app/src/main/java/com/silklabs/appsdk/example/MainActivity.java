@@ -241,8 +241,8 @@ public class MainActivity extends Activity {
     super.onDestroy();
     if (mSilkService != null) {
       mSilkService.onActivityDestroy();
+      unbindService(mSilkServiceConnection);
     }
-    unbindService(mSilkServiceConnection);
   }
 
   /**

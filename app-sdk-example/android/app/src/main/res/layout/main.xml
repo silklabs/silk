@@ -79,8 +79,8 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/send_echo_message"
-            android:id="@+id/sendEchoMessageButton"
+            android:text="@string/configure"
+            android:id="@+id/configureButton"
             android:layout_below="@+id/loginButton"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
@@ -88,8 +88,26 @@
         <Spinner
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/deviceList"
+            android:id="@+id/unconfigDeviceList"
             android:layout_below="@+id/loginButton"
+            android:layout_toRightOf="@+id/configureButton"
+            android:layout_alignParentRight="true"
+            android:spinnerMode="dialog" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/send_echo_message"
+            android:id="@+id/sendEchoMessageButton"
+            android:layout_below="@+id/configureButton"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/deviceList"
+            android:layout_below="@+id/configureButton"
             android:layout_toRightOf="@+id/sendEchoMessageButton"
             android:layout_alignParentRight="true"
             android:spinnerMode="dialog" />

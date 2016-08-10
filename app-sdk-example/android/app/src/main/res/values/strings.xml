@@ -7,4 +7,8 @@
     <string name="login">Login</string>
     <string name="logout">Logout</string>
     <string name="send_echo_message">Send echo</string>
+    <string name="configure">configure</string>
+    <string name="ssid">ssid</string>
+    <string name="wifi_title">Which Wi-Fi network should your device connect to?</string>
+    <string name="ignore">ignore</string>
 </resources>

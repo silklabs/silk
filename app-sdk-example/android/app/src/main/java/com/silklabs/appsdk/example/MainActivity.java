@@ -5,12 +5,16 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
@@ -30,6 +34,7 @@ import java.util.Map;
 public class MainActivity extends Activity {
 
   private final String TAG = "SilkAppSDKExample";
+  private final int REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW = 1234; // Random number
   private boolean mResumed = false;
 
   private SilkAppSDKService mSilkService = null;
@@ -37,8 +42,10 @@ public class MainActivity extends Activity {
   private TextView authStatusView = null;
   private EditText emailText = null;
   private EditText passwordText = null;
-  private Spinner deviceListSpinner = null;
-
+  private Button echoButton = null;
+  private Spinner configuredDeviceListSpinner = null;
+  private Spinner unconfiguredDeviceListSpinner = null;
+  private Button configureButton = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -48,24 +55,27 @@ public class MainActivity extends Activity {
         @Override
         public void onMessage(Map<String, Object> message) {
           Log.i(TAG, "Received message from SDK: " + message.toString());
-          String messageType = message.get("type").toString();
+          String messageType = (String) message.get("type");
 
           switch(messageType) {
+            case "INITIALIZED":
+              Log.i(TAG, "Silk-sdk initialized");
+              break;
             case "CLIENT_STATUS": {
               Object clientConnectionError = message.get("clientConnectionError");
               if (clientConnectionError == null) {
-                String clientConnectionStatus = message.get("clientConnectionStatus").toString();
+                String clientConnectionStatus = (String) message.get("clientConnectionStatus");
                 onNetworkStatusChanged(clientConnectionStatus);
               } else {
-                onError(clientConnectionError.toString());
+                onError((String) clientConnectionError);
               }
 
               Object clientAuthError = message.get("clientAuthError");
               if (clientAuthError == null) {
-                String clientAuthStatus = message.get("clientAuthStatus").toString();
+                String clientAuthStatus = (String) message.get("clientAuthStatus");
                 onAuthStatusChanged(clientAuthStatus);
               } else {
-                onError(clientAuthError.toString());
+                onError((String) clientAuthError);
               }
               break;
             }
@@ -73,18 +83,29 @@ public class MainActivity extends Activity {
               onDeviceListAvailable((ArrayList<Map<String, Object>>) message.get("devices"));
               break;
             case "MESSAGE_ERROR": {
-              String errorMsg = message.get("error").toString();
+              String errorMsg = (String) message.get("error");
               onError(errorMsg);
               break;
             }
             case "DEVICE_MESSAGE_ERROR": {
-              String errorMsg = message.get("error").toString();
-              String deviceId = message.get("deviceId").toString();
+              String errorMsg = (String) message.get("error");
+              String deviceId = (String) message.get("deviceId");
               onError("device (" + deviceId.substring(0, 5) + "...)" + ": " + errorMsg);
               break;
             }
+            case "DEVICE_CONFIG_SUCCESS": {
+              String deviceConfigId = Double.toString((Double) message.get("deviceConfigId"));
+              onSuccess("Sucessfully configured (" + deviceConfigId + ")");
+              break;
+            }
+            case "DEVICE_CONFIG_ERROR": {
+              String deviceConfigId = Double.toString((Double) message.get("deviceConfigId"));
+              String configError = (String) message.get("configError");
+              onError("Failed to configure (" + deviceConfigId + "): " + configError);
+              break;
+            }
             default:
-              Log.w(TAG, "Unknown message type: " + messageType);
+              onError("Unknown message type: " + messageType);
           }
         }
       });
@@ -130,16 +151,39 @@ public class MainActivity extends Activity {
     private void onDeviceListAvailable(final ArrayList<Map<String, Object>> devices) {
       runOnUiThread(new Runnable() {
         public void run() {
-          ArrayList<String> deviceIds = new ArrayList<String>();
+          ArrayList<String> configuredDeviceIds = new ArrayList<String>();
+          ArrayList<String> unConfiguredDeviceIds = new ArrayList<String>();
           for (int i = 0; i < devices.size(); i++) {
             Map<String, Object> device = devices.get(i);
-            String deviceId = device.get("deviceId").toString();
-            deviceIds.add(deviceId);
+            String configStatus = (String) device.get("deviceConfigStatus");
+            if ("CONFIGURED".equals(configStatus)) {
+              configuredDeviceIds.add((String) device.get("deviceId"));
+            } else {
+              Double deviceConfigId =  (Double) device.get("deviceConfigId");
+              unConfiguredDeviceIds.add(Double.toString(deviceConfigId));
+            }
           }
-          ArrayAdapter<String> adapter = new ArrayAdapter<String>(getBaseContext(),
-              android.R.layout.simple_spinner_item, deviceIds);
-          adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-          deviceListSpinner.setAdapter(adapter);
+          // Update the configured devices list
+          ArrayAdapter<String> configuredAdapter = new ArrayAdapter<String>(getBaseContext(),
+              android.R.layout.simple_spinner_item, configuredDeviceIds);
+          configuredAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          configuredDeviceListSpinner.setAdapter(configuredAdapter);
+          if (configuredDeviceIds.size() > 0) {
+            echoButton.setEnabled(true);
+          } else {
+            echoButton.setEnabled(false);
+          }
+
+          // Update the unconfigured devices list
+          ArrayAdapter<String> unConfiguredAdapter = new ArrayAdapter<String>(getBaseContext(),
+            android.R.layout.simple_spinner_item, unConfiguredDeviceIds);
+          unConfiguredAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          unconfiguredDeviceListSpinner.setAdapter(unConfiguredAdapter);
+          if (unConfiguredDeviceIds.size() > 0) {
+            configureButton.setEnabled(true);
+          } else {
+            configureButton.setEnabled(false);
+          }
         }
       });
     }
@@ -153,7 +197,13 @@ public class MainActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    checkDrawOverlayPermission();
+  }
 
+  /**
+   * Initialize main UI controls
+   */
+  protected void initialize() {
     setContentView(R.layout.main);
     networkStatusView = (TextView) findViewById(R.id.networkStatusResultView);
     authStatusView = (TextView) findViewById(R.id.authStatusResultView);
@@ -164,7 +214,7 @@ public class MainActivity extends Activity {
     passwordText = (EditText) findViewById(R.id.passwordText);
     passwordText.setOnFocusChangeListener(focusChangeListener);
 
-    deviceListSpinner = (Spinner) findViewById(R.id.deviceList);
+    configuredDeviceListSpinner = (Spinner) findViewById(R.id.deviceList);
 
     final Button loginButton = (Button) findViewById(R.id.loginButton);
     loginButton.setOnClickListener(loginButtonListener);
@@ -172,11 +222,101 @@ public class MainActivity extends Activity {
     final Button logoutButton = (Button) findViewById(R.id.logoutButton);
     logoutButton.setOnClickListener(logoutButtonListener);
 
-    final Button echoButton = (Button) findViewById(R.id.sendEchoMessageButton);
+    echoButton = (Button) findViewById(R.id.sendEchoMessageButton);
     echoButton.setOnClickListener(echoButtonListener);
+    echoButton.setEnabled(false);
+
+    configureButton = (Button) findViewById(R.id.configureButton);
+    configureButton.setOnClickListener(configureButtonListener);
+    configureButton.setEnabled(false);
+
+    unconfiguredDeviceListSpinner = (Spinner) findViewById(R.id.unconfigDeviceList);
 
     startService(new Intent(this, SilkAppSDKService.class)); // keep service alive for duration of process
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
+  }
+
+  /**
+   * Display wifi credentials dialog
+   */
+  protected void displayWifiDialog() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+    builder.setTitle(R.string.wifi_title);
+    View viewInflated = LayoutInflater.from(getBaseContext()).inflate(R.layout.wifi,
+      (ViewGroup) findViewById(android.R.id.content), false);
+    final EditText ssidEditText = (EditText) viewInflated.findViewById(R.id.ssidText);
+    final EditText passwordEditText = (EditText) viewInflated.findViewById(R.id.wifiPasswordText);
+
+    builder.setView(viewInflated);
+
+    // Set up the buttons
+    builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        dialog.dismiss();
+        String ssid = ssidEditText.getText().toString();
+        String password = passwordEditText.getText().toString();
+        String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+        String deviceName = "test";
+
+        // Set device configuration
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "DEVICE_CONFIG_SET_CONFIG");
+        message.put("deviceConfigId", deviceConfigId);
+        message.put("deviceName", deviceName);
+        message.put("wifiSSID", ssid);
+        message.put("wifiPassword", password);
+        mSilkService.postMessage(message);
+      }
+    });
+    builder.setNegativeButton(R.string.ignore, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+
+        // Decline device configuration
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "DEVICE_CONFIG_DECLINE");
+        message.put("deviceConfigId", deviceConfigId);
+        mSilkService.postMessage(message);
+
+        dialog.cancel();
+      }
+    });
+
+    builder.show();
+  }
+
+  /**
+   * Check to see if the app has permission to draw over the other apps. If not, request for the
+   * permission
+   */
+  public void checkDrawOverlayPermission() {
+    if(Build.VERSION.SDK_INT >= 23) {
+      // Check if we already  have permission to draw over other apps
+      if (!Settings.canDrawOverlays(this)) {
+        // If not construct intent to request permission
+        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+          Uri.parse("package:" + getPackageName()));
+        // request permission via start activity for result
+        startActivityForResult(intent, REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW);
+        return;
+      }
+    }
+    initialize();
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if(Build.VERSION.SDK_INT >= 23) {
+      if (requestCode == REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW) {
+        if (Settings.canDrawOverlays(this)) {
+          initialize();
+        } else {
+          onError("App can not run until the permission to draw over other apps is granted ");
+        }
+      }
+    }
   }
 
   @Override
@@ -202,8 +342,8 @@ public class MainActivity extends Activity {
     super.onDestroy();
     if (mSilkService != null) {
       mSilkService.onActivityDestroy();
+      unbindService(mSilkServiceConnection);
     }
-    unbindService(mSilkServiceConnection);
   }
 
   /**
@@ -237,15 +377,32 @@ public class MainActivity extends Activity {
    */
   private OnClickListener echoButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
-      if (deviceListSpinner.getSelectedItem() == null) {
+      if (configuredDeviceListSpinner.getSelectedItem() == null) {
         onError("Please select a device");
         return;
       }
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_MESSAGE");
-      message.put("deviceId", deviceListSpinner.getSelectedItem().toString());
+      message.put("deviceId", configuredDeviceListSpinner.getSelectedItem().toString());
       message.put("payload", "{\"message\": \"Love the app\"}");
       mSilkService.postMessage(message);
+    }
+  };
+
+  /**
+   * Handle Configure button click
+   */
+  private OnClickListener configureButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+
+      // Accept device configuration
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "DEVICE_CONFIG_ACCEPT");
+      message.put("deviceConfigId", deviceConfigId);
+      mSilkService.postMessage(message);
+
+      displayWifiDialog();
     }
   };
 
@@ -276,6 +433,19 @@ public class MainActivity extends Activity {
             dialog.dismiss();
           }
         });
+    alertDialog.show();
+  }
+
+  private void onSuccess(String msg) {
+    AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+    alertDialog.setTitle("Success");
+    alertDialog.setMessage(msg);
+    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+      new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int which) {
+          dialog.dismiss();
+        }
+      });
     alertDialog.show();
   }
 }

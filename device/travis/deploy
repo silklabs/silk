@@ -18,6 +18,7 @@ mkdir -p dist/$BUILD_NAME/$TRAVIS_COMMIT
 (
   cd dist/$BUILD_NAME/$TRAVIS_COMMIT
   wget https://s3-us-west-2.amazonaws.com/silk-device/$BRANCH/$BUILD_NAME/last || true
+  touch last
 )
 LAST_TRAVIS_COMMIT=$(cat dist/$BUILD_NAME/$TRAVIS_COMMIT/last)
 if [[ "$LAST_TRAVIS_COMMIT" = "$TRAVIS_COMMIT" ]]; then

@@ -13,7 +13,6 @@ export type UserMediaConstraints = {
 
 // Taken from https://w3c.github.io/webrtc-pc/#widl-RTCDataChannelInit
 export type RTCDataChannelInit = {
-  ordered?: bool;
   maxPacketLifeTime?: number;
   maxRetransmits?: number;
   negotiated?: bool;

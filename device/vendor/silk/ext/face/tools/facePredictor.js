@@ -1,3 +1,5 @@
+#!/usr/bin/env ../../../../../pub/babel-run/babel-node
+
 /**
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
@@ -225,7 +227,7 @@ async function run() {
   try {
     let predictor = new FacePredictor(fileListPath, dbPath, destPath);
     await predictor.run();
-  } catch(err) {
+  } catch (err) {
     console.error(`Error running face predictor: ${err.stack || err}`);
   }
 }

@@ -1,3 +1,5 @@
+#!/usr/bin/env ../../../../../pub/babel-run/babel-node
+
 /**
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
@@ -67,7 +69,7 @@ async function run(clipDirectory) {
       console.log(`Done analysing heart rate`);
       face.cancel();
     });
-  } catch(err) {
+  } catch (err) {
     console.error(`Error running hearrate analyzer: ${err.stack || err}`);
   }
 }

@@ -228,6 +228,19 @@ class Env extends EventEmitter {
         return camera.ready()
         .then(() => camera.getParameterStr(name));
       };
+
+      Object.defineProperties(this.camera, {
+        'FRAME_DELAY_MS': {
+          get: function () {
+            return camera.FRAME_DELAY_MS;
+          },
+        },
+        'FAST_FRAME_DELAY_MS': {
+          get: function () {
+            return camera.FAST_FRAME_DELAY_MS;
+          },
+        },
+      });
     }
 
     /**

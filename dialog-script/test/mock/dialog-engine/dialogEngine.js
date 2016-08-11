@@ -95,6 +95,7 @@ export default class DialogEngine extends EventEmitter {
   _options: DialogEngineOptions;
   _scriptOptions: DialogScriptOptions;
   uiMode = 'normal';
+  rtc: EventEmitter = new EventEmitter();
 
   constructor(options?: DialogEngineOptions = {}) {
     super();

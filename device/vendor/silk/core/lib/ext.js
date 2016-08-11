@@ -531,27 +531,8 @@ class Env extends EventEmitter {
       };
     }
 
-    /**
-     * Send and receive events to and from server.
-     */
-    let server = deviceObjects.server;
-    if (server) {
-      this.server = new EventEmitter();
-
-      this._addEvents('server', server, this.server, ['disconnect']);
-
-      // Very sorry!! Remove once connections.js is moved into its own module
-      this.server.connections = deviceObjects.server.connections;
-
-      /**
-       * Send the event named `event` with payload `data` to the
-       * server.
-       */
-      this.server.send = (event, data) => {
-        // `server` validates the data being sent.
-        server.send(event, data);
-      };
-    }
+    // Very sorry!! Remove once connections.js is moved into its own module
+    this.dialogChannel = deviceObjects.dialogChannel;
   }
 
   /**
@@ -646,26 +627,6 @@ class Extensions {
     await this._unloadExtension(extName);
     await this._loadExtension(extName);
   };
-
-  /**
-   * Send the received command to the loaded extensions. Called when a command
-   * intended for extensions is received by the device
-   *
-   * @param {Object} cmd Command to be sent to the specified extension
-   */
-  onCommand(cmd) {
-    const targetName = `silkext-${cmd.targetName}`;
-    for (let key in this._loaded) {
-      let extension = this._loaded[key];
-      if (extension.env.name === targetName) {
-        try {
-          extension.mod.onCommand(cmd);
-        } catch (e) {
-          log.warn(`Error sending command to ${extension.env.name}, error: ${e}`);
-        }
-      }
-    }
-  }
 
   /**
    * @private

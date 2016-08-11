@@ -1,7 +1,7 @@
 #! /bin/bash -e
-
 # This is a silk wide eslint
 
+cd $(dirname $0)
 projects=$(node ./tools/npm/find_packages.js)
 
 eslint=$PWD/node_modules/.bin/eslint

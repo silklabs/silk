@@ -1,5 +1,8 @@
 /**
- * @private
+ * Copyright (c) 2015-2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
  * @flow
  */
 
@@ -11,9 +14,9 @@ import fs from 'mz/fs';
 import invariant from 'assert';
 import mkdirp from 'mkdirp-promise';
 import path from 'path';
-import type Server from './server.js';
 import wrapNoEntity from './fs/wrap_no_entity';
-import type { Camera } from 'silk-camera';
+import type {Camera} from 'silk-camera';
+import type {ChannelEventEmitter} from './connections';
 
 const log = createLog('camera_cr');
 
@@ -61,17 +64,16 @@ function CameraClipFrameImagesRelease(item: CameraClipFrameImages): void {
  */
 export default class CameraClipRecorder {
   state: CameraClipRecorderState;
-  _server: Server;
+  _diag: ChannelEventEmitter;
   _camera: Camera;
   _liveDiag: bool;
 
   _frames: CBuffer<CameraClipFrameImages>;
   _framePosition: number;
 
-  constructor(camera: any /*Camera*/, server: Server) {
-    invariant(server, 'must pass server...');
-    this._server = server;
+  constructor(camera: any /*Camera*/, diag: ChannelEventEmitter) {
     this._camera = camera;
+    this._diag = diag;
 
     this._framePosition = 0;
     this._frames = new CBuffer(MAX_CLIP_DURATION * 1000 / this._camera.FRAME_DELAY_MS);
@@ -85,30 +87,21 @@ export default class CameraClipRecorder {
     };
     this.reset();
     this._loadAvailableClips();
+    this._diag.on('cameraClipRecorder:cmd', cmd => {
+      this.diagCommand(cmd.name, cmd.arg);
+    });
   }
 
   _onStateChange: (() => void) = () => {
-    if (!this._liveDiag) {
-      return;
-    }
-    const state = {
-      clipRecorder: this.state,
-    };
-    this._server.send('diag', {
-      type: 'state',
-      name: 'camera',
-      state,
-    });
+    log.verbose(`Emitting diag state:`, this.state);
+    this._diag.emit('cameraClipRecorder:state', this.state);
   };
 
-  setDiag(enabled: bool): void {
-    this._liveDiag = enabled;
-    this._onStateChange();
-  }
-
   diagCommand(name: string, arg: string): void {
+    log.verbose(`diag command: ${name} ${arg}`);
     switch (name) {
     case 'hi':
+      this._onStateChange();
       break;
     case 'record':
       switch (arg) {

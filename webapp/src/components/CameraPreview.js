@@ -2,6 +2,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import createLog from 'silk-log';
+import invariant from 'assert';
 
 import Cameras from '../libraries/Cameras';
 import * as CanvasUtils from '../libraries/CanvasUtils';
@@ -38,9 +39,9 @@ export default class CameraPreview extends React.Component {
   _renderedSize = null;
   _pixelRatio = 1;
 
-  state = {
-    camera: null,
-  };
+  _camera = null;
+
+  state = {};
 
   get deviceId() {
     return this.props.deviceId;
@@ -53,8 +54,12 @@ export default class CameraPreview extends React.Component {
       this._pixelRatio = devicePixelRatio / backingRatio;
     }
 
-    Cameras.on('stateChanged', this._onCamerasStateChanged);
-    this._onCamerasStateChanged();
+    this._camera = Cameras.get(this.deviceId);
+    invariant(this._camera, 'No camera');
+
+    this._camera.on('previewImage', this._renderImg);
+    this._camera.on('stateChanged', this._onCameraStateChanged);
+    this._onCameraStateChanged();
   }
 
   componentDidMount() {
@@ -67,18 +72,15 @@ export default class CameraPreview extends React.Component {
   }
 
   componentWillUnmount() {
-    const camera = this.state.camera;
-    if (camera) {
-      camera.removeListener('previewImage', this._renderImg);
-    }
     if (this._logoImg.src) {
       URL.revokeObjectURL(this._logoImg.src);
     }
-    Cameras.removeListener('stateChanged', this._onCamerasStateChanged);
+    this._camera.removeListener('previewImage', this._renderImg);
+    this._camera.removeListener('stateChanged', this._onCameraStateChanged);
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const camera = this.state.camera;
+    const camera = this._camera;
     if (camera) {
       this._renderedSize = camera.previewSize;
     } else {
@@ -88,7 +90,7 @@ export default class CameraPreview extends React.Component {
   }
 
   render() {
-    const camera = this.state.camera;
+    const camera = this._camera;
 
     let canvasWidth, imgWidth;
     let canvasHeight, imgHeight;
@@ -129,29 +131,17 @@ export default class CameraPreview extends React.Component {
     );
   }
 
-  _onCamerasStateChanged = () => {
-    const oldCamera = this.state.camera;
-    const newCamera = Cameras.cameras[this.deviceId];
+  _onCameraStateChanged = () => {
+    const camera = this._camera;
 
-    if (oldCamera !== newCamera) {
-      if (oldCamera) {
-        oldCamera.removeListener('previewImage', this._renderImg);
+    if (camera.previewSize !== this._renderedSize) {
+      if (this._img) {
+        this._img.width = this._canvas.width = camera.previewSize.width;
+        this._img.height = this._canvas.height = camera.previewSize.height;
       }
-      if (newCamera) {
-        newCamera.addListener('previewImage', this._renderImg);
-      }
-      this._resetLogoImg();
-      this.setState({camera: newCamera});
-      return;
+      this._renderedSize = camera.previewSize;
     }
-
-    if (newCamera.previewSize !== this._renderedSize) {
-      this._img.width = this._canvas.width = newCamera.previewSize.width;
-      this._img.height = this._canvas.height = newCamera.previewSize.height;
-      this._renderedSize = newCamera.previewSize;
-      this._renderImg();
-      return;
-    }
+    this._renderImg();
   };
 
   _resetLogoImg() {
@@ -167,7 +157,10 @@ export default class CameraPreview extends React.Component {
 
   _renderImg = () => {
     const img = this._img;
-    const camera = this.state.camera;
+    if (!img) {
+      return;
+    }
+    const camera = this._camera;
 
     if (img.src) {
       URL.revokeObjectURL(img.src);
@@ -214,11 +207,8 @@ export default class CameraPreview extends React.Component {
   _renderCanvasInternal(context, canvasWidth, canvasHeight) {
     context.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    const camera = this.state.camera;
-    if (!camera) {
-      // XXX Leave transparent?
-      return;
-    }
+    const camera = this._camera;
+    invariant(camera, 'null camera');
 
     const defaultFont = ' DINRound';
 
@@ -231,7 +221,7 @@ export default class CameraPreview extends React.Component {
     }
 
     // Objects.
-    if (this._previewTimestamp) {
+    if (camera.online && this._previewTimestamp) {
       const time = this._previewTimestamp.getTime();
       const objects = camera.objects.collect(time - 1000, time);
       if (objects.size) {

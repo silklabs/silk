@@ -22,6 +22,7 @@ import createLog from 'silk-log/device';
 import getBTLE from '../btle/parent';
 import getDeviceId from '../deviceid';
 import NormalSessionListener from './normal_session_listener';
+import type {default as Connections, ConnectionsState} from '../connections';
 
 import type {
   ScanResult,
@@ -30,7 +31,6 @@ import type {
 } from 'silk-wifi';
 
 import type SessionListenerBase from './session_listener_base';
-import type {default as Server, ServerState} from '../server';
 import type {
   AdvertisingInfo,
   BluetoothLE,
@@ -68,7 +68,8 @@ type AugmentedWifiState =
   'online' |
   'offline';
 
-type Status = AugmentedWifiState | ServerState;
+type Status = AugmentedWifiState | ConnectionsState;
+
 
 const log = createLog('config');
 
@@ -149,7 +150,7 @@ const WIFI_ERROR_MAP: Map<WifiDisconnectReason, string> = new Map([
 ]);
 
 // maps server states to a connection status string that is sent to the app
-const SERVER_STATE_MAP: Map<ServerState, string> = new Map([
+const SERVER_STATE_MAP: Map<ConnectionsState, string> = new Map([
   [ 'connecting', 'server_connecting' ],
   [ 'connected', 'server_connected' ],
   [ 'disconnected', 'server_disconnected' ],
@@ -169,7 +170,7 @@ export class DeviceConfig extends EventEmitter {
   _unconfigurePromise: ?Promise<void> = null;
   _config: ?ConfigData = null;
   _serverConnected: boolean = false;
-  _server: Server = null;
+  _server: Connections = null;
   _socketSessionListeners: Array<SessionListenerBase> = [ ];
   _configuringSocketSessionListener: ?ConfigSessionListener = null;
   _sessionStatus: Status = ``;
@@ -511,7 +512,7 @@ export class DeviceConfig extends EventEmitter {
     }
   }
 
-  _onServerStateChange(state: ServerState): void {
+  _onServerStateChange(state: ConnectionsState): void {
     log.debug(`DeviceConfig._onServerStateChange('${state}')`);
 
     let status = SERVER_STATE_MAP.get(state);
@@ -581,7 +582,7 @@ export class DeviceConfig extends EventEmitter {
     this._socketSessionListeners.push(listener);
   }
 
-  async init(server: Server): Promise<void> {
+  async init(server: Connections): Promise<void> {
     log.debug(`init`);
     invariant(server);
 
@@ -608,15 +609,8 @@ export class DeviceConfig extends EventEmitter {
                      (scanResults) => this._onWifiScanResults(scanResults));
     wifi.addListener(`error`, (error) => this._onWifiError(error));
 
-    this._onServerStateChange(server.lastEmittedState);
-    server.addListener(`connecting`,
-                       () => this._onServerStateChange(`connecting`));
-    server.addListener(`reconnecting`,
-                       () => this._onServerStateChange(`reconnecting`));
-    server.addListener(`connect`,
-                       () => this._onServerStateChange(`connected`));
-    server.addListener(`disconnect`,
-                       () => this._onServerStateChange(`disconnected`));
+    this._onServerStateChange(server.state);
+    server.addListener(`stateChange`, state => this._onServerStateChange(state));
     server.addListener(`error`, (error) => this._onServerError(error));
 
     let [ deviceId, btle ] = await Promise.all([
@@ -696,7 +690,7 @@ export class DeviceConfig extends EventEmitter {
                                 this._onConfiguredServerDisconnect);
 
     if (this._server.connected) {
-      this._server.disconnect();
+      this._server.stop();
       log.info('Unconfigure - Disconnected from server');
     }
 

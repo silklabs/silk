@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Alert, Button, Glyphicon, DropdownButton, MenuItem } from 'react-bootstrap';
+import { Alert, Button, Glyphicon } from 'react-bootstrap';
 import { Link } from 'react-router';
 import createLog from 'silk-log';
 import { signalDevice } from 'silk-rtc';
@@ -93,10 +93,6 @@ export class OnlineCamera extends React.Component {
     }
   }
 
-  onSpeak = (eventKey) => {
-    this.props.camera.speak(eventKey, this.speakText);
-  };
-
   onToggleIntercom = (e) => {
     let intercomOn = !this.state.intercomOn;
     this.setState({ intercomOn });
@@ -140,52 +136,42 @@ export class OnlineCamera extends React.Component {
         </Link>
         <div style={{...styles.toolbar, ...styles.toolbarCenter}}>
           <Button
-            bsSize="small"
+            bsSize="xsmall"
             bsStyle={intercomStyle}
             active={this.state.intercomOn}
             onClick={this.onToggleIntercom}>
             <Glyphicon glyph="bullhorn" style={styles.glyphicon} />
           </Button>
           <Link to={`/diag/${this.deviceId}`}>
-            <Button bsSize="small" bsStyle="info">
+            <Button bsSize="xsmall" bsStyle="info">
               <Glyphicon glyph="info-sign" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/avpipeline/${this.deviceId}`}>
-            <Button bsSize="small">
+            <Button bsSize="xsmall">
               <Glyphicon glyph="indent-left" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/chunks/${this.deviceId}`}>
-            <Button bsSize="small">
+            <Button bsSize="xsmall">
               <Glyphicon glyph="list" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/audiostudio/${this.deviceId}`}>
-            <Button bsSize="small">
+            <Button bsSize="xsmall">
               <Glyphicon glyph="headphones" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/webrtc/${this.deviceId}`}>
-            <Button bsSize="small">
+            <Button bsSize="xsmall">
               <Glyphicon glyph="facetime-video" style={styles.glyphicon} />
             </Button>
           </Link>
           <Link to={`/datachannel/${this.deviceId}`}>
-            <Button bsSize="small">
+            <Button bsSize="xsmall">
               <Glyphicon glyph="transfer" style={styles.glyphicon} />
             </Button>
           </Link>
-        </div>
-        <div style={styles.toolbar}>
-          <DropdownButton bsSize="small" title="Speak with" id="speak"
-            disabled={!this.props.online} onSelect={this.onSpeak}>
-            <MenuItem eventKey="ttscereproc">ttscereproc</MenuItem>
-            <MenuItem eventKey="ttspico">ttspico</MenuItem>
-          </DropdownButton>
-          <input type="text" placeholder="Enter the text to speak" style={styles.speechText}
-            onChange={this.handleTextChange}>
-          </input>
           <Button bsSize="xsmall" onClick={this.onClickRemoveDevice}>
             <Glyphicon glyph="remove-circle" style={styles.glyphicon} />
           </Button>

@@ -3,12 +3,11 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @private
  * @flow
  */
 
 import invariant from 'assert';
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import CBuffer from 'CBuffer';
 
 import api from 'silk-device-api';
@@ -48,8 +47,8 @@ const PRE_EVENT_UPLOAD_MS = 5000;
 // The amount of time to collect objects before sending in a batch.
 const OBJECT_SEND_INTERVAL_MS = 250;
 
-import type { Outbox } from 'silk-outbox';
-import type Server from './server.js';
+import type {Outbox} from 'silk-outbox';
+import type {ChannelEventEmitter} from './connections';
 
 /**
  * Type representing an object rectangle
@@ -102,11 +101,12 @@ type Size = {
   height: number;
 };
 
-type ConfigLiveStreamArgs = {
-  preview: boolean;
-  video: boolean;
-  diag: boolean;
-  objects: boolean;
+type DataChannels = {
+  diag: ChannelEventEmitter;
+  mic: ChannelEventEmitter;
+  objects: ChannelEventEmitter;
+  preview: ChannelEventEmitter;
+  video: ChannelEventEmitter;
 };
 
 /**
@@ -117,8 +117,8 @@ type ConfigLiveStreamArgs = {
  */
 export default class Timeline extends EventEmitter {
   outbox: Outbox;
-  server: Server;
   camera: any;
+  channels: DataChannels;
 
   // Keep track of all objects that are classified in the video stream.
   objects: CBuffer<TimelineEventObject> = new CBuffer(100);
@@ -132,6 +132,7 @@ export default class Timeline extends EventEmitter {
   uploadOpQueue: Array<[number, () => void]>;
 
   liveDiag: boolean = false;
+  liveMic: boolean = false;
   liveVideo: boolean = false;
   livePreview: boolean = false;
   liveObjects: boolean = false;
@@ -148,17 +149,14 @@ export default class Timeline extends EventEmitter {
   _nextObjectId: number = 0;
 
   constructor(
-    server: Server,
     outbox: Outbox,
-    camera: any /*TODO: Camera*/
+    camera: any, /*TODO: Camera*/
+    channels: DataChannels,
   ) {
     super();
-    invariant(server, 'must pass server...');
-    invariant(outbox, 'must pass outbox...');
-    invariant(camera, 'must pass camera...');
 
     this.outbox = outbox;
-    this.server = server;
+    this.channels = channels;
 
     this.diagJpegFrames = [];
     this.diagFrameFilter = '';
@@ -191,15 +189,21 @@ export default class Timeline extends EventEmitter {
       this.eventTracker.on('inactive', this._onEventTrackerInactive);
     }
 
-    server.on('disconnect', () => {
-      log.info('Turning off any live streaming');
-      this.configLiveStream({
-        preview: false,
-        video: false,
-        diag: false,
-        objects: false,
-      });
-    });
+    for (let label in this.channels) {
+      switch (label) {
+      case 'diag':
+      case 'mic':
+      case 'objects':
+      case 'preview':
+      case 'video':
+        this.channels[label].on('open', this._updateOpenChannels);
+        this.channels[label].on('close', this._updateOpenChannels);
+        break;
+      default:
+        invariant(false, label);
+      }
+    }
+    this._updateOpenChannels();
 
     camera.on('frame', this.addCameraFrame);
     this.on('removeListener', this._onListenerChange);
@@ -220,6 +224,10 @@ export default class Timeline extends EventEmitter {
       }));
     });
     this.camera = camera;
+
+    this.channels.diag.on('timeline:cmd', cmd => {
+      this.diagCommand(cmd.name, cmd.arg);
+    });
   }
 
   _onListenerChange: (() => void) = () => {
@@ -260,34 +268,36 @@ export default class Timeline extends EventEmitter {
     return ++this._nextObjectId;
   }
 
-  /**
-   * Selects if transition of the live preview images and/or video should be
-   * enabled or not.
-   *
-   * @param args
-   */
-  configLiveStream(args: ConfigLiveStreamArgs) {
-    const {preview, video, diag, objects} = args;
-    log.info(`configLiveStream: preview=${String(preview)}, video=${String(video)}, ` +
-             `diag=${String(diag)}, objects=${String(objects)}`);
-
-    if (this.livePreview !== preview) {
-      this.livePreview = preview;
-      if (this.livePreview) {
-        // Force the last preview image to be transmitted immediately, to provide
-        // the client with a preview image as quick as possible when the camera
-        // first connects.
-        this._pushPreview(0, null, false);
-      }
-    }
-    this.liveVideo = video;
-    this.liveDiag = diag;
-    if (this.liveDiag) {
+  _updateOpenChannels = () => {
+    const liveDiag = this.channels.diag.open;
+    if (!this.liveDiag && liveDiag) {
       this.diagEmitState();
     }
+    this.liveDiag = liveDiag;
 
-    this.liveObjects = objects;
-    if (objects) {
+    this.liveVideo = this.channels.video.open;
+
+    const livePreview = this.channels.preview.open;
+    if (!this.livePreview && livePreview) {
+      // Force the last preview image to be transmitted immediately, to provide
+      // the client with a preview image as quick as possible when the camera
+      // first connects.
+      this._pushPreview(0, null, false);
+    }
+    this.livePreview = livePreview;
+
+    const liveMic = this.channels.mic.open;
+    if (!this.liveMic && liveMic) {
+      log.info('Enabling mic stream');
+      this.camera.on('mic-data', this._onMicData);
+    } else if (this.liveMic && !liveMic) {
+      log.info('Disabling mic stream');
+      this.camera.removeListener('mic-data', this._onMicData);
+    }
+    this.liveMic = liveMic;
+
+    this.liveObjects = this.channels.objects.open;
+    if (this.liveObjects) {
       if (!this.objectSendTimeout) {
         // Send anything we have immediately.
         this._sendObjects();
@@ -296,17 +306,25 @@ export default class Timeline extends EventEmitter {
       clearTimeout(this.objectSendTimeout);
       this.objectSendTimeout = null;
     }
-  }
+
+    log.verbose(`Open channels: `);
+    for (let label in this.channels) {
+      log.verbose(label, this.channels[label].open);
+    }
+  };
+
+  _onMicData = (msg) => {
+    this.channels.mic.emit('pcm', {
+      when: msg.when,
+      samples: msg.frames,
+    });
+  };
 
   diagEmitState(): void {
     const state = {
       imageFilter: this.diagFrameFilter,
     };
-    this.server.send('diag', {
-      type: 'state',
-      name: 'timeline',
-      state,
-    });
+    this.channels.diag.emit('timeline:state', state);
   }
 
   /**
@@ -392,6 +410,7 @@ export default class Timeline extends EventEmitter {
     let split = filter.split(/[\s,]+/);
 
     this.diagFrameFilter = filter;
+    log.verbose('diagFrameFilter: ', filter);
     this.diagFrameFilterNames = [];
     this.diagFrameFilterSkips = [];
     split.forEach((term) => {
@@ -492,7 +511,10 @@ export default class Timeline extends EventEmitter {
     }
 
     if (this.objects.size) {
-      this.server.send('objects', {objects: this.objects.toArray()});
+      this.channels.objects.emit('objects', {
+        objects: this.objects.toArray(),
+        maxsize: this.camera.getFrameSize(),
+      });
       this.objects.empty();
     }
   };
@@ -612,19 +634,17 @@ export default class Timeline extends EventEmitter {
     }
 
     if (this.livePreview) {
-      this.server.send('video', {
-        contents: 'jpeg',
+      this.channels.preview.emit('jpeg', {
         when,
+        deviceEmitMs: Date.now(),
         frame,
         durationMs: PREVIEW_UPLOAD_INTERVAL_MS,
       });
     }
 
     if (this.diagJpegFrames.length > 0) {
-      this.server.send('diag', {
-        type: 'jpegFrames',
-        frames: this.diagJpegFrames,
-      });
+      // TODO: Uncomment and debug perf issues
+      //this.channels.diag.emit('timeline:jpegFrames', { jpegFrames: this.diagJpegFrames });
       this.diagJpegFrames = [];
     }
 
@@ -669,9 +689,9 @@ export default class Timeline extends EventEmitter {
    */
   _pushVideo(when: number, durationMs: number, frame: Buffer) {
     if (this.liveVideo) {
-      this.server.send('video', {
-        contents: 'mp4',
+      this.channels.video.emit('mp4', {
         when,
+        deviceEmitMs: Date.now(),
         frame,
         durationMs,
       });

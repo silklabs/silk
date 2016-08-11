@@ -13,7 +13,6 @@ export type UserMediaConstraints = {
 
 // Taken from https://w3c.github.io/webrtc-pc/#widl-RTCDataChannelInit
 export type RTCDataChannelInit = {
-  ordered?: bool;
   maxPacketLifeTime?: number;
   maxRetransmits?: number;
   negotiated?: bool;
@@ -104,7 +103,7 @@ declare export class RTCSessionDescription {
 
 declare export class RTCDataChannel extends WebrtcEventTarget {
   label: string;
-  readyState: string;
+  readyState: 'connecting' | 'open' | 'closing' | 'closed';
   close: () => void;
   binaryType: string;
   send: (data: string | Buffer | ArrayBuffer) => void;

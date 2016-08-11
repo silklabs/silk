@@ -30,12 +30,13 @@ const log = createLog('connections');
 const MAX_RECONNECT_SLEEP = 30 * 1000;
 const RECONNECT_SLEEP_INTERVAL = 250;
 
-type States = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
+export type ConnectionsState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
 
 
 export class ChannelEventEmitter extends EventEmitter {
   _label: string;
   _connections: Connections;
+  _open: bool = false;
 
   constructor(label: string, connections: Connections) {
     super();
@@ -49,7 +50,11 @@ export class ChannelEventEmitter extends EventEmitter {
     //       low.
   }
 
-  _emitLocalChannelEvent(event: string, payload:Object) {
+  get open(): bool {
+    return this._open;
+  }
+
+  _emitLocalChannelEvent(event: string, payload: Object) {
     super.emit(event, payload);
   }
 
@@ -62,7 +67,7 @@ export class ChannelEventEmitter extends EventEmitter {
     }
   };
 
-  _onChannel(channel: StructuredDataChannel) {
+  _onDataChannel(channel: StructuredDataChannel) {
     // $FlowFixMe: Flow thinks that EventEmitter.eventNames() doesn't exist, https://github.com/facebook/flow/pull/2206
     const eventNames: Array<string> = this.eventNames();
 
@@ -71,17 +76,42 @@ export class ChannelEventEmitter extends EventEmitter {
         channel.on(event, data => this._emitLocalChannelEvent(event, data));
       }
     });
+
+    channel.on('open', () => this._emitLocalState());
+    channel.on('close', () => this._emitLocalState());
+  }
+
+  _emitLocalState() {
+    let open = false;
+
+    for (let recipient of this._connections._connections) {
+      const channel = recipient.getChannel(this._label);
+      if (channel) {
+        open = channel.open;
+      }
+      if (open) {
+        break;
+      }
+    }
+    if (open !== this._open) {
+      const event = open ? 'open' : 'close';
+      this._open = open;
+      log.verbose(`ChannelEventEmitter state for ${this._label}: ${event}`);
+      super.emit(event);
+    }
   }
 
   emit(event: string, payload: Object): bool {
+    if (!this._open) {
+      log.info('Ignoring', event, 'on closed channel:', this._label);
+    }
     return this._connections.send(this._label, event, payload);
   }
 }
 
 
 export default class Connections extends EventEmitter {
-
-  state: States = 'disconnected';
+  state: ConnectionsState = 'disconnected';
 
   _ws: ?WebSocket = null;
   _wsDuplex: ?WebSocketDuplexStream = null;
@@ -159,9 +189,9 @@ export default class Connections extends EventEmitter {
 
     if (this._ws) {
       this._ws.close();
-      this._wsDuplex = this._demux = this._ws = null;
+      this._cleanupListeners();
     }
-    invariant(this.state === 'disconnected');
+    this.state = 'disconnected';
   }
 
   /**
@@ -186,17 +216,19 @@ export default class Connections extends EventEmitter {
       const channel = recipient.getChannel(channelName);
       if (channel) {
         invariant(channel);
-        channel.emit(event, payload);
-        sent = true;
+        if (channel.open) {
+          channel.emit(event, payload);
+          sent = true;
+        }
       }
     }
     if (!sent) {
-      log.warn(`Attempted to send on non-existent channel: ${channelName}`);
+      log.verbose(`Attempted to send on non-existent channel: ${channelName}`);
     }
     return sent;
   }
 
-  _setState(newState: States): void {
+  _setState(newState: ConnectionsState): void {
     const previousState = this.state;
     this.state = newState;
     this.emit('stateChange', newState, previousState);
@@ -383,7 +415,7 @@ export default class Connections extends EventEmitter {
       // Check if there is already interest in this channel
       let emitter = this._channelEmitters[channel.label];
       if (emitter) {
-        emitter._onChannel(channel);
+        emitter._onDataChannel(channel);
       }
     };
 
@@ -505,6 +537,4 @@ export default class Connections extends EventEmitter {
     log.info(`Signaling server has closed ... (${reason})`);
     this._scheduleReconnect();
   };
-
-
 }

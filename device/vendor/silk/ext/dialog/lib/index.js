@@ -119,8 +119,8 @@ class Dialog {
       break;
     }
 
-    const dialogRtc = env.server.connections.getChannel('dialog');
-    this._dialogEngine = createDialogEngine(options, uiMode, dialogRtc);
+    // $FlowFixMe: Very sorry!! Remove once connections.js is moved into its own module
+    this._dialogEngine = createDialogEngine(options, uiMode, env.dialogChannel);
     this._loadDialogScript();
     this._input = new Input();
 

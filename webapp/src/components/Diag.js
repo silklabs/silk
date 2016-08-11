@@ -183,7 +183,7 @@ class DiagImageTable extends React.Component {
   };
 
   onDiagFrameFilterApply = () => {
-    this.props.camera.diagCommand('timeline', 'imageFilter', this.state.imageFilter);
+    this.props.camera.diagTimelineCommand('imageFilter', this.state.imageFilter);
     localforage.setItem('diag-image-filter', this.state.imageFilter);
   };
 
@@ -246,7 +246,7 @@ class DiagCameraToolbar extends React.Component {
   };
 
   state = {
-    device: { // see CameraClipRecorderState in device/vendor/silk/core/lib/camera.js
+    device: { // see CameraClipRecorderState in device/vendor/silk/core/lib/camera_clip_recorder.js
       mode: 'live',
       availableClips: [],
       msg: '',
@@ -266,9 +266,9 @@ class DiagCameraToolbar extends React.Component {
       this.onDiagCameraState);
   }
 
-  onDiagCameraState = (state) => {
-    log.error('diagState:camera', JSON.stringify(state));
-    this.setState({device: state.clipRecorder});
+  onDiagCameraState = (device /*: CameraClipRecorderState*/) => {
+    log.error('diagState:camera', JSON.stringify(device));
+    this.setState({device});
   };
 
   sendCommand(name, arg) {
@@ -494,7 +494,7 @@ export default class Diag extends React.Component {
       // TODO: This is a little racy but probably ok.  If this promise doesn't
       // resolve before the component is first rendered (unlikely) then the
       // incorrect view will be shown.
-      if (view) {
+      if (typeof view === 'string') {
         this.setState({ view });
       }
     });
@@ -546,11 +546,11 @@ export default class Diag extends React.Component {
     this.setState({paused});
   };
 
-  onReboot = (e, channel) => {
+  onReboot = (channel) => {
     this.state.camera.reboot(channel);
   };
 
-  onView = (e, view) => {
+  onView = (view) => {
     localforage.setItem('diag-active-view', view);
     this.setState({view});
   };
@@ -567,7 +567,7 @@ export default class Diag extends React.Component {
     };
 
     let { camera, paused } = this.state;
-    if (!camera || !camera.online) {
+    if (!camera || !camera.diagOnline) {
       return <div>Waiting for camera {this.deviceId} to connect ...</div>;
     }
 
@@ -649,7 +649,7 @@ class DiagLog extends React.Component {
   style = {
     flex: 2,
     fontFamily: 'monospace',
-    fontSize: '8',
+    fontSize: '8px',
     overflowY: 'scroll',
     overflowX: 'hidden',
     margin: 2,
@@ -714,7 +714,7 @@ class DiagLogcat extends DiagLog {
                return <div dangerouslySetInnerHTML={{__html: html}} />;
              })
         }
-        <Input style={{fontFamily: 'monospace', fontSize: '8'}}
+        <Input style={{fontFamily: 'monospace', fontSize: '8px'}}
           ref="filter"
           type="text"
           placeholder="Filter regexp"

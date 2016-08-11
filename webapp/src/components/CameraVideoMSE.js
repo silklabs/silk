@@ -559,7 +559,8 @@ export default class CameraVideo extends React.Component {
     const objects = [];
 
     // Collect all objects that should be present in this time window.
-    const objectMap = this.state.camera.objects.collect(timeStart, timeEnd);
+    const objectMap = this.state.camera.objects === null ? [] :
+      this.state.camera.objects.collect(timeStart, timeEnd);
     const consoleMessageObjects = [];
 
     objectMap.forEach((objectArray, objectId) => {

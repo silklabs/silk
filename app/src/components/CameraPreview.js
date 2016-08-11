@@ -37,7 +37,7 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
     blob: null,
   };
 
-  channelName: string = 'video';
+  channelName: string = 'preview';
   messageType: string = 'jpeg';
 
   _timeoutTimer: ?number = null;

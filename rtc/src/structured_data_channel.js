@@ -97,6 +97,11 @@ export default class StructuredDataChannel extends EventEmitter {
     return this._channel.label;
   }
 
+  get open(): bool {
+    invariant(this._channel);
+    return this._channel.readyState === 'open';
+  }
+
   _sendPendingWrites() {
     for (let write of this._pendingWrites) {
       // XXX: Using explicit indexing to make flow happy.
@@ -124,15 +129,32 @@ export default class StructuredDataChannel extends EventEmitter {
       } catch (ex) {
         log.debug(`Wasn't able to set binaryType to 'blob'. Soldering on.`);
       }
+
+      channel.addEventListener('open', this._onOpen);
       channel.addEventListener('close', this._onClose);
       channel.addEventListener('error', this._onError);
       channel.addEventListener('message', this._onMessage);
-      process.nextTick(() => {
-        emit.call(this, 'open');
-      });
-      this._sendPendingWrites();
+
+      switch (channel.readyState) {
+      case 'open':
+        process.nextTick(this._onOpen);
+        break;
+      case 'closed':
+        process.nextTick(this._onClose);
+        break;
+      case 'connecting':
+      case 'closing':
+        break;
+      default:
+        invariant(false);
+      }
     }
   }
+
+  _onOpen: () => void = () => {
+    this._sendPendingWrites();
+    emit.call(this, 'open');
+  };
 
   _onClose: () => void = () => {
     emit.call(this, 'close');

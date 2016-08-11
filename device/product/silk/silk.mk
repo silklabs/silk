@@ -72,7 +72,6 @@ endif
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PACKAGES += \
   silkext-voicerecorder \
-  silkext-samsungtv \
 
 endif
 

@@ -53,7 +53,7 @@ server will be more dev-friendly though.
 Logging is configured via `config.local.json` currently logging is based
 on the `debug` module...
 
-For example to enable all logs possible (socket.io, etc..):
+For example to enable all logs possible:
 
 ```json
 {

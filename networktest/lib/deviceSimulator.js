@@ -5,7 +5,6 @@
  */
 
 import api from 'silk-device-api';
-import Server from 'silk-core/lib/server';
 import * as util from 'silk-sysutils';
 import https from 'https';
 import URL from 'url';
@@ -21,7 +20,6 @@ const VIDEO_HEIGHT = 720;
 const PREVIEW_SCALE = 4;
 const VIDEO_DURATION = 1000;
 
-const DEVICE_NAME = 'test';
 const VIDEO_CONTENT_TYPE = 'video/mp4';
 const VIDEO_BLOB_TYPE = 'video';
 
@@ -40,41 +38,14 @@ export default class DeviceSimulator {
 
   constructor(accessToken) {
     this.accessToken = accessToken;
-    this.server = new Server();
   }
 
   connect() {
-    return new Promise(resolve => {
-      this.server.once('connect', () => resolve());
-      this.server.connect();
-    });
+    return Promise.resolve();
   }
 
   disconnect() {
-    return new Promise(resolve => {
-      this.server.once('disconnect', () => {
-        util.timeout(0) // need break, otherwise socket gets in bad state
-        .then(() => resolve())
-        .catch(util.processthrow);
-      });
-      this.server.disconnect();
-    });
-  }
-
-  emitInfo() {
-    let now = Date.now();
-    let info = {
-      id: this.accessToken.toString(),
-      name: DEVICE_NAME,
-      now,
-      logo: this._logo,
-      videoSize: this._videoSize,
-      previewSize: this._previewSize,
-    };
-
-    return new Promise(resolve => {
-      this.server.socket.emit('info', info, () => resolve());
-    });
+    return Promise.resolve();
   }
 
   _emitVideo(frame, type, durationMs) {
@@ -86,19 +57,6 @@ export default class DeviceSimulator {
     return new Promise(resolve => {
       this.server.socket.emit('video', data, () => resolve());
     });
-  }
-
-  emitJpeg(cfg) {
-    let frame = ('frame' in cfg) ? cfg.frame : this._previewFrame;
-
-    return this._emitVideo(frame, 'jpeg', 0);
-  }
-
-  emitMp4(cfg) {
-    let frame = ('frame' in cfg) ? cfg.frame : this._previewFrame;
-    let durationMs = ('durationMs' in cfg) ? cfg.durationMs : VIDEO_DURATION;
-
-    return this._emitVideo(frame, 'mp4', durationMs);
   }
 
   async uploadBlob(cfg) {

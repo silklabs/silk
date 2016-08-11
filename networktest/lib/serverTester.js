@@ -19,7 +19,6 @@ export default class ServerTester {
   _startTest(repeater) {
     let stats;
     return this._device.connect()
-    .then(() => this._device.emitInfo(1, 0)) // server expects info first
     .then(() => repeater.start())
     .then((results) => {
       stats = results;
@@ -40,9 +39,6 @@ export default class ServerTester {
 
   doTest(test, cnt, hz, cfg = {}) {
     let tests = {
-      'info': () => this._device.emitInfo(cfg),
-      'preview': () => this._device.emitJpeg(cfg),
-      'video': () => this._device.emitMp4(cfg),
       'uploadVideo': () => this._device.uploadVideo(cfg),
       'uploadBlob': () => this._device.uploadBlob(cfg),
       'uploadMetadata': () => this._device.uploadMetadata(cfg),

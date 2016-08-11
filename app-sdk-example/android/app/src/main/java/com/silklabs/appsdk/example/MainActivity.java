@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
@@ -39,8 +40,8 @@ public class MainActivity extends Activity {
   private boolean mResumed = false;
 
   private SilkAppSDKService mSilkService = null;
-  private TextView networkStatusView = null;
-  private TextView authStatusView = null;
+  private TextView networkStatusTextView = null;
+  private TextView authStatusTextView = null;
   private EditText emailText = null;
   private EditText passwordText = null;
   private Button echoButton = null;
@@ -48,6 +49,7 @@ public class MainActivity extends Activity {
   private Button configureButton = null;
   private Spinner ssidListSpinner = null;
   private AlertDialog wifiDialog = null;
+  private TextView deviceStatusTextView = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -138,8 +140,8 @@ public class MainActivity extends Activity {
     private void onNetworkStatusChanged(final String networkStatus) {
       runOnUiThread(new Runnable() {
         public void run() {
-          if (networkStatusView != null) {
-            networkStatusView.setText(networkStatus);
+          if (networkStatusTextView != null) {
+            networkStatusTextView.setText(networkStatus);
           }
         }
       });
@@ -152,8 +154,8 @@ public class MainActivity extends Activity {
     private void onAuthStatusChanged(final String authStatus) {
       runOnUiThread(new Runnable() {
         public void run() {
-          if (authStatusView != null) {
-            authStatusView.setText(authStatus);
+          if (authStatusTextView != null) {
+            authStatusTextView.setText(authStatus);
           }
         }
       });
@@ -193,6 +195,7 @@ public class MainActivity extends Activity {
             }
             devicesList.add(myDevice);
           }
+
           // Update the devices list
           ArrayAdapter<Device> devicesListAdapter = new ArrayAdapter<Device>(getBaseContext(),
               android.R.layout.simple_spinner_item, devicesList);
@@ -207,6 +210,10 @@ public class MainActivity extends Activity {
             configureButton.setEnabled(true);
           } else {
             configureButton.setEnabled(false);
+          }
+          // Clear the existing device status message
+          if (devicesList.size() <= 0) {
+            deviceStatusTextView.setText("");
           }
         }
       });
@@ -251,8 +258,8 @@ public class MainActivity extends Activity {
    */
   protected void initialize() {
     setContentView(R.layout.main);
-    networkStatusView = (TextView) findViewById(R.id.networkStatusResultView);
-    authStatusView = (TextView) findViewById(R.id.authStatusResultView);
+    networkStatusTextView = (TextView) findViewById(R.id.networkStatusResultView);
+    authStatusTextView = (TextView) findViewById(R.id.authStatusResultView);
 
     emailText = (EditText) findViewById(R.id.emailText);
     emailText.setOnFocusChangeListener(focusChangeListener);
@@ -261,6 +268,7 @@ public class MainActivity extends Activity {
     passwordText.setOnFocusChangeListener(focusChangeListener);
 
     deviceListSpinner = (Spinner) findViewById(R.id.deviceList);
+    deviceListSpinner.setOnItemSelectedListener(deviceSelectedListener);
 
     final Button loginButton = (Button) findViewById(R.id.loginButton);
     loginButton.setOnClickListener(loginButtonListener);
@@ -275,6 +283,8 @@ public class MainActivity extends Activity {
     configureButton = (Button) findViewById(R.id.configureButton);
     configureButton.setOnClickListener(configureButtonListener);
     configureButton.setEnabled(false);
+
+    deviceStatusTextView = (TextView) findViewById(R.id.deviceStatusTextView);
 
     createWifiDialog();
 
@@ -472,6 +482,23 @@ public class MainActivity extends Activity {
       }
     }
   };
+
+  /**
+   * Display selected device status
+   */
+  private AdapterView.OnItemSelectedListener deviceSelectedListener = new AdapterView.OnItemSelectedListener() {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+      Device device = (Device) parent.getItemAtPosition(position);
+      deviceStatusTextView.setText(device.status());
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+      deviceStatusTextView.setText("");
+    }
+  };
+
 
   /**
    * Display error messge dialog

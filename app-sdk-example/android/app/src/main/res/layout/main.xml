@@ -103,4 +103,19 @@
             android:layout_below="@+id/deviceList"
             android:layout_toRightOf="@+id/configureButton" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/device_status"
+            android:id="@+id/deviceStatusLabel"
+            android:layout_below="@+id/sendEchoMessageButton"
+            android:singleLine="true"
+            android:paddingTop="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/deviceStatusTextView"
+            android:layout_below="@+id/deviceStatusLabel" />
+
 </RelativeLayout>

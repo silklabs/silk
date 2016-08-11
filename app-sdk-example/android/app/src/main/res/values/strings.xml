@@ -13,4 +13,5 @@
     <string name="wifi_title">Which Wi-Fi network should your device connect to?</string>
     <string name="ignore">ignore</string>
     <string name="save">save</string>
+    <string name="device_status">Device Status:</string>
 </resources>

@@ -1,0 +1,143 @@
+#!/bin/bash -e
+#
+# Updates the internal device OTA location with the latest builds
+#
+
+cd $(dirname $0)/../..
+source setup
+source pub/version/branch
+echo BRANCH: $BRANCH
+
+BUILD_URL_PREFIX=https://s3-us-west-2.amazonaws.com/silk-device
+OTA_URL_PREFIX=http://update.silklabs.com/ota-internal
+BUILDS="\
+  mako-silk-$BRANCH-userdebug \
+  kenzo-silk-$BRANCH-userdebug \
+  kenzo-silkhub-$BRANCH-userdebug \
+  pandohub-silkhub-$BRANCH-userdebug \
+"
+
+if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
+  echo "You don't know what you're doing."
+  exit 1
+fi
+
+# Build necessary ota tools
+cd bsp-gonk/
+./sync kenzo gonkjs
+source build/envsetup.sh
+make -j4 otatools
+which bsdiff
+which imgdiff
+
+for BUILD in $BUILDS; do
+  rm -rf \
+    manifest.json \
+    ota_dist \
+    sha1 \
+
+  wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/last || true
+  LATEST_SHA1=$(cat sha1)
+  if [[ -z $LATEST_SHA1 ]]; then
+    echo No build available for $BRANCH/$BUILD
+    continue
+  fi
+
+  rm -f sha1
+  wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/$LATEST_SHA1/last || true
+  PREV_SHA1=$(cat sha1)
+  if [[ -z $PREV_SHA1 ]]; then
+    echo No previous build available for $BRANCH/$BUILD
+    continue
+  fi
+  echo
+  echo Latest build for $BRANCH/$BUILD is $LATEST_SHA1
+  echo Previous build for $BRANCH/$BUILD is $PREV_SHA1
+
+  rm -f latest_target_files.zip prev_target_files.zip
+  wget -O latest_target_files.zip $BUILD_URL_PREFIX/$BRANCH/$BUILD/$LATEST_SHA1/target_files.zip
+  wget -O prev_target_files.zip $BUILD_URL_PREFIX/$BRANCH/$BUILD/$PREV_SHA1/target_files.zip
+
+  mkdir -p ota_dist
+
+  # Generate incremental OTA .zip
+  (
+    set -x
+    build/tools/releasetools/ota_from_target_files \
+      --block \
+      --verify \
+      --incremental_from prev_target_files.zip \
+      latest_target_files.zip \
+      ota_dist/${BUILD}-${PREV_SHA1}-inc.zip
+  )
+
+  # Generate full OTA .zip
+  (
+    set -x
+    build/tools/releasetools/ota_from_target_files \
+      --block \
+      --verify \
+      --no_prereq \
+      latest_target_files.zip \
+      ota_dist/${BUILD}-full.zip
+  )
+
+  # Maybe fetch previous OTA manifest
+  wget -O manifest.json $OTA_URL_PREFIX/$BUILD.json || true
+  touch $BUILD.json
+
+  # Generate OTA manifest
+  ota_manifest=ota_dist/${BUILD}.json
+  echo Manifest: $ota_manifest
+  echo "{" > $ota_manifest
+  echo "  \"${BUILD}\": {" >> $ota_manifest
+
+  for zip in $(shopt -s nullglob; echo ota_dist/*.zip); do
+    zip_size=`wc -c < "${zip}"`
+    zip_sha1=`openssl sha1 "${zip}" | sed 's/^.* //'`
+    if [[ $zip =~ .*-full.zip ]]; then
+      echo Full OTA: $zip
+      {
+        echo "    \"*\": {"
+        echo "      \"sha\": \"$LATEST_SHA1\","
+        echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
+        echo "      \"zip_size\": \"$zip_size\","
+        echo "      \"zip_sha1\": \"$zip_sha1\""
+        echo "    }, "
+       } >> $ota_manifest
+    elif [[ $zip =~ .*-inc.zip ]]; then
+      echo Inc OTA: $zip
+      {
+        echo "    \"$PREV_SHA1\": {"
+        echo "      \"sha\": \"$LATEST_SHA1\","
+        echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
+        echo "      \"zip_size\": \"$zip_size\","
+        echo "      \"zip_sha1\": \"$zip_sha1\""
+        echo "    }, "
+       } >> $ota_manifest
+    else
+      echo Error: Unknown zip type: $zip >&2
+      exit 1
+    fi
+  done
+  echo "    \"\": null" >> $ota_manifest
+  echo "  } " >> $ota_manifest
+  echo "} " >> $ota_manifest
+
+  # Don't upload if manifest.json is unchanged
+  if diff manifest.json $ota_manifest; then
+    echo =================================================
+    echo No change for $BRANCH/$BUILD, skipping ota upload
+    echo =================================================
+    continue
+  fi
+
+  ../s3-artifacts/bin/upload \
+      update.silklabs.com \
+      ota-internal/ \
+      $(readlink -f ota_dist) \
+      --credentials update.silklabs.com_ota-internal \
+      --noindex \
+      --lossy \
+
+done

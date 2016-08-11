@@ -123,7 +123,8 @@ export function* getStockPrice(
 
   log.info(`Starting stock saga`);
 
-  if (entities.length === 0 || entities[0].type !== 'stock') {
+  if (entities.length === 0 || entities[0].type !== 'stock' ||
+      !entities[0].entity || entities[0].entity.length === 0) {
     yield call(speak,
         `Sorry, I'm not sure which stock you are asking about`, `idle`);
     return;

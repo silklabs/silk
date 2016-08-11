@@ -58,6 +58,12 @@ suite(`userScript`, () => {
     done();
   });
 
+  test(`Demo test - Test Twitter stock`, async (done) => {
+    tester.speak(`What's the stock price of Twitter?`);
+    await tester.listenCheck(`Twitter`, `idle`);
+    done();
+  });
+
   test(`Demo test - Test Microsoft Stock`, async (done) => {
     tester.speak(`What is the stock price of Microsoft?`);
     await tester.listenCheck(`Microsoft`, `idle`);

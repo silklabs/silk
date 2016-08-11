@@ -47,7 +47,7 @@ function fetchStockTicker(stock: string): Promise<string> {
             log.debug(results);
 
             let ticker = results.find((result) => {
-              return result.exchDisp === 'NASDAQ';
+              return result.exchDisp === 'NASDAQ' || result.exchDisp === 'NYSE';
             });
             if (!ticker) {
               throw new Error(`Failed to get ticker`);

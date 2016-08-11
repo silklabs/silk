@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
             case "DEVICE_CONFIG_SUCCESS": {
               int deviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
-              onSuccess("Sucessfully configured (" + deviceConfigId + ")");
+              onSuccess("Successfully configured (" + deviceConfigId + ")");
               break;
             }
             case "DEVICE_CONFIG_ERROR": {
@@ -446,7 +446,7 @@ public class MainActivity extends Activity {
   private OnClickListener echoButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       Device device = (Device) deviceListSpinner.getSelectedItem();
-      if (device.deviceConfigStatus == "UNCONFIGURED") {
+      if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
         onError("Selected device is not configured. Please configure it first");
         return;
       }
@@ -465,7 +465,7 @@ public class MainActivity extends Activity {
   private OnClickListener configureButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       Device device = (Device) deviceListSpinner.getSelectedItem();
-      if (device.deviceConfigStatus == "CONFIGURED") {
+      if (device.deviceConfigStatus.equals("CONFIGURED")) {
         onError("Selected device is already configured");
         return;
       }
@@ -512,7 +512,6 @@ public class MainActivity extends Activity {
       deviceStatusTextView.setText("");
     }
   };
-
 
   /**
    * Display error messge dialog

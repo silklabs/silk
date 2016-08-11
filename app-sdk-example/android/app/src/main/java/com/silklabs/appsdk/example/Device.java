@@ -1,4 +1,5 @@
 package com.silklabs.appsdk.example;
+
 import java.lang.StringBuilder;
 
 public class Device {
@@ -17,7 +18,9 @@ public class Device {
 
   @Override
   public String toString() {
-    return (this.deviceConfigStatus == "UNCONFIGURED") ? ("* " + this.deviceConfigId) : this.deviceId;
+    String label = (this.deviceConfigStatus.equals("UNCONFIGURED")) ?
+      ("* " + Integer.toString(this.deviceConfigId)) : this.deviceId;
+    return label;
   }
 
   public String status() {

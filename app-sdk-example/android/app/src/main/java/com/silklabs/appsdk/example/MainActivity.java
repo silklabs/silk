@@ -98,12 +98,14 @@ public class MainActivity extends Activity {
               break;
             }
             case "DEVICE_CONFIG_SUCCESS": {
-              String deviceConfigId = Double.toString((Double) message.get("deviceConfigId"));
+              int deviceConfigId =
+                ((Double) message.get("deviceConfigId")).intValue();
               onSuccess("Sucessfully configured (" + deviceConfigId + ")");
               break;
             }
             case "DEVICE_CONFIG_ERROR": {
-              String deviceConfigId = Double.toString((Double) message.get("deviceConfigId"));
+              int deviceConfigId =
+                ((Double) message.get("deviceConfigId")).intValue();
               String configError = (String) message.get("configError");
               onError("Failed to configure (" + deviceConfigId + "): " + configError);
               break;
@@ -112,12 +114,18 @@ public class MainActivity extends Activity {
               if (deviceListSpinner.getSelectedItem() == null) {
                 return;
               }
-              String wifiDeviceConfigId = (String) message.get("deviceConfigId");
-              String deviceConfigId = deviceListSpinner.getSelectedItem().toString();
-              if (!deviceConfigId.equals(wifiDeviceConfigId)) {
-                Log.w(TAG, "Received wifi network message for " + wifiDeviceConfigId);
+
+              Device device = (Device) deviceListSpinner.getSelectedItem();
+              int deviceConfigId =  device.deviceConfigId;
+
+              int wifiDeviceConfigId =
+                ((Double) message.get("deviceConfigId")).intValue();
+              Log.d(TAG, "Received wifi network message for " + wifiDeviceConfigId);
+
+              if (deviceConfigId != wifiDeviceConfigId) {
                 return;
               }
+
               onWifiNetworksAvailable((ArrayList<Map<String, Object>>) message.get("wifiNetworks"));
               break;
             }
@@ -190,7 +198,8 @@ public class MainActivity extends Activity {
             if ("CONFIGURED".equals(myDevice.deviceConfigStatus)) {
               configuredCount++;
             } else {
-              myDevice.deviceConfigId = Double.toString((Double) device.get("deviceConfigId"));
+              myDevice.deviceConfigId =
+                ((Double) device.get("deviceConfigId")).intValue();
               unConfiguredCount++;
             }
             devicesList.add(myDevice);

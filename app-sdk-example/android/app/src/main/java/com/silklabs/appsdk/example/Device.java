@@ -4,7 +4,7 @@ import java.lang.StringBuilder;
 public class Device {
   public String deviceType;
   public String deviceId;
-  public String deviceConfigId;
+  public int deviceConfigId;
   public String deviceConfigStatus;
   public String wifiConnectionStatus;
   public String wifiConnectionError;

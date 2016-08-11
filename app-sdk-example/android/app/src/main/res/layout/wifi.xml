@@ -6,15 +6,13 @@
              android:paddingLeft="16dp"
              android:paddingRight="16dp" >
 
-    <EditText
+    <Spinner
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:id="@+id/ssidText"
+        android:id="@+id/ssidList"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:hint="@string/ssid"
-        android:layout_marginTop="10dp" />
+        android:spinnerMode="dropdown"/>
 
     <EditText
         android:layout_width="wrap_content"
@@ -22,9 +20,9 @@
         android:inputType="textPassword"
         android:ems="10"
         android:id="@+id/wifiPasswordText"
-        android:layout_below="@+id/ssidText"
+        android:layout_below="@+id/ssidList"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:hint="@string/password" />
+        android:hint="@string/wifi_password" />
 
 </RelativeLayout>

@@ -1,6 +1,7 @@
 package com.silklabs.appsdk.example;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
@@ -38,14 +40,16 @@ public class MainActivity extends Activity {
   private boolean mResumed = false;
 
   private SilkAppSDKService mSilkService = null;
-  private TextView networkStatusView = null;
-  private TextView authStatusView = null;
+  private TextView networkStatusTextView = null;
+  private TextView authStatusTextView = null;
   private EditText emailText = null;
   private EditText passwordText = null;
   private Button echoButton = null;
-  private Spinner configuredDeviceListSpinner = null;
-  private Spinner unconfiguredDeviceListSpinner = null;
+  private Spinner deviceListSpinner = null;
   private Button configureButton = null;
+  private Spinner ssidListSpinner = null;
+  private AlertDialog wifiDialog = null;
+  private TextView deviceStatusTextView = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -104,6 +108,19 @@ public class MainActivity extends Activity {
               onError("Failed to configure (" + deviceConfigId + "): " + configError);
               break;
             }
+            case "DEVICE_CONFIG_WIFI_NETWORKS": {
+              if (deviceListSpinner.getSelectedItem() == null) {
+                return;
+              }
+              String wifiDeviceConfigId = (String) message.get("deviceConfigId");
+              String deviceConfigId = deviceListSpinner.getSelectedItem().toString();
+              if (!deviceConfigId.equals(wifiDeviceConfigId)) {
+                Log.w(TAG, "Received wifi network message for " + wifiDeviceConfigId);
+                return;
+              }
+              onWifiNetworksAvailable((ArrayList<Map<String, Object>>) message.get("wifiNetworks"));
+              break;
+            }
             default:
               onError("Unknown message type: " + messageType);
           }
@@ -123,8 +140,8 @@ public class MainActivity extends Activity {
     private void onNetworkStatusChanged(final String networkStatus) {
       runOnUiThread(new Runnable() {
         public void run() {
-          if (networkStatusView != null) {
-            networkStatusView.setText(networkStatus);
+          if (networkStatusTextView != null) {
+            networkStatusTextView.setText(networkStatus);
           }
         }
       });
@@ -137,8 +154,8 @@ public class MainActivity extends Activity {
     private void onAuthStatusChanged(final String authStatus) {
       runOnUiThread(new Runnable() {
         public void run() {
-          if (authStatusView != null) {
-            authStatusView.setText(authStatus);
+          if (authStatusTextView != null) {
+            authStatusTextView.setText(authStatus);
           }
         }
       });
@@ -151,39 +168,75 @@ public class MainActivity extends Activity {
     private void onDeviceListAvailable(final ArrayList<Map<String, Object>> devices) {
       runOnUiThread(new Runnable() {
         public void run() {
-          ArrayList<String> configuredDeviceIds = new ArrayList<String>();
-          ArrayList<String> unConfiguredDeviceIds = new ArrayList<String>();
+          ArrayList<Device> devicesList = new ArrayList<Device>();
+          int configuredCount = 0;
+          int unConfiguredCount = 0;
+
           for (int i = 0; i < devices.size(); i++) {
             Map<String, Object> device = devices.get(i);
-            String configStatus = (String) device.get("deviceConfigStatus");
-            if ("CONFIGURED".equals(configStatus)) {
-              configuredDeviceIds.add((String) device.get("deviceId"));
+            Device myDevice = new Device();
+            myDevice.deviceType = (String) device.get("deviceType");
+            myDevice.deviceId = (String) device.get("deviceId");
+            myDevice.deviceConfigStatus = (String) device.get("deviceConfigStatus");
+            myDevice.wifiConnectionStatus = (String) device.get("wifiConnectionStatus");
+            myDevice.wifiConnectionError = (String) device.get("wifiConnectionError");
+            myDevice.serverConnectionStatus = (String) device.get("serverConnectionStatus");
+            myDevice.serverConnectionError = (String) device.get("serverConnectionError");
+            myDevice.bleConnectionStatus = (String) device.get("bleConnectionStatus");
+            myDevice.bleConnectionError = (String) device.get("bleConnectionError");
+            myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
+            myDevice.rtcConnectionError = (String) device.get("rtcConnectionError");
+
+            if ("CONFIGURED".equals(myDevice.deviceConfigStatus)) {
+              configuredCount++;
             } else {
-              Double deviceConfigId =  (Double) device.get("deviceConfigId");
-              unConfiguredDeviceIds.add(Double.toString(deviceConfigId));
+              myDevice.deviceConfigId = Double.toString((Double) device.get("deviceConfigId"));
+              unConfiguredCount++;
             }
+            devicesList.add(myDevice);
           }
-          // Update the configured devices list
-          ArrayAdapter<String> configuredAdapter = new ArrayAdapter<String>(getBaseContext(),
-              android.R.layout.simple_spinner_item, configuredDeviceIds);
-          configuredAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-          configuredDeviceListSpinner.setAdapter(configuredAdapter);
-          if (configuredDeviceIds.size() > 0) {
+
+          // Update the devices list
+          ArrayAdapter<Device> devicesListAdapter = new ArrayAdapter<Device>(getBaseContext(),
+              android.R.layout.simple_spinner_item, devicesList);
+          devicesListAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          deviceListSpinner.setAdapter(devicesListAdapter);
+          if (configuredCount > 0) {
             echoButton.setEnabled(true);
           } else {
             echoButton.setEnabled(false);
           }
-
-          // Update the unconfigured devices list
-          ArrayAdapter<String> unConfiguredAdapter = new ArrayAdapter<String>(getBaseContext(),
-            android.R.layout.simple_spinner_item, unConfiguredDeviceIds);
-          unConfiguredAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-          unconfiguredDeviceListSpinner.setAdapter(unConfiguredAdapter);
-          if (unConfiguredDeviceIds.size() > 0) {
+          if (unConfiguredCount > 0) {
             configureButton.setEnabled(true);
           } else {
             configureButton.setEnabled(false);
           }
+          // Clear the existing device status message
+          if (devicesList.size() <= 0) {
+            deviceStatusTextView.setText("");
+          }
+        }
+      });
+    }
+
+    /**
+     * Handle DEVICE_CONFIG_WIFI_NETWORKS message
+     * @param networks
+     */
+    private void onWifiNetworksAvailable(final ArrayList<Map<String, Object>> networks) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          ArrayList<String> ssids = new ArrayList<String>();
+          for (int i = 0; i < networks.size(); i++) {
+            Map<String, Object> network = networks.get(i);
+            ssids.add((String) network.get("ssid"));
+          }
+
+          // Update the wifi ssid list
+          ArrayAdapter<String> ssidsAdapter = new ArrayAdapter<String>(getBaseContext(),
+            android.R.layout.simple_spinner_item, ssids);
+          ssidsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          ssidListSpinner.setAdapter(ssidsAdapter);
         }
       });
     }
@@ -205,8 +258,8 @@ public class MainActivity extends Activity {
    */
   protected void initialize() {
     setContentView(R.layout.main);
-    networkStatusView = (TextView) findViewById(R.id.networkStatusResultView);
-    authStatusView = (TextView) findViewById(R.id.authStatusResultView);
+    networkStatusTextView = (TextView) findViewById(R.id.networkStatusResultView);
+    authStatusTextView = (TextView) findViewById(R.id.authStatusResultView);
 
     emailText = (EditText) findViewById(R.id.emailText);
     emailText.setOnFocusChangeListener(focusChangeListener);
@@ -214,7 +267,8 @@ public class MainActivity extends Activity {
     passwordText = (EditText) findViewById(R.id.passwordText);
     passwordText.setOnFocusChangeListener(focusChangeListener);
 
-    configuredDeviceListSpinner = (Spinner) findViewById(R.id.deviceList);
+    deviceListSpinner = (Spinner) findViewById(R.id.deviceList);
+    deviceListSpinner.setOnItemSelectedListener(deviceSelectedListener);
 
     final Button loginButton = (Button) findViewById(R.id.loginButton);
     loginButton.setOnClickListener(loginButtonListener);
@@ -230,7 +284,9 @@ public class MainActivity extends Activity {
     configureButton.setOnClickListener(configureButtonListener);
     configureButton.setEnabled(false);
 
-    unconfiguredDeviceListSpinner = (Spinner) findViewById(R.id.unconfigDeviceList);
+    deviceStatusTextView = (TextView) findViewById(R.id.deviceStatusTextView);
+
+    createWifiDialog();
 
     startService(new Intent(this, SilkAppSDKService.class)); // keep service alive for duration of process
     bindService(new Intent(this, SilkAppSDKService.class), mSilkServiceConnection, Context.BIND_AUTO_CREATE);
@@ -239,52 +295,51 @@ public class MainActivity extends Activity {
   /**
    * Display wifi credentials dialog
    */
-  protected void displayWifiDialog() {
+  protected void createWifiDialog() {
     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-    builder.setTitle(R.string.wifi_title);
+    wifiDialog = builder.create();
+
+    wifiDialog.setTitle(R.string.wifi_title);
     View viewInflated = LayoutInflater.from(getBaseContext()).inflate(R.layout.wifi,
       (ViewGroup) findViewById(android.R.id.content), false);
-    final EditText ssidEditText = (EditText) viewInflated.findViewById(R.id.ssidText);
+    ssidListSpinner = (Spinner) viewInflated.findViewById(R.id.ssidList);
     final EditText passwordEditText = (EditText) viewInflated.findViewById(R.id.wifiPasswordText);
 
-    builder.setView(viewInflated);
+    wifiDialog.setView(viewInflated);
 
-    // Set up the buttons
-    builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+    wifiDialog.setButton(Dialog.BUTTON_POSITIVE, "save", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         dialog.dismiss();
-        String ssid = ssidEditText.getText().toString();
+        String ssid = ssidListSpinner.getSelectedItem().toString();
         String password = passwordEditText.getText().toString();
-        String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+        Device device = (Device) deviceListSpinner.getSelectedItem();
         String deviceName = "test";
 
         // Set device configuration
         Map<String, Object> message = new HashMap<>();
         message.put("type", "DEVICE_CONFIG_SET_CONFIG");
-        message.put("deviceConfigId", deviceConfigId);
+        message.put("deviceConfigId", device.deviceConfigId);
         message.put("deviceName", deviceName);
         message.put("wifiSSID", ssid);
         message.put("wifiPassword", password);
         mSilkService.postMessage(message);
       }
     });
-    builder.setNegativeButton(R.string.ignore, new DialogInterface.OnClickListener() {
+    wifiDialog.setButton(Dialog.BUTTON_NEGATIVE, "ignore", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+        Device device = (Device) deviceListSpinner.getSelectedItem();
 
         // Decline device configuration
         Map<String, Object> message = new HashMap<>();
         message.put("type", "DEVICE_CONFIG_DECLINE");
-        message.put("deviceConfigId", deviceConfigId);
+        message.put("deviceConfigId", device.deviceConfigId);
         mSilkService.postMessage(message);
 
         dialog.cancel();
       }
     });
-
-    builder.show();
   }
 
   /**
@@ -344,13 +399,17 @@ public class MainActivity extends Activity {
       mSilkService.onActivityDestroy();
       unbindService(mSilkServiceConnection);
     }
+    if (wifiDialog != null) {
+      wifiDialog.cancel();
+    }
   }
 
   /**
    * Handle Login button click
    */
   private OnClickListener loginButtonListener = new View.OnClickListener() {
-    public void onClick(View v) {
+    public void onClick(View view) {
+      hideKeyboard(view);
       Map<String, Object> message = new HashMap<>();
       message.put("type", "ACCOUNT_LOGIN_PASSWORD");
       message.put("email", emailText.getText().toString());
@@ -377,13 +436,15 @@ public class MainActivity extends Activity {
    */
   private OnClickListener echoButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
-      if (configuredDeviceListSpinner.getSelectedItem() == null) {
-        onError("Please select a device");
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      if (device.deviceConfigStatus == "UNCONFIGURED") {
+        onError("Selected device is not configured. Please configure it first");
         return;
       }
+
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_MESSAGE");
-      message.put("deviceId", configuredDeviceListSpinner.getSelectedItem().toString());
+      message.put("deviceId", device.deviceId);
       message.put("payload", "{\"message\": \"Love the app\"}");
       mSilkService.postMessage(message);
     }
@@ -394,15 +455,19 @@ public class MainActivity extends Activity {
    */
   private OnClickListener configureButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
-      String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      if (device.deviceConfigStatus == "CONFIGURED") {
+        onError("Selected device is already configured");
+        return;
+      }
 
       // Accept device configuration
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_CONFIG_ACCEPT");
-      message.put("deviceConfigId", deviceConfigId);
+      message.put("deviceConfigId", device.deviceConfigId);
       mSilkService.postMessage(message);
 
-      displayWifiDialog();
+      wifiDialog.show();
     }
   };
 
@@ -413,11 +478,32 @@ public class MainActivity extends Activity {
     @Override
     public void onFocusChange(View view, boolean hasFocus) {
       if (!hasFocus) {
-        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        hideKeyboard(view);
       }
     }
   };
+
+  private void hideKeyboard(View view) {
+    InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+    inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+  }
+
+  /**
+   * Display selected device status
+   */
+  private AdapterView.OnItemSelectedListener deviceSelectedListener = new AdapterView.OnItemSelectedListener() {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+      Device device = (Device) parent.getItemAtPosition(position);
+      deviceStatusTextView.setText(device.status());
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+      deviceStatusTextView.setText("");
+    }
+  };
+
 
   /**
    * Display error messge dialog

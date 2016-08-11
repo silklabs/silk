@@ -408,7 +408,8 @@ public class MainActivity extends Activity {
    * Handle Login button click
    */
   private OnClickListener loginButtonListener = new View.OnClickListener() {
-    public void onClick(View v) {
+    public void onClick(View view) {
+      hideKeyboard(view);
       Map<String, Object> message = new HashMap<>();
       message.put("type", "ACCOUNT_LOGIN_PASSWORD");
       message.put("email", emailText.getText().toString());
@@ -477,11 +478,15 @@ public class MainActivity extends Activity {
     @Override
     public void onFocusChange(View view, boolean hasFocus) {
       if (!hasFocus) {
-        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        hideKeyboard(view);
       }
     }
   };
+
+  private void hideKeyboard(View view) {
+    InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+    inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+  }
 
   /**
    * Display selected device status

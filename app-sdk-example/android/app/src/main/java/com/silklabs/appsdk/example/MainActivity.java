@@ -44,8 +44,7 @@ public class MainActivity extends Activity {
   private EditText emailText = null;
   private EditText passwordText = null;
   private Button echoButton = null;
-  private Spinner configuredDeviceListSpinner = null;
-  private Spinner unconfiguredDeviceListSpinner = null;
+  private Spinner deviceListSpinner = null;
   private Button configureButton = null;
   private Spinner ssidListSpinner = null;
   private AlertDialog wifiDialog = null;
@@ -108,8 +107,11 @@ public class MainActivity extends Activity {
               break;
             }
             case "DEVICE_CONFIG_WIFI_NETWORKS": {
+              if (deviceListSpinner.getSelectedItem() == null) {
+                return;
+              }
               String wifiDeviceConfigId = (String) message.get("deviceConfigId");
-              String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+              String deviceConfigId = deviceListSpinner.getSelectedItem().toString();
               if (!deviceConfigId.equals(wifiDeviceConfigId)) {
                 Log.w(TAG, "Received wifi network message for " + wifiDeviceConfigId);
                 return;
@@ -164,35 +166,44 @@ public class MainActivity extends Activity {
     private void onDeviceListAvailable(final ArrayList<Map<String, Object>> devices) {
       runOnUiThread(new Runnable() {
         public void run() {
-          ArrayList<String> configuredDeviceIds = new ArrayList<String>();
-          ArrayList<String> unConfiguredDeviceIds = new ArrayList<String>();
+          ArrayList<Device> devicesList = new ArrayList<Device>();
+          int configuredCount = 0;
+          int unConfiguredCount = 0;
+
           for (int i = 0; i < devices.size(); i++) {
             Map<String, Object> device = devices.get(i);
-            String configStatus = (String) device.get("deviceConfigStatus");
-            if ("CONFIGURED".equals(configStatus)) {
-              configuredDeviceIds.add((String) device.get("deviceId"));
+            Device myDevice = new Device();
+            myDevice.deviceType = (String) device.get("deviceType");
+            myDevice.deviceId = (String) device.get("deviceId");
+            myDevice.deviceConfigStatus = (String) device.get("deviceConfigStatus");
+            myDevice.wifiConnectionStatus = (String) device.get("wifiConnectionStatus");
+            myDevice.wifiConnectionError = (String) device.get("wifiConnectionError");
+            myDevice.serverConnectionStatus = (String) device.get("serverConnectionStatus");
+            myDevice.serverConnectionError = (String) device.get("serverConnectionError");
+            myDevice.bleConnectionStatus = (String) device.get("bleConnectionStatus");
+            myDevice.bleConnectionError = (String) device.get("bleConnectionError");
+            myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
+            myDevice.rtcConnectionError = (String) device.get("rtcConnectionError");
+
+            if ("CONFIGURED".equals(myDevice.deviceConfigStatus)) {
+              configuredCount++;
             } else {
-              Double deviceConfigId =  (Double) device.get("deviceConfigId");
-              unConfiguredDeviceIds.add(Double.toString(deviceConfigId));
+              myDevice.deviceConfigId = Double.toString((Double) device.get("deviceConfigId"));
+              unConfiguredCount++;
             }
+            devicesList.add(myDevice);
           }
-          // Update the configured devices list
-          ArrayAdapter<String> configuredAdapter = new ArrayAdapter<String>(getBaseContext(),
-              android.R.layout.simple_spinner_item, configuredDeviceIds);
-          configuredAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-          configuredDeviceListSpinner.setAdapter(configuredAdapter);
-          if (configuredDeviceIds.size() > 0) {
+          // Update the devices list
+          ArrayAdapter<Device> devicesListAdapter = new ArrayAdapter<Device>(getBaseContext(),
+              android.R.layout.simple_spinner_item, devicesList);
+          devicesListAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          deviceListSpinner.setAdapter(devicesListAdapter);
+          if (configuredCount > 0) {
             echoButton.setEnabled(true);
           } else {
             echoButton.setEnabled(false);
           }
-
-          // Update the unconfigured devices list
-          ArrayAdapter<String> unConfiguredAdapter = new ArrayAdapter<String>(getBaseContext(),
-            android.R.layout.simple_spinner_item, unConfiguredDeviceIds);
-          unConfiguredAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-          unconfiguredDeviceListSpinner.setAdapter(unConfiguredAdapter);
-          if (unConfiguredDeviceIds.size() > 0) {
+          if (unConfiguredCount > 0) {
             configureButton.setEnabled(true);
           } else {
             configureButton.setEnabled(false);
@@ -249,7 +260,7 @@ public class MainActivity extends Activity {
     passwordText = (EditText) findViewById(R.id.passwordText);
     passwordText.setOnFocusChangeListener(focusChangeListener);
 
-    configuredDeviceListSpinner = (Spinner) findViewById(R.id.deviceList);
+    deviceListSpinner = (Spinner) findViewById(R.id.deviceList);
 
     final Button loginButton = (Button) findViewById(R.id.loginButton);
     loginButton.setOnClickListener(loginButtonListener);
@@ -264,8 +275,6 @@ public class MainActivity extends Activity {
     configureButton = (Button) findViewById(R.id.configureButton);
     configureButton.setOnClickListener(configureButtonListener);
     configureButton.setEnabled(false);
-
-    unconfiguredDeviceListSpinner = (Spinner) findViewById(R.id.unconfigDeviceList);
 
     createWifiDialog();
 
@@ -294,13 +303,13 @@ public class MainActivity extends Activity {
         dialog.dismiss();
         String ssid = ssidListSpinner.getSelectedItem().toString();
         String password = passwordEditText.getText().toString();
-        String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+        Device device = (Device) deviceListSpinner.getSelectedItem();
         String deviceName = "test";
 
         // Set device configuration
         Map<String, Object> message = new HashMap<>();
         message.put("type", "DEVICE_CONFIG_SET_CONFIG");
-        message.put("deviceConfigId", deviceConfigId);
+        message.put("deviceConfigId", device.deviceConfigId);
         message.put("deviceName", deviceName);
         message.put("wifiSSID", ssid);
         message.put("wifiPassword", password);
@@ -310,12 +319,12 @@ public class MainActivity extends Activity {
     wifiDialog.setButton(Dialog.BUTTON_NEGATIVE, "ignore", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+        Device device = (Device) deviceListSpinner.getSelectedItem();
 
         // Decline device configuration
         Map<String, Object> message = new HashMap<>();
         message.put("type", "DEVICE_CONFIG_DECLINE");
-        message.put("deviceConfigId", deviceConfigId);
+        message.put("deviceConfigId", device.deviceConfigId);
         mSilkService.postMessage(message);
 
         dialog.cancel();
@@ -416,13 +425,15 @@ public class MainActivity extends Activity {
    */
   private OnClickListener echoButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
-      if (configuredDeviceListSpinner.getSelectedItem() == null) {
-        onError("Please select a device");
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      if (device.deviceConfigStatus == "UNCONFIGURED") {
+        onError("Selected device is not configured. Please configure it first");
         return;
       }
+
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_MESSAGE");
-      message.put("deviceId", configuredDeviceListSpinner.getSelectedItem().toString());
+      message.put("deviceId", device.deviceId);
       message.put("payload", "{\"message\": \"Love the app\"}");
       mSilkService.postMessage(message);
     }
@@ -433,12 +444,16 @@ public class MainActivity extends Activity {
    */
   private OnClickListener configureButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
-      String deviceConfigId = unconfiguredDeviceListSpinner.getSelectedItem().toString();
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      if (device.deviceConfigStatus == "CONFIGURED") {
+        onError("Selected device is already configured");
+        return;
+      }
 
       // Accept device configuration
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_CONFIG_ACCEPT");
-      message.put("deviceConfigId", deviceConfigId);
+      message.put("deviceConfigId", device.deviceConfigId);
       mSilkService.postMessage(message);
 
       wifiDialog.show();

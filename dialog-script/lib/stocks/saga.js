@@ -18,7 +18,12 @@ export type CurrentStockPrice = {
   change: number
 };
 
-function fetchStockTicker(stock: string): Promise<string> {
+type CurrentStockName = {
+  ticker: string,
+  name: string
+};
+
+function fetchStockTicker(stock: string): Promise<CurrentStockName> {
   log.info(`Getting current stock ticker for ${stock}`);
 
   return new Promise((resolve, reject) => {
@@ -47,12 +52,12 @@ function fetchStockTicker(stock: string): Promise<string> {
             log.debug(results);
 
             let ticker = results.find((result) => {
-              return result.exchDisp === 'NASDAQ';
+              return result.exchDisp === 'NASDAQ' || result.exchDisp === 'NYSE';
             });
             if (!ticker) {
               throw new Error(`Failed to get ticker`);
             }
-            resolve(ticker.symbol);
+            resolve({ticker: ticker.symbol, name: ticker.name});
           } catch (error) {
             reject(error);
           }
@@ -123,7 +128,8 @@ export function* getStockPrice(
 
   log.info(`Starting stock saga`);
 
-  if (entities.length === 0 || entities[0].type !== 'stock') {
+  if (entities.length === 0 || entities[0].type !== 'stock' ||
+      !entities[0].entity || entities[0].entity.length === 0) {
     yield call(speak,
         `Sorry, I'm not sure which stock you are asking about`, `idle`);
     return;
@@ -131,11 +137,15 @@ export function* getStockPrice(
 
   const stock = entities[0].entity;
   let stockPrice;
+  let stockName;
   try {
-    let ticker = yield call(fetchStockTicker, stock);
-    stockPrice = yield call(fetchStockPrice, ticker);
+    let result = yield call(fetchStockTicker, stock);
+    if (!result) {
+      throw new Error('Invalid result');
+    }
+    stockPrice = yield call(fetchStockPrice, result.ticker);
+    stockName = result.name;
     invariant(stockPrice);
-    log.debug(stockPrice);
   } catch (err) {
     log.error(`${err}`);
     yield call(speak, `Sorry, I'm unable to get the stock price for ${stock}`, `idle`);
@@ -150,6 +160,6 @@ export function* getStockPrice(
   } else {
     text = `is up ${stockPrice.change}%`;
   }
-  text = `${stock} ${text}, currently at $${stockPrice.price}`;
+  text = `${stockName} ${text}, currently at $${stockPrice.price}`;
   yield call(speak, text, `idle`);
 }

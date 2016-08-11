@@ -18,7 +18,12 @@ export type CurrentStockPrice = {
   change: number
 };
 
-function fetchStockTicker(stock: string): Promise<string> {
+type CurrentStockName = {
+  ticker: string,
+  name: string
+};
+
+function fetchStockTicker(stock: string): Promise<CurrentStockName> {
   log.info(`Getting current stock ticker for ${stock}`);
 
   return new Promise((resolve, reject) => {
@@ -52,7 +57,7 @@ function fetchStockTicker(stock: string): Promise<string> {
             if (!ticker) {
               throw new Error(`Failed to get ticker`);
             }
-            resolve(ticker.symbol);
+            resolve({ticker: ticker.symbol, name: ticker.name});
           } catch (error) {
             reject(error);
           }
@@ -132,11 +137,15 @@ export function* getStockPrice(
 
   const stock = entities[0].entity;
   let stockPrice;
+  let stockName;
   try {
-    let ticker = yield call(fetchStockTicker, stock);
-    stockPrice = yield call(fetchStockPrice, ticker);
+    let result = yield call(fetchStockTicker, stock);
+    if (!result) {
+      throw new Error('Invalid result');
+    }
+    stockPrice = yield call(fetchStockPrice, result.ticker);
+    stockName = result.name;
     invariant(stockPrice);
-    log.debug(stockPrice);
   } catch (err) {
     log.error(`${err}`);
     yield call(speak, `Sorry, I'm unable to get the stock price for ${stock}`, `idle`);
@@ -151,6 +160,6 @@ export function* getStockPrice(
   } else {
     text = `is up ${stockPrice.change}%`;
   }
-  text = `${stock} ${text}, currently at $${stockPrice.price}`;
+  text = `${stockName} ${text}, currently at $${stockPrice.price}`;
   yield call(speak, text, `idle`);
 }

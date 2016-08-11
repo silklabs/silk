@@ -98,12 +98,14 @@ public class MainActivity extends Activity {
               break;
             }
             case "DEVICE_CONFIG_SUCCESS": {
-              String deviceConfigId = Double.toString((Double) message.get("deviceConfigId"));
-              onSuccess("Sucessfully configured (" + deviceConfigId + ")");
+              int deviceConfigId =
+                ((Double) message.get("deviceConfigId")).intValue();
+              onSuccess("Successfully configured (" + deviceConfigId + ")");
               break;
             }
             case "DEVICE_CONFIG_ERROR": {
-              String deviceConfigId = Double.toString((Double) message.get("deviceConfigId"));
+              int deviceConfigId =
+                ((Double) message.get("deviceConfigId")).intValue();
               String configError = (String) message.get("configError");
               onError("Failed to configure (" + deviceConfigId + "): " + configError);
               break;
@@ -112,12 +114,18 @@ public class MainActivity extends Activity {
               if (deviceListSpinner.getSelectedItem() == null) {
                 return;
               }
-              String wifiDeviceConfigId = (String) message.get("deviceConfigId");
-              String deviceConfigId = deviceListSpinner.getSelectedItem().toString();
-              if (!deviceConfigId.equals(wifiDeviceConfigId)) {
-                Log.w(TAG, "Received wifi network message for " + wifiDeviceConfigId);
+
+              Device device = (Device) deviceListSpinner.getSelectedItem();
+              int deviceConfigId =  device.deviceConfigId;
+
+              int wifiDeviceConfigId =
+                ((Double) message.get("deviceConfigId")).intValue();
+              Log.d(TAG, "Received wifi network message for " + wifiDeviceConfigId);
+
+              if (deviceConfigId != wifiDeviceConfigId) {
                 return;
               }
+
               onWifiNetworksAvailable((ArrayList<Map<String, Object>>) message.get("wifiNetworks"));
               break;
             }
@@ -168,6 +176,13 @@ public class MainActivity extends Activity {
     private void onDeviceListAvailable(final ArrayList<Map<String, Object>> devices) {
       runOnUiThread(new Runnable() {
         public void run() {
+          // Get currently selected item
+          String currentItem = null;
+          Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
+          if (currentDevice != null) {
+            currentItem = currentDevice.toString();
+          }
+
           ArrayList<Device> devicesList = new ArrayList<Device>();
           int configuredCount = 0;
           int unConfiguredCount = 0;
@@ -190,7 +205,8 @@ public class MainActivity extends Activity {
             if ("CONFIGURED".equals(myDevice.deviceConfigStatus)) {
               configuredCount++;
             } else {
-              myDevice.deviceConfigId = Double.toString((Double) device.get("deviceConfigId"));
+              myDevice.deviceConfigId =
+                ((Double) device.get("deviceConfigId")).intValue();
               unConfiguredCount++;
             }
             devicesList.add(myDevice);
@@ -215,6 +231,11 @@ public class MainActivity extends Activity {
           if (devicesList.size() <= 0) {
             deviceStatusTextView.setText("");
           }
+
+          // Preselect the last selected item
+          if (currentItem != null) {
+            selectDeviceListSpinnerItem(currentItem);
+          }
         }
       });
     }
@@ -226,6 +247,12 @@ public class MainActivity extends Activity {
     private void onWifiNetworksAvailable(final ArrayList<Map<String, Object>> networks) {
       runOnUiThread(new Runnable() {
         public void run() {
+          // Get currently selected item
+          String currentItem = null;
+          if (ssidListSpinner.getSelectedItem() != null) {
+            currentItem = ssidListSpinner.getSelectedItem().toString();
+          }
+
           ArrayList<String> ssids = new ArrayList<String>();
           for (int i = 0; i < networks.size(); i++) {
             Map<String, Object> network = networks.get(i);
@@ -237,6 +264,11 @@ public class MainActivity extends Activity {
             android.R.layout.simple_spinner_item, ssids);
           ssidsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
           ssidListSpinner.setAdapter(ssidsAdapter);
+
+          // Preselect the last selected item
+          if (currentItem != null) {
+            selectSsidListSpinnerItem(currentItem);
+          }
         }
       });
     }
@@ -437,7 +469,7 @@ public class MainActivity extends Activity {
   private OnClickListener echoButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       Device device = (Device) deviceListSpinner.getSelectedItem();
-      if (device.deviceConfigStatus == "UNCONFIGURED") {
+      if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
         onError("Selected device is not configured. Please configure it first");
         return;
       }
@@ -456,7 +488,7 @@ public class MainActivity extends Activity {
   private OnClickListener configureButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       Device device = (Device) deviceListSpinner.getSelectedItem();
-      if (device.deviceConfigStatus == "CONFIGURED") {
+      if (device.deviceConfigStatus.equals("CONFIGURED")) {
         onError("Selected device is already configured");
         return;
       }
@@ -504,6 +536,37 @@ public class MainActivity extends Activity {
     }
   };
 
+  /**
+   * Select the deviceListSpinner item that was previously selected
+   *
+   * @param value
+   */
+  private void selectDeviceListSpinnerItem(String value) {
+    ArrayAdapter<Device> adapter = (ArrayAdapter<Device>) deviceListSpinner.getAdapter();
+    for (int position = 0; position < adapter.getCount(); position++) {
+      Device device = (Device) adapter.getItem(position);
+      if(device.toString().equals(value)) {
+        deviceListSpinner.setSelection(position);
+        return;
+      }
+    }
+  }
+
+  /**
+   * Select the ssidListSpinner item that was previously selected
+   *
+   * @param value
+   */
+  private void selectSsidListSpinnerItem(String value) {
+    ArrayAdapter<String> adapter = (ArrayAdapter<String>) ssidListSpinner.getAdapter();
+    for (int position = 0; position < adapter.getCount(); position++) {
+      String ssid = adapter.getItem(position).toString();
+      if(ssid.equals(value)) {
+        ssidListSpinner.setSelection(position);
+        return;
+      }
+    }
+  }
 
   /**
    * Display error messge dialog

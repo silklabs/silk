@@ -1,10 +1,11 @@
 package com.silklabs.appsdk.example;
+
 import java.lang.StringBuilder;
 
 public class Device {
   public String deviceType;
   public String deviceId;
-  public String deviceConfigId;
+  public int deviceConfigId;
   public String deviceConfigStatus;
   public String wifiConnectionStatus;
   public String wifiConnectionError;
@@ -17,7 +18,9 @@ public class Device {
 
   @Override
   public String toString() {
-    return (this.deviceConfigStatus == "UNCONFIGURED") ? ("* " + this.deviceConfigId) : this.deviceId;
+    String label = (this.deviceConfigStatus.equals("UNCONFIGURED")) ?
+      ("* " + Integer.toString(this.deviceConfigId)) : this.deviceId;
+    return label;
   }
 
   public String status() {

@@ -49,7 +49,9 @@ class DialogScript {
       }
       dialogEngine.rtc.emit(`message`, {
         command: `time`,
-        now: Date.now(),
+        payload: {
+          now: Date.now(),
+        },
       });
       setTimeout(broadcastTime, 10 * 1000);
     };
@@ -61,15 +63,15 @@ class DialogScript {
     dialogEngine.on('sound', this._onSoundEvent);
   }
 
-  _onRtcMessage: ((payload: Object) => void) = (payload) => {
-    log.info(`Message from rtc`, payload);
+  _onRtcMessage: ((payload: Object) => void) = (message) => {
+    log.info(`Message from rtc`, message);
 
     // Echo 'echo' messages back to the sender.
-    if (payload &&
-        typeof payload === `object` &&
-        payload.command === `echo` &&
-        typeof payload.payload === `object`) {
-      dialogEngine.rtc.emit(`message`, payload.payload);
+    if (message &&
+        typeof message === `object` &&
+        message.command === `echo` &&
+        typeof message.payload === `object`) {
+      dialogEngine.rtc.emit(`message`, message);
     }
   }
 

@@ -50,9 +50,7 @@ public class BLESocketManagerBridge
 
     Utils.check(reactContext != null);
 
-    mSocketManager = BLESocketManager.getOrCreate(reactContext, this);
-    Utils.check(mSocketManager != null);
-
+    mSocketManager = new BLESocketManager(reactContext, this);
     reactContext.addLifecycleEventListener(this);
   }
 

@@ -106,6 +106,7 @@ declare export class RTCDataChannel extends WebrtcEventTarget {
   readyState: 'connecting' | 'open' | 'closing' | 'closed';
   close: () => void;
   binaryType: string;
+  bufferedAmount: number;
   send: (data: string | Buffer | ArrayBuffer) => void;
 }
 

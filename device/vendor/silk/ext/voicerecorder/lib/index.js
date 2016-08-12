@@ -24,6 +24,7 @@ type MicDataCallback = (pkt: MicData) => void;
 type InputEventCallback = (event: { keyId: string }) => void;
 
 const RECORDINGS_PATH = 'data/media/mic';
+const MAX_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
 const log = createLog('silkext-voicerecorder');
 let camera: Camera;
@@ -35,6 +36,7 @@ class Recorder {
   _input: Input;
   _ready: boolean = false;
   _writer: ?FileWriter = null;
+  _durationTimeoutId: ?number = null;
 
   constructor(env: Env) {
     camera = env.camera;
@@ -87,6 +89,10 @@ class Recorder {
 
     log.debug(`Received key down event ${JSON.stringify(event)}`);
     if (!this._writer) {
+      // Set up the max duration timeout
+      this._durationTimeoutId = setTimeout(() => this._stopRecording('timeout'),
+          MAX_DURATION_MS);
+
       log.info(`Started audio recording`);
       this._writer = new wav.FileWriter(`${RECORDINGS_PATH}/${Date.now()}.wav`, {
         sampleRate: config.deviceMic.sampleRate,
@@ -100,17 +106,32 @@ class Recorder {
         log.error('Failed to write: ', err);
       });
     } else {
-      log.info(`Stopped audio recording`);
+      this._stopRecording();
+    }
+  };
+
+  _stopRecording(reason: string) {
+    log.info(`Stopping audio recording, reason: ${reason}`);
+    this._cancelDurationTimer();
+    if (this._writer) {
       this._writer.end();
       this._writer = null;
     }
-  };
+  }
+
+  _cancelDurationTimer() {
+    if (this._durationTimeoutId) {
+      clearTimeout(this._durationTimeoutId);
+      this._durationTimeoutId = null;
+    }
+  }
 
   willUnload(): void {
     log.info('unloading....');
 
     camera.removeListener('mic-data', this._onMicData);
     this._input.removeListener('down', this._onKeyPress);
+    this._cancelDurationTimer();
   }
 }
 

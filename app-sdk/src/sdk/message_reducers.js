@@ -239,13 +239,13 @@ function DEVICE_BLE_CONNECTED(
       deviceId: null,
       deviceConfigId: session.socketId,
       deviceConfigStatus: 'UNCONFIGURED',
-      wifiConnectionStatus: null,
+      wifiConnectionStatus: 'NOT_CONNECTED',
       wifiConnectionError: null,
-      serverConnectionStatus: null,
+      serverConnectionStatus: 'NOT_CONNECTED',
       serverConnectionError: null,
       bleConnectionStatus: 'CONNECTED',
       bleConnectionError: null,
-      rtcConnectionStatus: null,
+      rtcConnectionStatus: 'NOT_CONNECTED',
       rtcConnectionError: null,
     };
     devices = devices.concat(unconfiguredDevice);
@@ -345,8 +345,62 @@ function DEVICE_CONFIG_STATUSUPDATED(
   state: MessagesState,
   action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED', DeviceSession>
 ): MessagesState {
-  // TODO update device's wifiConnectionStatus
-  return state;
+  const session = action.payload;
+  let {devices} = state.DEVICES;
+  const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
+  if (index === -1) {
+    return state;
+  }
+
+  const sessionStatus = session.status;
+  invariant(sessionStatus);
+
+  const messageComponents = sessionStatus.message.split('_');
+  const type = messageComponents.shift();
+  const detail = messageComponents.join('_');
+
+  const statusKey = `${type}ConnectionStatus`;
+  const errorKey = `${type}ConnectionError`;
+
+  invariant(type === 'wifi' || type === 'server');
+
+  devices = devices.slice();
+  const deviceStatusMessage = devices[index];
+  if (sessionStatus.isError) {
+    deviceStatusMessage[statusKey] = 'NOT_CONNECTED';
+    deviceStatusMessage[errorKey] = detail;
+  } else {
+    let status;
+
+    if (type === 'wifi') {
+      if (detail === 'inactive' || detail === 'offline') {
+        status = 'NOT_CONNECTED';
+      } else if (detail !== 'online') {
+        status = 'CONNECTING';
+      } else {
+        status = 'CONNECTED';
+      }
+    } else {
+      if (detail === 'disconnected') {
+        status = 'NOT_CONNECTED';
+      } else if (detail !== 'connected') {
+        status = 'CONNECTING';
+      } else {
+        status = 'CONNECTED';
+      }
+    }
+
+    deviceStatusMessage[statusKey] = status;
+    deviceStatusMessage[errorKey] = null;
+  }
+
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
 }
 
 function DEVICE_CONFIG_REGISTERED(

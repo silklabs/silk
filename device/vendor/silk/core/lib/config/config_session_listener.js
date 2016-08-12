@@ -104,7 +104,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
   }
 
   sendStatus(status: string): void {
-    if (this._state !== 'registered') {
+    if (this._state !== 'registered' && this._state !== 'complete') {
       return;
     }
     super.sendStatus(status);

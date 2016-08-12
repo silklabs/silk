@@ -42,6 +42,8 @@ public class MainActivity extends Activity {
   private SilkAppSDKService mSilkService = null;
   private TextView networkStatusTextView = null;
   private TextView authStatusTextView = null;
+  private Button loginButton = null;
+  private Button logoutButton = null;
   private EditText emailText = null;
   private EditText passwordText = null;
   private Button echoButton = null;
@@ -103,7 +105,8 @@ public class MainActivity extends Activity {
               onSuccess("Successfully configured (" + deviceConfigId + ")");
               break;
             }
-            case "DEVICE_CONFIG_ERROR": {
+            case "DEVICE_CONFIG_ERROR":
+            case "DEVICE_CONFIG_FATAL_ERROR": {
               int deviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
               String configError = (String) message.get("configError");
@@ -156,9 +159,7 @@ public class MainActivity extends Activity {
     private void onNetworkStatusChanged(final String networkStatus) {
       runOnUiThread(new Runnable() {
         public void run() {
-          if (networkStatusTextView != null) {
-            networkStatusTextView.setText(networkStatus);
-          }
+          networkStatusTextView.setText(networkStatus);
         }
       });
     }
@@ -170,9 +171,19 @@ public class MainActivity extends Activity {
     private void onAuthStatusChanged(final String authStatus) {
       runOnUiThread(new Runnable() {
         public void run() {
-          if (authStatusTextView != null) {
-            authStatusTextView.setText(authStatus);
+          if (authStatus.equals("AUTHENTICATED")) {
+            logoutButton.setEnabled(true);
+          } else {
+            logoutButton.setEnabled(false);
           }
+
+          if (authStatus.equals("NOT_AUTHENTICATED")) {
+            loginButton.setEnabled(true);
+          } else {
+            loginButton.setEnabled(false);
+          }
+
+          authStatusTextView.setText(authStatus);
         }
       });
     }
@@ -192,8 +203,6 @@ public class MainActivity extends Activity {
           }
 
           ArrayList<Device> devicesList = new ArrayList<Device>();
-          int configuredCount = 0;
-          int unconfiguredCount = 0;
 
           for (int i = 0; i < devices.size(); i++) {
             Map<String, Object> device = devices.get(i);
@@ -210,15 +219,10 @@ public class MainActivity extends Activity {
             myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
             myDevice.rtcConnectionError = (String) device.get("rtcConnectionError");
 
-            if ("CONFIGURED".equals(myDevice.deviceConfigStatus)) {
-              configuredCount++;
-            } else {
+            if (!"CONFIGURED".equals(myDevice.deviceConfigStatus)) {
               myDevice.deviceConfigId =
                 ((Double) device.get("deviceConfigId")).intValue();
-              myDevice.deviceId = "Unconfigured " + myDevice.deviceConfigId;
-              if (!myDevice.deviceId.isEmpty()) {
-                unconfiguredCount++;
-              }
+              myDevice.deviceId = "Unconfigured device " + myDevice.deviceConfigId;
             }
             devicesList.add(myDevice);
           }
@@ -228,18 +232,11 @@ public class MainActivity extends Activity {
               android.R.layout.simple_spinner_item, devicesList);
           devicesListAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
           deviceListSpinner.setAdapter(devicesListAdapter);
-          if (configuredCount > 0) {
-            echoButton.setEnabled(true);
-          } else {
-            echoButton.setEnabled(false);
-          }
-          if (unconfiguredCount > 0) {
-            configureButton.setEnabled(true);
-          } else {
-            configureButton.setEnabled(false);
-          }
+
           // Clear the existing device status message
           if (devicesList.size() <= 0) {
+            echoButton.setEnabled(false);
+            configureButton.setEnabled(false);
             deviceStatusTextView.setText("");
           }
 
@@ -302,6 +299,7 @@ public class MainActivity extends Activity {
   protected void initialize() {
     setContentView(R.layout.main);
     networkStatusTextView = (TextView) findViewById(R.id.networkStatusResultView);
+    networkStatusTextView.setText("INITIALIZING");
     authStatusTextView = (TextView) findViewById(R.id.authStatusResultView);
 
     emailText = (EditText) findViewById(R.id.emailText);
@@ -313,10 +311,12 @@ public class MainActivity extends Activity {
     deviceListSpinner = (Spinner) findViewById(R.id.deviceList);
     deviceListSpinner.setOnItemSelectedListener(deviceSelectedListener);
 
-    final Button loginButton = (Button) findViewById(R.id.loginButton);
+    loginButton = (Button) findViewById(R.id.loginButton);
+    loginButton.setEnabled(false);
     loginButton.setOnClickListener(loginButtonListener);
 
-    final Button logoutButton = (Button) findViewById(R.id.logoutButton);
+    logoutButton = (Button) findViewById(R.id.logoutButton);
+    logoutButton.setEnabled(false);
     logoutButton.setOnClickListener(logoutButtonListener);
 
     echoButton = (Button) findViewById(R.id.sendEchoMessageButton);
@@ -369,14 +369,14 @@ public class MainActivity extends Activity {
         mSilkService.postMessage(message);
       }
     });
-    wifiDialog.setButton(Dialog.BUTTON_NEGATIVE, "ignore", new DialogInterface.OnClickListener() {
+    wifiDialog.setButton(Dialog.BUTTON_NEGATIVE, "cancel", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         Device device = (Device) deviceListSpinner.getSelectedItem();
 
-        // Decline device configuration
+        // Abort device configuration
         Map<String, Object> message = new HashMap<>();
-        message.put("type", "DEVICE_CONFIG_DECLINE");
+        message.put("type", "DEVICE_CONFIG_ABORT");
         message.put("deviceConfigId", device.deviceConfigId);
         mSilkService.postMessage(message);
 
@@ -542,11 +542,27 @@ public class MainActivity extends Activity {
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
       Device device = (Device) parent.getItemAtPosition(position);
+
+      if (device.rtcConnectionStatus != null &&
+          device.rtcConnectionStatus.equals("CONNECTED")) {
+        echoButton.setEnabled(true);
+      } else {
+        echoButton.setEnabled(false);
+      }
+
+      if (device.deviceConfigId != -1) {
+        configureButton.setEnabled(true);
+      } else {
+        configureButton.setEnabled(false);
+      }
+
       deviceStatusTextView.setText(device.status());
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
+      echoButton.setEnabled(false);
+      configureButton.setEnabled(false);
       deviceStatusTextView.setText("");
     }
   };

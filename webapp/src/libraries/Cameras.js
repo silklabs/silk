@@ -125,7 +125,12 @@ class Camera extends EventEmitter {
     if (enabled && this.online) {
       if (this._peer !== null && this._diagChannel === null) {
         log.info('Creating diag channel');
-        this._diagChannel = this._peer.createChannel('diag', {});
+        this._diagChannel = this._peer.createChannel(
+          'diag',
+          {
+            maxRetransmitTime: 1000,
+          }
+        );
         this._diagChannel.on('open', () => {
           log.debug('Diag channel open');
           this._diagChannel.emit('hello', {});
@@ -257,7 +262,12 @@ class Camera extends EventEmitter {
     if (enabled && this.online) {
       if (this._peer !== null && this._previewChannel === null) {
         log.info('Creating preview channel');
-        this._previewChannel = this._peer.createChannel('preview', {});
+        this._previewChannel = this._peer.createChannel(
+          'preview',
+          {
+            maxRetransmitTime: 1000,
+          }
+        );
         this._previewChannel.on('open', () => {
           log.debug('Preview channel open');
         });
@@ -313,7 +323,12 @@ class Camera extends EventEmitter {
     if (enabled && this.online) {
       if (this._peer !== null && this._videoChannel === null) {
         log.info('Creating video channel');
-        this._videoChannel = this._peer.createChannel('video', {});
+        this._videoChannel = this._peer.createChannel(
+          'video',
+          {
+            maxRetransmitTime: 1000,
+          }
+        );
         this._videoChannel.on('open', () => {
           log.debug('Video channel open');
         });
@@ -349,7 +364,11 @@ class Camera extends EventEmitter {
     const enabled = this._requestedRooms.micData;
     if (enabled && this.online) {
       if (this._peer !== null && this._micChannel === null) {
-        this._micChannel = this._peer.createChannel('mic', {});
+        this._micChannel = this._peer.createChannel('mic',
+          {
+            maxRetransmitTime: 1000,
+          }
+        );
         this._micChannel.on('open', () => {
           log.debug('Mic channel open');
         });
@@ -387,7 +406,12 @@ class Camera extends EventEmitter {
     if (enabled && this.online) {
       if (this._peer !== null && this._objectsChannel === null) {
         this.objects = new ObjectCollector();
-        this._objectsChannel = this._peer.createChannel('objects', {});
+        this._objectsChannel = this._peer.createChannel(
+          'objects',
+          {
+            maxRetransmitTime: 1000,
+          }
+        );
         this._objectsChannel.on('open', () => {
           log.debug('Objects channel open');
         });

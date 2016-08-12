@@ -38,6 +38,8 @@ export class ChannelEventEmitter extends EventEmitter {
   _connections: Connections;
   _open: bool = false;
 
+  maxBufferedAmount: number = Infinity;
+
   constructor(label: string, connections: Connections) {
     super();
     this._label = label;
@@ -102,10 +104,24 @@ export class ChannelEventEmitter extends EventEmitter {
   }
 
   emit(event: string, payload: Object): bool {
+    let sent = false;
     if (!this._open) {
       log.info('Ignoring', event, 'on closed channel:', this._label);
+    } else {
+      for (let recipient of this._connections._connections) {
+        const channel = recipient.getChannel(this._label);
+        if (channel && channel.open) {
+          if (channel.bufferedAmount <= this.maxBufferedAmount) {
+            channel.emit(event, payload);
+            sent = true;
+          } else {
+            log.info(`${this._label} channel full.` +
+                     `${channel.bufferedAmount} > ${this.maxBufferedAmount}`);
+          }
+        }
+      }
     }
-    return this._connections.send(this._label, event, payload);
+    return sent;
   }
 }
 

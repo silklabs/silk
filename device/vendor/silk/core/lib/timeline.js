@@ -196,6 +196,9 @@ export default class Timeline extends EventEmitter {
       case 'objects':
       case 'preview':
       case 'video':
+        // This data is all live, so if the peer can't keep then just drop
+        // packets rather than building up a backlog
+        this.channels[label].maxBufferedAmount = 1;
         this.channels[label].on('open', this._updateOpenChannels);
         this.channels[label].on('close', this._updateOpenChannels);
         break;

@@ -97,6 +97,11 @@ export default class StructuredDataChannel extends EventEmitter {
     return this._channel.label;
   }
 
+  get bufferedAmount(): number {
+    invariant(this._channel);
+    return this._channel.bufferedAmount;
+  }
+
   get open(): bool {
     invariant(this._channel);
     return this._channel.readyState === 'open';

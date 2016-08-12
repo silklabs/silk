@@ -390,8 +390,15 @@ function DEVICE_CONFIG_STATUSUPDATED(
 ): DevicesState {
   const session = action.payload;
   const {configuring} = state;
-  invariant(configuring);
+
+  // We may receive status updates even after successful config while the device
+  // tries to connect to the server.
+  if (!configuring) {
+    return state;
+  }
+
   invariant(configuring.socketId === session.socketId);
+
   return {
     ...state,
     configuring: {

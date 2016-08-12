@@ -231,11 +231,15 @@ function initBLE(store: Store<*>) {
     });
     session.on('secret', () => dispatch(config.passedProximity(session)));
     session.on('wifiscan', () => dispatch(config.wifiScanResults(session)));
-    session.on('status', () => dispatch(config.statusUpdated(session)));
-    session.on('registered', () => {
-      session.dismiss();
-      dispatch(config.registered(session));
+    session.on('status', (status) => {
+      dispatch(config.statusUpdated(session));
+      // Hang on to the session until we know the device connected to the
+      // server.
+      if (!status.isError && status.message === 'server_connected') {
+        session.dismiss();
+      }
     });
+    session.on('registered', () => dispatch(config.registered(session)));
     session.on('error', (error) => dispatch(config.error(session)));
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "mel-features",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "author": "Andreas Gal <andreas.gal@gmail.com>",
   "license": "MIT",
   "main": "index.js",

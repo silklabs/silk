@@ -34,6 +34,7 @@ import type {
   Env,
   Camera,
   Timeline,
+  TimelineEventCallback,
 } from 'silk-exttest';
 import { Duplex } from 'stream';
 
@@ -162,6 +163,10 @@ class Dialog {
       }
     }
     this._input.on('down', this._onKeyPress);
+
+    // Notify dialog engine that a sound event has been detected
+    timeline.on('sound', this._onSoundEvent);
+
     this._init();
   }
 
@@ -502,6 +507,14 @@ class Dialog {
     }]);
   }
 
+  /**
+   * Notify dialog engine of sound events
+   */
+  _onSoundEvent: TimelineEventCallback = (when, rects, source, name) => {
+    log.debug(`Received event ${name} at {when}`);
+    this._dialogEngine.notifySoundEvent(name, when);
+  };
+
   willUnload(): void {
     log.info('unloading....');
     this._monitor(false);
@@ -512,6 +525,7 @@ class Dialog {
     this._dialogEngine.removeListener('speech', this._onSpeak);
     this._dialogEngine.removeListener('speak-begin', this._onSpeakBegin);
     this._dialogEngine.removeListener('interpret-end', this._onInterpretEnd);
+    timeline.removeListener('sound', this._onSoundEvent);
   }
 }
 

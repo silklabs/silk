@@ -122,6 +122,15 @@ export class DialogEngine extends EventEmitter {
    * @memberof silk-dialog-engine.DialogEngine
    * @instance
    */
+  /**
+   * This event is emitted when a type of sound is detected
+   *
+   * @event sound
+   * @param type Type of the sound detected. For ex, babycry
+   * @param when Timestamp of when the sound was detected
+   * @memberof silk-dialog-engine.DialogEngine
+   * @instance
+   */
 
   _uiMode: DialogUiMode;
   _options: DialogEngineOptions;
@@ -320,6 +329,10 @@ export class DialogEngine extends EventEmitter {
     stream.addListener(`data`, dataListener);
     stream.addListener(`end`, endListener);
     stt.startRequest(finish);
+  }
+
+  notifySoundEvent(type: string, when: number): void {
+    this.emit('sound', type, when);
   }
 }
 

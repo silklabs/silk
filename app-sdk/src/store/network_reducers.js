@@ -12,6 +12,8 @@ export type NetworkState = {
 };
 
 const initialState: NetworkState = {
+  // Assume that we can reach the server initially to avoid flickering the UI
+  // on every launch.
   canReachServer: true,
 };
 

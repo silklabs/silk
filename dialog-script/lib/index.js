@@ -47,20 +47,30 @@ class DialogScript {
       if (this._unloaded) {
         return;
       }
-      dialogEngine.rtc.emit('time', {now: Date.now()});
+      dialogEngine.rtc.emit(`message`, {
+        command: `time`,
+        now: Date.now(),
+      });
       setTimeout(broadcastTime, 10 * 1000);
     };
     broadcastTime();
 
-    dialogEngine.rtc.on('echo', this._onRtcEcho);
+    dialogEngine.rtc.on(`message`, this._onRtcMessage);
     // End RTC example
 
     dialogEngine.on('sound', this._onSoundEvent);
   }
 
-  _onRtcEcho: ((payload: Object) => void) = (payload) => {
-    log.info('echo', payload);
-    dialogEngine.rtc.emit('echo', payload);
+  _onRtcMessage: ((payload: Object) => void) = (payload) => {
+    log.info(`Message from rtc`, payload);
+
+    // Echo 'echo' messages back to the sender.
+    if (payload &&
+        typeof payload === `object` &&
+        payload.command === `echo` &&
+        typeof payload.payload === `object`) {
+      dialogEngine.rtc.emit(`message`, payload.payload);
+    }
   }
 
   _onSoundEvent: ((type: string, when: number) => void) = (type, when) => {
@@ -126,8 +136,8 @@ class DialogScript {
     this._unloaded = true;
     this._mostRecentState = null;
 
-    dialogEngine.rtc.removeListener('echo', this._onRtcEcho);
     dialogEngine.removeListener('sound', this._onSoundEvent);
+    dialogEngine.rtc.removeListener(`message`, this._onRtcMessage);
 
     if (this._persistTimeout) {
       clearTimeout(this._persistTimeout);

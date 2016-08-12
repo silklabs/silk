@@ -3,6 +3,7 @@
  */
 
 import merge from 'lodash.merge';
+import mergeApiDefaultConfig from 'silk-api/src/config';
 import {configureLog} from 'silk-log';
 
 const defaultConfig = {
@@ -16,7 +17,7 @@ try {
   localConfig = {};
 }
 
-const config = merge({}, defaultConfig, localConfig);
+const config = mergeApiDefaultConfig(merge({}, defaultConfig, localConfig));
 export default config;
 
 configureLog(config.debug);

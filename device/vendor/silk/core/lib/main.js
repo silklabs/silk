@@ -289,7 +289,7 @@ function main() {
         timeline: timeline,
         ui: ui,
         say: say,
-        dialogChannel: connections.getChannel('dialog'), // Very sorry!! Remove once connections.js is moved into its own module
+        dialogChannel: connections.getChannel('app'), // Very sorry!! Remove once connections.js is moved into its own module
       });
     })
     .then(maybeAbortBoot)

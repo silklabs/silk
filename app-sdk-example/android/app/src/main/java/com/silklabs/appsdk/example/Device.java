@@ -5,7 +5,7 @@ import java.lang.StringBuilder;
 public class Device {
   public String deviceType;
   public String deviceId;
-  public int deviceConfigId;
+  public int deviceConfigId = -1;
   public String deviceConfigStatus;
   public String wifiConnectionStatus;
   public String wifiConnectionError;

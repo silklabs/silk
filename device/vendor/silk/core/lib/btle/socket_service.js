@@ -364,6 +364,8 @@ export default class SocketService extends BlenoService {
   _discoverServices(peripheral: Peripheral): Promise<Array<Service>> {
     log.debug(`SocketService._discoverServices`, peripheral.address);
 
+    invariant(peripheral.state === `connected`);
+
     return this._waitForEventWithTimeout(
       peripheral,
       peripheral,
@@ -380,6 +382,8 @@ export default class SocketService extends BlenoService {
     log.debug(`SocketService._discoverCharacteristics`,
               peripheral.address,
               service.uuid);
+
+    invariant(peripheral.state === `connected`);
 
     return this._waitForEventWithTimeout(
       peripheral,
@@ -400,6 +404,8 @@ export default class SocketService extends BlenoService {
               service.uuid,
               characteristic.uuid);
 
+    invariant(peripheral.state === `connected`);
+
     return this._waitForEventWithTimeout(
       peripheral,
       characteristic,
@@ -414,10 +420,14 @@ export default class SocketService extends BlenoService {
     log.debug(`SocketService._startConnection`, address);
 
     if (peripheral.state === `disconnected` || peripheral.state === `error`) {
-      await this._connect(peripheral);
+      const error = await this._connect(peripheral);
+      if (error) {
+        log.warn(`Failed to connect to peripheral`, address, error);
+        return;
+      }
     }
 
-    log.debug(`Connected to peripheral`);
+    log.debug(`Connected to peripheral`, address);
 
     const services = await this._discoverServices(peripheral);
     if (!this._enabled) {
@@ -461,6 +471,7 @@ export default class SocketService extends BlenoService {
 
     const stream = new SocketStream(peripheral, characteristic);
     stream.once(`close`, () => {
+      log.debug(`Stream closed, disconnecting peripheral`, address);
       this._bleno.disconnect(address);
     });
 

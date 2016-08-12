@@ -44,7 +44,7 @@ export type DevicesState = {
 
   /**
    * Map socket ID (which is locally -- to this client -- and
-   * tmeporarily -- for the runtime of the app -- unique) to a
+   * temporarily -- for the runtime of the app -- unique) to a
    * DeviceSession object.
    */
   unconfigured: Map<number, DeviceSession>;

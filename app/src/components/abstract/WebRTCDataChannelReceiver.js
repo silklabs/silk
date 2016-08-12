@@ -53,7 +53,12 @@ export default class WebRTCDataChannelReceiver<P: Props> extends AsyncComponent 
       log.debug('No peer');
       return;
     }
-    const channel = peer.createChannel(this.channelName);
+    const channel = peer.createChannel(
+      this.channelName,
+      {
+        maxRetransmitTime: 1000,
+      }
+    );
     channel.on(this.messageType, this.onMessage);
   }
 

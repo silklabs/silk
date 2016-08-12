@@ -80,7 +80,12 @@ export default class DataChannel extends React.Component {
       channel.removeListener(this.state.message, this.onDeviceMessage);
     }
     if (peer) {
-      channel = peer.createChannel(this.state.channelName);
+      channel = peer.createChannel(
+        this.state.channelName,
+        {
+          maxRetransmitTime: 1000,
+        }
+      );
       if (channel) {
         if (this.state.message.length > 0) {
           channel.on(this.state.message, this.onDeviceMessage);

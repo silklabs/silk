@@ -117,6 +117,23 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
     }
   }
 
+  void cleanupMainThread() {
+    Log.d(TAG, "cleanupMainThread");
+    Utils.checkMainThread();
+
+    if (mBeaconBootstrap != null) {
+      mBeaconBootstrap.disable();
+      mBeaconBootstrap = null;
+    }
+
+    if (mBeaconManager != null) {
+      mBeaconManager.removeRangeNotifier(this);
+      mBeaconManager = null;
+    }
+
+    mRegions.clear();
+  }
+
   void onHostResume() {
     Log.d(TAG, "onHostResume");
     Utils.checkMainThread();
@@ -209,7 +226,7 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
 
   @Override
   public Context getApplicationContext() {
-    return mSocketManager.safeReactContext();
+    return mSocketManager.reactContext();
   }
 
   @Override

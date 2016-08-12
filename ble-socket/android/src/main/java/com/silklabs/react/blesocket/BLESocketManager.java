@@ -60,7 +60,7 @@ public class BLESocketManager {
 
   private static int sNextConnectionId = 0;
 
-  private static BLESocketManager sInstance;
+  private static BLESocketManager sLastInstance;
 
   private class Service extends BluetoothGattService {
 
@@ -389,14 +389,12 @@ public class BLESocketManager {
     }
   }
 
+  private final ReactApplicationContext mReactContext;
+  private final BLESocketManagerBridge mBridge;
   private final RegionMonitor mRegionMonitor;
   private final ServerCallback mServerCallback = new ServerCallback();
   private final ScanCallback mScanCallback = new ScanCallback();
   private final ClientCallback mClientCallback = new ClientCallback();
-
-  // These may be changed out from under us. Use the |safe*()| methods.
-  private ReactApplicationContext mUnsafeReactContext;
-  private BLESocketManagerBridge mUnsafeBridge;
 
   // May only be touched on the main thread.
   private BluetoothManager mBluetoothManager;
@@ -415,35 +413,26 @@ public class BLESocketManager {
   private Map<Integer, Connection> mConnectionsById = new HashMap<>();
   private Map<String, Connection> mConnectionsByAddress = new HashMap<>();
 
-  static BLESocketManager getOrCreate(final ReactApplicationContext reactContext,
-                                      final BLESocketManagerBridge bridge) {
-    if (sInstance == null) {
-      final BLESocketManager instance =
-        new BLESocketManager(reactContext, bridge);
-      Utils.check(sInstance == sInstance);
-    } else {
-      synchronized (sInstance) {
-        sInstance.mUnsafeReactContext = reactContext;
-        sInstance.mUnsafeBridge = bridge;
-        sInstance.postInitMainThread();
-      }
-    }
-    Utils.check(sInstance != null);
-    return sInstance;
-  }
-
-  private BLESocketManager(final ReactApplicationContext reactContext,
-                           final BLESocketManagerBridge bridge) {
+  BLESocketManager(final ReactApplicationContext reactContext,
+                   final BLESocketManagerBridge bridge) {
     Log.d(TAG, "constructor");
 
-    Utils.check(sInstance == null);
-    sInstance = this;
+    if (sLastInstance != null) {
+      final BLESocketManager instance = sLastInstance;
+      Utils.postToMainThread(new Runnable() {
+        @Override
+        public void run() {
+          instance.cleanupMainThread();
+        }
+      });
+    }
+    sLastInstance = this;
 
     Utils.check(reactContext != null);
-    mUnsafeReactContext = reactContext;
+    mReactContext = reactContext;
 
     Utils.check(bridge != null);
-    mUnsafeBridge = bridge;
+    mBridge = bridge;
 
     final Service configService = new Service(RegionMonitor.CONFIG_BEACON_UUID);
 
@@ -456,22 +445,6 @@ public class BLESocketManager {
     mRegionMonitor = new RegionMonitor(reactContext, this);
   }
 
-  ReactApplicationContext safeReactContext() {
-    ReactApplicationContext reactContext;
-    synchronized (sInstance) {
-      reactContext = mUnsafeReactContext;
-    }
-    return reactContext;
-  }
-
-  BLESocketManagerBridge safeBridge() {
-    BLESocketManagerBridge bridge;
-    synchronized (sInstance) {
-      bridge = mUnsafeBridge;
-    }
-    return bridge;
-  }
-
   private void postInitMainThread() {
     Utils.postToMainThread(new Runnable() {
       @Override
@@ -482,17 +455,11 @@ public class BLESocketManager {
   }
 
   private void initMainThread() {
+    Log.d(TAG, "initMainThread");
     Utils.checkMainThread();
 
-    if (mGattServer != null) {
-      mGattServer.close();
-      mGattServer = null;
-    }
-
-    final ReactApplicationContext context = safeReactContext();
-
     mBluetoothManager =
-      (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+      (BluetoothManager) mReactContext.getSystemService(Context.BLUETOOTH_SERVICE);
     Utils.check(mBluetoothManager != null);
 
     mBluetoothAdapter = mBluetoothManager.getAdapter();
@@ -506,11 +473,48 @@ public class BLESocketManager {
 
       final Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
       intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      context.startActivity(intent);
+      mReactContext.startActivity(intent);
       return;
     }
 
     Log.d(TAG, "Bluetooth is enabled");
+  }
+
+  private void cleanupMainThread() {
+    Log.d(TAG, "cleanupMainThread");
+    Utils.checkMainThread();
+
+    List<Connection> connections = new ArrayList<>(mConnectionsById.values());
+    for (Connection connection : connections) {
+      cleanupConnection(connection);
+    }
+
+    for (BluetoothGatt gatt : mPendingDevices.values()) {
+      gatt.disconnect();
+      gatt.close();
+    }
+
+    if (mGattServer != null) {
+      mGattServer.close();
+      mGattServer = null;
+    }
+
+    mRegionMonitor.cleanupMainThread();
+
+    mBluetoothManager = null;
+    mBluetoothAdapter = null;
+    mBluetoothScanner = null;
+    mServices.clear();
+    mInForeground = false;
+    mScanning = false;
+    mScanBlacklist.clear();
+    mScanWhitelist.clear();
+    mPendingDevices.clear();
+    mEnabled = false;
+    mUnconfiguredDevicesInRange = false;
+    mShouldScanForUnconfiguredDevices = false;
+    mConnectionsById.clear();
+    mConnectionsByAddress.clear();
   }
 
   private void updateScanningState() {
@@ -612,7 +616,7 @@ public class BLESocketManager {
     }
 
     mGattServer =
-      mBluetoothManager.openGattServer(safeReactContext(), mServerCallback);
+      mBluetoothManager.openGattServer(mReactContext, mServerCallback);
 
     for (ServiceInfo serviceInfo : mServices.values()) {
       if (!serviceInfo.mAdded && !serviceInfo.mAdding) {
@@ -687,7 +691,7 @@ public class BLESocketManager {
     mConnectionsByAddress.remove(connection.mAddress);
     connection.mPreparedWriteValue = null;
 
-    safeBridge().sendDisconnected(connection.mId);
+    mBridge.sendDisconnected(connection.mId);
 
     final BluetoothGatt gatt = connection.mGatt;
     final BluetoothGattCharacteristic characteristic =
@@ -771,7 +775,7 @@ public class BLESocketManager {
     Utils.check(!mPendingDevices.containsKey(address));
 
     BluetoothGatt gatt =
-      device.connectGatt(safeReactContext(), false, mClientCallback);
+      device.connectGatt(mReactContext, false, mClientCallback);
     mPendingDevices.put(address, gatt);
   }
 
@@ -1198,7 +1202,7 @@ public class BLESocketManager {
         connection.mPreparedWriteValue = newValue;
       }
     } else {
-      safeBridge().sendIncomingData(connection.mId, value);
+      mBridge.sendIncomingData(connection.mId, value);
     }
   }
 
@@ -1380,7 +1384,7 @@ public class BLESocketManager {
         Log.w(TAG, "Connection was already unsubscribed " + address);
       } else {
         connection.mSubscribed = true;
-        safeBridge().sendConnect(connection.mId);
+        mBridge.sendConnect(connection.mId);
       }
     } else if (valueIsUnsubscribe) {
       if (connection.mUnsubscribed) {
@@ -1389,7 +1393,7 @@ public class BLESocketManager {
         Log.w(TAG, "Connection is not yet subscribed " + address);
       } else {
         connection.mUnsubscribed = true;
-        safeBridge().sendEnd(connection.mId);
+        mBridge.sendEnd(connection.mId);
       }
     }
   }
@@ -1411,8 +1415,8 @@ public class BLESocketManager {
       Log.w(TAG, "No connection for " + address);
     } else {
       if (execute && connection.mPreparedWriteValue != null) {
-        safeBridge().sendIncomingData(connection.mId,
-                                      connection.mPreparedWriteValue);
+        mBridge.sendIncomingData(connection.mId,
+                                 connection.mPreparedWriteValue);
       }
       connection.mPreparedWriteValue = null;
     }
@@ -1657,7 +1661,7 @@ public class BLESocketManager {
     }
 
     if (status == 0) {
-      safeBridge().sendRssiUpdate(connection.mId, rssi);
+      mBridge.sendRssiUpdate(connection.mId, rssi);
     } else {
       Log.w(TAG, "Failed to read rssi for " + address + ", " + status);
     }
@@ -1672,6 +1676,10 @@ public class BLESocketManager {
     }, 500);
   }
 
+  ReactApplicationContext reactContext() {
+    return mReactContext;
+  }
+
   void setEnabled() {
     Log.d(TAG, "setEnabled");
     Utils.checkMainThread();
@@ -1683,14 +1691,12 @@ public class BLESocketManager {
 
     maybeAddServices();
 
-    final BLESocketManagerBridge bridge = safeBridge();
-
     if (mUnconfiguredDevicesInRange) {
       Log.i(TAG, "Informing JS that there are unconfigured devices in range");
-      bridge.sendUnconfiguredDevicesInRange(true);
+      mBridge.sendUnconfiguredDevicesInRange(true);
     } else {
       Log.i(TAG, "Informing JS that no unconfigured devices are in range");
-      bridge.sendUnconfiguredDevicesInRange(false);
+      mBridge.sendUnconfiguredDevicesInRange(false);
     }
 
     updateScanningState();
@@ -1958,7 +1964,7 @@ public class BLESocketManager {
       mUnconfiguredDevicesInRange = true;
       if (mEnabled) {
         Log.i(TAG, "Informing JS that there are unconfigured devices in range");
-        safeBridge().sendUnconfiguredDevicesInRange(true);
+        mBridge.sendUnconfiguredDevicesInRange(true);
       }
     }
 
@@ -1982,7 +1988,7 @@ public class BLESocketManager {
       mUnconfiguredDevicesInRange = false;
       if (mEnabled) {
         Log.i(TAG, "Informing JS that no unconfigured devices are in range");
-        safeBridge().sendUnconfiguredDevicesInRange(false);
+        mBridge.sendUnconfiguredDevicesInRange(false);
       }
     }
 

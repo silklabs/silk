@@ -129,6 +129,14 @@ public class MainActivity extends Activity {
               onWifiNetworksAvailable((ArrayList<Map<String, Object>>) message.get("wifiNetworks"));
               break;
             }
+            case "DEVICE_MESSAGE": {
+              Map<String, Object> payload = (Map<String, Object>) message.get("payload");
+              String command = (String) payload.get("command");
+              if (command.equals("echo")) {
+                onSuccess(payload.get("payload").toString());
+              }
+              break;
+            }
             default:
               onError("Unknown message type: " + messageType);
           }

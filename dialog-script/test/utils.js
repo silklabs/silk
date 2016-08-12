@@ -9,6 +9,7 @@ import * as mockLights from './mock/mock-silk-lights';
 import * as mockSonos from './mock/mock-silk-sonos';
 import * as mockStorage from './mock/dialog-storage';
 import * as mockVolume from './mock/mock-silk-volume';
+import * as mockSysutils from './mock/mock-silk-sysutils';
 
 import createLog from 'silk-log';
 const log = createLog(`dialog-script-test-utils`);
@@ -22,6 +23,7 @@ export function installMocks() {
   mock('silk-lights', mockLights);
   mock('silk-sonos', mockSonos);
   mock('silk-volume', mockVolume);
+  mock('silk-sysutils', mockSysutils);
 }
 
 export function uninstallMocks() {

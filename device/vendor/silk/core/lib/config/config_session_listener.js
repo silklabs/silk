@@ -371,10 +371,16 @@ export default class ConfigSessionListener extends SessionListenerBase {
       return;
     }
 
+    const currentState = this._state;
+
     // Set the 'error' state so that we ignore any further data.
     this._state = 'error';
 
-    this._deviceConfig.stopRetryingWifiConnection(new Error(`Disconnecting`));
+    // We don't need to cancel wifi connection if we're past 'complete'.
+    if (currentState !== 'complete' && currentState !== 'dismissed') {
+      this._deviceConfig.stopRetryingWifiConnection(new Error(`Disconnecting`));
+    }
+
     super.disconnect();
   }
 

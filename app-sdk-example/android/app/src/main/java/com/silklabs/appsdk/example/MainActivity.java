@@ -66,19 +66,19 @@ public class MainActivity extends Activity {
               Log.i(TAG, "Silk-sdk initialized");
               break;
             case "CLIENT_STATUS": {
+              String clientConnectionStatus = (String) message.get("clientConnectionStatus");
+              onNetworkStatusChanged(clientConnectionStatus);
+
+              String clientAuthStatus = (String) message.get("clientAuthStatus");
+              onAuthStatusChanged(clientAuthStatus);
+
               Object clientConnectionError = message.get("clientConnectionError");
-              if (clientConnectionError == null) {
-                String clientConnectionStatus = (String) message.get("clientConnectionStatus");
-                onNetworkStatusChanged(clientConnectionStatus);
-              } else {
+              if (clientConnectionError != null) {
                 onError((String) clientConnectionError);
               }
 
               Object clientAuthError = message.get("clientAuthError");
-              if (clientAuthError == null) {
-                String clientAuthStatus = (String) message.get("clientAuthStatus");
-                onAuthStatusChanged(clientAuthStatus);
-              } else {
+              if (clientAuthError != null) {
                 onError((String) clientAuthError);
               }
               break;
@@ -185,7 +185,7 @@ public class MainActivity extends Activity {
 
           ArrayList<Device> devicesList = new ArrayList<Device>();
           int configuredCount = 0;
-          int unConfiguredCount = 0;
+          int unconfiguredCount = 0;
 
           for (int i = 0; i < devices.size(); i++) {
             Map<String, Object> device = devices.get(i);
@@ -207,7 +207,10 @@ public class MainActivity extends Activity {
             } else {
               myDevice.deviceConfigId =
                 ((Double) device.get("deviceConfigId")).intValue();
-              unConfiguredCount++;
+              myDevice.deviceId = "Unconfigured " + myDevice.deviceConfigId;
+              if (!myDevice.deviceId.isEmpty()) {
+                unconfiguredCount++;
+              }
             }
             devicesList.add(myDevice);
           }
@@ -222,7 +225,7 @@ public class MainActivity extends Activity {
           } else {
             echoButton.setEnabled(false);
           }
-          if (unConfiguredCount > 0) {
+          if (unconfiguredCount > 0) {
             configureButton.setEnabled(true);
           } else {
             configureButton.setEnabled(false);
@@ -477,7 +480,11 @@ public class MainActivity extends Activity {
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_MESSAGE");
       message.put("deviceId", device.deviceId);
-      message.put("payload", "{\"message\": \"Love the app\"}");
+      message.put("payload",
+                  "{" +
+                    "\"command\": \"echo\", " +
+                    "\"payload\": {\"message\": \"Love the app\"}" +
+                  "}");
       mSilkService.postMessage(message);
     }
   };

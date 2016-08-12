@@ -1734,7 +1734,7 @@ public class BLESocketManager {
       boolean addServiceNow = true;
 
       for (ServiceInfo serviceInfo : mServices.values()) {
-        if (serviceInfo != thisServiceInfo && !serviceInfo.mAdded) {
+        if (serviceInfo.mAdding) {
           addServiceNow = false;
           break;
         }

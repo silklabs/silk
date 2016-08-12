@@ -8,6 +8,7 @@
 import invariant from 'assert';
 import {NativeModules, NetInfo} from 'react-native';
 import getSocketManager from 'silk-ble-socket';
+import createLog from 'silk-log';
 
 import DeviceSession from './ble/device_session';
 import * as actions from './store/actions';
@@ -17,10 +18,14 @@ import type {Store} from './store';
 
 const RTC_SIGNAL_INTERVAL_MS = 60000;
 
+const log = createLog('app-sdk-client');
+
 /**
  * Automation for app initialization and network connectivity.
  */
 function initNetworkAndAPI(store: Store<*>) {
+  log.debug('initNetworkAndAPI');
+
   let networkConnectivitySubscription = null;
   function checkNetworkConnectivity() {
     store.dispatch(actions.network.canReachServer());
@@ -35,7 +40,8 @@ function initNetworkAndAPI(store: Store<*>) {
       // Don't do anything until we've restored user config.
       return;
     }
-    if (oldConfig.curent &&
+    if (oldConfig.user &&
+        oldConfig.current &&
         config.current.serverUrl === oldConfig.current.serverUrl) {
       return;
     }
@@ -63,6 +69,8 @@ function initNetworkAndAPI(store: Store<*>) {
  * maintaining a list of them, connecting to them, etc.
  */
 function initRegisteredDevices(store: Store<*>) {
+  log.debug('initRegisteredDevices');
+
   // Ensure we have the latest list of devices, and are attempting to
   // signal them, when the circumstances call for it. For instance,
   // right after logging in, right after the phone's network
@@ -136,6 +144,8 @@ function initRegisteredDevices(store: Store<*>) {
  * Automation for the device setup process.
  */
 function initDeviceConfig(store: Store<*>) {
+  log.debug('initDeviceConfig');
+
   // Whenever the UI has provided the config settings for the device
   // currently being configured, register the device with the server.
   store.subscribeToPath('devices.configuring.config', (config) => {
@@ -178,10 +188,27 @@ function initDeviceConfig(store: Store<*>) {
  * Connect the BLE state machine in DeviceSession to the store.
  */
 function initBLE(store: Store<*>) {
-  store.subscribeToPath('auth.isAuthenticated', (isAuthenticated) => {
-    if (isAuthenticated) {
+  log.debug('initBLE');
+
+  store.subscribeToPath('auth.beaconUuid', (beaconUuid, oldBeaconUuid) => {
+    if (beaconUuid) {
+      invariant(store.getState().auth.isAuthenticated);
+      invariant(!oldBeaconUuid);
+
+      log.debug('Enabling BLESocketManager');
       NativeModules.BLESocketManager.start();
+
+      log.debug('Monitoring account uuid beacon', beaconUuid);
+      NativeModules.BLESocketManager.addBeaconUuid(beaconUuid);
     } else {
+      invariant(!store.getState().auth.isAuthenticated);
+
+      if (oldBeaconUuid) {
+        log.debug('No longer monitoring account uuid beacon', oldBeaconUuid);
+      }
+      NativeModules.BLESocketManager.removeAllBeaconUuids();
+
+      log.debug('Disabling BLESocketManager');
       NativeModules.BLESocketManager.stop();
     }
   });
@@ -216,6 +243,8 @@ function initBLE(store: Store<*>) {
 }
 
 export function init(store: Store<*>) {
+  log.debug('init');
+
   initNetworkAndAPI(store);
   initRegisteredDevices(store);
   initDeviceConfig(store);

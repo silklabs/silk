@@ -110,7 +110,14 @@ export default class CallManager extends Manager {
     });
 
     const websocket = new WebSocket(signedUrl);
-    await eventToPromise(websocket, 'open');
+    try {
+      await eventToPromise(websocket, 'open');
+    } catch (err) {
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new Error(err.stack || err.message || err.name || err.type);
+    }
     const websocketStream = new WebSocketDuplexStream(websocket, {
       log,
     });

@@ -8,7 +8,7 @@
  * @flow
  */
 import invariant from 'assert';
-import {AsyncStorage, NativeModules} from 'react-native';
+import {AsyncStorage} from 'react-native';
 import {AccessToken} from 'silk-api';
 
 import {
@@ -34,11 +34,11 @@ const REGISTERED_DEVICES_KEY = 'user.registeredDevices';
 function genHandleSuccessfulAuth(
   api: SilkApi,
   apiResult: SignInOutput | CreateAccountOutput
-): Promise<boolean> {
+): Promise<?string> {
   const {success, beaconUUID} = apiResult;
   if (!success) {
     api.accessToken = null;
-    return Promise.resolve(false);
+    return Promise.resolve(null);
   }
   api.metrics.start();
   const {accessToken} = api;
@@ -46,35 +46,28 @@ function genHandleSuccessfulAuth(
   const json = JSON.stringify({
     publicKey: accessToken.pub,
     privateKey: accessToken.priv,
+    beaconUuid: beaconUUID,
   });
-  return AsyncStorage.setItem(ACCESS_TOKEN_KEY, json).then(() => {
-    // TODO: enable this once we have the BLE code in the SDK.
-    // Even better, move this to a store subscriber so these actions
-    // don't have any side-effects.
-    if (NativeModules.BLESocketManager) {
-      NativeModules.BLESocketManager.addBeaconUuid(beaconUUID);
-    }
-    return true;
-  });
+  return AsyncStorage.setItem(ACCESS_TOKEN_KEY, json).then(() => beaconUUID);
 }
 
-function genRestore(state: StateWithApi): Promise<boolean> {
+function genRestore(state: StateWithApi): Promise<?string> {
   return AsyncStorage.getItem(ACCESS_TOKEN_KEY).then((accessTokenString) => {
     if (!accessTokenString) {
-      return false;
+      return null;
     }
     const {api} = state;
     invariant(api);
     const parsed = JSON.parse(accessTokenString);
     api.accessToken = new AccessToken(parsed.publicKey, parsed.privateKey);
-    return true;
+    return parsed.beaconUuid;
   });
 }
 
 async function genSignIn(
   state: StateWithApi,
   input: RawPasswordInput
-): Promise<boolean> {
+): Promise<?string> {
   // Always create a new token when we attempt a sign up...
   const {api} = state;
   invariant(api);
@@ -91,7 +84,7 @@ async function genSignIn(
 async function genCreateAccount(
   state: StateWithApi,
   input: RawPasswordInput
-): Promise<boolean> {
+): Promise<?string> {
   // Always create a new token when we attempt a sign up...
   const {api} = state;
   invariant(api);
@@ -112,11 +105,6 @@ function genSignOut(
   invariant(api);
   api.metrics.stop();
   api.accessToken = null;
-
-  // TODO: enable this once we have the BLE code in the SDK:
-  if (NativeModules.BLESocketManager) {
-    NativeModules.BLESocketManager.removeAllBeaconUuids();
-  }
 
   return AsyncStorage.multiRemove([
     ACCESS_TOKEN_KEY,

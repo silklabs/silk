@@ -43,8 +43,16 @@ export default class WebSocketDuplexStream extends Duplex {
   }
 
   _onError: () => void = (err) => {
-    this._log.error('Error in websocket stream', err, err.stack);
-    this.emit('error', err);
+    let error;
+    if (err instanceof Error) {
+      error = err;
+    } else {
+      error = new Error(err.stack || err.message || err.name || err.type);
+    }
+    this._log.error('Error in websocket stream: ',
+                    error.message,
+                    error.stack);
+    this.emit('error', error);
     this.emit('close');
   };
 

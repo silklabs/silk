@@ -103,10 +103,25 @@ function DEVICE_MESSAGE(
     return;
   }
 
-  const channel = peer.createChannel('dialog');
-  channel.emit('message', message.payload);
-}
+  let payload;
+  try {
+    payload = JSON.parse(message.payload);
+  } catch (err) {
+    emitter.postMessage({
+      type: 'DEVICE_MESSAGE_ERROR',
+      deviceId: message.deviceId,
+      error: 'PAYLOAD_IS_NOT_VALID_JSON',
+    });
+    return;
+  }
 
+  if (!payload || (typeof payload !== 'object')) {
+    payload = {payload};
+  }
+
+  const channel = peer.createChannel('app');
+  channel.emit('message', payload);
+}
 
 // TODO: send DEVICE_CONFIG_ERROR for incorrect wifi password (if we even can?)
 
@@ -118,7 +133,6 @@ export const messageHandlers = {
   DEVICE_REMOVE,
   DEVICE_MESSAGE,
 };
-
 
 export function init(store: SDKStore) {
   store.subscribeToPath('devices.registered', (newDevices, oldDevices) => {
@@ -135,7 +149,7 @@ export function init(store: SDKStore) {
       if (!oldPeer && newPeer) {
         // Newly established connection. Let's create the datachannel and
         // subscribe to it so we can forward incoming messages to native.
-        const channel = newPeer.createChannel('dialog');
+        const channel = newPeer.createChannel('app');
         channel.on('message', (payload) => {
           emitter.postMessage({
             type: 'DEVICE_MESSAGE',
@@ -144,7 +158,7 @@ export function init(store: SDKStore) {
           });
         });
       } else if (oldPeer && !newPeer) {
-        const channel = oldPeer.getChannel('dialog');
+        const channel = oldPeer.getChannel('app');
         if (channel) {
           channel.removeAllListeners();
         }

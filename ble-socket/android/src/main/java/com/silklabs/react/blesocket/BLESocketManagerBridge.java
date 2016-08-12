@@ -92,7 +92,7 @@ public class BLESocketManagerBridge
       }
 
       default: {
-        Log.w(TAG, "Unhndled broadcast action: '" + action + "'");
+        Log.w(TAG, "Unhandled broadcast action: '" + action + "'");
       }
     }
   }

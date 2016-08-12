@@ -46,20 +46,28 @@ export type AuthState = {
    * Whether we're successfully authenticated.
    */
   isAuthenticated: boolean;
+
+  /**
+   * The UUID for the account beacon when |isAuthenticated| is true. Null when
+   * |isAuthenticated| is false.
+   */
+  beaconUuid: ?string;
 };
 
 const initialState: AuthState = {
   restoreAttempted: false,
   currentOperation: null,
   isAuthenticated: false,
+  beaconUuid: null,
 };
 
 function handleAuthAction<T: AuthOperationType>(
   operationType: T,
   state: AuthState,
-  action: Action<T, *, boolean>
+  action: Action<T, *, ?string>
 ): AuthState {
   invariant(!state.isAuthenticated);
+  invariant(state.beaconUuid === null);
 
   if (action.requested) {
     return {
@@ -85,6 +93,7 @@ function handleAuthAction<T: AuthOperationType>(
     return {
       ...state,
       isAuthenticated: false,
+      beaconUuid: null,
       currentOperation: {
         type: operationType,
         inProgress: false,
@@ -93,7 +102,8 @@ function handleAuthAction<T: AuthOperationType>(
     };
   }
 
-  const isAuthenticated = action.payload;
+  const beaconUuid = action.payload;
+  const isAuthenticated = beaconUuid !== null;
   let currentOperation = null;
   if (!isAuthenticated) {
     currentOperation = {
@@ -107,12 +117,13 @@ function handleAuthAction<T: AuthOperationType>(
     ...state,
     currentOperation,
     isAuthenticated,
+    beaconUuid,
   };
 }
 
 function AUTH_RESTORE(
   state: AuthState,
-  action: Action<'AUTH_RESTORE', void, boolean>
+  action: Action<'AUTH_RESTORE', void, ?string>
 ): AuthState {
   const newState = handleAuthAction('AUTH_RESTORE', state, action);
   if (newState === state) {
@@ -130,21 +141,21 @@ function AUTH_RESTORE(
 
 function AUTH_SIGNIN(
   state: AuthState,
-  action: Action<'AUTH_SIGNIN', *, boolean>
+  action: Action<'AUTH_SIGNIN', *, ?string>
 ): AuthState {
   return handleAuthAction('AUTH_SIGNIN', state, action);
 }
 
 function AUTH_CREATEACCOUNT(
   state: AuthState,
-  action: Action<'AUTH_CREATEACCOUNT', *, boolean>
+  action: Action<'AUTH_CREATEACCOUNT', *, ?string>
 ): AuthState {
   return handleAuthAction('AUTH_CREATEACCOUNT', state, action);
 }
 
 function AUTH_RESETPASSWORD(
   state: AuthState,
-  action: Action<'AUTH_RESETPASSWORD', *, boolean>
+  action: Action<'AUTH_RESETPASSWORD', *, ?string>
 ): AuthState {
   return handleAuthAction('AUTH_RESETPASSWORD', state, action);
 }
@@ -163,6 +174,7 @@ function AUTH_SIGNOUT(
   return {
     ...state,
     isAuthenticated: false,
+    beaconUuid: null,
   };
 }
 

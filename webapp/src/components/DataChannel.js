@@ -16,8 +16,8 @@ import Cameras from '../libraries/Cameras';
 
 const log = createLog('datachannel');
 
-const AVAILABLE_CHANNEL_NAMES = ['dialog', 'diag', 'video'];
-const DEFAULT_CHANNEL_NAME = 'dialog';
+const AVAILABLE_CHANNEL_NAMES = ['app', 'diag', 'video'];
+const DEFAULT_CHANNEL_NAME = 'app';
 const DEFAULT_CHANNEL_MESSAGE = 'time';
 
 export default class DataChannel extends React.Component {
@@ -249,4 +249,3 @@ export default class DataChannel extends React.Component {
     );
   }
 }
-

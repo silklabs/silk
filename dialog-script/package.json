@@ -31,6 +31,7 @@
     "event-to-promise": "0.7.0",
     "mocha": "2.4.5",
     "mock-require": "1.3.0",
+    "moment": "2.14.1",
     "silk-babel-run": "^0.17.0",
     "webpack": "1.13.0"
   },

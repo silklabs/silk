@@ -71,7 +71,7 @@ const concurrentIntents: Set<string> = new Set([
   `getArtist`,
   `getCurrentSong`,
   `getStockPrice`,
-  `getWeather`,
+  `builtin.intent.weather.check_weather`,
   `pauseMusic`,
   `playMusic`,
   `resetZipcode`,
@@ -301,8 +301,9 @@ export default function*(
         sagaFunction = getStockPrice;
         args.push(entities);
         break;
-      case `getWeather`:
+      case `builtin.intent.weather.check_weather`:
         sagaFunction = getWeather;
+        args.push(entities);
         break;
       case `xkcd`:
         sagaFunction = xkcd;

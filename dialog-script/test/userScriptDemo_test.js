@@ -94,6 +94,18 @@ suite(`userScript`, () => {
     done();
   });
 
+  test(`Demo test - Test weather with city name`, async (done) => {
+    tester.speak(`How's the weather in San Diego?`);
+    await tester.listenCheck(`^It's currently`, `idle`);
+    done();
+  });
+
+  test(`Demo test - Test weather with zipcode`, async (done) => {
+    tester.speak(`How's the weather in 92131?`);
+    await tester.listenCheck(`^It's currently`, `idle`);
+    done();
+  });
+
   test(`Demo test - Test weather 1 - clear`, async (done) => {
     tester.speak(`clear zipcode`);
     await tester.listenCheck(`Cleared zipcode`, `idle`);

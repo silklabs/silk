@@ -5,6 +5,7 @@
 import createLog from 'silk-log/device';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
+import moment from 'moment';
 
 import {
   default as createEnvironment,
@@ -97,6 +98,7 @@ export function* sayCurrentTime(
   }
   const minutes = now.getMinutes();
   const am = now.getHours() < 12;
+  const dateString = moment(now).format('Do [of] MMMM');
 
   // TODO: More clever variations? (e.g. "half past 5").
   const timeString = `${hour} ${((minutes > 0 && minutes < 10) ? 'oh ' : '')}` +
@@ -110,7 +112,7 @@ export function* sayCurrentTime(
    * |sayCurrentTime| generator step-by-step. By using the |call| function we
    * can write unit tests that run the generator one step at a time.
    */
-  yield call(speak, `The time is ${timeString}`, `idle`);
+  yield call(speak, `The time is ${timeString} on ${dateString}`, `idle`);
 }
 
 /**

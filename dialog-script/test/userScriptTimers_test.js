@@ -48,5 +48,12 @@ suite(`userScript`, () => {
     done();
   });
 
+  test(`Timer test - start/cancel 1 day`, async (done) => {
+    tester.speak(`Start a timer for 1 day`);
+    await tester.listenCheck(`^Ok, I've started a timer`, `idle`);
+    tester.speak(`Cancel the timer for 1 day`);
+    await tester.listenCheck(`^Ok, I've canceled that timer`, `idle`);
+    done();
+  });
 
 });

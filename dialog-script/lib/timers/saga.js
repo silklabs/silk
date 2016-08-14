@@ -6,6 +6,7 @@ import createLog from 'silk-log/device';
 import {delay} from 'redux-saga';
 import {call, put, race, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
+import moment from 'moment';
 
 import {
   addTimer,
@@ -40,47 +41,15 @@ export function sortTimers(a: TimerState, b: TimerState): number {
              0;
 }
 
-export function timerEntityToMs(entity: Entity): ?number {
-  // `duration` encoding for builtin.datetime.duration
-  //   PT1H     - 1 hour
-  //   PT1M     - 1 minute
-  //   PT1H30M  - 1 hour 30 min
-  //   PT100S   - 100 seconds
-  //   PT10M10S - 10 minute 10 seconds
-
-  // Not supported for timers
-  //   P1D - 1 day
-  //   P1W - 1 week
-  //   P1M - 1 month
-  //   P1Y - 1 year
-
+export function durationEntityToMs(entity: Entity): ?number {
   if (entity.type !== 'builtin.datetime.duration' ||
       entity.resolution === undefined ||
-      entity.resolution.duration === undefined ||
-      entity.resolution.duration.substr(0, 2) !== 'PT') {
+      entity.resolution.duration === undefined) {
     return null;
   }
 
-  let duration = entity.resolution.duration.substr(2);
-  let durationMs = 0;
-  let match;
-  while (match = duration.match(/^(\d+)([SMH])/)) { // eslint-disable-line no-cond-assign
-    log.debug(`duration: ${match[1]} ${match[2]}`);
-    switch (match[2]) {
-    case 'S':
-      durationMs += match[1] * 1000;
-      break;
-    case 'M':
-      durationMs += match[1] * 1000 * 60;
-      break;
-    case 'H':
-      durationMs += match[1] * 1000 * 60 * 60;
-      break;
-    default:
-      return null;
-    }
-    duration = duration.substring(match[0].length);
-  }
+  let duration = moment.duration(entity.resolution.duration);
+  let durationMs = duration.asMilliseconds();
   return (durationMs === 0 ? null : durationMs);
 }
 
@@ -221,7 +190,7 @@ export default function* modifyTimers(
   // Attempt to understand the amount of time the user gave us.
   let durationMs: ?number = null;
   for (let entity of entities) {
-    durationMs = timerEntityToMs(entity);
+    durationMs = durationEntityToMs(entity);
     if (durationMs !== null) {
       break;
     }

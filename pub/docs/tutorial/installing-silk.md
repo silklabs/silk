@@ -29,7 +29,7 @@ So after downloading the compressed file that ends with `.tar.gz` enter respecti
 ```bash
 target.tar.gz
 cd target
-./flash-all.sh
+./flash.sh
 ```
 
 And `silk-mako-nightly-20160504150933` can be something else depending on your download type/date and platform target. Just make sure to match the name of the downloaded file with what you put after the `cd` command.
@@ -41,5 +41,5 @@ If you've got Silk already installed in your phone, make sure the device is up a
 ```bash
 target.tar.gz
 cd target
-./flash-all.sh
+./flash.sh
 ```

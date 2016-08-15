@@ -89,7 +89,15 @@ export default class TextToIntention {
   }
 
   _fetchIntention(text: string, id: string, key: string): Promise<Intention> {
-    return new Promise((resolve, reject) => {
+    let onError = (resolve, error) => {
+      log.error(error);
+      resolve({
+        intent: UNKNOWN_INTENT,
+        entities: [],
+      });
+    };
+
+    return new Promise(resolve => {
       const data = urlEncode({
         id,
         'subscription-key': key,
@@ -109,7 +117,7 @@ export default class TextToIntention {
 
       const req = https.request(opts, (res) => {
         let json = '';
-        res.once(`error`, (error) => reject(error));
+        res.once(`error`, (error) => onError(resolve, error));
         res.on('data', (chunk) => {
           json += chunk;
         });
@@ -123,19 +131,18 @@ export default class TextToIntention {
             try {
               intent = this._parseResponse(json);
             } catch (error) {
-              reject(error);
+              onError(resolve, error);
               return;
             }
             resolve(intent);
           } else {
             let errorText = `Request failed with status code ${res.statusCode}`;
-            log.warn(errorText);
-            reject(new Error(errorText));
+            onError(resolve, new Error(errorText));
           }
         });
       });
 
-      req.once(`error`, (error) => reject(error));
+      req.once(`error`, (error) => onError(resolve, error));
       req.write(data);
       req.end();
     });

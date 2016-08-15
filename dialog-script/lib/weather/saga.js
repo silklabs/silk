@@ -9,8 +9,8 @@ import invariant from 'assert';
 
 import type {Environment} from '../environment';
 import {urlEncodeParams, encodeNumber} from '../utils';
-
-import {updateZipcode, clearZipcode} from './actions';
+import type {Entities} from 'silk-dialog-engine';
+import {updateLocation, clearLocation} from './actions';
 
 const log = createLog(`script-generic-weather-saga`);
 
@@ -22,16 +22,29 @@ export type CurrentWeather = {
   location: string,
 };
 
-function fetchWeather(zipcode: number): Promise<CurrentWeather> {
-  log.info(`Getting current weather for zipcode ${zipcode}`);
+function fetchWeather(location: number | string): Promise<CurrentWeather> {
+  log.info(`Getting current weather for ${location}`);
 
   return new Promise((resolve, reject) => {
     //http://api.openweathermap.org/data/2.5/weather?units=imperial&zip=94103,us&appid=54472ed7a293dd7d1b57da42b163030f
-    const params = urlEncodeParams({
+
+    let params = {
       'units': 'imperial',
-      'zip': `${zipcode},us`,
       'appid': '54472ed7a293dd7d1b57da42b163030f',
-    });
+    };
+    // Assume that the location is a zipcode if it is a number or else city name
+    if (isNaN(location)) {
+      params = {
+        ...params,
+        'q': `${location},us`,
+      };
+    } else {
+      params = {
+        ...params,
+        'zip': `${location},us`,
+      };
+    }
+    params = urlEncodeParams(params);
     const opts = {
       hostname: 'api.openweathermap.org',
       path: `/data/2.5/weather?${params}`,
@@ -94,7 +107,7 @@ function fetchWeather(zipcode: number): Promise<CurrentWeather> {
   });
 }
 
-export function* resetZipcode(
+export function* resetLocation(
   environment: Environment,
 ): Generator<Object, void, any> {
   invariant(environment);
@@ -102,13 +115,14 @@ export function* resetZipcode(
   const {speak} = environment;
   invariant(speak);
 
-  log.info(`Starting reset zipcode saga`);
-  yield put(clearZipcode());
-  yield call(speak, `Cleared zipcode`, `idle`);
+  log.info(`Starting reset location saga`);
+  yield put(clearLocation());
+  yield call(speak, `Cleared location`, `idle`);
 }
 
 export function* getWeather(
   environment: Environment,
+  entities: Entities,
 ): Generator<Object, void, any> {
   invariant(environment);
 
@@ -118,46 +132,63 @@ export function* getWeather(
 
   log.info(`Starting weather saga`);
 
-  const state = yield select(getWeatherState);
-  invariant(state);
-
-  let zipcode = state.zipcode;
-  if (!zipcode) {
-    log.info(`No zipcode found. Ask user for their zipcode`);
-    for (let retryCount = 0; retryCount <= 2; retryCount++) {
-      const intro = retryCount ? `Sorry, I didn't get that. ` : '';
-      const query = 'What is your zipcode?';
-
-      yield call(speak, intro + query, `waiting`);
-
-      let event = yield take(micChannel);
-      invariant(event);
-
-      const newZipcode = event.text;
-      if (!newZipcode.match(/\d{5}/)) {
-        continue;
+  // Search for entity that provides the location information. Location can either
+  // be a city name or a zipcode.
+  let location = null;
+  if (entities) {
+    entities.forEach(entity => {
+      if (entity.type === 'builtin.weather.absolute_location' &&
+          entity.entity && entity.entity.length !== 0) {
+        location = entity.entity;
       }
+    });
+  }
 
-      log.info(`Got new zipcode ${newZipcode}`);
-      yield put(updateZipcode(newZipcode));
-      zipcode = newZipcode;
-      break;
+  if (location) {
+    // Store the new location
+    yield put(updateLocation(location));
+  } else {
+    // Check if either location is stored or ask the user for the location
+    const state = yield select(getWeatherState);
+    invariant(state);
+
+    location = state.location;
+    if (!location) { // If no location is stored asked the user for location
+      log.info(`No location found. Ask user for their location`);
+      for (let retryCount = 0; retryCount <= 2; retryCount++) {
+        const intro = retryCount ? `Sorry, I didn't get that. ` : '';
+        const query = 'What is your city or zipcode?';
+
+        yield call(speak, intro + query, `waiting`);
+
+        let event = yield take(micChannel);
+        invariant(event);
+
+        const newLocation = event.text;
+
+        log.info(`Got new location ${newLocation}`);
+        yield put(updateLocation(newLocation));
+        location = newLocation;
+        break;
+      }
     }
   }
 
-  if (!zipcode) {
+  if (!location) {
     yield call(speak, `Sorry, I'm not understanding. Please try again`, `idle`);
     return;
   }
 
   let weather;
   try {
-    weather = yield call(fetchWeather, zipcode);
+    weather = yield call(fetchWeather, location);
     invariant(weather);
     log.debug(weather);
   } catch (err) {
     log.error(`${err}`);
-    yield call(speak, `Sorry, I'm unable to get the weather for ${encodeNumber(zipcode)}`, `idle`);
+    const locationString = isNaN(location) ? location :
+        encodeNumber(parseInt(location));
+    yield call(speak, `Sorry, I'm unable to get the weather for ${locationString}`, `idle`);
     return;
   }
 

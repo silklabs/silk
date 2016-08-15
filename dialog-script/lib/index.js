@@ -181,6 +181,11 @@ dialogEngine.configure({
         id: `77362118-061a-4713-adac-ed0498342935`,
         key: `572e250e318e428d893cb19279d22a87`,
       },
+      {
+        // 'Cortana prebuilt' Luis App
+        id: `c413b2ef-382c-45bd-8ff0-f76d60e2a821`,
+        key: `572e250e318e428d893cb19279d22a87`,
+      },
     ],
   },
   speechOptions,

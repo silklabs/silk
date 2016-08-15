@@ -170,7 +170,8 @@ export default class TextToIntention {
         let intention;
         for (intention of intentions) {
           if (intention.intent !== UNKNOWN_INTENT &&
-              intention.intent !== 'None') {
+              intention.intent !== 'None' &&
+              intention.intent !== 'builtin.intent.none') {
             break;
           }
         }
@@ -187,7 +188,8 @@ export default class TextToIntention {
 
     let topMatchIntent: ?IntentResponse = null;
     response.intents.forEach((intentResponse: IntentResponse) => {
-      if (intentResponse.score >= 0.35 &&
+      // builtins have undefined scores. Consider no score as high score
+      if (intentResponse.score === undefined || intentResponse.score >= 0.35 &&
           (!topMatchIntent || topMatchIntent.score < intentResponse.score)) {
         topMatchIntent = intentResponse;
       }

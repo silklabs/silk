@@ -24,7 +24,7 @@ import {
 } from './ui/saga';
 import {getStockPrice} from './stocks/saga';
 import {xkcd} from './xkcd/saga';
-import {getWeather, resetZipcode} from './weather/saga';
+import {getWeather, resetLocation} from './weather/saga';
 import {pauseMusic, playMusic, getCurrentSong, getArtist} from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
 
@@ -71,10 +71,10 @@ const concurrentIntents: Set<string> = new Set([
   `getArtist`,
   `getCurrentSong`,
   `getStockPrice`,
-  `getWeather`,
+  `builtin.intent.weather.check_weather`,
   `pauseMusic`,
   `playMusic`,
-  `resetZipcode`,
+  `resetLocation`,
   `xkcd`,
   `setNightlightColor`,
   `setUiMode`,
@@ -301,15 +301,16 @@ export default function*(
         sagaFunction = getStockPrice;
         args.push(entities);
         break;
-      case `getWeather`:
+      case `builtin.intent.weather.check_weather`:
         sagaFunction = getWeather;
+        args.push(entities);
         break;
       case `xkcd`:
         sagaFunction = xkcd;
         args.push(entities);
         break;
-      case `resetZipcode`:
-        sagaFunction = resetZipcode;
+      case `resetLocation`:
+        sagaFunction = resetLocation;
         break;
       case `playMusic`:
         sagaFunction = playMusic;

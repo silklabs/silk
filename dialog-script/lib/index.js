@@ -172,9 +172,9 @@ dialogEngine.configure({
   luisOptions: {
     apps: [
       {
-        // Baby Luis app
-        id: `1049f242-aa89-4ed2-ac4b-5861754818dc`,
-        key: `0e6a5c9f33a14422ad6f1bad7c77926e`,
+        // 'Baby Feeding' Luis app - engineering@silklabs.com
+        id: `6464166b-c589-439f-8b2e-a84418d974c1`,
+        key: `572e250e318e428d893cb19279d22a87`,
       },
       {
         // 'Silk Demo' Luis App - engineering@silklabs.com

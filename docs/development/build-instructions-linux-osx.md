@@ -113,7 +113,7 @@ then
 ```bash
 occam-lmy47v-factory-b0c4eb3d.tgz
 cd occam-lmy47v
-./flash-all.sh
+./flash.sh
 ```
 
 For detailed instructions on Flashing a stock rom, head out to the [official Google Developers page](https://developers.google.com/android/nexus/images).

@@ -24,6 +24,7 @@ WHITELIST=$(cat <<-EOF
   azure-storage
   babeldeps
   ble-socket
+  bsp-version
   cam
   config
   crypto

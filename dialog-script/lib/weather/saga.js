@@ -144,8 +144,11 @@ export function* getWeather(
     });
   }
 
-  // Check if either location is stored or ask the user for the location
-  if (!location) {
+  if (location) {
+    // Store the new location
+    yield put(updateLocation(location));
+  } else {
+    // Check if either location is stored or ask the user for the location
     const state = yield select(getWeatherState);
     invariant(state);
 

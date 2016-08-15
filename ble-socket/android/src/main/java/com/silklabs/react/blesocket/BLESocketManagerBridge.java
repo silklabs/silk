@@ -139,11 +139,11 @@ public class BLESocketManagerBridge
     sendEvent("silk-blesocketmanager-unconfigured-devices", params);
   }
 
-  void sendDevicesBeaconing(final String serviceUuid,
+  void sendDevicesBeaconing(final UUID serviceUuid,
                             final int deviceNumber,
                             final boolean beaconing) {
     WritableMap params = Arguments.createMap();
-    params.putString("serviceUuid", serviceUuid);
+    params.putString("serviceUuid", serviceUuid.toString());
     params.putInt("deviceNumber", deviceNumber);
     params.putBoolean("beaconing", beaconing);
     sendEvent("silk-blesocketmanager-device-beaconing", params);

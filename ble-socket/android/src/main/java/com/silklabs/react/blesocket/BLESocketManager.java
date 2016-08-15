@@ -1998,6 +1998,28 @@ public class BLESocketManager {
   void regionBeacons(UUID uuid, Set<Integer> deviceNumbers) {
     Log.d(TAG, "regionExited: " + uuid);
     Utils.checkMainThread();
+
+    final ServiceInfo serviceInfo = mServices.get(uuid);
+    if (serviceInfo == null) {
+      Log.d(TAG, "No longer monitoring region");
+      return;
+    }
+
+    Set<Integer> foundDeviceNumbers = new HashSet<>(deviceNumbers);
+    foundDeviceNumbers.removeAll(serviceInfo.mDeviceNumbersBeaconing);
+
+    Set<Integer> lostDeviceNumbers = serviceInfo.mDeviceNumbersBeaconing;
+    lostDeviceNumbers.removeAll(deviceNumbers);
+
+    serviceInfo.mDeviceNumbersBeaconing = deviceNumbers;
+
+    for (Integer deviceNumber : foundDeviceNumbers) {
+      mBridge.sendDevicesBeaconing(uuid, deviceNumber, true);
+    }
+
+    for (Integer deviceNumber : lostDeviceNumbers) {
+      mBridge.sendDevicesBeaconing(uuid, deviceNumber, false);
+    }
   }
 
 }

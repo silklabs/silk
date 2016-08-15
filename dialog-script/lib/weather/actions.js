@@ -2,35 +2,35 @@
  * @flow
  */
 
-export const TYPE_UPDATE_ZIPCODE = 'WEATHER_UPDATE_ZIPCODE';
-export const TYPE_RESET_ZIPCODE = 'WEATHER_RESET_ZIPCODE';
+export const TYPE_UPDATE_LOCATION = 'WEATHER_UPDATE_LOCATION';
+export const TYPE_RESET_LOCATION = 'WEATHER_RESET_LOCATION';
 
 // Flow needs these as string literals so we can't use the consts above... Grr.
 export type Action =
   {
-    type: 'WEATHER_UPDATE_ZIPCODE',
+    type: 'WEATHER_UPDATE_LOCATION',
     payload: {
-      zipcode: number;
+      location: number | string;
     };
   } | {
-    type: 'WEATHER_RESET_ZIPCODE'
+    type: 'WEATHER_RESET_LOCATION'
   }
 ;
 
-// Creates an action that updates the zipcode
-export function updateZipcode(zipcode: number): Action {
+// Creates an action that updates the location
+export function updateLocation(location: number | string): Action {
   return {
-    type: TYPE_UPDATE_ZIPCODE,
+    type: TYPE_UPDATE_LOCATION,
     payload: {
-      zipcode,
+      location,
     },
   };
 }
 
-// Creates an action that resets the zipcode
-export function clearZipcode(): Action {
+// Creates an action that resets the location
+export function clearLocation(): Action {
   return {
-    type: TYPE_RESET_ZIPCODE,
+    type: TYPE_RESET_LOCATION,
   };
 }
 

@@ -10,7 +10,7 @@ import invariant from 'assert';
 import type {Environment} from '../environment';
 import {urlEncodeParams, encodeNumber} from '../utils';
 import type {Entities} from 'silk-dialog-engine';
-import {updateZipcode, clearZipcode} from './actions';
+import {updateLocation, clearLocation} from './actions';
 
 const log = createLog(`script-generic-weather-saga`);
 
@@ -107,7 +107,7 @@ function fetchWeather(location: number | string): Promise<CurrentWeather> {
   });
 }
 
-export function* resetZipcode(
+export function* resetLocation(
   environment: Environment,
 ): Generator<Object, void, any> {
   invariant(environment);
@@ -115,9 +115,9 @@ export function* resetZipcode(
   const {speak} = environment;
   invariant(speak);
 
-  log.info(`Starting reset zipcode saga`);
-  yield put(clearZipcode());
-  yield call(speak, `Cleared zipcode`, `idle`);
+  log.info(`Starting reset location saga`);
+  yield put(clearLocation());
+  yield call(speak, `Cleared location`, `idle`);
 }
 
 export function* getWeather(
@@ -144,31 +144,28 @@ export function* getWeather(
     });
   }
 
-  // Get the zipcode if location is not available
+  // Check if either location is stored or ask the user for the location
   if (!location) {
     const state = yield select(getWeatherState);
     invariant(state);
 
-    location = state.zipcode;
-    if (!location) { // If no zipcode is stored asked the user for zipcode
-      log.info(`No location found. Ask user for their zipcode`);
+    location = state.location;
+    if (!location) { // If no location is stored asked the user for location
+      log.info(`No location found. Ask user for their location`);
       for (let retryCount = 0; retryCount <= 2; retryCount++) {
         const intro = retryCount ? `Sorry, I didn't get that. ` : '';
-        const query = 'What is your zipcode?';
+        const query = 'What is your city or zipcode?';
 
         yield call(speak, intro + query, `waiting`);
 
         let event = yield take(micChannel);
         invariant(event);
 
-        const newZipcode = event.text;
-        if (!newZipcode.match(/\d{5}/)) {
-          continue;
-        }
+        const newLocation = event.text;
 
-        log.info(`Got new zipcode ${newZipcode}`);
-        yield put(updateZipcode(newZipcode));
-        location = newZipcode;
+        log.info(`Got new location ${newLocation}`);
+        yield put(updateLocation(newLocation));
+        location = newLocation;
         break;
       }
     }

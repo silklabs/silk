@@ -18,8 +18,9 @@ public class Device {
 
   @Override
   public String toString() {
-    String label = (this.deviceConfigStatus.equals("UNCONFIGURED")) ?
-      ("* " + Integer.toString(this.deviceConfigId)) : this.deviceId;
+    String label = this.deviceConfigStatus.equals("UNCONFIGURED") ?
+      "Unconfigured Device " + this.deviceConfigId :
+      this.deviceId;
     return label;
   }
 

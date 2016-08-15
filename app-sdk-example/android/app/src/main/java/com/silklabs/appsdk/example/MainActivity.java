@@ -222,7 +222,6 @@ public class MainActivity extends Activity {
             if (!"CONFIGURED".equals(myDevice.deviceConfigStatus)) {
               myDevice.deviceConfigId =
                 ((Double) device.get("deviceConfigId")).intValue();
-              myDevice.deviceId = "Unconfigured device " + myDevice.deviceConfigId;
             }
             devicesList.add(myDevice);
           }
@@ -346,6 +345,7 @@ public class MainActivity extends Activity {
     View viewInflated = LayoutInflater.from(getBaseContext()).inflate(R.layout.wifi,
       (ViewGroup) findViewById(android.R.id.content), false);
     ssidListSpinner = (Spinner) viewInflated.findViewById(R.id.ssidList);
+    ssidListSpinner.setOnItemSelectedListener(ssidSelectedListener);
     final EditText passwordEditText = (EditText) viewInflated.findViewById(R.id.wifiPasswordText);
 
     wifiDialog.setView(viewInflated);
@@ -515,6 +515,8 @@ public class MainActivity extends Activity {
       mSilkService.postMessage(message);
 
       wifiDialog.show();
+
+      wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
     }
   };
 
@@ -578,6 +580,11 @@ public class MainActivity extends Activity {
       Device device = (Device) adapter.getItem(position);
       if(device.toString().equals(value)) {
         deviceListSpinner.setSelection(position);
+
+        final Button button = wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (button != null) {
+          button.setEnabled(device.deviceId != null);
+        }
         return;
       }
     }
@@ -598,6 +605,24 @@ public class MainActivity extends Activity {
       }
     }
   }
+
+  /**
+   * Display selected device status
+   */
+  private AdapterView.OnItemSelectedListener ssidSelectedListener = new AdapterView.OnItemSelectedListener() {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+      final Device device = (Device) deviceListSpinner.getSelectedItem();
+      final Button button = wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+      button.setEnabled(device.deviceId != null);
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+      final Button button = wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+      button.setEnabled(false);
+    }
+  };
 
   /**
    * Display error messge dialog

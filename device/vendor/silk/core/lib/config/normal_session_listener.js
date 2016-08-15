@@ -42,9 +42,14 @@ export default class NormalSessionListener extends SessionListenerBase {
 
     super(deviceConfig, socketSession, SCHEMA);
 
+    const config = this._deviceConfig._config;
+    invariant(config);
+    invariant(config.accountDeviceNumber);
+
     this._send({
       name: `registered`,
       deviceId: this._deviceConfig._deviceId,
+      accountDeviceNumber: config.accountDeviceNumber,
     });
 
     if (this._deviceConfig._sessionErrorCode) {

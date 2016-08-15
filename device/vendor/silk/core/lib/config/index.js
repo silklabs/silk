@@ -349,7 +349,9 @@ export class DeviceConfig extends EventEmitter {
     invariant(!this._wifiAbortConnection);
     invariant(this._configuringSocketSessionListener);
 
-    this._configuringSocketSessionListener.sendComplete();
+    const {accountDeviceNumber} = this._config;
+
+    this._configuringSocketSessionListener.sendComplete(accountDeviceNumber);
 
     log.info('Configured');
     this.emit('configured');

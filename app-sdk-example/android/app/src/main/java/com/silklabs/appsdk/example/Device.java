@@ -5,7 +5,8 @@ import java.lang.StringBuilder;
 public class Device {
   public String deviceType;
   public String deviceId;
-  public int deviceConfigId = -1;
+  public Integer accountDeviceNumber;
+  public Integer deviceConfigId;
   public String deviceConfigStatus;
   public String wifiConnectionStatus;
   public String wifiConnectionError;
@@ -28,6 +29,7 @@ public class Device {
     StringBuilder builder = new StringBuilder();
     builder.append("deviceType: ").append(deviceType).append("\n");
     builder.append("deviceId: ").append(deviceId).append("\n");
+    builder.append("accountDeviceNumber: ").append(accountDeviceNumber).append("\n");
     builder.append("deviceConfigId: ").append(deviceConfigId).append("\n");
     builder.append("deviceConfigStatus: ").append(deviceConfigStatus).append("\n");
     builder.append("wifiConnectionStatus: ").append(wifiConnectionStatus).append("\n");

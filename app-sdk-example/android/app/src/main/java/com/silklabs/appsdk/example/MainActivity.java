@@ -119,13 +119,14 @@ public class MainActivity extends Activity {
               }
 
               Device device = (Device) deviceListSpinner.getSelectedItem();
-              int deviceConfigId =  device.deviceConfigId;
+              Integer deviceConfigId =  device.deviceConfigId;
 
-              int wifiDeviceConfigId =
+              Integer wifiDeviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
               Log.d(TAG, "Received wifi network message for " + wifiDeviceConfigId);
 
-              if (deviceConfigId != wifiDeviceConfigId) {
+              if (deviceConfigId == null ||
+                  !deviceConfigId.equals(wifiDeviceConfigId)) {
                 return;
               }
 
@@ -219,7 +220,10 @@ public class MainActivity extends Activity {
             myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
             myDevice.rtcConnectionError = (String) device.get("rtcConnectionError");
 
-            if (!"CONFIGURED".equals(myDevice.deviceConfigStatus)) {
+            if (myDevice.deviceConfigStatus.equals("CONFIGURED")) {
+              myDevice.accountDeviceNumber =
+                ((Double) device.get("accountDeviceNumber")).intValue();
+            } else {
               myDevice.deviceConfigId =
                 ((Double) device.get("deviceConfigId")).intValue();
             }
@@ -552,12 +556,7 @@ public class MainActivity extends Activity {
         echoButton.setEnabled(false);
       }
 
-      if (device.deviceConfigId != -1) {
-        configureButton.setEnabled(true);
-      } else {
-        configureButton.setEnabled(false);
-      }
-
+      configureButton.setEnabled(device.deviceConfigId != null);
       deviceStatusTextView.setText(device.status());
     }
 

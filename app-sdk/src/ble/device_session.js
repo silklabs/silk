@@ -64,6 +64,7 @@ const SCHEMA = {
   registered: Joi.object().keys({
     name: Joi.string().equal(`registered`).required(),
     deviceId: Joi.string().lowercase().trim().length(64).hex().required(),
+    accountDeviceNumber: Joi.number().integer().required(),
   }).required(),
 
   status: Joi.object().keys({
@@ -102,6 +103,7 @@ const SCHEMA = {
 
   complete: Joi.object().keys({
     name: Joi.string().equal(`complete`).required(),
+    accountDeviceNumber: Joi.number().integer().required(),
   }).required(),
 };
 
@@ -134,6 +136,7 @@ export default class DeviceSession extends RobustEventEmitter {
 
   _isRegistered: boolean = false;
   _deviceId: ?string = null;
+  _accountDeviceNumber: ?number = null;
   _status: ?DeviceStatus = null;
   _wifiNetworks: ?Array<DeviceWifiNetwork> = null;
 
@@ -329,6 +332,7 @@ export default class DeviceSession extends RobustEventEmitter {
 
       this._isRegistered = true;
       this._deviceId = data.deviceId;
+      this._accountDeviceNumber = data.accountDeviceNumber;
       this._state = DeviceSession.STATE_REGISTERED;
       this._emitConnect();
       this._emitRegistered();
@@ -425,6 +429,7 @@ export default class DeviceSession extends RobustEventEmitter {
 
       this._state = DeviceSession.STATE_REGISTERED;
       this._isRegistered = true;
+      this._accountDeviceNumber = data.accountDeviceNumber;
       this._emitRegistered();
       return;
 
@@ -482,6 +487,10 @@ export default class DeviceSession extends RobustEventEmitter {
 
   get deviceId(): ?string {
     return this._deviceId;
+  }
+
+  get accountDeviceNumber(): ?number {
+    return this._accountDeviceNumber;
   }
 
   get secret(): ?DeviceSecret {

@@ -24,6 +24,7 @@ import type {
 export type RegisteredDevice = {
   deviceId: string;
   publicKey: string;
+  accountDeviceNumber: number;
   name: string;
   rtc: {
     connecting: boolean,
@@ -196,7 +197,8 @@ function DEVICE_BLE_CONNECTED(
     };
   }
 
-  const {deviceId} = session;
+  const {accountDeviceNumber, deviceId} = session;
+  invariant(accountDeviceNumber);
   invariant(deviceId);
   if (!state.registered || !state.registered.has(deviceId)) {
     return state;
@@ -207,6 +209,7 @@ function DEVICE_BLE_CONNECTED(
   invariant(!device.ble.session);
   registered.set(deviceId, {
     ...device,
+    accountDeviceNumber,
     ble: {
       ...device.ble,
       session,
@@ -445,11 +448,12 @@ function DEVICE_CONFIG_ERROR(
 
 function DEVICE_CONFIG_FINISH(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIG_FINISH', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIG_FINISH', void>
 ): DevicesState {
-  const {configuring} = state;
+  const {configuring, unconfigured} = state;
   invariant(configuring);
   invariant(configuring.registered || configuring.error);
+  invariant(unconfigured.has(configuring.socketId));
   if (configuring.error) {
     return {
       ...state,
@@ -457,8 +461,14 @@ function DEVICE_CONFIG_FINISH(
     };
   }
 
+  const session = unconfigured.get(configuring.socketId);
+  invariant(session);
+
   invariant(configuring.secret);
   invariant(configuring.serverRegistrationResult);
+
+  const accountDeviceNumber = session.accountDeviceNumber;
+  invariant(accountDeviceNumber);
 
   const {deviceId} = configuring.secret;
   const registered = new Map(state.registered);
@@ -466,8 +476,10 @@ function DEVICE_CONFIG_FINISH(
     deviceId,
     publicKey: deviceId,
     name: configuring.serverRegistrationResult.name,
+    accountDeviceNumber,
     ...registeredDeviceTemplate,
   });
+
   return {
     ...state,
     configuring: null,

@@ -171,6 +171,7 @@ function DEVICE_REGISTERED_FETCH(
         type: 'DEVICE_STATUS',
         deviceType: '',
         deviceId: device.deviceId,
+        accountDeviceNumber: device.accountDeviceNumber,
         deviceConfigId: null,
         deviceConfigStatus: 'CONFIGURED',
         wifiConnectionStatus: null,
@@ -237,6 +238,7 @@ function DEVICE_BLE_CONNECTED(
       type: 'DEVICE_STATUS',
       deviceType: '',
       deviceId: null,
+      accountDeviceNumber: null,
       deviceConfigId: session.socketId,
       deviceConfigStatus: 'UNCONFIGURED',
       wifiConnectionStatus: 'NOT_CONNECTED',
@@ -414,11 +416,15 @@ function DEVICE_CONFIG_REGISTERED(
     return state;
   }
 
+  const {accountDeviceNumber} = session;
+  invariant(accountDeviceNumber);
+
   // Update the device's configuration status now that's it's registered.
   devices = devices.slice();
   devices[index] = {
     ...devices[index],
     deviceConfigStatus: 'CONFIGURED',
+    accountDeviceNumber,
   };
   return {
     ...state,

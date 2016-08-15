@@ -613,7 +613,7 @@ public class MainActivity extends Activity {
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
       final Device device = (Device) deviceListSpinner.getSelectedItem();
       final Button button = wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-      button.setEnabled(device.deviceId != null);
+      button.setEnabled(device != null && device.deviceId != null);
     }
 
     @Override

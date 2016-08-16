@@ -5,7 +5,7 @@
 import createLog from 'silk-log/device';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
-import moment from 'moment';
+import {getCurrentDateTime} from './utils';
 
 import {
   default as createEnvironment,
@@ -93,20 +93,7 @@ export function* sayCurrentTime(
 ): Generator<Object, void, any> {
   const {speak} = environment;
 
-  // Get the current time and isolate individual components that we care about.
-  const now = new Date();
-  let hour = now.getHours() % 12;
-  if (hour === 0) {
-    hour = 12;
-  }
-  const minutes = now.getMinutes();
-  const am = now.getHours() < 12;
-  const dateString = moment(now).format('Do [of] MMMM');
-
-  // TODO: More clever variations? (e.g. "half past 5").
-  const timeString = `${hour} ${((minutes > 0 && minutes < 10) ? 'oh ' : '')}` +
-                     `${(minutes > 0 ? minutes : 'o\'clock')} ` +
-                     `${(am ? 'AM' : 'PM')}`;
+  let [timeString, dateString] = getCurrentDateTime();
 
   /**
    * Instruct the saga runtime to "call the speak function with these

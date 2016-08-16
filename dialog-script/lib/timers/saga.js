@@ -7,7 +7,7 @@ import {delay} from 'redux-saga';
 import {call, put, race, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import moment from 'moment';
-import {parseIso8601} from '../utils';
+import {parseIso8601, getCurrentDateTime} from '../utils';
 
 import {
   addTimer,
@@ -218,7 +218,8 @@ export function* timerMonitorSaga(
       if (dialogEngine.uiMode === 'normal') {
         // Alert the user.
         if (timer.title) {
-          yield call(speak, `You asked me to remind you to ${timer.title}`, 'idle');
+          let [timeString] = getCurrentDateTime();
+          yield call(speak, `It is ${timeString}. You asked me to remind you to ${timer.title}`, 'idle');
         } else {
           yield call(speak, `Timer ${timer.id} has expired`, 'idle');
         }

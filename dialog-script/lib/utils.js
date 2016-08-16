@@ -1,6 +1,7 @@
 /**
  * @flow
  */
+import moment from 'moment';
 
 const iso8601extended = /^\d{4}(-\d{2}(-\d{2}([T ]\d{2}(:\d{2}(:\d{2})?)?([,.]\d+)?(Z|[+-]\d{2}(:\d{2})?)?)?)?)?$/;
 const iso8601basic = new RegExp(iso8601extended.source.replace(/[:-]\\d/g, '\\d'));
@@ -70,4 +71,22 @@ export function parseIso8601(s: string, useLocal: boolean) {
     d.setTime(d.getTime() + 60000 * offset * (matches[7].substr(0, 1) === '-' ? 1 : -1));
   }
   return d;
+}
+
+export function getCurrentDateTime(): Array<string> {
+  // Get the current time and isolate individual components that we care about.
+  const now = new Date();
+  let hour = now.getHours() % 12;
+  if (hour === 0) {
+    hour = 12;
+  }
+  const minutes = now.getMinutes();
+  const am = now.getHours() < 12;
+  const dateString = moment(now).format('Do [of] MMMM');
+
+  // TODO: More clever variations? (e.g. "half past 5").
+  const timeString = `${hour} ${((minutes > 0 && minutes < 10) ? 'oh ' : '')}` +
+                     `${(minutes > 0 ? minutes : 'o\'clock')} ` +
+                     `${(am ? 'AM' : 'PM')}`;
+  return [timeString, dateString];
 }

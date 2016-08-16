@@ -75,7 +75,7 @@ suite(`userScript`, () => {
     tester.speak(`Create an alarm to go off in 5 seconds to go to bed`);
     await tester.listenCheck(`^Ok, I've started the go to bed alarm`, `idle`);
     let timer = setTimeout(() => assert(false, 'Alarm did not expire'), 7000);
-    await tester.listenCheck(`^You asked me to remind you to go to bed`, `idle`);
+    await tester.listenCheck(`You asked me to remind you to go to bed`, `idle`);
     clearTimeout(timer);
     done();
   });

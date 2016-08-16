@@ -98,7 +98,7 @@ function dateTimeEntitiesToMs(dateEntity: ?Entity,
     if (timeIso8601) {
       log.debug(`Time string: ${timeIso8601}`);
       let date = parseIso8601(timeIso8601, useLocal);
-      expireAtMs = date ? date.getTime(): 0; // Convert to Unix timestamp
+      expireAtMs = date ? date.getTime() : 0; // Convert to Unix timestamp
     }
   }
   return (expireAtMs === 0 ? null : expireAtMs);
@@ -217,7 +217,11 @@ export function* timerMonitorSaga(
 
       if (dialogEngine.uiMode === 'normal') {
         // Alert the user.
-        yield call(speak, `Timer ${timer.id} has expired`, 'idle');
+        if (timer.title) {
+          yield call(speak, `You asked me to remind you to ${timer.title}`, 'idle');
+        } else {
+          yield call(speak, `Timer ${timer.id} has expired`, 'idle');
+        }
       }
     }
   } finally {
@@ -242,6 +246,7 @@ export default function* modifyTimers(
   let durationEntity: ?Entity = null;
   let dateEntity: ?Entity = null;
   let timeEntity: ?Entity = null;
+  let title: string = '';
   for (let entity of entities) {
     if ((entity.type === 'builtin.datetime.duration') &&
         entity.resolution && (entity.resolution.duration !== undefined)) {
@@ -252,6 +257,9 @@ export default function* modifyTimers(
     } else if ((entity.type === 'builtin.alarm.start_time') &&
         (entity.resolution !== undefined)) {
       timeEntity = entity;
+    } else if ((entity.type === 'builtin.alarm.title') &&
+        (entity.entity !== undefined)) {
+      title = entity.entity;
     }
   }
 
@@ -262,29 +270,35 @@ export default function* modifyTimers(
     durationMs = dateTimeEntitiesToMs(dateEntity, timeEntity);
   }
 
-  if (durationMs === null) {
-    yield call(speak, `Sorry, I'm not understanding your timer or alarm request`, `idle`);
-    return;
-  }
-
-  invariant(typeof durationMs === 'number');
-
   // Add a new timer via |put|.
   if (type === `startTimer`) {
+    if (durationMs === null) {
+      yield call(speak, `Sorry, I'm not understanding your timer request`, `idle`);
+      return;
+    }
+
+    invariant(typeof durationMs === 'number');
     log.info(`Adding timer for ${durationMs / 1000} seconds`);
-    yield put(addTimer(durationMs, Date.now() + durationMs));
+    yield put(addTimer(durationMs, Date.now() + durationMs, title));
     yield call(speak, `Ok, I've started a timer`, `idle`);
     return;
   }
 
   if (type === `startAlarm`) {
+    if (durationMs === null) {
+      yield call(speak, `Sorry, I'm not understanding your alarm request`, `idle`);
+      return;
+    }
+
+    invariant(typeof durationMs === 'number');
     log.info(`Adding an alarm`);
-    yield put(addTimer(durationMs, durationMs));
-    yield call(speak, `Ok, I've started an alarm`, `idle`);
+    yield put(addTimer(durationMs, durationMs, title));
+    yield call(speak, `Ok, I've started` +
+        (title ? ` the ` + title : ` an`) + ` alarm`, `idle`);
     return;
   }
 
-  invariant((type === `cancelTimer`) || type === `cancelAlarm`);
+  invariant((type === `cancelTimer`) || (type === `cancelAlarm`));
   const timers = yield select(getTimers);
   invariant(timers);
 
@@ -295,13 +309,13 @@ export default function* modifyTimers(
 
   // Remove an existing timer via |put|.
   for (let timer of timers) {
-    // TODO Something smarter here.
-    if (timer.durationMs === durationMs) {
+    if ((title && (timer.title === title)) || (timer.durationMs === durationMs)) {
       yield put(removeTimer(timer.id));
       if (type === `cancelTimer`) {
         yield call(speak, `Ok, I've canceled that timer`, `idle`);
       } else {
-        yield call(speak, `Ok, I've canceled that alarm`, `idle`);
+        yield call(speak, `Ok, I've canceled` +
+            (title ? ` the ` + title : ` that`) + ` alarm`, `idle`);
       }
       return;
     }

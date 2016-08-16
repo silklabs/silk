@@ -54,11 +54,28 @@ suite(`userScript`, () => {
   });
 
   // "time": "YYYY-MM-DDTHH:MM:SS", "date": null
-  test(`Alarm test - start an alarm to go off after`, async (done) => {
+  test(`Alarm test - start an alarm to go off in some time`, async (done) => {
     tester.speak(`Set the alarm to go off in 5 seconds`);
     await tester.listenCheck(`^Ok, I've started an alarm`, `idle`);
     let timer = setTimeout(() => assert(false, 'Timer did not expire'), 7000);
     await tester.listenCheck(`^Timer \\d+ has expired`, `idle`);
+    clearTimeout(timer);
+    done();
+  });
+
+  test(`Alarm test - start a named alarm for next day at 8am`, async (done) => {
+    tester.speak(`Set an alarm for tomorrow at 8 am called as wakeup`);
+    await tester.listenCheck(`^Ok, I've started the wakeup alarm`, `idle`);
+    tester.speak(`Cancel the wakeup alarm`);
+    await tester.listenCheck(`^Ok, I've canceled the wakeup alarm`, `idle`);
+    done();
+  });
+
+  test(`Alarm test - start a named alarm to go off in some time`, async (done) => {
+    tester.speak(`Create an alarm to go off in 5 seconds to go to bed`);
+    await tester.listenCheck(`^Ok, I've started the go to bed alarm`, `idle`);
+    let timer = setTimeout(() => assert(false, 'Timer did not expire'), 7000);
+    await tester.listenCheck(`^You asked me to remind you to go to bed`, `idle`);
     clearTimeout(timer);
     done();
   });

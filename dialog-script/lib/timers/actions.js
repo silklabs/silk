@@ -18,6 +18,7 @@ export type Action =
     payload: {
       durationMs: number;
       expiresMs: number;
+      title: string;
     };
   } | {
     type: 'TIMERS_EXPIRE' | 'TIMERS_REMOVE';
@@ -30,12 +31,13 @@ export type Action =
 ;
 
 // Creates an action that will add a timer.
-export function addTimer(durationMs: number, expiresMs: number): Action {
+export function addTimer(durationMs: number, expiresMs: number, title: string): Action {
   return {
     type: TYPE_ADD,
     payload: {
       durationMs,
       expiresMs,
+      title,
     },
   };
 }

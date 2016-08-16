@@ -5,10 +5,14 @@
  */
 
 #import <UIKit/UIKit.h>
-#import <SLKAppSDK/SLKAppSDK.h>
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic) SLKAppSDKService *silkService;
+@property (weak, nonatomic) IBOutlet UILabel *statusText;
+@property (weak, nonatomic) IBOutlet UILabel *connectionStatusText;
+@property (weak, nonatomic) IBOutlet UILabel *authStatusText;
+@property (weak, nonatomic) IBOutlet UITextField *emailTextField;
+@property (weak, nonatomic) IBOutlet UITextField *passwordTextField;
+@property (weak, nonatomic) IBOutlet UITableView *deviceTableView;
 
 @end

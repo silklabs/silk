@@ -20,6 +20,9 @@
 		35D700411D298EF800993A9C /* SilkAppSDKExampleUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700401D298EF800993A9C /* SilkAppSDKExampleUITests.m */; };
 		579C79551D46D99300A833E7 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; };
 		579C79561D46D99300A833E7 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		870849BA1D62957C00C17A86 /* AppState.m in Sources */ = {isa = PBXBuildFile; fileRef = 870849B91D62957C00C17A86 /* AppState.m */; };
+		87B7C8721D63E76400B2F3F0 /* DeviceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */; };
+		87B7C8761D665BCE00B2F3F0 /* DeviceCommViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87B7C8751D665BCE00B2F3F0 /* DeviceCommViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -94,6 +97,12 @@
 		35D700421D298EF800993A9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKAppSDK.xcodeproj; path = "../../app-sdk/ios/SLKAppSDK.xcodeproj"; sourceTree = "<group>"; };
 		579C794F1D46D88800A833E7 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebRTC.framework; path = "../../react-native-webrtc/ios/WebRTC.framework"; sourceTree = "<group>"; };
+		870849B81D6294EE00C17A86 /* AppState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
+		870849B91D62957C00C17A86 /* AppState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppState.m; sourceTree = "<group>"; };
+		87B7C8701D63E76400B2F3F0 /* DeviceViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceViewController.h; sourceTree = "<group>"; };
+		87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceViewController.m; sourceTree = "<group>"; };
+		87B7C8741D665BCE00B2F3F0 /* DeviceCommViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceCommViewController.h; sourceTree = "<group>"; };
+		87B7C8751D665BCE00B2F3F0 /* DeviceCommViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceCommViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,9 +159,15 @@
 			children = (
 				35D7001E1D298EF700993A9C /* AppDelegate.h */,
 				35D7001F1D298EF700993A9C /* AppDelegate.m */,
+				870849B81D6294EE00C17A86 /* AppState.h */,
+				870849B91D62957C00C17A86 /* AppState.m */,
 				35D700211D298EF700993A9C /* ViewController.h */,
 				35D700221D298EF700993A9C /* ViewController.m */,
+				87B7C8701D63E76400B2F3F0 /* DeviceViewController.h */,
+				87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */,
 				35D700241D298EF700993A9C /* Main.storyboard */,
+				87B7C8741D665BCE00B2F3F0 /* DeviceCommViewController.h */,
+				87B7C8751D665BCE00B2F3F0 /* DeviceCommViewController.m */,
 				35D700271D298EF700993A9C /* Assets.xcassets */,
 				35D700291D298EF700993A9C /* LaunchScreen.storyboard */,
 				35D7002C1D298EF700993A9C /* Info.plist */,
@@ -368,7 +383,10 @@
 			files = (
 				35D700231D298EF700993A9C /* ViewController.m in Sources */,
 				35D700201D298EF700993A9C /* AppDelegate.m in Sources */,
+				87B7C8761D665BCE00B2F3F0 /* DeviceCommViewController.m in Sources */,
 				35D7001D1D298EF700993A9C /* main.m in Sources */,
+				870849BA1D62957C00C17A86 /* AppState.m in Sources */,
+				87B7C8721D63E76400B2F3F0 /* DeviceViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -517,6 +535,7 @@
 		35D700461D298EF800993A9C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -534,6 +553,7 @@
 		35D700471D298EF800993A9C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";

@@ -132,8 +132,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
     output: Joi.object().keys({
       devices: Joi.array().required().items(Joi.object().keys({
         name: Devices.NAME_SCHEMA,
-        // We never return devices which do not have a accountDeviceNumber.
-        accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.required(),
+        // XXX: HACK make this optional until some larger fixes come in...
+        accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.optional(),
         publicKey: Joi.string().hex().required(),
         deviceId: Joi.string().hex().required(),
         lastSeenAt: Joi.date().required(),

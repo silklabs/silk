@@ -18,6 +18,7 @@ export type Entities = Array<Entity>;
 
 export type Intention = {
   intent: string;
+  score: number;
   entities: Entities;
 };
 
@@ -45,21 +46,11 @@ type EntityResponse = {
   startIndex: number;
   endIndex: number;
   score: number;
-} | {
-  type: 'builtin.datetime.duration';
-  entity: string;
-  startIndex: number;
-  endIndex: number;
-  resoution: {
-    duration: string;
-  };
-} | {
-  type: 'builtin.datetime.date';
-  entity: string;
-  startIndex: number;
-  endIndex: number;
-  resoution: {
+  resolution: {
+    resolution_type: string;
     date: string;
+    time: string;
+    duration: string;
   };
 };
 
@@ -93,6 +84,7 @@ export default class TextToIntention {
       log.error(error);
       resolve({
         intent: UNKNOWN_INTENT,
+        score: 1.0,
         entities: [],
       });
     };
@@ -167,20 +159,21 @@ export default class TextToIntention {
 
       return Promise.all(promises)
       .then(intentions => {
-        let intention;
-        for (intention of intentions) {
+        let topMatchIntent = null;
+        for (let intention of intentions) {
           if (intention.intent !== UNKNOWN_INTENT &&
               intention.intent !== 'None' &&
-              intention.intent !== 'builtin.intent.none') {
-            break;
+              intention.intent !== 'builtin.intent.none' &&
+              (!topMatchIntent || topMatchIntent.score < intention.score)) {
+            topMatchIntent = intention;
           }
         }
-        return intention;
+        return topMatchIntent;
       });
     }
 
     log.info(`No intention found`);
-    return Promise.resolve({intent: UNKNOWN_INTENT, entities: []});
+    return Promise.resolve({intent: UNKNOWN_INTENT, score: 1.0, entities: []});
   }
 
   _parseResponse(json: string): Intention {
@@ -189,7 +182,10 @@ export default class TextToIntention {
     let topMatchIntent: ?IntentResponse = null;
     response.intents.forEach((intentResponse: IntentResponse) => {
       // builtins have undefined scores. Consider no score as high score
-      if (intentResponse.score === undefined || intentResponse.score >= 0.35 &&
+      if (intentResponse.score === undefined) {
+        intentResponse.score = 1.0;
+      }
+      if (intentResponse.score >= 0.35 &&
           (!topMatchIntent || topMatchIntent.score < intentResponse.score)) {
         topMatchIntent = intentResponse;
       }
@@ -198,6 +194,7 @@ export default class TextToIntention {
     if (!topMatchIntent) {
       return {
         intent: UNKNOWN_INTENT,
+        score: 1.0,
         entities: [],
       };
     }
@@ -213,6 +210,7 @@ export default class TextToIntention {
 
     return {
       intent: topMatchIntent.intent,
+      score: topMatchIntent.score,
       entities: entities,
     };
   }

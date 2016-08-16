@@ -5,7 +5,7 @@
 import createLog from 'silk-log/device';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
-import moment from 'moment';
+import {getCurrentDateTime} from './utils';
 
 import {
   default as createEnvironment,
@@ -65,13 +65,16 @@ const independentIntents: Set<string> = new Set([
  * above.
  */
 const concurrentIntents: Set<string> = new Set([
+  `builtin.intent.weather.check_weather`,
+  `builtin.intent.alarm.delete_alarm`,
+  `builtin.intent.alarm.turn_off_alarm`,
+  `builtin.intent.alarm.set_alarm`,
   `cancelTimer`,
   `getCurrentTime`,
   `factoryReset`,
   `getArtist`,
   `getCurrentSong`,
   `getStockPrice`,
-  `builtin.intent.weather.check_weather`,
   `pauseMusic`,
   `playMusic`,
   `resetLocation`,
@@ -90,20 +93,7 @@ export function* sayCurrentTime(
 ): Generator<Object, void, any> {
   const {speak} = environment;
 
-  // Get the current time and isolate individual components that we care about.
-  const now = new Date();
-  let hour = now.getHours() % 12;
-  if (hour === 0) {
-    hour = 12;
-  }
-  const minutes = now.getMinutes();
-  const am = now.getHours() < 12;
-  const dateString = moment(now).format('Do [of] MMMM');
-
-  // TODO: More clever variations? (e.g. "half past 5").
-  const timeString = `${hour} ${((minutes > 0 && minutes < 10) ? 'oh ' : '')}` +
-                     `${(minutes > 0 ? minutes : 'o\'clock')} ` +
-                     `${(am ? 'AM' : 'PM')}`;
+  let [timeString, dateString] = getCurrentDateTime();
 
   /**
    * Instruct the saga runtime to "call the speak function with these
@@ -276,11 +266,20 @@ export default function*(
         break;
       case `startTimer`:
         sagaFunction = modifyTimers;
-        args.push(`start`, entities);
+        args.push(`startTimer`, entities);
+        break;
+      case `builtin.intent.alarm.set_alarm`:
+        sagaFunction = modifyTimers;
+        args.push(`startAlarm`, entities);
         break;
       case `cancelTimer`:
         sagaFunction = modifyTimers;
-        args.push(`cancel`, entities);
+        args.push(`cancelTimer`, entities);
+        break;
+      case `builtin.intent.alarm.delete_alarm`:
+      case `builtin.intent.alarm.turn_off_alarm`:
+        sagaFunction = modifyTimers;
+        args.push(`cancelAlarm`, entities);
         break;
       case `factoryReset`:
         sagaFunction = requestFactoryReset;

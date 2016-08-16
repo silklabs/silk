@@ -7,6 +7,7 @@ import {delay} from 'redux-saga';
 import {call, put, race, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import moment from 'moment';
+import {parseIso8601, getCurrentDateTime} from '../utils';
 
 import {
   addTimer,
@@ -41,16 +42,66 @@ export function sortTimers(a: TimerState, b: TimerState): number {
              0;
 }
 
-export function durationEntityToMs(entity: Entity): ?number {
-  if (entity.type !== 'builtin.datetime.duration' ||
-      entity.resolution === undefined ||
-      entity.resolution.duration === undefined) {
+export function durationEntityToMs(entity: ?Entity): ?number {
+  if (!entity) {
     return null;
   }
-
   let duration = moment.duration(entity.resolution.duration);
   let durationMs = duration.asMilliseconds();
   return (durationMs === 0 ? null : durationMs);
+}
+
+/**
+ * Convert alarm date and time entities to unix timestamp.
+ * In most cases LUIS returns the date in UTC timezone and time in
+ * local timezone except where the time entity also has the date, in which case
+ * the entire date-time string is in UTC timezone.
+ *
+ * @return {number} Absolute time at which timer is to expire
+ */
+function dateTimeEntitiesToMs(dateEntity: ?Entity,
+    timeEntity: ?Entity): ?number {
+  let expireAtMs = 0;
+
+  if (!timeEntity) {
+    return null;
+  }
+
+  // Time entity could have a resolution of type `duration` or `time`
+  if ((timeEntity.resolution.resolution_type === 'builtin.datetime.duration') &&
+      timeEntity.resolution.duration) {
+    let duration = moment.duration(timeEntity.resolution.duration);
+    expireAtMs = Date.now() + duration.asMilliseconds();
+    log.debug(`Time string: ${timeEntity.resolution.duration}`);
+  } else if ((timeEntity.resolution.resolution_type === 'builtin.datetime.time') &&
+      timeEntity.resolution.time) {
+    let time = timeEntity.resolution.time;
+    let timeIso8601 = null;
+    let useLocal = true; // Date is in UTC but time is in local timezone. Oh MSFT!
+
+    // If time entity specifies the date then use the date from the time entity
+    if (/^\d{4}-\d{2}-\d{2}/.exec(time)) {
+      timeIso8601 = time;
+      useLocal = false; // LUIS returns the entire date-time string in UTC
+    } else if (dateEntity) {
+      if ((dateEntity.resolution.resolution_type === 'builtin.datetime.date') &&
+          dateEntity.resolution.date) {
+        timeIso8601 = dateEntity.resolution.date + time;
+      } else {
+        log.warn(`${dateEntity.resolution.resolution_type} is not supported`);
+      }
+    } else { // Date entity not available
+      // Assume that the user requested for an alarm for the same day
+      timeIso8601 = moment.utc().format('YYYY-MM-DD') + time;
+    }
+
+    if (timeIso8601) {
+      log.debug(`Time string: ${timeIso8601}`);
+      let date = parseIso8601(timeIso8601, useLocal);
+      expireAtMs = date ? date.getTime() : 0; // Convert to Unix timestamp
+    }
+  }
+  return (expireAtMs === 0 ? null : expireAtMs);
 }
 
 /**
@@ -166,7 +217,12 @@ export function* timerMonitorSaga(
 
       if (dialogEngine.uiMode === 'normal') {
         // Alert the user.
-        yield call(speak, `Timer ${timer.id} has expired`, 'idle');
+        if (timer.title) {
+          let [timeString] = getCurrentDateTime();
+          yield call(speak, `It is ${timeString}. You asked me to remind you to ${timer.title}`, 'idle');
+        } else {
+          yield call(speak, `Timer ${timer.id} has expired`, 'idle');
+        }
       }
     }
   } finally {
@@ -182,36 +238,68 @@ export function* timerMonitorSaga(
  */
 export default function* modifyTimers(
   environment: Environment,
-  type: 'start' | 'cancel',
+  type: 'startTimer' | 'cancelTimer' | 'startAlarm' | 'cancelAlarm',
   entities: Entities
 ): Generator<Object, void, any> {
   const {speak} = environment;
 
   // Attempt to understand the amount of time the user gave us.
-  let durationMs: ?number = null;
+  let durationEntity: ?Entity = null;
+  let dateEntity: ?Entity = null;
+  let timeEntity: ?Entity = null;
+  let title: string = '';
   for (let entity of entities) {
-    durationMs = durationEntityToMs(entity);
-    if (durationMs !== null) {
-      break;
+    if ((entity.type === 'builtin.datetime.duration') &&
+        entity.resolution && (entity.resolution.duration !== undefined)) {
+      durationEntity = entity;
+    } else if ((entity.type === 'builtin.alarm.start_date') &&
+        (entity.resolution !== undefined)) {
+      dateEntity = entity;
+    } else if ((entity.type === 'builtin.alarm.start_time') &&
+        (entity.resolution !== undefined)) {
+      timeEntity = entity;
+    } else if ((entity.type === 'builtin.alarm.title') &&
+        (entity.entity !== undefined)) {
+      title = entity.entity;
     }
   }
 
-  if (durationMs === null) {
-    yield call(speak, `Sorry, I'm not understanding your timer request`, `idle`);
-    return;
+  let durationMs: ?number = null;
+  if ((type === `startTimer`) || (type === `cancelTimer`)) {
+    durationMs = durationEntityToMs(durationEntity);
+  } else {
+    durationMs = dateTimeEntitiesToMs(dateEntity, timeEntity);
   }
 
-  invariant(typeof durationMs === 'number');
-
   // Add a new timer via |put|.
-  if (type === `start`) {
+  if (type === `startTimer`) {
+    if (durationMs === null) {
+      yield call(speak, `Sorry, I'm not understanding your timer request`, `idle`);
+      return;
+    }
+
+    invariant(typeof durationMs === 'number');
     log.info(`Adding timer for ${durationMs / 1000} seconds`);
-    yield put(addTimer(durationMs, Date.now() + durationMs));
+    yield put(addTimer(durationMs, Date.now() + durationMs, title));
     yield call(speak, `Ok, I've started a timer`, `idle`);
     return;
   }
 
-  invariant(type === `cancel`);
+  if (type === `startAlarm`) {
+    if (durationMs === null) {
+      yield call(speak, `Sorry, I'm not understanding your alarm request`, `idle`);
+      return;
+    }
+
+    invariant(typeof durationMs === 'number');
+    log.info(`Adding an alarm`);
+    yield put(addTimer(durationMs, durationMs, title));
+    yield call(speak, `Ok, I've started` +
+        (title ? ` the ` + title : ` an`) + ` alarm`, `idle`);
+    return;
+  }
+
+  invariant((type === `cancelTimer`) || (type === `cancelAlarm`));
   const timers = yield select(getTimers);
   invariant(timers);
 
@@ -222,10 +310,14 @@ export default function* modifyTimers(
 
   // Remove an existing timer via |put|.
   for (let timer of timers) {
-    // TODO Something smarter here.
-    if (timer.durationMs === durationMs) {
+    if ((title && (timer.title === title)) || (timer.durationMs === durationMs)) {
       yield put(removeTimer(timer.id));
-      yield call(speak, `Ok, I've canceled that timer`, `idle`);
+      if (type === `cancelTimer`) {
+        yield call(speak, `Ok, I've canceled that timer`, `idle`);
+      } else {
+        yield call(speak, `Ok, I've canceled` +
+            (title ? ` the ` + title : ` that`) + ` alarm`, `idle`);
+      }
       return;
     }
   }

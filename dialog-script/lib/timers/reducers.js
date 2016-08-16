@@ -19,6 +19,7 @@ export type TimerState = {
   id: number;
   durationMs: number;
   expiresMs: number;
+  title: string;
 };
 
 export type State = {
@@ -59,7 +60,7 @@ export default function(state: State = initialState, action: Action): State {
    * additional timer.
    */
   case TYPE_ADD: {
-    const {durationMs, expiresMs} = action.payload;
+    const {durationMs, expiresMs, title} = action.payload;
     const timerId = state.nextTimerId;
     return {
       ...state,
@@ -68,6 +69,7 @@ export default function(state: State = initialState, action: Action): State {
         id: timerId,
         durationMs,
         expiresMs,
+        title,
       }),
     };
   }

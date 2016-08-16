@@ -49,21 +49,11 @@ type EntityResponse = {
   startIndex: number;
   endIndex: number;
   score: number;
-} | {
-  type: 'builtin.datetime.duration';
-  entity: string;
-  startIndex: number;
-  endIndex: number;
-  resoution: {
-    duration: string;
-  };
-} | {
-  type: 'builtin.datetime.date';
-  entity: string;
-  startIndex: number;
-  endIndex: number;
-  resoution: {
+  resolution: {
+    resolution_type: string;
     date: string;
+    time: string;
+    duration: string;
   };
 };
 

@@ -65,13 +65,16 @@ const independentIntents: Set<string> = new Set([
  * above.
  */
 const concurrentIntents: Set<string> = new Set([
+  `builtin.intent.weather.check_weather`,
+  `builtin.intent.alarm.delete_alarm`,
+  `builtin.intent.alarm.turn_off_alarm`,
+  `builtin.intent.alarm.set_alarm`,
   `cancelTimer`,
   `getCurrentTime`,
   `factoryReset`,
   `getArtist`,
   `getCurrentSong`,
   `getStockPrice`,
-  `builtin.intent.weather.check_weather`,
   `pauseMusic`,
   `playMusic`,
   `resetLocation`,
@@ -276,11 +279,20 @@ export default function*(
         break;
       case `startTimer`:
         sagaFunction = modifyTimers;
-        args.push(`start`, entities);
+        args.push(`startTimer`, entities);
+        break;
+      case `builtin.intent.alarm.set_alarm`:
+        sagaFunction = modifyTimers;
+        args.push(`startAlarm`, entities);
         break;
       case `cancelTimer`:
         sagaFunction = modifyTimers;
-        args.push(`cancel`, entities);
+        args.push(`cancelTimer`, entities);
+        break;
+      case `builtin.intent.alarm.delete_alarm`:
+      case `builtin.intent.alarm.turn_off_alarm`:
+        sagaFunction = modifyTimers;
+        args.push(`cancelAlarm`, entities);
         break;
       case `factoryReset`:
         sagaFunction = requestFactoryReset;

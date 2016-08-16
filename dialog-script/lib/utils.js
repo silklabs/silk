@@ -2,6 +2,9 @@
  * @flow
  */
 
+const iso8601extended = /^\d{4}(-\d{2}(-\d{2}([T ]\d{2}(:\d{2}(:\d{2})?)?([,.]\d+)?(Z|[+-]\d{2}(:\d{2})?)?)?)?)?$/;
+const iso8601basic = new RegExp(iso8601extended.source.replace(/[:-]\\d/g, '\\d'));
+
 export function urlEncodeParams(obj: Object): string {
   const list = [];
   Object.keys(obj).forEach(key => {
@@ -15,4 +18,56 @@ type NumberFormat = 'telephone' | 'cardinal' | 'ordinal';
 
 export function encodeNumber(digits: number, format: NumberFormat = 'telephone'): string {
   return `<say-as interpret-as=\"${format}\">${digits}</say-as>`;
+}
+
+/**
+ * Parse an ISO 8601 formatted string to date
+ */
+export function parseIso8601(s: string, useLocal: boolean) {
+  s = s.replace(/,/g, '.');
+  let matches = iso8601extended.exec(s);
+  if (matches) {
+    s = s.substr(0, 10).replace(/-/g, '') + s.substr(10).replace(/:/g, '');
+  }
+  matches = iso8601basic.exec(s);
+  if (!matches) {
+    return null;
+  }
+  let d = new Date();
+  d.setUTCFullYear(parseInt(matches[0].substring(0, 4)));
+  d.setUTCMonth(matches[1] ? parseInt(matches[1].substr(0, 2)) - 1 : 0);
+  d.setUTCDate(matches[2] ? parseInt(matches[2].substr(0, 2)) : 1);
+  let hours = 0, minutes = 0, seconds = 0, milliseconds = 0;
+  let fraction = matches[6] ? parseFloat(matches[6]) : 0;
+  if (matches[3]) {
+    hours = parseInt(matches[3].substr(1, 2));
+    if (matches[4]) {
+      minutes = parseInt(matches[4].substr(0, 2));
+      if (matches[5]) {
+        seconds = parseInt(matches[5].substr(0, 2));
+        milliseconds = 1000 * fraction;
+      } else {
+        seconds = 60 * fraction;
+      }
+    } else {
+      minutes = 60 * fraction;
+    }
+  }
+  if (useLocal && !matches[7]) {
+    d.setHours(hours);
+    d.setMinutes(minutes);
+  } else {
+    d.setUTCHours(hours);
+    d.setUTCMinutes(minutes);
+  }
+  d.setUTCSeconds(seconds);
+  d.setUTCMilliseconds(milliseconds);
+  if (matches[7] && matches[7] !== 'Z') {
+    let offset = parseInt(matches[7].substr(1, 2)) * 60;
+    if (matches[8]) {
+      offset += parseInt(matches[8].substr(0, 2));
+    }
+    d.setTime(d.getTime() + 60000 * offset * (matches[7].substr(0, 1) === '-' ? 1 : -1));
+  }
+  return d;
 }

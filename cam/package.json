@@ -1,6 +1,6 @@
 {
   "name": "silk-cam",
-  "version": "0.22.0",
+  "version": "1.0.0",
   "description": "Silk camera tools",
   "scripts": {
     "lint": "eslint src",

@@ -190,27 +190,76 @@ function initDeviceConfig(store: Store<*>) {
 function initBLE(store: Store<*>) {
   log.debug('initBLE');
 
-  store.subscribeToPath('auth.beaconUuid', (beaconUuid, oldBeaconUuid) => {
+  const {BLESocketManager} = NativeModules;
+
+  let accountBeaconUuid: ?string = null;
+  const connectableDeviceNumbers: Set<number> = new Set();
+
+  store.subscribeToPath('auth.beaconUuid', (beaconUuid) => {
     if (beaconUuid) {
       invariant(store.getState().auth.isAuthenticated);
-      invariant(!oldBeaconUuid);
+      invariant(!accountBeaconUuid);
 
       log.debug('Enabling BLESocketManager');
-      NativeModules.BLESocketManager.start();
+      BLESocketManager.start();
 
       log.debug('Monitoring account uuid beacon', beaconUuid);
-      NativeModules.BLESocketManager.addBeaconUuid(beaconUuid);
+      BLESocketManager.addBeaconUuid(beaconUuid);
+
+      accountBeaconUuid = beaconUuid;
     } else {
       invariant(!store.getState().auth.isAuthenticated);
 
-      if (oldBeaconUuid) {
-        log.debug('No longer monitoring account uuid beacon', oldBeaconUuid);
+      if (accountBeaconUuid) {
+        log.debug('No longer monitoring account uuid beacon',
+                  accountBeaconUuid);
+        connectableDeviceNumbers.forEach((deviceNumber: number) => {
+          BLESocketManager.scanForDevice(accountBeaconUuid,
+                                         deviceNumber,
+                                         false);
+        });
+        connectableDeviceNumbers.clear();
+
+        accountBeaconUuid = null;
       }
-      NativeModules.BLESocketManager.removeAllBeaconUuids();
+
+      BLESocketManager.removeAllBeaconUuids();
 
       log.debug('Disabling BLESocketManager');
-      NativeModules.BLESocketManager.stop();
+      BLESocketManager.stop();
     }
+  });
+
+  store.subscribeToPath('devices.registered', (newDevices, oldDevices) => {
+    const lostDeviceNumbers: Set<number> = new Set(connectableDeviceNumbers);
+
+    if (newDevices) {
+      newDevices.forEach((newDevice) => {
+        const {accountDeviceNumber} = newDevice;
+
+        if (newDevice.ble.connectionRequested) {
+          lostDeviceNumbers.delete(accountDeviceNumber);
+          if (!connectableDeviceNumbers.has(accountDeviceNumber)) {
+            log.debug('Connection requested for device ' + accountDeviceNumber);
+            BLESocketManager.scanForDevice(accountBeaconUuid,
+                                           accountDeviceNumber,
+                                           true);
+            connectableDeviceNumbers.add(accountDeviceNumber);
+          }
+        } else if (connectableDeviceNumbers.has(accountDeviceNumber)) {
+          invariant(lostDeviceNumbers.has(accountDeviceNumber));
+          connectableDeviceNumbers.delete(accountDeviceNumber);
+        }
+      });
+    }
+
+    lostDeviceNumbers.forEach((accountDeviceNumber) => {
+      log.debug('Connection no longer requested for device ' +
+                accountDeviceNumber);
+      BLESocketManager.scanForDevice(accountBeaconUuid,
+                                     accountDeviceNumber,
+                                     false);
+    });
   });
 
   const {ble, config} = actions.devices;
@@ -224,7 +273,16 @@ function initBLE(store: Store<*>) {
     const pubKeys = registeredDevices.map((device) => device.publicKey);
     const session = new DeviceSession(socket, api, pubKeys);
 
-    session.on('connect', () => dispatch(ble.connected(session)));
+    let sessionIsConfig = false;
+
+    session.on('connect', () => {
+      if (session.isRegistered) {
+        invariant(session.authenticated);
+      } else {
+        sessionIsConfig = true;
+      }
+      dispatch(ble.connected(session));
+    });
     session.on('disconnect', () => {
       session.removeAllListeners();
       dispatch(ble.disconnected(session));
@@ -233,10 +291,19 @@ function initBLE(store: Store<*>) {
     session.on('wifiscan', () => dispatch(config.wifiScanResults(session)));
     session.on('status', (status) => {
       dispatch(config.statusUpdated(session));
-      // Hang on to the session until we know the device connected to the
-      // server.
       if (!status.isError && status.message === 'server_connected') {
-        session.dismiss();
+        if (sessionIsConfig) {
+          session.dismiss();
+        } else {
+          const {registered} = store.getState().devices;
+          const device =
+            (session.deviceId && registered) ?
+            registered.get(session.deviceId) :
+            null;
+          if (!device || !device.ble.connectionRequested) {
+            session.disconnect();
+          }
+        }
       }
     });
     session.on('registered', () => dispatch(config.registered(session)));

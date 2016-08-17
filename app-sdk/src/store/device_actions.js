@@ -23,6 +23,7 @@ import type {StateWithApi} from './api';
 import type {DevicesState} from './device_reducers';
 import type {
   default as DeviceSession,
+  WifiConfiguration,
   RegistrationInformation,
 } from '../ble/device_session';
 
@@ -55,6 +56,10 @@ export type RegisterConfiguringDeviceResult = {
   registrationToken: string;
 };
 
+export type ChangeWifiConfiguration = WifiConfiguration & {
+  deviceId: string;
+};
+
 const log = createLog('app-sdk-device-actions');
 const REGISTERED_DEVICES_KEY = 'user.registeredDevices';
 
@@ -85,6 +90,20 @@ function genUnregisterRegisteredDevice(
     deviceId: input.devicePublicKey,
     success: result.success,
   }));
+}
+
+function disconnect(
+  state: StateWithDevices,
+  input: string
+): string {
+  const {registered} = state.devices;
+  invariant(registered);
+  const device = registered.get(input);
+  invariant(device);
+  if (device.ble.session) {
+    device.ble.session.disconnect();
+  }
+  return input;
 }
 
 function configAccept(
@@ -186,6 +205,33 @@ function genRTCSignalDevice(
   return peer.connect().then(() => peer);
 }
 
+function wifiList(
+  state: StateWithDevices,
+  input: string,
+): string {
+  const {registered} = state.devices;
+  invariant(registered);
+  const device = registered.get(input);
+  invariant(device);
+  const {session} = device.ble;
+  invariant(session);
+  session.listWifi();
+  return input;
+}
+
+function wifiSet(
+  state: StateWithDevices,
+  input: ChangeWifiConfiguration,
+): ChangeWifiConfiguration {
+  const {registered} = state.devices;
+  invariant(registered);
+  const device = registered.get(input.deviceId);
+  invariant(device);
+  const {session} = device.ble;
+  invariant(session);
+  session.selectWifi(input);
+  return input;
+}
 
 // Thunk Actions
 
@@ -201,6 +247,9 @@ export const registered = {
 // DeviceSession.
 
 export const ble = {
+  connect: actionFromPayload('DEVICE_BLE_CONNECT'),
+  disconnect: actionFromPayloadGen('DEVICE_BLE_DISCONNECT', disconnect),
+
   // These actions are dispatched by events emitted by the BLE machinery.
   connected: actionFromPayload('DEVICE_BLE_CONNECTED'),
   disconnected: actionFromPayload('DEVICE_BLE_DISCONNECTED'),
@@ -214,6 +263,9 @@ export const config = {
   registerWithServer: actionFromAsyncPayloadGen('DEVICE_CONFIG_REGISTERSERVER', genRegisterConfiguringDeviceWithServer),
   sendConfig: actionFromPayloadGen('DEVICE_CONFIG_SENDCONFIG', sendConfig),
   finish: actionFromPayload('DEVICE_CONFIG_FINISH'),
+
+  wifiList: actionFromPayloadGen('DEVICE_WIFI_LIST', wifiList),
+  wifiSet: actionFromPayloadGen('DEVICE_WIFI_SET', wifiSet),
 
   // These actions are dispatched by events emitted by the BLE machinery.
   passedProximity: actionFromPayload('DEVICE_CONFIG_PROXIMITYGATE'),

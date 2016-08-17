@@ -32,6 +32,7 @@ export type RegisteredDevice = {
     error: ?Error,
   },
   ble: {
+    connectionRequested: boolean,
     session: ?DeviceSession,
   },
 };
@@ -75,6 +76,7 @@ const registeredDeviceTemplate = {
     error: null,
   },
   ble: {
+    connectionRequested: false,
     session: null,
   },
 };
@@ -182,6 +184,56 @@ function DEVICE_REGISTERED_UNREGISTER(
 
 // BLE connections
 
+function DEVICE_BLE_CONNECT(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_BLE_CONNECT', string>
+): DevicesState {
+  const deviceId = action.payload;
+  invariant(deviceId);
+  if (!state.registered || !state.registered.has(deviceId)) {
+    return state;
+  }
+  const registered = new Map(state.registered);
+  const device = registered.get(deviceId);
+  invariant(device);
+  registered.set(deviceId, {
+    ...device,
+    ble: {
+      ...device.ble,
+      connectionRequested: true,
+    },
+  });
+  return {
+    ...state,
+    registered,
+  };
+}
+
+function DEVICE_BLE_DISCONNECT(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_BLE_DISCONNECT', string>
+): DevicesState {
+  const deviceId = action.payload;
+  invariant(deviceId);
+  if (!state.registered || !state.registered.has(deviceId)) {
+    return state;
+  }
+  const registered = new Map(state.registered);
+  const device = registered.get(deviceId);
+  invariant(device);
+  registered.set(deviceId, {
+    ...device,
+    ble: {
+      ...device.ble,
+      connectionRequested: false,
+    },
+  });
+  return {
+    ...state,
+    registered,
+  };
+}
+
 function DEVICE_BLE_CONNECTED(
   state: DevicesState,
   action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
@@ -231,24 +283,21 @@ function DEVICE_BLE_DISCONNECTED(
   if (unconfigured.has(session.socketId)) {
     unconfigured = new Map(unconfigured);
     unconfigured.delete(session.socketId);
-  } else {
-    invariant(session.isRegistered);
+  } else if (session.deviceId) {
     const {deviceId} = session;
-    invariant(deviceId);
-    if (!state.registered || !state.registered.has(deviceId)) {
-      return state;
+    if (state.registered && state.registered.has(deviceId)) {
+      registered = new Map(registered);
+      const device = registered.get(deviceId);
+      invariant(device);
+      invariant(device.ble.session === session);
+      registered.set(deviceId, {
+        ...device,
+        ble: {
+          ...device.ble,
+          session: null,
+        },
+      });
     }
-    registered = new Map(registered);
-    const device = registered.get(deviceId);
-    invariant(device);
-    invariant(device.ble.session === session);
-    registered.set(deviceId, {
-      ...device,
-      ble: {
-        ...device.ble,
-        session: null,
-      },
-    });
   }
 
   if (configuring &&
@@ -416,9 +465,18 @@ function DEVICE_CONFIG_REGISTERED(
   action: SimpleAction<'DEVICE_CONFIG_REGISTERED', DeviceSession>
 ): DevicesState {
   const session = action.payload;
-  const {configuring} = state;
-  invariant(configuring);
-  invariant(configuring.socketId === session.socketId);
+  invariant(session.isRegistered);
+  invariant(session.deviceId);
+  const {configuring, registered, unconfigured} = state;
+  if (!configuring || configuring.socketId !== session.socketId) {
+    invariant(registered);
+    const device = registered.get(session.deviceId);
+    invariant(device);
+    invariant(device.ble.session === session);
+    invariant(session.authenticated);
+    return state;
+  }
+  invariant(unconfigured.has(session.socketId));
   return {
     ...state,
     configuring: {
@@ -450,9 +508,11 @@ function DEVICE_CONFIG_FINISH(
   state: DevicesState,
   action: SimpleAction<'DEVICE_CONFIG_FINISH', void>
 ): DevicesState {
-  const {configuring, unconfigured} = state;
+  const {configuring} = state;
   invariant(configuring);
   invariant(configuring.registered || configuring.error);
+
+  let {unconfigured} = state;
   invariant(unconfigured.has(configuring.socketId));
   if (configuring.error) {
     return {
@@ -463,6 +523,9 @@ function DEVICE_CONFIG_FINISH(
 
   const session = unconfigured.get(configuring.socketId);
   invariant(session);
+
+  unconfigured = new Map(unconfigured);
+  unconfigured.delete(configuring.socketId);
 
   invariant(configuring.secret);
   invariant(configuring.serverRegistrationResult);
@@ -478,12 +541,17 @@ function DEVICE_CONFIG_FINISH(
     name: configuring.serverRegistrationResult.name,
     accountDeviceNumber,
     ...registeredDeviceTemplate,
+    ble: {
+      ...registeredDeviceTemplate.ble,
+      session,
+    },
   });
 
   return {
     ...state,
     configuring: null,
     registered,
+    unconfigured,
   };
 }
 
@@ -588,6 +656,8 @@ export const reducer = handleActions({
   DEVICE_REGISTERED_RESTORE,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER,
+  DEVICE_BLE_CONNECT,
+  DEVICE_BLE_DISCONNECT,
   DEVICE_BLE_CONNECTED,
   DEVICE_BLE_DISCONNECTED,
   DEVICE_CONFIG_ACCEPT,

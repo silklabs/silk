@@ -514,6 +514,8 @@ public class BLESocketPeripheral: NSObject,
     } else {
       serviceInfo!.deviceNumbersRequested.remove(accountDeviceNumber)
     }
+
+    self.updateScanningState()
   }
 
   func send(connectionId: Int, data: NSData) {

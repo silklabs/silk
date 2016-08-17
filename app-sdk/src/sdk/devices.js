@@ -15,6 +15,10 @@ import type {
   DeviceConfigAbortMessage,
   DeviceRemoveMessage,
   DeviceMessageMessage,
+  DeviceBLEConnectMessage,
+  DeviceBLEDisconnectMessage,
+  DeviceWifiListMessage,
+  DeviceWifiSetMessage,
 } from './incoming';
 
 // Incoming messages:
@@ -55,6 +59,50 @@ function DEVICE_CONFIG_ABORT(
   invariant(configuring);
   invariant(configuring.socketId === message.deviceConfigId);
   store.dispatch(actions.devices.config.abort());
+}
+
+function DEVICE_BLE_CONNECT(
+  store: SDKStore,
+  message: DeviceBLEConnectMessage,
+) {
+  const {registered} = store.getState().devices;
+  invariant(registered);
+  invariant(registered.has(message.deviceId));
+  store.dispatch(actions.devices.ble.connect(message.deviceId));
+}
+
+function DEVICE_BLE_DISCONNECT(
+  store: SDKStore,
+  message: DeviceBLEDisconnectMessage,
+) {
+  const {registered} = store.getState().devices;
+  invariant(registered);
+  invariant(registered.has(message.deviceId));
+  store.dispatch(actions.devices.ble.disconnect(message.deviceId));
+}
+
+function DEVICE_WIFI_LIST(
+  store: SDKStore,
+  message: DeviceWifiListMessage,
+) {
+  const {registered} = store.getState().devices;
+  invariant(registered);
+  invariant(registered.has(message.deviceId));
+  store.dispatch(actions.devices.config.wifiList(message.deviceId));
+}
+
+function DEVICE_WIFI_SET(
+  store: SDKStore,
+  message: DeviceWifiSetMessage,
+) {
+  const {registered} = store.getState().devices;
+  invariant(registered);
+  invariant(registered.has(message.deviceId));
+  store.dispatch(actions.devices.config.wifiSet({
+    deviceId: message.deviceId,
+    accessPoint: message.accessPoint,
+    password: message.password,
+  }));
 }
 
 function DEVICE_REMOVE(
@@ -132,6 +180,10 @@ export const messageHandlers = {
   DEVICE_CONFIG_ABORT,
   DEVICE_REMOVE,
   DEVICE_MESSAGE,
+  DEVICE_BLE_CONNECT,
+  DEVICE_BLE_DISCONNECT,
+  DEVICE_WIFI_LIST,
+  DEVICE_WIFI_SET,
 };
 
 export function init(store: SDKStore) {

@@ -529,6 +529,7 @@ public class BLESocketManager {
 
     if (!btEnabled || !mEnabled) {
       stopScanning();
+      cancelPendingConnections();
 
       if (!mConnectionsById.isEmpty()) {
         final List<Connection> connections =
@@ -542,12 +543,7 @@ public class BLESocketManager {
       return;
     }
 
-    if (mScanning) {
-      mBluetoothScanner.stopScan(mScanCallback);
-      mScanning = false;
-      mScanBlacklist.clear();
-      mScanWhitelist.clear();
-    }
+    stopScanning();
 
     final List<ScanFilter> scanFilters = new ArrayList<>();
     final List<UUID> scanUuids = new ArrayList<>();
@@ -580,25 +576,32 @@ public class BLESocketManager {
   }
 
   private void stopScanning() {
-    Log.d(TAG, "stopScanning scanning = " + mScanning);
+    Log.d(TAG, "stopScanning");
 
     if (!mScanning) {
       return;
     }
 
     Log.i(TAG, "Stopping scan");
+
     mBluetoothScanner.stopScan(mScanCallback);
     mScanning = false;
     mScanBlacklist.clear();
     mScanWhitelist.clear();
+  }
 
-    if (!mPendingDevices.isEmpty()) {
-      for (BluetoothGatt device : mPendingDevices.values()) {
-        device.disconnect();
-        device.close();
-      }
-      mPendingDevices.clear();
+  private void cancelPendingConnections() {
+    Log.d(TAG, "cancelPendingConnections");
+
+    if (mPendingDevices.isEmpty()) {
+      return;
     }
+
+    for (BluetoothGatt device : mPendingDevices.values()) {
+      device.disconnect();
+      device.close();
+    }
+    mPendingDevices.clear();
   }
 
   private void maybeAddServices() {
@@ -1449,6 +1452,7 @@ public class BLESocketManager {
       final Connection connection = mConnectionsByAddress.get(address);
       if (connection == null) {
         cancelConnection(address);
+        gatt.close();
       } else {
         connection.mDisconnected = true;
         cleanupConnection(connection);
@@ -1800,6 +1804,29 @@ public class BLESocketManager {
     final ServiceInfo serviceInfo =
       mServices.get(RegionMonitor.CONFIG_BEACON_UUID);
     serviceInfo.mEnabled = shouldScan && mInForeground;
+
+    updateScanningState();
+  }
+
+  void scanForDevice(UUID serviceUuid,
+                     int accountDeviceNumber,
+                     boolean shouldScan) {
+    Log.d(TAG,
+          "scanForDevice: " + serviceUuid + ", " + accountDeviceNumber + ", " +
+          shouldScan);
+    Utils.checkMainThread();
+
+    final ServiceInfo serviceInfo = mServices.get(serviceUuid);
+    if (serviceInfo == null) {
+      Log.w(TAG, "Not monitoring " + serviceUuid);
+      return;
+    }
+
+    if (shouldScan) {
+      serviceInfo.mDeviceNumbersRequested.add(accountDeviceNumber);
+    } else {
+      serviceInfo.mDeviceNumbersRequested.remove(accountDeviceNumber);
+    }
 
     updateScanningState();
   }

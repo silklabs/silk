@@ -14,5 +14,5 @@
     <string name="ignore">ignore</string>
     <string name="save">save</string>
     <string name="device_status">Device Status:</string>
-    <string name="proximity_message">Move phone close to device in order to complete configuration</string>
+    <string name="proximity_message">Move phone close to device</string>
 </resources>

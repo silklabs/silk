@@ -90,7 +90,7 @@ export default class NormalSessionListener extends SessionListenerBase {
       this._deviceConfig.scanWifi();
       break;
 
-    case `wifiChange`:
+    case `wifiSelect`:
       this._deviceConfig.connectToWifi(data.accessPoint, data.password);
       break;
 

@@ -66,6 +66,7 @@ export type DeviceStatusMessage = {
   serverConnectionStatus: ?ConnectionStatus;
   serverConnectionError: ?ServerConnectionError;
   bleConnectionStatus: ?ConnectionStatus;
+  bleConnectionRequested: boolean;
   bleConnectionError: ?BLEConnectionError;
   rtcConnectionStatus: ?ConnectionStatus;
   rtcConnectionError: ?RTCConnectionError;
@@ -116,6 +117,12 @@ type DeviceMessageErrorMessage = {
   error: string; // TODO
 };
 
+type DeviceWifiNetworksMessage = {
+  type: 'DEVICE_WIFI_NETWORKS';
+  deviceId: string;
+  wifiNetworks: Array<DeviceWifiNetwork>;
+};
+
 export type OutgoingMessage =
     InitializedMessage
   | MessageErrorMessage
@@ -129,4 +136,5 @@ export type OutgoingMessage =
   | DeviceRemoveErrorMessage
   | DeviceMessageMessage
   | DeviceMessageErrorMessage
+  | DeviceWifiNetworksMessage
   ;

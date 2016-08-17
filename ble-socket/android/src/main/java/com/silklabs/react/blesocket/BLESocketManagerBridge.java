@@ -362,9 +362,26 @@ public class BLESocketManagerBridge
 
   @ReactMethod
   public void scanForDevice(String serviceUuid,
-                            int accountDeviceNumber,
-                            boolean shouldScan) {
-    // TODO
+                            final int accountDeviceNumber,
+                            final boolean shouldScan) {
+    Log.d(TAG,
+          "scanForDevice: " + serviceUuid + ", " + accountDeviceNumber + ", " +
+          shouldScan);
+
+    final UUID uuid;
+    try {
+      uuid = UUID.fromString(serviceUuid);
+    } catch(Exception e) {
+      Log.e(TAG, "Invalid uuid: " + serviceUuid + ": " + e);
+      return;
+    }
+
+    Utils.postToMainThread(new Runnable() {
+      @Override
+      public void run() {
+        mSocketManager.scanForDevice(uuid, accountDeviceNumber, shouldScan);
+      }
+    });
   }
 
 }

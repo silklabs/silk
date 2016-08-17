@@ -178,9 +178,10 @@ function DEVICE_REGISTERED_FETCH(
         wifiConnectionError: null,
         serverConnectionStatus: null,
         serverConnectionError: null,
-        bleConnectionStatus: null,
+        bleConnectionStatus: 'NOT_CONNECTED',
+        bleConnectionRequested: false,
         bleConnectionError: null,
-        rtcConnectionStatus: null,
+        rtcConnectionStatus: 'NOT_CONNECTED',
         rtcConnectionError: null,
       }))),
     },
@@ -214,6 +215,55 @@ function DEVICE_REGISTERED_UNREGISTER(
   };
 }
 
+function handleBLEConnectionRequest(
+  state: MessagesState,
+  deviceId: string,
+  connectionRequested: boolean,
+): MessagesState {
+  invariant(deviceId);
+  let {devices} = state.DEVICES;
+
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+
+  let device = devices[index];
+  if (device.bleConnectionRequested === connectionRequested) {
+    return state;
+  }
+
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    bleConnectionRequested: connectionRequested,
+  };
+
+  return {
+    ...state,
+    DEVICES: {
+      type: 'DEVICE_LIST',
+      devices,
+    },
+  };
+}
+
+function DEVICE_BLE_CONNECT(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_BLE_CONNECT', string>
+): MessagesState {
+  const deviceId = action.payload;
+  return handleBLEConnectionRequest(state, deviceId, true);
+}
+
+function DEVICE_BLE_DISCONNECT(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_BLE_DISCONNECT', string>
+): MessagesState {
+  const deviceId = action.payload;
+  return handleBLEConnectionRequest(state, deviceId, false);
+}
+
 function DEVICE_BLE_CONNECTED(
   state: MessagesState,
   action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
@@ -232,6 +282,7 @@ function DEVICE_BLE_CONNECTED(
     devices[index] = {
       ...devices[index],
       bleConnectionStatus: 'CONNECTED',
+      bleConnectionError: null,
     };
   } else {
     const unconfiguredDevice = {
@@ -246,6 +297,7 @@ function DEVICE_BLE_CONNECTED(
       serverConnectionStatus: 'NOT_CONNECTED',
       serverConnectionError: null,
       bleConnectionStatus: 'CONNECTED',
+      bleConnectionRequested: false,
       bleConnectionError: null,
       rtcConnectionStatus: 'NOT_CONNECTED',
       rtcConnectionError: null,
@@ -279,6 +331,8 @@ function DEVICE_BLE_DISCONNECTED(
     devices = devices.slice();
     devices[index] = {
       ...devices[index],
+      wifiConnectionStatus: null,
+      serverConnectionStatus: null,
       bleConnectionStatus: 'NOT_CONNECTED',
     };
   } else {
@@ -333,11 +387,24 @@ function DEVICE_CONFIG_WIFISCANRESULTS(
 ): MessagesState {
   const session = action.payload;
   invariant(session.wifiNetworks);
-  emitter.postMessage({
-    type: 'DEVICE_CONFIG_WIFI_NETWORKS',
-    deviceConfigId: session.socketId,
-    wifiNetworks: session.wifiNetworks,
-  });
+
+  // We can't check |isRegistered| here because if this session was just
+  // just successfully configured then |isRegistered| will now be true and we
+  // want to keep sending DEVICE_CONFIG_WIFI_NETWORKS messages.
+  if (session.authenticated) {
+    invariant(session.deviceId);
+    emitter.postMessage({
+      type: 'DEVICE_WIFI_NETWORKS',
+      deviceId: session.deviceId,
+      wifiNetworks: session.wifiNetworks,
+    });
+  } else {
+    emitter.postMessage({
+      type: 'DEVICE_CONFIG_WIFI_NETWORKS',
+      deviceConfigId: session.socketId,
+      wifiNetworks: session.wifiNetworks,
+    });
+  }
 
   // We don't actually change state...
   return state;
@@ -349,7 +416,11 @@ function DEVICE_CONFIG_STATUSUPDATED(
 ): MessagesState {
   const session = action.payload;
   let {devices} = state.DEVICES;
-  const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
+
+  const index =
+    session.deviceId ?
+    devices.findIndex((device) => device.deviceId === session.deviceId) :
+    devices.findIndex((device) => device.deviceConfigId === session.socketId);
   if (index === -1) {
     return state;
   }
@@ -502,7 +573,6 @@ function DEVICE_RTC_CONNECTIONCLOSED(
   };
 }
 
-
 export const reducer = handleActions({
   AUTH_RESTORE: handleAuthAction,
   AUTH_SIGNIN: handleAuthAction,
@@ -511,6 +581,8 @@ export const reducer = handleActions({
   NETWORK_SERVER_REACHABLE,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER,
+  DEVICE_BLE_CONNECT,
+  DEVICE_BLE_DISCONNECT,
   DEVICE_BLE_CONNECTED,
   DEVICE_BLE_DISCONNECTED,
   DEVICE_CONFIG_PROXIMITYGATE,

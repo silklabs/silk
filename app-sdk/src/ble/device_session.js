@@ -33,9 +33,12 @@ type MessageData = {
   [arbitraryKey: string]: any;
 };
 
-export type RegistrationInformation = {
+export type WifiConfiguration = {
   accessPoint: string;
   password: string;
+};
+
+export type RegistrationInformation = WifiConfiguration & {
   publicKey: string;
   regToken: string;
   serverUrl: ?string;
@@ -328,7 +331,7 @@ export default class DeviceSession extends RobustEventEmitter {
         break;
       }
 
-      invariant(this._socketSession.authenticated);
+      invariant(this.authenticated);
 
       this._isRegistered = true;
       this._deviceId = data.deviceId;
@@ -463,6 +466,10 @@ export default class DeviceSession extends RobustEventEmitter {
 
   get socketId(): number {
     return this._id;
+  }
+
+  get authenticated(): boolean {
+    return this._socketSession.authenticated;
   }
 
   get manufacturer(): string {
@@ -649,4 +656,33 @@ export default class DeviceSession extends RobustEventEmitter {
     this._state = DeviceSession.STATE_DISMISSED;
     this._socketSession.disconnect();
   };
+
+  disconnect() {
+    log.debug(`DeviceSession.disconnect()`);
+
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    this._socketSession.disconnect();
+  }
+
+  listWifi() {
+    log.debug(`DeviceSession.listWifi()`);
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    invariant(this.authenticated);
+
+    this._socketSession.write({
+      name: `wifiScan`,
+    });
+  }
+
+  selectWifi(config: WifiConfiguration) {
+    log.debug(`DeviceSession.selectWifi('${config.accessPoint}')`);
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    invariant(this.authenticated);
+
+    this._socketSession.write({
+      name: `wifiSelect`,
+      accessPoint: config.accessPoint,
+      password: config.password,
+    });
+  }
 }

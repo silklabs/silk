@@ -296,7 +296,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
 
 export class AuthenticateWriteStream extends AuthenticateStreamBase {
 
-  static log = createLog(`streams:authenticate-read`);
+  static log = createLog(`streams:authenticate-write`);
 
   _accessToken: ?AccessToken;
   _sentSignatureDeferred: Deferred<void> = createDeferred();
@@ -383,10 +383,13 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
   async setAuthenticated(authenticated: boolean): Promise<void> {
     AuthenticateWriteStream.log.debug(`setAuthenticated`, authenticated);
 
-    const [allowUnauthenticated] = await Promise.all([
-      this._allowUnauthenticatedDeferred.promise,
-      this._sentSignatureDeferred.promise,
-    ]);
+    await this._sentSignatureDeferred.promise;
+
+    let allowUnauthenticated = false;
+
+    if (!authenticated) {
+      allowUnauthenticated = await this._allowUnauthenticatedDeferred.promise;
+    }
 
     if (authenticated || allowUnauthenticated) {
       this._unblock();

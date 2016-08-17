@@ -1,6 +1,6 @@
 {
   "name": "silk",
-  "version": "0.22.0",
+  "version": "1.0.0",
   "description": "Silk SDK",
   "repository": "silklabs/silk",
   "main": "cli.js",

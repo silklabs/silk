@@ -84,7 +84,7 @@ export default class TextToIntention {
       log.error(error);
       resolve({
         intent: UNKNOWN_INTENT,
-        score: 1.0,
+        score: 0.0,
         entities: [],
       });
     };
@@ -159,12 +159,16 @@ export default class TextToIntention {
 
       return Promise.all(promises)
       .then(intentions => {
-        let topMatchIntent = null;
+        let topMatchIntent = {
+          intent: UNKNOWN_INTENT,
+          score: 0.0,
+          entities: [],
+        };
         for (let intention of intentions) {
           if (intention.intent !== UNKNOWN_INTENT &&
               intention.intent !== 'None' &&
               intention.intent !== 'builtin.intent.none' &&
-              (!topMatchIntent || topMatchIntent.score < intention.score)) {
+              topMatchIntent.score < intention.score) {
             topMatchIntent = intention;
           }
         }
@@ -173,7 +177,7 @@ export default class TextToIntention {
     }
 
     log.info(`No intention found`);
-    return Promise.resolve({intent: UNKNOWN_INTENT, score: 1.0, entities: []});
+    return Promise.resolve({intent: UNKNOWN_INTENT, score: 0.0, entities: []});
   }
 
   _parseResponse(json: string): Intention {
@@ -194,7 +198,7 @@ export default class TextToIntention {
     if (!topMatchIntent) {
       return {
         intent: UNKNOWN_INTENT,
-        score: 1.0,
+        score: 0.0,
         entities: [],
       };
     }

@@ -32,6 +32,7 @@ const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/data/update.zip';
 
+const SYSTEM_VERIFIED = util.getboolprop('partition.system.verified');
 const BOARD = util.getprop('persist.silk.build.board',
                            util.getprop('ro.silk.build.board'));
 const PRODUCT = util.getprop('ro.silk.build.product');
@@ -420,8 +421,12 @@ function validateManifest(result) {
       }
     case currentSha:
       {
-        currentMetadata = buildMetadata;
-        log.info('Selected "inc" update');
+        if (SYSTEM_VERIFIED) {
+          currentMetadata = buildMetadata;
+          log.info('Selected "inc" update');
+        } else {
+          log.info('Skipping "inc" update as /system is unverified');
+        }
         break;
       }
     default:

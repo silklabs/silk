@@ -11,6 +11,8 @@ import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.altbeacon.beacon.logging.LogManager;
+import org.altbeacon.beacon.logging.Loggers;
 import org.altbeacon.beacon.service.MonitoringStatus;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
@@ -84,10 +86,19 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
     Log.d(TAG, "initMainThread");
     Utils.checkMainThread();
 
+    if (BuildConfig.DEBUG || true /* XXX REMOVE BEFORE RELEASE */) {
+      LogManager.setLogger(Loggers.verboseLogger());
+      LogManager.setVerboseLoggingEnabled(true);
+    } else {
+      LogManager.setLogger(Loggers.warningLogger());
+      LogManager.setVerboseLoggingEnabled(false);
+    }
+
     mBeaconManager = BeaconManager.getInstanceForApplication(reactContext);
     mBeaconManager.setRegionStatePeristenceEnabled(true);
     mBeaconManager.setBackgroundScanPeriod(BEACON_BACKGROUND_SCAN_MS);
     mBeaconManager.setBackgroundBetweenScanPeriod(BEACON_BACKGROUND_BETWEEN_MS);
+    mBeaconManager.setBackgroundMode(false);
     mBeaconManager.addRangeNotifier(this);
 
     final List<BeaconParser> parsers = mBeaconManager.getBeaconParsers();

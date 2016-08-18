@@ -99,7 +99,7 @@ for BUILD in $BUILDS; do
       echo Full OTA: $zip
       {
         echo "    \"*\": {"
-        echo "      \"sha\": \"$LATEST_SHA1\","
+        echo "      \"version\": \"$LATEST_SHA1\","
         echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
         echo "      \"zip_size\": \"$zip_size\","
         echo "      \"zip_sha1\": \"$zip_sha1\""
@@ -109,7 +109,7 @@ for BUILD in $BUILDS; do
       echo Inc OTA: $zip
       {
         echo "    \"$PREV_SHA1\": {"
-        echo "      \"sha\": \"$LATEST_SHA1\","
+        echo "      \"version\": \"$LATEST_SHA1\","
         echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
         echo "      \"zip_size\": \"$zip_size\","
         echo "      \"zip_sha1\": \"$zip_sha1\""

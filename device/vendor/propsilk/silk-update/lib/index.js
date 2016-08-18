@@ -339,8 +339,8 @@ function validateManifest(result) {
       return null;
     }
 
-    if (!buildMetadata.sha) {
-      log.warn('Update server responded with no sha');
+    if (!buildMetadata.version) {
+      log.warn('Update server responded with no version');
       return null;
     }
 
@@ -410,7 +410,7 @@ function validateManifest(result) {
     switch (buildType) {
     case '*':
       {
-        if (buildMetadata.sha !== currentSha || FORCE_UPDATE) {
+        if (buildMetadata.verson !== currentSha || FORCE_UPDATE) {
           // Different sha, select this build
           currentMetadata = buildMetadata;
           log.info('Selected "*" update');

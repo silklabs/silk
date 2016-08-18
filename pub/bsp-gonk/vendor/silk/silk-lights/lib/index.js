@@ -24,7 +24,7 @@ import createLog from 'silk-log/device';
 
 const log = createLog('lights');
 
-type LightColor = number; // 0x<AA><RR><GG><BB>
+export type LightColor = number; // 0x<AA><RR><GG><BB>
 
 type FlashMode = 'none' |     // No flash.
                  'timed' |    // To flash the light at a given rate, set

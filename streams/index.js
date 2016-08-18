@@ -5,6 +5,7 @@
 export { default as ClosingPassThrough } from './src/closing_passthrough';
 export { default as ClosingTransform } from './src/closing_transform';
 export { default as DemuxStream } from './src/demux';
+export { default as MultiplexStream } from './src/demux';
 export { default as DuplexTransform } from './src/duplex_transform';
 export { default as SocketDuplexStream } from './src/socket';
 export { default as WebSocketDuplexStream } from './src/websocket';

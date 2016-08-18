@@ -11,7 +11,8 @@ import invariant from 'assert';
 
 import createLog from 'silk-log/device';
 import Input from 'silk-input';
-import * as sysutil from 'silk-sysutils';
+import type {Light} from 'silk-lights';
+import lights from 'silk-lights';
 import volume from 'silk-volume';
 import type { Env } from 'silk-exttest';
 import type { UiState } from 'silk-device-ui';
@@ -54,7 +55,6 @@ class PandoHubUi {
   dialogEngine: DialogEngine;
   dialogState: DialogState;
   connectingSubstate: ConnectingSubstate;
-  brightness: number; // 0 .. 255
   connectingTimer: ?number;
   alertTimer: ?number;
   ledsPresent: bool;
@@ -65,11 +65,13 @@ class PandoHubUi {
   renderReenteredAlert: ?Alert;
   factoryResetUi: FactoryResetUi;
 
+  nightlightWhite: Light;
+  nightlightRgb: Light;
+
   constructor(env: Env) {
     this.input = new Input();
     this.deviceUiState = 'bootanimation';
     this.dialogState = 'idle';
-    this.brightness = clamp(0, 255, sysutil.getintprop('persist.pandohubui.brightness', 128));
     this.connectingTimer = null;
     this.alertTimer = null;
     this.ledsPresent = false;
@@ -104,14 +106,21 @@ class PandoHubUi {
             Ring.create(),
           ]);
           this.nightlight = nightlight;
+          this.nightlightWhite = lights.get('nightlightWhite');
+          this.nightlightRgb = lights.get('nightlightRgb');
+          this.nightlightWhite.on('change', this.onNightlightChange);
+          this.nightlightRgb.on('change', this.onNightlightChange);
           this.ring = ring;
-
           this.ledsPresent = true;
         }
         this.rendering = false;
         this.render();
       });
     });
+  }
+
+  onNightlightChange: ((event: string) => void) = () => {
+    this.render();
   }
 
   onDialogUiMode: DialogUiModeEventCallback = uiMode => {
@@ -177,13 +186,11 @@ class PandoHubUi {
       }
       break;
     case 'brightnessdown':
-      this.brightness = Math.max(0, this.brightness - 32);
-      sysutil.setprop('persist.pandohubui.brightness', this.brightness);
+      this.nightlightWhite.color = Math.max(0, this.nightlightWhite.color - 32);
       this.render();
       break;
     case 'brightnessup':
-      this.brightness = Math.min(255, this.brightness + 32);
-      sysutil.setprop('persist.pandohubui.brightness', this.brightness);
+      this.nightlightWhite.color = Math.min(255, this.nightlightWhite.color + 32);
       this.render();
       break;
     default:
@@ -277,7 +284,8 @@ class PandoHubUi {
     log.debug('alert:', this.alertTimer !== null);
     log.debug('volume:', volume.level);
     log.debug('volume mute:', volume.mute);
-    log.debug('brightness:', this.brightness);
+    log.debug('nightlight brightness:', this.nightlightWhite.color);
+    log.debug('nightlight color:', this.nightlightRgb.color);
 
     if (this.alertTimer !== null) {
       // Alert is still pending, don't disturb it
@@ -321,7 +329,7 @@ class PandoHubUi {
       case 'somethingsWrong':
         await Promise.all([
           this.ring.online(),
-          this.nightlight.userColor(this.brightness),
+          this.nightlight.userColor(),
         ]);
         break;
       default:
@@ -343,7 +351,7 @@ class PandoHubUi {
         case 'normal':
           await Promise.all([
             this.ring.online(),
-            this.nightlight.userColor(this.brightness),
+            this.nightlight.userColor(),
           ]);
           break;
         case 'dnd':
@@ -387,7 +395,7 @@ class PandoHubUi {
     case 'powerdown':
       await Promise.all([
         this.ring.online(),
-        this.nightlight.userColor(this.brightness),
+        this.nightlight.userColor(),
       ]);
       break;
     default:
@@ -443,6 +451,8 @@ class PandoHubUi {
     this.input.removeListener('down', this.onKeyPress);
     this.input.removeListener('up', this.onKeyRelease);
     volume.removeListener('level', this.onVolumeLevel);
+    this.nightlightWhite.removeListener('change', this.onNightlightChange);
+    this.nightlightRgb.removeListener('change', this.onNightlightChange);
   }
 }
 

@@ -66,21 +66,25 @@ export function* setNightlightColor(
   invariant(entities.length === 1);
   let entity = entities[0].entity;
 
-  const nightlight = lights.get('nightlight');
-  if (!nightlight) {
+  const nightlightRgb = lights.get('nightlightRgb');
+  const nightlightWhite = lights.get('nightlightWhite');
+  if (!nightlightRgb || !nightlightWhite) {
     yield call(speak, `Unable to set Nightlight color`);
     return;
   }
 
   switch (entity) {
   case 'red':
-    nightlight.set(lights.RED);
+    nightlightRgb.set(lights.RED);
+    nightlightWhite.set(63);  // 25% brightness
     break;
   case 'white':
-    nightlight.set(lights.WHITE);
+    nightlightRgb.set(lights.WHITE);
+    nightlightWhite.set(127); // 50% brightness
     break;
   case 'blue':
-    nightlight.set(lights.BLUE);
+    nightlightRgb.set(lights.BLUE);
+    nightlightWhite.set(255); // 100% brightness
     break;
   default:
     yield call(speak, `Unsupported nightlight color: ${entity}`, 'idle');

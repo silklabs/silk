@@ -48,6 +48,7 @@ type BrightnessMode = 'user' |  // brightness is managed by user setting
 export class Light extends events.EventEmitter {
   _id: LightId;
   _color: LightColor = 0;
+  _colorMax: LightColor = 0xFFFFFF;
   _flashMode: FlashMode = 'none';
   _flashOnMS: number = 0;
   _flashOffMS: number = 0;
@@ -144,7 +145,7 @@ export class Light extends events.EventEmitter {
    * @instance
    */
   set color(val: LightColor) {
-    if (val < 0 || val > 0xFFFFFF) {
+    if (val < 0 || val > this._colorMax) {
       throw new Error('Invalid color: ' + val);
     }
     if (this._color !== val) {

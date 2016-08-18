@@ -350,8 +350,20 @@ function validateManifest(result) {
           log.warn('Update server responded with no sha');
           return null;
         }
-        if (!buildMetadata.fingerprint) {
-          log.warn('Update server responded with no fingerprint');
+        break;
+      }
+    case 'inc':
+      {
+        if (!buildMetadata.bsp_api_id) {
+          log.warn('Update server responded with no bsp_api_id');
+          return null;
+        }
+        if (!buildMetadata.sha) {
+          log.warn('Update server responded with no sha');
+          return null;
+        }
+        if (!buildMetadata.src_sha) {
+          log.warn('Update server responded with no src_sha');
           return null;
         }
         break;
@@ -403,11 +415,11 @@ function validateManifest(result) {
     return buildMetadata;
   }
 
-  // Select an update from options provided by the server.  Try the 'full'
-  // first, and if the bsp is up to date then check for the smaller 'silk'
-  // update.
+  // Select an update from options provided by the server.  Try the smallest
+  // 'inc' update first followed by the 'full' update, then if the bsp is up to
+  // date then check for the 'silk' update.
   currentMetadata = null;
-  ['full', 'silk'].forEach(buildType => {
+  ['inc', 'full', 'silk'].forEach(buildType => {
     if (currentMetadata) {
       return; // Already found a build
     }
@@ -417,7 +429,7 @@ function validateManifest(result) {
       return;
     }
 
-    const FORCE_UPDATE = false; // true can be helpful debugging
+    const FORCE_UPDATE = false; // true can be helpful when debugging
     switch (buildType) {
     case 'silk':
       {
@@ -465,6 +477,25 @@ function validateManifest(result) {
           log.info('Selected "full" update');
         } else {
           log.verbose('Already running the latest "full" update');
+        }
+        break;
+      }
+    case 'inc':
+      {
+        let sha;
+        if (AB_UPDATE && inactiveSilkBspVersion) {
+          sha = inactiveSilkBspVersion.sha;
+        } else {
+          sha = silkBspVersion.sha;
+        }
+
+        if (buildMetadata.sha === sha) {
+          log.verbose('Already running the latest "inc" update');
+        } else if (buildMetadata.src_sha === sha) {
+          currentMetadata = buildMetadata;
+          log.info('Selected "inc" update');
+        } else {
+          log.verbose('"inc" update not applicable');
         }
         break;
       }

@@ -181,7 +181,7 @@ export function createMilestone(
   });
 }
 
-const MAX_PR_MERGEABLE_RETRIES = 4;
+const MAX_PR_MERGEABLE_RETRIES = 8;
 const PR_MERGEABLE_TIMEOUT_MS = 500;
 
 /**

@@ -70,6 +70,7 @@ node_modules/fbjs/flow/lib/
 # level flow-interfaces.
 .*/device/vendor/propsilk/silk-caffe/.*
 .*/device/vendor/propsilk/silk-cv/.*
+.*/node_modules/ws/.*
 
 # Ignore huge projects with minimal or no JS.
 .*/node-webrtc/build-staging/.*

@@ -1,0 +1,130 @@
+/**
+ * @providesModule ws
+ * @flow
+ */
+
+import TypedEventEmitter from 'typed-events';
+
+type ReadyState = 0 | 1 | 2 | 3;
+type PingPongOptions = {
+  mask?: bool;
+  binary?: bool;
+}
+
+type SendOptions = PingPongOptions & {
+  compress?: bool;
+}
+
+export type VerifyClientInfo = {
+  origin: string;
+  req: http$IncomingMessage;
+  secure: bool;
+};
+
+export type VerifyClientCb = (
+  result: bool,
+  code?: number,
+  name?: string,
+) => void;
+
+export type VerifyClientFn =
+  (info: VerifyClientFn, cb: VerifyClientCb) => any |
+  (info: VerifyClientFn) => bool;
+
+export type HandleProtocolsFn = (
+  protocols: Array<string>,
+  cb: (result: bool, protocol: string) => void,
+) => void;
+
+export type PerMessageDeflateOptions = {
+  serverNoContextTakeover?: bool;
+  clientNoContextTakeover?: bool;
+  serverMaxWindowBits?: number;
+  clientMaxWindowBits?: number;
+  memLevel?: number;
+};
+
+type ServerOptions = {
+  host?: string;
+  port?: number;
+  // This is more correctly typed as http server but there is no export for this.
+  server?: net$Server;
+  verifyClient?: VerifyClientFn,
+  handleProtocols?: HandleProtocolsFn,
+  perMessageDeflate?: bool | PerMessageDeflateOptions,
+  path?: string;
+  noServer?: bool;
+  disableHixie?: bool;
+  clientTracking?: bool;
+};
+
+type Callback = (err?: Error) => void;
+export type ErrorEventCb = (err: Error) => void;
+export type MessageEventCb = (data: Buffer | string, flags: { binary: bool }) => void;
+export type CloseEventCb = (code: number, message: ?string) => void;
+
+declare export class Server extends TypedEventEmitter {
+  constructor(options: ServerOptions): void;
+  close(cb: Callback): void;
+  handleUpgrade(
+    req: http$ClientRequest,
+    socket: net$Socket,
+    callback: (err?: Error, ws: ?WebSocket) => void,
+  ): void;
+
+  on(event: 'error', cb: ErrorEventCb): this;
+  once(event: 'error', cb: ErrorEventCb): this;
+  on(event: 'headers', cb: (headers: Array<string>) => void): this;
+  once(event: 'headers', cb: (headers: Array<string>) => void): this;
+  on(event: 'connection', cb: (ws: WebSocket) => void): this;
+  once(event: 'connection', cb: (ws: WebSocket) => void): this;
+}
+
+declare export default class WebSocket extends TypedEventEmitter {
+
+  static CONNECTING: 0;
+  static OPEN: 1;
+  static CLOSING: 2;
+  static CLOSED: 3;
+
+  readyState: ReadyState;
+  bytesReceived: number;
+  url: string;
+  upgradeReq: http$IncomingMessage;
+  // Added purely for compat does nothing in this context ...
+  binaryType: string;
+
+  constructor(url: string): void;
+  close(number?: number, data?: string | Buffer): void;
+  ping(): void;
+  pong(): void;
+  ping(data: Buffer, options?: PingPongOptions, dontFailWhenClosed: bool): void;
+  pong(data: Buffer, options?: PingPongOptions, dontFailWhenClosed: bool): void;
+  pause(): void;
+  resume(): void;
+  send(data: string | Buffer, options?: SendOptions, cb?: Callback): void;
+  send(data: string | Buffer, cb: Callback): void;
+  terminate(): void;
+
+  // Node interfaces ...
+  on(event: 'error', cb: ErrorEventCb): this;
+  once(event: 'error', cb: ErrorEventCb): this;
+
+  on(event: 'message', cb: MessageEventCb): this;
+  once(event: 'message', cb: MessageEventCb): this;
+
+  once(event: 'ping', cb: MessageEventCb): this;
+  on(event: 'ping', cb: MessageEventCb): this;
+
+  once(event: 'pong', cb: MessageEventCb): this;
+  on(event: 'pong', cb: MessageEventCb): this;
+
+  once(event: 'close', cb: CloseEventCb): this;
+  on(event: 'close', cb: CloseEventCb): this;
+
+  on(event: 'open', cb: () => void): this;
+  once(event: 'open', cb: () => void): this;
+
+  addEventListener(event: 'open', cb: () => void): this;
+  addEventListener(event: 'message', cb: (e: MessageEvent) => void): this;
+}

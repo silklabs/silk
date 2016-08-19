@@ -1,0 +1,31 @@
+/* @flow */
+declare class WebSocket {
+  static CONNECTING: 0;
+  static OPEN: 1;
+  static CLOSING: 2;
+  static CLOSED: 3;
+  constructor(url: string, protocols?: string | Array<string>): void;
+  protocol: string;
+  readyState: number;
+  bufferedAmount: number;
+  binaryType: string;
+  onopen: (ev: Event) => any;
+  extensions: string;
+  onmessage: (ev: MessageEvent) => any;
+  onclose: (ev: CloseEvent) => any;
+  onerror: (ev: Event) => any;
+  binaryType: string;
+  url: string;
+  close(code?: number, reason?: string): void;
+  send(data: any): void;
+  CONNECTING: 0;
+  OPEN: 1;
+  CLOSING: 2;
+  CLOSED: 3;
+
+  addEventListener(type: 'open', cb: () => void): void;
+  addEventListener(type: 'message', cb: (e: MessageEvent) => void): void;
+  addEventListener(type: 'close', cb: (e: CloseEvent) => void): void;
+  addEventListener(type: 'error', cb: (e: Event) => void): void;
+  removeEventListener(type: string, listener: Object | Function): void;
+}

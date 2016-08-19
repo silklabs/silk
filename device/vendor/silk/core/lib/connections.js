@@ -144,7 +144,7 @@ export default class Connections extends EventEmitter {
   _running: bool = false;
   _serversTable: ?SasCompositeClient;
   _serverUrl: ?string;
-  _mux: ?Duplex = null;
+  _mux: ?MultiplexStream = null;
   _connections: Set<Peer> = new Set();
   _channelEmitters: {[key: string]: ChannelEventEmitter} = {};
 
@@ -214,6 +214,18 @@ export default class Connections extends EventEmitter {
       this._cleanupListeners();
     }
     this.state = 'disconnected';
+  }
+
+  /**
+   * Create a bi-directional stream to communicate with the silk cloud.
+   */
+  creatCloudStream(type: string, payload: {[key: string]: mixed}): VirtualStream {
+    const mux = this._mux;
+    invariant(mux);
+    return mux.createStream({
+      type,
+      payload,
+    }, `cloud stream: ${type}`);
   }
 
   /**

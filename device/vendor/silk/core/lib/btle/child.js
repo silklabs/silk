@@ -805,6 +805,11 @@ class BluetoothLEChild {
       this._onSocketInternalMessage(sessionInfo, message);
     };
 
+    const sessionErrorListener = (error) => {
+      log.error(`Session error`, error);
+      socket.end();
+    };
+
     let cleanedUp = false;
 
     const cleanup = () => {
@@ -819,6 +824,8 @@ class BluetoothLEChild {
 
       socket.removeListener(`error`, socketErrorListener);
       socket.removeListener(`internalMessage`, socketInternalMessageListener);
+
+      session.removeListener(`error`, sessionErrorListener);
 
       session.unpipe(socket);
       socket.unpipe(session);
@@ -841,6 +848,8 @@ class BluetoothLEChild {
 
     socket.addListener(`error`, socketErrorListener);
     socket.addListener(`internalMessage`, socketInternalMessageListener);
+
+    session.addListener(`error`, sessionErrorListener);
 
     session.pipe(socket);
     socket.pipe(session);

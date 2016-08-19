@@ -33,9 +33,9 @@ APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
 ./node_modules/.bin/documentation \
   build \
   $APIDOC_SOURCE_FILES \
-  --project-version master \
+  --project-version latest \
   -f html \
-  -o dist/api/device \
+  -o dist \
   --shallow \
   -t node_modules/documentation-theme-default \
   --name silk-device-api

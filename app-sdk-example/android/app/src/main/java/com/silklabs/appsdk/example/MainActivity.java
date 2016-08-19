@@ -119,13 +119,31 @@ public class MainActivity extends Activity {
               }
 
               Device device = (Device) deviceListSpinner.getSelectedItem();
-              int deviceConfigId =  device.deviceConfigId;
+              Integer deviceConfigId =  device.deviceConfigId;
 
-              int wifiDeviceConfigId =
+              Integer wifiDeviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
               Log.d(TAG, "Received wifi network message for " + wifiDeviceConfigId);
 
-              if (deviceConfigId != wifiDeviceConfigId) {
+              if (deviceConfigId == null ||
+                  !deviceConfigId.equals(wifiDeviceConfigId)) {
+                return;
+              }
+
+              onWifiNetworksAvailable((ArrayList<Map<String, Object>>) message.get("wifiNetworks"));
+              break;
+            }
+            case "DEVICE_WIFI_NETWORKS": {
+              final Device device =
+                (Device) deviceListSpinner.getSelectedItem();
+              if (device == null) {
+                return;
+              }
+
+              String deviceId = ((String) message.get("deviceId"));
+              Log.d(TAG, "Received wifi network message for " + deviceId);
+
+              if (!device.deviceId.equals(deviceId)) {
                 return;
               }
 
@@ -219,7 +237,10 @@ public class MainActivity extends Activity {
             myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
             myDevice.rtcConnectionError = (String) device.get("rtcConnectionError");
 
-            if (!"CONFIGURED".equals(myDevice.deviceConfigStatus)) {
+            if (myDevice.deviceConfigStatus.equals("CONFIGURED")) {
+              myDevice.accountDeviceNumber =
+                ((Double) device.get("accountDeviceNumber")).intValue();
+            } else {
               myDevice.deviceConfigId =
                 ((Double) device.get("deviceConfigId")).intValue();
             }
@@ -242,6 +263,17 @@ public class MainActivity extends Activity {
           // Preselect the last selected item
           if (currentItem != null) {
             selectDeviceListSpinnerItem(currentItem);
+          }
+
+          currentDevice = (Device) deviceListSpinner.getSelectedItem();
+          if (currentDevice != null &&
+              currentDevice.deviceConfigStatus.equals("CONFIGURED") &&
+              currentDevice.bleConnectionStatus.equals("CONNECTED") &&
+              wifiDialog.isShowing()) {
+            Map<String, Object> message = new HashMap<>();
+            message.put("type", "DEVICE_WIFI_LIST");
+            message.put("deviceId", currentDevice.deviceId);
+            mSilkService.postMessage(message);
           }
         }
       });
@@ -353,20 +385,28 @@ public class MainActivity extends Activity {
     wifiDialog.setButton(Dialog.BUTTON_POSITIVE, "save", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        dialog.dismiss();
-        String ssid = ssidListSpinner.getSelectedItem().toString();
-        String password = passwordEditText.getText().toString();
-        Device device = (Device) deviceListSpinner.getSelectedItem();
-        String deviceName = "test";
+        final Map<String, Object> message;
+        final String ssid = ssidListSpinner.getSelectedItem().toString();
+        final String password = passwordEditText.getText().toString();
+        final Device device = (Device) deviceListSpinner.getSelectedItem();
 
-        // Set device configuration
-        Map<String, Object> message = new HashMap<>();
-        message.put("type", "DEVICE_CONFIG_SET_CONFIG");
-        message.put("deviceConfigId", device.deviceConfigId);
-        message.put("deviceName", deviceName);
-        message.put("wifiSSID", ssid);
-        message.put("wifiPassword", password);
+        if (device.deviceConfigStatus.equals("CONFIGURED")) {
+          message = new HashMap<>();
+          message.put("type", "DEVICE_WIFI_SET");
+          message.put("deviceId", device.deviceId);
+          message.put("accessPoint", ssid);
+          message.put("password", password);
+        } else {
+          // Set device configuration
+          message = new HashMap<>();
+          message.put("type", "DEVICE_CONFIG_SET_CONFIG");
+          message.put("deviceConfigId", device.deviceConfigId);
+          message.put("deviceName", "test");
+          message.put("wifiSSID", ssid);
+          message.put("wifiPassword", password);
+        }
         mSilkService.postMessage(message);
+        dialog.dismiss();
       }
     });
     wifiDialog.setButton(Dialog.BUTTON_NEGATIVE, "cancel", new DialogInterface.OnClickListener() {
@@ -374,11 +414,18 @@ public class MainActivity extends Activity {
       public void onClick(DialogInterface dialog, int which) {
         Device device = (Device) deviceListSpinner.getSelectedItem();
 
-        // Abort device configuration
-        Map<String, Object> message = new HashMap<>();
-        message.put("type", "DEVICE_CONFIG_ABORT");
-        message.put("deviceConfigId", device.deviceConfigId);
-        mSilkService.postMessage(message);
+        if (device.deviceConfigStatus.equals("CONFIGURED")) {
+          Map<String, Object> message = new HashMap<>();
+          message.put("type", "DEVICE_BLE_DISCONNECT");
+          message.put("deviceId", device.deviceId);
+          mSilkService.postMessage(message);
+        } else {
+          // Abort device configuration
+          Map<String, Object> message = new HashMap<>();
+          message.put("type", "DEVICE_CONFIG_ABORT");
+          message.put("deviceConfigId", device.deviceConfigId);
+          mSilkService.postMessage(message);
+        }
 
         dialog.cancel();
       }
@@ -504,15 +551,18 @@ public class MainActivity extends Activity {
     public void onClick(View v) {
       Device device = (Device) deviceListSpinner.getSelectedItem();
       if (device.deviceConfigStatus.equals("CONFIGURED")) {
-        onError("Selected device is already configured");
-        return;
+        // Attempt device reconfiguration
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "DEVICE_BLE_CONNECT");
+        message.put("deviceId", device.deviceId);
+        mSilkService.postMessage(message);
+      } else {
+        // Accept device configuration
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "DEVICE_CONFIG_ACCEPT");
+        message.put("deviceConfigId", device.deviceConfigId);
+        mSilkService.postMessage(message);
       }
-
-      // Accept device configuration
-      Map<String, Object> message = new HashMap<>();
-      message.put("type", "DEVICE_CONFIG_ACCEPT");
-      message.put("deviceConfigId", device.deviceConfigId);
-      mSilkService.postMessage(message);
 
       wifiDialog.show();
 
@@ -552,12 +602,11 @@ public class MainActivity extends Activity {
         echoButton.setEnabled(false);
       }
 
-      if (device.deviceConfigId != -1) {
-        configureButton.setEnabled(true);
+      if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
+        configureButton.setEnabled(device.deviceConfigId != null);
       } else {
-        configureButton.setEnabled(false);
+        configureButton.setEnabled(true);
       }
-
       deviceStatusTextView.setText(device.status());
     }
 
@@ -580,11 +629,6 @@ public class MainActivity extends Activity {
       Device device = (Device) adapter.getItem(position);
       if(device.toString().equals(value)) {
         deviceListSpinner.setSelection(position);
-
-        final Button button = wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        if (button != null) {
-          button.setEnabled(device.deviceId != null);
-        }
         return;
       }
     }
@@ -599,10 +643,25 @@ public class MainActivity extends Activity {
     ArrayAdapter<String> adapter = (ArrayAdapter<String>) ssidListSpinner.getAdapter();
     for (int position = 0; position < adapter.getCount(); position++) {
       String ssid = adapter.getItem(position).toString();
-      if(ssid.equals(value)) {
+      if (ssid.equals(value)) {
         ssidListSpinner.setSelection(position);
-        return;
+        break;
       }
+    }
+
+    final Button button = wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+    if (button != null) {
+      final Device device = (Device) deviceListSpinner.getSelectedItem();
+      boolean enabled =
+        device != null && ssidListSpinner.getSelectedItem() != null;
+      if (enabled) {
+        if (device.deviceConfigStatus.equals("CONFIGURED")) {
+          enabled = device.bleConnectionStatus.equals("CONNECTED");
+        } else {
+          enabled = device.deviceId != null;
+        }
+      }
+      button.setEnabled(enabled);
     }
   }
 
@@ -614,7 +673,7 @@ public class MainActivity extends Activity {
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
       final Device device = (Device) deviceListSpinner.getSelectedItem();
       final Button button = wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-      button.setEnabled(device.deviceId != null);
+      button.setEnabled(device != null && device.deviceId != null);
     }
 
     @Override

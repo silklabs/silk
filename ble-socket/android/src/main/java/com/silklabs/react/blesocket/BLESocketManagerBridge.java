@@ -96,9 +96,13 @@ public class BLESocketManagerBridge
   }
 
   private void sendEvent(final String eventName, final WritableMap params) {
-    getReactApplicationContext()
-      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-      .emit(eventName, params);
+    final ReactApplicationContext context = getReactApplicationContext();
+    if (!context.hasActiveCatalystInstance()) {
+      Log.w(TAG, "Cannot send '" + eventName + "' event because RN isn't up");
+      return;
+    }
+    context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+           .emit(eventName, params);
   }
 
   void sendConnect(final int connectionId) {
@@ -139,11 +143,11 @@ public class BLESocketManagerBridge
     sendEvent("silk-blesocketmanager-unconfigured-devices", params);
   }
 
-  void sendDevicesBeaconing(final String serviceUuid,
+  void sendDevicesBeaconing(final UUID serviceUuid,
                             final int deviceNumber,
                             final boolean beaconing) {
     WritableMap params = Arguments.createMap();
-    params.putString("serviceUuid", serviceUuid);
+    params.putString("serviceUuid", serviceUuid.toString());
     params.putInt("deviceNumber", deviceNumber);
     params.putBoolean("beaconing", beaconing);
     sendEvent("silk-blesocketmanager-device-beaconing", params);
@@ -362,9 +366,26 @@ public class BLESocketManagerBridge
 
   @ReactMethod
   public void scanForDevice(String serviceUuid,
-                            int accountDeviceNumber,
-                            boolean shouldScan) {
-    // TODO
+                            final int accountDeviceNumber,
+                            final boolean shouldScan) {
+    Log.d(TAG,
+          "scanForDevice: " + serviceUuid + ", " + accountDeviceNumber + ", " +
+          shouldScan);
+
+    final UUID uuid;
+    try {
+      uuid = UUID.fromString(serviceUuid);
+    } catch(Exception e) {
+      Log.e(TAG, "Invalid uuid: " + serviceUuid + ": " + e);
+      return;
+    }
+
+    Utils.postToMainThread(new Runnable() {
+      @Override
+      public void run() {
+        mSocketManager.scanForDevice(uuid, accountDeviceNumber, shouldScan);
+      }
+    });
   }
 
 }

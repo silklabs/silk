@@ -147,9 +147,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
       this._errorMessage = error.message;
     }
 
-    this._ended = true;
-
-    this._killRssiUpdates();
+    this._disconnect();
   };
 
   _onClose: (() => void) = () => {
@@ -157,12 +155,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
 
     const duration = Math.max(Date.now() - this._startTime, 0);
 
-    if (!this._disconnected) {
-      log.debug(`Disconnecting peripheral`);
-      this._peripheral.removeListener(`disconnect`, this._onDisconnect);
-      this._peripheral.disconnect();
-      this._disconnected = true;
-    }
+    this._disconnect();
 
     const commonArgs = [
       duration,
@@ -192,6 +185,22 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
       this._startTime = now;
     }
   };
+
+  _disconnect() {
+    log.debug(`_disconnect`);
+
+    if (this._disconnected) {
+      return;
+    }
+
+    this._disconnected = true;
+
+    this._ended = true;
+    this._killRssiUpdates();
+
+    this._peripheral.removeListener(`disconnect`, this._onDisconnect);
+    this._peripheral.disconnect();
+  }
 
   _killRssiUpdates() {
     log.debug(`_killRssiUpdates`);

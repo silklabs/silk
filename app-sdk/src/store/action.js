@@ -80,7 +80,8 @@ export type ThunkAction<S, T, I, P> = (
  * changeUsername.
  */
 export function actionFromPayload<S, T, P>(
-  type: T
+  type: T,
+  ...rest: Array<void>
 ): ((payload: P) => ThunkAction<S, T, P, P>) {
   return (payload: P) => (dispatch: Dispatch<SimpleAction<T, P>>) => {
     dispatch({type, input: payload, payload});
@@ -95,6 +96,7 @@ export function actionFromPayload<S, T, P>(
 export function actionFromPayloadGen<S, T, I, P>(
   type: T,
   createPayload: (state: S, input: I) => P,
+  ...rest: Array<void>
 ): ((input: I) => ThunkAction<S, T, I, P>) {
   return (input: I) => (dispatch: Dispatch<Action<T, I, P>>, getState: () => S) => {
     let payload;
@@ -117,6 +119,7 @@ export function actionFromPayloadGen<S, T, I, P>(
 export function actionFromAsyncPayloadGen<S, T, I, P>(
   type: T,
   genPayload: (state: S, input: I) => Promise<P>,
+  ...rest: Array<void>
 ): ((input: I) => ThunkAction<S, T, I, P>) {
   return (input: I) => (dispatch: Dispatch<Action<T, I, P>>, getState: () => S) => {
     dispatch({type, input, requested: true});

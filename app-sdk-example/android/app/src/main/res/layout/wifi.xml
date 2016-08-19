@@ -29,13 +29,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/textProximity"
+        android:text="@string/proximity_message"
+        android:id="@+id/textView"
         android:layout_alignParentTop="true"
         android:layout_marginTop="113dp"
         android:layout_alignParentStart="true"
-        android:layout_alignEnd="@+id/wifiPasswordText"
-        android:text="@string/proximity_message"
-        android:textStyle="italic"
-        android:singleLine="false"/>
+        android:layout_alignEnd="@+id/wifiPasswordText"/>
 
 </RelativeLayout>

@@ -33,9 +33,12 @@ type MessageData = {
   [arbitraryKey: string]: any;
 };
 
-export type RegistrationInformation = {
+export type WifiConfiguration = {
   accessPoint: string;
   password: string;
+};
+
+export type RegistrationInformation = WifiConfiguration & {
   publicKey: string;
   regToken: string;
   serverUrl: ?string;
@@ -64,6 +67,7 @@ const SCHEMA = {
   registered: Joi.object().keys({
     name: Joi.string().equal(`registered`).required(),
     deviceId: Joi.string().lowercase().trim().length(64).hex().required(),
+    accountDeviceNumber: Joi.number().integer().required(),
   }).required(),
 
   status: Joi.object().keys({
@@ -102,6 +106,7 @@ const SCHEMA = {
 
   complete: Joi.object().keys({
     name: Joi.string().equal(`complete`).required(),
+    accountDeviceNumber: Joi.number().integer().required(),
   }).required(),
 };
 
@@ -134,6 +139,7 @@ export default class DeviceSession extends RobustEventEmitter {
 
   _isRegistered: boolean = false;
   _deviceId: ?string = null;
+  _accountDeviceNumber: ?number = null;
   _status: ?DeviceStatus = null;
   _wifiNetworks: ?Array<DeviceWifiNetwork> = null;
 
@@ -171,6 +177,7 @@ export default class DeviceSession extends RobustEventEmitter {
     socketSession.addListener(`error`, this._onError);
     socketSession.addListener(`data`, this._onData);
     socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
+    socketSession.addListener(`end`, this._onEnd);
     this._socketSession = socketSession;
 
     this._metrics = metrics;
@@ -259,6 +266,15 @@ export default class DeviceSession extends RobustEventEmitter {
     this._error = error;
   };
 
+  _onEnd: (() => void) = () => {
+    log.debug(`DeviceSession._onEnd()`);
+
+    if (this._state !== DeviceSession.STATE_DISMISSED) {
+      log.warn(`Device session ended before dismissed`);
+      this._forceDisconnect();
+    }
+  };
+
   _onData: ((data: MessageData) => void) = (data) => {
     if (__DEV__) {
       Systrace.beginEvent(`ble.DeviceManager._onData('${data.name}')`);
@@ -320,15 +336,28 @@ export default class DeviceSession extends RobustEventEmitter {
       return;
 
     case `registered`:
+      if (!this.authenticated) {
+        log.warn(`Received '${data.name}' on an unauthenticated stream`);
+        this._forceDisconnect();
+        return;
+      }
+
+      if (this._socketSession.authenticatedPublicKey !== data.deviceId) {
+        log.warn(`Authentication key does not match device id`,
+                 this._socketSession.authenticatedPublicKey,
+                 data.deviceId);
+        this._forceDisconnect();
+        return;
+      }
+
       if (state !== DeviceSession.STATE_ID_RECEIVED) {
         log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
 
-      invariant(this._socketSession.authenticated);
-
       this._isRegistered = true;
       this._deviceId = data.deviceId;
+      this._accountDeviceNumber = data.accountDeviceNumber;
       this._state = DeviceSession.STATE_REGISTERED;
       this._emitConnect();
       this._emitRegistered();
@@ -369,6 +398,12 @@ export default class DeviceSession extends RobustEventEmitter {
       return;
 
     case `register`:
+      if (this.authenticated) {
+        log.warn(`Received '${data.name}' on an authenticated stream`);
+        this._forceDisconnect();
+        return;
+      }
+
       if (state !== DeviceSession.STATE_ID_RECEIVED &&
           state !== DeviceSession.STATE_RESTARTED) {
         log.warn(`Received '${data.name}' while in state ${state}`);
@@ -425,6 +460,7 @@ export default class DeviceSession extends RobustEventEmitter {
 
       this._state = DeviceSession.STATE_REGISTERED;
       this._isRegistered = true;
+      this._accountDeviceNumber = data.accountDeviceNumber;
       this._emitRegistered();
       return;
 
@@ -460,6 +496,10 @@ export default class DeviceSession extends RobustEventEmitter {
     return this._id;
   }
 
+  get authenticated(): boolean {
+    return this._socketSession.authenticated;
+  }
+
   get manufacturer(): string {
     return this._manufacturer;
   }
@@ -482,6 +522,10 @@ export default class DeviceSession extends RobustEventEmitter {
 
   get deviceId(): ?string {
     return this._deviceId;
+  }
+
+  get accountDeviceNumber(): ?number {
+    return this._accountDeviceNumber;
   }
 
   get secret(): ?DeviceSecret {
@@ -640,4 +684,34 @@ export default class DeviceSession extends RobustEventEmitter {
     this._state = DeviceSession.STATE_DISMISSED;
     this._socketSession.disconnect();
   };
+
+  disconnect() {
+    log.debug(`DeviceSession.disconnect()`);
+
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    this._state = DeviceSession.STATE_DISMISSED;
+    this._socketSession.disconnect();
+  }
+
+  listWifi() {
+    log.debug(`DeviceSession.listWifi()`);
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    invariant(this.authenticated);
+
+    this._socketSession.write({
+      name: `wifiScan`,
+    });
+  }
+
+  selectWifi(config: WifiConfiguration) {
+    log.debug(`DeviceSession.selectWifi('${config.accessPoint}')`);
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    invariant(this.authenticated);
+
+    this._socketSession.write({
+      name: `wifiSelect`,
+      accessPoint: config.accessPoint,
+      password: config.password,
+    });
+  }
 }

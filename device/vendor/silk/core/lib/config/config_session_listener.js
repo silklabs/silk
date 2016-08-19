@@ -384,14 +384,15 @@ export default class ConfigSessionListener extends SessionListenerBase {
     super.disconnect();
   }
 
-  sendComplete(): void {
-    log.debug(`ConfigSessionListener.sendComplete()`);
+  sendComplete(accountDeviceNumber: number): void {
+    log.debug(`ConfigSessionListener.sendComplete(${accountDeviceNumber})`);
 
     invariant(this._state === 'registered');
     invariant(!this._dismissTimeout);
 
     this._send({
       name: `complete`,
+      accountDeviceNumber,
     });
 
     this._state = 'complete';

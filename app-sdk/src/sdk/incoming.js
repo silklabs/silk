@@ -2,6 +2,8 @@
  * @flow
  */
 
+import type {WifiConfiguration} from '../ble/device_session';
+
 export type DeviceConfigAcceptMessage = {
   type: 'DEVICE_CONFIG_ACCEPT';
   deviceConfigId: number;
@@ -34,4 +36,24 @@ export type DeviceMessageMessage = {
   type: 'DEVICE_MESSAGE';
   deviceId: string;
   payload: any;
+};
+
+export type DeviceBLEConnectMessage = {
+  type: 'DEVICE_BLE_CONNECT';
+  deviceId: string;
+};
+
+export type DeviceBLEDisconnectMessage = {
+  type: 'DEVICE_BLE_DISCONNECT';
+  deviceId: string;
+};
+
+export type DeviceWifiListMessage = {
+  type: 'DEVICE_WIFI_LIST';
+  deviceId: string;
+};
+
+export type DeviceWifiSetMessage = WifiConfiguration & {
+  type: 'DEVICE_WIFI_SET';
+  deviceId: string;
 };

@@ -34,7 +34,39 @@ type ReducerMap = {
 
 const log = createLog('app-sdk-store');
 
+const LOG_STATE_TRANSITIONS = false;
+
+// If |LOG_STATE_TRANSITIONS| is true then this function will be called before
+// logging state transitions. Use it to select only the data you care about.
+function logStateTransformer(state) {
+  const devices = {...state.devices};
+
+  const unconfigured = [];
+  devices.unconfigured.forEach((session, id) => {
+    unconfigured.push([id, session.deviceId]);
+  });
+  devices.unconfigured = unconfigured;
+
+  if (devices.registered) {
+    const registered = [];
+    devices.registered.forEach((device, deviceId) => {
+      const newDevice = {...device};
+      if (device.ble.session) {
+        newDevice.ble.session = device.ble.session.deviceId;
+      }
+      registered.push([deviceId, newDevice]);
+    });
+    devices.registered = registered;
+  }
+
+  return devices;
+}
+
 const logger = store => next => action => {
+  if (LOG_STATE_TRANSITIONS) {
+    log.debug(`Old state`, logStateTransformer(store.getState()));
+  }
+
   if (action.requested) {
     log.debug(`${action.type} requested`);
   } else if (action.error) {
@@ -49,7 +81,14 @@ const logger = store => next => action => {
     }
     log.debug(`${action.type} payload:`, payload);
   }
-  return next(action);
+
+  const returnedValue = next(action);
+
+  if (LOG_STATE_TRANSITIONS) {
+    log.debug(`New state`, logStateTransformer(store.getState()));
+  }
+
+  return returnedValue;
 };
 
 export default function makeStore(

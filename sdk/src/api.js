@@ -104,6 +104,11 @@ export default class API {
     await this.adb('root');
     await this.adb('wait-for-device');
     if (system) {
+      let [stdout] = await this.adb('shell getprop partition.system.verified');
+      let verified = stdout.replace(/\r?\n$/, '');
+      if (verified === '1') {
+        throw new Error('Verity enabled.  Run |adb disable-verity && adb reboot| to continue');
+      }
       await this.adb('remount');
     }
 

@@ -2047,6 +2047,8 @@ public class BLESocketManager {
     for (Integer deviceNumber : lostDeviceNumbers) {
       mBridge.sendDevicesBeaconing(uuid, deviceNumber, false);
     }
+
+    updateScanningState();
   }
 
 }

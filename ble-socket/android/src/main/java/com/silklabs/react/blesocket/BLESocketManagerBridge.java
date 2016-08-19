@@ -96,9 +96,13 @@ public class BLESocketManagerBridge
   }
 
   private void sendEvent(final String eventName, final WritableMap params) {
-    getReactApplicationContext()
-      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-      .emit(eventName, params);
+    final ReactApplicationContext context = getReactApplicationContext();
+    if (!context.hasActiveCatalystInstance()) {
+      Log.w(TAG, "Cannot send '" + eventName + "' event because RN isn't up");
+      return;
+    }
+    context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+           .emit(eventName, params);
   }
 
   void sendConnect(final int connectionId) {

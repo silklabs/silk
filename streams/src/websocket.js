@@ -97,12 +97,14 @@ export default class WebSocketDuplexStream extends Duplex {
   };
 
   constructor(ws: WebSocket | NodeWebSocket, options: { log?: any } = {}) {
-    super({
+    // $FlowFixMe: hard to type this correctly because of how node passes config.
+    const opts = Object.assign({
       // WebSockets have native support for utf8 (strings). Any write which is
       // given a string will be sent a string frame instead of being converted
       // into a buffer.
       decodeStrings: false,
-    });
+    }, options);
+    super(opts);
 
     if (options.log) {
       this._log = options.log;
@@ -117,7 +119,7 @@ export default class WebSocketDuplexStream extends Duplex {
     // This should be MessageEvent, but addEventListener() is spec'ed
     // for an Event listener. Specifying Event here means event.data
     // below will fail.
-    const onMessage = (event: MessageEvent) => {
+    const onMessage = (event) => {
       // XXX: Should we somehow include flags ???
       let data = event.data;
 
@@ -128,7 +130,6 @@ export default class WebSocketDuplexStream extends Duplex {
       }
 
       if (!Buffer.isBuffer(data)) {
-        invariant(data instanceof ArrayBuffer);
         // $FlowFixMe: https://github.com/facebook/flow/pull/2296
         data = new Buffer(data);
       }

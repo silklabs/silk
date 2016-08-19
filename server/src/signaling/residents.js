@@ -158,7 +158,10 @@ export default class Residents {
    * lived.
    */
   register(id: string, connection: WebSocket) {
-    const multiplex = new MultiplexStream(new WebSocketDuplexStream(connection));
+    const multiplex = new MultiplexStream(new WebSocketDuplexStream(connection, {
+      // Data will flow without being coerced into buffer...
+      objectMode: true,
+    }));
     const now = Date.now();
     const resident = {
       lastPing: now,
@@ -237,7 +240,10 @@ export default class Residents {
    * client. These communications are designed to be short.
    */
   bridge(id: string, connection: WebSocket) {
-    const wsDuplex = new WebSocketDuplexStream(connection);
+    const wsDuplex = new WebSocketDuplexStream(connection, {
+      // Data will flow without being coerced into buffer...
+      objectMode: true,
+    });
     const streamId = uuid.v4();
     const resident = this._residents.get(id);
     log.info(`Bridge(id=${id} streamId=${streamId})`);

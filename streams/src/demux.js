@@ -144,7 +144,12 @@ export class VirtualStream extends Duplex {
     type: VirtualStreamType,
     name: ?string,
   ) {
-    super();
+    super({
+      // Do not coerce into buffer.
+      decodeStrings: false,
+      // Let data flow through this without buffering.
+      objectMode: true,
+    });
     this._id = id;
     this._writeDest = writeTo;
     this._body = body;
@@ -258,6 +263,7 @@ export default class DemuxStream extends Transform {
 
   constructor(source: Duplex, name?: string) {
     super({
+      decodeStrings: false,
       readableObjectMode: true,
     });
     this._writeDest = source;

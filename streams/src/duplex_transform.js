@@ -90,6 +90,11 @@ export default class DuplexTransform extends Duplex {
     this.__writableTransform = writableTransform ||
                                new ClosingPassThrough(options);
 
+    this.addListener(EVENT_NAME_ERROR, this.__onError);
+    this.once(EVENT_NAME_CLOSE, () => {
+      this.removeListener(EVENT_NAME_ERROR, this.__onError);
+    });
+
     DuplexTransform.__ensureCloseEvent(this.__name,
                                        this.__readable,
                                        EVENT_NAME_END,
@@ -281,6 +286,13 @@ export default class DuplexTransform extends Duplex {
     return this.__writableTransform.write(chunk, encoding, callback);
   }
 
+  __onError: ((error: Error) => void) = (error) => {
+    log.debug(`[${this.__name}] DuplexTransform.__onError(` +
+              `'${error.toString()}')`);
+
+    this.__cleanupAfterError(error);
+  };
+
   __cleanupAfterError(error: Error) {
     log.debug(`[${this.__name}] DuplexTransform.__cleanupAfterError(` +
               `'${error.toString()}')`);
@@ -294,6 +306,8 @@ export default class DuplexTransform extends Duplex {
     this.__error = error;
     this.__endEventAllowed = false;
     this.__finishEventAllowed = false;
+
+    this.removeListener(EVENT_NAME_ERROR, this.__onError);
 
     // Remove all event listeners.
     this.__readable.removeListener(EVENT_NAME_END, this.__onReadableEnd);

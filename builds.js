@@ -458,6 +458,12 @@ const builds = {
     files: ['dialog-script/**'],
     branches: ['master', 'next', 'release'],
   },
+  'releng-shipit-internal-ota': {
+    title: 'Internal OTA update',
+    travis_yml: 'releng/shipit/travis.internal-ota.yml',
+    events: ['nightly'],
+    branches: ['master', 'next', 'release'],
+  },
 
   // Nightly device builds
   'device-qemu-silk': nightlyBuild('device', {

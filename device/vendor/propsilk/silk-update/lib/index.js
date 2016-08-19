@@ -32,6 +32,7 @@ const PREVENT_REBOOT_PROP = 'persist.silk.update.noreboot';
 const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/data/update.zip';
 
+const SYSTEM_VERIFIED = util.getboolprop('partition.system.verified');
 const BOARD = util.getprop('persist.silk.build.board',
                            util.getprop('ro.silk.build.board'));
 const PRODUCT = util.getprop('ro.silk.build.product');
@@ -324,7 +325,7 @@ function validateManifest(result) {
     return Promise.reject();
   }
 
-  const key = `${BOARD}-${PRODUCT}-${VARIANT}`;
+  const key = `${BOARD}-${PRODUCT}-${CHANNEL}-${VARIANT}`;
   let deviceMetadata = result.body[key]; // Unsanitized server response
   if (!deviceMetadata) {
     log.info(`Update server responded with nothing available for "${key}" ` +
@@ -338,26 +339,9 @@ function validateManifest(result) {
       return null;
     }
 
-    switch (buildType) {
-    case 'silk':
-    case 'full':
-      {
-        if (!buildMetadata.bsp_api_id) {
-          log.warn('Update server responded with no bsp_api_id');
-          return null;
-        }
-        if (!buildMetadata.sha) {
-          log.warn('Update server responded with no sha');
-          return null;
-        }
-        if (!buildMetadata.fingerprint) {
-          log.warn('Update server responded with no fingerprint');
-          return null;
-        }
-        break;
-      }
-    default:
-      throw new Error(`Unknown buildType: ${buildType}`);
+    if (!buildMetadata.version) {
+      log.warn('Update server responded with no version');
+      return null;
     }
 
     // Validate URL.
@@ -403,11 +387,16 @@ function validateManifest(result) {
     return buildMetadata;
   }
 
-  // Select an update from options provided by the server.  Try the 'full'
-  // first, and if the bsp is up to date then check for the smaller 'silk'
-  // update.
+  let currentSha;
+  if (AB_UPDATE && inactiveSilkBspVersion) {
+    currentSha = inactiveSilkBspVersion.sha;
+  } else {
+    currentSha = silkBspVersion.sha;
+  }
+
+  // Select an update from options provided by the server.
   currentMetadata = null;
-  ['full', 'silk'].forEach(buildType => {
+  [currentSha, '*'].forEach(buildType => {
     if (currentMetadata) {
       return; // Already found a build
     }
@@ -417,54 +406,26 @@ function validateManifest(result) {
       return;
     }
 
-    const FORCE_UPDATE = false; // true can be helpful debugging
+    const FORCE_UPDATE = false; // true can be helpful when debugging
     switch (buildType) {
-    case 'silk':
+    case '*':
       {
-        let sha;
-        let bsp_api_id;
-
-        // Ensure the bsp is compatible before accepting a /system/silk
-        // update.
-        if (AB_UPDATE) {
-          if (!inactiveSilkBspVersion || !inactiveSilkCoreVersion) {
-            log.info('inactive partition in unknown state, "silk" update skipped');
-            break;
-          }
-          sha = inactiveSilkCoreVersion.sha;
-          bsp_api_id = inactiveSilkBspVersion.bsp_api_id;
+        if (buildMetadata.verson !== currentSha || FORCE_UPDATE) {
+          // Different sha, select this build
+          currentMetadata = buildMetadata;
+          log.info('Selected "*" update');
         } else {
-          sha = silkCoreVersion.sha;
-          bsp_api_id = silkBspVersion.bsp_api_id;
-        }
-        if (buildMetadata.bsp_api_id === bsp_api_id) {
-          if (buildMetadata.sha !== sha || FORCE_UPDATE) {
-            // Different sha but same api id, select this build
-            currentMetadata = buildMetadata;
-            log.info('Selected "silk" update');
-          } else {
-            log.verbose('Already running the latest "silk" update');
-          }
-        } else {
-          log.verbose('bsp version mismatch,  "silk" update skipped');
+          log.verbose('Already running the latest update');
         }
         break;
       }
-    case 'full':
+    case currentSha:
       {
-        let sha;
-        if (AB_UPDATE && inactiveSilkBspVersion) {
-          sha = inactiveSilkBspVersion.sha;
-        } else {
-          sha = silkBspVersion.sha;
-        }
-
-        if (buildMetadata.sha !== sha || FORCE_UPDATE) {
-          // Different sha, select this build
+        if (SYSTEM_VERIFIED) {
           currentMetadata = buildMetadata;
-          log.info('Selected "full" update');
+          log.info('Selected "inc" update');
         } else {
-          log.verbose('Already running the latest "full" update');
+          log.info('Skipping "inc" update as /system is unverified');
         }
         break;
       }

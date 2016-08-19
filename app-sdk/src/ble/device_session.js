@@ -177,6 +177,7 @@ export default class DeviceSession extends RobustEventEmitter {
     socketSession.addListener(`error`, this._onError);
     socketSession.addListener(`data`, this._onData);
     socketSession.addListener(`rssiUpdate`, this._onRssiUpdate);
+    socketSession.addListener(`end`, this._onEnd);
     this._socketSession = socketSession;
 
     this._metrics = metrics;
@@ -265,6 +266,15 @@ export default class DeviceSession extends RobustEventEmitter {
     this._error = error;
   };
 
+  _onEnd: (() => void) = () => {
+    log.debug(`DeviceSession._onEnd()`);
+
+    if (this._state !== DeviceSession.STATE_DISMISSED) {
+      log.warn(`Device session ended before dismissed`);
+      this._forceDisconnect();
+    }
+  };
+
   _onData: ((data: MessageData) => void) = (data) => {
     if (__DEV__) {
       Systrace.beginEvent(`ble.DeviceManager._onData('${data.name}')`);
@@ -326,12 +336,24 @@ export default class DeviceSession extends RobustEventEmitter {
       return;
 
     case `registered`:
+      if (!this.authenticated) {
+        log.warn(`Received '${data.name}' on an unauthenticated stream`);
+        this._forceDisconnect();
+        return;
+      }
+
+      if (this._socketSession.authenticatedPublicKey !== data.deviceId) {
+        log.warn(`Authentication key does not match device id`,
+                 this._socketSession.authenticatedPublicKey,
+                 data.deviceId);
+        this._forceDisconnect();
+        return;
+      }
+
       if (state !== DeviceSession.STATE_ID_RECEIVED) {
         log.warn(`Received '${data.name}' while in state ${state}`);
         break;
       }
-
-      invariant(this.authenticated);
 
       this._isRegistered = true;
       this._deviceId = data.deviceId;
@@ -376,6 +398,12 @@ export default class DeviceSession extends RobustEventEmitter {
       return;
 
     case `register`:
+      if (this.authenticated) {
+        log.warn(`Received '${data.name}' on an authenticated stream`);
+        this._forceDisconnect();
+        return;
+      }
+
       if (state !== DeviceSession.STATE_ID_RECEIVED &&
           state !== DeviceSession.STATE_RESTARTED) {
         log.warn(`Received '${data.name}' while in state ${state}`);
@@ -661,6 +689,7 @@ export default class DeviceSession extends RobustEventEmitter {
     log.debug(`DeviceSession.disconnect()`);
 
     invariant(this._state === DeviceSession.STATE_REGISTERED);
+    this._state = DeviceSession.STATE_DISMISSED;
     this._socketSession.disconnect();
   }
 

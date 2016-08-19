@@ -187,11 +187,9 @@ class PandoHubUi {
       break;
     case 'brightnessdown':
       this.nightlightWhite.color = Math.max(0, this.nightlightWhite.color - 32);
-      this.render();
       break;
     case 'brightnessup':
       this.nightlightWhite.color = Math.min(255, this.nightlightWhite.color + 32);
-      this.render();
       break;
     default:
       break;

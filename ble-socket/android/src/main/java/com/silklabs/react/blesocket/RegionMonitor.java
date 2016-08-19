@@ -32,8 +32,11 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
   // We only look for beacons that use the iBeacon layout.
   private static String BEACON_LAYOUT_IBEACON =
     "m:0-3=4c000215,i:4-19,i:20-21,i:22-23,p:24-24";
+  private static long BEACON_FOREGROUND_SCAN_MS = 2200L;
+  private static long BEACON_FOREGROUND_BETWEEN_MS = 500L;
   private static long BEACON_BACKGROUND_SCAN_MS = 5000L;
   private static long BEACON_BACKGROUND_BETWEEN_MS = 10000L;
+  private static long BEACON_REGION_EXIT_MS = 30000L;
 
   private static final String CONFIG_BEACON_UUID_STRING =
     "cefa2202-53c7-4285-ac1b-a6e6eb00bb79";
@@ -96,8 +99,11 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
 
     mBeaconManager = BeaconManager.getInstanceForApplication(reactContext);
     mBeaconManager.setRegionStatePeristenceEnabled(true);
+    mBeaconManager.setForegroundScanPeriod(BEACON_FOREGROUND_SCAN_MS);
+    mBeaconManager.setForegroundBetweenScanPeriod(BEACON_FOREGROUND_BETWEEN_MS);
     mBeaconManager.setBackgroundScanPeriod(BEACON_BACKGROUND_SCAN_MS);
     mBeaconManager.setBackgroundBetweenScanPeriod(BEACON_BACKGROUND_BETWEEN_MS);
+    mBeaconManager.setRegionExitPeriod(BEACON_REGION_EXIT_MS);
     mBeaconManager.setBackgroundMode(false);
     mBeaconManager.addRangeNotifier(this);
 

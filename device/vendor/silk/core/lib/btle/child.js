@@ -224,6 +224,13 @@ class BluetoothLEChild {
     }
   };
 
+  _waitForAdapter(): Promise<void> {
+    if (!this._adapterStateDeferredAccepted) {
+      log.info(`Waiting for adapter state to be 'poweredOn'`);
+    }
+    return this._adapterStateDeferred.promise;
+  }
+
   async _onInitialize(message: Object) {
     log.debug(`_onInitialize`, message);
 
@@ -240,8 +247,7 @@ class BluetoothLEChild {
 
     this._desiredMode = message.mode;
 
-    // Wait for the adapter to start.
-    await this._adapterStateDeferred.promise;
+    await this._waitForAdapter();
 
     // Switch to the proper mode.
     await this._changeMode(message.mode);
@@ -265,7 +271,7 @@ class BluetoothLEChild {
     this._advertisingInfo = advertisingInfo;
   }
 
-  _onMode(mode: BluetoothMode, promiseId: number): Promise<void> {
+  _onMode(mode: BluetoothMode, promiseId: ?number): Promise<void> {
     log.debug(`_onMode`, mode, promiseId);
 
     switch (mode) {
@@ -296,11 +302,13 @@ class BluetoothLEChild {
           for (let count = 0; count < maxFailureCount; count++) {
             try {
               await this._changeMode(mode);
-              this._sendMessage({
-                name: `mode`,
-                mode,
-                promiseId,
-              });
+              if (promiseId !== null) {
+                this._sendMessage({
+                  name: `mode`,
+                  mode,
+                  promiseId,
+                });
+              }
               return;
             } catch (err) {
               error = err;
@@ -313,15 +321,17 @@ class BluetoothLEChild {
           log.warn(`Unable to change mode to '${mode}' after ` +
                    `${maxFailureCount} attempts`,
                    error);
-          this._sendMessage({
-            name: `mode`,
-            mode,
-            promiseId,
-            error: {
-              message: error.message,
-              stack: error.stack,
-            },
-          });
+          if (promiseId !== null) {
+            this._sendMessage({
+              name: `mode`,
+              mode,
+              promiseId,
+              error: {
+                message: error.message,
+                stack: error.stack,
+              },
+            });
+          }
           throw error;
         });
     return this._changeStatePromise;
@@ -461,8 +471,7 @@ class BluetoothLEChild {
   async _startAdvertising(): Promise<void> {
     log.debug(`_startAdvertising`);
 
-    // Make sure that the adapter is on before attempting to start advertising.
-    await this._adapterStateDeferred.promise;
+    await this._waitForAdapter();
 
     if (this._socketService) {
       return;
@@ -547,8 +556,7 @@ class BluetoothLEChild {
   async _startBeacon(): Promise<void> {
     log.debug(`_startBeacon`);
 
-    // Make sure that the adapter is on before attempting to start beaconing.
-    await this._adapterStateDeferred.promise;
+    await this._waitForAdapter();
 
     if (this._beaconActive) {
       return;
@@ -655,14 +663,14 @@ class BluetoothLEChild {
     }
   }
 
-  _onAdapterStateChange: ((adapterState: string) => void) = (adapterState) => {
-    log.debug(`_onAdapterStateChange`, adapterState);
+  _onAdapterStateChange: ((state: AdapterState) => void) = (state) => {
+    log.debug(`_onAdapterStateChange`, state);
 
-    if (this._adapterState === adapterState) {
+    if (this._adapterState === state) {
       return;
     }
 
-    const justCrashed = this._adapterState === `poweredOn`;
+    const justCrashed = this._adapterState === 'poweredOn';
     if (justCrashed) {
       log.warn(`Bledroid crashed`);
 
@@ -670,16 +678,16 @@ class BluetoothLEChild {
       //api.metrics.add(new Metrics.BledroidCrash());
     }
 
-    log.info(`Adapter state changed to '${adapterState}'`);
-    this._adapterState = adapterState;
+    log.info(`Adapter state changed to '${state}'`);
+    this._adapterState = state;
 
-    if (adapterState === `poweredOn`) {
+    if (state === 'poweredOn') {
       invariant(!this._bledroidCrashDeferred);
 
       // Make sure that we unblock anyone waiting on the adapter state promise.
       if (!this._adapterStateDeferredAccepted) {
-        this._adapterStateDeferred.accept();
         this._adapterStateDeferredAccepted = true;
+        this._adapterStateDeferred.accept();
       }
       return;
     }
@@ -693,8 +701,10 @@ class BluetoothLEChild {
     this._bledroid.removeAllListeners();
 
     // Make sure that any mode changes wait for bledroid to reconnect.
-    this._adapterStateDeferred = createDeferred();
-    this._adapterStateDeferredAccepted = false;
+    if (this._adapterStateDeferredAccepted) {
+      this._adapterStateDeferred = createDeferred();
+      this._adapterStateDeferredAccepted = false;
+    }
 
     // Make sure that any mode changes that were waiting on bledroid wake up and
     // retry.
@@ -709,7 +719,7 @@ class BluetoothLEChild {
     // chain already that will eventually get us to the right mode. If the mode
     // does match then we need to add a new promise to the end of the chain.
     if (this._mode === this._desiredMode) {
-      this._onMode(this._desiredMode);
+      this._onMode(this._desiredMode, null);
     }
 
     // Pretend like we're just changing to OFF.

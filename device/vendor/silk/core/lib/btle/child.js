@@ -372,11 +372,11 @@ class BluetoothLEChild {
 
       const sessionPromises = [];
       this._sessionInfoMap.forEach((sessionInfo) => {
-        return new Promise((resolve) => {
+        sessionPromises.push(new Promise((resolve) => {
           const socketSession = sessionInfo.session;
           socketSession.once(`close`, resolve);
           socketSession.end();
-        });
+        }));
       });
 
       promises.push(Promise.all(sessionPromises).then(() => {

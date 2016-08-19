@@ -10,6 +10,7 @@ import invariant from 'assert';
 import fs from 'mz/fs';
 import path from 'path';
 import lights, {Light} from 'silk-lights';
+import type {LightColor} from 'silk-lights';
 import * as sysutil from 'silk-sysutils';
 
 /**
@@ -690,6 +691,49 @@ export class Ring {
   }
 }
 
+class NightlightRGB extends Light {
+  _nightlight: Nightlight;
+
+  constructor(nightlight: Nightlight) {
+    super('nightlightRgb');
+    this._nightlight = nightlight;
+    this._color = sysutil.getintprop('persist.silk.nightlight.rgb', lights.WHITE);
+    if (this._color < 0 || this._color > lights.WHITE) {
+      this._color = lights.WHITE;
+    }
+    this._nightlight.setUserColor(this._color);
+  }
+
+  _update(): Promise<void> { // Overrides the Light._update() implementation
+    sysutil.setprop('persist.silk.nightlight.rgb', this._color);
+    this._nightlight.setUserColor(this._color);
+    this.emit('change');
+    return Promise.resolve();
+  }
+}
+
+class NightlightWhite extends Light {
+  _nightlight: Nightlight;
+
+  constructor(nightlight: Nightlight) {
+    super('nightlightWhite');
+    this._nightlight = nightlight;
+
+    this._color = sysutil.getintprop('persist.silk.nightlight.white', -1);
+    this._colorMax = 255;
+    if (this._color < 0 || this._color > this._colorMax) {
+      this._color = 127; // 50%
+    }
+    this._nightlight.setUserBrightness(this._color);
+  }
+
+  _update(): Promise<void> { // Overrides the Light._update() implementation
+    sysutil.setprop('persist.silk.nightlight.white', this._color);
+    this._nightlight.setUserBrightness(this._color);
+    this.emit('change');
+    return Promise.resolve();
+  }
+}
 
 /*
   The nightlight is driven by three LP55321 controllers named 1-0032, 1-0033,
@@ -728,9 +772,11 @@ export class Ring {
       8: D503 (R)
       9: D506 (R)
 */
-export class Nightlight extends Light {
+export class Nightlight {
   _ctl: Array<LedController>;
   _userBrightness: number = 0;
+  _userColor: LightColor = 0;
+  _userActive: boolean = false;
 
   static async create(): Promise<Nightlight> {
     let nightlight = new Nightlight();
@@ -739,18 +785,8 @@ export class Nightlight extends Light {
   }
 
   constructor() {
-    super('nightlight');
-    this._color = sysutil.getintprop('persist.pandohubui.light.rgb', lights.WHITE);
-    if (this._color < 0 || this._color > lights.WHITE) {
-      this._color = lights.WHITE;
-    }
-    lights.addCustomLight(this);
-  }
-
-  _update(): Promise<void> { // Overrides the Light._update() implementation
-    sysutil.setprop('persist.pandohubui.light.rgb', this._color);
-    this.userColor(this._userBrightness);
-    return Promise.resolve();
+    lights.addCustomLight(new NightlightRGB(this));
+    lights.addCustomLight(new NightlightWhite(this));
   }
 
   async _init(): Promise<void> {
@@ -808,16 +844,25 @@ export class Nightlight extends Light {
     await Promise.all(runners);
   }
 
-  async userColor(brightness: number): Promise<void> {
+  setUserColor(color: LightColor) {
+    this._userColor = color;
+  }
+
+  setUserBrightness(brightness: number) {
     this._userBrightness = brightness;
+  }
+
+  async userColor(): Promise<void> {
+    const brightness = this._userBrightness;
+    const color = this._userColor;
 
     // For now don't attempt to handle RGB LED intensity beyond binary, and rely
     // just on the dedicated White LEDs to manage brightness
     const maybeOff = brightness > 0 ? 1 : 0;
 
-    const red = maybeOff * ((this._color & 0xFF0000) >> 16);
-    const green = maybeOff * ((this._color & 0x00FF00) >> 8);
-    const blue = maybeOff * (this._color & 0x0000FF);
+    const red = maybeOff * ((color & 0xFF0000) >> 16);
+    const green = maybeOff * ((color & 0x00FF00) >> 8);
+    const blue = maybeOff * (color & 0x0000FF);
 
     await this._disableAll();
 

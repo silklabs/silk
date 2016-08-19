@@ -87,13 +87,13 @@ class SocketCharacteristic extends BlenoCharacteristic {
 
 export default class SocketService extends BlenoService {
 
-  _noble: Noble;
-  _bleno: Bleno;
-  _peripherals: Map<string, Peripheral> = new Map();
+  static _noble: ?Noble = null;
+  static _bleno: ?Bleno = null;
+  static _peripherals: Map<string, Peripheral> = new Map();
+
   _streams: Map<string, SocketStream> = new Map();
   _queuedStreamData: Map<string, Array<Buffer>> = new Map();
   _stopHandlers: Set<(() => void)> = new Set();
-  _scanning: boolean = false;
   _enabled: boolean = true;
 
   constructor(
@@ -101,6 +101,28 @@ export default class SocketService extends BlenoService {
     bleno: Bleno,
     uuid?: string = BTLE_SOCKET_UUIDS.service,
   ) {
+    if (SocketService._noble) {
+      invariant(SocketService._bleno);
+    } else {
+      invariant(!SocketService._bleno);
+
+      noble.addListener(`stateChange`, (state: AdapterState) => {
+        log.debug(`SocketService._onStateChange`, state);
+        if (state !== 'poweredOn') {
+          SocketService._peripherals.clear();
+        }
+      });
+
+      noble.addListener(`discover`, (peripheral: Peripheral) => {
+        log.debug(`SocketService._onDiscover`, peripheral.address);
+
+        SocketService._peripherals.set(peripheral.address, peripheral);
+      });
+
+      SocketService._noble = noble;
+      SocketService._bleno = bleno;
+    }
+
     const characteristic = new SocketCharacteristic();
 
     super({
@@ -112,14 +134,7 @@ export default class SocketService extends BlenoService {
 
     characteristic._service = this;
 
-    noble.addListener(`stateChange`, this._onStateChange);
-    noble.addListener(`discover`, this._onDiscover);
-    noble.addListener(`scanStart`, this._onScanStart);
-    noble.addListener(`scanStop`, this._onScanStop);
     bleno.addListener(`disconnect`, this._onDisconnect);
-
-    this._noble = noble;
-    this._bleno = bleno;
   }
 
   async stop(): Promise<void> {
@@ -128,29 +143,28 @@ export default class SocketService extends BlenoService {
     this._enabled = false;
     this._queuedStreamData.clear();
 
-    this._noble.removeListener(`stateChange`, this._onStateChange);
-    this._noble.removeListener(`discover`, this._onDiscover);
-    this._noble.removeListener(`scanStart`, this._onScanStart);
-    this._noble.removeListener(`scanStop`, this._onScanStop);
-
     if (this._stopHandlers.size) {
       const handlers = Array.from(this._stopHandlers);
       handlers.forEach((handler) => handler());
       this._stopHandlers.clear();
     }
 
+    const bleno = SocketService._bleno;
+    invariant(bleno);
+
     let promises = [];
     this._streams.forEach((stream, address) => {
       log.debug(`Peripheral ${address} still connected`);
+
       promises.push(new Promise((resolve) => {
         const listener = (disconnectedAddress) => {
           if (disconnectedAddress === address) {
-            this._bleno.removeListener(`disconnect`, listener);
+            bleno.removeListener(`disconnect`, listener);
             resolve();
           }
         };
-        this._bleno.addListener(`disconnect`, listener);
-        this._bleno.disconnect(address);
+        bleno.addListener(`disconnect`, listener);
+        bleno.disconnect(address);
       }));
     });
 
@@ -164,49 +178,9 @@ export default class SocketService extends BlenoService {
       log.debug(`Done waiting`);
     }
 
-    this._bleno.removeListener(`disconnect`, this._onDisconnect);
+    bleno.removeListener(`disconnect`, this._onDisconnect);
     this._streams.clear();
   }
-
-  _onStateChange: ((state: AdapterState) => void) = (state) => {
-    log.debug(`SocketService._onStateChange`, state);
-    if (state !== 'poweredOn') {
-      this._peripherals.clear();
-    }
-  };
-
-  _onDiscover: ((peripheral: Peripheral) => void) = (peripheral) => {
-    log.debug(`SocketService._onDiscover`, peripheral.address);
-
-    if (!this._enabled) {
-      return;
-    }
-
-    if (!this._scanning ||
-        peripheral.advertisement.serviceUuids.indexOf(this.uuid) !== -1) {
-      this._peripherals.set(peripheral.address, peripheral);
-    }
-  };
-
-  _onScanStart: (() => void) = () => {
-    log.debug(`SocketService._onScanStart`);
-
-    if (!this._enabled) {
-      return;
-    }
-
-    this._scanning = true;
-  };
-
-  _onScanStop: (() => void) = () => {
-    log.debug(`SocketService._onScanStop`);
-
-    if (!this._enabled) {
-      return;
-    }
-
-    this._scanning = false;
-  };
 
   _onDisconnect: ((address: string) => void) = (address) => {
     log.debug(`SocketService._onDisconnect`, address);
@@ -228,7 +202,7 @@ export default class SocketService extends BlenoService {
       return;
     }
 
-    const peripheral = this._peripherals.get(address);
+    const peripheral = SocketService._peripherals.get(address);
     if (!peripheral) {
       log.warn(`No peripheral connected yet`);
       return;
@@ -293,7 +267,7 @@ export default class SocketService extends BlenoService {
       return;
     }
 
-    if (!this._peripherals.has(address)) {
+    if (!SocketService._peripherals.has(address)) {
       log.warn(`No stream for peripheral '${address}'`);
       callback(BlenoCharacteristic.RESULT_UNLIKELY_ERROR);
       return;

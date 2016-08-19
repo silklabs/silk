@@ -42,6 +42,10 @@ export default class WebSocketDuplexStream extends Duplex {
     return this._ws.readyState;
   }
 
+  close(code?: number, reason?: string) {
+    this._ws.close(code, reason);
+  }
+
   _onError: () => void = (err) => {
     let error;
     if (err instanceof Error) {

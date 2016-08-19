@@ -192,10 +192,6 @@ static const bt_uuid_t kClientBeaconUuid = {{
   0x89, 0x09, 0x81, 0xce, 0x03, 0xcc, 0xd6, 0x2f
 }};
 
-// Set to true when we're trying to clean up after an error so that we don't
-// try to block or accidentally recurse. It will never be reset to false.
-bool cleaning_up_after_error = false;
-
 class Tracer {
 public:
   static void init() {
@@ -215,19 +211,6 @@ public:
 void bt_cleanup();
 int bt_stop_advertising();
 int bt_stop_beacon();
-
-void cleanup_and_abort() {
-  ALOGD("cleanup_and_abort()");
-
-  if (cleaning_up_after_error) {
-    ALOGW("prevented recursion, aborting immediately");
-  } else {
-    cleaning_up_after_error = true;
-    bt_cleanup();
-  }
-
-  abort();
-}
 
 //
 // Helper macros
@@ -312,7 +295,7 @@ public:
             realEventSize,
             sizeof(event),
             event);
-      cleanup_and_abort();
+      abort();
     }
 
     ALOGD("Broadcasting %s", event);
@@ -351,7 +334,7 @@ public:
   ~ThreadWaiter() {
     if (currentWaitType != WaitNone) {
       ALOGE("Waiting for type %d at shutdown", currentWaitType);
-      cleanup_and_abort();
+      abort();
     }
   }
 
@@ -372,7 +355,7 @@ public:
       ALOGE("Cannot wait for type %d, already waiting on type %d",
             waitType,
             currentWaitType);
-      cleanup_and_abort();
+      abort();
     }
 
     currentWaitType = waitType;
@@ -400,10 +383,6 @@ public:
         // Don't warn about this wait type again.
         currentWaitType = WaitNone;
 
-        // Try to clean up, but don't block.
-        cleaning_up_after_error = true;
-        bt_cleanup();
-
         exit(1);
       }
     }
@@ -423,7 +402,7 @@ private:
       }
 
       if (abortIfNotWaiting) {
-        cleanup_and_abort();
+        abort();
       }
 
       return;
@@ -523,7 +502,7 @@ void generate_uuid(bt_uuid_t &uuid) {
   int fd = TEMP_FAILURE_RETRY(open("/proc/sys/kernel/random/uuid", O_RDONLY));
   if (fd == -1) {
     ALOGE("failed to open uuid %d", errno);
-    cleanup_and_abort();
+    abort();
   }
 
   const ssize_t read_count =
@@ -535,7 +514,7 @@ void generate_uuid(bt_uuid_t &uuid) {
 
   if (read_count != sizeof(buffer)) {
     ALOGE("failed to read uuid %d %d", read_count, read_errno);
-    cleanup_and_abort();
+    abort();
   }
 
   // Remove dashes.
@@ -547,7 +526,7 @@ void generate_uuid(bt_uuid_t &uuid) {
 
   if (!str_to_uuid(buffer, uuid)) {
     ALOGE("failed to convert uuid '%s'", buffer);
-    cleanup_and_abort();
+    abort();
   }
 }
 
@@ -751,8 +730,7 @@ static bt_os_callouts_t os_callouts = {
 
 void bt_adapter_state_changed_callback(bt_state_t state) {
   Tracer trc("bt_adapter_state_changed_callback");
-  auto signal = mainThreadWaiter.autoSignal(WaitEnableDisable,
-                                            !cleaning_up_after_error);
+  auto signal = mainThreadWaiter.autoSignal(WaitEnableDisable);
 
   adapter_state = state;
   bledroid.sendEvent("!adapterState powered%s",
@@ -1964,7 +1942,7 @@ void gatt_server_register_server_callback(int status,
 
   if (status != 0) {
     ALOGE("register_server failed. error=%d", status);
-    cleanup_and_abort();
+    abort();
   }
 
   ALOGV("gatt_server_register_server_callback. status=%d server_if=%d",
@@ -2241,7 +2219,7 @@ void gatt_server_request_write_callback(int conn_id,
 
 #ifdef DEBUG
   if (strlen(msg) >= sizeof(msg)) {
-    cleanup_and_abort();  // BUG!
+    abort();  // BUG!
   }
 #endif
 
@@ -2481,12 +2459,7 @@ void bt_cleanup() {
     const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
     const bt_interface_t *bt = bt_device->get_bluetooth_interface();
     if (bt) {
-      if (cleaning_up_after_error) {
-        // Don't attempt to wait for this if we're in an error state.
-        if (bt->disable() != BT_STATUS_SUCCESS) {
-          ALOGE("bt->disable() failed");
-        }
-      } else {
+      {
         auto lock = mainThreadWaiter.autoLock();
         if (bt->disable() == BT_STATUS_SUCCESS) {
           mainThreadWaiter.wait(WaitEnableDisable);
@@ -2504,21 +2477,19 @@ void bt_cleanup() {
     device->close(device);
   }
 
-  if (!cleaning_up_after_error) {
-    adapter_state = BT_STATE_OFF;
-    gatt_server_if = -1;
-    gatt_client_listen_scan_if = -1;
-    gatt_client_beacon_if = -1;
-    desired_listen_state = false;
-    gatt_client_scanning = false;
-    gatt = nullptr;
-    device = nullptr;
-    connection_id_during_register_for_notification = -1;
-    address_during_rssi_update = kInvalidAddr;
-    gatt_client_connection_count = 0;
-    advertising = false;
-    beaconActive = false;
-  }
+  adapter_state = BT_STATE_OFF;
+  gatt_server_if = -1;
+  gatt_client_listen_scan_if = -1;
+  gatt_client_beacon_if = -1;
+  desired_listen_state = false;
+  gatt_client_scanning = false;
+  gatt = nullptr;
+  device = nullptr;
+  connection_id_during_register_for_notification = -1;
+  address_during_rssi_update = kInvalidAddr;
+  gatt_client_connection_count = 0;
+  advertising = false;
+  beaconActive = false;
 }
 
 /**

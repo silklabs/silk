@@ -132,6 +132,11 @@ for BUILD in $BUILDS; do
     continue
   fi
 
+  if [[ $TRAVIS_PULL_REQUEST != false ]]; then
+    echo TRAVIS_PULL_REQUEST = true, skipping OTA upload
+    continue
+  fi
+
   ../s3-artifacts/bin/upload \
       update.silklabs.com \
       ota-internal/ \

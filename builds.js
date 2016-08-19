@@ -461,7 +461,11 @@ const builds = {
   'releng-shipit-internal-ota': {
     title: 'Internal OTA update',
     travis_yml: 'releng/shipit/travis.internal-ota.yml',
-    events: ['nightly'],
+    events: ['nightly', 'pr'],
+    files: [
+      'releng/shipit/travis.internal-ota.yml',
+      'releng/shipit/internal-ota',
+    ],
     branches: ['master', 'next', 'release'],
   },
 

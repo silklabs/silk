@@ -53,6 +53,19 @@ export default class WebSocketDuplexStream extends Duplex {
     this._ws.close(code, reason);
   }
 
+  /**
+   * Attempt to immediately terminate connection without sending further frames.
+   */
+  terminate() {
+    if (typeof this._ws.terminate === 'function') {
+      this._ws.terminate();
+      return;
+    }
+
+    // fallback to close if we are running under the browser.
+    this.close();
+  }
+
   _onError = (err) => {
     let error;
     if (err instanceof Error) {
@@ -120,8 +133,10 @@ export default class WebSocketDuplexStream extends Duplex {
         data = new Buffer(data);
       }
 
-      invariant(data instanceof Buffer);
+      // $FlowFixMe: see below ...
       this._log.info(`Got binary message from websocket ${data.length} bytes`);
+      invariant(Buffer.isBuffer(data));
+      // $FlowFixMe: instanceof checks fail for some reason ....
       this.push(data);
     };
 

@@ -13,13 +13,14 @@ import {
 
 import {TYPE_RESET} from '../actions';
 
-import type {Action} from './actions';
+import type {Action, TimerType} from './actions';
 
 export type TimerState = {
   id: number;
   durationMs: number;
   expiresMs: number;
   title: string;
+  type: TimerType;
 };
 
 export type State = {
@@ -60,7 +61,7 @@ export default function(state: State = initialState, action: Action): State {
    * additional timer.
    */
   case TYPE_ADD: {
-    const {durationMs, expiresMs, title} = action.payload;
+    const {durationMs, expiresMs, title, type} = action.payload;
     const timerId = state.nextTimerId;
     return {
       ...state,
@@ -70,6 +71,7 @@ export default function(state: State = initialState, action: Action): State {
         durationMs,
         expiresMs,
         title,
+        type,
       }),
     };
   }

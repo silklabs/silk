@@ -216,10 +216,14 @@ export function* timerMonitorSaga(
       yield put(expireTimer(timer.id));
 
       if (dialogEngine.uiMode === 'normal') {
-        // Alert the user.
-        if (timer.title) {
+        // Alert the user
+        if (timer.type === 'alarm') {
           let [timeString] = getCurrentDateTime();
-          yield call(speak, `It is ${timeString}. You asked me to remind you to ${timer.title}`, 'idle');
+          if (timer.title) {
+            yield call(speak, `It is ${timeString}. You asked me to remind you to ${timer.title}`, 'idle');
+          } else {
+            yield call(speak, `It is ${timeString}. Alarm ${timer.id} has expired`, 'idle');
+          }
         } else {
           yield call(speak, `Timer ${timer.id} has expired`, 'idle');
         }
@@ -293,7 +297,7 @@ export default function* modifyTimers(
 
     invariant(typeof durationMs === 'number');
     log.info(`Adding an alarm`);
-    yield put(addTimer(durationMs, durationMs, title));
+    yield put(addTimer(durationMs, durationMs, title, 'alarm'));
     yield call(speak, `Ok, I've started` +
         (title ? ` the ` + title : ` an`) + ` alarm`, `idle`);
     return;
@@ -308,9 +312,12 @@ export default function* modifyTimers(
     return;
   }
 
+  let timerType = (type === `cancelTimer`) ? 'timer' : 'alarm';
+
   // Remove an existing timer via |put|.
   for (let timer of timers) {
-    if ((title && (timer.title === title)) || (timer.durationMs === durationMs)) {
+    if ((timerType === timer.type) &&
+        ((title && (timer.title === title)) || (timer.durationMs === durationMs))) {
       yield put(removeTimer(timer.id));
       if (type === `cancelTimer`) {
         yield call(speak, `Ok, I've canceled that timer`, `idle`);

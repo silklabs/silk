@@ -48,7 +48,7 @@ suite(`userScript`, () => {
     tester.speak(`Set an alarm for 5 seconds`);
     await tester.listenCheck(`^Ok, I've started an alarm`, `idle`);
     let timer = setTimeout(() => assert(false, 'Alarm did not expire'), 7000);
-    await tester.listenCheck(`^Timer \\d+ has expired`, `idle`);
+    await tester.listenCheck(`Alarm \\d+ has expired`, `idle`);
     clearTimeout(timer);
     done();
   });
@@ -58,7 +58,7 @@ suite(`userScript`, () => {
     tester.speak(`Set the alarm to go off in 5 seconds`);
     await tester.listenCheck(`^Ok, I've started an alarm`, `idle`);
     let timer = setTimeout(() => assert(false, 'Alarm did not expire'), 7000);
-    await tester.listenCheck(`^Timer \\d+ has expired`, `idle`);
+    await tester.listenCheck(`Alarm \\d+ has expired`, `idle`);
     clearTimeout(timer);
     done();
   });

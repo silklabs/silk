@@ -1,5 +1,4 @@
-/* global suite */
-/* global test */
+/* global suite, suiteSetup, suiteTeardown, test */
 
 import assert from 'assert';
 import {EventEmitter} from 'events';
@@ -7,7 +6,11 @@ import {channel} from 'redux-saga';
 import {call, fork, put, take} from 'redux-saga/effects';
 import {createMockTask as createMockSaga} from 'redux-saga/utils';
 
-import {testScript} from './utils';
+import {
+  testScript,
+  installMocks,
+  uninstallMocks,
+} from './utils';
 import {
   default as createEnvironment,
   audioEventSaga,
@@ -26,6 +29,14 @@ suite(`environment`, () => {
   // So far all we care about here is that the DialogEngine has |addListener|
   // and |removeListener|.
   const dialogEngine = new EventEmitter();
+
+  suiteSetup(() => {
+    installMocks();
+  });
+
+  suiteTeardown(() => {
+    uninstallMocks;
+  });
 
   test(`createEnvironment`, () => {
     const micChannel = channel();

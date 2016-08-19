@@ -8,6 +8,8 @@ import {call, put, race, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import moment from 'moment';
 import {parseIso8601, getCurrentDateTime} from '../utils';
+import path from 'path';
+import player from 'silk-audioplayer';
 
 import {
   addTimer,
@@ -27,6 +29,7 @@ type WakeConditions = {
 };
 
 const log = createLog(`dialog-script-timers-saga`);
+const ALARM_TONE = path.join(__dirname, '../media', 'funny_alarm.mp3');
 
 // Slice the timers array.
 export function getTimers(state: Object): Array<TimerState> {
@@ -219,6 +222,12 @@ export function* timerMonitorSaga(
         // Alert the user
         if (timer.type === 'alarm') {
           let [timeString] = getCurrentDateTime();
+          try {
+            yield call(() => player.play(ALARM_TONE));
+          } catch (err) {
+            log.error(`Failed to play alarm: `, err);
+          }
+
           if (timer.title) {
             yield call(speak, `It is ${timeString}. You asked me to remind you to ${timer.title}`, 'idle');
           } else {

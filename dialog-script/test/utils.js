@@ -10,6 +10,7 @@ import * as mockSonos from './mock/mock-silk-sonos';
 import * as mockStorage from './mock/dialog-storage';
 import * as mockVolume from './mock/mock-silk-volume';
 import * as mockSysutils from './mock/mock-silk-sysutils';
+import * as mockAudioPlayer from './mock/mock-silk-audioplayer';
 
 import createLog from 'silk-log';
 const log = createLog(`dialog-script-test-utils`);
@@ -24,6 +25,7 @@ export function installMocks() {
   mock('silk-sonos', mockSonos);
   mock('silk-volume', mockVolume);
   mock('silk-sysutils', mockSysutils);
+  mock('silk-audioplayer', mockAudioPlayer);
 }
 
 export function uninstallMocks() {

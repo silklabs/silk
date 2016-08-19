@@ -172,6 +172,11 @@ waitForDevice() {
   done
 }
 
+echo Disabling verity
+adb disable-verity
+adb reboot
+waitForDevice
+
 echo Preparing build.prop...
 rm -f build.prop
 adb pull /system/build.prop

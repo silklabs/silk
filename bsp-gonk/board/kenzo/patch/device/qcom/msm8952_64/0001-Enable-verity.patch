@@ -1,0 +1,26 @@
+From 804841d533a45a78db15e1f11e78edf01457a3cf Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 18 Aug 2016 22:14:11 -0700
+Subject: [PATCH] Enable verity
+
+Change-Id: I406fcbd2dee913dbae7fd451f8645a18c6d140e1
+---
+ fstab.qcom | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fstab.qcom b/fstab.qcom
+index 6c0c0c7..5984d78 100644
+--- a/fstab.qcom
++++ b/fstab.qcom
+@@ -6,7 +6,7 @@
+ # Currently we dont have e2fsck compiled. So fs check would failed.
+ 
+ #<src>                                                <mnt_point>  <type>  <mnt_flags and options>                     <fs_mgr_flags>
+-/dev/block/bootdevice/by-name/system         /system      ext4    ro,barrier=1,discard                                wait
++/dev/block/bootdevice/by-name/system         /system      ext4    ro,barrier=1,discard                                wait,verify
+ /dev/block/bootdevice/by-name/userdata       /data        ext4    nosuid,nodev,barrier=1,noauto_da_alloc,discard      wait,check,encryptable=footer
+ /devices/soc.0/7864900.sdhci/mmc_host        /storage/sdcard1   vfat    nosuid,nodev         wait,voldmanaged=sdcard1:auto,noemulatedsd
+ /dev/block/zram0             none         swap    defaults zramsize=536870912
+-- 
+2.7.0
+

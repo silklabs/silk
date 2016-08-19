@@ -1,0 +1,26 @@
+From 228efb9fc8662c63e4d00bac2f6e21590527ee6c Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 18 Aug 2016 22:30:09 -0700
+Subject: [PATCH] Enable verity on /system parition
+
+Change-Id: I13645bf90acf6e260c12d4d3b72aacc43a519247
+---
+ base.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/base.mk b/base.mk
+index d8de9f0..6388fc9 100644
+--- a/base.mk
++++ b/base.mk
+@@ -834,7 +834,7 @@ PRODUCT_PACKAGE_OVERLAYS += device/qcom/common/product/overlay
+ -include frameworks/base/data/videos/VideoPackage1.mk
+ 
+ # dm-verity definitions
+-PRODUCT_VERITY_PARTITION=/dev/block/bootdevice/by-name/system
++PRODUCT_SYSTEM_VERITY_PARTITION=/dev/block/bootdevice/by-name/system
+ $(call inherit-product, build/target/product/verity.mk)
+ 
+ #skip boot jars check if QCPATH not available
+-- 
+2.7.0
+

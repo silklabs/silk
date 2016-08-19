@@ -9,15 +9,18 @@
  *
  * @flow
  */
+import invariant from 'assert';
 import uuid from 'uuid';
 import createLog from 'silk-log';
 import WebSocket from 'ws';
+import {
+  MultiplexStream,
+  WebSocketDuplexStream,
+} from 'silk-streams';
+
+import { VirtualStream } from 'silk-streams/src/demux';
 
 const log = createLog('signaling:residents');
-
-const CLIENT_MESSAGE = 0;
-const CLIENT_CLOSE = 1;
-const STREAM_ID_LENGTH = 36;
 
 type ClientConfig = {
   timeoutMs: number;
@@ -29,9 +32,10 @@ type ResidentConfig = {
   pongTimeoutMs: number;
 };
 
-type Client = {
+type SignalingClient = {
   connectedAt: number;
-  connection: any; // ws websocket ...
+  connection: WebSocketDuplexStream;
+  stream: VirtualStream;
 };
 
 type Resident = {
@@ -39,20 +43,15 @@ type Resident = {
   currentId: ?string;
   lastPong: number;
   lastPing: number;
-
-  connection: any;
+  multiplex: MultiplexStream;
+  connection: WebSocket;
   // unique id to connection.
-  clients: Map<string, Client>;
+  clients: Map<string, SignalingClient>;
 };
-
-function header(type = CLIENT_CLOSE | CLIENT_MESSAGE, data: string): string {
-  // This is far from efficent but the data rate and volume for signaling is low.
-  return JSON.stringify([type, data]);
-}
 
 export default class Residents {
 
-  _clients: Set<Client> = new Set();
+  _clients: Set<SignalingClient> = new Set();
   _residents: Map<string, Resident> = new Map();
   _clientMonitorTimer: ?number;
   _residentMonitorTimer: ?number;
@@ -114,7 +113,6 @@ export default class Residents {
     check();
   }
 
-
   start() {
     log.info(`Monitoring residents and clients...`);
     this.monitorClients();
@@ -134,17 +132,40 @@ export default class Residents {
     }
   }
 
+  route(resident: Resident, stream: VirtualStream) {
+    // NOTE: This is just an example it would be probably best to do the heavy
+    // lifting in another file ...
+    if (!stream.body.type) {
+      return;
+    }
+
+    switch (stream.body.type) {
+    // TODO: Remove me once we have some proper examples in here...
+    case 'echo':
+      log.info(`Creating echo cloud stream ...`);
+      // yeah little meta...
+      stream.pipe(stream);
+      break;
+    default:
+      log.info(`Stream request without a .type`);
+      stream.destroy();
+      return;
+    }
+  }
+
   /**
    * Keep track of a particular websocket connection. The residents are long
    * lived.
    */
-  register(id: string, connection: any) {
+  register(id: string, connection: WebSocket) {
+    const multiplex = new MultiplexStream(new WebSocketDuplexStream(connection));
     const now = Date.now();
     const resident = {
       lastPing: now,
       lastPong: now,
       currentId: null,
       connection,
+      multiplex,
       clients: new Map(),
     };
 
@@ -160,11 +181,19 @@ export default class Residents {
       log.info(`Resident disconnect (${id}) and ${resident.clients.size} clients`);
 
       this._residents.delete(id);
+
+      // Multiplex consumes the errors and then spits them back out.
+      multiplex.removeListener('error', onClose);
+      multiplex.removeListener('data', onStream);
+
       connection.removeListener('close', onClose);
-      connection.removeListener('error', onClose);
-      connection.removeListener('message', onMessage);
       connection.removeListener('pong', onPong);
       connection.removeListener('ping', onPing);
+    };
+
+    const onStream = (stream: VirtualStream) => {
+      invariant(stream instanceof VirtualStream);
+      this.route(resident, stream);
     };
 
     const onPong = () => {
@@ -177,38 +206,6 @@ export default class Residents {
       connection.pong();
     };
 
-    const onMessage = (data, flags) => {
-      if (!resident.currentId) {
-        if (data.length !== STREAM_ID_LENGTH) {
-          log.error(`Resident sent invalid id length: ${data.length}`);
-          connection.terminate();
-          return;
-        }
-        resident.currentId = data.toString();
-        return;
-      }
-
-      const streamId = resident.currentId;
-      // currentId is reset early in this process to avoid potential errors
-      // where we do not reset it.
-      resident.currentId = null;
-
-      let client = resident.clients.get(streamId);
-      if (!client) {
-        log.warn(`Attempting to send data to unknown dest: ${streamId}`);
-        return;
-      }
-      log.info(`(resident) Sending data from ${id} to ${streamId}`);
-
-      if (client.connection.readyState !== WebSocket.OPEN) {
-        log.error(`Resident ${id} sending messgaes to closed client: ${streamId}`);
-        return;
-      }
-
-      // XXX: Remove the type conversion.
-      client.connection.send(data.toString());
-    };
-
     const onClose = () => {
       cleanup();
     };
@@ -218,9 +215,10 @@ export default class Residents {
       cleanup();
     };
 
-    connection.on('error', onError);
+    multiplex.on('error', onError);
+    multiplex.on('data', onStream);
+
     connection.on('close', onClose);
-    connection.on('message', onMessage);
     connection.on('ping', onPing);
     connection.on('pong', onPong);
 
@@ -238,7 +236,8 @@ export default class Residents {
    * Bride communications between one of the residents and an incoming
    * client. These communications are designed to be short.
    */
-  bridge(id: string, connection: any) {
+  bridge(id: string, connection: WebSocket) {
+    const wsDuplex = new WebSocketDuplexStream(connection);
     const streamId = uuid.v4();
     const resident = this._residents.get(id);
     log.info(`Bridge(id=${id} streamId=${streamId})`);
@@ -252,31 +251,18 @@ export default class Residents {
       throw new Error('uuid collision (should never happen)');
     }
 
+    const stream = resident.multiplex.createStream({
+      type: 'signaling',
+    }, `signaling stream ${streamId} -> ${id}`);
+
     const client = {
       connectedAt: Date.now(),
-      connection,
+      connection: wsDuplex,
+      stream,
     };
 
-    const onMessage = (data, flags) => {
-      log.info(`(client) Sending data to ${id} from ${streamId}`);
-
-      if (resident.connection.readyState > WebSocket.OPENED) {
-        log.warn(`Terminating client during message since resident has closed.`);
-        return;
-      }
-
-      // Each "send" call maps directly to a frame and we are single threaded
-      // which avoids race conditions in the order of our frames.
-      try {
-        resident.connection.send(header(CLIENT_MESSAGE, streamId));
-        resident.connection.send(data);
-      } catch (err) {
-        // Either we are already disconnected or some other error which will get
-        // resolved by the error/close handlers.
-        log.error(`Error writing to resident ${id} ${err.stack}`);
-        return;
-      }
-    };
+    wsDuplex.pipe(stream);
+    stream.pipe(wsDuplex);
 
     const onClose = () => {
       cleanup();
@@ -289,24 +275,16 @@ export default class Residents {
 
     const cleanup = () => {
       log.info(`Disconnect client (${streamId})`);
-      connection.removeListener('message', onMessage);
-      connection.removeListener('close', onClose);
-      connection.removeListener('error', onError);
+      wsDuplex.removeListener('close', onClose);
+      wsDuplex.removeListener('error', onError);
       resident.clients.delete(streamId);
       this._clients.delete(client);
-
-      // send a message to initiate close on the resident side.
-      if (resident.connection.readyState === WebSocket.OPEN) {
-        log.info(`Notify resident (${id}) of stream close ${streamId}`);
-        resident.connection.send(header(CLIENT_CLOSE, streamId));
-      }
     };
 
     log.info(`Client stream ${streamId} setup for ${id}`);
     this._clients.add(client);
     resident.clients.set(streamId, client);
-    connection.on('message', onMessage);
-    connection.on('close', onClose);
-    connection.on('error', onError);
+    wsDuplex.on('close', onClose);
+    wsDuplex.on('error', onError);
   }
 }

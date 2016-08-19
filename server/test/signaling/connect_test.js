@@ -3,7 +3,7 @@ import WebSocket from 'ws';
 import eventToPromise from 'event-to-promise';
 import SasCompositeTable from 'silk-azure-storage/src/sas_composite_table';
 
-import {DemuxStream, WebSocketDuplexStream} from 'silk-streams';
+import {MultiplexStream, WebSocketDuplexStream} from 'silk-streams';
 
 import createContext from '../server/context';
 
@@ -58,9 +58,7 @@ suite('connect test', () => {
       await device.api.genSignSignalingUrl('device', servers[0].host);
     let deviceWs = new WebSocket(deviceUrl);
     let deviceWsDuplex = new WebSocketDuplexStream(deviceWs);
-    let deviceDemux = new DemuxStream(deviceWsDuplex);
-    deviceWsDuplex.pipe(deviceDemux);
-
+    let deviceMux = new MultiplexStream(deviceWsDuplex);
     await eventToPromise(deviceWs, 'open');
 
     const accountUrl = await account.api.genSignSignalingUrl(
@@ -71,7 +69,7 @@ suite('connect test', () => {
     let accountWs = new WebSocketDuplexStream(new WebSocket(accountUrl));
     accountWs.write('ping');
 
-    const accountPeer = await eventToPromise(deviceDemux, 'data');
+    const accountPeer = await eventToPromise(deviceMux, 'data');
     const ping = await eventToPromise(accountPeer, 'data');
     assert.equal(ping.toString(), 'ping');
 

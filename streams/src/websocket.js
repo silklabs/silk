@@ -9,14 +9,21 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Duplex } from 'stream';
 import createLog from 'silk-log';
 
 import type { Logger } from 'silk-log';
+import type { EventEmitter } from 'events';
+import type NodeWebSocket from 'ws';
 
 const log = createLog('streams:websocket');
 
-function removeListener(target: any, event: string, fn: Function): void {
+function removeListener(
+  target: EventEmitter | EventTarget,
+  event: string,
+  fn: Function,
+): void {
   if (typeof target.removeEventListener === 'function') {
     target.removeEventListener(event, fn);
     return;
@@ -32,7 +39,7 @@ function removeListener(target: any, event: string, fn: Function): void {
 
 export default class WebSocketDuplexStream extends Duplex {
 
-  _ws: WebSocket;
+  _ws: WebSocket | NodeWebSocket;
   _buffers: Array<Buffer | string> = [];
   _finished: bool = false;
   _autoClose: bool = true;
@@ -46,7 +53,7 @@ export default class WebSocketDuplexStream extends Duplex {
     this._ws.close(code, reason);
   }
 
-  _onError: () => void = (err) => {
+  _onError = (err) => {
     let error;
     if (err instanceof Error) {
       error = err;
@@ -60,7 +67,7 @@ export default class WebSocketDuplexStream extends Duplex {
     this.emit('close');
   };
 
-  _onClose: () => void = () => {
+  _onClose = () => {
     this._log.info(`Websocket closing`);
     if (!this._finished) {
       const msg = 'WebSocket closed before all writes...';
@@ -76,8 +83,13 @@ export default class WebSocketDuplexStream extends Duplex {
     this._log.info(`WebSocket closed`);
   };
 
-  constructor(ws: WebSocket, options: Object = {}) {
-    super(options);
+  constructor(ws: WebSocket | NodeWebSocket, options: { log?: any } = {}) {
+    super({
+      // WebSockets have native support for utf8 (strings). Any write which is
+      // given a string will be sent a string frame instead of being converted
+      // into a buffer.
+      decodeStrings: false,
+    });
 
     if (options.log) {
       this._log = options.log;
@@ -92,14 +104,24 @@ export default class WebSocketDuplexStream extends Duplex {
     // This should be MessageEvent, but addEventListener() is spec'ed
     // for an Event listener. Specifying Event here means event.data
     // below will fail.
-    const onMessage = (event: any) => {
+    const onMessage = (event: MessageEvent) => {
       // XXX: Should we somehow include flags ???
       let data = event.data;
+
+      if (typeof data === 'string') {
+        this._log.info(`Got string message from websocket`);
+        this.push(data);
+        return;
+      }
+
       if (!Buffer.isBuffer(data)) {
+        invariant(data instanceof ArrayBuffer);
+        // $FlowFixMe: https://github.com/facebook/flow/pull/2296
         data = new Buffer(data);
       }
 
-      this._log.info(`Got data from websocket ${data.length} bytes`);
+      invariant(data instanceof Buffer);
+      this._log.info(`Got binary message from websocket ${data.length} bytes`);
       this.push(data);
     };
 

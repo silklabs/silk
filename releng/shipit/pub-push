@@ -33,7 +33,7 @@ cd pub/docs ; npm install ; cd ../..
 
 # Recreate gh-pages branch and publish it
 mkdir gh-pages
-cp -ra pub/docs/dist gh-pages/
+cp -ra pub/docs/latest gh-pages/
 cp -ra pub/docs/public_html/* gh-pages/
 git add gh-pages
 git commit -m "Automated doc update"

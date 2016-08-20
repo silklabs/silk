@@ -20,6 +20,7 @@ export type Intention = {
 export type LuisApp = {
   id: string;
   key: string;
+  whitelist?: Array<string>;
 };
 
 export type LuisOptions = {
@@ -135,7 +136,7 @@ export default class DialogEngine extends EventEmitter {
     this.emit(`interpret-end`, null);
   }
 
-  _fetchIntention(text: string, id: string, key: string): Promise<Intention> {
+  _fetchIntention(text: string, id: string, key: string, whitelist?: Array<string>): Promise<Intention> {
     let onError = (resolve, error) => {
       log.warn(error);
       resolve({
@@ -180,7 +181,11 @@ export default class DialogEngine extends EventEmitter {
               onError(resolve, error);
               return;
             }
-            resolve(intent);
+            if (!whitelist || (whitelist.indexOf(intent.intent) !== -1)) {
+              resolve(intent);
+            } else {
+              onError(resolve, new Error(`Ignoring blacklisted ${intent.intent}`));
+            }
           } else {
             let errorText = `Request failed with status code ${res.statusCode}`;
             onError(resolve, new Error(errorText));
@@ -207,7 +212,7 @@ export default class DialogEngine extends EventEmitter {
     if (this._scriptOptions.luisOptions) {
       let promises = [];
       this._scriptOptions.luisOptions.apps.forEach(app => {
-        promises.push(this._fetchIntention(text, app.id, app.key));
+        promises.push(this._fetchIntention(text, app.id, app.key, app.whitelist));
       });
 
       return Promise.all(promises)

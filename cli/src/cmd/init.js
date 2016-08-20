@@ -119,7 +119,7 @@ export let init = {
     }
 
     if (!pkg.dependencies.silk) {
-      pkg.dependencies.silk = '^0.17.0';
+      pkg.dependencies.silk = '^1.0.0';
     }
 
     await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));

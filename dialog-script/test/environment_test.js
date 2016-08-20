@@ -1,4 +1,7 @@
-/* global suite, suiteSetup, suiteTeardown, test */
+/* global suite */
+/* global test */
+/* global suiteSetup */
+/* global suiteTeardown */
 
 import assert from 'assert';
 import {EventEmitter} from 'events';
@@ -11,27 +14,32 @@ import {
   installMocks,
   uninstallMocks,
 } from './utils';
-import {
-  default as createEnvironment,
-  audioEventSaga,
-  createAudioEventChannel,
-  createMicEventChannel,
-} from '../lib/environment';
-import {
-  speakBegin,
-  speakEnd,
-  interpretEnd,
-} from '../lib/actions';
-import {timerMonitorSaga} from '../lib/timers/saga';
+
+let dialogEngine;
+let createEnvironment;
+let audioEventSaga;
+let createAudioEventChannel;
+let createMicEventChannel;
+let speakBegin;
+let speakEnd;
+let interpretEnd;
+let timerMonitorSaga;
 
 suite(`environment`, () => {
 
   // So far all we care about here is that the DialogEngine has |addListener|
   // and |removeListener|.
-  const dialogEngine = new EventEmitter();
-
   suiteSetup(() => {
     installMocks();
+    dialogEngine = new EventEmitter();
+    createEnvironment = require('../lib/environment').default;
+    audioEventSaga = require('../lib/environment').audioEventSaga;
+    createAudioEventChannel = require('../lib/environment').createAudioEventChannel;
+    createMicEventChannel = require('../lib/environment').createMicEventChannel;
+    speakBegin = require('../lib/actions').speakBegin;
+    speakEnd = require('../lib/actions').speakEnd;
+    interpretEnd = require('../lib/actions').interpretEnd;
+    timerMonitorSaga = require('../lib/timers/saga').timerMonitorSaga;
   });
 
   suiteTeardown(() => {

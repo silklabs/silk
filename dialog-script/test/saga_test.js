@@ -15,15 +15,15 @@ import {
   makeMicEvent,
   testScript,
 } from './utils';
-import {
-  audioEventSaga,
-  cleanupFinishedSagas,
-  createMicEventChannel,
-  wrapFork,
-} from '../lib/environment';
-import modifyBabies from '../lib/babies/saga';
-import startFeeding from '../lib/food/saga';
-import {timerMonitorSaga} from '../lib/timers/saga';
+
+let audioEventSaga;
+let cleanupFinishedSagas;
+let createMicEventChannel;
+let wrapFork;
+
+let modifyBabies;
+let startFeeding;
+let timerMonitorSaga;
 
 let saga;
 let unknownText;
@@ -41,6 +41,13 @@ suite(`saga`, () => {
     installMocks();
     unknownText = require('../lib/saga').unknownText;
     saga = require('../lib/saga').default;
+    audioEventSaga = require('../lib/environment').audioEventSaga;
+    cleanupFinishedSagas = require('../lib/environment').cleanupFinishedSagas;
+    createMicEventChannel = require('../lib/environment').createMicEventChannel;
+    wrapFork = require('../lib/environment').wrapFork;
+    modifyBabies = require('../lib/babies/saga').default;
+    startFeeding = require('../lib/food/saga').default;
+    timerMonitorSaga = require('../lib/timers/saga').timerMonitorSaga;
   });
 
   suiteTeardown(() => {

@@ -4,6 +4,6 @@
   "description": "Mock for silk-lights",
   "main": "index.js",
   "dependencies": {
-    "babel-preset-silk-node4": "^0.17.0"
+    "babel-preset-silk-node4": "^1.0.0"
   }
 }

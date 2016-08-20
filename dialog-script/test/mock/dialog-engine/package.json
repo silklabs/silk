@@ -4,7 +4,7 @@
   "description": "Mock for dialog engine",
   "main": "index.js",
   "dependencies": {
-    "babel-preset-silk-node4": "^0.17.0",
-    "silk-log": "^0.17.0"
+    "babel-preset-silk-node4": "^1.0.0",
+    "silk-log": "^1.0.0"
   }
 }

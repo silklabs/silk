@@ -11,6 +11,8 @@ export const TYPE_EXPIRE = 'TIMERS_EXPIRE';
 export const TYPE_REMOVE = 'TIMERS_REMOVE';
 export const TYPE_REMOVE_ALL = 'TIMERS_REMOVE_ALL';
 
+export type TimerType = 'alarm' | 'timer';
+
 // Flow needs these as string literals so we can't use the consts above... Grr.
 export type Action =
   {
@@ -19,6 +21,7 @@ export type Action =
       durationMs: number;
       expiresMs: number;
       title: string;
+      type: TimerType;
     };
   } | {
     type: 'TIMERS_EXPIRE' | 'TIMERS_REMOVE';
@@ -31,13 +34,15 @@ export type Action =
 ;
 
 // Creates an action that will add a timer.
-export function addTimer(durationMs: number, expiresMs: number, title: string): Action {
+export function addTimer(durationMs: number, expiresMs: number, title: string,
+                         type: TimerType = 'timer'): Action {
   return {
     type: TYPE_ADD,
     payload: {
       durationMs,
       expiresMs,
       title,
+      type,
     },
   };
 }

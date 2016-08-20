@@ -23,6 +23,7 @@ import {Readable} from 'stream';
 import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
 import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
 import TextToIntention from './textToIntention';
+import type { UtteranceType } from 'silk-stt';
 
 export type {Intention, Entity, Entities} from './textToIntention';
 
@@ -135,6 +136,8 @@ export class DialogEngine extends EventEmitter {
   _uiMode: DialogUiMode;
   _options: DialogEngineOptions;
   _scriptOptions: DialogScriptOptions;
+  _saveUtterance: boolean = false;
+  _utteranceType: UtteranceType;
 
   /**
    * Real-time communication channel with any apps that are currently connected
@@ -165,6 +168,14 @@ export class DialogEngine extends EventEmitter {
       this._uiMode = mode;
       process.nextTick(() => this.emit('ui-mode', mode));
     }
+  }
+
+  set saveUtterance(save: boolean) {
+    this._saveUtterance = save;
+  }
+
+  set utteranceType(type: UtteranceType) {
+    this._utteranceType = type;
   }
 
   /**
@@ -286,9 +297,9 @@ export class DialogEngine extends EventEmitter {
         return;
       }
 
+      this.emit(`text`, text);
       if (!text) {
         log.debug(`No speech detected`);
-        this.emit(`text`, text);
         process.nextTick(() => {
           this.emit(`intent`, ``, []);
           this.emit(`interpret-end`, error);
@@ -297,7 +308,6 @@ export class DialogEngine extends EventEmitter {
       }
 
       log.debug(`Speech recognition finished`, text);
-      this.emit(`text`, text);
 
       this._getIntention(text).then((intention: Intention) => {
         log.debug(`Interpretation finished`, intention);
@@ -327,7 +337,7 @@ export class DialogEngine extends EventEmitter {
     stream.addListener(`error`, errorListener);
     stream.addListener(`data`, dataListener);
     stream.addListener(`end`, endListener);
-    stt.startRequest(finish);
+    stt.startRequest(finish, this._saveUtterance, this._utteranceType);
   }
 
   notifySoundEvent(type: string, when: number): void {

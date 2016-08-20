@@ -33,10 +33,9 @@ cd pub/docs ; npm install ; cd ../..
 
 # Recreate gh-pages branch and publish it
 mkdir gh-pages
-cp -ra pub/docs/dist gh-pages/master
-cp -ra pub/docs/public_html/* gh-pages/master
+cp -ra pub/docs/dist gh-pages/
+cp -ra pub/docs/public_html/* gh-pages/
 git add gh-pages
 git commit -m "Automated doc update"
 git subtree split --prefix gh-pages -b gh-pages
 git push -f sos gh-pages:gh-pages
-

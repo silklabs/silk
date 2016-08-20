@@ -40,5 +40,5 @@ APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
   -t node_modules/documentation-theme-default \
   --name silk-device-api
 
-du -hs dist/api/device
+du -hs dist
 rm -rf build

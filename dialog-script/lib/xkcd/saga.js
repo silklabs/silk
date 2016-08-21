@@ -16,13 +16,14 @@ export function* xkcd(
   const {speak} = environment;
   invariant(speak);
 
-  invariant(entities.length === 2);
-  let cmd = entities[0].entity;
-  let arg = entities[1].entity;
-
-  switch (cmd) {
+  invariant(entities.length === 1);
+  invariant(entities[0].type === 'number');
+  switch (entities[0].entity) {
   case '149': // https://xkcd.com/149/
-    yield call(speak, arg === 'sudo' ? 'Okay' : 'Make it yourself', 'idle');
+    yield call(speak, 'Make it yourself', 'idle');
+    break;
+  case '149-sudo':
+    yield call(speak, 'Okay', 'idle');
     break;
   default:
     invariant(false);

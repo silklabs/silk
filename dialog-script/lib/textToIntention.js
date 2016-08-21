@@ -64,7 +64,7 @@ ai(`night light blue`, 'setNightlightColor', 'color', 'blue', {});
 
 // Demo dialogs
 ai(`make me a sandwich`, 'xkcd', 'number', '149', {});
-ai(`sudo make me a sandwich`, 'xkcd', 'number', '149', {}, 'type', 'sudo', {});
+ai(`sudo make me a sandwich`, 'xkcd', 'number', '149-sudo', {});
 
 /*
 ai(`what time is it`, 'getCurrentTime');

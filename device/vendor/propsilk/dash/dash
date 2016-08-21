@@ -4,7 +4,15 @@
 #
 
 if [ -f /init ]; then
+  # Gonk-based device
   cd /
+  ROOT=false
+  if [ $(whoami) == root ]; then
+    ROOT=true
+  fi
+else
+  # Sim
+  ROOT=true
 fi
 
 uptime
@@ -17,7 +25,7 @@ node -p "\
 "
 echo
 
-if [ -d data/tombstones ]; then
+if $ROOT && [ -d data/tombstones ]; then
   tombstones=$(ls data/tombstones)
   if [ "$tombstones" != "" ]; then
     echo "TOMBSTONES (data/tombstones):"
@@ -39,7 +47,7 @@ if [ -d /sys/class/power_supply/battery ]; then
   echo
 fi
 
-if [ -d data/outbox ]; then
+if $ROOT && [ -d data/outbox ]; then
   cd data/outbox/
   queues=$(ls)
   if [ "$queues" != "" ]; then
@@ -72,31 +80,35 @@ if [ -d /sys/class/thermal ]; then
   echo
 fi
 
-echo "Open File Descriptors:"
-if [ -f /init ]; then
-  nodepid=$(ps node | busybox tail -n1 | busybox cut -c11-15)
-  if [ $nodepid -gt 1 ]; then
-    echo -n "  node: "; lsof $nodepid | busybox wc -l
+if $ROOT; then
+  echo "Open File Descriptors:"
+  if [ -f /init ]; then
+    nodepid=$(ps node | busybox tail -n1 | busybox cut -c11-15)
+    if [ $nodepid -gt 1 ]; then
+      echo -n "  node: "; lsof $nodepid | busybox wc -l
+    fi
+    echo -n "     *: "; lsof | busybox wc -l
+  else
+    echo -n "     TODO"
   fi
-  echo -n "     *: "; lsof | busybox wc -l
-else
-  echo -n "     TODO"
-fi
-echo
-
-echo "Procrank (top 5 Pss)":
-procrank 2> /dev/null | (
-  i=0
-  lastLine=
-  while read; do
-    lastLine="$REPLY"
-    i=$(($i + 1))
-    test $i -le 7 && echo "  $REPLY"
-  done
-  echo "  ..."
-  echo "  $lastLine"
   echo
-)
+
+  if [ -f /init ]; then
+    echo "Procrank (top 5 Pss)":
+    procrank 2> /dev/null | (
+      i=0
+      lastLine=
+      while read; do
+        lastLine="$REPLY"
+        i=$(($i + 1))
+        test $i -le 7 && echo "  $REPLY"
+      done
+      echo "  ..."
+      echo "  $lastLine"
+      echo
+    )
+  fi
+fi
 
 echo Silk System Properties:
 ( getprop | grep silk | grep -v '^\[init' ) | (
@@ -106,37 +118,45 @@ echo Silk System Properties:
 )
 echo
 
-echo Network:
-echo "  wlan0: $(ndc interface getcfg wlan0)"
-echo "  route:"
-( busybox route ) | (
-  while read; do
-    echo "    $REPLY"
-  done
-)
-echo "  dhcp:"
-( getprop | grep '^\[dhcp' ) | (
-  while read; do
-    echo "    $REPLY"
-  done
-)
-echo
-
-if [ -f /sys/devices/system/cpu/cpu0/online ]; then
-  echo CPU:
-  cd /sys/devices/system/cpu/
-  for cpu in cpu[0-8]; do
-    online=$(cat $cpu/online 2> /dev/null || echo 1)
-    if [ $online == 1 ]; then
-      currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
-      maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
-      echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
-    else
-      echo "  $cpu: offline"
-    fi
-  done
+if $ROOT; then
+  echo Network:
+  echo "  wlan0: $(ndc interface getcfg wlan0)"
+  echo "  route:"
+  ( busybox route ) | (
+    while read; do
+      echo "    $REPLY"
+    done
+  )
+  echo "  dhcp:"
+  ( getprop | grep '^\[dhcp' ) | (
+    while read; do
+      echo "    $REPLY"
+    done
+  )
   echo
+
+  if [ -f /sys/devices/system/cpu/cpu0/online ]; then
+    echo CPU:
+    cd /sys/devices/system/cpu/
+    for cpu in cpu[0-8]; do
+      online=$(cat $cpu/online 2> /dev/null || echo 1)
+      if [ $online == 1 ]; then
+        currfreq=$(cat $cpu/cpufreq/scaling_cur_freq 2> /dev/null || echo ?)
+        maxfreq=$(cat $cpu/cpufreq/scaling_max_freq 2> /dev/null || echo ?)
+        echo "  $cpu: $currfreq KHz (max: $maxfreq KHz)"
+      else
+        echo "  $cpu: offline"
+      fi
+    done
+    echo
+  fi
 fi
 
 df
 echo
+
+if ! $ROOT; then
+  echo ===============================================================
+  echo Warning: Not running as root, only partial information provided
+  echo ===============================================================
+fi

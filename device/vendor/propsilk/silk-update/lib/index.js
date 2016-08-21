@@ -410,7 +410,7 @@ function validateManifest(result) {
     switch (buildType) {
     case '*':
       {
-        if (buildMetadata.verson !== currentSha || FORCE_UPDATE) {
+        if (buildMetadata.version !== currentSha || FORCE_UPDATE) {
           // Different sha, select this build
           currentMetadata = buildMetadata;
           log.info('Selected "*" update');

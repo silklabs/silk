@@ -174,7 +174,6 @@ export class DialogEngine extends EventEmitter {
    * @memberof silk-dialog-engine.DialogEngine
    */
   configure(scriptOptions: DialogScriptOptions) {
-    invariant(!this._scriptOptions);
     this._scriptOptions = scriptOptions;
 
     if (this._scriptOptions.speechOptions) {

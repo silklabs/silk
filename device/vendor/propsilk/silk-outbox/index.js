@@ -13,6 +13,10 @@ export { default as APICallOperation } from './lib/api_call_operation';
 export { default as StreamOperation } from './lib/stream_operation';
 export { default as Operation } from './lib/operation';
 export { default as PapertrailOperation } from './lib/papertrail_operation';
-export { BlobUploadOperation } from './lib/blob_upload_operation';
+export {
+  BlobUploadOperation,
+  PosKeywordUploadOperation,
+  NegKeywordUploadOperation,
+} from './lib/blob_upload_operation';
 
 export type { Outbox } from './lib/manager';

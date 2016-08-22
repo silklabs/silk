@@ -84,3 +84,15 @@ export class BlobUploadOperation extends StreamOperation {
     };
   }
 }
+
+export class PosKeywordUploadOperation extends BlobUploadOperation { // eslint-disable-line
+  static NAME = 'keyword-upload';
+  static META_TYPE = 'keyword_pos';
+  static CONTENT_TYPE = 'audio/wav';
+}
+
+export class NegKeywordUploadOperation extends BlobUploadOperation { // eslint-disable-line
+  static NAME = 'keyword-upload';
+  static META_TYPE = 'keyword_neg';
+  static CONTENT_TYPE = 'audio/wav';
+}

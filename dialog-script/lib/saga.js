@@ -27,6 +27,7 @@ import {xkcd} from './xkcd/saga';
 import {getWeather, resetLocation} from './weather/saga';
 import {pauseMusic, playMusic, getCurrentSong, getArtist} from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
+import {recordKeyword} from './keyword/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
@@ -77,6 +78,7 @@ const concurrentIntents: Set<string> = new Set([
   `getStockPrice`,
   `pauseMusic`,
   `playMusic`,
+  `recordKeyword`,
   `resetLocation`,
   `xkcd`,
   `setNightlightColor`,
@@ -332,6 +334,10 @@ export default function*(
         if (entities[0].type === 'light') {
           sagaFunction = turnOffLight;
         }
+        break;
+      case `recordKeyword`:
+        sagaFunction = recordKeyword;
+        args.push(entities);
         break;
       default:
         throw new Error(`All intents in concurrentIntents must be handled!`);

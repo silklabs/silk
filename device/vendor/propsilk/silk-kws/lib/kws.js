@@ -21,7 +21,11 @@ import {MelFeatureExtractor, Framer, Normalizer} from 'mel-features';
 import netstatus from 'silk-netstatus';
 import SpeechToText from 'silk-stt';
 import player from 'silk-audioplayer';
-import {BlobUploadOperation, getOutboxInstance} from 'silk-outbox';
+import {
+  PosKeywordUploadOperation,
+  NegKeywordUploadOperation,
+  getOutboxInstance,
+} from 'silk-outbox';
 import {BufferReadable} from 'silk-streams';
 
 import type {VoiceActivityDetector} from 'silk-vad';
@@ -78,18 +82,6 @@ type MicData = {
   when: number;
   frames: Buffer;
 };
-
-class PosKeywordUploadOperation extends BlobUploadOperation {
-  static NAME = 'keyword-upload';
-  static META_TYPE = 'keyword_pos';
-  static CONTENT_TYPE = 'audio/wav';
-}
-
-class NegKeywordUploadOperation extends BlobUploadOperation {
-  static NAME = 'keyword-upload';
-  static META_TYPE = 'keyword_neg';
-  static CONTENT_TYPE = 'audio/wav';
-}
 
 /**
  * This class receives mic data stream and tries to detect a specific keyword
@@ -553,7 +545,7 @@ export default class KeywordSpotting extends EventEmitter {
         op = new PosKeywordUploadOperation({
           size: wavData.length,
           metadata: {
-            metaType: 'keyword_pos',
+            metaType: PosKeywordUploadOperation.META_TYPE,
             startUTC: Date.now(),
           },
         });
@@ -561,7 +553,7 @@ export default class KeywordSpotting extends EventEmitter {
         op = new NegKeywordUploadOperation({
           size: wavData.length,
           metadata: {
-            metaType: 'keyword_neg',
+            metaType: NegKeywordUploadOperation.META_TYPE,
             startUTC: Date.now(),
           },
         });

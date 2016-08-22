@@ -140,7 +140,7 @@ export default class DialogEngine extends EventEmitter {
       log.warn(error);
       resolve({
         intent: UNKNOWN_INTENT,
-        score: 1.0,
+        score: 0.0,
         entities: [],
       });
     };
@@ -212,7 +212,11 @@ export default class DialogEngine extends EventEmitter {
 
       return Promise.all(promises)
       .then(intentions => {
-        let topMatchIntent = null;
+        let topMatchIntent = {
+          intent: UNKNOWN_INTENT,
+          score: 0.0,
+          entities: [],
+        };
         for (let intention of intentions) {
           if (intention.intent !== UNKNOWN_INTENT &&
               intention.intent !== 'None' &&
@@ -226,7 +230,7 @@ export default class DialogEngine extends EventEmitter {
     }
 
     log.info(`No intention found`);
-    return Promise.resolve({intent: UNKNOWN_INTENT, score: 1.0, entities: []});
+    return Promise.resolve({intent: UNKNOWN_INTENT, score: 0.0, entities: []});
   }
 
   _parseResponse(json: string): Intention {
@@ -246,7 +250,7 @@ export default class DialogEngine extends EventEmitter {
     if (!topMatchIntent) {
       return {
         intent: UNKNOWN_INTENT,
-        score: 1.0,
+        score: 0.0,
         entities: [],
       };
     }

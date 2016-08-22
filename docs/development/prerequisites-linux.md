@@ -29,24 +29,27 @@ sudo apt-get update
 Then install the following packages:
 ```bash
 sudo apt-get install -y \
-  openjdk-7-jdk \
-  m4 \
-  libxml2-utils \
+  android-tools-adb \
+  android-tools-fastboot \
   ccache \
   cmake \
-  android-tools-adb \
-  lib32z1 \
-  lib32stdc++6 \
-  libc6-dev-i386 \
-  libstdc++6:i386  \
-  linux-libc-dev  \
   g++ \
   g++-4.8 \
   g++-4.8-multilib \
+  lib32stdc++6 \
+  lib32z1 \
+  libc6-dev-i386 \
   libcv-dev \
   libcvaux-dev \
   libhighgui-dev \
-  libopencv-dev
+  libopencv-dev \
+  libstdc++6:i386  \
+  libxml2-utils \
+  linux-libc-dev  \
+  m4 \
+  mkisofs \
+  openjdk-7-jdk \
+  zip
 ```
 
 and configure your ccache:

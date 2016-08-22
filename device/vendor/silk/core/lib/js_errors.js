@@ -19,6 +19,7 @@ import {spawn} from 'child_process';
 import createLog from 'silk-log/device';
 import {StoringStream} from 'silk-streams';
 import eventToPromise from 'event-to-promise';
+import {Debuggerd, Tombstones} from './crash_reporter';
 import type {CrashReporter} from './crash_reporter';
 
 const log = createLog('js_errors');
@@ -73,31 +74,45 @@ export async function buildJSTombstone(type: string, err: Error) {
   return stream;
 }
 
-export default function(crashreporter: CrashReporter) {
+export default function(crashreporter: ?CrashReporter) {
   const handleError = async (type, err) => {
     log.info(type, err.stack);
-    try {
-      const stream = await buildJSTombstone(type, err);
-      return crashreporter.reportJSError(err,
-                                         type,
-                                         stream,
-                                         stream.getStoreSize());
-    } catch (ex) {
-      log.error('Failed to report ${type}', ex);
+    const stream = await buildJSTombstone(type, err);
 
+    if (crashreporter) {
       try {
-        const stream2 = await buildJSTombstone(type, ex);
-        return crashreporter.reportJSError(ex,
-                                           'uncaughtException',
-                                           stream2,
-                                           stream2.getStoreSize(),
-                                           { failedStack: err.stack }
-                                          );
-      } catch (ex2) {
-        log.error('Failed to report exception while reporting ${type}', ex2);
+        crashreporter.reportJSError(err,
+                                    type,
+                                    stream,
+                                    stream.getStoreSize());
+        return;
+      } catch (ex) {
+        log.error('Failed to report ${type}', ex);
+
+        try {
+          const stream2 = await buildJSTombstone(type, ex);
+          crashreporter.reportJSError(ex,
+                                      'uncaughtException',
+                                      stream2,
+                                      stream2.getStoreSize(),
+                                      { failedStack: err.stack });
+        } catch (ex2) {
+          log.error('Failed to report exception while reporting ${type}', ex2);
+        }
+      }
+    } else {
+      const tombstones = new Tombstones();
+      try {
+        await tombstones.report(stream);
+        await Debuggerd.notify();
+      } catch (ex) {
+        // Harsh, but...
+        log.error(`Aborting:`, ex);
+        process.abort();
+      } finally {
+        process.exit(1); // eslint-disable-line no-process-exit
       }
     }
-    return null;
   };
 
   process.on('uncaughtException',

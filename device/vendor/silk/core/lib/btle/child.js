@@ -9,31 +9,20 @@
 // Set up error handling before doing anything else.
 let parentConnected = true;
 
-function errorHandler(type: string, error: Error) {
-  console.error(`${type}:`, error.stack);      // eslint-disable-line no-console
-
+import jsErrors from '../js_errors';
+jsErrors(null);
+process.on('exit', (code) => {
   if (process.send && parentConnected) {
     try {
       process.send({
         name: `error`,
-        type,
-        message: error.message,
-        stack: error.stack,
+        message: `Process exit code: ${code}`,
       });
     } catch (exception) {
       console.error(exception.stack);          // eslint-disable-line no-console
     }
   }
-
-  // Harsh, but for now...
-  console.info(`Aborting`);                    // eslint-disable-line no-console
-  process.abort();
-}
-
-process.addListener(`uncaughtException`,
-                    errorHandler.bind(null, `uncaughtException`));
-process.addListener(`unhandledRejection`,
-                    errorHandler.bind(null, `unhandledRejection`));
+});
 
 process.once(`disconnect`, () => {
   console.info(`Parent process disconnected`); // eslint-disable-line no-console

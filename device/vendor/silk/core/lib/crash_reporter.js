@@ -14,13 +14,14 @@ import eventToPromise from 'event-to-promise';
 import mkdirp from 'mkdirp-promise';
 import net from 'net';
 import wrapNoEntity from './fs/wrap_no_entity';
-import { getboolprop } from 'silk-sysutils';
+import {getboolprop} from 'silk-sysutils';
 import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
 import byline from 'byline';
 
-import { CrashReporterOperation } from 'silk-outbox';
-import { EventEmitter } from 'events';
+import {CrashReporterOperation} from 'silk-outbox';
+import {EventEmitter} from 'events';
+import {PassThrough} from 'stream';
 
 const log = createLog('crash_reporter');
 
@@ -47,7 +48,7 @@ export class Tombstones extends EventEmitter {
 
   _activePromise = Promise.resolve();
 
-  constructor(tombstonePath) {
+  constructor(tombstonePath: string = TOMBSTONE_PATH) {
     super();
     assert(typeof tombstonePath === 'string');
     this.tombstonePath = tombstonePath;
@@ -217,10 +218,20 @@ export class Debuggerd extends EventEmitter {
 
   _startPromise = null;
 
-  constructor(socketPath) {
+  constructor(socketPath: string = DEBUGGERD_SOCKET_PATH) {
     super();
     assert(typeof socketPath === 'string');
     this.socketPath = socketPath;
+  }
+
+  static async notify(socketPath: string = DEBUGGERD_SOCKET_PATH) {
+    const notifyStream = new PassThrough();
+    notifyStream.end('!');
+
+    const socket = net.connect(socketPath);
+    await eventToPromise(socket, 'connect');
+    notifyStream.pipe(socket);
+    await eventToPromise(socket, 'close');
   }
 
   onConnection = async (socket) => {
@@ -499,15 +510,11 @@ export class CrashReporter {
 }
 
 export default function(outbox, options = {}) {
-  let tombstones = new Tombstones(
-    options.tombstonePath || TOMBSTONE_PATH
-  );
+  let tombstones = new Tombstones(options.tombstonePath);
 
   let debuggerd = null;
   if (process.platform === 'android' || options.debuggerdSocketPath) {
-    debuggerd = new Debuggerd(
-      options.debuggerdSocketPath || DEBUGGERD_SOCKET_PATH
-    );
+    debuggerd = new Debuggerd(options.debuggerdSocketPath);
   } else {
     log.verbose('No debuggerd');
   }

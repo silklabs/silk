@@ -185,6 +185,13 @@ dialogEngine.configure({
         // 'Cortana prebuilt' Luis App
         id: `c413b2ef-382c-45bd-8ff0-f76d60e2a821`,
         key: `572e250e318e428d893cb19279d22a87`,
+
+        // Only handle these intents from the prebuilt app
+        whitelist: ['builtin.intent.weather.check_weather',
+                    'builtin.intent.alarm.delete_alarm',
+                    'builtin.intent.alarm.turn_off_alarm',
+                    'builtin.intent.alarm.set_alarm',
+                    'builtin.intent.none'],
       },
     ],
   },

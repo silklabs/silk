@@ -73,9 +73,8 @@ export function parseIso8601(s: string, useLocal: boolean) {
   return d;
 }
 
-export function getCurrentDateTime(): Array<string> {
-  // Get the current time and isolate individual components that we care about.
-  const now = new Date();
+export function getDateTime(time?: number): Array<string> {
+  const now = time ? new Date(time) : new Date();
   let hour = now.getHours() % 12;
   if (hour === 0) {
     hour = 12;

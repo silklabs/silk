@@ -7,9 +7,10 @@ import {delay} from 'redux-saga';
 import {call, put, race, select, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import moment from 'moment';
-import {parseIso8601, getCurrentDateTime} from '../utils';
+import {parseIso8601, getDateTime} from '../utils';
 import path from 'path';
 import player from 'silk-audioplayer';
+import humanizeDuration from 'humanize-duration';
 
 import {
   addTimer,
@@ -221,7 +222,7 @@ export function* timerMonitorSaga(
       if (dialogEngine.uiMode === 'normal') {
         // Alert the user
         if (timer.type === 'alarm') {
-          let [timeString] = getCurrentDateTime();
+          let [timeString] = getDateTime();
           try {
             yield call(() => player.play(ALARM_TONE));
           } catch (err) {
@@ -249,7 +250,7 @@ export function* timerMonitorSaga(
  * via |put| and then |timerMonitorSaga| wakes up when it sees that state
  * change.
  */
-export default function* modifyTimers(
+export function* modifyTimers(
   environment: Environment,
   type: 'startTimer' | 'cancelTimer' | 'startAlarm' | 'cancelAlarm',
   entities: Entities
@@ -339,4 +340,93 @@ export default function* modifyTimers(
   }
 
   yield call(speak, `Sorry, I couldn't figure out which timer to cancel`, `idle`);
+}
+
+/**
+ * Find an alarm given the title or find the next alarm
+ */
+function* findAlarm(title: string): Generator<Object, ?TimerState, any> {
+  // Get the list of timers
+  let timers = yield select(getTimers);
+  invariant(Array.isArray(timers));
+
+  if (!timers.length) {
+    return null;
+  }
+
+  let alarm;
+  if (title) {
+    // Find the alarm that matches the title
+    timers.forEach(timer => {
+      if ((timer.title === title) && (timer.type === 'alarm')) {
+        alarm = timer;
+        return;
+      }
+    });
+  } else { // Assume user is asking about the next alarm
+    timers.sort(sortTimers); // Make sure they are sorted
+    timers.forEach(timer => {
+      if (timer.type === 'alarm') {
+        alarm = timer;
+        return;
+      }
+    });
+  }
+  return alarm;
+}
+
+export function* getAlarmInfo(
+    environment: Environment,
+    entities: Entities
+): Generator<Object, void, any> {
+  const {speak} = environment;
+  let title: string = '';
+  for (let entity of entities) {
+    if ((entity.type === 'builtin.alarm.title') &&
+        (entity.entity !== undefined)) {
+      title = entity.entity;
+    }
+  }
+
+  let alarm = yield call(findAlarm, title);
+  if (!alarm) {
+    yield call(speak, `Sorry, I couldn't figure out which alarm you are talking about`,
+        `idle`);
+    return;
+  }
+
+  let duration = Math.max(alarm.expiresMs - Date.now(), 0);
+  let timeStr = humanizeDuration(duration, {
+    round: true,
+    conjunction: ' and ',
+    serialComma: false
+  });
+  yield call(speak, `Alarm ${title ? title : alarm.id} is set to expire in ${timeStr}`, `idle`);
+}
+
+export function* findAlarmInfo(
+    environment: Environment,
+    entities: Entities
+): Generator<Object, void, any> {
+  const {speak} = environment;
+
+  // Attempt to understand the amount of time the user gave us.
+  let title: string = '';
+  for (let entity of entities) {
+    if ((entity.type === 'builtin.alarm.title') &&
+        (entity.entity !== undefined)) {
+      title = entity.entity;
+    }
+  }
+
+  let alarm = yield call(findAlarm, title);
+  if (!alarm) {
+    yield call(speak, `Sorry, I couldn't figure out which alarm you are talking about`,
+        `idle`);
+    return;
+  }
+
+  let when = Math.max(alarm.expiresMs, 0);
+  let [timeString, dateString] = getDateTime(when);
+  yield call(speak, `Alarm ${title ? title : alarm.id} is currently set for ${timeString} on ${dateString}`, `idle`);
 }

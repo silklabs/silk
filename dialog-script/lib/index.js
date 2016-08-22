@@ -191,6 +191,8 @@ dialogEngine.configure({
                     'builtin.intent.alarm.delete_alarm',
                     'builtin.intent.alarm.turn_off_alarm',
                     'builtin.intent.alarm.set_alarm',
+                    'builtin.intent.alarm.time_remaining',
+                    'builtin.intent.alarm.find_alarm',
                     'builtin.intent.none'],
       },
     ],

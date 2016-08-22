@@ -55,9 +55,9 @@ suite(`userScript`, () => {
 
   // "time": "YYYY-MM-DDTHH:MM:SS", "date": null
   test(`Alarm test - start an alarm to go off in some time`, async (done) => {
-    tester.speak(`Set the alarm to go off in 5 seconds`);
+    tester.speak(`Set the alarm to go off in 10 seconds`);
     await tester.listenCheck(`^Ok, I've started an alarm`, `idle`);
-    let timer = setTimeout(() => assert(false, 'Alarm did not expire'), 7000);
+    let timer = setTimeout(() => assert(false, 'Alarm did not expire'), 13000);
     await tester.listenCheck(`Alarm \\d+ has expired`, `idle`);
     clearTimeout(timer);
     done();
@@ -77,6 +77,18 @@ suite(`userScript`, () => {
     let timer = setTimeout(() => assert(false, 'Alarm did not expire'), 7000);
     await tester.listenCheck(`You asked me to remind you to go to bed`, `idle`);
     clearTimeout(timer);
+    done();
+  });
+
+  test(`Alarm test - get alarm time`, async (done) => {
+    tester.speak(`Set an alarm for tomorrow at 8 am called as wakeup`);
+    await tester.listenCheck(`^Ok, I've started the wakeup alarm`, `idle`);
+    tester.speak(`how much time until my wakeup alarm?`);
+    await tester.listenCheck(`^Alarm wakeup would expire in`, `idle`);
+    tester.speak(`when does my wakeup alarm expire?`);
+    await tester.listenCheck(`^Alarm wakeup is currently set for`, `idle`);
+    tester.speak(`Cancel the wakeup alarm`);
+    await tester.listenCheck(`^Ok, I've canceled the wakeup alarm`, `idle`);
     done();
   });
 });

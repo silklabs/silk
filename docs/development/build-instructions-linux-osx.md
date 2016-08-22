@@ -6,6 +6,8 @@ The instructions below will help you build Silk for the supported devices on Lin
 * For Linux users: see [Prerequisites (Linux)](prerequisites-linux.md)
 * For OS X users: see [Prerequisites (OS X)](prerequisites-osx.md)
 
+We also provide a [Docker image](../../docker/README.md).
+
 ### Building and using the emulator
 
 

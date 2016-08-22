@@ -245,6 +245,18 @@ export function* timerMonitorSaga(
 }
 
 /**
+ * Convert the duration into a human readable string
+ */
+function humanize(duration: number): string {
+  return humanizeDuration(duration, {
+    round: true,
+    conjunction: ' and ',
+    serialComma: false,
+    units: ['d', 'h', 'm'],
+  });
+}
+
+/**
  * This saga allows the user to start and stop timers. It does not interact with
  * |timerMonitorSaga| directly. Instead this saga merely updates the data store
  * via |put| and then |timerMonitorSaga| wakes up when it sees that state
@@ -295,7 +307,7 @@ export function* modifyTimers(
     invariant(typeof durationMs === 'number');
     log.info(`Adding timer for ${durationMs / 1000} seconds`);
     yield put(addTimer(durationMs, Date.now() + durationMs, title));
-    yield call(speak, `Ok, I've started a timer`, `idle`);
+    yield call(speak, `Ok, I've started a timer for ${humanize(durationMs)}`, `idle`);
     return;
   }
 
@@ -308,8 +320,10 @@ export function* modifyTimers(
     invariant(typeof durationMs === 'number');
     log.info(`Adding an alarm`);
     yield put(addTimer(durationMs, durationMs, title, 'alarm'));
+    let durationStr = humanize(durationMs - Date.now());
     yield call(speak, `Ok, I've started` +
-        (title ? ` the ` + title : ` an`) + ` alarm`, `idle`);
+        (title ? ` the ` + title : ` an`) + ` alarm to expire in ${durationStr}`,
+        `idle`);
     return;
   }
 
@@ -396,12 +410,7 @@ export function* getAlarmInfo(
   }
 
   let duration = Math.max(alarm.expiresMs - Date.now(), 0);
-  let timeStr = humanizeDuration(duration, {
-    round: true,
-    conjunction: ' and ',
-    serialComma: false
-  });
-  yield call(speak, `Alarm ${title ? title : alarm.id} is set to expire in ${timeStr}`, `idle`);
+  yield call(speak, `Alarm ${title ? title : alarm.id} would expire in ${humanize(duration)}`, `idle`);
 }
 
 export function* findAlarmInfo(

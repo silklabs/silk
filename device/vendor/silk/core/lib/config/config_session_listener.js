@@ -14,6 +14,7 @@ import sensors from 'silk-sensors';
 import {
   exec,
   getboolprop,
+  setprop,
 } from 'silk-sysutils';
 
 import SessionListenerBase from './session_listener_base';
@@ -68,6 +69,7 @@ const SCHEMA = {
     regToken: Joi.string().required(),
     serverUrl: Joi.string().allow(``).default(``).optional(),
     time: Joi.number().required(),
+    timezoneOffset: Joi.number().required(),
   }).options({
     stripUnknown: true,
   }).required(),
@@ -266,11 +268,22 @@ export default class ConfigSessionListener extends SessionListenerBase {
         };
 
         const time = new Date(data.time);
-        log.debug(`Setting system time to configuring app's time`, time);
+        log.verbose(`Setting time to`, time);
 
         exec('time_genoff', [time.getTime().toString()])
           .catch((error) => log.warn(`Unable to set system time`, error))
           .then(() => this._completeRegistration(secret));
+
+        const timezoneOffset = data.timezoneOffset;
+        const hourOffset = Math.abs(timezoneOffset) / 60;
+        const minuteOffset = Math.abs(timezoneOffset) % 60;
+        const timezone = 'UTC' +
+          (timezoneOffset < 0 ? '-' : '+') +
+          ('00' + hourOffset.toString()).substr(-2) +
+          ':' +
+          ('00' + minuteOffset.toString()).substr(-2);
+        log.verbose(`Setting timezone to`, timezone);
+        setprop('persist.sys.timezone', timezone);
       }
       return;
 

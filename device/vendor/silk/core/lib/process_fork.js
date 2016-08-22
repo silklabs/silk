@@ -9,6 +9,7 @@
 import {fork as nodeFork} from 'child_process';
 import invariant from 'assert';
 
+import * as util from 'silk-sysutils';
 import createLog from 'silk-log/device';
 
 import type {ChildProcess} from 'child_process';
@@ -260,6 +261,15 @@ export default function fork(
   // will remain connected to the IO even though the parent is now a zombie
   // (at least when running under /system/bin/logwrapper)
   options.silent = true;
+
+  // Don't permit --debug to be inherited from the parent process, instead only
+  // enable if the debugger has been explicitly requested for this child.
+  let execArgv = options.execArgv || process.execArgv;
+  execArgv = execArgv.filter(arg => arg !== '--debug');
+  if (util.getstrprop('persist.silk.debugger', '') === options.name) {
+    execArgv.push('--debug');
+  }
+  options.execArgv = execArgv;
 
   const child = nodeFork(modulePath, args, options);
 

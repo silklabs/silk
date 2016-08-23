@@ -25,7 +25,14 @@ import {
 import {getStockPrice} from './stocks/saga';
 import {xkcd} from './xkcd/saga';
 import {getWeather, resetLocation} from './weather/saga';
-import {pauseMusic, playMusic, getCurrentSong, getArtist} from './music/saga';
+import {
+  pauseSonos,
+  playSonos,
+  getCurrentSong,
+  getArtist,
+  playMusic,
+  pauseMusic,
+} from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
 import {recordKeyword} from './keyword/saga';
 
@@ -78,6 +85,8 @@ const concurrentIntents: Set<string> = new Set([
   `getArtist`,
   `getCurrentSong`,
   `getStockPrice`,
+  `pauseSonos`,
+  `playSonos`,
   `pauseMusic`,
   `playMusic`,
   `recordKeyword`,
@@ -322,6 +331,12 @@ export default function*(
         break;
       case `resetLocation`:
         sagaFunction = resetLocation;
+        break;
+      case `playSonos`:
+        sagaFunction = playSonos;
+        break;
+      case `pauseSonos`:
+        sagaFunction = pauseSonos;
         break;
       case `playMusic`:
         sagaFunction = playMusic;

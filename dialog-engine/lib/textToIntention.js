@@ -96,7 +96,7 @@ export default class TextToIntention {
 
   _fetchIntention(text: string, id: string, key: string, whitelist?: Array<string>): Promise<Intention> {
     let onError = (resolve, error) => {
-      log.error(error);
+      log.error(error.message);
       resolve({
         intent: UNKNOWN_INTENT,
         score: 0.0,

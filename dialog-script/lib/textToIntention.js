@@ -88,8 +88,10 @@ ai(`how's the weather today?`, 'getWeather');
 
 ai(`start music`, 'playMusic');
 ai(`play music`, 'playMusic');
+ai(`play sonos`, 'playSonos');
 ai(`stop music`, 'pauseMusic');
 ai(`pause music`, 'pauseMusic');
+ai(`pause sonos`, 'pauseSonos');
 
 ai(`turn on the light`, 'turnOn', 'light', 'light', {});
 ai(`turn on the lights`, 'turnOn', 'light', 'lights', {});

@@ -5,7 +5,7 @@
 import createLog from 'silk-log/device';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
-import {getCurrentDateTime} from './utils';
+import {getDateTime} from './utils';
 
 import {
   default as createEnvironment,
@@ -15,7 +15,7 @@ import {
 
 import modifyBabies from './babies/saga';
 import startFeeding from './food/saga';
-import modifyTimers from './timers/saga';
+import {modifyTimers, getAlarmInfo, findAlarmInfo} from './timers/saga';
 import {
   requestFactoryReset,
   setNightlightColor,
@@ -70,6 +70,8 @@ const concurrentIntents: Set<string> = new Set([
   `builtin.intent.alarm.delete_alarm`,
   `builtin.intent.alarm.turn_off_alarm`,
   `builtin.intent.alarm.set_alarm`,
+  `builtin.intent.alarm.time_remaining`,
+  `builtin.intent.alarm.find_alarm`,
   `cancelTimer`,
   `getCurrentTime`,
   `factoryReset`,
@@ -95,7 +97,7 @@ export function* sayCurrentTime(
 ): Generator<Object, void, any> {
   const {speak} = environment;
 
-  let [timeString, dateString] = getCurrentDateTime();
+  let [timeString, dateString] = getDateTime();
 
   /**
    * Instruct the saga runtime to "call the speak function with these
@@ -273,6 +275,14 @@ export default function*(
       case `builtin.intent.alarm.set_alarm`:
         sagaFunction = modifyTimers;
         args.push(`startAlarm`, entities);
+        break;
+      case `builtin.intent.alarm.time_remaining`:
+        sagaFunction = getAlarmInfo;
+        args.push(entities);
+        break;
+      case `builtin.intent.alarm.find_alarm`:
+        sagaFunction = findAlarmInfo;
+        args.push(entities);
         break;
       case `cancelTimer`:
         sagaFunction = modifyTimers;

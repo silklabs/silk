@@ -252,7 +252,7 @@ function humanize(duration: number): string {
     round: true,
     conjunction: ' and ',
     serialComma: false,
-    units: ['d', 'h', 'm'],
+    units: ['d', 'h', 'm', 's'],
   });
 }
 

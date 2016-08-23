@@ -218,7 +218,7 @@ export default class Timeline extends EventEmitter {
       this.addFace(when, faces, 'hal');
     });
     camera.on('video-segment', (when, durationMs, pkt) => {
-      api.metrics.add(new VideoMetrics.Record(durationMs));
+      //api.metrics.add(new VideoMetrics.Record(durationMs));
       //api.metrics.add(new VideoMetrics.CaptureToNode(socketDuration));
       this.addVideo(when, durationMs, pkt);
     });

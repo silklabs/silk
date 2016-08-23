@@ -10,6 +10,8 @@
 import * as https from 'https';
 import createLog from 'silk-log/device';
 import {uptime} from 'silk-sysutils';
+import api from 'silk-device-api';
+import {Metric, MetricTypes} from 'silk-api';
 
 import type {DialogScriptOptions} from './index';
 
@@ -72,6 +74,18 @@ function urlEncode(obj: Object): string {
   return list.join(`&`);
 }
 
+class LuisRequest extends Metric {
+  static NAME = 'luis_request';
+  static DESC = 'Measures time for a Luis request';
+
+  constructor(statusCode: number, durationMS: number) {
+    super({
+      statusCode: new MetricTypes.Integer(statusCode),
+      durationMS: new MetricTypes.Integer(Math.floor(durationMS)),
+    });
+  }
+}
+
 export default class TextToIntention {
 
   _options: DialogScriptOptions;
@@ -115,8 +129,9 @@ export default class TextToIntention {
           json += chunk;
         });
         res.once('end', () => {
+          const requestDuration = Math.floor(uptime(requestStartUptime));
+          api.metrics.add(new LuisRequest(res.statusCode, requestDuration));
           if (res.statusCode === 200) {
-            const requestDuration = Math.floor(uptime(requestStartUptime));
             log.verbose(`Luis request complete in ${requestDuration}ms`);
             log.debug(json);
 

@@ -12,12 +12,27 @@ import {EventEmitter} from 'events';
 import * as https from 'https';
 import TtsCache from './tts_cache';
 import {uptime} from 'silk-sysutils';
+import api from 'silk-device-api';
+import {Metric, MetricTypes} from 'silk-api';
 
 import type { SpeechOptions } from 'silk-dialog-script';
 
 const log = createLog('tts');
 let options: SpeechOptions;
 let ttsCache = new TtsCache();
+
+
+class TtsRequest extends Metric {
+  static NAME = 'tts_request';
+  static DESC = 'Measures time for a TtS request';
+
+  constructor(statusCode: number, durationMS: number) {
+    super({
+      statusCode: new MetricTypes.Integer(statusCode),
+      durationMS: new MetricTypes.Integer(Math.floor(durationMS)),
+    });
+  }
+}
 
 /**
  * Call this function once to configure the speech options
@@ -92,6 +107,7 @@ export default class TextToSpeech extends EventEmitter {
       res.once(`end`, () => {
         const requestDuration = Math.floor(uptime(requestStartUptime));
         log.verbose(`Response complete ${res.statusCode} in ${requestDuration}ms`);
+        api.metrics.add(new TtsRequest(res.statusCode, requestDuration));
         if (res.statusCode !== 200) {
           this.emit(`error`, new Error(`Request failed with status code ` +
                                        `${res.statusCode}`));

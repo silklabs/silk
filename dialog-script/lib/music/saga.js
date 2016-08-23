@@ -43,13 +43,19 @@ function readMusicDir(dir: string): Promise<Array<string>> {
  * @param songs
  * @returns a promise that is resolved when all songs are done playing
  */
-function playNextSong(songs: Array<string>): Promise<void> {
+function playNextSong(environment: Environment, songs: Array<string>): Promise<void> {
+  const {dialogEngine} = environment;
+
   let playNext = song => {
-    if (mediaState === 'playing') {
-      return player.play(song);
-    }
-    log.debug(`Playing song ${song}`);
-    return Promise.resolve();
+    return dialogEngine.dialogDone().then(() => {
+      if (mediaState === 'playing') {
+        log.debug(`Starting to play song ${song}`);
+        return player.play(song);
+      } else {
+        log.warn(`Ignoring play request as an explicit stop is requested`);
+        return Promise.resolve();
+      }
+    });
   };
 
   let playPromise = Promise.resolve();
@@ -65,7 +71,7 @@ function playNextSong(songs: Array<string>): Promise<void> {
 function playAllSongs(environment: Environment, songs: Array<string>) {
   const {speak} = environment;
 
-  playNextSong(songs)
+  playNextSong(environment, songs)
   .then(() => {
     if (mediaState === 'playing') {
       log.debug(`Finished playing all songs. Repeating`);

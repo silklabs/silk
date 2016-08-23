@@ -35,15 +35,15 @@ class MPListener : public MediaPlayerListener {
 public:
   virtual void notify(int msg, int ext1, int ext2, const Parcel *obj) {
     switch (msg) {
-    case MEDIA_PREPARED:
-    case MEDIA_SEEK_COMPLETE:
-    case MEDIA_SET_VIDEO_SIZE:
-    case MEDIA_STARTED:
-    case MEDIA_PAUSED:
-      break;
-    default:
+    case MEDIA_PLAYBACK_COMPLETE:
+    case MEDIA_STOPPED:
+    case MEDIA_SKIPPED:
+    case MEDIA_ERROR:
       ALOGD("Exiting playback on msg=%d, ext1=%d, ext2=%d", msg, ext1, ext2);
       unblockMainThread(ext1);
+      break;
+    default:
+      ALOGV("Ignoring message msg=%d, ext1=%d, ext2=%d", msg, ext1, ext2);
       break;
     }
   }
@@ -63,6 +63,9 @@ void Player::Init(Local<Object> exports) {
   // Prototype
   Nan::SetPrototypeMethod(ctor, "play", Play);
   Nan::SetPrototypeMethod(ctor, "setVolume", SetVolume);
+  Nan::SetPrototypeMethod(ctor, "stop", Stop);
+  Nan::SetPrototypeMethod(ctor, "pause", Pause);
+  Nan::SetPrototypeMethod(ctor, "resume", Resume);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Player").ToLocalChecked(), ctor->GetFunction());
@@ -170,6 +173,36 @@ NAN_METHOD(Player::SetVolume) {
   }
 
   self->gain = info[0]->NumberValue();
+}
+
+NAN_METHOD(Player::Stop) {
+  SETUP_FUNCTION(Player)
+
+  status_t ret = INVALID_OPERATION;
+  if (self->mMediaPlayer != NULL) {
+    ret = self->mMediaPlayer->stop();
+  }
+  info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
+}
+
+NAN_METHOD(Player::Pause) {
+  SETUP_FUNCTION(Player)
+
+  status_t ret = INVALID_OPERATION;
+  if (self->mMediaPlayer != NULL) {
+    ret = self->mMediaPlayer->pause();
+  }
+  info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
+}
+
+NAN_METHOD(Player::Resume) {
+  SETUP_FUNCTION(Player)
+
+  status_t ret = INVALID_OPERATION;
+  if (self->mMediaPlayer != NULL) {
+    ret = self->mMediaPlayer->start();
+  }
+  info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
 }
 
 NODE_MODULE(player, Player::Init);

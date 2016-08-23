@@ -173,6 +173,9 @@ NAN_METHOD(Player::SetVolume) {
   }
 
   self->gain = info[0]->NumberValue();
+  if (self->mMediaPlayer != NULL) {
+    self->mMediaPlayer->setVolume(self->gain, self->gain);
+  }
 }
 
 NAN_METHOD(Player::Stop) {

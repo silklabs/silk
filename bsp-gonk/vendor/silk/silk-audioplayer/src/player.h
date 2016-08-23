@@ -48,6 +48,9 @@ private:
 
   JSFUNC(Play);
   JSFUNC(SetVolume);
+  JSFUNC(Stop);
+  JSFUNC(Pause);
+  JSFUNC(Resume);
 };
 
 #endif

@@ -32,6 +32,9 @@ type soundMapDataType = {
  * player.play('data/media/test.mp3')
  * .then(() => log.info('Done playing'));
  * .catch(err => log.error(err));
+ * player.pause();
+ * player.setVolume(0.5);
+ * player.resume();
  *
  * // Reduce latency by preloading the sound file
  * player.load('data/media/test.wav')
@@ -48,7 +51,9 @@ class Player {
    * Sets the specified output gain value on all channels of this sound file. Gain
    * values are clamped to the closed interval [0.0, 1.0]. A value of 0.0
    * results in zero gain (silence), and a value of 1.0 means signal unchanged.
-   * The default value is 1.0.
+   * The default value is 1.0. Audio player volume can be set before or during
+   * the playback.
+   *
    * @memberof silk-audioplayer
    * @instance
    *
@@ -111,6 +116,36 @@ class Player {
         resolve();
       });
     });
+  }
+
+  /**
+   * Stop the currently playing audio file
+   * @return true if the operation was successful, false otherwise
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  stop(): boolean {
+    return player.stop();
+  }
+
+  /**
+   * Pause the currently playing audio file
+   * @return true if the operation was successful, false otherwise
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  pause(): boolean {
+    return player.pause();
+  }
+
+  /**
+   * Resume the currently paused audio file
+   * @return true if the operation was successful, false otherwise
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  resume(): boolean {
+    return player.resume();
   }
 
   /**

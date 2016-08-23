@@ -37,6 +37,48 @@ function readMusicDir(dir: string): Promise<Array<string>> {
   }
 }
 
+/**
+ * Play next song after the previous one is finished
+ *
+ * @param songs
+ * @returns a promise that is resolved when all songs are done playing
+ */
+function playNextSong(songs: Array<string>): Promise<void> {
+  let playNext = song => {
+    if (mediaState === 'playing') {
+      return player.play(song);
+    }
+    log.debug(`Playing song ${song}`);
+    return Promise.resolve();
+  };
+
+  let playPromise = Promise.resolve();
+  for (let i = 0; i < songs.length; i++) {
+    playPromise = playPromise.then(() => playNext(songs[i]));
+  }
+  return playPromise;
+}
+
+/**
+ * Play all the songs in a loop
+ */
+function playAllSongs(environment: Environment, songs: Array<string>) {
+  const {speak} = environment;
+
+  playNextSong(songs)
+  .then(() => {
+    if (mediaState === 'playing') {
+      log.debug(`Finished playing all songs. Repeating`);
+      process.nextTick(() => playAllSongs(environment, songs));
+    }
+  })
+  .catch(err => {
+    log.error(`Error playing songs `, err);
+    speak('Sorry, I am unable to play music', `idle`);
+    return;
+  });
+}
+
 export function* playSonos(
   environment: Environment,
 ): Generator<Object, void, any> {
@@ -95,22 +137,6 @@ export function* getArtist(
   yield call(getCurrentSong);
 }
 
-function playNextSong(songs: Array<string>): Promise<void> {
-  let playNext = song => {
-    if (mediaState === 'playing') {
-      return player.play(song);
-    }
-    log.debug(`Playing song ${song}`);
-    return Promise.resolve();
-  };
-
-  let playPromise = Promise.resolve();
-  for (let i = 0; i < songs.length; i++) {
-    playPromise = playPromise.then(() => playNext(songs[i]));
-  }
-  return playPromise;
-}
-
 export function* playMusic(
     environment: Environment,
 ): Generator<Object, void, any> {
@@ -133,13 +159,7 @@ export function* playMusic(
   }
 
   mediaState = 'playing';
-
-  playNextSong(songs)
-  .catch(err => {
-    log.error(`Error playing songs `, err);
-    speak('Sorry, I am unable to play music', `idle`);
-    return;
-  });
+  playAllSongs(environment, songs);
 
   yield call(speak, 'Playing music', `idle`);
 }

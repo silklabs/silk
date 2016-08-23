@@ -67,9 +67,7 @@ import startCollectingProcessMetrics from './process_metrics';
 // Start the profile server ASAP.
 initProfiler();
 
-api.metrics.add(new JSStartup({
-  startupMS: new MetricTypes.Integer(Math.floor(process.uptime() * 1000)),
-}));
+const startupMS = process.uptime() * 1000;
 
 // Amount of time to wait for async shutdown before forcing power status change.
 const SHUTDOWN_TIMEOUT_MS = 45 * 1000;
@@ -309,6 +307,7 @@ function main() {
       log.info(`boot complete in ${bootTimeS} seconds`);
       util.setprop('silk.boot_completed',
                    1 + parseInt(util.getprop('silk.boot_completed', 0)));
+      api.metrics.add(new JSStartup(startupMS, bootTimeS * 1000));
     }).
     catch(err => {
       if (err === bootAbortedFlag) {

@@ -47,8 +47,8 @@ const MESSAGES_FROM_BOTH = {
 };
 
 const MESSAGES_FROM_CHILD = Object.assign({}, MESSAGES_FROM_BOTH, {
-  error: messageSchema(`error`, ERROR_SCHEMA, {
-    type: Joi.string().required(),
+  error: messageSchema(`error`, {
+    message: Joi.string().required(),
   }),
 
   initialized: messageSchema(`initialized`),

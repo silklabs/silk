@@ -1,7 +1,5 @@
 import assert from 'assert';
-import eventToPromise from 'event-to-promise';
 import mkdirp from 'mkdirp-promise';
-import net from 'net';
 import {exec} from 'mz/child_process';
 import fs from 'mz/fs';
 import path from 'path';
@@ -13,6 +11,7 @@ import { createOutbox, CrashReporterOperation } from 'silk-outbox';
 import skipOnTravis from './skip-on-travis.js';
 
 import {
+  Debuggerd,
   Tombstones,
   default as createCrashReporter,
 } from '../lib/crash_reporter';
@@ -146,11 +145,8 @@ suite('crash report', () => {
       return { crash, outbox };
     }
 
-    async function debuggerdTrigger(stream) {
-      let socket = net.connect(debuggerdSocketPath);
-      await eventToPromise(socket, 'connect');
-      stream.pipe(socket);
-      await eventToPromise(socket, 'close');
+    async function debuggerdTrigger() {
+      await Debuggerd.notify(debuggerdSocketPath);
     }
 
     test('manually report crash before deviceId', async () => {
@@ -172,12 +168,12 @@ suite('crash report', () => {
 
     test('crash before deviceId', async () => {
       let { crash, outbox} = create();
-      let { stream, buffer } = randomStream();
+      let { buffer } = randomStream();
 
       // Simulate the debuggerd case...
       await mkdirp(tombstonesDir);
       await fs.writeFile(tombstonePath('tombstone_1'), buffer);
-      await debuggerdTrigger(stream);
+      await debuggerdTrigger();
 
       // debuggerdTrigger() guarantees that the signal was sent to the crash
       // report but not that the tombstone has been fully processed.  Block

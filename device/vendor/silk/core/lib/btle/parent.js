@@ -523,7 +523,7 @@ export class BluetoothLE extends EventEmitter {
 
       switch (message.name) {
       case `error`: {
-        log.error(`Child error`, message.stack);
+        log.error(`Child error:`, message.message);
         this._killChild();
         break;
       }

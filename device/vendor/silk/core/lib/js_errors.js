@@ -3,7 +3,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @private
+ * @flow
  */
 
 /**
@@ -14,21 +14,23 @@
  * @namespace
  */
 
-import { getprop } from 'silk-sysutils';
-import { spawn } from 'child_process';
+import {getstrprop} from 'silk-sysutils';
+import {spawn} from 'child_process';
 import createLog from 'silk-log/device';
 import {StoringStream} from 'silk-streams';
 import eventToPromise from 'event-to-promise';
+import {Debuggerd, Tombstones} from './crash_reporter';
+import type {CrashReporter} from './crash_reporter';
 
 const log = createLog('js_errors');
 
-const BUILD_FINGERPRINT = getprop('ro.build.fingerprint');
+const BUILD_FINGERPRINT = getstrprop('ro.build.fingerprint');
 
-function formatError(err) {
-  return `${err}\n\nbacktrace:\n${err.stack}`;
+function formatError(err: Error): string {
+  return `${err.toString()}\n\nbacktrace:\n${err.stack}`;
 }
 
-function tombstoneHeader(type, err) {
+function tombstoneHeader(type: string, err: Error): string {
   return `*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
 Build fingerprint: '${BUILD_FINGERPRINT}'
 Revision: '1'
@@ -63,7 +65,7 @@ function drainLogcat(destination) {
   }
 }
 
-export async function buildJSTombstone(type, err) {
+export async function buildJSTombstone(type: string, err: Error) {
   const stream = new StoringStream();
   const header = tombstoneHeader(type, err);
   stream.write(header);
@@ -72,31 +74,45 @@ export async function buildJSTombstone(type, err) {
   return stream;
 }
 
-export default function(crashreporter) {
+export default function(crashreporter: ?CrashReporter) {
   const handleError = async (type, err) => {
     log.info(type, err.stack);
-    try {
-      const stream = await buildJSTombstone(type, err);
-      return crashreporter.reportJSError(err,
-                                         type,
-                                         stream,
-                                         stream.getStoreSize());
-    } catch (ex) {
-      log.error('Failed to report ${type}', ex);
+    const stream = await buildJSTombstone(type, err);
 
+    if (crashreporter) {
       try {
-        const stream2 = await buildJSTombstone(type, ex);
-        return crashreporter.reportJSError(ex,
-                                           'uncaughtException',
-                                           stream2,
-                                           stream2.getStoreSize(),
-                                           { failedStack: err.stack }
-                                          );
-      } catch (ex2) {
-        log.error('Failed to report exception while reporting ${type}', ex2);
+        crashreporter.reportJSError(err,
+                                    type,
+                                    stream,
+                                    stream.getStoreSize());
+        return;
+      } catch (ex) {
+        log.error('Failed to report ${type}', ex);
+
+        try {
+          const stream2 = await buildJSTombstone(type, ex);
+          crashreporter.reportJSError(ex,
+                                      'uncaughtException',
+                                      stream2,
+                                      stream2.getStoreSize(),
+                                      { failedStack: err.stack });
+        } catch (ex2) {
+          log.error('Failed to report exception while reporting ${type}', ex2);
+        }
+      }
+    } else {
+      const tombstones = new Tombstones();
+      try {
+        await tombstones.report(stream);
+        await Debuggerd.notify();
+      } catch (ex) {
+        // Harsh, but...
+        log.error(`Aborting:`, ex);
+        process.abort();
+      } finally {
+        process.exit(1); // eslint-disable-line no-process-exit
       }
     }
-    return null;
   };
 
   process.on('uncaughtException',

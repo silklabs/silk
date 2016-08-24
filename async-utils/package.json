@@ -12,5 +12,15 @@
     "sleep",
     "timeout",
     "lock"
-  ]
+  ],
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "symlinkDependencies": {
+    "eslint-config-silk": "/pub/eslint-config"
+  },
+  "devDependencies": {
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1"
+  }
 }

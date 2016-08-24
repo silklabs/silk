@@ -5,10 +5,25 @@ if [[ -z $MAKE_J ]]; then
 fi
 make="make $MAKE_J"
 
+check_build_fingerprint() {
+  local buildprop=$ANDROID_PRODUCT_OUT/system/build.prop
+  export BUILD_FINGERPRINT=`sed -ne 's/^ro.build.fingerprint=\(.*\)$/\1/p' $buildprop`
+  if [[ -z "$BUILD_FINGERPRINT" ]]; then
+    echo Error: ro.build.fingerprint not found in $buildprop >&2
+    exit 1
+  fi
+  echo BUILD_FINGERPRINT=$BUILD_FINGERPRINT
+  if [[ $(echo "$BUILD_FINGERPRINT" | wc -c) -ge 91 ]]; then
+    echo "Error: ro.build.fingerprint too long (PROP_VALUE_MAX=92)"
+    exit 1
+  fi
+}
+
 source build/envsetup.sh
-case $BOARD in
+case $SILK_BOARD in
 qemu)
   $make
+  check_build_fingerprint
 
   echo "******************************************************************"
   echo Emulator tests
@@ -55,9 +70,11 @@ base.*)
   ;;
 kenzo)
   $make target-files-package
+  check_build_fingerprint
   ;;
 *)
   $make target-files-package
+  check_build_fingerprint
   ;;
 esac
 

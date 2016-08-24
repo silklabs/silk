@@ -11,7 +11,7 @@ import {EventEmitter} from 'events';
 import CBuffer from 'CBuffer';
 
 import api from 'silk-device-api';
-import * as VideoMetrics from './metrics/video';
+//import * as VideoMetrics from './metrics/video';
 import CameraRestart from './metrics/camera_restart';
 import {BufferReadable} from 'silk-streams';
 import EventTracker from './eventtracker';

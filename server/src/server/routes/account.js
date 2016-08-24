@@ -132,6 +132,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
     output: Joi.object().keys({
       devices: Joi.array().required().items(Joi.object().keys({
         name: Devices.NAME_SCHEMA,
+        type: Devices.TYPE_SCHEMA,
+        registered: Joi.boolean().required(),
         // XXX: HACK make this optional until some larger fixes come in...
         accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.optional(),
         publicKey: Joi.string().hex().required(),
@@ -147,6 +149,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
     list = list.map((device) => {
       return {
         name: device.name,
+        type: device.type,
+        registered: device.registration.complete,
         accountDeviceNumber: device.registration.accountDeviceNumber,
         publicKey: device.accessToken.publicKey,
         deviceId: device.accessToken.publicKey,

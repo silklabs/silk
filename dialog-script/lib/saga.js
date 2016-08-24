@@ -6,7 +6,6 @@ import createLog from 'silk-log/device';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import {getDateTime} from './utils';
-import silkVersion from 'silk-core-version';
 
 import {
   default as createEnvironment,
@@ -132,6 +131,7 @@ export function* saySoftwareVersion(
    * |sayCurrentTime| generator step-by-step. By using the |call| function we
    * can write unit tests that run the generator one step at a time.
    */
+  const silkVersion = require('silk-core-version');
   yield call(speak,
              (silkVersion.official ? 'Official ' : '') +
              silkVersion.semver + ' on ' + silkVersion.branch +

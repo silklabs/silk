@@ -54,13 +54,9 @@
 /vendor/lge/
 /vendor/moto/
 /vendor/qcom/
-/vendor/silk/core/local_node_modules/ntp-client/
-/vendor/silk/core/local_node_modules/silk-api/
-/vendor/silk/core/local_node_modules/silk-socket.io-client-node/
 /vendor/silk/core/npm-debug.log
 /vendor/silk/trainingset/
 /vendor/silk/**/*.js.map
-.gulpcache
 npm-debug.log
 
 # repo projects from msm8916 gonk

@@ -42,7 +42,6 @@
     "mz": "2.4.0",
     "netmask": "1.0.5",
     "request": "2.72.0",
-    "silk-socket.io-client-node": "git+ssh://git@github.com/silklabs/silk-socket.io-client-node#0.0.1",
     "socket.io-client": "1.4.6",
     "source-map-support": "0.3.3",
     "split": "1.0.0",

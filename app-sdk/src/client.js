@@ -180,6 +180,7 @@ function initDeviceConfig(store: Store<*>) {
       regToken: result.registrationToken,
       serverUrl: api.config.serverUrl,
       time: Date.now(),
+      timezoneOffset: (new Date()).getTimezoneOffset(),
     }));
   });
 }

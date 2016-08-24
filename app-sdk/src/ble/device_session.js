@@ -43,6 +43,7 @@ export type RegistrationInformation = WifiConfiguration & {
   regToken: string;
   serverUrl: ?string;
   time: number;
+  timezoneOffset: number;
 };
 
 export type DeviceSecret = {

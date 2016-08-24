@@ -139,14 +139,14 @@ suite(`userScript`, () => {
     done();
   });
 
-  test(`Demo test - Test music - play`, async (done) => {
-    tester.speak(`Play music`);
+  test(`Demo test - Test sonos - play`, async (done) => {
+    tester.speak(`Play sonos`);
     await tester.listenCheck(`Playing`, `idle`);
     done();
   });
 
-  test(`Demo test - Test music - pause`, async (done) => {
-    tester.speak(`Pause music`);
+  test(`Demo test - Test sonos - pause`, async (done) => {
+    tester.speak(`Pause sonos`);
     await tester.listenCheck(`Pausing`, `idle`);
     done();
   });

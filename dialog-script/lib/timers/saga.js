@@ -220,6 +220,9 @@ export function* timerMonitorSaga(
       yield put(expireTimer(timer.id));
 
       if (dialogEngine.uiMode === 'normal') {
+        // Yield for the current dialog to finish
+        yield call(() => dialogEngine.dialogDone());
+
         // Alert the user
         if (timer.type === 'alarm') {
           let [timeString] = getDateTime();

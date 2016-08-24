@@ -171,6 +171,7 @@ class Dialog {
           log.debug(`Keyword detected`);
           api.metrics.add(new KeywordDetected());
           this._kws.stop();
+          this._dialogEngine.startDialog();
           this._playSound(KEYWORD_DETECTED_SOUND_FILE)
           .then(() => this._onSpeechStart());
         });
@@ -240,6 +241,7 @@ class Dialog {
         this._kws.stop();
       }
       api.metrics.add(new KeywordButtonPress());
+      this._dialogEngine.startDialog();
       this._playSound(KEYWORD_DETECTED_SOUND_FILE)
       .then(() => this._onSpeechStart());
     } else {
@@ -470,6 +472,7 @@ class Dialog {
    * keyword spotting again
    */
   _onDialogDone() {
+    this._dialogEngine.endDialog();
     this._emitEvent('finished_processing_speech');
     if (this._kwsEnabled) {
       this._kws.start();

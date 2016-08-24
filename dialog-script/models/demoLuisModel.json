@@ -1,10 +1,15 @@
-
 {
   "luis_schema_version": "1.3.0",
   "name": "Silk Demo",
   "desc": "",
   "culture": "en-us",
   "intents": [
+    {
+      "name": "playSonos"
+    },
+    {
+      "name": "pauseSonos"
+    },
     {
       "name": "getArtist"
     },
@@ -480,13 +485,13 @@
       ]
     },
     {
-      "text": "clear the zipcode",
-      "intent": "resetLocation",
+      "text": "what's the current song being played right now?",
+      "intent": "getCurrentSong",
       "entities": []
     },
     {
-      "text": "what's the current song being played right now?",
-      "intent": "getCurrentSong",
+      "text": "clear the zipcode",
+      "intent": "resetLocation",
       "entities": []
     },
     {
@@ -506,11 +511,6 @@
       "entities": []
     },
     {
-      "text": "what's the time now?",
-      "intent": "getCurrentTime",
-      "entities": []
-    },
-    {
       "text": "turn on a light",
       "intent": "turnOn",
       "entities": [
@@ -520,6 +520,11 @@
           "endPos": 3
         }
       ]
+    },
+    {
+      "text": "what's the time now?",
+      "intent": "getCurrentTime",
+      "entities": []
     },
     {
       "text": "what song is playing?",
@@ -567,12 +572,12 @@
       "entities": []
     },
     {
-      "text": "start timer for 20 seconds",
+      "text": "start a timer for 30 seconds",
       "intent": "startTimer",
       "entities": []
     },
     {
-      "text": "start a timer for 30 seconds",
+      "text": "start timer for 20 seconds",
       "intent": "startTimer",
       "entities": []
     },
@@ -749,6 +754,61 @@
     {
       "text": "start 10 second timer",
       "intent": "startTimer",
+      "entities": []
+    },
+    {
+      "text": "cancel timer",
+      "intent": "cancelTimer",
+      "entities": []
+    },
+    {
+      "text": "cancel timer for 20 minutes",
+      "intent": "cancelTimer",
+      "entities": []
+    },
+    {
+      "text": "cancel timer for 30 minutes",
+      "intent": "cancelTimer",
+      "entities": []
+    },
+    {
+      "text": "cancel timer for 10 minutes",
+      "intent": "cancelTimer",
+      "entities": []
+    },
+    {
+      "text": "cancel 15 minutes timer",
+      "intent": "cancelTimer",
+      "entities": []
+    },
+    {
+      "text": "play music on sonos",
+      "intent": "playSonos",
+      "entities": []
+    },
+    {
+      "text": "pause music on sonos",
+      "intent": "pauseSonos",
+      "entities": []
+    },
+    {
+      "text": "play sonos",
+      "intent": "playSonos",
+      "entities": []
+    },
+    {
+      "text": "pause sonos",
+      "intent": "pauseSonos",
+      "entities": []
+    },
+    {
+      "text": "pause songs on sonos",
+      "intent": "pauseSonos",
+      "entities": []
+    },
+    {
+      "text": "play songs on sonos",
+      "intent": "playSonos",
       "entities": []
     }
   ]

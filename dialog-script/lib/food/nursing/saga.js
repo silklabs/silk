@@ -68,7 +68,7 @@ function* nursing(
   alert: boolean,
   timePerSideSec: number,
 ): Generator<Object, boolean, any> {
-  const {speak} = environment;
+  const {dialogEngine, speak} = environment;
 
   let timeRemainingSec = timePerSideSec;
 
@@ -100,6 +100,7 @@ function* nursing(
 
   // If the user requested an alert then we should issue one now.
   if (alert) {
+    yield call(() => dialogEngine.dialogDone());
     yield speak(`${timePerSideSec} seconds have passed. It's now time to ` +
                 `switch to the other side.`);
   }
@@ -111,6 +112,7 @@ function* nursing(
     yield put(updateTimeRemaining(timeRemainingSec));
   }
 
+  yield call(() => dialogEngine.dialogDone());
   if (alert) {
     yield call(speak,
                `${timePerSideSec} seconds have passed. You're all finished.`,

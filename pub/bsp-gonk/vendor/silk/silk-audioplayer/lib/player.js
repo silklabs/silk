@@ -49,6 +49,10 @@ if (process.platform === 'android') {
       .catch(err => callback(err));
     },
     setVolume(gain) {
+      log.warn(`setVolume is not supported on this platform`);
+    },
+    stop() {
+      log.warn(`stop is not supported on this platform`);
     },
   };
 }

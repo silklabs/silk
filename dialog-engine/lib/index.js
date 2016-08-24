@@ -19,6 +19,7 @@ import {EventEmitter} from 'events';
 import createLog from 'silk-log/device';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
+import player from 'silk-audioplayer';
 
 import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
 import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
@@ -138,6 +139,9 @@ export class DialogEngine extends EventEmitter {
   _scriptOptions: DialogScriptOptions;
   _saveUtterance: boolean = false;
   _utteranceType: UtteranceType;
+  _dialogStarted: boolean = false;
+  _dialogPromise: Promise<void> = Promise.resolve();
+  _dialogPromiseResolve: (value: Promise<void> | void) => void;
 
   /**
    * Real-time communication channel with any apps that are currently connected
@@ -218,6 +222,42 @@ export class DialogEngine extends EventEmitter {
     return tti.getIntent(text);
   }
 
+  _onDialogStart: (() => void) = () => {
+    log.debug(`Dialog started; pausing audio`);
+    this._dialogStarted = true;
+    this._dialogPromise = new Promise(resolve => {
+      this._dialogPromiseResolve = resolve;
+    });
+    player.pause();
+  };
+
+  _onDialogEnd: (() => void) = () => {
+    log.debug(`Dialog ended; resuming audio`);
+    this._dialogStarted = false;
+    this._dialogPromiseResolve();
+    player.resume();
+  };
+
+  _onSpeakBegin: (() => void) = () => {
+    if (!this._dialogStarted) {
+      // This happens as a result of an unsolicited response like a timer that
+      // has expired or an alarm that went off.
+      log.debug(`Unsolicited speech started; pausing audio`);
+      this._dialogPromise = new Promise(resolve => {
+        this._dialogPromiseResolve = resolve;
+      });
+      player.pause();
+    }
+  };
+
+  /**
+   * This function returns a promise that is resolved once the currently active
+   * dialog is done.
+   */
+  dialogDone(): Promise<void> {
+    return this._dialogPromise;
+  }
+
   speak(text: string, nextState: ?DialogState): void {
     // Currently speaking empty text is used to abort a dialog.  For now convert
     // this into speaking the space character.
@@ -228,7 +268,10 @@ export class DialogEngine extends EventEmitter {
 
     log.debug(`Starting to speak`, text);
 
-    process.nextTick(() => this.emit(`speak-begin`, text, nextState));
+    process.nextTick(() => {
+      this._onSpeakBegin();
+      this.emit(`speak-begin`, text, nextState);
+    });
 
     // Local TTS engine is being used so don't use the cloud based tts stream
     if (this._options && this._options.localTts) {
@@ -267,6 +310,14 @@ export class DialogEngine extends EventEmitter {
    */
   endSpeak(text: string, error: ?Error) {
     this.emit(`speak-end`, text, error);
+  }
+
+  startDialog() {
+    this._onDialogStart();
+  }
+
+  endDialog() {
+    this._onDialogEnd();
   }
 
   interpret(stream: Readable): void {

@@ -25,7 +25,6 @@ export type UpdateType = 'none' | 'full' | 'inc';
 export class UpdateCheck extends Metric {
   static NAME = 'update_check';
   static DESC = 'Records when a device checks for a new OTA';
-  static INDEX = new Set(['updateType']);
 
   constructor(selectedUpdate: UpdateType) {
     super({

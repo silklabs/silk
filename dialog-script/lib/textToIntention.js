@@ -66,6 +66,8 @@ ai(`night light blue`, 'setNightlightColor', 'color', 'blue', {});
 ai(`make me a sandwich`, 'xkcd', 'number', '149', {});
 ai(`sudo make me a sandwich`, 'xkcd', 'number', '149-sudo', {});
 
+ai(`software version`, 'getSoftwareVersion');
+
 /*
 ai(`what time is it`, 'getCurrentTime');
 ai(`start a timer for 5 seconds`, 'startTimer', 'builtin.datetime.duration',

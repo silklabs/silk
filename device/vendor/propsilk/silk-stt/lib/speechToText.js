@@ -38,10 +38,15 @@ class SttRequest extends Metric {
   static NAME = 'stt_request';
   static DESC = 'Measures time for a StT request';
 
-  constructor(statusCode: number, durationMS: number) {
+  constructor(statusCode: number,
+              accessTokenMs: number,
+              responseStartMs: number,
+              responseEndMs: number) {
     super({
       statusCode: new MetricTypes.Integer(statusCode),
-      durationMS: new MetricTypes.Integer(Math.floor(durationMS)),
+      accessTokenMs: new MetricTypes.Integer(Math.floor(accessTokenMs)),
+      responseStartMs: new MetricTypes.Integer(Math.floor(responseStartMs)),
+      responseEndMs: new MetricTypes.Integer(Math.floor(responseEndMs)),
     });
   }
 }
@@ -132,12 +137,14 @@ export default class SpeechToText {
     }
 
     let accessToken;
+    const accessTokenStartUptime = util.uptime();
     try {
       accessToken = await options.getAccessToken();
     } catch (err) {
       this._callCallback(err);
       return;
     }
+    const accessTokenMs = util.uptime(accessTokenStartUptime);
     log.debug(`Got access token`);
 
     const query = options.urlEncode({
@@ -176,16 +183,22 @@ export default class SpeechToText {
     log.info(`Issuing new request`);
 
     const req = https.request(opts, (res) => {
+      const responseStartMs = util.uptime(this._requestStartUptime);
       let json = ``;
       res.once(`error`, (error) => this._callCallback(error));
       res.on(`data`, chunk => {
         json += chunk;
       });
       res.once(`end`, () => {
-        const requestDuration = Math.floor(util.uptime(this._requestStartUptime));
-        log.info(`Response complete ${res.statusCode} in ${requestDuration}ms`);
+        const responseEndMs = util.uptime(this._requestStartUptime);
+        log.info(`Response complete ${res.statusCode} in ${responseEndMs}ms`);
         log.debug(`Response`, json);
-        api.metrics.add(new SttRequest(res.statusCode, requestDuration));
+        api.metrics.add(new SttRequest(
+          res.statusCode,
+          accessTokenMs,
+          responseStartMs,
+          responseEndMs,
+        ));
 
         if (res.statusCode !== 200) {
           this._callCallback(new Error(`Request failed with status code ` +

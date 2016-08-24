@@ -26,10 +26,15 @@ class TtsRequest extends Metric {
   static NAME = 'tts_request';
   static DESC = 'Measures time for a TtS request';
 
-  constructor(statusCode: number, durationMS: number) {
+  constructor(statusCode: number,
+              accessTokenMs: number,
+              responseStartMs: number,
+              responseEndMs: number) {
     super({
       statusCode: new MetricTypes.Integer(statusCode),
-      durationMS: new MetricTypes.Integer(Math.floor(durationMS)),
+      accessTokenMs: new MetricTypes.Integer(Math.floor(accessTokenMs)),
+      responseStartMs: new MetricTypes.Integer(Math.floor(responseStartMs)),
+      responseEndMs: new MetricTypes.Integer(Math.floor(responseEndMs)),
     });
   }
 }
@@ -67,12 +72,14 @@ export default class TextToSpeech extends EventEmitter {
     }
 
     let accessToken;
+    const accessTokenStartUptime = uptime();
     try {
       accessToken = await options.getAccessToken();
     } catch (err) {
       this.emit(`error`, err);
       return;
     }
+    const accessTokenTimeMs = uptime(accessTokenStartUptime);
     log.debug(`Got access token`);
 
     const postData = `<speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' xml:gender='Female' name='Microsoft Server Speech Text to Speech Voice (en-US, ZiraRUS)'>${text}</voice></speak>`;
@@ -98,6 +105,7 @@ export default class TextToSpeech extends EventEmitter {
     log.debug(`postData`, opts);
 
     const req = https.request(opts, res => {
+      const responseStartMs = uptime(requestStartUptime);
       let samples = new Buffer(0);
       res.once(`error`, (error) => this.emit(`error`, error));
       res.on(`data`, (chunk) => {
@@ -105,9 +113,14 @@ export default class TextToSpeech extends EventEmitter {
         samples = Buffer.concat([samples, chunk]);
       });
       res.once(`end`, () => {
-        const requestDuration = Math.floor(uptime(requestStartUptime));
-        log.verbose(`Response complete ${res.statusCode} in ${requestDuration}ms`);
-        api.metrics.add(new TtsRequest(res.statusCode, requestDuration));
+        const responseEndMs = Math.floor(uptime(requestStartUptime));
+        log.verbose(`Response complete ${res.statusCode} in ${responseEndMs}ms`);
+        api.metrics.add(new TtsRequest(
+          res.statusCode,
+          accessTokenTimeMs,
+          responseStartMs,
+          responseEndMs,
+        ));
         if (res.statusCode !== 200) {
           this.emit(`error`, new Error(`Request failed with status code ` +
                                        `${res.statusCode}`));

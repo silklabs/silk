@@ -81,6 +81,7 @@ const concurrentIntents: Set<string> = new Set([
   `builtin.intent.alarm.find_alarm`,
   `cancelTimer`,
   `getCurrentTime`,
+  `getSoftwareVersion`,
   `factoryReset`,
   `getArtist`,
   `getCurrentSong`,
@@ -116,6 +117,26 @@ export function* sayCurrentTime(
    * can write unit tests that run the generator one step at a time.
    */
   yield call(speak, `The time is ${timeString} on ${dateString}`, `idle`);
+}
+
+export function* saySoftwareVersion(
+  environment: Environment,
+): Generator<Object, void, any> {
+  const {speak} = environment;
+
+  /**
+   * Instruct the saga runtime to "call the speak function with these
+   * arguments". The |call| function is not absolutely essential (you could also
+   * simply write |yield speak(...)|, but then there would be no way to test the
+   * |sayCurrentTime| generator step-by-step. By using the |call| function we
+   * can write unit tests that run the generator one step at a time.
+   */
+  const silkVersion = require('silk-core-version');
+  yield call(speak,
+             (silkVersion.official ? 'Official ' : '') +
+             silkVersion.semver + ' on ' + silkVersion.branch +
+             ' with a sha1 of ' + silkVersion.sha.substr(0, 8),
+             `idle`);
 }
 
 /**
@@ -267,7 +288,7 @@ export default function*(
     if (!sagas.concurrent && concurrentIntents.has(intent)) {
       /**
        * This is nearly identical to the way we handled |independentIntents|
-       * above, except that we're storing the result in a  a different slot on
+       * above, except that we're storing the result in a different slot on
        * |sagas|.
        */
       let sagaFunction: ?SagaFunction = null;
@@ -276,6 +297,9 @@ export default function*(
       switch (intent) {
       case `getCurrentTime`:
         sagaFunction = sayCurrentTime;
+        break;
+      case `getSoftwareVersion`:
+        sagaFunction = saySoftwareVersion;
         break;
       case `startTimer`:
         sagaFunction = modifyTimers;

@@ -1,7 +1,13 @@
 $(info SILK_PRODUCT: $(SILK_PRODUCT))
 $(info SILK_BOARD: $(SILK_BOARD))
-$(info $(shell node -p "_=require('silk-core-version'); _.semver+' ('+_.branch+')'"))
+SILK_CORE_VERSION=$(shell node -p "_=require('silk-core-version');_.branch+'/'+_.semver")/$(shell git rev-parse HEAD | cut -b 1-7)
+$(info $(SILK_CORE_VERSION))
 $(info ============================================)
+
+
+ifeq (,$(strip $(BUILD_FINGERPRINT)))
+  BUILD_FINGERPRINT := Silk/$(SILK_BOARD)/$(SILK_PRODUCT)/$(TARGET_BUILD_VARIANT):$(SILK_CORE_VERSION):$(USER)_$(shell date +%m/%d_%H:%M)
+endif
 
 SILK_BUILD_FILES := $(dir $(lastword $(MAKEFILE_LIST)))
 

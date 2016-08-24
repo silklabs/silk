@@ -78,10 +78,13 @@ class LuisRequest extends Metric {
   static NAME = 'luis_request';
   static DESC = 'Measures time for a Luis request';
 
-  constructor(statusCode: number, durationMS: number) {
+  constructor(statusCode: number,
+              responseStartMs: number,
+              responseEndMs: number) {
     super({
       statusCode: new MetricTypes.Integer(statusCode),
-      durationMS: new MetricTypes.Integer(Math.floor(durationMS)),
+      responseStartMs: new MetricTypes.Integer(Math.floor(responseEndMs)),
+      responseEndMs: new MetricTypes.Integer(Math.floor(responseEndMs)),
     });
   }
 }
@@ -123,16 +126,21 @@ export default class TextToIntention {
       const requestStartUptime = uptime();
 
       const req = https.request(opts, (res) => {
+        const responseStartMs = uptime(requestStartUptime);
         let json = '';
         res.once(`error`, (error) => onError(resolve, error));
         res.on('data', (chunk) => {
           json += chunk;
         });
         res.once('end', () => {
-          const requestDuration = Math.floor(uptime(requestStartUptime));
-          api.metrics.add(new LuisRequest(res.statusCode, requestDuration));
+          const responseEndMs = uptime(requestStartUptime);
+          api.metrics.add(new LuisRequest(
+            res.statusCode,
+            responseStartMs,
+            responseEndMs,
+          ));
           if (res.statusCode === 200) {
-            log.verbose(`Luis request complete in ${requestDuration}ms`);
+            log.verbose(`Luis request complete in ${responseEndMs}ms`);
             log.debug(json);
 
             let intent;

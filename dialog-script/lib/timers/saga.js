@@ -75,7 +75,7 @@ function dateTimeEntitiesToMs(dateEntity: ?Entity,
   if ((timeEntity.resolution.resolution_type === 'builtin.datetime.duration') &&
       timeEntity.resolution.duration) {
     let duration = moment.duration(timeEntity.resolution.duration);
-    expireAtMs = Date.now() + duration.asMilliseconds();
+    expireAtMs = duration.asMilliseconds();
     log.debug(`Time string: ${timeEntity.resolution.duration}`);
   } else if ((timeEntity.resolution.resolution_type === 'builtin.datetime.time') &&
       timeEntity.resolution.time) {
@@ -256,24 +256,19 @@ function humanize(duration: number): string {
   });
 }
 
-/**
- * This saga allows the user to start and stop timers. It does not interact with
- * |timerMonitorSaga| directly. Instead this saga merely updates the data store
- * via |put| and then |timerMonitorSaga| wakes up when it sees that state
- * change.
- */
-export function* modifyTimers(
-  environment: Environment,
-  type: 'startTimer' | 'cancelTimer' | 'startAlarm' | 'cancelAlarm',
-  entities: Entities
-): Generator<Object, void, any> {
-  const {speak} = environment;
+type TimerEntities = {
+  durationEntity: ?Entity;
+  dateEntity: ?Entity;
+  timeEntity: ?Entity;
+  title: string;
+};
 
-  // Attempt to understand the amount of time the user gave us.
+function parseEntities(entities: Entities): TimerEntities {
   let durationEntity: ?Entity = null;
   let dateEntity: ?Entity = null;
   let timeEntity: ?Entity = null;
   let title: string = '';
+
   for (let entity of entities) {
     if ((entity.type === 'builtin.datetime.duration') &&
         entity.resolution && (entity.resolution.duration !== undefined)) {
@@ -289,6 +284,24 @@ export function* modifyTimers(
       title = entity.entity;
     }
   }
+  return {durationEntity, dateEntity, timeEntity, title};
+}
+
+/**
+ * This saga allows the user to start and stop timers. It does not interact with
+ * |timerMonitorSaga| directly. Instead this saga merely updates the data store
+ * via |put| and then |timerMonitorSaga| wakes up when it sees that state
+ * change.
+ */
+export function* modifyTimers(
+  environment: Environment,
+  type: 'startTimer' | 'cancelTimer' | 'startAlarm' | 'cancelAlarm',
+  entities: Entities
+): Generator<Object, void, any> {
+  const {speak} = environment;
+
+  // Attempt to understand the amount of time the user gave us.
+  let {durationEntity, dateEntity, timeEntity, title} = parseEntities(entities);
 
   let durationMs: ?number = null;
   if ((type === `startTimer`) || (type === `cancelTimer`)) {
@@ -319,8 +332,17 @@ export function* modifyTimers(
 
     invariant(typeof durationMs === 'number');
     log.info(`Adding an alarm`);
-    yield put(addTimer(durationMs, durationMs, title, 'alarm'));
-    let durationStr = humanize(durationMs - Date.now());
+    let durationStr;
+    if (timeEntity &&
+        (timeEntity.resolution.resolution_type === 'builtin.datetime.duration') &&
+        timeEntity.resolution.duration) {
+      // Relative time is provided so add the current time
+      yield put(addTimer(durationMs, Date.now() + durationMs, title, 'alarm'));
+      durationStr = humanize(durationMs);
+    } else {
+      yield put(addTimer(durationMs, durationMs, title, 'alarm'));
+      durationStr = humanize(durationMs - Date.now());
+    }
     yield call(speak, `Ok, I've started` +
         (title ? ` the ` + title : ` an`) + ` alarm to expire in ${durationStr}`,
         `idle`);
@@ -359,7 +381,7 @@ export function* modifyTimers(
 /**
  * Find an alarm given the title or find the next alarm
  */
-function* findAlarm(title: string): Generator<Object, ?TimerState, any> {
+function* findAlarm(durationMs: number, title: string): Generator<Object, ?TimerState, any> {
   // Get the list of timers
   let timers = yield select(getTimers);
   invariant(Array.isArray(timers));
@@ -369,22 +391,31 @@ function* findAlarm(title: string): Generator<Object, ?TimerState, any> {
   }
 
   let alarm;
-  if (title) {
-    // Find the alarm that matches the title
-    timers.forEach(timer => {
-      if ((timer.title === title) && (timer.type === 'alarm')) {
-        alarm = timer;
-        return;
+  if (title || durationMs) {
+    // Find the alarm that matches the title or the duration
+    for (let i = 0; i < timers.length; i++) {
+      if (timers[i].type !== 'alarm') {
+        continue;
       }
-    });
-  } else { // Assume user is asking about the next alarm
+
+      if (title && (timers[i].title === title)) {
+        alarm = timers[i];
+        break;
+      }
+
+      if (durationMs && (timers[i].durationMs === durationMs)) {
+        alarm = timers[i];
+        break;
+      }
+    }
+  } else { // Assume user is asking about the first alarm to expire
     timers.sort(sortTimers); // Make sure they are sorted
-    timers.forEach(timer => {
-      if (timer.type === 'alarm') {
-        alarm = timer;
-        return;
+    for (let i = 0; i < timers.length; i++) {
+      if (timers[i].type === 'alarm') {
+        alarm = timers[i];
+        break;
       }
-    });
+    }
   }
   return alarm;
 }
@@ -394,15 +425,11 @@ export function* getAlarmInfo(
     entities: Entities
 ): Generator<Object, void, any> {
   const {speak} = environment;
-  let title: string = '';
-  for (let entity of entities) {
-    if ((entity.type === 'builtin.alarm.title') &&
-        (entity.entity !== undefined)) {
-      title = entity.entity;
-    }
-  }
 
-  let alarm = yield call(findAlarm, title);
+  let {dateEntity, timeEntity, title} = parseEntities(entities);
+  let durationMs = dateTimeEntitiesToMs(dateEntity, timeEntity);
+
+  let alarm = yield call(findAlarm, durationMs, title);
   if (!alarm) {
     yield call(speak, `Sorry, I couldn't figure out which alarm you are talking about`,
         `idle`);
@@ -410,7 +437,7 @@ export function* getAlarmInfo(
   }
 
   let duration = Math.max(alarm.expiresMs - Date.now(), 0);
-  yield call(speak, `Alarm ${title ? title : alarm.id} would expire in ${humanize(duration)}`, `idle`);
+  yield call(speak, `Alarm ${alarm.title ? alarm.title : alarm.id} would expire in ${humanize(duration)}`, `idle`);
 }
 
 export function* findAlarmInfo(
@@ -420,15 +447,10 @@ export function* findAlarmInfo(
   const {speak} = environment;
 
   // Attempt to understand the amount of time the user gave us.
-  let title: string = '';
-  for (let entity of entities) {
-    if ((entity.type === 'builtin.alarm.title') &&
-        (entity.entity !== undefined)) {
-      title = entity.entity;
-    }
-  }
+  let {dateEntity, timeEntity, title} = parseEntities(entities);
+  let durationMs = dateTimeEntitiesToMs(dateEntity, timeEntity);
 
-  let alarm = yield call(findAlarm, title);
+  let alarm = yield call(findAlarm, durationMs, title);
   if (!alarm) {
     yield call(speak, `Sorry, I couldn't figure out which alarm you are talking about`,
         `idle`);
@@ -437,5 +459,5 @@ export function* findAlarmInfo(
 
   let when = Math.max(alarm.expiresMs, 0);
   let [timeString, dateString] = getDateTime(when);
-  yield call(speak, `Alarm ${title ? title : alarm.id} is currently set for ${timeString} on ${dateString}`, `idle`);
+  yield call(speak, `Alarm ${alarm.title ? alarm.title : alarm.id} is currently set for ${timeString} on ${dateString}`, `idle`);
 }

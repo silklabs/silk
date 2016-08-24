@@ -453,10 +453,26 @@ export default class SocketService extends BlenoService {
 
     log.debug(`Discovered descriptors`);
 
+    if (!this.listenerCount(`connect`)) {
+      throw new Error(`Nobody is listening for the 'connect' event`);
+    }
+
     const stream = new SocketStream(peripheral, characteristic);
     stream.once(`close`, () => {
       log.debug(`Stream closed`, address);
     });
+
+    const queuedData = this._queuedStreamData.get(address);
+    invariant(queuedData);
+
+    this._queuedStreamData.delete(address);
+
+    if (queuedData.length) {
+      log.debug(`Delivering queued data for peripheral '${address}'`);
+      queuedData.forEach((data) => {
+        stream._onIncoming(data);
+      });
+    }
 
     this._streams.set(address, stream);
 
@@ -466,15 +482,6 @@ export default class SocketService extends BlenoService {
     } catch (error) {
       this._streams.delete(address);
       throw error;
-    }
-
-    const queuedData = this._queuedStreamData.get(address);
-    if (queuedData) {
-      log.debug(`Delivering queued data for peripheral '${address}'`);
-      this._queuedStreamData.delete(address);
-      queuedData.forEach((data) => {
-        stream._onIncoming(data);
-      });
     }
   }
 

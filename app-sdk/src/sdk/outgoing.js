@@ -47,7 +47,7 @@ export type ClientStatusMessage = {
 };
 
 type DeviceConfigStatus = 'CONFIGURED' | 'UNCONFIGURED';
-type ConnectionStatus = 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED';
+export type ConnectionStatus = 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED';
 
 // TODO: enum these
 type WifiConnectionError = string;
@@ -58,15 +58,13 @@ type RTCConnectionError = string;
 export type DeviceStatusMessage = {
   type: 'DEVICE_STATUS',
   deviceType: string;
+  deviceVersion: ?string;
   deviceId: ?string;
   deviceConfigId: ?number;
+  accountDeviceNumber: ?number;
   deviceConfigStatus: DeviceConfigStatus;
-  wifiConnectionStatus: ?ConnectionStatus;
-  wifiConnectionError: ?WifiConnectionError;
   serverConnectionStatus: ?ConnectionStatus;
-  serverConnectionError: ?ServerConnectionError;
   bleConnectionStatus: ?ConnectionStatus;
-  bleConnectionRequested: boolean;
   bleConnectionError: ?BLEConnectionError;
   rtcConnectionStatus: ?ConnectionStatus;
   rtcConnectionError: ?RTCConnectionError;
@@ -123,6 +121,17 @@ type DeviceWifiNetworksMessage = {
   wifiNetworks: Array<DeviceWifiNetwork>;
 };
 
+export type DeviceConnectionDetailsMessage = {
+  type: 'DEVICE_CONNECTION_DETAILS',
+  deviceId: ?string;
+  wifiStatus: ?ConnectionStatus;
+  wifiSSID: ?string;
+  wifiLevel: ?number;
+  wifiError: ?WifiConnectionError;
+  serverStatus: ?ConnectionStatus;
+  serverError: ?ServerConnectionError;
+};
+
 export type OutgoingMessage =
     InitializedMessage
   | MessageErrorMessage
@@ -137,4 +146,5 @@ export type OutgoingMessage =
   | DeviceMessageMessage
   | DeviceMessageErrorMessage
   | DeviceWifiNetworksMessage
+  | DeviceConnectionDetailsMessage
   ;

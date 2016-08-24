@@ -28,6 +28,10 @@ const SCHEMA = {
     accessPoint: Joi.string().min(1).required(),
     password: Joi.string().allow(null).required(),
   }).required(),
+
+  wifiInfo: Joi.object().keys({
+    name: Joi.string().equal(`wifiInfo`).required(),
+  }).required(),
 };
 
 export default class NormalSessionListener extends SessionListenerBase {
@@ -38,7 +42,9 @@ export default class NormalSessionListener extends SessionListenerBase {
     log.debug(`NormalSessionListener()`);
 
     // We're already configured so we require authenticated streams.
-    socketSession.allowUnauthenticated(false);
+    socketSession.once(`unauthenticated`, () => {
+      socketSession.allowUnauthenticated(false);
+    });
 
     super(deviceConfig, socketSession, SCHEMA);
 
@@ -51,14 +57,6 @@ export default class NormalSessionListener extends SessionListenerBase {
       deviceId: this._deviceConfig._deviceId,
       accountDeviceNumber: config.accountDeviceNumber,
     });
-
-    if (this._deviceConfig._sessionErrorCode) {
-      this.sendError(this._deviceConfig._sessionErrorCode);
-    }
-
-    if (this._deviceConfig._sessionStatus) {
-      this.sendStatus(this._deviceConfig._sessionStatus);
-    }
   }
 
   _onData(unvalidatedData: Object): void {
@@ -86,13 +84,20 @@ export default class NormalSessionListener extends SessionListenerBase {
     }
 
     switch (data.name) {
-    case `wifiScan`:
+    case `wifiScan`: {
       this._deviceConfig.scanWifi();
       break;
+    }
 
-    case `wifiSelect`:
+    case `wifiSelect`: {
       this._deviceConfig.connectToWifi(data.accessPoint, data.password);
       break;
+    }
+
+    case `wifiInfo`: {
+      this._deviceConfig.getWifiConnectionInfo(this);
+      break;
+    }
 
     default:
       log.warn(`Unknown message`, data);

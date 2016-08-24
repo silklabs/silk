@@ -153,13 +153,15 @@ function sendConfig(
 
 async function genRegisterConfiguringDeviceWithServer(
   state: StateWithApi,
-  input: RegisterConfiguringDeviceInput
+  input: RegisterConfiguringDeviceInput,
 ): Promise<RegisterConfiguringDeviceResult> {
   const {api} = state;
   invariant(api);
 
   const {devicePublicKey} = input;
-  log.info('Registering device', devicePublicKey);
+  invariant(devicePublicKey);
+
+  log.info('Registering device', input);
 
   // Ugh, we're signing a hex string, which will be hashed as a
   // string before actually being signed.
@@ -187,8 +189,9 @@ async function genRegisterConfiguringDeviceWithServer(
   }
 
   return {
-    ...input,
     success,
+    name: input.name,
+    type: input.type,
     registrationToken,
     beaconUUID,
   };
@@ -233,6 +236,21 @@ function wifiSet(
   return input;
 }
 
+function wifiGetInfo(
+  state: StateWithDevices,
+  input: string,
+): string {
+  const {registered} = state.devices;
+  invariant(registered);
+  const device = registered.get(input);
+  invariant(device);
+  const {session} = device.ble;
+  invariant(session);
+  session.getWifiInfo();
+  return input;
+}
+
+
 // Thunk Actions
 
 export const registered = {
@@ -253,6 +271,7 @@ export const ble = {
   // These actions are dispatched by events emitted by the BLE machinery.
   connected: actionFromPayload('DEVICE_BLE_CONNECTED'),
   disconnected: actionFromPayload('DEVICE_BLE_DISCONNECTED'),
+  error: actionFromPayload('DEVICE_BLE_ERROR'),
 };
 
 export const config = {
@@ -266,13 +285,14 @@ export const config = {
 
   wifiList: actionFromPayloadGen('DEVICE_WIFI_LIST', wifiList),
   wifiSet: actionFromPayloadGen('DEVICE_WIFI_SET', wifiSet),
+  wifiGetInfo: actionFromPayloadGen('DEVICE_WIFI_GETINFO', wifiGetInfo),
 
   // These actions are dispatched by events emitted by the BLE machinery.
   passedProximity: actionFromPayload('DEVICE_CONFIG_PROXIMITYGATE'),
   wifiScanResults: actionFromPayload('DEVICE_CONFIG_WIFISCANRESULTS'),
+  wifiInfo: actionFromPayload('DEVICE_CONFIG_WIFIINFO'),
   statusUpdated: actionFromPayload('DEVICE_CONFIG_STATUSUPDATED'),
   registered: actionFromPayload('DEVICE_CONFIG_REGISTERED'),
-  error: actionFromPayload('DEVICE_CONFIG_ERROR'),
 };
 
 export const rtc = {

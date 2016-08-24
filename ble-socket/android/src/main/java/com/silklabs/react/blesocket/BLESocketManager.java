@@ -484,6 +484,8 @@ public class BLESocketManager {
     Log.d(TAG, "cleanupMainThread");
     Utils.checkMainThread();
 
+    stopScanning();
+
     List<Connection> connections = new ArrayList<>(mConnectionsById.values());
     for (Connection connection : connections) {
       cleanupConnection(connection);

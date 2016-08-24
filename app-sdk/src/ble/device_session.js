@@ -20,9 +20,12 @@ export type DeviceStatus = {
   isError: boolean;
 };
 
-export type DeviceWifiNetwork = {
+export type DeviceWifiInfo = {
   ssid: string;
   level: number;
+};
+
+export type DeviceWifiNetwork = DeviceWifiInfo & {
   psk: boolean;
 };
 
@@ -52,7 +55,15 @@ export type DeviceSecret = {
 
 const log = mklog('btle-DeviceManager');
 
+const ACCOUNT_DEVICE_NUMBER_SCHEMA =
+  Joi.number().integer().min(1).required();
+
 const SCHEMA = {
+  unauthorized: Joi.object().keys({
+    name: Joi.string().equal(`unauthorized`).required(),
+    accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA,
+  }),
+
   id: Joi.object().keys({
     name: Joi.string().equal(`id`).required(),
     manufacturer: Joi.string().required(),
@@ -68,12 +79,13 @@ const SCHEMA = {
   registered: Joi.object().keys({
     name: Joi.string().equal(`registered`).required(),
     deviceId: Joi.string().lowercase().trim().length(64).hex().required(),
-    accountDeviceNumber: Joi.number().integer().required(),
+    accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA,
   }).required(),
 
   status: Joi.object().keys({
     name: Joi.string().equal(`status`).required(),
-    status: Joi.string().required(),
+    type: Joi.string().only([`wifi`, `server`]).required(),
+    code: Joi.string().required(),
   }).required(),
 
   wifiscan: Joi.object().keys({
@@ -87,8 +99,15 @@ const SCHEMA = {
     ).required(),
   }).required(),
 
+  wifiinfo: Joi.object().keys({
+    name: Joi.string().equal(`wifiinfo`).required(),
+    ssid: Joi.string().required(),
+    level: Joi.number().integer().min(-100).max(-10).required(),
+  }).required(),
+
   error: Joi.object().keys({
     name: Joi.string().equal(`error`).required(),
+    type: Joi.string().only([`wifi`, `server`]).required(),
     code: Joi.string().required(),
   }).required(),
 
@@ -107,7 +126,7 @@ const SCHEMA = {
 
   complete: Joi.object().keys({
     name: Joi.string().equal(`complete`).required(),
-    accountDeviceNumber: Joi.number().integer().required(),
+    accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA,
   }).required(),
 };
 
@@ -141,8 +160,10 @@ export default class DeviceSession extends RobustEventEmitter {
   _isRegistered: boolean = false;
   _deviceId: ?string = null;
   _accountDeviceNumber: ?number = null;
-  _status: ?DeviceStatus = null;
+  _wifiStatus: ?DeviceStatus = null;
+  _serverStatus: ?DeviceStatus = null;
   _wifiNetworks: ?Array<DeviceWifiNetwork> = null;
+  _wifiInfo: ?DeviceWifiInfo = null;
 
   _connectEmitted: boolean = false;
   _registeredEmitted: boolean = false;
@@ -223,6 +244,18 @@ export default class DeviceSession extends RobustEventEmitter {
     }
   }
 
+  _emitError: ((error: Error) => void) = (error) => {
+    if (this._error) {
+      log.warn(`Multiple session errors`, error);
+      return;
+    }
+
+    log.warn(`Session error, disconnecting`, error);
+    this._error = error;
+    this.emit(`error`, error);
+    this._forceDisconnect();
+  };
+
   _emitConnect() {
     log.debug(`DeviceSession._emitConnect()`);
 
@@ -259,20 +292,15 @@ export default class DeviceSession extends RobustEventEmitter {
   }
 
   _onError: ((error: Error) => void) = (error) => {
-    log.debug(`DeviceSession._onError('${error.toString()}')`);
-
-    log.warn(`Session error, disconnecting`, error);
-    this._forceDisconnect();
-    this.emit(`error`, error);
-    this._error = error;
+    this._emitError(error);
   };
 
   _onEnd: (() => void) = () => {
     log.debug(`DeviceSession._onEnd()`);
 
     if (this._state !== DeviceSession.STATE_DISMISSED) {
-      log.warn(`Device session ended before dismissed`);
-      this._forceDisconnect();
+      const error = new Error(`Device session ended before dismissed`);
+      this._emitError(error);
     }
   };
 
@@ -292,7 +320,7 @@ export default class DeviceSession extends RobustEventEmitter {
     const validationError = this._validateData(data);
     if (validationError) {
       log.warn(`Data validation failed`, validationError);
-      this._onError(validationError);
+      this._emitError(validationError);
       return;
     }
 
@@ -317,10 +345,28 @@ export default class DeviceSession extends RobustEventEmitter {
     }
 
     switch (data.name) {
-    case `id`:
+    case `unauthorized`: {
       if (state !== DeviceSession.STATE_UNKNOWN) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
+      }
+
+      log.warn(`Not authorized to connect to registered device ` +
+               data.accountDeviceNumber);
+      this._isRegistered = true;
+      this._accountDeviceNumber = data.accountDeviceNumber;
+      this._emitError(new Error(`Not authorized`));
+      return;
+    }
+
+    case `id`: {
+      if (state !== DeviceSession.STATE_UNKNOWN) {
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
       log.info(`Received device identification information`);
@@ -335,25 +381,32 @@ export default class DeviceSession extends RobustEventEmitter {
 
       this._state = DeviceSession.STATE_ID_RECEIVED;
       return;
+    }
 
-    case `registered`:
+    case `registered`: {
       if (!this.authenticated) {
-        log.warn(`Received '${data.name}' on an unauthenticated stream`);
-        this._forceDisconnect();
+        const error =
+          new Error(`Received '${data.name}' on an unauthenticated stream`);
+        this._emitError(error);
         return;
       }
 
       if (this._socketSession.authenticatedPublicKey !== data.deviceId) {
-        log.warn(`Authentication key does not match device id`,
+        const message = `Authentication key does not match device id`;
+        log.warn(message,
                  this._socketSession.authenticatedPublicKey,
                  data.deviceId);
-        this._forceDisconnect();
+
+        const error = new Error(`Received '${data.name}' on an unauthenticated stream`);
+        this._emitError(error);
         return;
       }
 
       if (state !== DeviceSession.STATE_ID_RECEIVED) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
       this._isRegistered = true;
@@ -363,52 +416,85 @@ export default class DeviceSession extends RobustEventEmitter {
       this._emitConnect();
       this._emitRegistered();
       return;
+    }
 
-    case `status`:
+    case `status`: {
       if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
           state !== DeviceSession.STATE_REGISTERED) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
-      this._status = {
-        message: data.status,
+      const status = {
+        // TODO: Real status messages.
+        message: data.code,
         isError: false,
       };
-      this.emit(`status`, this._status);
-      return;
+      if (data.type === `wifi`) {
+        this._wifiStatus = status;
+      } else {
+        this._serverStatus = status;
+      }
 
-    case `wifiscan`:
+      this.emit(`status`, data.type, status);
+      return;
+    }
+
+    case `wifiscan`: {
       this._wifiNetworks = data.networks;
       this.emit(`wifiscan`, this._wifiNetworks);
       return;
+    }
 
-    case `error`:
+    case `wifiinfo`: {
+      this._wifiInfo = {
+        ssid: data.ssid,
+        level: data.level,
+      };
+      this.emit(`wifiinfo`, this._wifiInfo);
+      return;
+    }
+
+    case `error`: {
       if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
           state !== DeviceSession.STATE_REGISTERED) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
-      this._status = {
-        message: data.error,
+      const status = {
+        // TODO: Real error messages.
+        message: data.code,
         isError: true,
-        errorCode: 0, // TODO: Real error codes?
       };
-      this.emit(`status`, this._status);
-      return;
+      if (data.type === `wifi`) {
+        this._wifiStatus = status;
+      } else {
+        this._serverStatus = status;
+      }
 
-    case `register`:
+      this.emit(`status`, data.type, status);
+      return;
+    }
+
+    case `register`: {
       if (this.authenticated) {
-        log.warn(`Received '${data.name}' on an authenticated stream`);
-        this._forceDisconnect();
+        const error =
+          new Error(`Received '${data.name}' on an authenticated stream`);
+        this._emitError(error);
         return;
       }
 
       if (state !== DeviceSession.STATE_ID_RECEIVED &&
           state !== DeviceSession.STATE_RESTARTED) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
       this._state = DeviceSession.STATE_REGISTER_REQUESTED;
@@ -418,12 +504,15 @@ export default class DeviceSession extends RobustEventEmitter {
         this.acceptRegistrationRequest();
       }
       return;
+    }
 
-    case `secret`:
+    case `secret`: {
       if (state !== DeviceSession.STATE_REGISTERING &&
           state !== DeviceSession.STATE_REGISTERING_PROXIMITY) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
       this._deviceId = data.deviceId;
@@ -433,11 +522,14 @@ export default class DeviceSession extends RobustEventEmitter {
 
       this._maybeEmitSecret();
       return;
+    }
 
-    case `restart`:
+    case `restart`: {
       if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
       invariant(this._secret);
@@ -446,17 +538,21 @@ export default class DeviceSession extends RobustEventEmitter {
       this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
       if (this.listenerCount(`restart`) === 0) {
         // TODO: This could go away once a restart UI has been implemented.
-        log.warn('Nobody listening to the restart event, disconnecting instead');
-        this._forceDisconnect();
+        const error =
+          new Error(`Nobody listening to the restart event, disconnecting `);
+        this._emitError(error);
       } else {
         this.emit(`restart`);
       }
       return;
+    }
 
-    case `complete`:
+    case `complete`: {
       if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET) {
-        log.warn(`Received '${data.name}' while in state ${state}`);
-        break;
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
       }
 
       this._state = DeviceSession.STATE_REGISTERED;
@@ -464,6 +560,7 @@ export default class DeviceSession extends RobustEventEmitter {
       this._accountDeviceNumber = data.accountDeviceNumber;
       this._emitRegistered();
       return;
+    }
 
     default:
       throw new Error(`Unhandled message: '${data.name}'`);
@@ -533,12 +630,20 @@ export default class DeviceSession extends RobustEventEmitter {
     return this._secret;
   }
 
-  get status(): ?DeviceStatus {
-    return this._status;
+  get wifiStatus(): ?DeviceStatus {
+    return this._wifiStatus;
   }
 
   get wifiNetworks(): ?Array<DeviceWifiNetwork> {
     return this._wifiNetworks;
+  }
+
+  get wifiInfo(): ?DeviceWifiInfo {
+    return this._wifiInfo;
+  }
+
+  get serverStatus(): ?DeviceStatus {
+    return this._serverStatus;
   }
 
   get error(): ?Error {
@@ -555,14 +660,14 @@ export default class DeviceSession extends RobustEventEmitter {
     log.debug(`DeviceSession.acceptRegistrationRequest()`);
 
     if (this._state === DeviceSession.STATE_ERROR) {
-      log.warn(`Cannot begin registration because the session is in the ` +
+      log.warn(`Cannot accept registration because the session is in the ` +
                `ERROR state, ignoring`);
       return;
     }
 
     // It's possible we're being asked to configure the device again
     // while we're still waiting for it to acknowledge the restart of
-    // the configuration process. Let's still honour that request,
+    // the configuration process. Let's still honor that request,
     // just wait until the device has confirmed the new state.
     if (this._state === DeviceSession.STATE_RESTARTED) {
       this._acceptRegistrationPending = true;
@@ -572,12 +677,11 @@ export default class DeviceSession extends RobustEventEmitter {
     invariant(this._state === DeviceSession.STATE_REGISTER_REQUESTED);
     this._acceptRegistrationPending = false;
 
+    this._state = DeviceSession.STATE_REGISTERING;
     this._socketSession.write({
       name: `accept`,
     });
     this._socketSession.rssiUpdatesEnabled = true;
-    this._state = DeviceSession.STATE_REGISTERING;
-    this.emit(`accepted`);
   }
 
   /**
@@ -596,11 +700,18 @@ export default class DeviceSession extends RobustEventEmitter {
       return;
     }
 
+    invariant(this._state === DeviceSession.STATE_ID_RECEIVED ||
+              this._state === DeviceSession.STATE_REGISTER_REQUESTED ||
+              this._state === DeviceSession.STATE_REGISTERING ||
+              this._state === DeviceSession.STATE_REGISTERING_PROXIMITY ||
+              this._state === DeviceSession.STATE_REGISTERING_SENT_SECRET ||
+              this._state === DeviceSession.STATE_RESTARTED);
+
+    this._state = DeviceSession.STATE_DISMISSED;
     this._socketSession.write({
       name: `decline`,
     });
-    this.emit(`declined`);
-    this._forceDisconnect();
+    this._socketSession.disconnect();
   }
 
   /**
@@ -679,10 +790,10 @@ export default class DeviceSession extends RobustEventEmitter {
     }
 
     invariant(this._state === DeviceSession.STATE_REGISTERED);
+    this._state = DeviceSession.STATE_DISMISSED;
     this._socketSession.write({
       name: `dismiss`,
     });
-    this._state = DeviceSession.STATE_DISMISSED;
     this._socketSession.disconnect();
   };
 
@@ -713,6 +824,20 @@ export default class DeviceSession extends RobustEventEmitter {
       name: `wifiSelect`,
       accessPoint: config.accessPoint,
       password: config.password,
+    });
+  }
+
+  getWifiInfo() {
+    log.debug(`DeviceSession.getWifiInfo()`);
+    invariant(this._state === DeviceSession.STATE_REGISTERED);
+
+    if (!this.authenticated) {
+      log.warn(`Ignoring getWifiInfo() on unauthenticated stream`);
+      return;
+    }
+
+    this._socketSession.write({
+      name: `wifiInfo`,
     });
   }
 }

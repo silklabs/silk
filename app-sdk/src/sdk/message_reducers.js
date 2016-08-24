@@ -15,6 +15,7 @@ import type {Peer} from 'silk-rtc';
 import type {Action, SimpleAction} from '../store/action';
 import type {
   ClientStatusMessage,
+  DeviceConnectionDetailsMessage,
   DeviceListMessage,
 } from './outgoing';
 import type DeviceSession from '../ble/device_session';
@@ -23,6 +24,7 @@ import type {UnregisterRegisteredDeviceResult} from '../store/device_actions';
 export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,
   DEVICES: DeviceListMessage,
+  CONNECTIONS: Array<DeviceConnectionDetailsMessage>,
 };
 
 type AuthActionTypes = 'AUTH_RESTORE' | 'AUTH_SIGNIN' | 'AUTH_CREATEACCOUNT';
@@ -39,6 +41,7 @@ const initialState: MessagesState = {
     type: 'DEVICE_LIST',
     devices: [],
   },
+  CONNECTIONS: [],
 };
 
 function handleAuthAction(
@@ -161,25 +164,25 @@ function DEVICE_REGISTERED_FETCH(
     }
   });
 
-  const newDevices = action.payload.devices
-    .filter((device) => !existingRecordsByDeviceId.has(device.deviceId));
+  const newDevices =
+    action.payload.devices.filter(
+      (device) => !existingRecordsByDeviceId.has(device.deviceId) &&
+                  device.registered
+    );
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices: state.DEVICES.devices.concat(newDevices.map((device) => ({
         type: 'DEVICE_STATUS',
-        deviceType: '',
+        deviceType: device.type,
+        deviceVersion: null,
         deviceId: device.deviceId,
         accountDeviceNumber: device.accountDeviceNumber,
         deviceConfigId: null,
         deviceConfigStatus: 'CONFIGURED',
-        wifiConnectionStatus: null,
-        wifiConnectionError: null,
         serverConnectionStatus: null,
-        serverConnectionError: null,
         bleConnectionStatus: 'NOT_CONNECTED',
-        bleConnectionRequested: false,
         bleConnectionError: null,
         rtcConnectionStatus: 'NOT_CONNECTED',
         rtcConnectionError: null,
@@ -209,59 +212,10 @@ function DEVICE_REGISTERED_UNREGISTER(
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices,
     },
   };
-}
-
-function handleBLEConnectionRequest(
-  state: MessagesState,
-  deviceId: string,
-  connectionRequested: boolean,
-): MessagesState {
-  invariant(deviceId);
-  let {devices} = state.DEVICES;
-
-  const index = devices.findIndex((device) => device.deviceId === deviceId);
-  if (index === -1) {
-    return state;
-  }
-
-  let device = devices[index];
-  if (device.bleConnectionRequested === connectionRequested) {
-    return state;
-  }
-
-  devices = devices.slice();
-  devices[index] = {
-    ...devices[index],
-    bleConnectionRequested: connectionRequested,
-  };
-
-  return {
-    ...state,
-    DEVICES: {
-      type: 'DEVICE_LIST',
-      devices,
-    },
-  };
-}
-
-function DEVICE_BLE_CONNECT(
-  state: MessagesState,
-  action: SimpleAction<'DEVICE_BLE_CONNECT', string>
-): MessagesState {
-  const deviceId = action.payload;
-  return handleBLEConnectionRequest(state, deviceId, true);
-}
-
-function DEVICE_BLE_DISCONNECT(
-  state: MessagesState,
-  action: SimpleAction<'DEVICE_BLE_DISCONNECT', string>
-): MessagesState {
-  const deviceId = action.payload;
-  return handleBLEConnectionRequest(state, deviceId, false);
 }
 
 function DEVICE_BLE_CONNECTED(
@@ -269,46 +223,51 @@ function DEVICE_BLE_CONNECTED(
   action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
 ): MessagesState {
   const session = action.payload;
+  const connections = state.CONNECTIONS;
   let {devices} = state.DEVICES;
 
   if (session.isRegistered) {
     const {deviceId} = session;
     invariant(deviceId);
+
     const index = devices.findIndex((device) => device.deviceId === deviceId);
     if (index === -1) {
       return state;
     }
+
+    invariant(-1 === connections.findIndex(
+      (connection) => connection.deviceId === deviceId
+    ));
+
     devices = devices.slice();
     devices[index] = {
       ...devices[index],
+      deviceVersion: session.version,
       bleConnectionStatus: 'CONNECTED',
       bleConnectionError: null,
     };
   } else {
     const unconfiguredDevice = {
       type: 'DEVICE_STATUS',
-      deviceType: '',
+      deviceType: session.model,
+      deviceVersion: session.version,
       deviceId: null,
       accountDeviceNumber: null,
       deviceConfigId: session.socketId,
       deviceConfigStatus: 'UNCONFIGURED',
-      wifiConnectionStatus: 'NOT_CONNECTED',
-      wifiConnectionError: null,
       serverConnectionStatus: 'NOT_CONNECTED',
-      serverConnectionError: null,
       bleConnectionStatus: 'CONNECTED',
-      bleConnectionRequested: false,
       bleConnectionError: null,
       rtcConnectionStatus: 'NOT_CONNECTED',
       rtcConnectionError: null,
     };
-    devices = devices.concat(unconfiguredDevice);
+    devices = [unconfiguredDevice].concat(devices);
   }
 
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices,
     },
   };
@@ -319,35 +278,116 @@ function DEVICE_BLE_DISCONNECTED(
   action: SimpleAction<'DEVICE_BLE_DISCONNECTED', DeviceSession>
 ): MessagesState {
   const session = action.payload;
+  let connections = state.CONNECTIONS;
   let {devices} = state.DEVICES;
+
+  const oldConnections = connections;
+  const oldDevices = devices;
 
   if (session.isRegistered) {
     const {deviceId} = session;
     invariant(deviceId);
-    const index = devices.findIndex((device) => device.deviceId === deviceId);
-    if (index === -1) {
-      return state;
+    let index = devices.findIndex((device) => device.deviceId === deviceId);
+    if (index !== -1) {
+      devices = devices.slice();
+      devices[index] = {
+        ...devices[index],
+        serverConnectionStatus: null,
+        bleConnectionStatus: 'NOT_CONNECTED',
+      };
     }
-    devices = devices.slice();
-    devices[index] = {
-      ...devices[index],
-      wifiConnectionStatus: null,
-      serverConnectionStatus: null,
-      bleConnectionStatus: 'NOT_CONNECTED',
-    };
   } else {
-    const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
-    if (index === -1) {
-      return state;
+    let index = devices.findIndex(
+      (device) => device.deviceConfigId === session.socketId
+    );
+    if (index !== -1) {
+      devices = devices.slice();
+      devices.splice(index, 1);
     }
-    devices = devices.slice();
-    devices.splice(index, 1);
   }
+
+  // Remove any connection details for this connection.
+  let index = -1;
+  if (session.deviceId) {
+    index = connections.findIndex(
+      (connection) => connection.deviceId === session.deviceId
+    );
+  }
+  if (index !== -1) {
+    connections = connections.slice();
+    connections.splice(index, 1);
+  }
+
+  if (oldConnections === connections && oldDevices === devices) {
+    return state;
+  }
+
+  if (oldConnections !== connections && oldDevices !== devices) {
+    return {
+      ...state,
+      DEVICES: {
+        ...state.DEVICES,
+        devices,
+      },
+      CONNECTIONS: connections,
+    };
+  }
+  if (oldConnections !== connections) {
+    return {
+      ...state,
+      CONNECTIONS: connections,
+    };
+  }
+  return {
+    ...state,
+    DEVICES: {
+      ...state.DEVICES,
+      devices,
+    },
+  };
+}
+
+function DEVICE_BLE_ERROR(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_BLE_ERROR', DeviceSession>
+): MessagesState {
+  const session = action.payload;
+  invariant(session);
+  const {error} = session;
+  invariant(error);
+  let {devices} = state.DEVICES;
+
+  let index = -1;
+  if (session.deviceId !== null) {
+    index = devices.findIndex((device) => device.deviceId === session.deviceId);
+  }
+  if (index === -1) {
+    index = devices.findIndex(
+      (device) => device.deviceConfigId === session.socketId
+    );
+  }
+
+  // Auth errors can happen before we have a deviceId or deviceConfigId.
+  if (index === -1 && session.accountDeviceNumber !== null) {
+    index = devices.findIndex(
+      (device) => device.accountDeviceNumber === session.accountDeviceNumber
+    );
+  }
+
+  if (index === -1) {
+    return state;
+  }
+
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    bleConnectionError: error.message,
+  };
 
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices,
     },
   };
@@ -358,8 +398,13 @@ function DEVICE_CONFIG_PROXIMITYGATE(
   action: SimpleAction<'DEVICE_CONFIG_PROXIMITYGATE', DeviceSession>
 ): MessagesState {
   const session = action.payload;
+
   let {devices} = state.DEVICES;
-  const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
+
+  let index = devices.findIndex(
+    (device) => device.deviceConfigId === session.socketId
+  );
+
   if (index === -1) {
     return state;
   }
@@ -372,10 +417,11 @@ function DEVICE_CONFIG_PROXIMITYGATE(
     ...devices[index],
     deviceId: session.secret.deviceId,
   };
+
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices,
     },
   };
@@ -412,67 +458,79 @@ function DEVICE_CONFIG_WIFISCANRESULTS(
 
 function DEVICE_CONFIG_STATUSUPDATED(
   state: MessagesState,
-  action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED' | 'DEVICE_CONFIG_WIFIINFO', DeviceSession>
 ): MessagesState {
   const session = action.payload;
-  let {devices} = state.DEVICES;
+  invariant(session.deviceId);
 
-  const index =
-    session.deviceId ?
-    devices.findIndex((device) => device.deviceId === session.deviceId) :
-    devices.findIndex((device) => device.deviceConfigId === session.socketId);
+  let connections = state.CONNECTIONS;
+
+  let connection: DeviceConnectionDetailsMessage = {
+    type: 'DEVICE_CONNECTION_DETAILS',
+    deviceId: session.deviceId,
+    wifiStatus: 'NOT_CONNECTED',
+    wifiSSID: null,
+    wifiLevel: null,
+    wifiError: null,
+    serverStatus: 'NOT_CONNECTED',
+    serverError: null,
+  };
+
+  let index = connections.findIndex(
+    (connection) => connection.deviceId === session.deviceId
+  );
   if (index === -1) {
-    return state;
+    connections = connections.concat(connection);
+  } else {
+    connections = connections.slice();
+    connection = {...connections[index]};
+    connections[index] = connection;
   }
 
-  const sessionStatus = session.status;
-  invariant(sessionStatus);
+  const {serverStatus, wifiStatus, wifiInfo} = session;
 
-  const messageComponents = sessionStatus.message.split('_');
-  const type = messageComponents.shift();
-  const detail = messageComponents.join('_');
-
-  const statusKey = `${type}ConnectionStatus`;
-  const errorKey = `${type}ConnectionError`;
-
-  invariant(type === 'wifi' || type === 'server');
-
-  devices = devices.slice();
-  const deviceStatusMessage = devices[index];
-  if (sessionStatus.isError) {
-    deviceStatusMessage[statusKey] = 'NOT_CONNECTED';
-    deviceStatusMessage[errorKey] = detail;
-  } else {
-    let status;
-
-    if (type === 'wifi') {
-      if (detail === 'inactive' || detail === 'offline') {
-        status = 'NOT_CONNECTED';
-      } else if (detail !== 'online') {
-        status = 'CONNECTING';
-      } else {
-        status = 'CONNECTED';
-      }
+  if (serverStatus) {
+    if (serverStatus.isError) {
+      connection.serverStatus = 'NOT_CONNECTED';
+      connection.serverError = serverStatus.message;
     } else {
-      if (detail === 'disconnected') {
-        status = 'NOT_CONNECTED';
-      } else if (detail !== 'connected') {
-        status = 'CONNECTING';
+      const {message} = serverStatus;
+      if (message === 'disconnected') {
+        connection.serverStatus = 'NOT_CONNECTED';
+      } else if (message !== 'connected') {
+        connection.serverStatus = 'CONNECTING';
       } else {
-        status = 'CONNECTED';
+        connection.serverStatus = 'CONNECTED';
       }
+      connection.serverError = null;
     }
+  }
 
-    deviceStatusMessage[statusKey] = status;
-    deviceStatusMessage[errorKey] = null;
+  if (wifiStatus) {
+    if (wifiStatus.isError) {
+      connection.wifiStatus = 'NOT_CONNECTED';
+      connection.wifiError = wifiStatus.message;
+    } else {
+      const {message} = wifiStatus;
+      if (message === 'inactive' || message === 'offline') {
+        connection.wifiStatus = 'NOT_CONNECTED';
+      } else if (message !== 'online') {
+        connection.wifiStatus = 'CONNECTING';
+      } else {
+        connection.wifiStatus = 'CONNECTED';
+      }
+      connection.wifiError = null;
+    }
+  }
+
+  if (wifiInfo) {
+    connection.wifiSSID = wifiInfo.ssid;
+    connection.wifiLevel = wifiInfo.level;
   }
 
   return {
     ...state,
-    DEVICES: {
-      type: 'DEVICE_LIST',
-      devices,
-    },
+    CONNECTIONS: connections,
   };
 }
 
@@ -500,7 +558,7 @@ function DEVICE_CONFIG_REGISTERED(
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices,
     },
   };
@@ -542,7 +600,7 @@ function DEVICE_RTC_SIGNAL(
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices,
     },
   };
@@ -567,7 +625,7 @@ function DEVICE_RTC_CONNECTIONCLOSED(
   return {
     ...state,
     DEVICES: {
-      type: 'DEVICE_LIST',
+      ...state.DEVICES,
       devices,
     },
   };
@@ -581,12 +639,12 @@ export const reducer = handleActions({
   NETWORK_SERVER_REACHABLE,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER,
-  DEVICE_BLE_CONNECT,
-  DEVICE_BLE_DISCONNECT,
   DEVICE_BLE_CONNECTED,
   DEVICE_BLE_DISCONNECTED,
+  DEVICE_BLE_ERROR,
   DEVICE_CONFIG_PROXIMITYGATE,
   DEVICE_CONFIG_WIFISCANRESULTS,
+  DEVICE_CONFIG_WIFIINFO: DEVICE_CONFIG_STATUSUPDATED,
   DEVICE_CONFIG_STATUSUPDATED,
   DEVICE_CONFIG_REGISTERED,
   DEVICE_RTC_SIGNAL,

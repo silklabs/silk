@@ -44,6 +44,7 @@ function logStateTransformer(state) {
   const transformedDevices = {
     unconfigured: [],
     registered: [],
+    configuring: devices.configuring,
   };
 
   devices.unconfigured.forEach((session, id) => {

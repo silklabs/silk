@@ -398,6 +398,7 @@ function validateManifest(result) {
   }
 
   // Select an update from options provided by the server.
+  let selectedUpdateType: UpdaterMetrics.UpdateType = 'none';
   currentMetadata = null;
   [currentSha, '*'].forEach(buildType => {
     if (currentMetadata) {
@@ -416,7 +417,7 @@ function validateManifest(result) {
         if (buildMetadata.version !== currentSha || FORCE_UPDATE) {
           // Different sha, select this build
           currentMetadata = buildMetadata;
-          log.info('Selected "*" update');
+          selectedUpdateType = 'full';
         } else {
           log.verbose('Already running the latest update');
         }
@@ -426,7 +427,7 @@ function validateManifest(result) {
       {
         if (SYSTEM_VERIFIED) {
           currentMetadata = buildMetadata;
-          log.info('Selected "inc" update');
+          selectedUpdateType = 'inc';
         } else {
           log.info('Skipping "inc" update as /system is unverified');
         }
@@ -437,9 +438,11 @@ function validateManifest(result) {
     }
   });
 
+  log.info('Selected update:', selectedUpdateType);
+  api.metrics.add(new UpdaterMetrics.UpdateCheck(selectedUpdateType));
+
   if (!currentMetadata) {
     log.info('No update available');
-    api.metrics.add(new UpdaterMetrics.DeviceCurrent());
     return Promise.reject();
   }
   return Promise.resolve();

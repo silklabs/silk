@@ -20,12 +20,17 @@ export class ZipDownload extends Metric {
   }
 }
 
-export class DeviceCurrent extends Metric {
-  static NAME = 'updater_no_update';
-  static DESC = 'Records when a device found no new update.zip';
+export type UpdateType = 'none' | 'full' | 'inc';
 
-  constructor() {
-    super({});
+export class UpdateCheck extends Metric {
+  static NAME = 'update_check';
+  static DESC = 'Records when a device checks for a new OTA';
+  static INDEX = new Set(['updateType']);
+
+  constructor(selectedUpdate: UpdateType) {
+    super({
+      updateType: selectedUpdate,
+    });
   }
 }
 

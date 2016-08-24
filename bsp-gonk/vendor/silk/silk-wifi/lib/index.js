@@ -12,9 +12,12 @@ import createLog from 'silk-log/device';
 
 import type { Socket } from 'net';
 
-export type ScanResult = {
+export type ConnectedNetworkInfo = {
   ssid: string;
   level: number;
+};
+
+export type ScanResult = ConnectedNetworkInfo & {
   psk: boolean;
 };
 
@@ -410,6 +413,38 @@ function wpaCliRemoveAllNetworks() {
   return wpaCliRemoveNetwork('all');
 }
 
+async function wpaCliGetCurrentNetworkSSID(): Promise<?string> {
+  const networkList = await wpaCli('list_networks');
+  const currentNetworkRegex = /^[0-9]+\t([^\t]+)\t[^\t]+\t.*\[CURRENT\].*$/;
+  for (let line of networkList.split('\n')) {
+    let found;
+    if ((found = line.match(currentNetworkRegex))) {
+      const ssid = unescapeSSID(found[1]);
+      if (ssid.length === 0 || CTRL_CHARS_REGEX.test(ssid)) {
+        continue;
+      }
+      return ssid;
+    }
+  }
+  return null;
+}
+
+async function wpaCliGetCurrentNetworkRSSI(): Promise<?number> {
+  const signalInfo = await wpaCli('signal_poll');
+  const rssiRegex = /^RSSI=([-\d]+)$/;
+  for (let line of signalInfo.split('\n')) {
+    let found;
+    if ((found = line.match(rssiRegex))) {
+      const rssi = parseInt(found[1]);
+      if (isNaN(rssi)) {
+        continue;
+      }
+      return rssi;
+    }
+  }
+  return null;
+}
+
 /**
  *  Silk wifi module
  *  @module silk-wifi
@@ -787,6 +822,36 @@ export class Wifi extends EventEmitter {
       .then(() => wpaCliExpectOk('disconnect'))
       .then(() => this._networkCleanup());
   }
+
+  /**
+  * Gather information about the current connection.
+  *
+  * @memberof silk-wifi
+  * @instance
+  */
+  async getCurrentNetworkInfo(): Promise<?ConnectedNetworkInfo> {
+    const ssid = await wpaCliGetCurrentNetworkSSID();
+    invariant(ssid !== undefined);
+    if (ssid === null) {
+      return null;
+    }
+
+    const level = await wpaCliGetCurrentNetworkRSSI();
+    invariant(level !== undefined);
+    if (level === null) {
+      return null;
+    }
+
+    if (!this.online) {
+      // Make sure this agrees with |online|.
+      return null;
+    }
+
+    return {
+      ssid,
+      level,
+    };
+  }
 }
 
 
@@ -846,6 +911,11 @@ export class StubWifi extends EventEmitter {
   forgetNetwork(): Promise<void> {
     log.warn('StubWifi.forgetNetwork not implemented');
     return Promise.resolve();
+  }
+
+  getCurrentNetworkInfo(): Promise<?ConnectedNetworkInfo> {
+    log.warn('StubWifi.getCurrentNetworkInfo not implemented');
+    return Promise.resolve(null);
   }
 }
 

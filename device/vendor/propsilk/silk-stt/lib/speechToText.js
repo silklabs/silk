@@ -16,6 +16,8 @@ import {PosKeywordUploadOperation, getOutboxInstance} from 'silk-outbox';
 import {BufferReadable} from 'silk-streams';
 import path from 'path';
 import fs from 'mz/fs';
+import api from 'silk-device-api';
+import {Metric, MetricTypes} from 'silk-api';
 
 import config from 'silk-config';
 import type { ConfigDeviceMic } from 'silk-config';
@@ -31,6 +33,18 @@ type Callback = (error: ?Error, text?: string) => void;
 
 const log = createLog('stt');
 let options: SpeechOptions;
+
+class SttRequest extends Metric {
+  static NAME = 'stt_request';
+  static DESC = 'Measures time for a StT request';
+
+  constructor(statusCode: number, durationMS: number) {
+    super({
+      statusCode: new MetricTypes.Integer(statusCode),
+      durationMS: new MetricTypes.Integer(Math.floor(durationMS)),
+    });
+  }
+}
 
 function generateWavHeader(dataSize: number, options: ConfigDeviceMic) {
   const bytesPerSample = options.bytesPerSample || 2;
@@ -171,6 +185,7 @@ export default class SpeechToText {
         const requestDuration = Math.floor(util.uptime(this._requestStartUptime));
         log.info(`Response complete ${res.statusCode} in ${requestDuration}ms`);
         log.debug(`Response`, json);
+        api.metrics.add(new SttRequest(res.statusCode, requestDuration));
 
         if (res.statusCode !== 200) {
           this._callCallback(new Error(`Request failed with status code ` +

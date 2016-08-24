@@ -17,6 +17,8 @@ import silkCoreVersion from 'silk-core-version';
 import silkBspVersion from 'silk-bsp-version';
 import {spawnSync} from 'child_process';
 import validator from 'validator';
+import api from 'silk-device-api';
+import * as UpdaterMetrics from './updater_metrics';
 
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
@@ -65,6 +67,7 @@ let currentMetadata = null;
 // Whether or not a zip file download has been attempted during the current
 // promise chain.
 let startedDownload = false;
+let downloadStartTimeMs;
 
 let manifestURL = null;
 
@@ -436,6 +439,7 @@ function validateManifest(result) {
 
   if (!currentMetadata) {
     log.info('No update available');
+    api.metrics.add(new UpdaterMetrics.DeviceCurrent());
     return Promise.reject();
   }
   return Promise.resolve();
@@ -462,6 +466,7 @@ function fetchUpdate(/* removed */) {
   }
 
   startedDownload = true;
+  downloadStartTimeMs = util.uptime();
 
   // Download new update file.
   log.info(`Downloading "${currentMetadata.zip_url}" to "${UPDATE_FILE_PATH}"`);
@@ -484,6 +489,9 @@ function determineUpdateSize(response) {
     return Promise.reject();
   }
 
+  const downloadTimeMs = util.uptime(downloadStartTimeMs);
+  api.metrics.add(new UpdaterMetrics.ZipDownload(downloadTimeMs,
+                                                 currentMetadata.zip_size));
   log.info('Update download completed');
 
   let { promise, cancel } = createStatPromise(UPDATE_FILE_PATH);
@@ -628,7 +636,7 @@ async function loadInactiveSystemInfo() {
     await util.exec('silk-ab-updater', ['umount_system_ab']);
 
     invariant(inactiveSilkCoreVersion.branch === silkCoreVersion.branch,
-      'brach mismatch between system partitions');
+      'branch mismatch between system partitions');
     invariant(inactiveSilkCoreVersion.bsp_api_id === inactiveSilkBspVersion.bsp_api_id,
       'inactive system partition bsp_api_id mismatch');
 

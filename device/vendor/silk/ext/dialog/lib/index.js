@@ -23,6 +23,8 @@ import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
 import player from 'silk-audioplayer';
 import ui from 'silk-device-ui';
+import api from 'silk-device-api';
+import {Metric} from 'silk-api';
 
 import type {
   DialogEngine,
@@ -78,6 +80,25 @@ const DIALOGSCRIPT_MODNAME = 'silk-dialog-script';
 const dialogScriptSearchDirs = util.getboolprop('ro.debuggable') ?
   [ 'data/node_modules', 'system/silk/node_modules' ] :
   [ 'system/silk/node_modules' ];
+
+
+class KeywordDetected extends Metric {
+  static NAME = 'dialog_keyword';
+  static DESC = 'Records when the dialog keyword was detected';
+
+  constructor() {
+    super({buttonPress: false});
+  }
+}
+
+class KeywordButtonPress extends Metric {
+  static NAME = 'dialog_keyword';
+  static DESC = 'Records when the dialog action button was detected';
+
+  constructor() {
+    super({buttonPress: true});
+  }
+}
 
 /**
  * This extension implements interaction between dialog engine and the end
@@ -148,6 +169,7 @@ class Dialog {
       if (!kwsTestMode) {
         this._kws.on('keyword', () => {
           log.debug(`Keyword detected`);
+          api.metrics.add(new KeywordDetected());
           this._kws.stop();
           this._playSound(KEYWORD_DETECTED_SOUND_FILE)
           .then(() => this._onSpeechStart());
@@ -217,6 +239,7 @@ class Dialog {
       if (this._kwsEnabled) {
         this._kws.stop();
       }
+      api.metrics.add(new KeywordButtonPress());
       this._playSound(KEYWORD_DETECTED_SOUND_FILE)
       .then(() => this._onSpeechStart());
     } else {

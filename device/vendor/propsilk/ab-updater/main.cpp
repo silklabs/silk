@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/mount.h>
 
 #include "install.h"
@@ -102,13 +103,46 @@ int main(int argc, char **argv) {
   }
   ALOGI("Active slot: %d  Inactive slot: %d", cur_slot, other_slot);
 
-  if (0 == strcmp(maybe_cmd, "mount_system_ab")) {
-    const char *system_ab;
-    if (other_slot == 0) {
-      system_ab = "/dev/block/bootdevice/by-name/system_a";
-    } else {
-      system_ab = "/dev/block/bootdevice/by-name/system_b";
+  char const *active_system;
+  char const *active_boot;
+  char const *other_system;
+  char const *other_boot;
+
+  struct slot {
+    char const *boot;
+    char const *system;
+  };
+  struct slot slots[2] = {
+    {
+      .boot = "/dev/block/bootdevice/by-name/boot_a",
+      .system = "/dev/block/bootdevice/by-name/system_a",
+    },
+    {
+      .boot = "/dev/block/bootdevice/by-name/boot_b",
+      .system = "/dev/block/bootdevice/by-name/system_b",
+    },
+  };
+
+  if (0 == strcmp(maybe_cmd, "sync_inactive")) {
+    int ret;
+
+    char *bootdd = NULL;
+    char *systemdd = NULL;
+    asprintf(&bootdd, "logwrapper dd if=%s of=%s", slots[cur_slot].boot, slots[other_slot].boot);
+    asprintf(&systemdd, "logwrapper dd if=%s of=%s", slots[cur_slot].system, slots[other_slot].system);
+
+    ALOGI(bootdd);
+    ret = system(bootdd);
+    ALOGI("boot dd result: %d", ret);
+    if (ret == 0) {
+      ALOGI(systemdd);
+      ret = system(systemdd);
+      ALOGI("system dd result: %d", ret);
     }
+    return ret;
+  }
+  if (0 == strcmp(maybe_cmd, "mount_system_ab")) {
+    const char *system_ab = slots[other_slot].system;
 
     ALOGI("Mounting %s", system_ab);
     int status = mount(system_ab, "/mnt/system_ab", "ext4",
@@ -149,13 +183,8 @@ int main(int argc, char **argv) {
   // code
   unlink("/dev/block/bootdevice/by-name/boot");
   unlink("/dev/block/bootdevice/by-name/system");
-  if (other_slot == 0) {
-    status = link("/dev/block/bootdevice/by-name/boot_a", "/dev/block/bootdevice/by-name/boot");
-    status |= link("/dev/block/bootdevice/by-name/system_a", "/dev/block/bootdevice/by-name/system");
-  } else {
-    status = link("/dev/block/bootdevice/by-name/boot_b", "/dev/block/bootdevice/by-name/boot");
-    status |= link("/dev/block/bootdevice/by-name/system_b", "/dev/block/bootdevice/by-name/system");
-  }
+  status = link(slots[other_slot].boot, "/dev/block/bootdevice/by-name/boot");
+  status |= link(slots[other_slot].system, "/dev/block/bootdevice/by-name/system");
 
   if (status != 0) {
     ALOGE("Unable to setup OTA env: %d (errno=%d)", status, errno);

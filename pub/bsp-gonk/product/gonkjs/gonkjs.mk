@@ -3,12 +3,6 @@
 #
 this_mkfile_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-# Add branch name to ro.build.fingerprint
-BUILD_VERSION_TAGS += $(BRANCH)
-
-# Add product name to ro.build.fingerprint
-BUILD_VERSION_TAGS += $(SILK_PRODUCT)
-
 # Build properties
 PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.build.product=$(SILK_PRODUCT) \

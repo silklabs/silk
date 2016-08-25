@@ -47,6 +47,8 @@ export type ListDevicesInput = {
 
 export type ListDevicesOutputDevices = {
  name: string;
+ type: string;
+ registered: boolean;
  accountDeviceNumber: number;
  publicKey: string;
  deviceId: string;
@@ -86,7 +88,7 @@ export default class Account extends BaseClass {
   name: string = 'api-account';
   prefix: string = '/v1/account/';
 
-  
+
   /**
   Get socket.io url for device...
 
@@ -101,7 +103,7 @@ export default class Account extends BaseClass {
   }
 
   /**
-  
+
 
   @param Object payload of request
   */

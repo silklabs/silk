@@ -10,12 +10,8 @@ import Base from './base';
 import { ObjectID } from 'mongodb';
 import AccessToken from 'silk-api/src/access_token';
 
-const DEVICE_TYPES = [
-  'camera',
-];
-
 const PUBLIC_KEY = Joi.string().hex().required();
-const TYPE_SCHEMA = Joi.string().only(DEVICE_TYPES).required();
+const TYPE_SCHEMA = Joi.string().regex(/^[a-z\d_-]+$/).max(80).required();
 // XXX: Max name length was chosen randomly...
 const NAME_SCHEMA = Joi.string().min(1).max(60).required();
 const MAX_ACCOUNT_DEVICE_NUMBER = 65535;

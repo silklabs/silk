@@ -26,8 +26,18 @@ fi
 
 echo $TRAVIS_COMMIT > dist/$BUILD_NAME/last
 
-mv -v $ANDROID_PRODUCT_OUT/obj/PACKAGING/target_files_intermediates/*.zip \
-  dist/$BUILD_NAME/$TRAVIS_COMMIT/target_files.zip
+TARGET_FILES=dist/$BUILD_NAME/$TRAVIS_COMMIT/target_files.zip
+mv -v $ANDROID_PRODUCT_OUT/obj/PACKAGING/target_files_intermediates/*.zip $TARGET_FILES
+
+# Replace image files in $ANDROID_PRODUCT_OUT (boot.img and system.img notably)
+# with the versions from target_files.zip, as the versions from target_files.zip
+# are used to generate incremental OTAs and they can be slightly different than
+# the ones in $ANDROID_PRODUCT_OUT, causing an incremental OTA to fail.
+#
+# TODO: Why are they different?!  Seems a little bad...
+#
+unzip $TARGET_FILES IMAGES/*
+mv -vf IMAGES/* $ANDROID_PRODUCT_OUT/
 
 ./travis/build_device_archive.sh $BUILD_NAME dist/latest
 ln dist/latest/* dist/$BUILD_NAME/$TRAVIS_COMMIT/

@@ -34,8 +34,9 @@ export class JSONDecodeStream extends ClosingTransform {
 export class JSONEncodeStream extends ClosingTransform {
   constructor() {
     log.debug(`JSONEncodeStream()`);
-
     super({
+      encoding: 'utf8',
+      decodeStrings: false,
       writableObjectMode: true,
     });
   }
@@ -59,7 +60,7 @@ export class JSONDuplexStream extends DuplexTransform {
     const decoder = new JSONDecodeStream();
     const encoder = new JSONEncodeStream();
 
-    options = Object.assign({ }, options);
+    options = Object.assign({}, options);
     if (!(`objectMode` in options)) {
       options.objectMode = true;
     }

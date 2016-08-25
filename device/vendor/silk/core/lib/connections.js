@@ -16,12 +16,18 @@ import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import WebSocket from 'ws';
 
 import {
-  DemuxStream,
+  MultiplexStream,
   JSONDuplexStream,
   WebSocketDuplexStream,
 } from 'silk-streams';
 
-import type { Duplex } from 'stream';
+import type { VirtualStream } from 'silk-streams/src/demux';
+
+import type {
+  ErrorEventCb,
+  CloseEventCb,
+} from 'ws';
+
 import type { Peer, StructuredDataChannel, UserMediaConstraints } from 'silk-rtc';
 
 import api from 'silk-device-api';
@@ -138,7 +144,7 @@ export default class Connections extends EventEmitter {
   _running: bool = false;
   _serversTable: ?SasCompositeClient;
   _serverUrl: ?string;
-  _demux: ?Duplex = null;
+  _mux: ?MultiplexStream = null;
   _connections: Set<Peer> = new Set();
   _channelEmitters: {[key: string]: ChannelEventEmitter} = {};
 
@@ -208,6 +214,18 @@ export default class Connections extends EventEmitter {
       this._cleanupListeners();
     }
     this.state = 'disconnected';
+  }
+
+  /**
+   * Create a bi-directional stream to communicate with the silk cloud.
+   */
+  creatCloudStream(type: string, payload: {[key: string]: mixed}): VirtualStream {
+    const mux = this._mux;
+    invariant(mux);
+    return mux.createStream({
+      type,
+      payload,
+    }, `cloud stream: ${type}`);
   }
 
   /**
@@ -401,7 +419,7 @@ export default class Connections extends EventEmitter {
     }
   }
 
-  _onSignaling: (stream: Duplex) => Promise<void> = async (stream) => {
+  _onSignaling: (stream: VirtualStream) => Promise<void> = async (stream) => {
     log.info(`Got signaling client ...`);
     this.emit('request', stream);
     let recipient;
@@ -480,11 +498,11 @@ export default class Connections extends EventEmitter {
     // Cleanup any previous websocket listeners ...
     const ws = this._ws;
     const wsDuplex = this._wsDuplex;
-    const demux = this._demux;
-    this._wsDuplex = this._ws = this._demux = null;
+    const mux = this._mux;
+    this._wsDuplex = this._ws = this._mux = null;
 
-    if (demux) {
-      demux.removeListener('data', this._onSignaling);
+    if (mux) {
+      mux.removeListener('data', this._onSignaling);
     }
 
     if (ws) {
@@ -519,10 +537,9 @@ export default class Connections extends EventEmitter {
     });
     this._wsDuplex.on('error', this._onWsDuplexError);
 
-    this._demux = new DemuxStream(this._wsDuplex);
-    this._wsDuplex.pipe(this._demux);
+    this._mux = new MultiplexStream(this._wsDuplex);
 
-    this._demux.on('data', this._onSignaling);
+    this._mux.on('data', this._onSignaling);
 
     if (this._reconnectAttempts) {
       log.info(`Reconnected after ${this._reconnectAttempts} attempts`);
@@ -540,17 +557,17 @@ export default class Connections extends EventEmitter {
     log.info(`(non fatal) Unexpected websocket duplex error: ${err.stack}`);
   };
 
-  _onWsError: (err: Error) => void = (err) => {
+  _onWsError: ErrorEventCb = (err) => {
     this._setState('disconnected');
     this.emit('disconnect');
     log.error(`Failed to connect to signaling server: ${err.stack}`);
     this._scheduleReconnect();
   };
 
-  _onWsClose: (reason: string) => void = (reason) => {
+  _onWsClose: CloseEventCb = (code, reason) => {
     this._setState('disconnected');
     this.emit('disconnect');
-    log.info(`Signaling server has closed ... (${reason})`);
+    log.info(`Signaling server has closed ... (${code} ${reason || '' })`);
     this._scheduleReconnect();
   };
 }

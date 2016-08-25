@@ -5,7 +5,10 @@
  */
 
 import invariant from 'assert';
-import { Server as WebSocketServer } from 'ws';
+import {
+  Server as WebSocketServer,
+  default as WebSocket,
+} from 'ws';
 import http from 'http';
 import eventToPromise from 'event-to-promise';
 import URL from 'url';
@@ -42,7 +45,8 @@ export type RouteContext = {
 
 const log = createLog('signaling:server');
 
-function signatureProvider(req: any): ?string {
+// eslint-disable-next-line no-undef
+function signatureProvider(req: http$IncomingMessage): ?string {
   let {query} = URL.parse(req.url, true);
   return query && query.jwt;
 }
@@ -251,7 +255,7 @@ async function main (config: any): any {
       }
     } catch (err) {
       log.info(`Failed to validate client: ${err.stack}`);
-      cb(null, errorStatus || 401);
+      cb(false, errorStatus || 401);
       return;
     }
     cb(true);
@@ -259,15 +263,13 @@ async function main (config: any): any {
 
   const wss = new WebSocketServer({
     server,
-    // babel 5 workaround (arity of function is not correct otherwise).
-    verifyClient: (connection, cb) => {
-      verifyClientHandler(connection, cb);
-    },
+    verifyClient: verifyClientHandler,
   });
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws: WebSocket) => {
     try {
       const req = ws.upgradeReq;
+      // $FlowFixMe: Fix this after the auth overhaul.
       const { type, deviceId, publicKey } = req;
       invariant(type);
       log.info(`Incoming connection (${type})`);

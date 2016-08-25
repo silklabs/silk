@@ -19,6 +19,18 @@ suite('connections', () => {
     await createApi({ serverUrl: context.url });
   });
 
+  test('.createCloudStream', async () => {
+    const conn = new Connections();
+    conn.start();
+    await eventToPromise(conn, 'connect');
+
+    const stream = conn.creatCloudStream('echo', {});
+    const value = 'echo me foo!';
+    stream.write(value);
+    const result = await eventToPromise(stream, 'data');
+    assert.equal(value, result);
+  });
+
   suite('connect', () => {
     let subject;
     setup(() => {

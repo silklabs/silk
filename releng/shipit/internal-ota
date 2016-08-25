@@ -35,43 +35,45 @@ for BUILD in $BUILDS; do
     manifest.json \
     ota_dist \
     sha1 \
+    latest_target_files.zip \
+    prev_target_files.zip \
+    prevprev_target_files.zip
 
+  mkdir -p ota_dist
+
+  # OTA manifest header
+  ota_manifest=ota_dist/${BUILD}.json
+  echo Manifest: $ota_manifest
+  echo "{" > $ota_manifest
+  echo "  \"${BUILD}\": {" >> $ota_manifest
+
+  add_zip_to_otamanifest() {
+    local zip="$1"
+    local sha1="$2"
+
+    local zip_size=`wc -c < "${zip}"`
+    local zip_sha1=`openssl sha1 "${zip}" | sed 's/^.* //'`
+    {
+      echo "    \"$sha1\": {"
+      echo "      \"version\": \"$LATEST_SHA1\","
+      echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
+      echo "      \"zip_size\": \"$zip_size\","
+      echo "      \"zip_sha1\": \"$zip_sha1\""
+      echo "    }, "
+     } >> $ota_manifest
+  }
+
+  #
+  # Full OTA .zip
+  #
   wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/last || true
   LATEST_SHA1=$(cat sha1)
   if [[ -z $LATEST_SHA1 ]]; then
     echo No build available for $BRANCH/$BUILD
     continue
   fi
-
-  rm -f sha1
-  wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/$LATEST_SHA1/last || true
-  PREV_SHA1=$(cat sha1)
-  if [[ -z $PREV_SHA1 ]]; then
-    echo No previous build available for $BRANCH/$BUILD
-    continue
-  fi
-  echo
   echo Latest build for $BRANCH/$BUILD is $LATEST_SHA1
-  echo Previous build for $BRANCH/$BUILD is $PREV_SHA1
-
-  rm -f latest_target_files.zip prev_target_files.zip
   wget -O latest_target_files.zip $BUILD_URL_PREFIX/$BRANCH/$BUILD/$LATEST_SHA1/target_files.zip
-  wget -O prev_target_files.zip $BUILD_URL_PREFIX/$BRANCH/$BUILD/$PREV_SHA1/target_files.zip
-
-  mkdir -p ota_dist
-
-  # Generate incremental OTA .zip
-  (
-    set -x
-    build/tools/releasetools/ota_from_target_files \
-      --block \
-      --verify \
-      --incremental_from prev_target_files.zip \
-      latest_target_files.zip \
-      ota_dist/${BUILD}-${PREV_SHA1}-inc.zip
-  )
-
-  # Generate full OTA .zip
   (
     set -x
     build/tools/releasetools/ota_from_target_files \
@@ -81,48 +83,63 @@ for BUILD in $BUILDS; do
       latest_target_files.zip \
       ota_dist/${BUILD}-full.zip
   )
+  add_zip_to_otamanifest ota_dist/${BUILD}-full.zip "*"
+
+
+  #
+  # Maybe generate incremental OTA .zip from prev
+  #
+  rm -f sha1
+  wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/$LATEST_SHA1/last || true
+  PREV_SHA1=$(cat sha1)
+  if [[ -z $PREV_SHA1 ]]; then
+    echo No previous build available for $BRANCH/$BUILD
+  else
+    echo Previous build for $BRANCH/$BUILD is $PREV_SHA1
+    wget -O prev_target_files.zip $BUILD_URL_PREFIX/$BRANCH/$BUILD/$PREV_SHA1/target_files.zip
+    (
+      set -x
+      build/tools/releasetools/ota_from_target_files \
+        --block \
+        --verify \
+        --incremental_from prev_target_files.zip \
+        latest_target_files.zip \
+        ota_dist/${BUILD}-${PREV_SHA1}-inc.zip
+    )
+    add_zip_to_otamanifest ota_dist/${BUILD}-${PREV_SHA1}-inc.zip $PREV_SHA1
+  fi
+
+  #
+  # Maybe generate incremental OTA .zip from prevprev
+  #
+  rm -f sha1
+  wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/$PREV_SHA1/last || true
+  PREVPREV_SHA1=$(cat sha1)
+  if [[ -z $PREVPREV_SHA1 ]]; then
+    echo No previous previous build available for $BRANCH/$BUILD
+  else
+    echo Previous previous build for $BRANCH/$BUILD is $PREVPREV_SHA1
+    wget -O prevprev_target_files.zip $BUILD_URL_PREFIX/$BRANCH/$BUILD/$PREVPREV_SHA1/target_files.zip
+    (
+      set -x
+      build/tools/releasetools/ota_from_target_files \
+        --block \
+        --verify \
+        --incremental_from prevprev_target_files.zip \
+        latest_target_files.zip \
+        ota_dist/${BUILD}-${PREVPREV_SHA1}-inc.zip
+    )
+    add_zip_to_otamanifest ota_dist/${BUILD}-${PREVPREV_SHA1}-inc.zip $PREVPREV_SHA1
+  fi
+
+  # OTA manifest footer
+  echo "    \"\": null" >> $ota_manifest
+  echo "  } " >> $ota_manifest
+  echo "} " >> $ota_manifest
 
   # Maybe fetch previous OTA manifest
   wget -O manifest.json $OTA_URL_PREFIX/$BUILD.json || true
   touch $BUILD.json
-
-  # Generate OTA manifest
-  ota_manifest=ota_dist/${BUILD}.json
-  echo Manifest: $ota_manifest
-  echo "{" > $ota_manifest
-  echo "  \"${BUILD}\": {" >> $ota_manifest
-
-  for zip in $(shopt -s nullglob; echo ota_dist/*.zip); do
-    zip_size=`wc -c < "${zip}"`
-    zip_sha1=`openssl sha1 "${zip}" | sed 's/^.* //'`
-    if [[ $zip =~ .*-full.zip ]]; then
-      echo Full OTA: $zip
-      {
-        echo "    \"*\": {"
-        echo "      \"version\": \"$LATEST_SHA1\","
-        echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
-        echo "      \"zip_size\": \"$zip_size\","
-        echo "      \"zip_sha1\": \"$zip_sha1\""
-        echo "    }, "
-       } >> $ota_manifest
-    elif [[ $zip =~ .*-inc.zip ]]; then
-      echo Inc OTA: $zip
-      {
-        echo "    \"$PREV_SHA1\": {"
-        echo "      \"version\": \"$LATEST_SHA1\","
-        echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
-        echo "      \"zip_size\": \"$zip_size\","
-        echo "      \"zip_sha1\": \"$zip_sha1\""
-        echo "    }, "
-       } >> $ota_manifest
-    else
-      echo Error: Unknown zip type: $zip >&2
-      exit 1
-    fi
-  done
-  echo "    \"\": null" >> $ota_manifest
-  echo "  } " >> $ota_manifest
-  echo "} " >> $ota_manifest
 
   # Don't upload if manifest.json is unchanged
   if diff manifest.json $ota_manifest; then

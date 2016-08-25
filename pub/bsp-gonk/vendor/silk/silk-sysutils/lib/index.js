@@ -1,5 +1,4 @@
 /**
- * @private
  * @flow
  */
 
@@ -13,7 +12,6 @@
  * util.getprop('ro.product.name', 'unknown');
  */
 
-import invariant from 'assert';
 import { EventEmitter } from 'events';
 import { execFile, spawn, spawnSync } from 'child_process';
 
@@ -59,7 +57,7 @@ export function processthrow(e: string) {
  * @memberof silk-sysutils
  */
 type ExecOutput = {
-  code: number;
+  code: number | string;
   stdout: string;
   stderr: string;
 };
@@ -80,13 +78,11 @@ export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
     execFile(cmd, args, (err, stdout, stderr) => {
       let code = 0;
       if (err) {
-        invariant(typeof err.code === 'number');
+        // Reject on exec failures or timeouts only
+        if (err.killed || typeof err.code === 'string') {
+          return reject(err);
+        }
         code = err.code;
-      }
-      // 127 is failed exec, which is always wrong.  Otherwise we
-      // leave it up to the user.
-      if (code === 127) {
-        return reject(err);
       }
       return resolve(
         { code: code, stdout: stdout.toString(), stderr: stderr.toString() }

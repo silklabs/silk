@@ -8,14 +8,39 @@
  * @private
  */
 
-import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
-import wav from 'wav';
-import fs from 'mz/fs';
 import { default as createLog, configureLog } from 'silk-log';
-import * as speechOptions from 'silk-dialog-script/lib/speechAccessToken';
+import bing from './sttConverterBing';
+import google from './sttConverterGoogle';
+import fs from 'fs';
+import path from 'path';
 
 configureLog('*');
 const log = createLog('sttConverter');
+const KEYWORD = 'aristotle';
+let totalCount = 0;
+let keywordCount = 0;
+
+function parseGoogleResult(result, file) {
+  if (result.length && result[0].results && result[0].results.length &&
+      (result[0].results[0].alternatives[0].transcript)) {
+    return result[0].results[0].alternatives[0].transcript;
+  } else {
+    return '';
+  }
+}
+
+function parseBingResult(result, file) {
+  return result;
+}
+
+function countKeywords(result, file) {
+  totalCount++;
+  let text = parseResult(result, file);
+  if (text.toLowerCase() === KEYWORD) {
+    keywordCount++;
+  }
+  log.info(`Result: ${text}, ${keywordCount}/${totalCount}`);
+}
 
 if (process.argv.length < 3) {
   log.error(`Usage:
@@ -23,28 +48,33 @@ if (process.argv.length < 3) {
   process.exit(1); // eslint-disable-line
 }
 
-configureSpeechToText(speechOptions);
-
-// Convert pcm data to text
-log.info(`Converting \'${process.argv[2]}\' to text`);
-let stt = new SpeechToText();
-stt.startRequest((error, text) => {
-  if (error) {
-    log.error(`Speech stream error`, error);
-  } else {
-    log.info(`Text: ${text}`);
+let input = process.argv[2];
+let parseResult = parseBingResult.bind();
+let main = bing.bind();
+if (process.argv.length >= 4) {
+  if (process.argv[3].toLowerCase() === 'google') {
+    parseResult = parseGoogleResult.bind();
+    main = google.bind();
   }
-  process.exit(1); // eslint-disable-line
-});
+}
 
-let reader = new wav.Reader();
-reader.on('data', pcmData => {
-  stt.write(pcmData);
-});
-reader.on('end', () => {
-  stt.finish();
-});
-reader.on('error', err => {
-  log.error(err);
-});
-fs.createReadStream(process.argv[2]).pipe(reader).resume();
+if (fs.lstatSync(input).isDirectory()) {
+  let files = fs.readdirSync(input);
+  let speechPromise = Promise.resolve();
+  files.forEach(file => {
+    speechPromise = speechPromise.then(() => main(path.join(input, file)))
+    .then(result => {
+      log.debug(file);
+      countKeywords(result, file);
+    })
+    .catch(err => log.error(err));
+  });
+  speechPromise.then(() => process.exit(0)); // eslint-disable-line
+} else {
+  main(input)
+  .then(result => {
+    countKeywords(result, input);
+    process.exit(0); // eslint-disable-line
+  })
+  .catch(err => log.error(err));
+}

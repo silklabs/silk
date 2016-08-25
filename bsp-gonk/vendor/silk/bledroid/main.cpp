@@ -36,6 +36,18 @@
 
 #define BT_UNITS_PER_MS 1000 / 625
 
+// Error codes from system/bt/bta/include/bta_gatt_api.h:
+//
+// #define BTA_GATT_CONN_UNKNOWN               0
+// #define BTA_GATT_CONN_L2C_FAILURE           GATT_CONN_L2C_FAILURE           /* general l2cap resource failure */
+// #define BTA_GATT_CONN_TIMEOUT               GATT_CONN_TIMEOUT               /* 0x08 connection timeout  */
+// #define BTA_GATT_CONN_TERMINATE_PEER_USER   GATT_CONN_TERMINATE_PEER_USER   /* 0x13 connection terminate by peer user  */
+// #define BTA_GATT_CONN_TERMINATE_LOCAL_HOST  GATT_CONN_TERMINATE_LOCAL_HOST  /* 0x16 connectionterminated by local host  */
+// #define BTA_GATT_CONN_FAIL_ESTABLISH        GATT_CONN_FAIL_ESTABLISH        /* 0x03E connection fail to establish  */
+// #define BTA_GATT_CONN_LMP_TIMEOUT           GATT_CONN_LMP_TIMEOUT           /* 0x22 connection fail for LMP response tout */
+// #define BTA_GATT_CONN_CANCEL                GATT_CONN_CANCEL                /* 0x0100 L2CAP connection cancelled  */
+// #define BTA_GATT_CONN_NONE                  0x0101                          /* 0x0101 no connection to cancel  */
+
 using namespace android;
 
 enum WaitType {

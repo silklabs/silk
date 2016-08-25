@@ -24,7 +24,7 @@ function readMusicDir(dir: string): Promise<Array<string>> {
   if (!songs) {
     return fs.readdir(dir)
     .then(files => {
-      songs = files.filter(filename => ['.wav', '.mp3'].includes(filename.substr(-4)));
+      songs = files.filter(filename => ['.wav', '.m4a', '.mp3'].includes(filename.substr(-4)));
       songs = songs.map(song => path.join(DIR, song));
       return songs;
     })

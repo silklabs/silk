@@ -44,8 +44,13 @@ for BUILD in $BUILDS; do
   # OTA manifest header
   ota_manifest=ota_dist/${BUILD}.json
   echo Manifest: $ota_manifest
-  echo "{" > $ota_manifest
-  echo "  \"${BUILD}\": {" >> $ota_manifest
+  {
+    echo "{"
+    echo "  \"${BUILD}\": {"
+    echo "    \"info\": {"
+    echo "      \"version\": \"$LATEST_SHA1\""
+    echo "    }, "
+  } >> $ota_manifest
 
   add_zip_to_otamanifest() {
     local zip="$1"
@@ -55,12 +60,12 @@ for BUILD in $BUILDS; do
     local zip_sha1=`openssl sha1 "${zip}" | sed 's/^.* //'`
     {
       echo "    \"$sha1\": {"
-      echo "      \"version\": \"$LATEST_SHA1\","
+      echo "      \"version\": \"$LATEST_SHA1\"," # TODO: Remove this line on Sept 1st, 2016
       echo "      \"zip_url\": \"$OTA_URL_PREFIX/$(basename ${zip})\","
       echo "      \"zip_size\": \"$zip_size\","
       echo "      \"zip_sha1\": \"$zip_sha1\""
       echo "    }, "
-     } >> $ota_manifest
+    } >> $ota_manifest
   }
 
   #

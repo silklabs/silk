@@ -14,7 +14,10 @@ using namespace android;
 
 class Observer: public AudioSourceEmitter::Observer {
 public:
-  void OnData(void *data, size_t size) {
+  void OnData(bool vad, void *data, size_t size) {
+    if (vad) {
+      ALOGI("Voice activity detected");
+    }
     TEMP_FAILURE_RETRY(write(1, data, size));
     free(data);
   }

@@ -27,8 +27,8 @@ LOCAL_SRC_FILES += 5.1.1_r6/MediaCodecSource.cpp
 endif
 
 LOCAL_SHARED_LIBRARIES := \
-	libstagefright libstagefright_foundation libutils liblog libbinder \
-	libgui libcamera_client libcutils libsysutils
+  libstagefright libstagefright_foundation libutils liblog libbinder \
+  libgui libcamera_client libcutils libsysutils libmedia
 
 LOCAL_C_INCLUDES := \
   frameworks/av/media/libstagefright \

@@ -38,7 +38,7 @@ public:
             const void *data, size_t size,
             FreeDataFunc freeDataFunc, void *freeData);
 
-  void OnData(void *data, size_t size) {
+  void OnData(bool vad, void *data, size_t size) {
     send(TAG_MIC, data, size, free, data);
   }
 protected:

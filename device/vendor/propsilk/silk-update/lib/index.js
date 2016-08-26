@@ -563,11 +563,11 @@ function stageUpdate() {
     return new Promise((resolve, reject) => {
       const updater = spawn('silk-ab-updater', [UPDATE_FILE_PATH]);
       updater.stdout.on('data', (data) => {
-        log.verbose('stdout:', data.toString());
+        log.verbose('ab stdout:', data.toString());
       });
 
       updater.stderr.on('data', (data) => {
-        log.warn('stderr:', data.toString());
+        log.warn('ab stderr:', data.toString());
       });
 
       updater.on('close', (code) => {
@@ -581,7 +581,7 @@ function stageUpdate() {
           // Inactive partition is now in an unknown state, sync it with the
           // active partition to return to normality
           syncInactivePartition()
-          .catch(() => undefined)
+          .catch((err) => log.warn('syncInactivePartition failed:', err))
           .then(() => reject(new Error('Update failed')));
         }
       });
@@ -656,11 +656,7 @@ function _expandManifestUrlVars() {
 
 async function syncInactivePartition() {
   invariant(AB_UPDATE);
-
-  if (!SYSTEM_VERIFIED) {
-    log.verbose('/system not verified, refusing to sync inactive partitions');
-    return;
-  }
+  invariant(SYSTEM_VERIFIED);
 
   log.verbose('Syncing inactive partition');
   await util.exec('silk-ab-updater', ['umount_system_ab']);
@@ -669,6 +665,10 @@ async function syncInactivePartition() {
 
 async function loadInactiveSystemInfo() {
   if (!AB_UPDATE) {
+    return;
+  }
+  if (!SYSTEM_VERIFIED) {
+    log.verbose('/system not verified, refusing to read from inactive partition');
     return;
   }
 
@@ -680,8 +680,10 @@ async function loadInactiveSystemInfo() {
     return moduleRequire(modLocation);
   }
 
-  for (let i of [1, 2]) {
-    log.debug('loadInactiveSystemInfo #', i);
+  // Try loading the inactive partition twice.  If the first attempt fails, the
+  // inactive partition is synced to the active partition
+  for (let loadAttempt of [1, 2]) {
+    log.debug('loadInactiveSystemInfo #', loadAttempt);
     try {
       await util.exec('silk-ab-updater', ['mount_system_ab']);
 
@@ -706,7 +708,7 @@ async function loadInactiveSystemInfo() {
       log.warn('Unable to load inactive system info:', err);
     }
 
-    // Something is amise with the inactive partitions so
+    // Something is amiss with the inactive partitions so
     // sync them back to a known state
     await syncInactivePartition();
   }

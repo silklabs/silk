@@ -561,6 +561,7 @@ function validateUpdateHash(sha1) {
 function stageUpdate() {
   if (AB_UPDATE) {
     return new Promise((resolve, reject) => {
+      const stageStartUptime = util.uptime();
       const updater = spawn('silk-ab-updater', [UPDATE_FILE_PATH]);
       updater.stdout.on('data', (data) => {
         log.verbose('ab stdout:', data.toString());
@@ -573,8 +574,10 @@ function stageUpdate() {
       updater.on('close', (code) => {
         log.info('updater exited with code', code);
         if (code === 0) {
+          const stageTimeMs = util.uptime(stageStartUptime);
           emitter.emit('staged');
           running = false;
+          api.metrics.add(new UpdaterMetrics.AbStageTime(stageTimeMs));
         } else {
           log.warn('Update failed to apply:', code);
 

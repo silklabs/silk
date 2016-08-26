@@ -657,6 +657,11 @@ function _expandManifestUrlVars() {
 async function syncInactivePartition() {
   invariant(AB_UPDATE);
 
+  if (!SYSTEM_VERIFIED) {
+    log.verbose('/system not verified, refusing to sync inactive partitions');
+    return;
+  }
+
   log.verbose('Syncing inactive partition');
   await util.exec('silk-ab-updater', ['umount_system_ab']);
   await util.exec('silk-ab-updater', ['sync_inactive']);

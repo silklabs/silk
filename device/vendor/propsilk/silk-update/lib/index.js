@@ -15,7 +15,7 @@ import fs from 'fs';
 import request from 'request';
 import silkCoreVersion from 'silk-core-version';
 import silkBspVersion from 'silk-bsp-version';
-import {spawnSync} from 'child_process';
+import {spawn, spawnSync} from 'child_process';
 import validator from 'validator';
 import api from 'silk-device-api';
 import * as UpdaterMetrics from './updater_metrics';
@@ -78,6 +78,19 @@ let inactiveSilkCoreVersion = null;
 // 'silk-bsp-version' loaded from the inactive system partition
 // (or null if not available)
 let inactiveSilkBspVersion = null;
+
+/**
+ * Webpack works by replacing require with a specialized version which loads
+ * from the bundle.  This is a trick to get the correct require from webpack
+ */
+const moduleRequire = ((() => {
+  try {
+    // $FlowFixMe
+    return __non_webpack_require__;  //eslint-disable-line
+  } catch (err) {
+    return require;
+  }
+})());
 
 // Resolves with:
 //   null: when the timeout elapses.
@@ -335,15 +348,18 @@ function validateManifest(result) {
              'device');
     return Promise.reject();
   }
+  if (typeof deviceMetadata.info !== 'object') {
+    log.warn('Update server responded with no info block');
+    return Promise.reject();
+  }
+  if (typeof deviceMetadata.info.version !== 'string') {
+    log.warn('Update server responded with no info.version');
+    return Promise.reject();
+  }
 
   function getBuildMetadata(deviceMetadata, buildType) {
     let buildMetadata = deviceMetadata[buildType];
     if (buildMetadata === null || typeof buildMetadata !== 'object') {
-      return null;
-    }
-
-    if (!buildMetadata.version) {
-      log.warn('Update server responded with no version');
       return null;
     }
 
@@ -390,59 +406,52 @@ function validateManifest(result) {
     return buildMetadata;
   }
 
-  let currentSha;
-  if (AB_UPDATE && inactiveSilkBspVersion) {
-    currentSha = inactiveSilkBspVersion.sha;
-  } else {
-    currentSha = silkBspVersion.sha;
+  const currentSha = silkBspVersion.sha;
+  if (currentSha === deviceMetadata.info.version) {
+    log.info('Device is current');
+    api.metrics.add(new UpdaterMetrics.UpdateCheck('current'));
+    return Promise.reject();
   }
 
-  // Select an update from options provided by the server.
-  let selectedUpdateType: UpdaterMetrics.UpdateType = 'none';
+  let updateSha = null;
+  if (AB_UPDATE) {
+    if (inactiveSilkBspVersion) {
+      updateSha = inactiveSilkBspVersion.sha;
+    }
+  } else {
+    updateSha = currentSha;
+  }
+
   currentMetadata = null;
-  [currentSha, '*'].forEach(buildType => {
-    if (currentMetadata) {
-      return; // Already found a build
-    }
 
-    let buildMetadata = getBuildMetadata(deviceMetadata, buildType);
-    if (!buildMetadata) {
-      return;
-    }
-
-    const FORCE_UPDATE = false; // true can be helpful when debugging
-    switch (buildType) {
-    case '*':
-      {
-        if (buildMetadata.version !== currentSha || FORCE_UPDATE) {
-          // Different sha, select this build
-          currentMetadata = buildMetadata;
-          selectedUpdateType = 'full';
-        } else {
-          log.verbose('Already running the latest update');
-        }
-        break;
+  // Check for an incremental update
+  if (updateSha !== null) {
+    let buildMetadata = getBuildMetadata(deviceMetadata, updateSha);
+    if (buildMetadata) {
+      if (!SYSTEM_VERIFIED) {
+        log.info('Skipping "inc" update as /system is unverified');
+      } else {
+        currentMetadata = buildMetadata;
+        log.info('Selected incremental update');
+        api.metrics.add(new UpdaterMetrics.UpdateCheck('inc'));
       }
-    case currentSha:
-      {
-        if (SYSTEM_VERIFIED) {
-          currentMetadata = buildMetadata;
-          selectedUpdateType = 'inc';
-        } else {
-          log.info('Skipping "inc" update as /system is unverified');
-        }
-        break;
-      }
-    default:
-      throw new Error(`Unknown buildType: ${buildType}`);
     }
-  });
+  }
 
-  log.info('Selected update:', selectedUpdateType);
-  api.metrics.add(new UpdaterMetrics.UpdateCheck(selectedUpdateType));
+  // Check for a full update
+  if (currentMetadata === null) {
+    let buildMetadata = getBuildMetadata(deviceMetadata, '*');
+    if (buildMetadata) {
+      currentMetadata = buildMetadata;
+      log.info('Selected full update');
+      api.metrics.add(new UpdaterMetrics.UpdateCheck('full'));
+    }
+  }
+
 
   if (!currentMetadata) {
-    log.info('No update available');
+    log.warn('No update available!');
+    api.metrics.add(new UpdaterMetrics.UpdateCheck('none'));
     return Promise.reject();
   }
   return Promise.resolve();
@@ -551,17 +560,35 @@ function validateUpdateHash(sha1) {
 
 function stageUpdate() {
   if (AB_UPDATE) {
-    return util.exec('silk-ab-updater', [UPDATE_FILE_PATH])
-      .then(result => {
-        log.verbose(result.stdout);
-        if (result.code === 0) {
+    return new Promise((resolve, reject) => {
+      const updater = spawn('silk-ab-updater', [UPDATE_FILE_PATH]);
+      updater.stdout.on('data', (data) => {
+        log.verbose('ab stdout:', data.toString());
+      });
+
+      updater.stderr.on('data', (data) => {
+        log.warn('ab stderr:', data.toString());
+      });
+
+      updater.on('close', (code) => {
+        log.info('updater exited with code', code);
+        if (code === 0) {
           emitter.emit('staged');
           running = false;
         } else {
-          log.warn('Update failed to apply');
-          log.info(result.stderr);
+          log.warn('Update failed to apply:', code);
+
+          // Inactive partition is now in an unknown state, sync it with the
+          // active partition to return to normality
+          syncInactivePartition()
+          .catch((err) => log.warn('syncInactivePartition failed:', err))
+          .then(() => reject(new Error('Update failed')));
         }
       });
+      updater.on('error', (err) => {
+        log.warn('Error during update', err);
+      });
+    });
   }
 
   if (PREVENT_REBOOT) {
@@ -627,28 +654,63 @@ function _expandManifestUrlVars() {
   manifestURL = manifestURL.replace('{variant}', VARIANT);
 }
 
+async function syncInactivePartition() {
+  invariant(AB_UPDATE);
+  invariant(SYSTEM_VERIFIED);
+
+  log.verbose('Syncing inactive partition');
+  await util.exec('silk-ab-updater', ['umount_system_ab']);
+  await util.exec('silk-ab-updater', ['sync_inactive']);
+}
+
 async function loadInactiveSystemInfo() {
   if (!AB_UPDATE) {
     return;
   }
+  if (!SYSTEM_VERIFIED) {
+    log.verbose('/system not verified, refusing to read from inactive partition');
+    return;
+  }
 
-  try {
-    await util.exec('silk-ab-updater', ['mount_system_ab']);
-    inactiveSilkCoreVersion = require('/mnt/system_ab/silk/node_modules/silk-core-version');
-    inactiveSilkBspVersion = require('/mnt/system_ab/node_modules/silk-bsp-version');
-    await util.exec('silk-ab-updater', ['umount_system_ab']);
+  function requireNoCache(modName: string) {
+    const modLocation = moduleRequire.resolve(modName);
+    if (require.cache[modLocation]) {
+      delete moduleRequire.cache[modLocation];
+    }
+    return moduleRequire(modLocation);
+  }
 
-    invariant(inactiveSilkCoreVersion.branch === silkCoreVersion.branch,
-      'branch mismatch between system partitions');
-    invariant(inactiveSilkCoreVersion.bsp_api_id === inactiveSilkBspVersion.bsp_api_id,
-      'inactive system partition bsp_api_id mismatch');
+  // Try loading the inactive partition twice.  If the first attempt fails, the
+  // inactive partition is synced to the active partition
+  for (let loadAttempt of [1, 2]) {
+    log.debug('loadInactiveSystemInfo #', loadAttempt);
+    try {
+      await util.exec('silk-ab-updater', ['mount_system_ab']);
 
-    log.verbose('Inactive silk-core-version', inactiveSilkCoreVersion);
-    log.verbose('Inactive silk-bsp-version', inactiveSilkBspVersion);
-  } catch (e) {
-    inactiveSilkBspVersion = null;
-    inactiveSilkCoreVersion = null;
-    log.warn('Unable to load inactive system info:', e.stack || e);
+      inactiveSilkCoreVersion = requireNoCache('/mnt/system_ab/silk/node_modules/silk-core-version');
+      inactiveSilkBspVersion = requireNoCache('/mnt/system_ab/node_modules/silk-bsp-version');
+
+      log.verbose('Active silk-core-version', silkCoreVersion);
+      log.verbose('Active silk-bsp-version', silkBspVersion);
+      log.verbose('Inactive silk-core-version', inactiveSilkCoreVersion);
+      log.verbose('Inactive silk-bsp-version', inactiveSilkBspVersion);
+
+      invariant(inactiveSilkCoreVersion.branch === silkCoreVersion.branch,
+        'branch mismatch between system partitions');
+      invariant(inactiveSilkCoreVersion.bsp_api_id === inactiveSilkBspVersion.bsp_api_id,
+        'inactive system partition bsp_api_id mismatch');
+
+      await util.exec('silk-ab-updater', ['umount_system_ab']);
+      return;
+    } catch (err) {
+      inactiveSilkBspVersion = null;
+      inactiveSilkCoreVersion = null;
+      log.warn('Unable to load inactive system info:', err);
+    }
+
+    // Something is amiss with the inactive partitions so
+    // sync them back to a known state
+    await syncInactivePartition();
   }
 }
 

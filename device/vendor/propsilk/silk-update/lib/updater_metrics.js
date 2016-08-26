@@ -20,7 +20,10 @@ export class ZipDownload extends Metric {
   }
 }
 
-export type UpdateType = 'none' | 'full' | 'inc';
+export type UpdateType = 'current' | // Device is up to date
+                         'full' |    // Device selected a full update
+                         'inc' |     // Device selected incremental update
+                         'none';     // No update available for the device version
 
 export class UpdateCheck extends Metric {
   static NAME = 'update_check';

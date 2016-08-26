@@ -84,7 +84,6 @@ for BUILD in $BUILDS; do
     build/tools/releasetools/ota_from_target_files \
       --block \
       --verify \
-      --no_prereq \
       latest_target_files.zip \
       ota_dist/${BUILD}-full.zip
   )

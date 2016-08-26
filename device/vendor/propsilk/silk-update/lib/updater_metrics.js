@@ -8,6 +8,17 @@
 
 import {Metric, MetricTypes} from 'silk-api';
 
+export class AbStageTime extends Metric {
+  static NAME = 'updater_ab_stage_time';
+  static DESC = 'Measures time it took to stage an ab update';
+
+  constructor(stageTimeMs: number) {
+    super({
+      stageTimeMs: new MetricTypes.Integer(Math.floor(stageTimeMs)),
+    });
+  }
+}
+
 export class ZipDownload extends Metric {
   static NAME = 'updater_zip_download';
   static DESC = 'Measures time it took to download an update .zip';

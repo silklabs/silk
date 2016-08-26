@@ -343,6 +343,11 @@ export function* modifyTimers(
       yield put(addTimer(durationMs, Date.now() + durationMs, title, 'alarm'));
       durationStr = humanize(durationMs);
     } else {
+      if ((durationMs - Date.now()) < 0) {
+        let [timeString] = getDateTime();
+        yield call(speak, `Sorry, it is ${timeString}, you can not set an alarm that is past due`, `idle`);
+        return;
+      }
       yield put(addTimer(durationMs, durationMs, title, 'alarm'));
       durationStr = humanize(durationMs - Date.now());
     }

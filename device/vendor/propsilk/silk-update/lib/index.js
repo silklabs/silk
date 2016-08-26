@@ -348,15 +348,18 @@ function validateManifest(result) {
              'device');
     return Promise.reject();
   }
+  if (typeof deviceMetadata.info !== 'object') {
+    log.warn('Update server responded with no info block');
+    return Promise.reject();
+  }
+  if (typeof deviceMetadata.info.version !== 'string') {
+    log.warn('Update server responded with no info.version');
+    return Promise.reject();
+  }
 
   function getBuildMetadata(deviceMetadata, buildType) {
     let buildMetadata = deviceMetadata[buildType];
     if (buildMetadata === null || typeof buildMetadata !== 'object') {
-      return null;
-    }
-
-    if (!buildMetadata.version) {
-      log.warn('Update server responded with no version');
       return null;
     }
 
@@ -404,6 +407,12 @@ function validateManifest(result) {
   }
 
   const currentSha = silkBspVersion.sha;
+  if (currentSha === deviceMetadata.info.version) {
+    log.info('Device is current');
+    api.metrics.add(new UpdaterMetrics.UpdateCheck('current'));
+    return Promise.reject();
+  }
+
   let updateSha = null;
   if (AB_UPDATE) {
     if (inactiveSilkBspVersion) {
@@ -413,20 +422,18 @@ function validateManifest(result) {
     updateSha = currentSha;
   }
 
-  let selectedUpdateType: UpdaterMetrics.UpdateType = 'none';
   currentMetadata = null;
 
-  // Check for a incremental update
+  // Check for an incremental update
   if (updateSha !== null) {
     let buildMetadata = getBuildMetadata(deviceMetadata, updateSha);
     if (buildMetadata) {
-      if (currentSha !== buildMetadata.version) {
-        log.info('Skipping "inc" update as device is current');
-      } else if (!SYSTEM_VERIFIED) {
+      if (!SYSTEM_VERIFIED) {
         log.info('Skipping "inc" update as /system is unverified');
       } else {
         currentMetadata = buildMetadata;
-        selectedUpdateType = 'inc';
+        log.info('Selected incremental update');
+        api.metrics.add(new UpdaterMetrics.UpdateCheck('inc'));
       }
     }
   }
@@ -435,23 +442,16 @@ function validateManifest(result) {
   if (currentMetadata === null) {
     let buildMetadata = getBuildMetadata(deviceMetadata, '*');
     if (buildMetadata) {
-      const FORCE_UPDATE = false; // true can be helpful when debugging
-      if (buildMetadata.version !== currentSha || FORCE_UPDATE) {
-        // Different sha, select this build
-        currentMetadata = buildMetadata;
-        selectedUpdateType = 'full';
-      } else {
-        log.verbose('Already running the latest update');
-      }
-
+      currentMetadata = buildMetadata;
+      log.info('Selected full update');
+      api.metrics.add(new UpdaterMetrics.UpdateCheck('full'));
     }
   }
 
-  log.info('Selected update:', selectedUpdateType);
-  api.metrics.add(new UpdaterMetrics.UpdateCheck(selectedUpdateType));
 
   if (!currentMetadata) {
-    log.info('No update available');
+    log.warn('No update available!');
+    api.metrics.add(new UpdaterMetrics.UpdateCheck('none'));
     return Promise.reject();
   }
   return Promise.resolve();

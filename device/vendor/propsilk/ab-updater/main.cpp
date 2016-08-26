@@ -128,8 +128,10 @@ int main(int argc, char **argv) {
 
     char *bootdd = NULL;
     char *systemdd = NULL;
-    asprintf(&bootdd, "logwrapper dd if=%s of=%s", slots[cur_slot].boot, slots[other_slot].boot);
-    asprintf(&systemdd, "logwrapper dd if=%s of=%s", slots[cur_slot].system, slots[other_slot].system);
+    asprintf(&bootdd, "/system/bin/logwrapper /system/bin/dd if=%s of=%s",
+      slots[cur_slot].boot, slots[other_slot].boot);
+    asprintf(&systemdd, "/system/bin/logwrapper /system/bin/dd if=%s of=%s",
+      slots[cur_slot].system, slots[other_slot].system);
 
     ALOGI(bootdd);
     ret = system(bootdd);

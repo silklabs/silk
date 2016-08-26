@@ -37,6 +37,19 @@ function readMusicDir(dir: string): Promise<Array<string>> {
   }
 }
 
+function shuffle(array) {
+  let counter = array.length;
+
+  while (counter > 0) {
+    let index = Math.floor(Math.random() * counter);
+    counter--;
+    let temp = array[counter];
+    array[counter] = array[index];
+    array[index] = temp;
+  }
+  return array;
+}
+
 /**
  * Play next song after the previous one is finished
  *
@@ -59,6 +72,7 @@ function playNextSong(environment: Environment, songs: Array<string>): Promise<v
   };
 
   let playPromise = Promise.resolve();
+  songs = shuffle(songs); // Shuffle the songs in the array
   for (let i = 0; i < songs.length; i++) {
     playPromise = playPromise.then(() => playNext(songs[i]));
   }

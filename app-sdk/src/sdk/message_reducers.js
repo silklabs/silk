@@ -17,6 +17,7 @@ import type {
   ClientStatusMessage,
   DeviceConnectionDetailsMessage,
   DeviceListMessage,
+  DeviceUpdateStatusMessage,
 } from './outgoing';
 import type DeviceSession from '../ble/device_session';
 import type {UnregisterRegisteredDeviceResult} from '../store/device_actions';
@@ -25,6 +26,7 @@ export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,
   DEVICES: DeviceListMessage,
   CONNECTIONS: Array<DeviceConnectionDetailsMessage>,
+  UPDATES: Array<DeviceUpdateStatusMessage>,
 };
 
 type AuthActionTypes = 'AUTH_RESTORE' | 'AUTH_SIGNIN' | 'AUTH_CREATEACCOUNT';
@@ -42,6 +44,7 @@ const initialState: MessagesState = {
     devices: [],
   },
   CONNECTIONS: [],
+  UPDATES: [],
 };
 
 function handleAuthAction(
@@ -181,7 +184,6 @@ function DEVICE_REGISTERED_FETCH(
         accountDeviceNumber: device.accountDeviceNumber,
         deviceConfigId: null,
         deviceConfigStatus: 'CONFIGURED',
-        serverConnectionStatus: null,
         bleConnectionStatus: 'NOT_CONNECTED',
         bleConnectionError: null,
         rtcConnectionStatus: 'NOT_CONNECTED',
@@ -255,7 +257,6 @@ function DEVICE_BLE_CONNECTED(
       accountDeviceNumber: null,
       deviceConfigId: session.socketId,
       deviceConfigStatus: 'UNCONFIGURED',
-      serverConnectionStatus: 'NOT_CONNECTED',
       bleConnectionStatus: 'CONNECTED',
       bleConnectionError: null,
       rtcConnectionStatus: 'NOT_CONNECTED',
@@ -280,9 +281,11 @@ function DEVICE_BLE_DISCONNECTED(
   const session = action.payload;
   let connections = state.CONNECTIONS;
   let {devices} = state.DEVICES;
+  let updates = state.UPDATES;
 
   const oldConnections = connections;
   const oldDevices = devices;
+  const oldUpdates = updates;
 
   if (session.isRegistered) {
     const {deviceId} = session;
@@ -292,7 +295,6 @@ function DEVICE_BLE_DISCONNECTED(
       devices = devices.slice();
       devices[index] = {
         ...devices[index],
-        serverConnectionStatus: null,
         bleConnectionStatus: 'NOT_CONNECTED',
       };
     }
@@ -318,32 +320,32 @@ function DEVICE_BLE_DISCONNECTED(
     connections.splice(index, 1);
   }
 
-  if (oldConnections === connections && oldDevices === devices) {
+  // Remove any update details for this connection.
+  index = -1;
+  if (session.deviceId) {
+    index = updates.findIndex(
+      (update) => update.deviceId === session.deviceId
+    );
+  }
+  if (index !== -1) {
+    updates = updates.slice();
+    updates.splice(index, 1);
+  }
+
+  if (oldConnections === connections &&
+      oldDevices === devices &&
+      oldUpdates === updates) {
     return state;
   }
 
-  if (oldConnections !== connections && oldDevices !== devices) {
-    return {
-      ...state,
-      DEVICES: {
-        ...state.DEVICES,
-        devices,
-      },
-      CONNECTIONS: connections,
-    };
-  }
-  if (oldConnections !== connections) {
-    return {
-      ...state,
-      CONNECTIONS: connections,
-    };
-  }
   return {
     ...state,
     DEVICES: {
       ...state.DEVICES,
       devices,
     },
+    CONNECTIONS: connections,
+    UPDATES: updates,
   };
 }
 
@@ -456,9 +458,9 @@ function DEVICE_CONFIG_WIFISCANRESULTS(
   return state;
 }
 
-function DEVICE_CONFIG_STATUSUPDATED(
+function DEVICE_CONFIG_CONNECTIONSTATUS(
   state: MessagesState,
-  action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED' | 'DEVICE_CONFIG_WIFIINFO', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIG_CONNECTIONSTATUS' | 'DEVICE_CONFIG_WIFIINFO', DeviceSession>
 ): MessagesState {
   const session = action.payload;
   invariant(session.deviceId);
@@ -531,6 +533,41 @@ function DEVICE_CONFIG_STATUSUPDATED(
   return {
     ...state,
     CONNECTIONS: connections,
+  };
+}
+
+function DEVICE_CONFIG_UPDATESTATUS(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_CONFIG_UPDATESTATUS', DeviceSession>
+): MessagesState {
+  const session = action.payload;
+  invariant(session.deviceId);
+
+
+  const {updateStatus} = session;
+  invariant(updateStatus);
+
+  let updates = state.UPDATES;
+
+  const update: DeviceUpdateStatusMessage = {
+    type: 'DEVICE_UPDATE_STATUS',
+    deviceId: session.deviceId,
+    state: updateStatus.state,
+    progress: updateStatus.progress || null,
+    error: updateStatus.error || null,
+  };
+
+  const index = updates.findIndex((u) => u.deviceId === session.deviceId);
+  if (index === -1) {
+    updates = updates.concat(update);
+  } else {
+    updates = updates.slice();
+    updates[index] = update;
+  }
+
+  return {
+    ...state,
+    UPDATES: updates,
   };
 }
 
@@ -644,8 +681,9 @@ export const reducer = handleActions({
   DEVICE_BLE_ERROR,
   DEVICE_CONFIG_PROXIMITYGATE,
   DEVICE_CONFIG_WIFISCANRESULTS,
-  DEVICE_CONFIG_WIFIINFO: DEVICE_CONFIG_STATUSUPDATED,
-  DEVICE_CONFIG_STATUSUPDATED,
+  DEVICE_CONFIG_WIFIINFO: DEVICE_CONFIG_CONNECTIONSTATUS,
+  DEVICE_CONFIG_CONNECTIONSTATUS,
+  DEVICE_CONFIG_UPDATESTATUS,
   DEVICE_CONFIG_REGISTERED,
   DEVICE_RTC_SIGNAL,
   DEVICE_RTC_CONNECTIONCLOSED,

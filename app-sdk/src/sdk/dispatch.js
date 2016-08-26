@@ -57,15 +57,15 @@ export function init(store: SDKStore) {
         continue;
       }
 
-      // CONNECTIONS gets special treatment.
-      if (messageType === 'CONNECTIONS') {
+      // Array types gets special treatment.
+      if (Array.isArray(message)) {
         const changed = new Set(message);
-        for (let connection of oldMessage) {
-          changed.delete(connection);
+        for (let msg of oldMessage) {
+          changed.delete(msg);
         }
-        for (let connection of changed) {
-          log.debug('Dispatching outgoing message', connection);
-          emitter.postMessage(connection);
+        for (let msg of changed) {
+          log.debug('Dispatching outgoing message', msg);
+          emitter.postMessage(msg);
         }
         continue;
       }

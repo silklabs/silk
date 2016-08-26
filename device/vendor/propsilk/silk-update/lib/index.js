@@ -6,26 +6,56 @@
  * TODO: Please flow me
  */
 
-/* eslint camelcase: "off" */
+/* eslint camelcase:0 */
 
 import invariant from 'assert';
 import crypto from 'crypto';
 import {EventEmitter} from 'events';
 import fs from 'fs';
-import request from 'request';
 import silkCoreVersion from 'silk-core-version';
 import silkBspVersion from 'silk-bsp-version';
 import {spawn, spawnSync} from 'child_process';
 import validator from 'validator';
 import api from 'silk-device-api';
+import createProgressStream from 'progress-stream';
+import http from 'http';
+import ForwardingEventEmitter from 'silk-utils/forwarding_event_emitter';
 import * as UpdaterMetrics from './updater_metrics';
 
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 
+export type UpdateState =
+  'disabled' |
+  'idle' |
+  'checking' |
+  'downloading' |
+  'staging' |
+  'staged' |
+  'applying';
+
+export type DownloadProgress = {
+  totalBytes: number;
+  receivedBytes: number;
+  remainingBytes: number;
+  elapsedSec: number;
+  remainingSec: number;
+  receivedBytesPerSec: number;
+  percentageComplete: number;
+};
+
+export type StatusEvent = {
+  state: UpdateState;
+  timestamp: number;
+  progress?: DownloadProgress;
+  error?: Error;
+};
+
 const log = createLog('update');
 
 const emitter = new EventEmitter();
+let currentState: UpdateState = 'disabled';
+let currentStateTimestamp = Date.now();
 
 const MANIFEST_URL_PROP = 'ro.silk.update.manifest_url';
 const CHANNEL_PROP = 'persist.silk.update.channel';
@@ -46,10 +76,13 @@ const AB_UPDATE = util.getboolprop('ro.silk.update.ab', false);
 const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
 const UPDATE_ENABLED = util.getboolprop(UPDATE_ENABLED_PROP, silkCoreVersion.official);
 
+const PROGRESS_EVENT_INTERVAL_SEC = 1;
+const SPEED_BUFFER_SEC = 10;
+
 const isValidUpdateURLOptions = {
   protocols: ['http', 'https'],
-  require_protocol: true,                       // eslint-disable-line camelcase
-  require_tld: true,                            // eslint-disable-line camelcase
+  require_protocol: true,
+  require_tld: true,
 };
 
 // Whether or not start has been called.
@@ -92,6 +125,24 @@ const moduleRequire = ((() => {
   }
 })());
 
+function changeState(state: UpdateState, details?: Object = {}) {
+  currentState = state;
+  currentStateTimestamp = Date.now();
+
+  const message = {
+    state,
+    timestamp: currentStateTimestamp,
+    ...details,
+  };
+
+  log.debug(`Dispatching status message`, message);
+  try {
+    emitter.emit(`status`, message);
+  } catch (error) {
+    // Ignore.
+  }
+}
+
 // Resolves with:
 //   null: when the timeout elapses.
 //
@@ -116,97 +167,105 @@ function createTimeoutPromise(delay) {
 // Rejects with:
 //   null: if the request is canceled.
 //   Error: if an error is emitted.
-function createRequestPromise(options) {
-  options = options || { };
+function download(url, options = {}) {
+  invariant(url);
+  const {pipe, json} = options;
+
   let cancel;
-  let promise = new Promise((resolve, reject) => {
-    let req = request.get(options);
-    req.on('error', (err) => {
-      // DNS errors due to the device being offline show up here.  No big deal,
-      // the retry mechanism will kick in
-      log.warn(`request.get() error: ${err}`);
-      reject();
-      req.abort();
-    })
-    .on('response', (response) => {
-      if (response.statusCode !== 200) {
-        resolve({ response: response, body: null });
+
+  const progress = createProgressStream({
+    time: PROGRESS_EVENT_INTERVAL_SEC * 1000,
+    speed: SPEED_BUFFER_SEC,
+  });
+
+  const promise = new Promise((resolve, reject) => {
+    let fileStream;
+
+    log.info(`Downloading '${url}'`);
+    let request = http.get(url);
+
+    const handleError = (error) => {
+      log.warn(`Download of '${url}' ${(error ? 'failed' : 'canceled')}`,
+               error || ``);
+      const tempRequest = request;
+      request = null;
+      if (!tempRequest) {
         return;
       }
-      let body = '';
-      response.on('data', (chunk) => {
-        body += chunk;
-      })
-      .on('end', () => {
-        if (options.json) {
+      reject(error);
+      progress.removeAllListeners();
+      tempRequest.abort();
+      progress.end();
+      progress.resume();
+      if (fileStream) {
+        fileStream.end();
+        fileStream = null;
+      }
+    };
+    request.on(`error`, handleError);
+
+    cancel = () => handleError(null);
+
+    request.on(`response`, (response) => {
+      response.on(`error`, handleError);
+
+      if (response.statusCode !== 200) {
+        log.warn(`Download of '${url}' failed, server response`,
+                 response.statusCode);
+        resolve({response, body: null});
+        return;
+      }
+
+      progress.on(`error`, handleError);
+      progress.setLength(response.headers['content-length'] || 0);
+
+      response.pipe(progress);
+
+      if (pipe) {
+        fileStream = fs.createWriteStream(pipe);
+        fileStream.on(`error`, handleError);
+
+        fileStream.on(`finish`, () => {
+          log.info(`Finished downloading '${url}'`);
+          resolve({response, body: null});
+        });
+
+        log.info(`Piping '${url}' to '${pipe}'`);
+        progress.pipe(fileStream);
+        return;
+      }
+
+      const buffers = [];
+      let buffersTotalLength = 0;
+
+      progress.on(`data`, (buffer) => {
+        buffers.push(buffer);
+        buffersTotalLength += buffer.length;
+      });
+
+      progress.on(`end`, () => {
+        log.info(`Finished downloading '${url}'`);
+        let body = Buffer.concat(buffers, buffersTotalLength);
+
+        if (json) {
           try {
             body = JSON.parse(body);
-          } catch (e) {
-            log.error(`Invalid server response: ${e.stack}`);
-            reject();
+          } catch (error) {
+            handleError(error);
             return;
           }
         }
-        resolve({ response, body });
+
+        resolve({response, body});
       });
     });
-
-    cancel = () => {
-      log.info('Canceling during a requestPromise');
-      reject();
-      req.abort();
-    };
   });
-  return { promise: promise, cancel: cancel };
-}
 
-// Resolves with:
-//   null: after the request has completed and the file has been streamed to
-//         disk.
-//   response: if the server responsed with a non-200 code.
-//
-// Rejects with:
-//   null: if the request is canceled.
-//   Error: if an error is emitted.
-function createPipeRequestPromise(options, path) {
-  let cancel;
-  let promise = new Promise((resolve, reject) => {
-    let req = request.get(options);
-    let pipe = req.pipe(fs.createWriteStream(path));
-
-    // Some internet sources say that we should call pipe.end() as well as
-    // calling req.abort() here.
-    let finish = () => {
-      req.abort();
-      pipe.end();
-    };
-
-    req.on('error', (err) => {
-      reject(err);
-      finish();
-    })
-    .on('response', (response) => {
-      if (response.statusCode !== 200) {
-        resolve(response);
-        finish();
-      }
-    });
-
-    pipe.on('error', (err) => {
-      reject(err);
-      finish();
-    })
-    .on('finish', () => {
-      resolve();
-    });
-
-    cancel = () => {
-      log.info('Canceling during a pipeRequestPromise');
-      reject();
-      finish();
-    };
-  });
-  return { promise: promise, cancel: cancel };
+  return {
+    promise,
+    cancel,
+    progress,
+  };
 }
 
 // Resolves with:
@@ -313,17 +372,16 @@ function waitForPollTime(runImmediately) {
   return promise;
 }
 
-function fetchManifest() {
+function downloadManifest() {
   // Maybe bail out.
   if (!running) {
     return Promise.reject();
   }
 
-  // Fetch the fingerprint from the OTA server.
-  log.info(`Checking "${manifestURL}" for updates`);
+  changeState('checking');
 
-  let { promise, cancel } = createRequestPromise({ uri: manifestURL,
-                                                   json: true });
+  // Download the fingerprint from the OTA server.
+  const {promise, cancel} = download(manifestURL, {json: true});
   cancelFunction = cancel;
   return promise;
 }
@@ -340,6 +398,8 @@ function validateManifest(result) {
     log.info(`Update server responded with status ${status}`);
     return Promise.reject();
   }
+
+  log.debug(`Update manifest`, result.body);
 
   const key = `${BOARD}-${PRODUCT}-${CHANNEL}-${VARIANT}`;
   let deviceMetadata = result.body[key]; // Unsanitized server response
@@ -471,35 +531,52 @@ function removeOldUpdate() {
   return promise;
 }
 
-function fetchUpdate(/* removed */) {
+function downloadUpdate(/* removed */) {
   // Maybe bail out.
   if (!running) {
     return Promise.reject();
   }
+
+  changeState('downloading');
 
   startedDownload = true;
   downloadStartTimeMs = util.uptime();
 
   // Download new update file.
-  log.info(`Downloading "${currentMetadata.zip_url}" to "${UPDATE_FILE_PATH}"`);
-
-  let { promise, cancel } =
-    createPipeRequestPromise(currentMetadata.zip_url, UPDATE_FILE_PATH);
+  const {promise, cancel, progress} =
+    download(currentMetadata.zip_url, {pipe: UPDATE_FILE_PATH});
   cancelFunction = cancel;
+
+  progress.on(`progress`, (stats) => {
+    changeState('downloading', {
+      progress: {
+        totalBytes: stats.length,
+        receivedBytes: stats.transferred,
+        remainingBytes: stats.remaining,
+        elapsedSec: stats.runtime,
+        remainingSec: stats.eta,
+        receivedBytesPerSec: stats.speed,
+        percentageComplete: parseFloat(stats.percentage.toFixed(1)),
+      },
+    });
+  });
   return promise;
 }
 
-function determineUpdateSize(response) {
+function determineUpdateSize(result) {
   // Maybe bail out.
   if (!running) {
     return Promise.reject();
   }
 
-  if (response) {
+  const {statusCode} = result.response;
+  if (statusCode !== 200) {
     // Bail out.
-    log.info('Update server responded with status ' + response.statusCode);
+    log.info(`Update server responded with status ${statusCode}`);
     return Promise.reject();
   }
+
+  changeState('staging');
 
   const downloadTimeMs = util.uptime(downloadStartTimeMs);
   api.metrics.add(new UpdaterMetrics.ZipDownload(downloadTimeMs,
@@ -575,7 +652,7 @@ function stageUpdate() {
         log.info('updater exited with code', code);
         if (code === 0) {
           const stageTimeMs = util.uptime(stageStartUptime);
-          emitter.emit('staged');
+          changeState('staged');
           running = false;
           api.metrics.add(new UpdaterMetrics.AbStageTime(stageTimeMs));
         } else {
@@ -598,13 +675,14 @@ function stageUpdate() {
     log.info(`'${PREVENT_REBOOT_PROP}' is set, skipping staged event`);
     return Promise.resolve();
   }
-  emitter.emit('staged');
+  changeState('staged');
   running = false;
   return Promise.resolve();
 }
 
 function cleanup(err) {
   if (err) {
+    changeState(currentState, {error: err});
     if (err.stack) {
       util.processthrow(err);
     }
@@ -635,12 +713,14 @@ function restart() {
 }
 
 function poll(runImmediately) {
+  changeState('idle');
+
   // Glue everything together into one long promise chain.
   waitForPollTime(runImmediately)
-  .then(fetchManifest)
+  .then(downloadManifest)
   .then(validateManifest)
   .then(removeOldUpdate)
-  .then(fetchUpdate)
+  .then(downloadUpdate)
   .then(determineUpdateSize)
   .then(validateUpdateSize)
   .then(calculateUpdateHash)
@@ -733,6 +813,7 @@ function start() {
 
   if (!MANIFEST_URL_TEMPLATE) {
     log.warn(`'${MANIFEST_URL_PROP}' is unset, disabling updates`);
+    changeState('disabled');
     return;
   }
 
@@ -740,11 +821,13 @@ function start() {
 
   if (!validator.isURL(manifestURL, isValidUpdateURLOptions)) {
     log.warn(`invalid url "${manifestURL}", disabling updates`);
+    changeState('disabled');
     return;
   }
 
   if (!POLL_HOURS) {
     log.warn(`'${POLL_HOURS_PROP}' is unset, disabling updates`);
+    changeState('disabled');
     return;
   }
 
@@ -752,11 +835,13 @@ function start() {
   if (isNaN(pollHours) || pollHours <= 0) {
     log.warn(`'${POLL_HOURS_PROP}' is set to an invalid value ` +
                `"${POLL_HOURS}", disabling updates`);
+    changeState('disabled');
     return;
   }
 
   if (!UPDATE_ENABLED) {
     log.warn(`'${UPDATE_ENABLED_PROP}' is unset, disabling updates`);
+    changeState('disabled');
     return;
   }
 
@@ -828,7 +913,27 @@ function apply(): Promise<void> {
   return promise;
 }
 
-emitter.start = start;
-emitter.stop = stop;
-emitter.apply = apply;
-module.exports = emitter;
+export function getUpdateController() {
+  const updater = getUpdateEmitter();
+  updater.start = start;
+  updater.stop = stop;
+  updater.apply = apply;
+  return updater;
+}
+
+export default function getUpdateEmitter() {
+  const updater = new ForwardingEventEmitter(emitter);
+  Object.defineProperties(updater, {
+    state: {
+      enumerable: true,
+      configurable: true,
+      get: () => currentState,
+    },
+    timestamp: {
+      enumerable: true,
+      configurable: true,
+      get: () => currentStateTimestamp,
+    },
+  });
+  return updater;
+}

@@ -19,7 +19,8 @@
     "silk-core-version": "/pub/version",
     "silk-bsp-version": "/bsp-version",
     "silk-log": "/pub/log",
-    "silk-buildjs": "../../../../pub/buildjs/"
+    "silk-buildjs": "../../../../pub/buildjs/",
+    "silk-utils": "/utils"
   },
   "private": true
 }

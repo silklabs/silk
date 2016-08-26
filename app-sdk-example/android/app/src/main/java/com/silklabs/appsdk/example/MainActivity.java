@@ -166,6 +166,10 @@ public class MainActivity extends Activity {
               onDeviceConnectionDetails(message);
               break;
             }
+            case "DEVICE_UPDATE_STATUS": {
+              onDeviceUpdateStatus(message);
+              break;
+            }
             default:
               onError("Unknown message type: " + messageType);
           }
@@ -391,6 +395,48 @@ public class MainActivity extends Activity {
             device.serverConnectionStatus =
               (String) message.get("serverStatus");
             device.serverConnectionError = (String) message.get("serverError");
+
+            if (device == currentDevice) {
+              deviceStatusTextView.setText(device.status());
+            }
+
+            break;
+          }
+        }
+      });
+    }
+
+    private void onDeviceUpdateStatus(final Map<String, Object> message) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          final String deviceId = (String) message.get("deviceId");
+
+          Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
+
+          SpinnerAdapter adapter = deviceListSpinner.getAdapter();
+          final int count = adapter.getCount();
+          for (int index = 0; index < count; index++) {
+            Device device = (Device) adapter.getItem(index);
+
+            if (!deviceId.equals(device.deviceId)) {
+              continue;
+            }
+
+            String state = (String) message.get("state");
+
+            String error = (String) message.get("error");
+            if (error != null) {
+              state += " (Error: " + error + ")";
+            } else {
+              Map<String, Object> progress =
+                (Map<String, Object>) message.get("progress");
+              if (progress != null) {
+                state +=
+                  " (" + ((Double) progress.get("percentageComplete")) + "%)";
+              }
+            }
+
+            device.updateState = state;
 
             if (device == currentDevice) {
               deviceStatusTextView.setText(device.status());

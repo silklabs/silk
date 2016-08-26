@@ -18,6 +18,7 @@ public class Device {
   public String bleConnectionError;
   public String rtcConnectionStatus;
   public String rtcConnectionError;
+  public String updateState;
 
   @Override
   public String toString() {
@@ -44,6 +45,7 @@ public class Device {
     builder.append("bleConnectionError: ").append(bleConnectionError).append("\n");
     builder.append("rtcConnectionStatus: ").append(rtcConnectionStatus).append("\n");
     builder.append("rtcConnectionError: ").append(rtcConnectionError).append("\n");
+    builder.append("updateState: ").append(updateState).append("\n");
 
     return builder.toString();
   }

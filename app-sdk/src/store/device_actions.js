@@ -291,7 +291,8 @@ export const config = {
   passedProximity: actionFromPayload('DEVICE_CONFIG_PROXIMITYGATE'),
   wifiScanResults: actionFromPayload('DEVICE_CONFIG_WIFISCANRESULTS'),
   wifiInfo: actionFromPayload('DEVICE_CONFIG_WIFIINFO'),
-  statusUpdated: actionFromPayload('DEVICE_CONFIG_STATUSUPDATED'),
+  connectionStatus: actionFromPayload('DEVICE_CONFIG_CONNECTIONSTATUS'),
+  updateStatus: actionFromPayload('DEVICE_CONFIG_UPDATESTATUS'),
   registered: actionFromPayload('DEVICE_CONFIG_REGISTERED'),
 };
 

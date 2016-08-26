@@ -12,7 +12,9 @@ import {getstrprop} from 'silk-sysutils';
 import * as Joi from 'joi';
 import version from 'silk-core-version';
 
+import type {StatusEvent as UpdateStatusEvent} from 'silk-update';
 import type {ConnectedNetworkInfo, ScanResult} from 'silk-wifi';
+
 import type {ConnectionType, DeviceConfig} from './index';
 import type ParentSocketSession from '../btle/parent_socket_session';
 
@@ -131,6 +133,21 @@ export default class SessionListenerBase {
       type,
       code,
     });
+  }
+
+  sendUpdateStatus(event: UpdateStatusEvent) {
+    log.debug(`SessionListenerBase.sendUpdateStatus()`, event);
+
+    const message = {
+      name: `update`,
+      ...event,
+    };
+
+    if (message.error) {
+      message.error = message.error.message;
+    }
+
+    this._send(message);
   }
 
   disconnect(): void {

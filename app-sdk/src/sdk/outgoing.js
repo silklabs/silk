@@ -3,6 +3,10 @@
  */
 
 import type {DeviceWifiNetwork} from '../ble/device_session';
+import type {
+  DownloadProgress,
+  UpdateState,
+} from 'silk-update';
 
 type InitializedMessage = {
   type: 'INITIALIZED';
@@ -63,7 +67,6 @@ export type DeviceStatusMessage = {
   deviceConfigId: ?number;
   accountDeviceNumber: ?number;
   deviceConfigStatus: DeviceConfigStatus;
-  serverConnectionStatus: ?ConnectionStatus;
   bleConnectionStatus: ?ConnectionStatus;
   bleConnectionError: ?BLEConnectionError;
   rtcConnectionStatus: ?ConnectionStatus;
@@ -132,6 +135,14 @@ export type DeviceConnectionDetailsMessage = {
   serverError: ?ServerConnectionError;
 };
 
+export type DeviceUpdateStatusMessage = {
+  type: 'DEVICE_UPDATE_STATUS',
+  deviceId: ?string;
+  state: UpdateState;
+  progress: ?DownloadProgress;
+  error: ?Error;
+};
+
 export type OutgoingMessage =
     InitializedMessage
   | MessageErrorMessage
@@ -147,4 +158,5 @@ export type OutgoingMessage =
   | DeviceMessageErrorMessage
   | DeviceWifiNetworksMessage
   | DeviceConnectionDetailsMessage
+  | DeviceUpdateStatusMessage
   ;

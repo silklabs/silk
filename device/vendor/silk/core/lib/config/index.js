@@ -10,6 +10,7 @@
 import invariant from 'assert';
 import {EventEmitter} from 'events';
 import fs from 'mz/fs';
+import getUpdateEmitter from 'silk-update';
 import * as Joi from 'joi';
 import {BTLE_SOCKET_UUIDS} from 'silk-api';
 import {createDeferred} from 'silk-async-utils';
@@ -24,6 +25,7 @@ import getDeviceId from '../deviceid';
 import NormalSessionListener from './normal_session_listener';
 import type {default as Connections, ConnectionsState} from '../connections';
 
+import type {StatusEvent as UpdateStatusEvent} from 'silk-update';
 import type {
   ScanResult,
   WifiDisconnectReason,
@@ -145,6 +147,7 @@ export class DeviceConfig extends EventEmitter {
   _sessionStatus: Map<ConnectionType, string> = new Map();
   _sessionErrorMessages: Map<ConnectionType, string> = new Map();
   _lastWifiScanResults: ?Array<ScanResult> = null;
+  _lastUpdateEvent: ?UpdateStatusEvent = null;
 
   async _writeConfig(config: ConfigData): Promise<void> {
     log.info('Writing config file', CONFIG_PATH, config);
@@ -456,6 +459,24 @@ export class DeviceConfig extends EventEmitter {
     }
   }
 
+  _notifyListenersOfUpdateInfo(event: UpdateStatusEvent): void {
+    log.debug(`DeviceConfig._notifyListenersOfUpdateInfo()`, event);
+
+    if (this._lastUpdateEvent === event) {
+      return;
+    }
+    this._lastUpdateEvent = event;
+
+    if (this._configuringSocketSessionListener) {
+      invariant(this._socketSessionListeners.length === 1);
+      this._configuringSocketSessionListener.sendUpdateStatus(event);
+    } else {
+      for (let listener of this._socketSessionListeners) {
+        listener.sendUpdateStatus(event);
+      }
+    }
+  }
+
   _onWifiStateChange(state: AugmentedWifiState): void {
     log.debug(`DeviceConfig._onWifiStateChange('${state}')`);
 
@@ -533,6 +554,9 @@ export class DeviceConfig extends EventEmitter {
       this._sessionErrorMessages.forEach((message, type) => {
         listener.sendError(type, message);
       });
+      if (this._lastUpdateInfo) {
+        listener.sendUpdateStatus(this._lastUpdateInfo);
+      }
     } else {
       listener = new ConfigSessionListener(this, socketSession);
     }
@@ -600,6 +624,10 @@ export class DeviceConfig extends EventEmitter {
     this._onServerStateChange(server.state);
     server.addListener(`stateChange`, state => this._onServerStateChange(state));
     server.addListener(`error`, (error) => this._onServerError(error));
+
+    const update = getUpdateEmitter();
+    update.addListener(`status`,
+                       (message) => this._notifyListenersOfUpdateInfo(message));
 
     let [ deviceId, btle ] = await Promise.all([
       getDeviceId(),

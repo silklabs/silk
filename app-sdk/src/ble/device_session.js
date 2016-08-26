@@ -14,6 +14,7 @@ import SocketSession from './socket_session';
 // eslint-disable-next-line no-unused-vars
 import type {MetricsAgent, SilkApi} from 'silk-api';
 import type {Socket} from 'silk-ble-socket';
+import type {StatusEvent as UpdateStatusEvent} from 'silk-update';
 
 export type DeviceStatus = {
   message: string;
@@ -111,6 +112,30 @@ const SCHEMA = {
     code: Joi.string().required(),
   }).required(),
 
+  update: Joi.object().keys({
+    name: Joi.string().equal(`update`).required(),
+    state: Joi.string().only([
+      `disabled`,
+      `idle`,
+      `checking`,
+      `downloading`,
+      `staging`,
+      `staged`,
+      `applying`,
+    ]).required(),
+    timestamp: Joi.number().integer().positive().required(),
+    progress: Joi.object().keys({
+      totalBytes: Joi.number().integer().min(0).required(),
+      receivedBytes: Joi.number().integer().min(0).required(),
+      remainingBytes: Joi.number().integer().min(0).required(),
+      elapsedSec: Joi.number().integer().min(0).required(),
+      remainingSec: Joi.number().integer().min(0).required(),
+      receivedBytesPerSec: Joi.number().min(0).required(),
+      percentageComplete: Joi.number().min(0).required(),
+    }).optional(),
+    error: Joi.string().optional(),
+  }).required(),
+
   register: Joi.object().keys({
     name: Joi.string().equal(`register`).required(),
   }).required(),
@@ -164,6 +189,7 @@ export default class DeviceSession extends RobustEventEmitter {
   _serverStatus: ?DeviceStatus = null;
   _wifiNetworks: ?Array<DeviceWifiNetwork> = null;
   _wifiInfo: ?DeviceWifiInfo = null;
+  _updateStatusEvent: ?UpdateStatusEvent = null;
 
   _connectEmitted: boolean = false;
   _registeredEmitted: boolean = false;
@@ -438,7 +464,7 @@ export default class DeviceSession extends RobustEventEmitter {
         this._serverStatus = status;
       }
 
-      this.emit(`status`, data.type, status);
+      this.emit(`connectionStatus`, data.type, status);
       return;
     }
 
@@ -477,7 +503,33 @@ export default class DeviceSession extends RobustEventEmitter {
         this._serverStatus = status;
       }
 
-      this.emit(`status`, data.type, status);
+      this.emit(`connectionStatus`, data.type, status);
+      return;
+    }
+
+    case `update`: {
+      if (state !== DeviceSession.STATE_REGISTERING_SENT_SECRET &&
+          state !== DeviceSession.STATE_REGISTERED) {
+        const error =
+          new Error(`Received '${data.name}' while in state ${state}`);
+        this._emitError(error);
+        return;
+      }
+
+      const event: UpdateStatusEvent = {
+        state: data.state,
+        timestamp: data.timestamp,
+      };
+      if (data.progress) {
+        event.progress = data.progress;
+      }
+      if (data.error) {
+        event.error = new Error(data.error);
+      }
+
+      this._updateStatusEvent = event;
+
+      this.emit(`updateStatus`, event);
       return;
     }
 
@@ -644,6 +696,10 @@ export default class DeviceSession extends RobustEventEmitter {
 
   get serverStatus(): ?DeviceStatus {
     return this._serverStatus;
+  }
+
+  get updateStatus(): ?UpdateStatusEvent {
+    return this._updateStatusEvent;
   }
 
   get error(): ?Error {
@@ -829,7 +885,10 @@ export default class DeviceSession extends RobustEventEmitter {
 
   getWifiInfo() {
     log.debug(`DeviceSession.getWifiInfo()`);
-    invariant(this._state === DeviceSession.STATE_REGISTERED);
+    if (this._state !== DeviceSession.STATE_REGISTERED) {
+      log.warn(`Ignoring getWifiInfo() in state ${this._state}`);
+      return;
+    }
 
     if (!this.authenticated) {
       log.warn(`Ignoring getWifiInfo() on unauthenticated stream`);

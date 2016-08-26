@@ -296,8 +296,9 @@ function initBLE(store: Store<*>) {
     session.on('secret', () => dispatch(config.passedProximity(session)));
     session.on('wifiscan', () => dispatch(config.wifiScanResults(session)));
     session.on('wifiinfo', () => dispatch(config.wifiInfo(session)));
-    session.on('status', (type, status) => {
-      dispatch(config.statusUpdated(session));
+    session.on('updateStatus', () => dispatch(config.updateStatus(session)));
+    session.on('connectionStatus', (type, status) => {
+      dispatch(config.connectionStatus(session));
       if (type === 'server' &&
           !status.isError &&
           status.message === 'connected') {

@@ -461,9 +461,9 @@ function DEVICE_CONFIG_SENDCONFIG(
   return state;
 }
 
-function DEVICE_CONFIG_STATUSUPDATED(
+function DEVICE_CONFIG_CONNECTIONSTATUS(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIG_CONNECTIONSTATUS', DeviceSession>
 ): DevicesState {
   const session = action.payload;
   const {configuring} = state;
@@ -684,7 +684,7 @@ export const reducer = handleActions({
   DEVICE_CONFIG_SETCONFIG,
   DEVICE_CONFIG_REGISTERSERVER,
   DEVICE_CONFIG_SENDCONFIG,
-  DEVICE_CONFIG_STATUSUPDATED,
+  DEVICE_CONFIG_CONNECTIONSTATUS,
   DEVICE_CONFIG_REGISTERED,
   DEVICE_CONFIG_FINISH,
   DEVICE_RTC_SIGNAL,

@@ -106,6 +106,10 @@ export default class DialogEngine extends EventEmitter {
     this._mockSpeak(text, finished);
   }
 
+  dialogDone(): Promise<void> {
+    return Promise.resolve();
+  }
+
   async _mockSpeak(text: string, finished: boolean): Promise<void> {
     log.info(`Mocking speak`, text, finished);
     await sleep(0);

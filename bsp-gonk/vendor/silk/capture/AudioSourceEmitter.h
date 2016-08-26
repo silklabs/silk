@@ -18,6 +18,7 @@ public:
 
   AudioSourceEmitter(const sp<MediaSource> &source,
                      sp<Observer> observer,
+                     int audioSampleRate,
                      int audioChannels);
 
   virtual ~AudioSourceEmitter();

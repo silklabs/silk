@@ -38,7 +38,8 @@ int main(int argc, char **argv)
   );
 
   sp<Observer> observer = new Observer();
-  audioSource = new AudioSourceEmitter(audioSource, observer, audioChannels);
+  audioSource = new AudioSourceEmitter(audioSource, observer,
+                                       audioSampleRate, audioChannels);
 
   status_t err = audioSource->start();
   if (err != 0) {

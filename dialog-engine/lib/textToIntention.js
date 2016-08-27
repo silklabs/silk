@@ -78,10 +78,12 @@ class LuisRequest extends Metric {
   static NAME = 'luis_request';
   static DESC = 'Measures time for a Luis request';
 
-  constructor(statusCode: number,
+  constructor(id: string,
+              statusCode: number,
               responseStartMs: number,
               responseEndMs: number) {
     super({
+      id,
       statusCode: new MetricTypes.Integer(statusCode),
       responseStartMs: new MetricTypes.Integer(Math.floor(responseEndMs)),
       responseEndMs: new MetricTypes.Integer(Math.floor(responseEndMs)),
@@ -135,6 +137,7 @@ export default class TextToIntention {
         res.once('end', () => {
           const responseEndMs = uptime(requestStartUptime);
           api.metrics.add(new LuisRequest(
+            id,
             res.statusCode,
             responseStartMs,
             responseEndMs,

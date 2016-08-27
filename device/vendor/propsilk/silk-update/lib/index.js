@@ -735,7 +735,7 @@ function _expandManifestUrlVars() {
   manifestURL = manifestURL.replace('{board}', OTA_BOARD);
   manifestURL = manifestURL.replace('{product}', OTA_PRODUCT);
   manifestURL = manifestURL.replace('{variant}', OTA_VARIANT);
-  manifestURL = manifestURL.replace('{otaname}', OTA_NAME);
+  manifestURL = manifestURL.replace('{name}', OTA_NAME);
   manifestURL = manifestURL.replace('{version}', silkBspVersion.sha);
 }
 

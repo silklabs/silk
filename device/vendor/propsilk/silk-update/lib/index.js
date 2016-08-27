@@ -735,6 +735,7 @@ function _expandManifestUrlVars() {
   manifestURL = manifestURL.replace('{board}', BOARD);
   manifestURL = manifestURL.replace('{product}', PRODUCT);
   manifestURL = manifestURL.replace('{variant}', VARIANT);
+  manifestURL = manifestURL.replace('{version}', silkBspVersion.sha);
 }
 
 async function syncInactivePartition() {

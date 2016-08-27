@@ -20,6 +20,7 @@ import {
 import SessionListenerBase from './session_listener_base';
 
 import type {
+  ConnectionType,
   DeviceConfig,
   Secret,
 } from './index';
@@ -105,11 +106,11 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._sendRegister();
   }
 
-  sendStatus(status: string): void {
+  sendStatus(type: ConnectionType, code: string): void {
     if (this._state !== 'registered' && this._state !== 'complete') {
       return;
     }
-    super.sendStatus(status);
+    super.sendStatus(type, code);
   }
 
   _clearDismissTimeout(): void {
@@ -392,6 +393,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     // We don't need to cancel wifi connection if we're past 'complete'.
     if (currentState !== 'complete' && currentState !== 'dismissed') {
       this._deviceConfig.stopRetryingWifiConnection(new Error(`Disconnecting`));
+      this._deviceConfig._cancelConfigure();
     }
 
     super.disconnect();
@@ -444,7 +446,7 @@ export default class ConfigSessionListener extends SessionListenerBase {
     this._wifiErrorCount++;
 
     if (this._wifiErrorCount === MAX_WIFI_ERRORS) {
-      this.sendError(errorCode);
+      this.sendError('wifi', errorCode);
 
       const error =
         new Error(`Wifi unable to connect after ${this._wifiErrorCount} ` +

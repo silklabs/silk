@@ -10,6 +10,7 @@
 import invariant from 'assert';
 import {EventEmitter} from 'events';
 import fs from 'mz/fs';
+import getUpdateEmitter from 'silk-update';
 import * as Joi from 'joi';
 import {BTLE_SOCKET_UUIDS} from 'silk-api';
 import {createDeferred} from 'silk-async-utils';
@@ -24,6 +25,7 @@ import getDeviceId from '../deviceid';
 import NormalSessionListener from './normal_session_listener';
 import type {default as Connections, ConnectionsState} from '../connections';
 
+import type {StatusEvent as UpdateStatusEvent} from 'silk-update';
 import type {
   ScanResult,
   WifiDisconnectReason,
@@ -58,6 +60,8 @@ export type Secret = {
   serverUrl: string;
 };
 
+export type ConnectionType = 'wifi' | 'server';
+
 type AugmentedWifiState =
   WifiState |
   // This value is emitted by WpaMonitor manually as it initializes the DHCP
@@ -67,9 +71,6 @@ type AugmentedWifiState =
   // WpaMonitor and represent the overall state of the internet uplink.
   'online' |
   'offline';
-
-type Status = AugmentedWifiState | ConnectionsState;
-
 
 const log = createLog('config');
 
@@ -97,65 +98,35 @@ const REGISTRATION_RESPONSE_SCHEMA = Joi.object().keys({
   }),
 }).required();
 
-// maps wifi states to a connection status string that is sent to the app
+// Maps wifi states to custom status codes.
 const WIFI_STATE_MAP: Map<AugmentedWifiState, string> = new Map([
-  [ 'scanning', 'wifi_scanning' ],
-  [ 'associating', 'wifi_associating' ],
-  [ 'associated', 'wifi_associated' ],
-  [ 'four_way_handshake', 'wifi_authenticating' ],
-  [ 'group_handshake', 'wifi_authenticating' ],
-  [ 'completed', 'wifi_connected' ],
-  [ 'dhcping', 'wifi_dhcping' ],
-  [ 'online', 'wifi_online' ],
-  [ 'offline', 'wifi_offline' ],
+  [ 'four_way_handshake', 'authenticating' ],
+  [ 'group_handshake', 'authenticating' ],
+  [ 'completed', 'connected' ],
 ]);
 
-// maps wifi errors to a connection status string that is sent to the app
+// Maps wifi errors to custom error codes.
 const WIFI_ERROR_MAP: Map<WifiDisconnectReason, string> = new Map([
-  [ 'invalid_0', 'wifi_error (0)' ],
-  [ 'unspecified', 'wifi_error (1)' ],
-  [ 'prev_auth_not_valid', 'wifi_wrong_password (2)' ],
-  [ 'deauth_leaving', 'wifi_deauth_leaving (3)' ],
-  [ 'disassoc_due_to_inactivity', 'wifi_disassoc_due_to_inactivity (4)' ],
-  [ 'disassoc_ap_busy', 'wifi_disassoc_ap_busy (5)' ],
-  [ 'class2_frame_from_nonauth_sta', 'wifi_class2_frame_from_nonauth_sta (6)' ],
-  [ 'class3_frame_from_nonassoc_sta', 'wifi_class3_frame_from_nonassoc_sta (7)' ],
-  [ 'disassoc_sta_has_left', 'wifi_disassoc_sta_has_left (8)' ],
-  [ 'sta_req_assoc_without_auth', 'wifi_sta_req_assoc_without_auth (9)' ],
-  [ 'pwr_capability_not_valid', 'wifi_pwr_capability_not_valid (10)' ],
-  [ 'supported_channel_not_valid', 'wifi_supported_channel_not_valid (11)' ],
-  [ 'invalid_12', 'wifi_error (12)' ],
-  [ 'invalid_ie', 'wifi_error (13)' ],
-  [ 'michael_mic_failure', 'wifi_michael_mic_failure (14)' ],
-  [ '4way_handshake_timeout', 'wifi_wrong_password (15)' ],
-  [ 'group_key_update_timeout', 'wifi_group_key_update_timeout (16)' ],
-  [ 'ie_in_4way_differs', 'wifi_ie_in_4way_differs (17)' ],
-  [ 'group_cipher_not_valid', 'wifi_group_cipher_not_valid (18)' ],
-  [ 'pairwise_cipher_not_valid', 'wifi_pairwise_cipher_not_valid (19)' ],
-  [ 'akmp_not_valid', 'wifi_akmp_not_valid (20)' ],
-  [ 'unsupported_rsn_ie_version', 'wifi_unsupported_rsn_ie_version (21)'],
-  [ 'invalid_rsn_ie_capab', 'wifi_invalid_rsn_ie_capab (22)' ],
-  [ 'ieee_802_1x_auth_failed', 'wifi_ieee_802_1x_auth_failed (23)' ],
-  [ 'cipher_suite_rejected', 'wifi_cipher_suite_rejected (24)' ],
-  [ 'tdls_teardown_unreachable', 'wifi_tdls_teardown_unreachable (25)' ],
-  [ 'tdls_teardown_unspecified', 'wifi_tdls_teardown_unspecified (26)' ],
-  [ 'invalid_27', 'wifi_error (27)' ],
-  [ 'invalid_28', 'wifi_error (28)' ],
-  [ 'invalid_29', 'wifi_error (29)' ],
-  [ 'invalid_30', 'wifi_error (30)' ],
-  [ 'invalid_31', 'wifi_error (31)' ],
-  [ 'invalid_32', 'wifi_error (32)' ],
-  [ 'invalid_33', 'wifi_error (33)' ],
-  [ 'disassoc_low_ack', 'wifi_disassoc_low_ack (34)' ],
+  [ 'unspecified', 'error (0)' ],
+  [ 'invalid_0', 'error (1)' ],
+  [ 'invalid_12', 'error (2)' ],
+  [ 'invalid_ie', 'error (3)' ],
+  [ 'invalid_27', 'error (4)' ],
+  [ 'invalid_28', 'error (5)' ],
+  [ 'invalid_29', 'error (6)' ],
+  [ 'invalid_30', 'error (7)' ],
+  [ 'invalid_31', 'error (8)' ],
+  [ 'invalid_32', 'error (9)' ],
+  [ 'invalid_33', 'error (10)' ],
+  [ 'prev_auth_not_valid', 'wrong_password (0)' ],
+  [ '4way_handshake_timeout', 'wrong_password (1)' ],
 ]);
 
-// maps server states to a connection status string that is sent to the app
-const SERVER_STATE_MAP: Map<ConnectionsState, string> = new Map([
-  [ 'connecting', 'server_connecting' ],
-  [ 'connected', 'server_connected' ],
-  [ 'disconnected', 'server_disconnected' ],
-  [ 'reconnecting', 'server_reconnecting' ],
-]);
+// Maps server states to custom status codes.
+const SERVER_STATE_MAP: Map<ConnectionsState, string> = new Map();
+
+// Maps server errors to custom error codes.
+const SERVER_ERROR_MAP: Map<string, string> = new Map();
 
 /**
  *
@@ -173,9 +144,10 @@ export class DeviceConfig extends EventEmitter {
   _server: Connections = null;
   _socketSessionListeners: Array<SessionListenerBase> = [ ];
   _configuringSocketSessionListener: ?ConfigSessionListener = null;
-  _sessionStatus: Status = ``;
-  _sessionErrorCode: string = ``;
+  _sessionStatus: Map<ConnectionType, string> = new Map();
+  _sessionErrorMessages: Map<ConnectionType, string> = new Map();
   _lastWifiScanResults: ?Array<ScanResult> = null;
+  _lastUpdateEvent: ?UpdateStatusEvent = null;
 
   async _writeConfig(config: ConfigData): Promise<void> {
     log.info('Writing config file', CONFIG_PATH, config);
@@ -450,21 +422,57 @@ export class DeviceConfig extends EventEmitter {
     api.loadConfig({serverUrl: serverUrl});
   }
 
-  _nofityListenersOfStatus(status: string): void {
-    log.debug(`DeviceConfig._nofityListenersOfStatus('${status}')`);
+  _notifyListenersOfStatus(type: ConnectionType, code: string): void {
+    log.debug(`DeviceConfig._notifyListenersOfStatus('${type}', '${code}')`);
 
-    if (this._sessionStatus === status) {
+    if (this._sessionStatus.get(type) === code) {
       return;
     }
-
-    this._sessionStatus = status;
+    this._sessionStatus.set(type, code);
+    this._sessionErrorMessages.delete(type);
 
     if (this._configuringSocketSessionListener) {
       invariant(this._socketSessionListeners.length === 1);
-      this._configuringSocketSessionListener.sendStatus(status);
+      this._configuringSocketSessionListener.sendStatus(type, code);
     } else {
       for (let listener of this._socketSessionListeners) {
-        listener.sendStatus(status);
+        listener.sendStatus(type, code);
+      }
+    }
+  }
+
+  _notifyListenersOfError(type: ConnectionType, code: string): void {
+    log.debug(`DeviceConfig._notifyListenersOfError('${type}', '${code}')`);
+
+    if (this._sessionErrorMessages.get(type) === code) {
+      return;
+    }
+    this._sessionErrorMessages.set(type, code);
+
+    if (this._configuringSocketSessionListener) {
+      invariant(this._socketSessionListeners.length === 1);
+      this._configuringSocketSessionListener.sendError(type, code);
+    } else {
+      for (let listener of this._socketSessionListeners) {
+        listener.sendError(type, code);
+      }
+    }
+  }
+
+  _notifyListenersOfUpdateInfo(event: UpdateStatusEvent): void {
+    log.debug(`DeviceConfig._notifyListenersOfUpdateInfo()`, event);
+
+    if (this._lastUpdateEvent === event) {
+      return;
+    }
+    this._lastUpdateEvent = event;
+
+    if (this._configuringSocketSessionListener) {
+      invariant(this._socketSessionListeners.length === 1);
+      this._configuringSocketSessionListener.sendUpdateStatus(event);
+    } else {
+      for (let listener of this._socketSessionListeners) {
+        listener.sendUpdateStatus(event);
       }
     }
   }
@@ -472,13 +480,8 @@ export class DeviceConfig extends EventEmitter {
   _onWifiStateChange(state: AugmentedWifiState): void {
     log.debug(`DeviceConfig._onWifiStateChange('${state}')`);
 
-    let status = WIFI_STATE_MAP.get(state);
-    if (!status) {
-      log.error(`No status mapping for wifi state '${state}'`);
-      status = `wifi_${state}`;
-    }
-
-    this._nofityListenersOfStatus(status);
+    const status = WIFI_STATE_MAP.get(state) || state;
+    this._notifyListenersOfStatus('wifi', status);
   }
 
   _onWifiScanResults(scanResults: Array<ScanResult>): void {
@@ -500,41 +503,27 @@ export class DeviceConfig extends EventEmitter {
     log.debug(`DeviceConfig._onWifiError()`, error);
 
     // $FlowFixMe: There's no good way to tell Flow that this is ok.
-    let status = WIFI_ERROR_MAP.get(error.message);
-    if (!status) {
-      log.error(`No error code mapping for wifi error`, error);
-      status = error.message;
-    }
-
-    this._nofityListenersOfStatus(status);
+    const message = WIFI_ERROR_MAP.get(error.message) || error.message;
+    this._notifyListenersOfError('wifi', message);
 
     // Special hook for wifi failures during configure.
     if (this._configuringSocketSessionListener) {
-      this._configuringSocketSessionListener.onWifiError(status);
+      this._configuringSocketSessionListener.onWifiError(message);
     }
   }
 
   _onServerStateChange(state: ConnectionsState): void {
     log.debug(`DeviceConfig._onServerStateChange('${state}')`);
 
-    let status = SERVER_STATE_MAP.get(state);
-    if (!status) {
-      log.error(`No status mapping for server state '${state}'`);
-      status = `server_${state}`;
-    }
-
-    if (wifi.isOnline()) {
-      this._nofityListenersOfStatus(status);
-    }
+    const status = SERVER_STATE_MAP.get(state) || state;
+    this._notifyListenersOfStatus('server', status);
   }
 
   _onServerError(error: Error): void {
     log.debug(`DeviceConfig._onServerError()`, error);
 
-    // XXX Need some mappings here someday.
-    const status = error.message;
-
-    this._nofityListenersOfStatus(status);
+    const code = SERVER_ERROR_MAP.get(error.message) || error.message;
+    this._notifyListenersOfError('server', code);
   }
 
   _onSocketSession(socketSession: ParentSocketSession): void {
@@ -547,9 +536,30 @@ export class DeviceConfig extends EventEmitter {
       return;
     }
 
-    const listener = (this._config && this._config.success) ?
-                     new NormalSessionListener(this, socketSession) :
-                     new ConfigSessionListener(this, socketSession);
+    let listener;
+    if (this._config && this._config.success) {
+      listener = new NormalSessionListener(this, socketSession);
+
+      if (wifi.isOnline()) {
+        wifi.getCurrentNetworkInfo().then((info) => {
+          if (info && this._socketSessionListeners.indexOf(listener) !== -1) {
+            listener.sendWifiConnectionInfo(info);
+          }
+        });
+      }
+
+      this._sessionStatus.forEach((status, type) => {
+        listener.sendStatus(type, status);
+      });
+      this._sessionErrorMessages.forEach((message, type) => {
+        listener.sendError(type, message);
+      });
+      if (this._lastUpdateInfo) {
+        listener.sendUpdateStatus(this._lastUpdateInfo);
+      }
+    } else {
+      listener = new ConfigSessionListener(this, socketSession);
+    }
 
     let errorHandler;
     let closeHandler;
@@ -614,6 +624,10 @@ export class DeviceConfig extends EventEmitter {
     this._onServerStateChange(server.state);
     server.addListener(`stateChange`, state => this._onServerStateChange(state));
     server.addListener(`error`, (error) => this._onServerError(error));
+
+    const update = getUpdateEmitter();
+    update.addListener(`status`,
+                       (message) => this._notifyListenersOfUpdateInfo(message));
 
     let [ deviceId, btle ] = await Promise.all([
       getDeviceId(),
@@ -833,6 +847,32 @@ export class DeviceConfig extends EventEmitter {
     log.debug(`DeviceConfig.scanWifi()`);
 
     wifi.scan();
+  }
+
+  async getWifiConnectionInfo(listener: SessionListenerBase): Promise<void> {
+    log.debug(`DeviceConfig.getWifiInfo()`);
+
+    if (!wifi.isOnline()) {
+      log.warn(`Not online`);
+      return;
+    }
+
+    const connectionInfo = await wifi.getCurrentNetworkInfo();
+    if (!connectionInfo) {
+      if (wifi.isOnline) {
+        log.warn(`Failed to get connection info`);
+      } else {
+        log.warn(`No longer online`);
+      }
+      return;
+    }
+
+    log.debug(`Got connection info`, connectionInfo);
+
+    if (this._socketSessionListeners.indexOf(listener) !== -1) {
+      log.debug(`Sending connection info`);
+      listener.sendWifiConnectionInfo(connectionInfo);
+    }
   }
 }
 

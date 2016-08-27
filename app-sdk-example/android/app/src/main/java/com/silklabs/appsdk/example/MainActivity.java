@@ -20,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.EditText;
 import android.app.AlertDialog;
@@ -87,6 +88,9 @@ public class MainActivity extends Activity {
             }
             case "DEVICE_LIST":
               onDeviceListAvailable((ArrayList<Map<String, Object>>) message.get("devices"));
+              break;
+            case "DEVICE_STATUS":
+              onDeviceStatus(message);
               break;
             case "MESSAGE_ERROR": {
               String errorMsg = (String) message.get("error");
@@ -156,6 +160,14 @@ public class MainActivity extends Activity {
               if (command.equals("echo")) {
                 onSuccess(payload.get("payload").toString());
               }
+              break;
+            }
+            case "DEVICE_CONNECTION_DETAILS": {
+              onDeviceConnectionDetails(message);
+              break;
+            }
+            case "DEVICE_UPDATE_STATUS": {
+              onDeviceUpdateStatus(message);
               break;
             }
             default:
@@ -228,10 +240,7 @@ public class MainActivity extends Activity {
             myDevice.deviceType = (String) device.get("deviceType");
             myDevice.deviceId = (String) device.get("deviceId");
             myDevice.deviceConfigStatus = (String) device.get("deviceConfigStatus");
-            myDevice.wifiConnectionStatus = (String) device.get("wifiConnectionStatus");
-            myDevice.wifiConnectionError = (String) device.get("wifiConnectionError");
             myDevice.serverConnectionStatus = (String) device.get("serverConnectionStatus");
-            myDevice.serverConnectionError = (String) device.get("serverConnectionError");
             myDevice.bleConnectionStatus = (String) device.get("bleConnectionStatus");
             myDevice.bleConnectionError = (String) device.get("bleConnectionError");
             myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
@@ -268,12 +277,172 @@ public class MainActivity extends Activity {
           currentDevice = (Device) deviceListSpinner.getSelectedItem();
           if (currentDevice != null &&
               currentDevice.deviceConfigStatus.equals("CONFIGURED") &&
-              currentDevice.bleConnectionStatus.equals("CONNECTED") &&
-              wifiDialog.isShowing()) {
+              currentDevice.bleConnectionStatus.equals("CONNECTED")) {
+            if (wifiDialog.isShowing()) {
+              Map<String, Object> message = new HashMap<>();
+              message.put("type", "DEVICE_WIFI_LIST");
+              message.put("deviceId", currentDevice.deviceId);
+              mSilkService.postMessage(message);
+            }
+
             Map<String, Object> message = new HashMap<>();
-            message.put("type", "DEVICE_WIFI_LIST");
+            message.put("type", "DEVICE_WIFI_LEVEL");
             message.put("deviceId", currentDevice.deviceId);
             mSilkService.postMessage(message);
+          }
+        }
+      });
+    }
+
+    private void onDeviceStatus(final Map<String, Object> message) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          final String deviceId = (String) message.get("deviceId");
+
+          Object deviceConfigIdEntry = message.get("deviceConfigId");
+          final Integer deviceConfigId =
+            deviceConfigIdEntry == null ?
+              -1 :
+              ((Double) deviceConfigIdEntry).intValue();
+
+          Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
+
+          SpinnerAdapter adapter = deviceListSpinner.getAdapter();
+          final int count = adapter.getCount();
+          for (int index = 0; index < count; index++) {
+            Device device = (Device) adapter.getItem(index);
+
+            if ((deviceId == null || !deviceId.equals(device.deviceId)) &&
+                !deviceConfigId.equals(device.deviceConfigId)) {
+              continue;
+            }
+
+            device.deviceType = (String) message.get("deviceType");
+            device.deviceId = (String) message.get("deviceId");
+            device.deviceConfigStatus = (String) message.get("deviceConfigStatus");
+            device.serverConnectionStatus = (String) message.get("serverConnectionStatus");
+            device.bleConnectionStatus = (String) message.get("bleConnectionStatus");
+            device.bleConnectionError = (String) message.get("bleConnectionError");
+            device.rtcConnectionStatus = (String) message.get("rtcConnectionStatus");
+            device.rtcConnectionError = (String) message.get("rtcConnectionError");
+            if (device.deviceConfigStatus.equals("CONFIGURED")) {
+              device.accountDeviceNumber =
+                ((Double) message.get("accountDeviceNumber")).intValue();
+            } else {
+              device.deviceConfigId = deviceConfigId;
+            }
+
+            if (device == currentDevice) {
+              if (device.rtcConnectionStatus != null &&
+                  device.rtcConnectionStatus.equals("CONNECTED")) {
+                echoButton.setEnabled(true);
+              } else {
+                echoButton.setEnabled(false);
+              }
+
+              if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
+                configureButton.setEnabled(device.deviceConfigId != null);
+              } else {
+                configureButton.setEnabled(true);
+              }
+              deviceStatusTextView.setText(device.status());
+
+              if (currentDevice.deviceConfigStatus.equals("CONFIGURED") &&
+                  currentDevice.bleConnectionStatus.equals("CONNECTED")) {
+                if (wifiDialog.isShowing()) {
+                  Map<String, Object> message = new HashMap<>();
+                  message.put("type", "DEVICE_WIFI_LIST");
+                  message.put("deviceId", currentDevice.deviceId);
+                  mSilkService.postMessage(message);
+                }
+
+                Map<String, Object> message = new HashMap<>();
+                message.put("type", "DEVICE_WIFI_GETINFO");
+                message.put("deviceId", currentDevice.deviceId);
+                mSilkService.postMessage(message);
+              }
+            }
+            break;
+          }
+        }
+      });
+    }
+
+    private void onDeviceConnectionDetails(final Map<String, Object> message) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          final String deviceId = (String) message.get("deviceId");
+
+          Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
+
+          SpinnerAdapter adapter = deviceListSpinner.getAdapter();
+          final int count = adapter.getCount();
+          for (int index = 0; index < count; index++) {
+            Device device = (Device) adapter.getItem(index);
+
+            if (!deviceId.equals(device.deviceId)) {
+              continue;
+            }
+
+            device.wifiConnectionStatus = (String) message.get("wifiStatus");
+            device.wifiSSID = (String) message.get("wifiSSID");
+            Double signalStrength = (Double) message.get("wifiLevel");
+            if (signalStrength != null) {
+              device.wifiSignalStrength = signalStrength.intValue();
+            }
+            device.wifiConnectionError = (String) message.get("wifiError");
+
+            device.serverConnectionStatus =
+              (String) message.get("serverStatus");
+            device.serverConnectionError = (String) message.get("serverError");
+
+            if (device == currentDevice) {
+              deviceStatusTextView.setText(device.status());
+            }
+
+            break;
+          }
+        }
+      });
+    }
+
+    private void onDeviceUpdateStatus(final Map<String, Object> message) {
+      runOnUiThread(new Runnable() {
+        public void run() {
+          final String deviceId = (String) message.get("deviceId");
+
+          Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
+
+          SpinnerAdapter adapter = deviceListSpinner.getAdapter();
+          final int count = adapter.getCount();
+          for (int index = 0; index < count; index++) {
+            Device device = (Device) adapter.getItem(index);
+
+            if (!deviceId.equals(device.deviceId)) {
+              continue;
+            }
+
+            String state = (String) message.get("state");
+
+            String error = (String) message.get("error");
+            if (error != null) {
+              state += " (Error: " + error + ")";
+            } else {
+              Map<String, Object> progress =
+                (Map<String, Object>) message.get("progress");
+              if (progress != null) {
+                state +=
+                  " (" + ((Double) progress.get("percentageComplete")) + "%)";
+              }
+            }
+
+            device.updateState = state;
+
+            if (device == currentDevice) {
+              deviceStatusTextView.setText(device.status());
+            }
+
+            break;
           }
         }
       });
@@ -627,7 +796,7 @@ public class MainActivity extends Activity {
     ArrayAdapter<Device> adapter = (ArrayAdapter<Device>) deviceListSpinner.getAdapter();
     for (int position = 0; position < adapter.getCount(); position++) {
       Device device = (Device) adapter.getItem(position);
-      if(device.toString().equals(value)) {
+      if (device.toString().equals(value)) {
         deviceListSpinner.setSelection(position);
         return;
       }

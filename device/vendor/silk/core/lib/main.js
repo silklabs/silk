@@ -35,7 +35,7 @@ import Battery from 'silk-battery';
 
 import wifi from 'silk-wifi';
 import ntp from 'silk-ntp';
-import update from 'silk-update';
+import {getUpdateController} from 'silk-update';
 import config from './config';
 import silkconfig from 'silk-config';
 import sensors from 'silk-sensors';
@@ -74,6 +74,8 @@ const SHUTDOWN_TIMEOUT_MS = 45 * 1000;
 // If true, don't attempt to get configured or connect with the Silk server but
 // otherwise try to be a functional as possible.
 const DEV_NO_SERVER_CONNECT = util.getboolprop('persist.silk.dev.no_server', false);
+
+const update = getUpdateController();
 
 let battery = new Battery();
 let id = null;
@@ -498,7 +500,12 @@ async function shutdown(type: ShutdownType = 'poweroff') {
 }
 
 // Update service...
-update.on('staged', () => {
+update.on('status', (info) => {
+  assert(info.state === update.state);
+  if (info.state !== 'staged') {
+    return;
+  }
+
   // An OTA update is ready to be applied.  Start monitoring for UI idle
   function applyUpdate() {
     log.warn('Applying OTA update');

@@ -19,6 +19,7 @@ import type {
   DeviceBLEDisconnectMessage,
   DeviceWifiListMessage,
   DeviceWifiSetMessage,
+  DeviceWifiGetInfoMessage,
 } from './incoming';
 
 // Incoming messages:
@@ -105,6 +106,18 @@ function DEVICE_WIFI_SET(
   }));
 }
 
+function DEVICE_WIFI_GETINFO(
+  store: SDKStore,
+  message: DeviceWifiGetInfoMessage,
+) {
+  const {registered} = store.getState().devices;
+  invariant(registered);
+  const device = registered.get(message.deviceId);
+  invariant(device);
+  invariant(device.ble.session);
+  store.dispatch(actions.devices.config.wifiGetInfo(message.deviceId));
+}
+
 function DEVICE_REMOVE(
   store: SDKStore,
   message: DeviceRemoveMessage,
@@ -184,6 +197,7 @@ export const messageHandlers = {
   DEVICE_BLE_DISCONNECT,
   DEVICE_WIFI_LIST,
   DEVICE_WIFI_SET,
+  DEVICE_WIFI_GETINFO,
 };
 
 export function init(store: SDKStore) {
@@ -246,6 +260,6 @@ export function init(store: SDKStore) {
       configError: error.message, // TODO enum
     });
 
-    store.dispatch(actions.devices.config.finish());
+    store.dispatch(actions.devices.config.abort());
   });
 }

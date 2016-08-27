@@ -41,7 +41,6 @@
     "mold-source-map": "0.4.0",
     "mz": "2.4.0",
     "netmask": "1.0.5",
-    "request": "2.72.0",
     "socket.io-client": "1.4.6",
     "source-map-support": "0.3.3",
     "split": "1.0.0",

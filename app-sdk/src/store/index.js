@@ -39,27 +39,40 @@ const LOG_STATE_TRANSITIONS = false;
 // If |LOG_STATE_TRANSITIONS| is true then this function will be called before
 // logging state transitions. Use it to select only the data you care about.
 function logStateTransformer(state) {
-  const devices = {...state.devices};
+  const {devices, messages} = state;
 
-  const unconfigured = [];
+  const transformedDevices = {
+    unconfigured: [],
+    registered: [],
+    configuring: devices.configuring,
+  };
+
   devices.unconfigured.forEach((session, id) => {
-    unconfigured.push([id, session.deviceId]);
+    transformedDevices.unconfigured.push([id, session.socketId]);
   });
-  devices.unconfigured = unconfigured;
 
   if (devices.registered) {
-    const registered = [];
     devices.registered.forEach((device, deviceId) => {
-      const newDevice = {...device};
-      if (device.ble.session) {
-        newDevice.ble.session = device.ble.session.deviceId;
-      }
-      registered.push([deviceId, newDevice]);
+      const newDevice = {
+        ...device,
+        ble: {
+          ...device.ble,
+          session: device.ble.session ? device.ble.session.socketId : null,
+        },
+        rtc: {
+          ...device.rtc,
+          peer: device.rtc.peer ? '<Peer>' : null,
+          error: device.rtc.error ? device.rtc.error.message : null,
+        },
+      };
+      transformedDevices.registered.push([deviceId, newDevice]);
     });
-    devices.registered = registered;
   }
 
-  return devices;
+  return {
+    devices: transformedDevices,
+    messages,
+  };
 }
 
 const logger = store => next => action => {

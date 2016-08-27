@@ -9,6 +9,8 @@ public class Device {
   public Integer deviceConfigId;
   public String deviceConfigStatus;
   public String wifiConnectionStatus;
+  public String wifiSSID;
+  public Integer wifiSignalStrength;
   public String wifiConnectionError;
   public String serverConnectionStatus;
   public String serverConnectionError;
@@ -16,6 +18,7 @@ public class Device {
   public String bleConnectionError;
   public String rtcConnectionStatus;
   public String rtcConnectionError;
+  public String updateState;
 
   @Override
   public String toString() {
@@ -33,6 +36,8 @@ public class Device {
     builder.append("deviceConfigId: ").append(deviceConfigId).append("\n");
     builder.append("deviceConfigStatus: ").append(deviceConfigStatus).append("\n");
     builder.append("wifiConnectionStatus: ").append(wifiConnectionStatus).append("\n");
+    builder.append("wifiSSID: ").append(wifiSSID).append("\n");
+    builder.append("wifiSignalStrength: ").append(wifiSignalStrength).append("\n");
     builder.append("wifiConnectionError: ").append(wifiConnectionError).append("\n");
     builder.append("serverConnectionStatus: ").append(serverConnectionStatus).append("\n");
     builder.append("serverConnectionError: ").append(serverConnectionError).append("\n");
@@ -40,6 +45,7 @@ public class Device {
     builder.append("bleConnectionError: ").append(bleConnectionError).append("\n");
     builder.append("rtcConnectionStatus: ").append(rtcConnectionStatus).append("\n");
     builder.append("rtcConnectionError: ").append(rtcConnectionError).append("\n");
+    builder.append("updateState: ").append(updateState).append("\n");
 
     return builder.toString();
   }

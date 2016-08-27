@@ -584,16 +584,37 @@ export class BledroidConnection extends EventEmitter {
 
     // Forward events directly from our single bledroid instance to this
     // connection.
-    this.on('newListener', (event, listener) => {
-      bledroid.addListener(event, listener);
-    });
-
-    this.on('removeListener', (event, listener) => {
-      bledroid.removeListener(event, listener);
-    });
+    this._forwardAddListener();
+    this._forwardRemoveListener();
 
     // Update our adapter state immediately.
     bledroid.command('getAdapterState');
+  }
+
+  _forwardAddListener() {
+    this.on('newListener', (event, listener) => {
+      bledroid.addListener(event, listener);
+    });
+  }
+
+  _forwardRemoveListener() {
+    this.on('removeListener', (event, listener) => {
+      bledroid.removeListener(event, listener);
+    });
+  }
+
+  removeAllListeners(...args) {
+    const removeAll = args.length === 0;
+
+    super.removeAllListeners(...args);
+
+    if (removeAll || args[0] === 'newListener') {
+      this._forwardAddListener();
+    }
+
+    if (removeAll || args[0] === 'removeListener') {
+      this._forwardRemoveListener();
+    }
   }
 
   command(commandStr) {

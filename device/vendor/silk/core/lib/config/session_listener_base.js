@@ -8,11 +8,14 @@
  */
 
 import createLog from 'silk-log/device';
+import {getstrprop} from 'silk-sysutils';
 import * as Joi from 'joi';
 import version from 'silk-core-version';
 
-import type {ScanResult} from 'silk-wifi';
-import type {DeviceConfig} from './index';
+import type {StatusEvent as UpdateStatusEvent} from 'silk-update';
+import type {ConnectedNetworkInfo, ScanResult} from 'silk-wifi';
+
+import type {ConnectionType, DeviceConfig} from './index';
 import type ParentSocketSession from '../btle/parent_socket_session';
 
 export type ValidMessageData = {
@@ -20,7 +23,10 @@ export type ValidMessageData = {
   [key: string]: any;
 }
 
-const log = createLog('config-session-listener-base');
+const log = createLog(`config-session-listener-base`);
+
+const DEVICE_TYPE =
+  `${getstrprop('ro.silk.build.board')}-${getstrprop('ro.silk.build.product')}`;
 
 export default class SessionListenerBase {
 
@@ -48,7 +54,7 @@ export default class SessionListenerBase {
       name: `id`,
       // TODO: Something real here.
       manufacturer: `Silk Labs`,
-      model: `SilkCam`,
+      model: DEVICE_TYPE,
       version: version.semver,
       image: new Uint8Array([ 0xfe, 0xfe, 0xfe, 0xfe ]),
     });
@@ -91,12 +97,13 @@ export default class SessionListenerBase {
     return data;
   }
 
-  sendStatus(status: string): void {
-    log.debug(`SessionListenerBase.sendStatus('${status}')`);
+  sendStatus(type: ConnectionType, code: string): void {
+    log.debug(`SessionListenerBase.sendStatus('${type}', '${code}')`);
 
     this._send({
       name: `status`,
-      status,
+      type,
+      code,
     });
   }
 
@@ -109,13 +116,38 @@ export default class SessionListenerBase {
     });
   }
 
-  sendError(code: string): void {
-    log.debug(`SessionListenerBase.sendStatus('${code}')`);
+  sendWifiConnectionInfo(info: ConnectedNetworkInfo) {
+    log.debug(`SessionListenerBase.sendWifiConnectionInfo()`, info);
+
+    this._send({
+      name: `wifiinfo`,
+      ...info,
+    });
+  }
+
+  sendError(type: ConnectionType, code: string): void {
+    log.debug(`SessionListenerBase.sendError('${type}', '${code}')`);
 
     this._send({
       name: `error`,
+      type,
       code,
     });
+  }
+
+  sendUpdateStatus(event: UpdateStatusEvent) {
+    log.debug(`SessionListenerBase.sendUpdateStatus()`, event);
+
+    const message = {
+      name: `update`,
+      ...event,
+    };
+
+    if (message.error) {
+      message.error = message.error.message;
+    }
+
+    this._send(message);
   }
 
   disconnect(): void {
@@ -146,7 +178,7 @@ export default class SessionListenerBase {
   }
 
   _onError(error: Error): void {
-    log.warn(`Session error, disconnecting`, error.stack);
+    log.warn(`Session error, disconnecting`, error);
     this.disconnect();
   }
 

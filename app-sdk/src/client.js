@@ -153,10 +153,15 @@ function initDeviceConfig(store: Store<*>) {
       return;
     }
 
-    const {configuring} = store.getState().devices;
+    const {configuring, unconfigured} = store.getState().devices;
+    invariant(configuring);
+
+    const session = unconfigured.get(configuring.socketId);
+    invariant(session);
+
     store.dispatch(actions.devices.config.registerWithServer({
       devicePublicKey: configuring.secret.deviceId,
-      type: 'camera', // TODO: provide UI hooks for this
+      type: session.model,
       name: configuring.config.name,
     }));
   });
@@ -290,9 +295,13 @@ function initBLE(store: Store<*>) {
     });
     session.on('secret', () => dispatch(config.passedProximity(session)));
     session.on('wifiscan', () => dispatch(config.wifiScanResults(session)));
-    session.on('status', (status) => {
-      dispatch(config.statusUpdated(session));
-      if (!status.isError && status.message === 'server_connected') {
+    session.on('wifiinfo', () => dispatch(config.wifiInfo(session)));
+    session.on('updateStatus', () => dispatch(config.updateStatus(session)));
+    session.on('connectionStatus', (type, status) => {
+      dispatch(config.connectionStatus(session));
+      if (type === 'server' &&
+          !status.isError &&
+          status.message === 'connected') {
         if (sessionIsConfig) {
           session.dismiss();
         } else {
@@ -308,7 +317,7 @@ function initBLE(store: Store<*>) {
       }
     });
     session.on('registered', () => dispatch(config.registered(session)));
-    session.on('error', (error) => dispatch(config.error(session)));
+    session.on('error', () => dispatch(ble.error(session)));
   }
 
   getSocketManager().on('connect', onSocketConnect);

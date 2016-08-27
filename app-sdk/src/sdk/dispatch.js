@@ -56,14 +56,28 @@ export function init(store: SDKStore) {
       if (message === oldMessage) {
         continue;
       }
-      // DEVICE_LIST gets special treatment.
-      if (messageType === 'DEVICE_LIST') {
+
+      // Array types gets special treatment.
+      if (Array.isArray(message)) {
+        const changed = new Set(message);
+        for (let msg of oldMessage) {
+          changed.delete(msg);
+        }
+        for (let msg of changed) {
+          log.debug('Dispatching outgoing message', msg);
+          emitter.postMessage(msg);
+        }
+        continue;
+      }
+
+      // DEVICES gets special treatment.
+      if (messageType === 'DEVICES') {
         const oldDevices = oldMessage.devices;
         const {devices} = message;
         if (devices.length === oldDevices.length) {
-          for (let i = 0; i < message.devices; i++) {
+          for (let i = 0; i < devices.length; i++) {
             const oldDevice = oldDevices[i];
-            const device = device[i];
+            const device = devices[i];
             if (oldDevice !== device) {
               log.debug('Dispatching outgoing message', device);
               emitter.postMessage(device);
@@ -72,6 +86,7 @@ export function init(store: SDKStore) {
           continue;
         }
       }
+
       log.debug('Dispatching outgoing message', message);
       emitter.postMessage(message);
     }

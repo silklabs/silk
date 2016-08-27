@@ -57,3 +57,8 @@ export type DeviceWifiSetMessage = WifiConfiguration & {
   type: 'DEVICE_WIFI_SET';
   deviceId: string;
 };
+
+export type DeviceWifiGetInfoMessage = {
+  type: 'DEVICE_WIFI_GETINFO';
+  deviceId: string;
+};

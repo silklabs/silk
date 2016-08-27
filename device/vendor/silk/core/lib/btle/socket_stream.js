@@ -365,22 +365,22 @@ export default class SocketStream extends Duplex {
 
     this._cleanup();
 
-    this._subscribed = false;
-    this._subscribedChanging = false;
-
     if (this._disconnectHandler) {
       this._disconnectHandler();
       invariant(!this._disconnectHandler);
     }
 
+    this._subscribed = false;
+    this._subscribedChanging = false;
+
     if (!this._ended) {
-      this.push(null);
       this._ended = true;
+      this.push(null);
     }
 
     if (!this._finished) {
-      this._emitError(new Error(`Disconnected unexpectedly`));
       this._finished = true;
+      this._emitError(new Error(`Disconnected unexpectedly`));
     }
 
     this._maybeScheduleClose();

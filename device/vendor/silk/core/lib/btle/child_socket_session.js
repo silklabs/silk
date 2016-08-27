@@ -7,7 +7,7 @@
  * @flow
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import {RssiSmoother} from 'silk-api';
 import {
   AuthenticateDuplexStream,
@@ -29,6 +29,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
   static RSSI_UPDATE_TIMEOUT = 50;
 
   _peripheral: Peripheral;
+  _accountDeviceNumber: number;
 
   // Set to true when |end()| is called.
   _ending: boolean = false;
@@ -51,11 +52,14 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
   _sentBytes: number = 0;
   _errorMessage: string = ``;
 
+  _msgpackStream: ?MessagePackDuplexStream;
+
   constructor(
     stream: SocketStream,
     peripheral: Peripheral,
     privateKey: string,
     publicKeys: Array<string>,
+    accountDeviceNumber: number,
   ) {
     log.debug(`constructor`);
 
@@ -74,14 +78,14 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     super(msgpackStream,
           cryptoStream,
           privateKey,
-          publicKeys,
-          api.metrics);
+          publicKeys);
+
+    this._accountDeviceNumber = accountDeviceNumber;
+    this._msgpackStream = msgpackStream;
 
     peripheral.addListener(`rssiUpdate`, this._onRssiUpdate);
     peripheral.addListener(`disconnect`, this._onDisconnect);
     this._peripheral = peripheral;
-
-    this._rssiSmoother.update(peripheral.rssi);
 
     this.once(`end`, this._onEnd);
     this.once(`error`, this._onError);
@@ -218,8 +222,8 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     }
 
     this._rssiTimeout = setTimeout(() => {
-      assert(this._rssiUpdatesEnabled);
-      assert(!this._rssiUpdatePending);
+      invariant(this._rssiUpdatesEnabled);
+      invariant(!this._rssiUpdatePending);
 
       this._rssiTimeout = null;
       this._rssiUpdatePending = true;
@@ -243,6 +247,23 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     return super.end(chunkOrEncodingOrCallback, encodingOrCallback, callback);
   }
 
+  sendAuthFailure(): void {
+    log.debug(`sendAuthFailure`);
+
+    invariant(this._accountDeviceNumber > 0);
+
+    const stream = this._msgpackStream;
+    this._msgpackStream = null;
+
+    if (stream) {
+      stream.write({
+        name: `unauthorized`,
+        accountDeviceNumber: this._accountDeviceNumber,
+      });
+      stream.end();
+    }
+  }
+
   get connected(): boolean {
     return !this._ending && !this._ended;
   }
@@ -264,8 +285,8 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     this._rssiUpdatesEnabled = val;
 
     if (this.rssiUpdatesEnabled) {
-      assert(this._peripheral);
-      assert(!this._rssiTimeout);
+      invariant(this._peripheral);
+      invariant(!this._rssiTimeout);
       if (!this._rssiUpdatePending) {
         this._updateRssiAfterDelay();
       }

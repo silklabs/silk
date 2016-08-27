@@ -26,6 +26,7 @@ export type RegisteredDevice = {
   publicKey: string;
   accountDeviceNumber: number;
   name: string;
+  type: string;
   rtc: {
     connecting: boolean,
     peer: ?Peer,
@@ -57,7 +58,8 @@ export type DevicesState = {
     secret: ?DeviceSecret;
     config: ?DeviceConfig;
     serverRegistrationResult: ?RegisterConfiguringDeviceResult;
-    status: ?DeviceStatus;
+    wifiStatus: ?DeviceStatus;
+    serverStatus: ?DeviceStatus;
     error: ?Error;
     registered: boolean;
   };
@@ -132,6 +134,9 @@ function DEVICE_REGISTERED_FETCH(
   const {devices} = action.payload;
   const registered = new Map();
   devices.forEach((serverRecord) => {
+    if (!serverRecord.registered) {
+      return;
+    }
     let device = null;
     if (state.registered) {
       device = state.registered.get(serverRecord.deviceId);
@@ -317,6 +322,24 @@ function DEVICE_BLE_DISCONNECTED(
   };
 }
 
+function DEVICE_BLE_ERROR(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_BLE_ERROR', DeviceSession>
+): DevicesState {
+  const session = action.payload;
+  const {configuring} = state;
+  if (!configuring || configuring.socketId !== session.socketId) {
+    return state;
+  }
+  return {
+    ...state,
+    configuring: {
+      ...configuring,
+      error: session.error,
+    },
+  };
+}
+
 // Device configuration
 
 function DEVICE_CONFIG_ACCEPT(
@@ -327,6 +350,7 @@ function DEVICE_CONFIG_ACCEPT(
   const session = action.payload;
   invariant(!state.configuring);
   invariant(!session.isRegistered);
+  invariant(session.model);
   return {
     ...state,
     configuring: {
@@ -335,7 +359,8 @@ function DEVICE_CONFIG_ACCEPT(
       secret: null,
       config: null,
       serverRegistrationResult: null,
-      status: null,
+      wifiStatus: null,
+      serverStatus: null,
       error: null,
       registered: false,
     },
@@ -436,9 +461,9 @@ function DEVICE_CONFIG_SENDCONFIG(
   return state;
 }
 
-function DEVICE_CONFIG_STATUSUPDATED(
+function DEVICE_CONFIG_CONNECTIONSTATUS(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIG_STATUSUPDATED', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIG_CONNECTIONSTATUS', DeviceSession>
 ): DevicesState {
   const session = action.payload;
   const {configuring} = state;
@@ -451,11 +476,14 @@ function DEVICE_CONFIG_STATUSUPDATED(
 
   invariant(configuring.socketId === session.socketId);
 
+  const {wifiStatus, serverStatus} = session;
+
   return {
     ...state,
     configuring: {
       ...configuring,
-      status: session.status,
+      wifiStatus,
+      serverStatus,
     },
   };
 }
@@ -486,24 +514,6 @@ function DEVICE_CONFIG_REGISTERED(
   };
 }
 
-function DEVICE_CONFIG_ERROR(
-  state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIG_ERROR', DeviceSession>
-): DevicesState {
-  const session = action.payload;
-  const {configuring} = state;
-  if (!configuring || configuring.socketId === session.socketId) {
-    return state;
-  }
-  return {
-    ...state,
-    configuring: {
-      ...configuring,
-      error: session.error,
-    },
-  };
-}
-
 function DEVICE_CONFIG_FINISH(
   state: DevicesState,
   action: SimpleAction<'DEVICE_CONFIG_FINISH', void>
@@ -512,14 +522,15 @@ function DEVICE_CONFIG_FINISH(
   invariant(configuring);
   invariant(configuring.registered || configuring.error);
 
-  let {unconfigured} = state;
-  invariant(unconfigured.has(configuring.socketId));
   if (configuring.error) {
     return {
       ...state,
       configuring: null,
     };
   }
+
+  let {unconfigured} = state;
+  invariant(unconfigured.has(configuring.socketId));
 
   const session = unconfigured.get(configuring.socketId);
   invariant(session);
@@ -530,6 +541,10 @@ function DEVICE_CONFIG_FINISH(
   invariant(configuring.secret);
   invariant(configuring.serverRegistrationResult);
 
+  const {name, type} = configuring.serverRegistrationResult;
+  invariant(name);
+  invariant(type);
+
   const accountDeviceNumber = session.accountDeviceNumber;
   invariant(accountDeviceNumber);
 
@@ -538,7 +553,8 @@ function DEVICE_CONFIG_FINISH(
   registered.set(deviceId, {
     deviceId,
     publicKey: deviceId,
-    name: configuring.serverRegistrationResult.name,
+    name,
+    type,
     accountDeviceNumber,
     ...registeredDeviceTemplate,
     ble: {
@@ -660,6 +676,7 @@ export const reducer = handleActions({
   DEVICE_BLE_DISCONNECT,
   DEVICE_BLE_CONNECTED,
   DEVICE_BLE_DISCONNECTED,
+  DEVICE_BLE_ERROR,
   DEVICE_CONFIG_ACCEPT,
   DEVICE_CONFIG_DECLINE: DEVICE_BLE_DISCONNECTED,
   DEVICE_CONFIG_ABORT,
@@ -667,9 +684,8 @@ export const reducer = handleActions({
   DEVICE_CONFIG_SETCONFIG,
   DEVICE_CONFIG_REGISTERSERVER,
   DEVICE_CONFIG_SENDCONFIG,
-  DEVICE_CONFIG_STATUSUPDATED,
+  DEVICE_CONFIG_CONNECTIONSTATUS,
   DEVICE_CONFIG_REGISTERED,
-  DEVICE_CONFIG_ERROR,
   DEVICE_CONFIG_FINISH,
   DEVICE_RTC_SIGNAL,
   DEVICE_RTC_CONNECTIONCLOSED,

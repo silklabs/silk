@@ -300,9 +300,9 @@ class BluetoothLEChild {
               }
               return;
             } catch (err) {
+              log.warn(`Failed to change mode to '${mode}', retrying`, err);
               error = err;
             }
-            log.warn(`Failed to change mode to '${mode}', retrying`, error);
           }
 
           invariant(error);
@@ -327,7 +327,7 @@ class BluetoothLEChild {
   }
 
   async _changeMode(mode: BluetoothMode): Promise<void> {
-    log.debug(`_changeMode`, mode);
+    log.debug(`_changeMode: ${this._mode} -> ${mode}`);
 
     if (this._mode === mode) {
       return;
@@ -478,7 +478,7 @@ class BluetoothLEChild {
       log.debug(`Setting services`);
       const callback = error => error ? reject(error) : resolve();
       bleno.setServices([service], callback);
-    }).then(() => {
+    }).then(() => new Promise((resolve, reject) => {
       log.debug(`Starting advertising`);
 
       const advertisingInfo = this._advertisingInfo;
@@ -517,26 +517,29 @@ class BluetoothLEChild {
         service.uuid,
       ].join(` `);
 
-      return new Promise((resolve, reject) => {
-        this._bledroid.once(`advertisingStart`, (status) => {
-          if (status) {
-            const message = `Failed to start advertising, status ${status}`;
-            reject(new Error(message));
-          } else {
-            resolve();
-          }
-        });
-        this._bledroid.command(command);
+      this._bledroid.once(`advertisingStart`, (status) => {
+        log.debug(`advertisingStart`, status);
+        if (status) {
+          const message = `Failed to start advertising, status ${status}`;
+          reject(new Error(message));
+        } else {
+          resolve();
+        }
       });
-    });
+      this._bledroid.command(command);
+    }));
 
     try {
       await Promise.race([
         bledroidCrash.promise,
         promise,
       ]);
+      log.debug(`Started service and advertising`);
       service.addListener(`connect`, this._onConnect);
       this._socketService = service;
+    } catch (error) {
+      log.warn(`Failed to start advertising`, error);
+      throw error;
     } finally {
       this._bledroidCrashDeferred = null;
     }
@@ -600,6 +603,7 @@ class BluetoothLEChild {
 
     const promise = new Promise((resolve) => {
       this._bledroid.once(`beaconStart`, (status) => {
+        log.debug(`beaconStart`, status);
         if (status) {
           log.warn(`Failed to start beacon, status ${status}`);
         }
@@ -613,7 +617,11 @@ class BluetoothLEChild {
         bledroidCrash.promise,
         promise,
       ]);
+      log.debug(`Started beacon`);
       this._beaconActive = true;
+    } catch (error) {
+      log.warn(`Failed to start beacon`, error);
+      throw error;
     } finally {
       this._bledroidCrashDeferred = null;
     }
@@ -628,6 +636,7 @@ class BluetoothLEChild {
 
     const promise = new Promise((resolve) => {
       this._bledroid.once(`beaconStop`, (status) => {
+        log.debug(`beaconStop`, status);
         if (status) {
           log.warn(`Failed to stop beacon, status = ${status}`);
         }
@@ -646,7 +655,11 @@ class BluetoothLEChild {
         bledroidCrash.promise,
         promise,
       ]);
+      log.debug(`Stopped beaconing`);
       this._beaconActive = false;
+    } catch (error) {
+      log.warn(`Failed to stop beacon`, error);
+      throw error;
     } finally {
       this._bledroidCrashDeferred = null;
     }
@@ -700,7 +713,7 @@ class BluetoothLEChild {
     const crashDeferred = this._bledroidCrashDeferred;
     this._bledroidCrashDeferred = null;
     if (crashDeferred) {
-      crashDeferred.reject();
+      crashDeferred.reject(new Error(`Bledroid crashed`));
     }
 
     // Make sure that we restart in the correct mode. If the current mode does
@@ -744,11 +757,15 @@ class BluetoothLEChild {
       this._nextSocketSessionId = 0;
     }
 
+    invariant(this._advertisingInfo);
+    const accountDeviceNumber = this._advertisingInfo.id;
+
     const session = new ChildSocketSession(
       stream,
       peripheral,
       this._privateKey,
       this._publicKeys,
+      accountDeviceNumber,
     );
     const socket = net.connect(this._serverPath);
 
@@ -915,6 +932,9 @@ class BluetoothLEChild {
 
     switch (message.name) {
     case `allowUnauthenticated`: {
+      if (!message.allow) {
+        session.sendAuthFailure();
+      }
       session.allowUnauthenticated(message.allow);
       break;
     }

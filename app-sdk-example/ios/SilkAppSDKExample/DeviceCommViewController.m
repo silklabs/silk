@@ -32,8 +32,8 @@
 }
 
 - (void) updateView {
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSString *deviceId = deviceStatus[@"deviceId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
   NSString *status = [appState getStatus];
   NSArray* messages = [appState getMessagesFromDeviceId:deviceId];
   
@@ -52,8 +52,8 @@
 
 - (IBAction)onSendEchoPress:(id)sender {
   NSString *msgType = @"DEVICE_MESSAGE";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSString *deviceId = deviceStatus[@"deviceId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
   NSDictionary* echoMessage = @{@"command": @"echo", @"payload": @{@"message": @"Love the app"}};
   
   // TODO: postMessage can't handle a dictionary, so manually create a json string :(

@@ -97,23 +97,22 @@
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-  NSArray *devicesList = [appState getDevicesArray];
-
   NSString *SimpleIdentifier = @"SimpleIdentifier";
-  
   UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:SimpleIdentifier];
   
   if (cell == nil) {
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:SimpleIdentifier];
   }
 
-  NSDictionary *deviceStatus = [devicesList objectAtIndex: indexPath.row];
-  NSString *deviceConfigStatus = deviceStatus[@"deviceConfigStatus"];
+  NSArray *devicesList = [appState getDevicesArray];
+  NSString *deviceKey = [devicesList objectAtIndex: indexPath.row];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:deviceKey];
+  NSString *deviceConfigStatus = deviceInfo[@"deviceConfigStatus"];
     
   if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
-    cell.textLabel.text = deviceStatus[@"deviceId"];
+    cell.textLabel.text = deviceInfo[@"deviceId"];
   } else {
-    cell.textLabel.text = [NSString stringWithFormat:@"Unconfigured device %@",  deviceStatus[@"deviceConfigId"]];
+    cell.textLabel.text = [NSString stringWithFormat:@"Unconfigured device %@",  deviceInfo[@"deviceConfigId"]];
   }
   return cell;
 }
@@ -128,9 +127,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
   NSArray *devicesList = [appState getDevicesArray];
-  NSDictionary *deviceStatus = [devicesList objectAtIndex: indexPath.row];
-
-  selectedDeviceKey = [appState getDeviceKeyFromDeviceStatus:deviceStatus];
+  selectedDeviceKey = [devicesList objectAtIndex: indexPath.row];
 
   // Deselect device entry and go to details view
   [tableView deselectRowAtIndexPath:indexPath animated:false];

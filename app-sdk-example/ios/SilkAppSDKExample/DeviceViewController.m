@@ -33,7 +33,6 @@
 }
 
 - (NSString*) formatStatus: (NSString*) status andError: (NSString*) error {
-  status = ![status isKindOfClass:[NSString class]] ? @"<NULL>" : status;
   error = ![error isKindOfClass:[NSString class]] ? @"" : error;
   
   if ([error length] == 0) {
@@ -44,36 +43,25 @@
 }
 
 - (void) updateView {
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
   
   NSString *status = [appState getStatus];
-  NSString *deviceType = deviceStatus[@"deviceType"];
-  NSString *deviceId = deviceStatus[@"deviceId"];
-  NSNumber *deviceConfigId = deviceStatus[@"deviceConfigId"];
-  NSString *deviceConfigStatus = deviceStatus[@"deviceConfigStatus"];
+  NSString *deviceConfigStatus = deviceInfo[@"deviceConfigStatus"];
   
-  NSNumber *bleConnectionRequested = deviceStatus[@"bleConnectionRequested"];
-  NSNumber *accountDeviceNumber = deviceStatus[@"accountDeviceNumber"];
+  NSMutableString *text = [[NSMutableString alloc] init];
   
-  NSString *wifiConnectionStatus = deviceStatus[@"wifiConnectionStatus"];
-  NSString *wifiConnectionError = deviceStatus[@"wifiConnectionError"];
-  NSString *serverConnectionStatus = deviceStatus[@"serverConnectionStatus"];
-  NSString *serverConnectionError = deviceStatus[@"serverConnectionError"];
-  NSString *bleConnectionStatus = deviceStatus[@"bleConnectionStatus"];
-  NSString *bleConnectionError = deviceStatus[@"bleConnectionError"];
-  NSString *rtcConnectionStatus = deviceStatus[@"rtcConnectionStatus"];
-  NSString *rtcConnectionError = deviceStatus[@"rtcConnectionError"];
-
-  deviceId = ![deviceId isKindOfClass:[NSString class]] ? @"<NULL>" : deviceId;
-  NSString *deviceConfigIdString = ![deviceConfigId isKindOfClass:[NSNumber class]] ? @"<NULL>" : [deviceConfigId stringValue];
-  
-  NSString* bleConnectionRequestedString = ![bleConnectionRequested isKindOfClass:[NSNumber class]] ? @"<NULL>" : [NSString stringWithFormat:@"%@", [bleConnectionRequested intValue] != 0 ? @"true" : @"false"];
-  NSString* accountDeviceNumberString = ![accountDeviceNumber isKindOfClass:[NSNumber class]] ? @"<NULL>" : [accountDeviceNumber stringValue];
-  
-  wifiConnectionStatus = [self formatStatus:wifiConnectionStatus andError:wifiConnectionError];
-  serverConnectionStatus = [self formatStatus:serverConnectionStatus andError:serverConnectionError];
-  bleConnectionStatus = [self formatStatus:bleConnectionStatus andError:bleConnectionError];
-  rtcConnectionStatus = [self formatStatus:rtcConnectionStatus andError:rtcConnectionError];
+  [text appendFormat:@"deviceType:\t%@", deviceInfo[@"deviceType"]];
+  [text appendFormat:@"\ndeviceId:\t\t%@", deviceInfo[@"deviceId"]];
+  [text appendFormat:@"\nacctDevNum:\t%@", deviceInfo[@"accountDeviceNumber"]];
+  [text appendFormat:@"\nconfigId:\t\t%@", deviceInfo[@"deviceConfigId"]];
+  [text appendFormat:@"\nconfigStatus:\t%@", deviceInfo[@"deviceConfigStatus"]];
+  [text appendFormat:@"\nserver:\t\t%@", deviceInfo[@"serverConnectionStatus"]];
+  [text appendFormat:@"\nbleConn:\t\t%@", [self formatStatus:deviceInfo[@"bleConnectionStatus"] andError:deviceInfo[@"bleConnectionError"]]];
+  [text appendFormat:@"\nwifiConn:\t\t%@", [self formatStatus:deviceInfo[@"wifiStatus"] andError:deviceInfo[@"wifiError"]]];
+  [text appendFormat:@"\nserverConn:\t%@", [self formatStatus:deviceInfo[@"serverStatus"] andError:deviceInfo[@"serverError"]]];
+  [text appendFormat:@"\nrtcConn:\t\t%@", [self formatStatus:deviceInfo[@"rtcConnectionStatus"] andError:deviceInfo[@"rtcConnectionError"]]];
+  [text appendFormat:@"\nwifi:\t\t\t%@ (%@)", deviceInfo[@"wifiSSID"], deviceInfo[@"wifiLevel"]];
+  [text appendFormat:@"\nupdate:\t\t%@ - %@ sec remaining (%@)", deviceInfo[@"updateState"], deviceInfo[@"updateDownloadRemainingSec"], deviceInfo[@"updateError"]];
   
   // Buttons/actions change depending on device configuration state
   NSString *buttonAText = @"Accept";
@@ -90,12 +78,19 @@
     buttonAText = @"Connect";
     buttonBText = @"Get Wifi";
     buttonCText = @"Config";
-    buttonDText = @"Disconnect";
+    buttonDText = @"Get Info";
     
     selectorA = @selector(onBLEConnectPress:);
     selectorB = @selector(onGetWifiPress:);
     selectorC = @selector(onSetWifiPress:);
-    selectorD = @selector(onBLEDisconnectPress:);
+    selectorD = @selector(onGetWifiInfoPress:);
+
+    // Toggle BLE Connect/Disconnect based on if ble has been requested
+    NSNumber *bleRequested = deviceInfo[@"bleRequested"];
+    if ([bleRequested isEqual: @YES]) {
+      buttonAText = @"Disconnect";
+      selectorA = @selector(onBLEDisconnectPress:);
+    }
   }
   
   // Dispatch to main thread for snappy UI updates
@@ -117,18 +112,12 @@
     [self.buttonD addTarget:self action:selectorD forControlEvents:UIControlEventTouchUpInside];
 
     self.statusText.text = status;
-    self.deviceTypeText.text = deviceType;
-    self.deviceIdText.text = deviceId;
-    self.deviceConfigIdText.text = deviceConfigIdString;
-    self.deviceConfigStatusText.text = deviceConfigStatus;
-    
-    self.bleConnectionRequestedText.text = bleConnectionRequestedString;
-    self.accountDeviceNumberText.text = accountDeviceNumberString;
-    
-    self.wifiConnectionStatusText.text = wifiConnectionStatus;
-    self.serverConnectionStatusText.text = serverConnectionStatus;
-    self.bleConnectionStatusText.text = bleConnectionStatus;
-    self.rtcConnectionStatusText.text = rtcConnectionStatus;
+    self.deviceDetailsText.text = text;
+
+    // All of this is to make it scroll horizontally, it's hacky :(
+    float width = ceil([text sizeWithAttributes:@{NSFontAttributeName: self.deviceDetailsText.font}].width) + 20;
+    self.deviceDetailsText.frame = CGRectMake(self.deviceDetailsText.frame.origin.x, self.deviceDetailsText.frame.origin.y, width, self.deviceDetailsText.frame.size.height);
+    self.deviceDetailsScrollView.contentSize = CGSizeMake( width, self.deviceDetailsScrollView.frame.size.height);
 
     [self.wifiNetworkTableView reloadData];
   });
@@ -153,8 +142,8 @@
  */
 - (IBAction)onAcceptPress:(id)sender {
   NSString *msgType = @"DEVICE_CONFIG_ACCEPT";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSNumber *deviceConfigId = deviceStatus[@"deviceConfigId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSNumber *deviceConfigId = deviceInfo[@"deviceConfigId"];
   
   NSLog(@"DeviceViewController: send %@ %@", msgType, deviceConfigId);
   [silkService postMessage:@{@"type": msgType, @"deviceConfigId": deviceConfigId}];
@@ -167,8 +156,8 @@
   NSString *deviceName = @"DummyName";
   NSString *wifiSSID = selectedWifiSSID;
   NSString *wifiPassword = self.passwordText.text;
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSNumber *deviceConfigId = deviceStatus[@"deviceConfigId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSNumber *deviceConfigId = deviceInfo[@"deviceConfigId"];
   
   NSLog(@"DeviceViewController: send %@ %@ %@ %@ %@", msgType, deviceConfigId, deviceName, wifiSSID, wifiPassword);
   [silkService postMessage:@{@"type": msgType, @"deviceConfigId": deviceConfigId,
@@ -179,8 +168,8 @@
 
 - (IBAction)onDeclinePress:(id)sender {
   NSString *msgType = @"DEVICE_CONFIG_DECLINE";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSNumber *deviceConfigId = deviceStatus[@"deviceConfigId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSNumber *deviceConfigId = deviceInfo[@"deviceConfigId"];
   
   NSLog(@"DeviceViewController: send %@ %@", msgType, deviceConfigId);
   [silkService postMessage:@{@"type": msgType, @"deviceConfigId": deviceConfigId}];
@@ -190,8 +179,8 @@
 
 - (IBAction)onAbortPress:(id)sender {
   NSString *msgType = @"DEVICE_CONFIG_ABORT";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSNumber *deviceConfigId = deviceStatus[@"deviceConfigId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSNumber *deviceConfigId = deviceInfo[@"deviceConfigId"];
   
   NSLog(@"DeviceViewController: send %@ %@", msgType, deviceConfigId);
   [silkService postMessage:@{@"type": msgType, @"deviceConfigId": deviceConfigId}];
@@ -205,23 +194,41 @@
 
 - (IBAction)onBLEConnectPress:(id)sender {
   NSString *msgType = @"DEVICE_BLE_CONNECT";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSString *deviceId = deviceStatus[@"deviceId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
+  
+  // Wifi list was not valid since there was no ble connection
+  [self clearWifiList];
   
   NSLog(@"DeviceViewController: send %@ %@", msgType, deviceId);
   [silkService postMessage:@{@"type": msgType, @"deviceId": deviceId}];
+  [appState updateBleRequested:@YES forDeviceKey:self.deviceKey];
 
   [appState updateStatus:@"Sent BLE_CONNECT"];
 }
 
+- (IBAction)onBLEDisconnectPress:(id)sender {
+  NSString *msgType = @"DEVICE_BLE_DISCONNECT";
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
+  
+  // Disconnecting, so wifi list is invalid
+  [self clearWifiList];
+
+  NSLog(@"DeviceViewController: send %@ %@", msgType, deviceId);
+  [silkService postMessage:@{@"type": msgType, @"deviceId": deviceId}];
+  [appState updateBleRequested:@NO forDeviceKey:self.deviceKey];
+  
+  [appState updateStatus:@"Sent BLE_DISCONNECT"];
+}
+
 - (IBAction)onGetWifiPress:(id)sender {
   NSString *msgType = @"DEVICE_WIFI_LIST";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSString *deviceId = deviceStatus[@"deviceId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
 
   // Clear current Wifi list in UI before asking for a new one
-  NSArray* emptyWifiNetworks = [[NSArray alloc] init];
-  [appState updateWifiNetworks:emptyWifiNetworks forDeviceKey:deviceId];
+  [self clearWifiList];
   
   NSLog(@"DeviceViewController: send %@ %@", msgType, deviceId);
   [silkService postMessage:@{@"type": msgType, @"deviceId": deviceId}];
@@ -232,8 +239,8 @@
 - (IBAction)onSetWifiPress:(id)sender {
   
   NSString *msgType = @"DEVICE_WIFI_SET";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSString *deviceId = deviceStatus[@"deviceId"];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
   NSString *accessPoint = selectedWifiSSID;
   NSString *password = self.passwordText.text;
   
@@ -245,29 +252,50 @@
   [appState updateStatus:@"Sent WIFI_SET"];
 }
 
-- (IBAction)onBLEDisconnectPress:(id)sender {
-  NSString *msgType = @"DEVICE_BLE_DISCONNECT";
-  NSDictionary *deviceStatus = [appState getDeviceStatusFromDeviceKey:self.deviceKey];
-  NSString *deviceId = deviceStatus[@"deviceId"];
+- (IBAction)onGetWifiInfoPress:(id)sender {
+  
+  NSString *msgType = @"DEVICE_WIFI_GETINFO";
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
   
   NSLog(@"DeviceViewController: send %@ %@", msgType, deviceId);
   [silkService postMessage:@{@"type": msgType, @"deviceId": deviceId}];
   
-  [appState updateStatus:@"Sent BLE_DISCONNECT"];
+  [appState updateStatus:@"Sent WIFI_GETINFO"];
 }
 
 /**
  * Wifi network table related functions
  */
 
+-(NSString*) getWifiKey {
+  // Wifi network info uses different keys depending on if the device is configured.
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceConfigStatus = deviceInfo[@"deviceConfigStatus"];
+  NSString *wifiKey;
+  
+  if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
+    wifiKey = deviceInfo[@"deviceId"];
+  } else {
+    wifiKey = [deviceInfo[@"deviceConfigId"] stringValue];
+  }
+  return wifiKey;
+}
+
+-(NSArray*) getWifiNetworks {
+  return [appState getWifiNetworksFromDeviceKey:[self getWifiKey]];
+}
+
+-(void) clearWifiList {
+  NSArray* emptyWifiNetworks = [[NSArray alloc] init];
+  [appState updateWifiNetworks:emptyWifiNetworks forDeviceKey:[self getWifiKey]];
+}
+
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-  NSArray *wifiNetworks = [appState getWifiNetworksFromDeviceKey:self.deviceKey];
-  return [wifiNetworks count];
+  return [[self getWifiNetworks] count];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-  NSArray *wifiNetworks = [appState getWifiNetworksFromDeviceKey:self.deviceKey];
-  
   NSString *SimpleIdentifier = @"SimpleIdentifier";
   UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:SimpleIdentifier];
   
@@ -277,7 +305,7 @@
   
   NSString *ssid = @"";
   NSNumber *rssi = 0;
-  NSDictionary *wifiNetwork = [wifiNetworks objectAtIndex: indexPath.row];
+  NSDictionary *wifiNetwork = [[self getWifiNetworks] objectAtIndex: indexPath.row];
   if (wifiNetwork != nil) {
     ssid = wifiNetwork[@"ssid"];
     rssi = wifiNetwork[@"level"];

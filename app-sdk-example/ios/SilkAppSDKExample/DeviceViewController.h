@@ -10,18 +10,8 @@
 
 @property (nonatomic) NSString *deviceKey;
 @property (weak, nonatomic) IBOutlet UILabel *statusText;
-@property (weak, nonatomic) IBOutlet UILabel *deviceTypeText;
-@property (weak, nonatomic) IBOutlet UILabel *deviceIdText;
-@property (weak, nonatomic) IBOutlet UILabel *deviceConfigIdText;
-
-@property (weak, nonatomic) IBOutlet UILabel *deviceConfigStatusText;
-@property (weak, nonatomic) IBOutlet UILabel *bleConnectionRequestedText;
-@property (weak, nonatomic) IBOutlet UILabel *accountDeviceNumberText;
-
-@property (weak, nonatomic) IBOutlet UILabel *bleConnectionStatusText;
-@property (weak, nonatomic) IBOutlet UILabel *wifiConnectionStatusText;
-@property (weak, nonatomic) IBOutlet UILabel *serverConnectionStatusText;
-@property (weak, nonatomic) IBOutlet UILabel *rtcConnectionStatusText;
+@property (weak, nonatomic) IBOutlet UIScrollView *deviceDetailsScrollView;
+@property (weak, nonatomic) IBOutlet UITextView *deviceDetailsText;
 
 @property (weak, nonatomic) IBOutlet UITextField *passwordText;
 

@@ -19,7 +19,7 @@
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-  
+
   // Initilize the global App state
   appState = [AppState getInstance];
   
@@ -69,6 +69,18 @@
     // Device list/status has changed
     NSArray *devices = message[@"devices"];
     [appState updateDevices:devices];
+
+  } else if ([messageType isEqualToString: @"DEVICE_STATUS"]) {
+    // Device status has changed
+    [appState updateDeviceStatus:message];
+
+  } else if ([messageType isEqualToString: @"DEVICE_UPDATE_STATUS"]) {
+    // Device update status has changed
+    [appState updateUpdateStatus:message];
+
+  } else if ([messageType isEqualToString: @"DEVICE_CONNECTION_DETAILS"]) {
+    // Device connection details has changed
+    [appState updateConnectionDetails:message];
 
   } else if ([messageType isEqualToString: @"DEVICE_CONFIG_WIFI_NETWORKS"]) {
     // Received updated Wifi network info for a specific device

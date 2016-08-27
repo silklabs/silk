@@ -65,12 +65,13 @@ const UPDATE_ENABLED_PROP = 'persist.silk.update.enabled';
 const UPDATE_FILE_PATH = '/data/update.zip';
 
 const SYSTEM_VERIFIED = util.getboolprop('partition.system.verified');
-const BOARD = util.getprop('persist.silk.build.board',
-                           util.getprop('ro.silk.build.board'));
-const PRODUCT = util.getprop('ro.silk.build.product');
-const VARIANT = util.getprop('ro.build.type');
 const MANIFEST_URL_TEMPLATE = util.getprop(MANIFEST_URL_PROP);
-const CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
+const OTA_BOARD = util.getprop('persist.silk.build.board',
+                               util.getprop('ro.silk.build.board'));
+const OTA_PRODUCT = util.getprop('ro.silk.build.product');
+const OTA_VARIANT = util.getprop('ro.build.type');
+const OTA_CHANNEL = util.getprop(CHANNEL_PROP, silkCoreVersion.branch);
+const OTA_NAME = `${OTA_BOARD}-${OTA_PRODUCT}-${OTA_CHANNEL}-${OTA_VARIANT}`;
 const POLL_HOURS = util.getprop(POLL_HOURS_PROP);
 const AB_UPDATE = util.getboolprop('ro.silk.update.ab', false);
 const PREVENT_REBOOT = util.getboolprop(PREVENT_REBOOT_PROP);
@@ -401,10 +402,9 @@ function validateManifest(result) {
 
   log.debug(`Update manifest`, result.body);
 
-  const key = `${BOARD}-${PRODUCT}-${CHANNEL}-${VARIANT}`;
-  let deviceMetadata = result.body[key]; // Unsanitized server response
+  let deviceMetadata = result.body[OTA_NAME]; // Unsanitized server response
   if (!deviceMetadata) {
-    log.info(`Update server responded with nothing available for "${key}" ` +
+    log.info(`Update server responded with nothing available for "${OTA_NAME}" ` +
              'device');
     return Promise.reject();
   }
@@ -731,10 +731,11 @@ function poll(runImmediately) {
 }
 
 function _expandManifestUrlVars() {
-  manifestURL = MANIFEST_URL_TEMPLATE.replace('{channel}', CHANNEL);
-  manifestURL = manifestURL.replace('{board}', BOARD);
-  manifestURL = manifestURL.replace('{product}', PRODUCT);
-  manifestURL = manifestURL.replace('{variant}', VARIANT);
+  manifestURL = MANIFEST_URL_TEMPLATE.replace('{channel}', OTA_CHANNEL);
+  manifestURL = manifestURL.replace('{board}', OTA_BOARD);
+  manifestURL = manifestURL.replace('{product}', OTA_PRODUCT);
+  manifestURL = manifestURL.replace('{variant}', OTA_VARIANT);
+  manifestURL = manifestURL.replace('{otaname}', OTA_NAME);
   manifestURL = manifestURL.replace('{version}', silkBspVersion.sha);
 }
 

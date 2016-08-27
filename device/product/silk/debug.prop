@@ -1,7 +1,7 @@
 # Properties only for debug builds
 persist.logd.size=16M
 persist.silk.kws.upload=true
-ro.silk.update.manifest_url=http://update.silklabs.com/ota-internal/{board}-{product}-{channel}-{variant}.json?version={version}
+ro.silk.update.manifest_url=http://update.silklabs.com/ota-internal/{name}.json?v={version}
 ro.silk.update.poll_hours=1
 
 # Add default IP address for eth0 (disabled by default)

@@ -1,6 +1,6 @@
 persist.silk.extensions=*
 persist.silk.main=silk-device-core
 persist.silk.capture.mute=true
-ro.silk.update.manifest_url=http://update.silklabs.com/ota/{board}-{product}-{channel}-{variant}.json?version={version}
+ro.silk.update.manifest_url=http://update.silklabs.com/ota/{name}.json?v={version}
 ro.silk.update.poll_hours=24
 ro.silk.node.sysprop.netinfo=true

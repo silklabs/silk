@@ -53,6 +53,7 @@ RUN ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key
 
 RUN addgroup silk
 RUN adduser -ingroup silk --gecos "" --disabled-password silk
+COPY sudoers_silk /etc/sudoers.d/silk
 
 USER silk
 RUN ccache -M 6GB

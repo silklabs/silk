@@ -63,6 +63,9 @@ RUN cp /home/silk/.ssh/id_rsa.pub /home/silk/.ssh/authorized_keys
 # add localhost to silk's list of known_hosts files without need ssh login
 RUN ssh-keyscan -H localhost >> ~/.ssh/known_hosts
 
+# add github to the list of know hosts
+RUN ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
 # Setup git
 RUN git config --global user.email "silkysmooth@example.com"
 RUN git config --global user.name "Silky Smooth"

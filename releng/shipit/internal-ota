@@ -40,6 +40,14 @@ for BUILD in $BUILDS; do
     prevprev_target_files.zip
 
   mkdir -p ota_dist
+  
+  wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/last || true
+  LATEST_SHA1=$(cat sha1)
+  if [[ -z $LATEST_SHA1 ]]; then
+    echo No build available for $BRANCH/$BUILD
+    continue
+  fi
+  echo Latest build for $BRANCH/$BUILD is $LATEST_SHA1
 
   # OTA manifest header
   ota_manifest=ota_dist/${BUILD}.json
@@ -71,13 +79,6 @@ for BUILD in $BUILDS; do
   #
   # Full OTA .zip
   #
-  wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/last || true
-  LATEST_SHA1=$(cat sha1)
-  if [[ -z $LATEST_SHA1 ]]; then
-    echo No build available for $BRANCH/$BUILD
-    continue
-  fi
-  echo Latest build for $BRANCH/$BUILD is $LATEST_SHA1
   wget -O latest_target_files.zip $BUILD_URL_PREFIX/$BRANCH/$BUILD/$LATEST_SHA1/target_files.zip
   (
     set -x

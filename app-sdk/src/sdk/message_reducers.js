@@ -288,9 +288,14 @@ function DEVICE_BLE_DISCONNECTED(
   const oldUpdates = updates;
 
   if (session.isRegistered) {
-    const {deviceId} = session;
-    invariant(deviceId);
+    const {deviceId, accountDeviceNumber} = session;
+    invariant(deviceId !== null || accountDeviceNumber !== null);
     let index = devices.findIndex((device) => device.deviceId === deviceId);
+    if (index === -1) {
+      index = devices.findIndex(
+        (device) => device.accountDeviceNumber === session.accountDeviceNumber
+      );
+    }
     if (index !== -1) {
       devices = devices.slice();
       devices[index] = {

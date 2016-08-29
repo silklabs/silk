@@ -66,7 +66,15 @@
             android:paddingLeft="10dp"
             android:layout_marginTop="10dp" />
 
-        <Button
+        <com.google.android.gms.common.SignInButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/googlelogin"
+            android:id="@+id/googleLoginButton"
+            android:layout_below="@+id/loginButton"
+            android:layout_alignParentLeft="true" />
+
+    <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/logout"
@@ -80,7 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/deviceList"
-            android:layout_below="@+id/loginButton"
+            android:layout_below="@+id/googleLoginButton"
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="true"
             android:spinnerMode="dialog"

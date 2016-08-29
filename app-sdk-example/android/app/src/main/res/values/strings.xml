@@ -2,10 +2,10 @@
     <string name="app_name">Silk App SDK Example</string>
     <string name="blob_provider_authority">com.silklabs.appsdk.example.blobs</string>
     <string name="network_status">Network Status:</string>
-    <string name="email">email</string>
-    <string name="password">password</string>
+    <string name="email">Silk email</string>
+    <string name="password">Silk password</string>
     <string name="wifi_password">Enter Wi-Fi password</string>
-    <string name="login">Login</string>
+    <string name="login">Login Silk</string>
     <string name="logout">Logout</string>
     <string name="send_echo_message">Send echo</string>
     <string name="configure">configure</string>
@@ -15,4 +15,7 @@
     <string name="save">save</string>
     <string name="device_status">Device Status:</string>
     <string name="proximity_message">Move phone close to device</string>
+    <string name="googlelogin">Login google</string>
+    <string name="signed_in_fmt">Signed in as: %s</string>
+    <string name="server_client_id">797108770604-m1jnq3atgub93vf86lktspbqg8m3tcop.apps.googleusercontent.com</string>
 </resources>

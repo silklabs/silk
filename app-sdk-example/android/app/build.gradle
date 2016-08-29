@@ -68,6 +68,9 @@ apply from: "$sdkProjectDir/bundle.gradle"
 dependencies {
     compile fileTree(dir: "libs", include: ["*.jar"])
     compile "com.android.support:appcompat-v7:23.0.1"
+    compile 'com.google.android.gms:play-services-auth:9.4.0'
     releaseCompile project(path: ":silk-app-sdk", configuration: 'release')
     debugCompile project(path: ":silk-app-sdk", configuration: 'debug')
 }
+
+apply plugin: 'com.google.gms.google-services'

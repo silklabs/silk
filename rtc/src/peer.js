@@ -93,7 +93,7 @@ export default class Peer extends EventEmitter {
   _mediaStreamRequestRunning: bool = false;
   _requestRemoteMediaStreamLock: Lock<MediaStream> = new Lock();
 
-  async _processMediaRequestQueue() {
+  async _processMediaRequestQueue(): Promise<void> {
     // The control stream is always present here ...
     const control = this._control;
     invariant(control);
@@ -139,7 +139,7 @@ export default class Peer extends EventEmitter {
     }
   }
 
-  async _runMediaRequestQueue() {
+  async _runMediaRequestQueue(): Promise<void> {
     if (this._mediaStreamRequestRunning) {
       return;
     }
@@ -253,7 +253,10 @@ export default class Peer extends EventEmitter {
     });
   }
 
-  async _requestRemoteMediaStream(label: string, constraints: UserMediaConstraints) {
+  async _requestRemoteMediaStream(
+    label: string,
+    constraints: UserMediaConstraints
+  ): Promise<MediaStream> {
     if (this._mediaStreams.has(label)) {
       throw new Error(`Stream '${label}' already in progress`);
     }

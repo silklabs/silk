@@ -203,7 +203,7 @@ export default class CameraClipRecorder {
   /*
    * Loads a clip
    */
-  async load(name: string) {
+  async load(name: string): Promise<void> {
     const clipMetadataFile = path.join(CAMERA_CLIP_DIRECTORY, name + '.json');
     if (!await fs.exists(clipMetadataFile)) {
       log.warn('Clip metadata does not exist:', clipMetadataFile);
@@ -244,7 +244,7 @@ export default class CameraClipRecorder {
   /*
    * Saves the current clip
    */
-  async save(name: string) {
+  async save(name: string): Promise<void> {
     if (this.state.mode !== 'pause' && this.state.mode !== 'play') {
       this._onStateChange();
       return;

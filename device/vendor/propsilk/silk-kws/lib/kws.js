@@ -260,7 +260,7 @@ export default class KeywordSpotting extends EventEmitter {
   /**
    * @private
    */
-  async _init() {
+  async _init(): Promise<void> {
     this._netCaffe = new caffe.Model();
 
     // Load a DNN model
@@ -380,7 +380,7 @@ export default class KeywordSpotting extends EventEmitter {
    * samples we run caffe prediction on it to detect keyword.
    * @private
    */
-  async _processNextWindow() {
+  async _processNextWindow(): Promise<void> {
     assert(this._predicting);
     // Wait to collect enough samples before running keyword detection on it
     if (this._output.length < NUM_SAMPLES) {

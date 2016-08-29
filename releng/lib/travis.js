@@ -26,7 +26,7 @@ export type TravisBuildConfig = {
 };
 export type TravisBuildRequest = {
   message?: string;
-  branch?: string;
+  branch: string;
   config?: TravisBuildConfig;
 };
 export type TravisBuildResponse = {[key: string]: any};

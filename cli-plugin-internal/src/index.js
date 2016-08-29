@@ -276,6 +276,7 @@ async function getDeviceFromPrompt(
   getDeviceIdx();
 
   await eventToPromise(rl, 'close');
+  invariant(deviceToken);
   return deviceToken;
 }
 
@@ -332,7 +333,7 @@ export const removeAll = {
     Unregister all devices from account.
     |silk login| must have been ran previously.
   `,
-  main: async () => {
+  main: async (): Promise<void> => {
     console.log(`Removing all devices from server ...`);
 
     let account = createAccount();

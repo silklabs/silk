@@ -1,5 +1,9 @@
-// Trim a wav file and remove silence at the beginning and end.
-// node remove-silence.js input-file output-file
+/**
+ * Trim a wav file and remove silence at the beginning and end.
+ * node remove-silence.js input-file output-file
+ *
+ * @noflow
+ */
 
 'use strict';
 

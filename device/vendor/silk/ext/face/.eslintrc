@@ -2,5 +2,8 @@
   "extends": "eslint-config-silk",
   "env": {
     "mocha": true
+  },
+  "rules": {
+    "silk/flow": 0
   }
 }

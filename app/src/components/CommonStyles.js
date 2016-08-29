@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import {
   PixelRatio,
   StyleSheet,

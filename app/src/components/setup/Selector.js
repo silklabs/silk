@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
@@ -62,10 +66,10 @@ export default class Selector extends React.Component {
     maxHeight: null,
   };
 
-  _scrollViewInitialHeight = null;
-  _scrollViewHeight = null;
-  _contentsHeight = null;
-  _selectedRowY = null;
+  _scrollViewInitialHeight: ?number = null;
+  _scrollViewHeight: ?number = null;
+  _contentsHeight: ?number = null;
+  _selectedRowY: ?number = null;
 
   _onScrollViewLayout = (event) => {
     this._scrollViewHeight = event.nativeEvent.layout.height;

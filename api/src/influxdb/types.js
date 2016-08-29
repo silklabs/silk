@@ -1,5 +1,7 @@
 /**
  * See: https://influxdb.com/docs/v0.9/write_protocols/line.html
+ *
+ * @flow
  */
 
 export class Float {

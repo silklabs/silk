@@ -1,6 +1,8 @@
 /**
  * This is a small abstraction based on various other http schema tools it is
  * designed to be an early abstraction around some standard we stick to later.
+ *
+ * @noflow
  */
 
 import * as Joi from 'joi';

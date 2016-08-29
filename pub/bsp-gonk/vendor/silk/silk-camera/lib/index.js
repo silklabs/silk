@@ -16,6 +16,8 @@
  * camera.on('frame', (when, image) => {
  *   log.info('Received a frame at timestamp', when, '-', image);
  * });
+ *
+ * @noflow
  */
 
 import * as util from 'silk-sysutils';
@@ -67,7 +69,15 @@ export type CameraCallback = (err: boolean, image: any) => void;
  * rgb      - normal rgb                  (CameraFrameSize === 'normal')
  * lowgray  - lower res grayscale         (CameraFrameSize === 'low')
  */
-export type CameraFrameFormat = 'fullgray' | 'fullrgb' | 'highgray' | 'gray' | 'grayeq' | 'rgb' | 'lowgray';
+export type CameraFrameFormat =
+    'fullgray'
+  | 'fullrgb'
+  | 'highgray'
+  | 'gray'
+  | 'grayeq'
+  | 'rgb'
+  | 'lowgray'
+  ;
 
 /**
  * The available camera frame sizes:

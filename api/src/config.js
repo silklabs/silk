@@ -1,7 +1,7 @@
 /**
  * Provide defaults for our configurations.
  *
- * @no-flow
+ * @noflow
  */
 
 import {branch} from 'silk-core-version';

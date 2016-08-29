@@ -1,8 +1,11 @@
+/**
+ * @flow
+ */
+
 import { Duplex } from 'stream';
 import createLog from 'silk-log';
-import type {
-  RTCDataChannel,
-} from '../../interface/webrtc';
+
+import type {RTCDataChannel} from 'node-webrtc';
 
 const log = createLog('rtc:data_channel_duplex');
 
@@ -32,15 +35,17 @@ export default class DataChannelDuplex extends Duplex {
       }
 
       this.push(null);
+      // $FlowFixMe: https://github.com/facebook/flow/pull/2330
       this.end(() => {
         this.emit('close');
       });
     });
   }
 
-  _write(data: string|Buffer, enc: string, callback: Function) {
+  _write(data: string|Buffer, enc: string, callback: Function): boolean {
     this._dataChannel.send(data);
     callback();
+    return true;
   }
 
   _read() {

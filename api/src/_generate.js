@@ -1,8 +1,11 @@
-/* eslint no-console: 0*/
 /**
  * This file is intended to be included by silk-server and inside of silk-api(s)
  * post install setup and should not be included elsewhere (hence the _).
+ *
+ * @noflow
  */
+
+/* eslint no-console: 0 */
 
 import fs from 'fs';
 import mkdirp from 'mkdirp';

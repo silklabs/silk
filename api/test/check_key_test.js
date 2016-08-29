@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 
 import assert from 'assert';
 import AccessToken from '../src/access_token';
@@ -6,7 +9,7 @@ async function assertThrows(func, ErrorClass) {
   let error;
   try {
     await func();
-  } catch(ex) {
+  } catch (ex) {
     error = ex;
   }
   assert(error instanceof ErrorClass, `Expected ${ErrorClass.name} exception, got ${error}`);

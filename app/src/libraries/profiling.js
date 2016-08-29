@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import { ec as ECDH } from 'elliptic';
 import { Systrace } from 'react-native';
 

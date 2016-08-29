@@ -5,7 +5,7 @@
   "author": "Anshul Jain <anshul@silklabs.com>",
   "scripts": {
     "preinstall": "../npm_postinstall",
-    "lint": "eslint *.js"
+    "lint": "eslint ."
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config"

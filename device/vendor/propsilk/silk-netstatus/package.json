@@ -5,7 +5,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "silk-build": "silk-buildjs .",
-    "lint": "eslint lib",
+    "lint": "eslint .",
     "mocha": "mocha $(find test -name '*_test.js')",
     "postinstall": "../../../../npm_postinstall",
     "test": "npm run lint && npm run mocha"

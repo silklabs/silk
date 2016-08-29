@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @flow
  */
 
 import URL from 'url';
@@ -18,7 +19,10 @@ import URL from 'url';
  * @name http
  * @namespace
  */
-export default function(url, overrides = {}) {
+export default function(
+  url: string,
+  overrides: {[key: string]: string} = {}
+) {
   let params = URL.parse(url);
   Object.assign(params, overrides);
 

@@ -9,7 +9,8 @@
     "test": "runtest",
     "clean": "rm -rf node_modules",
     "silk-build": "silk-buildjs .",
-    "posttest": "eslint test lib"
+    "lint": "eslint .",
+    "posttest": "npm run lint"
   },
   "dependencies": {
     "babel-runtime": "6.9.0",

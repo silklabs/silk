@@ -3,6 +3,8 @@
  * account shared internally by our company. This _must_ be removed prior to
  * going to production. We intentionally store the email, password,
  * public and private keys (i.e. no security) in the api for ease of use.
+ *
+ * @flow
  */
 
 

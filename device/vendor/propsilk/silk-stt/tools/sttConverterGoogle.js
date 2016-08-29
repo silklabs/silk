@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @noflow
  */
 
 // Prequisites: https://github.com/GoogleCloudPlatform/nodejs-docs-samples#prerequisites
@@ -34,7 +35,7 @@ let protoDescriptor = grpc.load({
 });
 let speechProto = protoDescriptor.google.cloud.speech.v1beta1;
 
-function getSpeechService(host) {
+function getSpeechService(host: string) {
   return new Promise((resolve, reject) => {
     let googleAuthClient = googleAuth({
       scopes: [
@@ -60,7 +61,7 @@ function getSpeechService(host) {
 }
 
 let speechServicePromise = getSpeechService('speech.googleapis.com');
-export default function main (inputFile) {
+export default function main(inputFile: string) {
   return speechServicePromise.then(speechService => {
     return new Promise((resolve, reject) => {
       let responses = [];

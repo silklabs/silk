@@ -4,10 +4,11 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @flow
  */
 
 import { Transform } from 'stream';
-import assert from 'assert';
+import invariant from 'assert';
 
 
  // Random priority (see syslog spec) this is only needed for the format to be
@@ -22,18 +23,22 @@ const PRIORITY = 34;
 export default class LogcatToSyslog extends Transform {
 
   // hostname to send in syslog message...
-  host = '';
+  host: string = '';
 
-  constructor(host) {
+  constructor(host: string) {
     super({
       writableObjectMode: true,
     });
-    assert(typeof host === 'string');
+    invariant(typeof host === 'string');
     this.host = host;
     this.once('finish', () => this.emit('close'));
   }
 
-  _transform(log, encoding, callback) {
+  _transform(
+    log: any,
+    encoding: string,
+    callback: (error: ?Error, data?: Buffer | string) => void
+  ) {
     let date = new Date(log.utc).toISOString();
 
 

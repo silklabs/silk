@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 const DEFAULT = {
   'debug': 'silk-*,-silk-*:debug',
 };

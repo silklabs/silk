@@ -1,23 +1,22 @@
+/**
+ * @noflow
+ */
+
 /* eslint no-console: 0, no-process-exit: 0 */
 import path from 'path';
 import fs from 'fs';
 
 import findPackages from '../../tools/npm/find_packages';
+import {Packages, mergeDependencies} from './packages';
 
-import {
-  Packages,
-  mergeDependencies,
-} from './packages';
-
-import type {
-  PackageJSON
-} from './packages';
+import type {PluginArgument} from 'silk-cli/src';
+import type {PackageJSON} from './packages';
 
 type FailConfig = {
   failSemver: bool;
   failMissing: bool;
   failMismatch: bool;
-}
+};
 
 // ROOT is the "root" of silk-core.
 const ROOT = path.join(__dirname, '../..');
@@ -38,7 +37,11 @@ function logMissingPackage(name: string): void {
   console.warn(`Package '${name}' is not checked in.`);
 }
 
-function logVersionMismatch(name: string, pkg: PackageJSON, version: string): void {
+function logVersionMismatch(
+  name: string,
+  pkg: PackageJSON,
+  version: string
+) {
   console.warn(`Package '${name}' does not match version in given package.json`);
   console.warn(`Current: '${pkg.version}' desired: '${version}'\n`);
 }
@@ -50,7 +53,7 @@ function pkgArguments() {
     }],
     [['version'], {
       help: `Version of the package to upgrade to`,
-      type: (value) => {
+      type: (value: string) => {
         if (!checkSemverValue(value)) {
           throw new Error(`Version ${value} must not contain semver range`);
         }
@@ -60,8 +63,8 @@ function pkgArguments() {
   ];
 }
 
-// XXX: Cannot simply be a constant because argparse mutates options (ugh).
-function pathArgument() {
+// This cannot simply be a constant because argparse mutates options (ugh).
+function pathArgument(): PluginArgument {
   return [['path'], {
     type: (input: string): string => {
       let cwd = path.resolve(input);
@@ -163,6 +166,7 @@ export let check = {
 
   arguments: [pathArgument()],
   main: (args) => {
+    // $FlowFixMe: require() calls should normally take literals.
     const pkg = require(args.path);
     // Fail on everything to provide best digagnostics.
     const opts = {
@@ -210,6 +214,7 @@ export let listPkgs = {
         continue;
       }
 
+      // $FlowFixMe: require() calls should normally take literals.
       const pkg = require(`${modulePath}/package.json`);
       const npmDeps = mergeDependencies(pkg);
       const symlinkDeps = pkg.symlinkDependencies || {};
@@ -261,6 +266,7 @@ export let searchPkg = {
     let hasPkg = false;
 
     for (let pkgDir of packages) {
+      // $FlowFixMe: require() calls should normally take literals.
       const pkg = require(path.join(pkgDir, 'package.json'));
       const deps = mergeDependencies(pkg);
       const dep = deps.get(args.package);
@@ -288,6 +294,7 @@ export let upgrade = {
 
     for (let pkgDir of corePackages) {
       const pkgPath = path.join(pkgDir, 'package.json');
+      // $FlowFixMe: require() calls should normally take literals.
       const pkg = require(pkgPath);
       let deps = null;
 
@@ -337,6 +344,7 @@ export let install = {
   main: async (args) => {
     // Note quite as fast as it could be as this will run some steps twice..
     // However it is much easier to manage this way.
+    // $FlowFixMe: require() calls should normally take literals.
     const pkg = require(args.path);
     const opts = {
       // Do not allow semver ~, etc.. flags when installing...

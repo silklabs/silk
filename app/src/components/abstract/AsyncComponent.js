@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * Make React component APIs play nicely within async functions.
  *
@@ -23,7 +21,12 @@ import React from 'react';
  *     this.setState({foo: 'bar'}, () => {
  *       doSomethingWith(this.state.foo);
  *     });
+ *
+ * @noflow
  */
+
+import React from 'react';
+
 export default class AsyncComponent extends React.Component {
 
   /**

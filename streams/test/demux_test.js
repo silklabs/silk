@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 import assert from 'assert';
 import http from 'http';
 import drain from '../src/drain';

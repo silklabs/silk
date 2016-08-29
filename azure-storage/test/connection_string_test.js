@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 import assert from 'assert';
 
 import connectionString from '../src/connection_string';

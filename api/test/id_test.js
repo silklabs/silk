@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 
 import assert from 'assert';
 import DeviceID from '../src/access_token';

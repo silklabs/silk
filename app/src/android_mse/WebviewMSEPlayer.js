@@ -5,6 +5,8 @@
  * that somehow needs to be hooked up to the native wrapper of the
  * webview, which is something the consumer of this component needs to
  * set up.
+ *
+ * @flow
  */
 
 import { EventEmitter } from 'events';

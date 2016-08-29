@@ -6,6 +6,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @flow
  */
 
 import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
@@ -29,7 +30,7 @@ if (process.argv.length < 4) {
 /**
  * Write pcm data to file
  */
-function writeWavFile(pcmSamples, fileName) {
+function writeWavFile(pcmSamples: Buffer, fileName: string) {
   let writer = new wav.FileWriter(fileName, {
     sampleRate: config.deviceMic.sampleRate,
     channels: config.deviceMic.numChannels,

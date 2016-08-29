@@ -2,5 +2,8 @@
   "extends": "eslint-config-silk",
   "globals": {
     "Generator": true
+  },
+  "rules": {
+    "silk/flow": 0
   }
 }

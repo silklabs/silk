@@ -9,9 +9,11 @@ import * as log from './logs';
 
 import type { Config } from './config';
 
+// TODO: we can do better here than `Object`
+export type PluginArgument = [Array<string>, Object];
 export type Plugin = {
   help?: string;
-  arguments?: [Array<string>, Object];
+  arguments?: Array<PluginArgument>;
   // any because we don't care if this is async function or not.
   main: (argv: Object, context?: Object) => any;
 }

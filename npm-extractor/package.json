@@ -8,7 +8,7 @@
   },
   "scripts": {
     "mocha": "mocha $(find test -name '*_test.js')",
-    "lint": "eslint *.js test",
+    "lint": "eslint .",
     "test": "npm run lint && npm run mocha"
   },
   "symlinkDependencies": {

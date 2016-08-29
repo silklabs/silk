@@ -1,1 +1,2 @@
 src/gen/**/*.js
+test/setup.js

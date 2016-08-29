@@ -4,6 +4,8 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @flow
  */
 
 import version from 'silk-core-version';
@@ -14,6 +16,8 @@ import { parse } from 'stacktrace-parser';
 import { exitApp } from './Util';
 
 const log = createLog('CrashReporter');
+
+declare var ErrorUtils: any;
 
 class CrashReporter {
 

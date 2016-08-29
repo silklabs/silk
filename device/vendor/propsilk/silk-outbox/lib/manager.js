@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Labs, Inc.
  *
  * @private
+ * @noflow
  */
 
 /*eslint no-loop-func:0*/

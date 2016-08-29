@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 import assert from 'assert';
 import { spawn } from 'child_process';
 import fs from 'mz/fs';

@@ -1,6 +1,7 @@
 package com.silklabs.react.blesocket;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.RemoteException;
 import android.util.Log;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -13,6 +14,7 @@ import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 import org.altbeacon.beacon.logging.LogManager;
 import org.altbeacon.beacon.logging.Loggers;
+import org.altbeacon.beacon.service.BeaconService;
 import org.altbeacon.beacon.service.MonitoringStatus;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
@@ -97,7 +99,22 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
       LogManager.setVerboseLoggingEnabled(false);
     }
 
-    mBeaconManager = BeaconManager.getInstanceForApplication(reactContext);
+    final Context context = reactContext.getApplicationContext();
+
+    // Make sure to kill any previous version of the service because otherwise
+    // the BeaconParser we add below might not get registered.
+    final Intent intent = new Intent(context, BeaconService.class);
+    context.stopService(intent);
+
+    mBeaconManager = BeaconManager.getInstanceForApplication(context);
+
+    final BeaconParser iBeaconParser = new BeaconParser("iBeacon");
+    iBeaconParser.setBeaconLayout(BEACON_LAYOUT_IBEACON);
+
+    final List<BeaconParser> parsers = mBeaconManager.getBeaconParsers();
+    parsers.clear();
+    parsers.add(iBeaconParser);
+
     mBeaconManager.setRegionStatePeristenceEnabled(true);
     mBeaconManager.setForegroundScanPeriod(BEACON_FOREGROUND_SCAN_MS);
     mBeaconManager.setForegroundBetweenScanPeriod(BEACON_FOREGROUND_BETWEEN_MS);
@@ -106,10 +123,6 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
     mBeaconManager.setRegionExitPeriod(BEACON_REGION_EXIT_MS);
     mBeaconManager.setBackgroundMode(false);
     mBeaconManager.addRangeNotifier(this);
-
-    final List<BeaconParser> parsers = mBeaconManager.getBeaconParsers();
-    parsers.clear();
-    parsers.add(new BeaconParser().setBeaconLayout(BEACON_LAYOUT_IBEACON));
 
     final MonitoringStatus monitoringStatus =
       MonitoringStatus.getInstanceForApplication(reactContext);

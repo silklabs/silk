@@ -14,9 +14,6 @@
     "silk-rtc": "/rtc",
     "silk-streams": "/streams"
   },
-  "localDependencies": {
-    "socket.io-client": "1.4.6"
-  },
   "dependencies": {
     "immutable": "3.8.1",
     "joi": "6.10.1",

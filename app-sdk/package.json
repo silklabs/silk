@@ -13,9 +13,6 @@
     "silk-streams": "/streams",
     "silk-utils": "/utils"
   },
-  "localDependencies": {
-    "socket.io-client": "1.4.6"
-  },
   "dependencies": {
     "lodash.merge": "3.3.2",
     "react": "15.2.0",

@@ -73,9 +73,7 @@ export default class WebSocketDuplexStream extends Duplex {
     } else {
       error = new Error(err.stack || err.message || err.name || err.type);
     }
-    this._log.error('Error in websocket stream: ',
-                    error.message,
-                    error.stack);
+    this._log.error('Error in websocket stream ', error);
     this.emit('error', error);
     this.emit('close');
   };
@@ -194,6 +192,7 @@ export default class WebSocketDuplexStream extends Duplex {
       this._log.verbose(`Writing pending buffer: ${buffer.length} bytes`);
       this._ws.send(buffer);
     }
+    this._buffers.length = 0;
     this.emit('_pushed');
   };
 }

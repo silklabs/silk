@@ -14,6 +14,7 @@ import { answer } from 'silk-rtc';
 import createLog from 'silk-log/device';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import WebSocket from 'ws';
+import { AccessToken } from 'silk-api';
 
 import {
   MultiplexStream,
@@ -420,7 +421,34 @@ export default class Connections extends EventEmitter {
   }
 
   _onSignaling: (stream: VirtualStream) => Promise<void> = async (stream) => {
-    log.info(`Got signaling client ...`);
+    const { type, publicKey, signedPublicKey } = stream.body;
+    if (type !== `signaling`) {
+      log.warn(`Unknown stream type '${type}'`);
+      stream.destroy();
+      return;
+    }
+
+    if (!publicKey) {
+      log.warn(`Missing public key`);
+      stream.destroy();
+      return;
+    }
+
+    if (!signedPublicKey) {
+      log.warn(`Missing signed public key`);
+      stream.destroy();
+      return;
+    }
+
+    const accessToken = AccessToken.importPub(publicKey);
+    if (!await accessToken.genVerify(publicKey, signedPublicKey)) {
+      log.warn(`Unable to verify public key`);
+      stream.destroy();
+      return;
+    }
+
+    log.info(`Got signaling client ${publicKey}`);
+
     this.emit('request', stream);
     let recipient;
     try {

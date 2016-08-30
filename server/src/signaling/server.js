@@ -13,6 +13,8 @@ import http from 'http';
 import eventToPromise from 'event-to-promise';
 import URL from 'url';
 import createLog from 'silk-log';
+import { AccessToken } from 'silk-api';
+
 import getHostname from '../get_hostname';
 
 import {
@@ -163,12 +165,27 @@ async function main (config: any): any {
     },
 
     account: async (req, res) => {
+      invariant(req.publicKey);
+
       const parsed = URL.parse(req.url, true);
-      if (!parsed.query || !parsed.query.deviceId) {
-        throw new Error('Must pass device id ...');
+      if (!parsed.query) {
+        throw new Error('Missing query');
       }
 
-      const { deviceId } = parsed.query;
+      const { deviceId, signedPublicKey } = parsed.query;
+
+      if (!deviceId) {
+        throw new Error('Missing deviceId');
+      }
+
+      if (!signedPublicKey) {
+        throw new Error('Missing signedPublicKey');
+      }
+
+      const accessToken = AccessToken.importPub(req.publicKey);
+      if (!await accessToken.genVerify(req.publicKey, signedPublicKey)) {
+        throw new Error('Unable to verify signed public key');
+      }
 
       if (!residents.has(deviceId)) {
         log.warn(`(${req.publicKey}) requested unknown device ${deviceId}`);
@@ -178,7 +195,8 @@ async function main (config: any): any {
 
       // yuck ...
       req.deviceId = deviceId;
-      log.info(`Connecting client to ${deviceId}`);
+      req.signedPublicKey = signedPublicKey;
+      log.info(`Connecting client ${req.publicKey} to ${deviceId}`);
     },
   };
 
@@ -270,7 +288,7 @@ async function main (config: any): any {
     try {
       const req = ws.upgradeReq;
       // $FlowFixMe: Fix this after the auth overhaul.
-      const { type, deviceId, publicKey } = req;
+      const { type, deviceId, publicKey, signedPublicKey } = req;
       invariant(type);
       log.info(`Incoming connection (${type})`);
 
@@ -279,7 +297,9 @@ async function main (config: any): any {
         residents.register(publicKey, ws);
       } else if (type === 'account') {
         invariant(deviceId);
-        residents.bridge(deviceId, ws);
+        invariant(publicKey);
+        invariant(signedPublicKey);
+        residents.bridge(deviceId, publicKey, signedPublicKey, ws);
       } else {
         // We check this above as well this is simply to ensure we have a catch
         // all if we hit some bugs.

@@ -239,14 +239,19 @@ export default class Residents {
    * Bride communications between one of the residents and an incoming
    * client. These communications are designed to be short.
    */
-  bridge(id: string, connection: WebSocket) {
+  bridge(
+    deviceId: string,
+    publicKey: string,
+    signedPublicKey: string,
+    connection: WebSocket,
+  ) {
     const wsDuplex = new WebSocketDuplexStream(connection, {
       // Data will flow without being coerced into buffer...
       objectMode: true,
     });
     const streamId = uuid.v4();
-    const resident = this._residents.get(id);
-    log.info(`Bridge(id=${id} streamId=${streamId})`);
+    const resident = this._residents.get(deviceId);
+    log.info(`Bridge(id=${deviceId} streamId=${streamId})`);
 
     if (!resident) {
       throw new Error(`Attempted to bridge to unknown resident`);
@@ -259,7 +264,9 @@ export default class Residents {
 
     const stream = resident.multiplex.createStream({
       type: 'signaling',
-    }, `signaling stream ${streamId} -> ${id}`);
+      publicKey,
+      signedPublicKey,
+    }, `signaling stream ${streamId} -> ${deviceId}`);
 
     const client = {
       connectedAt: Date.now(),
@@ -287,7 +294,7 @@ export default class Residents {
       this._clients.delete(client);
     };
 
-    log.info(`Client stream ${streamId} setup for ${id}`);
+    log.info(`Client stream ${streamId} setup for ${deviceId}`);
     this._clients.add(client);
     resident.clients.set(streamId, client);
     wsDuplex.on('close', onClose);

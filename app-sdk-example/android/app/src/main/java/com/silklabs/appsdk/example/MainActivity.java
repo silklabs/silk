@@ -969,12 +969,8 @@ public class MainActivity extends FragmentActivity implements
 
       Map<String, Object> message = new HashMap<>();
       message.put("type", "ACCOUNT_LOGIN");
-      message.put("accountType", "google");
-      message.put("accountAccessToken", idToken);
-      message.put("pushUrl", "");
-      message.put("pushToken", "");
-      message.put("userId", "");
-      message.put("clientName", "");
+      message.put("source", "google");
+      message.put("token", idToken);
       mSilkService.postMessage(message);
 
     } else {

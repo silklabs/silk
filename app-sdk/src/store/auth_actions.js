@@ -16,7 +16,7 @@ import {
 } from 'silk-redux/action';
 
 import type {SilkApi} from 'silk-api';
-import type {RawPasswordInput} from 'silk-api/src/vip';
+import type {RawPasswordInput, SignInWithTokenInput} from 'silk-api/src/vip';
 import type {
   SignInOutput,
   CreateAccountOutput,
@@ -64,7 +64,7 @@ function genRestore(state: StateWithApi): Promise<?string> {
   });
 }
 
-async function genSignIn(
+async function genSignInWithPassword(
   state: StateWithApi,
   input: RawPasswordInput
 ): Promise<?string> {
@@ -74,6 +74,23 @@ async function genSignIn(
   api.accessToken = await AccessToken.gen();
   try {
     const result = await api.vip.signInWithPassword(input);
+    return await genHandleSuccessfulAuth(api, result);
+  } catch (ex) {
+    api.accessToken = null;
+    throw ex;
+  }
+}
+
+async function genSignInWithOAuth2(
+    state: StateWithApi,
+    input: SignInWithTokenInput
+): Promise<?string> {
+  // Always create a new token when we attempt a sign up...
+  const {api} = state;
+  invariant(api);
+  api.accessToken = await AccessToken.gen();
+  try {
+    const result = await api.vip.signInWithOAuth2(input);
     return await genHandleSuccessfulAuth(api, result);
   } catch (ex) {
     api.accessToken = null;
@@ -129,7 +146,8 @@ async function genResetPassword(
 // ThunkActions
 
 export const restore = actionFromAsyncPayloadGen('AUTH_RESTORE', genRestore);
-export const signIn = actionFromAsyncPayloadGen('AUTH_SIGNIN', genSignIn);
+export const signInWithPassword = actionFromAsyncPayloadGen('AUTH_SIGNIN_WITH_PASSWORD', genSignInWithPassword);
+export const signInWithOAuth2 = actionFromAsyncPayloadGen('AUTH_SIGNIN_WITH_TOKEN', genSignInWithOAuth2);
 export const createAccount = actionFromAsyncPayloadGen('AUTH_CREATEACCOUNT', genCreateAccount);
 export const signOut = actionFromAsyncPayloadGen('AUTH_SIGNOUT', genSignOut);
 export const resetPassword = actionFromAsyncPayloadGen('AUTH_RESETPASSWORD', genResetPassword);

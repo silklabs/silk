@@ -29,7 +29,8 @@ export type MessagesState = {
   UPDATES: Array<DeviceUpdateStatusMessage>,
 };
 
-type AuthActionTypes = 'AUTH_RESTORE' | 'AUTH_SIGNIN' | 'AUTH_CREATEACCOUNT';
+type AuthActionTypes = 'AUTH_RESTORE' | 'AUTH_SIGNIN_WITH_PASSWORD' |
+                       'AUTH_SIGNIN_WITH_TOKEN' | 'AUTH_CREATEACCOUNT';
 
 const initialState: MessagesState = {
   CLIENT_STATUS: {
@@ -676,7 +677,8 @@ function DEVICE_RTC_CONNECTIONCLOSED(
 
 export const reducer = handleActions({
   AUTH_RESTORE: handleAuthAction,
-  AUTH_SIGNIN: handleAuthAction,
+  AUTH_SIGNIN_WITH_PASSWORD: handleAuthAction,
+  AUTH_SIGNIN_WITH_TOKEN: handleAuthAction,
   AUTH_CREATEACCOUNT: handleAuthAction,
   AUTH_SIGNOUT,
   NETWORK_SERVER_REACHABLE,

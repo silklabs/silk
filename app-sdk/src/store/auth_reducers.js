@@ -19,7 +19,8 @@ const log = createLog('app-sdk-auth');
 
 type AuthOperationType =
     'AUTH_RESTORE'
-  | 'AUTH_SIGNIN'
+  | 'AUTH_SIGNIN_WITH_PASSWORD'
+  | 'AUTH_SIGNIN_WITH_TOKEN'
   | 'AUTH_CREATEACCOUNT'
   | 'AUTH_RESETPASSWORD'
   ;
@@ -139,11 +140,18 @@ function AUTH_RESTORE(
   return newState;
 }
 
-function AUTH_SIGNIN(
+function AUTH_SIGNIN_WITH_PASSWORD(
   state: AuthState,
-  action: Action<'AUTH_SIGNIN', *, ?string>
+  action: Action<'AUTH_SIGNIN_WITH_PASSWORD', *, ?string>
 ): AuthState {
-  return handleAuthAction('AUTH_SIGNIN', state, action);
+  return handleAuthAction('AUTH_SIGNIN_WITH_PASSWORD', state, action);
+}
+
+function AUTH_SIGNIN_WITH_TOKEN(
+    state: AuthState,
+    action: Action<'AUTH_SIGNIN_WITH_TOKEN', *, ?string>
+): AuthState {
+  return handleAuthAction('AUTH_SIGNIN_WITH_TOKEN', state, action);
 }
 
 function AUTH_CREATEACCOUNT(
@@ -215,7 +223,8 @@ export const reducer = handleActions({
   AUTH_RESTORE,
   AUTH_RESETPASSWORD,
   AUTH_SIGNOUT,
-  AUTH_SIGNIN,
+  AUTH_SIGNIN_WITH_PASSWORD,
+  AUTH_SIGNIN_WITH_TOKEN,
   AUTH_CREATEACCOUNT,
   AUTH_ABORT_OPERATION,
   AUTH_ACK_ERROR,

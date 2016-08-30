@@ -15,6 +15,7 @@ import createLog from 'silk-log/device';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import WebSocket from 'ws';
 import { AccessToken } from 'silk-api';
+import {getboolprop} from 'silk-sysutils';
 
 import {
   MultiplexStream,
@@ -37,8 +38,17 @@ const log = createLog('connections');
 const MAX_RECONNECT_SLEEP = 30 * 1000;
 const RECONNECT_SLEEP_INTERVAL = 250;
 
-export type ConnectionsState = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
+const OPENHOUSE_PROP = `persist.silk.rtc.openhouse`;
 
+// Only allow unauthenticated streams on debug builds with the 'openhouse' prop.
+const ALLOW_UNAUTHENTICATED_STREAMS =
+  getboolprop(`ro.debuggable`, false) && getboolprop(OPENHOUSE_PROP, false);
+
+export type ConnectionsState =
+  'connected' |
+  'connecting' |
+  'disconnected' |
+  'reconnecting';
 
 export class ChannelEventEmitter extends EventEmitter {
   _label: string;
@@ -442,12 +452,18 @@ export default class Connections extends EventEmitter {
 
     const accessToken = AccessToken.importPub(publicKey);
     if (!await accessToken.genVerify(publicKey, signedPublicKey)) {
-      log.warn(`Unable to verify public key`);
-      stream.destroy();
-      return;
+      log.warn(`Unable to verify public key`, publicKey);
+      if (ALLOW_UNAUTHENTICATED_STREAMS) {
+        log.warn(`Allowing connection because the '${OPENHOUSE_PROP}' ` +
+                 `property is set. This connection would not be possible in ` +
+                 `production builds.`);
+      } else {
+        stream.destroy();
+        return;
+      }
     }
 
-    log.info(`Got signaling client ${publicKey}`);
+    log.info(`Got signaling client`, publicKey);
 
     this.emit('request', stream);
     let recipient;
@@ -464,7 +480,7 @@ export default class Connections extends EventEmitter {
       await recipient.connect();
       this.emit('connection', recipient);
     } catch (err) {
-      log.error(`Failed to signal in webrtc connection: ${err.stack}`);
+      log.error(`Failed to signal in webrtc connection`, err);
       return;
     } finally {
       log.info(`Ending signaling stream`);

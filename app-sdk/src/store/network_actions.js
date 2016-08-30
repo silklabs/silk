@@ -3,8 +3,7 @@
  */
 
 import invariant from 'assert';
-
-import {actionFromAsyncPayloadGen} from './action';
+import {actionFromAsyncPayloadGen} from 'silk-redux/action';
 
 import type {StateWithApi} from './api';
 

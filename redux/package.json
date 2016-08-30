@@ -1,0 +1,24 @@
+{
+  "symlinkDependencies": {
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-log": "/pub/log",
+    "silk-utils": "/utils"
+  },
+  "dependencies": {
+    "lodash.merge": "3.3.2",
+    "redux": "3.5.2",
+    "redux-actions": "0.10.1",
+    "redux-thunk": "2.1.0",
+    "redux-watch": "1.1.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "6.1.0",
+    "eslint": "2.13.1"
+  },
+  "name": "silk-redux",
+  "private": true,
+  "scripts": {
+    "lint": "eslint src"
+  },
+  "version": "1.1.0"
+}

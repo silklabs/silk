@@ -5,8 +5,10 @@
 import invariant from 'assert';
 import merge from 'lodash.merge';
 import {AsyncStorage} from 'react-native';
-
-import {actionFromPayload, actionFromAsyncPayloadGen} from './action';
+import {
+  actionFromPayload,
+  actionFromAsyncPayloadGen,
+} from 'silk-redux/action';
 
 import type {Config, StateWithConfig} from './config_reducers';
 

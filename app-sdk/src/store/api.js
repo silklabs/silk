@@ -7,12 +7,10 @@
 
 import {handleActions} from 'redux-actions';
 import createApi from 'silk-api';
-
-import {actionFromPayload} from './action';
+import {actionFromPayload} from 'silk-redux/action';
 
 import type {SilkApi, Config as ApiConfig} from 'silk-api';
-
-import type {SimpleAction} from './action';
+import type {SimpleAction} from 'silk-redux/action';
 
 // Actions
 

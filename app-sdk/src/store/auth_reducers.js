@@ -13,7 +13,7 @@ import {handleActions} from 'redux-actions';
 import createLog from 'silk-log';
 
 import type {Config as ApiConfig} from 'silk-api';
-import type {Action, SimpleAction} from './action';
+import type {Action, SimpleAction} from 'silk-redux/action';
 
 const log = createLog('app-sdk-auth');
 

@@ -5,7 +5,7 @@
 import invariant from 'assert';
 import {handleActions} from 'redux-actions';
 
-import type {Action} from './action';
+import type {Action} from 'silk-redux/action';
 
 export type NetworkState = {
   canReachServer: boolean;

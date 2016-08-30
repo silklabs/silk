@@ -114,22 +114,12 @@ export class UserState extends EventEmitter {
     this.emit('unauthenticated');
   }
 
-  checkPassword(email, password) {
-    // XXX: Put some more useful information here...
-    let userAgent = 'iOS';
-    return this.api.vip.checkPasswordWithPassword({
-      email,
-      password,
-      userAgent,
-    });
-  }
-
    /**
    * Attempt to sign into the server... Note: this looks pretty similar to sign
    * up right now this will diverge over time.
    */
-  async attemptSignIn(email, password) {
-    log.info('Attempting user sign in');
+  async _attemptSignIn(signInType, signInData) {
+    log.info('Attempting user sign in:', signInType);
     // Always create a new token when we attempt a sign up...
     const accessToken = await AccessToken.gen();
     this.accessToken = this.api.accessToken = accessToken;
@@ -137,29 +127,50 @@ export class UserState extends EventEmitter {
     // XXX: Put some more useful information here...
     let userAgent = 'iOS';
 
-    let {
-      success,
-      beaconUUID,
-    } = await this.api.vip.signInWithPassword({
-      email,
-      password,
-      userAgent,
-    });
+    let result;
+    switch (signInType) {
+    case 'password':
+      result = await this.api.vip.signInWithPassword({
+        email: signInData.email,
+        password: signInData.password,
+        userAgent,
+      });
+      break;
+    /*
+    case 'token':
+      result = await this.api.vip.signInWithToken({
+        token: signInData.token,
+        type: signInData.type,
+        userAgent,
+      });
+      break;
+    */
+    default:
+      throw new Error('Unknown sign in type: ' + signInType);
+    }
 
-    if (!success) {
+    if (!result.success) {
       return false;
     }
 
-    log.info('Successfully signed into account', email);
-    if (!beaconUUID) {
+    log.info('Successfully signed into account');
+    if (!result.beaconUUID) {
       throw new Error('Did not get a BLE beacon UUID.');
     }
 
-    log.debug('Adding BLE beacon', beaconUUID);
-    BLESocketManager.addBeaconUuid(beaconUUID);
+    log.debug('Adding BLE beacon', result.beaconUUID);
+    BLESocketManager.addBeaconUuid(result.beaconUUID);
 
     await this._saveAccessToken(accessToken);
     return true;
+  }
+
+  /*async*/ attemptSignInWithToken(type, value) {
+    return this._attemptSignIn('token', {type, value});
+  }
+
+  /*async*/ attemptSignInWithPassword(email, password) {
+    return this._attemptSignIn('password', {email, password});
   }
 
   /**

@@ -7,7 +7,7 @@ if [ -f /init ]; then
   # Gonk-based device
   cd /
   ROOT=false
-  if [ $(whoami) == root ]; then
+  if [ "$(busybox id -u)" = "0" ]; then
     ROOT=true
   fi
 else

@@ -148,12 +148,12 @@ function initDeviceConfig(store: Store<*>) {
 
   // Whenever the UI has provided the config settings for the device
   // currently being configured, register the device with the server.
-  store.subscribeToPath('devices.configuring.config', (config) => {
+  store.subscribeToPath('devices.configuring.config', (config, _, state) => {
     if (!config) {
       return;
     }
 
-    const {configuring, unconfigured} = store.getState().devices;
+    const {configuring, unconfigured} = state.devices;
     invariant(configuring);
 
     const session = unconfigured.get(configuring.socketId);
@@ -168,12 +168,12 @@ function initDeviceConfig(store: Store<*>) {
 
   // When a new device has been registered with the server, send the
   // device configuration and registration information to it.
-  store.subscribeToPath('devices.configuring.serverRegistrationResult', (result) => {
+  store.subscribeToPath('devices.configuring.serverRegistrationResult', (result, _, state) => {
     if (!result) {
       return;
     }
 
-    const {api, devices} = store.getState();
+    const {api, devices} = state;
     const {config} = devices.configuring;
     invariant(api);
     invariant(api.accessToken);
@@ -198,73 +198,81 @@ function initBLE(store: Store<*>) {
 
   const {BLESocketManager} = NativeModules;
 
-  let accountBeaconUuid: ?string = null;
-  const connectableDeviceNumbers: Set<number> = new Set();
-
-  store.subscribeToPath('auth.beaconUuid', (beaconUuid) => {
+  store.subscribeToPath('auth.beaconUuid', (beaconUuid, oldBeaconUuid, state, oldState) => {
     if (beaconUuid) {
-      invariant(store.getState().auth.isAuthenticated);
-      invariant(!accountBeaconUuid);
+      invariant(state.auth.isAuthenticated);
 
       log.debug('Enabling BLESocketManager');
       BLESocketManager.start();
 
       log.debug('Monitoring account uuid beacon', beaconUuid);
       BLESocketManager.addBeaconUuid(beaconUuid);
-
-      accountBeaconUuid = beaconUuid;
-    } else {
-      invariant(!store.getState().auth.isAuthenticated);
-
-      if (accountBeaconUuid) {
-        log.debug('No longer monitoring account uuid beacon',
-                  accountBeaconUuid);
-        connectableDeviceNumbers.forEach((deviceNumber: number) => {
-          BLESocketManager.scanForDevice(accountBeaconUuid,
-                                         deviceNumber,
-                                         false);
-        });
-        connectableDeviceNumbers.clear();
-
-        accountBeaconUuid = null;
-      }
-
-      BLESocketManager.removeAllBeaconUuids();
-
-      log.debug('Disabling BLESocketManager');
-      BLESocketManager.stop();
+      return;
     }
+
+    invariant(!state.auth.isAuthenticated);
+
+    if (oldBeaconUuid) {
+      log.debug('No longer monitoring account uuid beacon', oldBeaconUuid);
+      const oldDevices = oldState.devices.registered;
+      oldDevices.forEach((oldDevice) => {
+        if (!oldDevice.ble.connectionRequested) {
+          return;
+        }
+        const {accountDeviceNumber} = oldDevice;
+        BLESocketManager.scanForDevice(
+          oldBeaconUuid,
+          accountDeviceNumber,
+          false
+        );
+      });
+    }
+
+    log.debug('Disabling BLESocketManager');
+    BLESocketManager.removeAllBeaconUuids();
+    BLESocketManager.stop();
   });
 
-  store.subscribeToPath('devices.registered', (newDevices, oldDevices) => {
-    const lostDeviceNumbers: Set<number> = new Set(connectableDeviceNumbers);
-
-    if (newDevices) {
-      newDevices.forEach((newDevice) => {
-        const {accountDeviceNumber} = newDevice;
-
-        if (newDevice.ble.connectionRequested) {
-          lostDeviceNumbers.delete(accountDeviceNumber);
-          if (!connectableDeviceNumbers.has(accountDeviceNumber)) {
-            log.debug('Connection requested for device ' + accountDeviceNumber);
-            BLESocketManager.scanForDevice(accountBeaconUuid,
-                                           accountDeviceNumber,
-                                           true);
-            connectableDeviceNumbers.add(accountDeviceNumber);
-          }
-        } else if (connectableDeviceNumbers.has(accountDeviceNumber)) {
-          invariant(lostDeviceNumbers.has(accountDeviceNumber));
-          connectableDeviceNumbers.delete(accountDeviceNumber);
+  store.subscribeToPath('devices.registered', (newDevices, oldDevices, state) => {
+    const lostDeviceNumbers: Set<number> = new Set();
+    if (oldDevices) {
+      oldDevices.forEach((oldDevice) => {
+        if (oldDevice.ble.connectionRequested) {
+          lostDeviceNumbers.add(oldDevice.accountDeviceNumber);
         }
       });
     }
 
+    if (newDevices) {
+      newDevices.forEach((newDevice, deviceId) => {
+        if (!newDevice.ble.connectionRequested) {
+          return;
+        }
+
+        const {accountDeviceNumber} = newDevice;
+        lostDeviceNumbers.delete(accountDeviceNumber);
+
+        const oldDevice = oldDevices ? oldDevices.get(deviceId) : null;
+        if (oldDevice && oldDevice.ble.connectionRequested) {
+          return;
+        }
+
+        log.debug('Connection requested for device ' + accountDeviceNumber);
+        BLESocketManager.scanForDevice(
+          state.auth.beaconUuid,
+          accountDeviceNumber,
+          true
+        );
+      });
+    }
+
     lostDeviceNumbers.forEach((accountDeviceNumber) => {
-      log.debug('Connection no longer requested for device ' +
-                accountDeviceNumber);
-      BLESocketManager.scanForDevice(accountBeaconUuid,
-                                     accountDeviceNumber,
-                                     false);
+      log.debug('Connection no longer requested for device ' + accountDeviceNumber);
+      BLESocketManager.scanForDevice(
+        state.auth.beaconUuid,
+        accountDeviceNumber,
+        false
+      );
     });
   });
 

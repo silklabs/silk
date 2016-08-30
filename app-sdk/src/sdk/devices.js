@@ -232,12 +232,12 @@ export function init(store: SDKStore) {
     });
   });
 
-  store.subscribeToPath('devices.configuring.registered', (registered) => {
+  store.subscribeToPath('devices.configuring.registered', (registered, _, state) => {
     if (!registered) {
       return;
     }
 
-    const {configuring} = store.getState().devices;
+    const {configuring} = state.devices;
     invariant(configuring);
     emitter.postMessage({
       type: 'DEVICE_CONFIG_SUCCESS',
@@ -247,12 +247,12 @@ export function init(store: SDKStore) {
     store.dispatch(actions.devices.config.finish());
   });
 
-  store.subscribeToPath('devices.configuring.error', (error) => {
+  store.subscribeToPath('devices.configuring.error', (error, _, state) => {
     if (!error) {
       return;
     }
 
-    const {configuring} = store.getState().devices;
+    const {configuring} = state.devices;
     invariant(configuring);
     emitter.postMessage({
       type: 'DEVICE_CONFIG_FATAL_ERROR',

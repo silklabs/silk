@@ -10,11 +10,10 @@
 import invariant from 'assert';
 import {AsyncStorage} from 'react-native';
 import {AccessToken} from 'silk-api';
-
 import {
   actionFromPayload,
   actionFromAsyncPayloadGen,
-} from './action';
+} from 'silk-redux/action';
 
 import type {SilkApi} from 'silk-api';
 import type {RawPasswordInput} from 'silk-api/src/vip';

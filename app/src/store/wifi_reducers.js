@@ -6,7 +6,7 @@ import invariant from 'assert';
 import createLog from 'silk-log';
 import {handleActions} from 'redux-actions';
 
-import type {Action, SimpleAction} from 'silk-app-sdk/src/store/action';
+import type {Action, SimpleAction} from 'silk-redux/action';
 import type {
   default as DeviceSession,
   DeviceWifiNetwork,

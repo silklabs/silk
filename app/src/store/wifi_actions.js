@@ -5,7 +5,7 @@
 import {
   actionFromPayload,
   actionFromAsyncPayloadGen,
-} from 'silk-app-sdk/src/store/action';
+} from 'silk-redux/action';
 
 import * as Util from '../libraries/Util';
 

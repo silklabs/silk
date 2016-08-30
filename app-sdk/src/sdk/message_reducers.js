@@ -10,9 +10,9 @@ import {handleActions} from 'redux-actions';
 import emitter from './emitter';
 
 import type {ListDevicesOutput} from 'silk-api/src/gen/account';
+import type {Action, SimpleAction} from 'silk-redux/action';
 import type {Peer} from 'silk-rtc';
 
-import type {Action, SimpleAction} from '../store/action';
 import type {
   ClientStatusMessage,
   DeviceConnectionDetailsMessage,

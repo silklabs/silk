@@ -9,6 +9,7 @@
     "silk-log": "/pub/log",
     "silk-react-native-blobs": "/pub/react-native-blobs",
     "silk-react-native-transformer": "/react-native-transformer",
+    "silk-redux": "/redux",
     "silk-rtc": "/rtc",
     "silk-streams": "/streams",
     "silk-utils": "/utils"
@@ -19,11 +20,7 @@
   "dependencies": {
     "lodash.merge": "3.3.2",
     "react": "15.2.0",
-    "react-native": "0.30.0-rc.0",
-    "redux": "3.5.2",
-    "redux-actions": "0.10.1",
-    "redux-thunk": "2.1.0",
-    "redux-watch": "1.1.1"
+    "react-native": "0.30.0-rc.0"
   },
   "devDependencies": {
     "babel-eslint": "6.1.0",

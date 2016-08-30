@@ -6,7 +6,7 @@ import invariant from 'assert';
 import merge from 'lodash.merge';
 import {handleActions} from 'redux-actions';
 
-import type {SimpleAction, Action} from './action';
+import type {SimpleAction, Action} from 'silk-redux/action';
 
 export type Config = {
   debug: string;

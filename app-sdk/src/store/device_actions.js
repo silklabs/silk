@@ -6,12 +6,11 @@ import invariant from 'assert';
 import {AsyncStorage, NativeModules} from 'react-native';
 import createLog from 'silk-log';
 import * as silkRTC from 'silk-rtc';
-
 import {
   actionFromPayload,
   actionFromPayloadGen,
   actionFromAsyncPayloadGen,
-} from './action';
+} from 'silk-redux/action';
 
 import type {
   ListDevicesOutput,

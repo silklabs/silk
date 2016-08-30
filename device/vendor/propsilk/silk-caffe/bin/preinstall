@@ -24,21 +24,6 @@ if [[ -z $CI ]]; then
   J="-j6"
 fi
 
-# Install protobuf and compile as static library
-# Reference https://github.com/BVLC/caffe/issues/1917
-if [[ ! -d protobuf ]]; then
-  echo Compiling protobuf
-  # Default brew formula for protobuf is v2.6.1
-  # We need the same protobuf version for caffe as opencv3 is compiled with
-  # default protobuf version v2.6.1 or else there is a run time conflict
-  git clone --depth 1 https://github.com/google/protobuf -b v2.6.1
-  pushd protobuf
-  ./autogen.sh
-  ./configure CXXFLAGS='-fPIC' CFLAGS='-fPIC' --disable-shared
-  make $J
-  popd
-fi
-
 # Download caffe
 CAFFE_SHA1=813c3c9bb02a7e8b3899e7cfd6db1885228fb914
 if [[ ! -d caffe ]]; then
@@ -71,9 +56,6 @@ if [[ ! -f caffe/build/lib/libcaffe.dylib ]]; then
     -DUSE_LEVELDB=OFF \
     -DUSE_LMDB=OFF \
     -DBUILD_docs=OFF \
-    -DPROTOBUF_PROTOC_EXECUTABLE=$PROTOBUF_ROOT/src/protoc \
-    -DPROTOBUF_INCLUDE_DIR=$PROTOBUF_ROOT/src \
-    -DPROTOBUF_LIBRARY=$PROTOBUF_ROOT/src/.libs/libprotobuf.a \
     ..
   make all $J
   popd

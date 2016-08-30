@@ -41,6 +41,7 @@ export default class CallManager extends Manager {
 
   _api: SilkApi;
   _deviceId: string;
+  _signedPublicKey: Promise<string>;
 
   _accountId: string;
   _deviceUrl: string;
@@ -50,6 +51,11 @@ export default class CallManager extends Manager {
     super();
     this._api = api;
     this._deviceId = deviceId;
+
+    const {accessToken} = api;
+    invariant(accessToken);
+
+    this._signedPublicKey = accessToken.genSign(accessToken.pub);
   }
 
   async _getDeviceServerUrl(): Promise<string> {
@@ -104,9 +110,13 @@ export default class CallManager extends Manager {
   }
 
   async _getStream(): Promise<Duplex> {
-    const url = await this._getDeviceServerUrl();
+    const [url, signedPublicKey] = await Promise.all([
+      this._getDeviceServerUrl(),
+      this._signedPublicKey,
+    ]);
     const signedUrl = await this._api.genSignSignalingUrl('account', url, {
       deviceId: this._deviceId,
+      signedPublicKey,
     });
 
     const websocket = new WebSocket(signedUrl);

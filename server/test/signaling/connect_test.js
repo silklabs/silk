@@ -54,8 +54,12 @@ suite('connect test', () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
 
-    const deviceUrl =
-      await device.api.genSignSignalingUrl('device', servers[0].host);
+    const {accessToken} = account;
+
+    const [deviceUrl, signedPublicKey] = await Promise.all([
+      device.api.genSignSignalingUrl('device', servers[0].host),
+      accessToken.genSign(accessToken.pub),
+    ]);
     let deviceWs = new WebSocket(deviceUrl);
     let deviceWsDuplex = new WebSocketDuplexStream(deviceWs);
     let deviceMux = new MultiplexStream(deviceWsDuplex);
@@ -64,7 +68,7 @@ suite('connect test', () => {
     const accountUrl = await account.api.genSignSignalingUrl(
       'account',
       servers[0].host,
-      {deviceId: device.record.accessToken.publicKey}
+      {deviceId: device.record.accessToken.publicKey, signedPublicKey}
     );
     let accountWs = new WebSocketDuplexStream(new WebSocket(accountUrl));
     accountWs.write('ping');
@@ -99,15 +103,19 @@ suite('connect test', () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
 
-    const deviceUrl =
-      await device.api.genSignSignalingUrl('device', servers[0].host);
+    const {accessToken} = account;
+
+    const [deviceUrl, signedPublicKey] = await Promise.all([
+      device.api.genSignSignalingUrl('device', servers[0].host),
+      accessToken.genSign(accessToken.pub),
+    ]);
     let deviceWs = new WebSocket(deviceUrl);
     await eventToPromise(deviceWs, 'open');
 
     const accountUrl = await account.api.genSignSignalingUrl(
       'account',
       servers[0].host,
-      {deviceId: device.record.accessToken.publicKey}
+      {deviceId: device.record.accessToken.publicKey, signedPublicKey}
     );
     let accountWs = new WebSocket(accountUrl);
     await eventToPromise(accountWs, 'open');
@@ -121,15 +129,19 @@ suite('connect test', () => {
     let servers = await serversTable.query();
     assert.equal(servers.length, 1);
 
-    const deviceUrl =
-      await device.api.genSignSignalingUrl('device', servers[0].host);
+    const {accessToken} = account;
+
+    const [deviceUrl, signedPublicKey] = await Promise.all([
+      device.api.genSignSignalingUrl('device', servers[0].host),
+      accessToken.genSign(accessToken.pub),
+    ]);
     let deviceWs = new WebSocket(deviceUrl);
     await eventToPromise(deviceWs, 'open');
 
     const accountUrl = await account.api.genSignSignalingUrl(
       'account',
       servers[0].host,
-      {deviceId: device.record.accessToken.publicKey}
+      {deviceId: device.record.accessToken.publicKey, signedPublicKey}
     );
     let accountWs = new WebSocket(accountUrl);
     await eventToPromise(accountWs, 'open');

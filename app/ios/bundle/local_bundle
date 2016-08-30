@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-var config = require('../../config.local.json');
+var config = require('../../../config.local.json');
 var http = require('http');
 var fs = require('fs');
 var path = require('path');

@@ -12,7 +12,7 @@ const defaultConfig = {
 
 let localConfig;
 try {
-  localConfig = require('../../config.local.json');
+  localConfig = require('../../../config.local.json');
 } catch (ex) {
   localConfig = {};
 }

@@ -53,8 +53,7 @@ const babelRC = {
     [require('babel-plugin-rewrite-require'), {
       aliases: aliases,
       throwForMissingFiles: [
-        path.join(rootDir, 'app', 'config.local.json'),
-        path.join(rootDir, 'app-sdk', 'config.local.json'),
+        path.join(rootDir, 'config.local.json'),
         path.join(rootDir, 'raygun', 'config.internal.json'),
       ],
       throwForNonStringLiteral: true,

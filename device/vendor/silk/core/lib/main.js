@@ -505,9 +505,18 @@ update.on('status', (info) => {
   if (info.state !== 'staged') {
     return;
   }
+  log.verbose('OTA update staged');
 
   // An OTA update is ready to be applied.  Start monitoring for UI idle
   function applyUpdate() {
+    // There's currently no notification when peers connect/disconnect so just
+    // check for any peers right before an update is about to get applied and
+    // maybe try again later
+    if (connections.peerConnected) {
+      log.verbose('1 or more RTC peers connected, simulating ui activity');
+      ui.userActivity();
+      return;
+    }
     log.warn('Applying OTA update');
     shutdown('otaupdate');
   }
@@ -515,10 +524,8 @@ update.on('status', (info) => {
   if (ui.isIdle()) {
     log.verbose('ui is already idle');
     applyUpdate();
-  } else {
-    log.verbose('OTA update is staged, waiting for ui idle');
-    ui.on('idle', applyUpdate);
   }
+  ui.on('idle', applyUpdate);
 });
 
 // UI...

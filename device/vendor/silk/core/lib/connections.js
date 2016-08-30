@@ -148,12 +148,22 @@ export default class Connections extends EventEmitter {
   _connections: Set<Peer> = new Set();
   _channelEmitters: {[key: string]: ChannelEventEmitter} = {};
 
+  /**
+   * Connected to the signaling server?
+   */
   get connected(): bool {
     if (!this._ws) {
       return false;
     }
 
     return this._ws.readyState === WebSocket.OPEN;
+  }
+
+  /**
+   * 1 or more peers connected?
+   */
+  get peerConnected(): bool {
+    return this._connections.size > 0;
   }
 
   /**

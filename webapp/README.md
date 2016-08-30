@@ -17,7 +17,7 @@ express HTTP server.
 ```
 
 If working with a local server create the file `config.local.json` at the root
-of the project to override the default server URL:
+of the repository to override the default server URL:
 ```json
 {
   "serverUrl": "http://localhost:5000",

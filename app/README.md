@@ -29,8 +29,8 @@ npm run test
 ### Default User, Password, Server URL
 
 A default username, password, server URL can be configured via
-`config.local.json`.  Also set `showDevServers` to easily move between
-internal development servers:
+`config.local.json` in the repository root.  Also set `showDevServers`
+to easily move between internal development servers:
 
 ```js
 {
@@ -93,7 +93,7 @@ By default, the app is configured for deploy-to-device mode.  In this mode, when
 
 #### JS bundle loaded from remote packager server
 
-However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you might want to consider loading the JS bundle from a local server rather than packaging it with the app.  To do so, start the JS packaging server with `npm start` and add the following stanza to `config.local.json` in the `app/` directory (you'll have to create the file if it doesn't exist yet) before you run the app:
+However, if you find yourself rebuilding and redeploying the app frequently in your dev cycle, then you might want to consider loading the JS bundle from a local server rather than packaging it with the app.  To do so, start the JS packaging server with `npm start` and add the following stanza to `config.local.json` in the repository root (you'll have to create the file if it doesn't exist yet) before you run the app:
 
 ```js
 {

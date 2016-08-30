@@ -1061,7 +1061,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -x\n\n# Copy json config if it's available...\nconfig_file=\"$SRCROOT/../config.local.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.local.json\"\n# Ensure if we remove the file it's not left around in the bundle.\nrm -f $target_file\necho $config_file\nif [ -a \"$config_file\" ]; then\n  cp $config_file $target_file\nfi\n\n# Copy raygun.json, to enable native crash reporting, only on offical builds\nconfig_file=\"$SRCROOT/../node_modules/silk-raygun/config.internal.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.raygun.json\"\nrm -f $target_file\necho $config_file\nif [ \"$(../tools/official_build)\" == \"true\" ] && [ -a \"$(config_file)\" ]; then\n  cp $config_file $target_file\nfi\n";
+			shellScript = "set -x\n\n# Copy json config if it's available...\nconfig_file=\"$SRCROOT/../../config.local.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.local.json\"\n# Ensure if we remove the file it's not left around in the bundle.\nrm -f $target_file\necho $config_file\nif [ -a \"$config_file\" ]; then\n  cp $config_file $target_file\nfi\n\n# Copy raygun.json, to enable native crash reporting, only on offical builds\nconfig_file=\"$SRCROOT/../node_modules/silk-raygun/config.internal.json\"\ntarget_file=\"$CODESIGNING_FOLDER_PATH/config.raygun.json\"\nrm -f $target_file\necho $config_file\nif [ \"$(../tools/official_build)\" == \"true\" ] && [ -a \"$(config_file)\" ]; then\n  cp $config_file $target_file\nfi\n";
 		};
 		5741E1471B5DA53300F9376C /* Conditionally react-native bundle */ = {
 			isa = PBXShellScriptBuildPhase;

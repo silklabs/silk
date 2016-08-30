@@ -7,7 +7,7 @@
 var type = 'bundle';
 var config;
 try {
-  config = require('../../config.local.json')
+  config = require('../../../config.local.json')
 } catch(e) {
   // Ignore.
 }

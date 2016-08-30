@@ -7,8 +7,6 @@ import {
   createStore as createReduxStore,
   combineReducers,
 } from 'redux';
-// $FlowFixMe: No idea why but Flow can't see this module.
-import immutableStateInvariantMiddleware from 'redux-immutable-state-invariant';
 import createReduxLogger from 'redux-logger';
 import thunk from 'redux-thunk';
 import watch from 'redux-watch';
@@ -42,14 +40,10 @@ export default function createStore(
     } else {
       middleware.push(additionalMiddleware);
     }
-
   }
 
   // We want all redux state changes to be logged in debug builds.
   if (DEBUG) {
-    // The invariant middleware must be the first in the chain.
-    middleware.unshift(immutableStateInvariantMiddleware());
-
     // The logger must always be the last middleware in the chain.
     middleware.push(createReduxLogger({
       level: {

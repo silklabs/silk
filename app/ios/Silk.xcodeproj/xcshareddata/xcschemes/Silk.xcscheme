@@ -62,6 +62,16 @@
                ReferencedContainer = "container:../../crypto/ios/SLKCrypto.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "353163781D776D6300BA7D20"
+               BuildableName = "SLKConfigTests.xctest"
+               BlueprintName = "SLKConfigTests"
+               ReferencedContainer = "container:../../app-config/ios/SLKConfig.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference

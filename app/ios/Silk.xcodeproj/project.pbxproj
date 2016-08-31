@@ -15,6 +15,8 @@
 		3513294A1CDD1C2300805844 /* DINRoundPro-Light.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329451CDD1C2300805844 /* DINRoundPro-Light.otf */; };
 		3513294B1CDD1C2300805844 /* DINRoundPro-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */; };
 		352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 352DCEBA1D18BB810056D623 /* libSLKCrypto.a */; };
+		3531638E1D77754200BA7D20 /* SLKConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 3531638D1D77754200BA7D20 /* SLKConfig.m */; };
+		353163901D77755400BA7D20 /* SLKConfigTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 3531638F1D77755400BA7D20 /* SLKConfigTests.m */; };
 		356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 356CF7211D28AAF900BE44CF /* libRCTOrientation.a */; };
 		357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357AF0361D20E27E0075394A /* libSLKBlobs.a */; };
 		35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222901CB4A0350015FD5C /* libstdc++.tbd */; };
@@ -37,10 +39,7 @@
 		35C1A5621C5042B400551FC6 /* DashSegmentPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1A55E1C5042B400551FC6 /* DashSegmentPlayerManager.swift */; };
 		35DABDA61C5045FB005F479F /* VBPlayer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35DABDA41C5045FB005F479F /* VBPlayer.a */; };
 		35DEE2D01C5069E6000BBF61 /* DashSegmentPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35DEE2CF1C5069E6000BBF61 /* DashSegmentPlayback.swift */; };
-		35F768331CFFDF8A003EAF4D /* SLKConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */; };
-		35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 35F768351CFFE290003EAF4D /* SLKConfig.m */; };
 		5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714A0AB1B756B0900B0630C /* Assertions.swift */; };
-		5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5741E0BF1B5A108D00F9376C /* SLKConfig.swift */; };
 		57445D511D4693AE00DCA815 /* libRCTWebRTC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222301CB493710015FD5C /* libRCTWebRTC.a */; };
 		57445D571D4693CE00DCA815 /* WebRTC.framework in Embed Frameworks (1 item) */ = {isa = PBXBuildFile; fileRef = 57445D561D4693CE00DCA815 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		57445D581D4693FE00DCA815 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57445D561D4693CE00DCA815 /* WebRTC.framework */; };
@@ -316,6 +315,9 @@
 		351329451CDD1C2300805844 /* DINRoundPro-Light.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Light.otf"; sourceTree = "<group>"; };
 		351329461CDD1C2300805844 /* DINRoundPro-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DINRoundPro-Bold.otf"; sourceTree = "<group>"; };
 		352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKCrypto.xcodeproj; path = ../../crypto/ios/SLKCrypto.xcodeproj; sourceTree = "<group>"; };
+		3531638C1D77754200BA7D20 /* SLKConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKConfig.h; sourceTree = "<group>"; };
+		3531638D1D77754200BA7D20 /* SLKConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKConfig.m; sourceTree = "<group>"; };
+		3531638F1D77755400BA7D20 /* SLKConfigTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SLKConfigTests.m; path = ../SLKConfigTests/SLKConfigTests.m; sourceTree = "<group>"; };
 		356CF71C1D28AAF900BE44CF /* RCTOrientation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTOrientation.xcodeproj; path = "../../node_modules/react-native-orientation/iOS/RCTOrientation.xcodeproj"; sourceTree = "<group>"; };
 		357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../pub/react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
 		35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebRTC.xcodeproj; path = "../../react-native-webrtc/ios/RCTWebRTC.xcodeproj"; sourceTree = "<group>"; };
@@ -342,10 +344,7 @@
 		35DABDA41C5045FB005F479F /* VBPlayer.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = VBPlayer.a; sourceTree = "<group>"; };
 		35DABDA51C5045FB005F479F /* VBPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VBPlayer.h; sourceTree = "<group>"; };
 		35DEE2CF1C5069E6000BBF61 /* DashSegmentPlayback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashSegmentPlayback.swift; sourceTree = "<group>"; };
-		35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfigTest.swift; sourceTree = "<group>"; };
-		35F768351CFFE290003EAF4D /* SLKConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKConfig.m; sourceTree = "<group>"; };
 		5714A0AB1B756B0900B0630C /* Assertions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Assertions.swift; sourceTree = "<group>"; };
-		5741E0BF1B5A108D00F9376C /* SLKConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SLKConfig.swift; sourceTree = "<group>"; };
 		57445D561D4693CE00DCA815 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebRTC.framework; path = "../../react-native-webrtc/ios/WebRTC.framework"; sourceTree = "<group>"; };
 		5758F32D1B60989C00C18E5D /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		57AC68721B4F03B2009B70A3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -509,6 +508,17 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		3531638B1D77754200BA7D20 /* SLKConfig */ = {
+			isa = PBXGroup;
+			children = (
+				3531638C1D77754200BA7D20 /* SLKConfig.h */,
+				3531638D1D77754200BA7D20 /* SLKConfig.m */,
+				3531638F1D77755400BA7D20 /* SLKConfigTests.m */,
+			);
+			name = SLKConfig;
+			path = "../../../app-config/ios/SLKConfig";
+			sourceTree = "<group>";
+		};
 		356CF71D1D28AAF900BE44CF /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -570,16 +580,6 @@
 			path = "../../../ble-socket/ios/SLKBLESocket";
 			sourceTree = "<group>";
 		};
-		35C03E921CC03307008EF119 /* SLKConfig */ = {
-			isa = PBXGroup;
-			children = (
-				35F768351CFFE290003EAF4D /* SLKConfig.m */,
-				5741E0BF1B5A108D00F9376C /* SLKConfig.swift */,
-				35F768321CFFDF8A003EAF4D /* SLKConfigTest.swift */,
-			);
-			path = SLKConfig;
-			sourceTree = "<group>";
-		};
 		35C03E931CC03357008EF119 /* SLKUtil */ = {
 			isa = PBXGroup;
 			children = (
@@ -625,7 +625,7 @@
 				35B1136C1D4004F2005A5896 /* SLKBLESocket */,
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
-				35C03E921CC03307008EF119 /* SLKConfig */,
+				3531638B1D77754200BA7D20 /* SLKConfig */,
 				35C03E931CC03357008EF119 /* SLKUtil */,
 				57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
@@ -800,7 +800,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftMigration = 0700;
-				LastSwiftUpdateCheck = 0720;
+				LastSwiftUpdateCheck = 0730;
 				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = Facebook;
 				TargetAttributes = {
@@ -1075,7 +1075,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = ./bundle/xcode_bundle.sh;
+			shellScript = "../../app-config/ios/bundle/xcode_bundle.sh";
 		};
 		6C35E7921C1D5709000C8F8F /* Exfiltrate Symbols */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1112,8 +1112,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				353163901D77755400BA7D20 /* SLKConfigTests.m in Sources */,
 				57C30C331B92CE10003F9EFF /* DebugLogTest.swift in Sources */,
-				35F768331CFFDF8A003EAF4D /* SLKConfigTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1130,11 +1130,10 @@
 				35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */,
 				6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */,
 				5714A0AC1B756B0900B0630C /* Assertions.swift in Sources */,
+				3531638E1D77754200BA7D20 /* SLKConfig.m in Sources */,
 				35C03E911CC02577008EF119 /* NotImplemented.swift in Sources */,
 				35B113741D4004F2005A5896 /* RegionMonitor.swift in Sources */,
 				35B113721D4004F2005A5896 /* BLESocketManager.swift in Sources */,
-				35F768361CFFE290003EAF4D /* SLKConfig.m in Sources */,
-				5741E0C01B5A108D00F9376C /* SLKConfig.swift in Sources */,
 				35B113731D4004F2005A5896 /* BLESocketPeripheral.swift in Sources */,
 				35C1A5601C5042B400551FC6 /* DashSegmentPlayer.swift in Sources */,
 			);
@@ -1241,6 +1240,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native-orientation/iOS/**",
+					"$(SRCROOT)/../../app-config/ios/SLKConfig",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = SilkTests/Info.plist;
@@ -1263,11 +1263,13 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/external/Raygun4iOS",
 				);
+				GCC_PREPROCESSOR_DEFINITIONS = "";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native-orientation/iOS/**",
+					"$(SRCROOT)/../../app-config/ios/SLKConfig",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = SilkTests/Info.plist;
@@ -1290,11 +1292,17 @@
 					"$(PROJECT_DIR)/external/Raygun4iOS",
 					"$(PROJECT_DIR)/../../react-native-webrtc/ios/**",
 				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"SLK_JS_BUNDLE_ENTRY_FILE=\"@\\\"$(SLK_JS_BUNDLE_ENTRY_FILE)\\\"\"",
+					"$(inherited)",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native-orientation/iOS/**",
+					"$(SRCROOT)/../../app-config/ios/SLKConfig",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Silk/Info.plist";
@@ -1308,6 +1316,7 @@
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-DDEBUG -DRCT_DEBUG -DRCT_DEV";
 				PRODUCT_NAME = Silk;
 				PROVISIONING_PROFILE = "";
+				SLK_JS_BUNDLE_ENTRY_FILE = app/src/index;
 				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Silk/App-Bridging-Header.h";
@@ -1327,11 +1336,13 @@
 					"$(PROJECT_DIR)/external/Raygun4iOS",
 					"$(PROJECT_DIR)/../../react-native-webrtc/ios/**",
 				);
+				GCC_PREPROCESSOR_DEFINITIONS = "SLK_JS_BUNDLE_ENTRY_FILE=\"@\\\"$(SLK_JS_BUNDLE_ENTRY_FILE)\\\"\"";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native-orientation/iOS/**",
+					"$(SRCROOT)/../../app-config/ios/SLKConfig",
 					"$(SRCROOT)/../../pub/react-native-blobs/ios/SLKBlobs",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Silk/Info.plist";
@@ -1346,6 +1357,7 @@
 				"OTHER_SWIFT_FLAGS[arch=*]" = "-assert-config Debug";
 				PRODUCT_NAME = Silk;
 				PROVISIONING_PROFILE = "";
+				SLK_JS_BUNDLE_ENTRY_FILE = app/src/index;
 				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Silk/App-Bridging-Header.h";

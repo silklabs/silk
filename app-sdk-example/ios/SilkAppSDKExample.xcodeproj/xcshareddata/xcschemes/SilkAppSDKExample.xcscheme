@@ -48,6 +48,16 @@
                ReferencedContainer = "container:SilkAppSDKExample.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "35D700851D29957E00993A9C"
+               BuildableName = "SLKAppSDKTests.xctest"
+               BlueprintName = "SLKAppSDKTests"
+               ReferencedContainer = "container:../../app-sdk/ios/SLKAppSDK.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference

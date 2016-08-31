@@ -67,6 +67,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     output: Joi.object().keys({
       success: Joi.boolean().required(),
       beaconUUID: Joi.string().guid(),
+      userId: Joi.string().required(),
     }),
     input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
   }, async (req, res) => {
@@ -93,6 +94,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     res.respond({
       success: true,
       beaconUUID: account.beaconUUID,
+      userId: account.id,
     });
   });
 
@@ -105,6 +107,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     output: Joi.object().keys({
       success: Joi.boolean().required(),
       beaconUUID: Joi.string().guid(),
+      userId: Joi.string().required(),
     }),
     input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
   }, async (req, res) => {
@@ -125,6 +128,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     res.respond({
       success: true,
       beaconUUID: account.beaconUUID,
+      userId: account.id,
     });
   });
 

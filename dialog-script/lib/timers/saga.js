@@ -31,6 +31,7 @@ type WakeConditions = {
 
 const log = createLog(`dialog-script-timers-saga`);
 const ALARM_TONE = path.join(__dirname, '../media', 'funny_alarm.mp3');
+const MAX_INT32 = 0x7FFFFFFF;
 
 // Slice the timers array.
 export function getTimers(state: Object): Array<TimerState> {
@@ -336,6 +337,11 @@ export function* modifyTimers(
     if (timeEntity &&
         (timeEntity.resolution.resolution_type === 'builtin.datetime.duration') &&
         timeEntity.resolution.duration) {
+      if (durationMs > MAX_INT32) {
+        yield call(speak, `Sorry, you can not set an alarm for that far in future`, `idle`);
+        return;
+      }
+
       // Relative time is provided so add the current time
       yield put(addTimer(durationMs, Date.now() + durationMs, title, 'alarm'));
       durationStr = humanize(durationMs);
@@ -343,6 +349,9 @@ export function* modifyTimers(
       if ((durationMs - Date.now()) < 0) {
         let [timeString] = getDateTime();
         yield call(speak, `Sorry, it is ${timeString}, you can not set an alarm that is past due`, `idle`);
+        return;
+      } else if ((durationMs - Date.now()) > MAX_INT32) {
+        yield call(speak, `Sorry, you can not set an alarm for that far in future`, `idle`);
         return;
       }
       yield put(addTimer(durationMs, durationMs, title, 'alarm'));

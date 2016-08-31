@@ -35,6 +35,7 @@ import {
 } from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
 import {recordKeyword} from './keyword/saga';
+import {spellWord} from './spelling/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
@@ -99,6 +100,7 @@ const concurrentIntents: Set<string> = new Set([
   `startTimer`,
   `turnOff`,
   `turnOn`,
+  `spellWord`,
 ]);
 
 // A simple saga that speaks the current time.
@@ -386,6 +388,10 @@ export default function*(
         break;
       case `recordKeyword`:
         sagaFunction = recordKeyword;
+        args.push(entities);
+        break;
+      case `spellWord`:
+        sagaFunction = spellWord;
         args.push(entities);
         break;
       default:

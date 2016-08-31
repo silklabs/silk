@@ -11,9 +11,9 @@
 import invariant from 'assert';
 import {handleActions} from 'redux-actions';
 import createLog from 'silk-log';
+import type {Action, SimpleAction} from 'silk-redux/action';
 
 import type {Config as ApiConfig} from 'silk-api';
-import type {Action, SimpleAction} from 'silk-redux/action';
 
 const log = createLog('app-sdk-auth');
 
@@ -48,8 +48,8 @@ export type AuthState = {
   isAuthenticated: boolean;
 
   /**
-   * The UUID for the account beacon when |isAuthenticated| is true. Null when
-   * |isAuthenticated| is false.
+   * The UUID for the account beacon when `isAuthenticated` is true. Null when
+   * `isAuthenticated` is false.
    */
   beaconUuid: ?string;
 };

@@ -6,9 +6,9 @@ import invariant from 'assert';
 import {handleActions} from 'redux-actions';
 
 import type {ListDevicesOutput} from 'silk-api/src/gen/account';
+import type {Action, SimpleAction} from 'silk-redux/action';
 import type {Peer} from 'silk-rtc';
 
-import type {Action, SimpleAction} from 'silk-redux/action';
 import type {
   default as DeviceSession,
   DeviceSecret,

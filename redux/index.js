@@ -20,7 +20,7 @@ import type {
 
 type PathSubscriber<T> = (newValue: T, oldValue: T, objectPath: string) => any;
 
-export type Store<S> = ReduxStore & {
+export type Store<S> = ReduxStore<S> & {
   subscribeToPath: (path: string, listener: PathSubscriber<*>) => (() => void);
 };
 

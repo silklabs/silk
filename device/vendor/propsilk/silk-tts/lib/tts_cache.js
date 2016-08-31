@@ -51,7 +51,7 @@ export default class TtsCache {
   /**
    * Populate the cache from the provided directory
    */
-  async _populateCacheFrom(dir: string, cache: CacheType) {
+  async _populateCacheFrom(dir: string, cache: CacheType): Promise<void> {
     if ((await fs.exists(dir)) === false) {
       log.warn(`cache dir ${dir} doesn't exist`);
       return;

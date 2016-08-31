@@ -9,13 +9,13 @@
 
 import invariant from 'assert';
 
-type QueryProps = {[key: string]: mixed} | {
+type QueryProps = {
   $in?: Array<mixed>;
   $nin?: Array<mixed>;
-}
+};
 
 type Query = {
-  $or?: Array<QueryProps>
+  $or?: Array<Query>
 } | QueryProps;
 
 // Allowed operators used in our queries.
@@ -126,16 +126,16 @@ function normalizeQueryValue(property: string, input: mixed): Array<string> {
 
 // See https://docs.mongodb.org/manual/reference/operator/query/or/#op._S_or
 function parseOrClause(statements: Array<Query>): string {
-  let subcluases = [];
+  let subclauses = [];
   for (let query of statements) {
     let clause = [];
     for (let prop in query) {
       let value = query[prop];
       clause.push(...normalizeQueryValue(prop, value));
     }
-    subcluases.push(`(${clause.join(' and ')})`);
+    subclauses.push(`(${clause.join(' and ')})`);
   }
-  return `(${subcluases.join(' or ')})`;
+  return `(${subclauses.join(' or ')})`;
 }
 
 export default function parseQuery(

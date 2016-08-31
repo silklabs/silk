@@ -3,16 +3,15 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @flow
- */
-
-/**
  * This module is responsible for handling the various types of JS runtime
  * errors that may occur (such as uncaught exceptions and promise chain
  * rejections that are not handled).
+ *
  * @name js_errors
  * @namespace
+ * @flow
  */
+
 
 import {getstrprop} from 'silk-sysutils';
 import {spawn} from 'child_process';
@@ -20,6 +19,7 @@ import createLog from 'silk-log/device';
 import {StoringStream} from 'silk-streams';
 import eventToPromise from 'event-to-promise';
 import {Debuggerd, Tombstones} from './crash_reporter';
+
 import type {CrashReporter} from './crash_reporter';
 
 const log = createLog('js_errors');
@@ -65,7 +65,10 @@ function drainLogcat(destination) {
   }
 }
 
-export async function buildJSTombstone(type: string, err: Error) {
+export async function buildJSTombstone(
+  type: string,
+  err: Error
+): Promise<StoringStream> {
   const stream = new StoringStream();
   const header = tombstoneHeader(type, err);
   stream.write(header);

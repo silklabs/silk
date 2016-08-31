@@ -1,13 +1,15 @@
 #!/system/bin/sh
 
-export NODE_ENV="production"
-export DEBUG=$(getprop persist.silk.debug "silk-*,-silk-*:debug")
+export DEBUG=$(getprop persist.silk.debug "silk-*,-silk-*:debug,-silk-*:verbose")
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors true)
 export UV_THREADPOOL_SIZE=32
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/silk/lib
 
 if [ $(getprop ro.debuggable) -eq 1 ]; then
+  export NODE_ENV="debug"
   export NODE_PATH=$NODE_PATH:data/node_modules/
+else
+  export NODE_ENV="production"
 fi
 
 info() {

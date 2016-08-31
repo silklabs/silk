@@ -195,17 +195,12 @@ export const configure = {
     let adb = createAdb(args.deviceSerialNumber);
 
     let account = createAccount();
-    let device = new Device({serverUrl: dotConfig.serverUrl}, adb);
+    let device = new Device({
+      serverUrl: dotConfig.serverUrl,
+      newAccessToken: args.n,
+    }, adb);
 
     console.log(`Configuring device ...`);
-
-    if (args.n) {
-      // persist new device ID
-      await device.pushNewDeviceId();
-    } else {
-      // use device id from device
-      await device.pullDeviceId();
-    }
 
     const {deviceSerialNumber} = args;
     const api = new API({

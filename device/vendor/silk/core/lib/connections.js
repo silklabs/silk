@@ -9,13 +9,15 @@
 
 import invariant from 'assert';
 import { EventEmitter } from 'events';
-
 import { answer } from 'silk-rtc';
 import createLog from 'silk-log/device';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
 import WebSocket from 'ws';
 import { AccessToken } from 'silk-api';
 import {getboolprop} from 'silk-sysutils';
+import api from 'silk-device-api';
+
+import getPermissionManager from './permissions';
 
 import {
   MultiplexStream,
@@ -32,7 +34,7 @@ import type {
 
 import type { Peer, StructuredDataChannel, UserMediaConstraints } from 'silk-rtc';
 
-import api from 'silk-device-api';
+import type {PermissionManagerConnection} from './permissions';
 
 const log = createLog('connections');
 const MAX_RECONNECT_SLEEP = 30 * 1000;
@@ -158,6 +160,17 @@ export default class Connections extends EventEmitter {
   _mux: ?MultiplexStream = null;
   _connections: Set<Peer> = new Set();
   _channelEmitters: {[key: string]: ChannelEventEmitter} = {};
+  _enforcePermissions: boolean = true;
+  _permissionManager: ?PermissionManagerConnection = null;
+
+  constructor(disablePermissions?: 'disable permissions' | void) {
+    super();
+
+    if (disablePermissions === 'disable permissions') {
+      log.warn(`Permissions checking disabled... This had better be a test!`);
+      this._enforcePermissions = false;
+    }
+  }
 
   /**
    * Connected to the signaling server?
@@ -213,6 +226,9 @@ export default class Connections extends EventEmitter {
     invariant(this.state === 'disconnected');
 
     log.info('Connections start');
+    if (this._enforcePermissions && !this._permissionManager) {
+      this._permissionManager = getPermissionManager();
+    }
     this._running = true;
     this._connect();
   }
@@ -463,13 +479,23 @@ export default class Connections extends EventEmitter {
     const accessToken = AccessToken.importPub(publicKey);
     if (!await accessToken.genVerify(publicKey, signedPublicKey)) {
       log.warn(`Unable to verify public key`, publicKey);
-      if (ALLOW_UNAUTHENTICATED_STREAMS) {
-        log.warn(`Allowing connection because the '${OPENHOUSE_PROP}' ` +
-                 `property is set. This connection would not be possible in ` +
-                 `production builds.`);
-      } else {
-        stream.destroy();
-        return;
+      stream.destroy();
+      return;
+    }
+
+    const permissionManager = this._permissionManager;
+    if (permissionManager) {
+      const pairedKeys = permissionManager.match(`rtc`);
+      if (pairedKeys.indexOf(publicKey) === -1) {
+        log.warn(`This public key is not paired`, publicKey);
+        if (ALLOW_UNAUTHENTICATED_STREAMS) {
+          log.warn(`Allowing connection because the '${OPENHOUSE_PROP}' ` +
+                   `property is set. This connection would not be possible in ` +
+                   `production builds.`);
+        } else {
+          stream.destroy();
+          return;
+        }
       }
     }
 

@@ -5,5 +5,9 @@
   },
   "rules": {
     "silk/flow": 0
+  },
+  "globals": {
+    "$Enum": false,
+    "$Shape": false
   }
 }

@@ -25,14 +25,18 @@ export type Store<S> = ReduxStore<S> & {
   subscribeToPath: (path: string, listener: PathSubscriber<S, *>) => (() => void);
 };
 
+export {combineReducers} from 'redux';
+export {handleActions} from 'redux-actions';
+
 const DEBUG = (global.__DEV__) || (process.env.NODE_ENV !== `production`);
 
-const log = createLog(`redux-store`);
+const log = createLog(`redux`);
 
 export default function createStore(
   reducers: ReducersMapObject = {},
   initialState?: ?Object = undefined,
   additionalMiddleware?: ?Middleware | ?Array<Middleware> = undefined,
+  logOptions?: ?Object = undefined,
 ): Store<*> {
   const middleware = [thunk];
   if (additionalMiddleware) {
@@ -46,16 +50,16 @@ export default function createStore(
   // We want all redux state changes to be logged in debug builds.
   if (DEBUG) {
     // The logger must always be the last middleware in the chain.
-    middleware.push(createReduxLogger({
+    middleware.push(createReduxLogger(logOptions || {
       level: {
-        prevState: `debug`,
-        action: `debug`,
-        nextState: `debug`,
+        prevState: `verbose`,
+        action: `info`,
+        nextState: `verbose`,
         error: `error`,
       },
       logger: {
         ...log,
-        log: (...args: Array<any>) => log.info(...args),
+        log: (...args: Array<any>) => undefined,
       },
       actionTransformer: (action: any) => {
         const {type, requested, error} = action;
@@ -66,13 +70,6 @@ export default function createStore(
         if (error) {
           return {type, error, payload};
         }
-        // Stupid heuristic to get the most informative but least spammy
-        // log messages from actions.
-        if ((typeof payload === `object`) &&
-            (payload !== null) &&
-            (!payload.constructor || payload.constructor.name !== `Object`)) {
-          payload = `<${payload.constructor.name}>`;
-        }
         return {type, payload};
       },
       colors: {
@@ -82,6 +79,7 @@ export default function createStore(
         nextState: false,
         error: false,
       },
+      timestamp: false,
     }));
   }
 

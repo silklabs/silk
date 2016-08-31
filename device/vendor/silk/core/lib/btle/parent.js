@@ -249,7 +249,7 @@ export class BluetoothLE extends EventEmitter {
   async _startAll(): Promise<void> {
     log.debug(`_startAll`);
 
-    const deviceId = await getDeviceId();
+    const deviceId = getDeviceId();
     invariant(deviceId.priv);
 
     this._privateKey = deviceId.priv;

@@ -34,7 +34,7 @@ function genHandleSuccessfulAuth(
   api: SilkApi,
   apiResult: SignInOutput | CreateAccountOutput
 ): Promise<?string> {
-  const {success, beaconUUID} = apiResult;
+  const {success, beaconUUID, userId} = apiResult;
   if (!success) {
     api.accessToken = null;
     return Promise.resolve(null);
@@ -46,6 +46,7 @@ function genHandleSuccessfulAuth(
     publicKey: accessToken.pub,
     privateKey: accessToken.priv,
     beaconUuid: beaconUUID,
+    userId: userId,
   });
   return AsyncStorage.setItem(ACCESS_TOKEN_KEY, json).then(() => beaconUUID);
 }

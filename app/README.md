@@ -99,12 +99,12 @@ However, if you find yourself rebuilding and redeploying the app frequently in y
 {
   "react-native": {
     "type": "remote",
-    "url": "http://<your IP address>:8081/app/src/index.bundle?platform=ios&dev=true"
+    "host": "<your IP address, defaults to localhost>"
   }
 }
 ```
 
-If you're running the app in the simulator, you can use `localhost` for your computer's IP address. Use Cmd+R in the simulator to reload the JS whenever you've made changes without having to re-run in Xcode. If you're running the app on a real device, you'll have to make sure that that device is on the same network as your computer, and you'll have to use your computer's IP address in the URL. Shake the device and pick "Reload JS" from the menu that appears whenever you want to reload the JavaScript code.
+If you're running the app in the simulator, you can use `localhost` for the host (or leave it out). Use Cmd+R in the simulator to reload the JS whenever you've made changes without having to re-run in Xcode. If you're running the app on a real device, you'll have to make sure that that device is on the same network as your computer, and you'll have to use your computer's IP address in the URL. Shake the device and pick "Reload JS" from the menu that appears whenever you want to reload the JavaScript code.
 
 #### Hybrid approach: packaged JS bundle generated from packager server
 
@@ -113,8 +113,7 @@ It may not always be convenient or possible to have the app load its JS bundle f
 ```js
 {
   "react-native": {
-    "type": "local",
-    "url": "http://localhost:8081/app/src/index.bundle?platform=ios&dev=true"
+    "type": "local"
   }
 }
 ```

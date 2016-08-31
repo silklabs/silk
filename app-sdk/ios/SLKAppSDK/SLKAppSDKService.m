@@ -11,6 +11,7 @@
 #import "SLKAppSDKService.h"
 #import "SLKAppSDKDelegate.h"
 #import "SLKAppSDKEventEmitter.h"
+#import "SLKConfig.h"
 #import <SLKAppSDK/SLKAppSDK-Swift.h>
 
 @interface SLKAppSDKService () <RCTBridgeDelegate, RegionMonitorDelegate>
@@ -22,6 +23,7 @@
   RCTBridge *_bridge;
   id<SLKAppSDKDelegate> _delegate;
   SLKAppSDKEventEmitter *_eventEmitter;
+  SLKConfig *_config;
   RegionMonitor *_regionMonitor;
   BLESocketPeripheral *_socketPeripheral;
   BOOL _initialized;
@@ -34,6 +36,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   if ((self = [super init])) {
     _delegate = delegate;
     _eventEmitter = [[SLKAppSDKEventEmitter alloc] initWithDelegate:delegate];
+    _config = [SLKConfig new];
     _regionMonitor = [[RegionMonitor alloc] initWithDelegate:self];
     _bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:nil];
     _socketPeripheral = [[BLESocketPeripheral alloc] initWithRegionMonitor:_regionMonitor];
@@ -81,13 +84,12 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  // Change this |localhost| to your machine's ip address.
-  return [NSURL URLWithString:@"http://localhost:8081/app-sdk/src/sdk/index.bundle?platform=ios&dev=true"];
+  return _config.jsBundleURL;
 }
 
 - (NSArray *)extraModulesForBridge:(RCTBridge *)bridge
 {
-  return @[_eventEmitter, [BLESocketManager new]];
+  return @[_eventEmitter, _config, [BLESocketManager new]];
 }
 
 // RegionMonitorDelegate

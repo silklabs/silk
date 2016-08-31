@@ -16,6 +16,7 @@
 #import "RCTTouchHandler.h"
 #import "RCTView.h"
 
+#import "SLKConfig.h"
 #import "SLKBlobManager.h"
 #import "SLKWebSocketModule.h"
 

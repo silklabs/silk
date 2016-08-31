@@ -375,12 +375,12 @@ export default function*(
         sagaFunction = getArtist;
         break;
       case `turnOn`:
-        if (entities[0].type === 'light') {
+        if (entities.length && (entities[0].type === 'light')) {
           sagaFunction = turnOnLight;
         }
         break;
       case `turnOff`:
-        if (entities[0].type === 'light') {
+        if (entities.length && (entities[0].type === 'light')) {
           sagaFunction = turnOffLight;
         }
         break;

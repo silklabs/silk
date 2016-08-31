@@ -1,5 +1,13 @@
 #!/usr/bin/env ../../../../pub/babel-run/babel-node
 
+/**
+ * Copyright (c) 2016 Silk Labs, Inc.
+ * All Rights Reserved.
+ * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @noflow
+ */
+
 'use strict';
 
 import fs from 'fs';

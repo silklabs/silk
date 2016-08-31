@@ -17,7 +17,7 @@
     "node-webrtc": "git+ssh://git@github.com/silklabs/node-webrtc#master",
     "babel-runtime": "6.9.0",
     "event-to-promise": "0.7.0",
-    "msgpack-lite": "0.1.13",
+    "msgpack-lite": "0.1.20",
     "ws": "1.0.1"
   },
   "devDependencies": {

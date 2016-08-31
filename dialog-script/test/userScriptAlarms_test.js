@@ -85,9 +85,9 @@ suite(`userScript`, () => {
     await tester.listenCheck(`^Ok, I've started the wakeup alarm`, `idle`);
     tester.speak(`how much time until my alarm for tomorrow at 8 am?`);
     await tester.listenCheck(`^Alarm wakeup would expire in`, `idle`);
-    setTimeout(() => tester.speak(`when does my wakeup alarm expire?`), 500);
+    tester.speak(`when does my wakeup alarm expire?`);
     await tester.listenCheck(`^Alarm wakeup is currently set for`, `idle`);
-    setTimeout(() => tester.speak(`Cancel the wakeup alarm`), 500);
+    tester.speak(`Cancel the wakeup alarm`);
     await tester.listenCheck(`^Ok, I've canceled the wakeup alarm`, `idle`);
     done();
   });
@@ -97,11 +97,11 @@ suite(`userScript`, () => {
     await tester.listenCheck(`^Ok, I've started an alarm`, `idle`);
     tester.speak(`Set an alarm for tomorrow at 8 am called as wakeup`);
     await tester.listenCheck(`^Ok, I've started the wakeup alarm`, `idle`);
-    setTimeout(() => tester.speak(`how much time until my alarm`), 500);
+    tester.speak(`how much time until my alarm`);
     await tester.listenCheck(`^Alarm \\d+ would expire in`, `idle`);
-    setTimeout(() => tester.speak(`Cancel the alarm for tomorrow at 6 am`), 500);
+    tester.speak(`Cancel the alarm for tomorrow at 6 am`);
     await tester.listenCheck(`^Ok, I've canceled that alarm`, `idle`);
-    setTimeout(() => tester.speak(`Cancel the wakeup alarm`), 500);
+    tester.speak(`Cancel the wakeup alarm`);
     await tester.listenCheck(`^Ok, I've canceled the wakeup alarm`, `idle`);
     done();
   });
@@ -109,7 +109,7 @@ suite(`userScript`, () => {
   test(`Alarm test - get time for alarm with duration`, async (done) => {
     tester.speak(`Set an alarm for 1 hour`);
     await tester.listenCheck(`^Ok, I've started an alarm`, `idle`);
-    setTimeout(() => tester.speak(`how much time until my alarm for 1 hour`), 1000);
+    tester.speak(`how much time until my alarm for 1 hour`);
     await tester.listenCheck(`^Alarm \\d+ would expire in`, `idle`);
     tester.speak(`Cancel the alarm for 1 hour`);
     await tester.listenCheck(`^Ok, I've canceled that alarm`, `idle`);

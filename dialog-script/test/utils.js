@@ -159,7 +159,7 @@ export class UserScriptTester {
   }
 
   speak(text) {
-    this._dialogEngine._mockInterpret(text);
+    setTimeout(() => this._dialogEngine._mockInterpret(text), 500);
   }
 
   listen() {

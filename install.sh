@@ -16,7 +16,7 @@ npm build node_modules/silk-dnn-models
 
 if [[ "$(uname)" == "Darwin" && -z $GET_OFF_MY_LAWN ]]; then
   # Following packages are needed by caffe module
-  brew install -vd snappy gflags szip libtool
+  brew install -vd snappy gflags szip libtool protobuf
   
   # OpenCV3 wants libwebp
   brew install webp
@@ -27,13 +27,6 @@ if [[ "$(uname)" == "Darwin" && -z $GET_OFF_MY_LAWN ]]; then
   BOOST="$(brew list -1 | grep -i "^boost\$" || true)"
   if [[ -z $BOOST ]]; then
     brew install boost
-  fi
-
-  # Following packages are needed by protobuf
-  brew install autoconf
-  AUTOMAKE="$(brew list -1 | grep -i "^automake\$" || true)"
-  if [[ -z $AUTOMAKE ]]; then
-    brew install automake
   fi
 fi
 
@@ -54,14 +47,9 @@ if [[ "$(uname)" == "Linux" && -z $GET_OFF_MY_LAWN ]]; then
   package_exists libatlas-base-dev
   package_exists libboost-all-dev
   package_exists libgflags-dev
-
-  # Following packages are needed by protobuf
-  package_exists autoconf
-  package_exists automake
-  package_exists libtool
+  package_exists libprotobuf-dev
+  package_exists protobuf-compiler
 fi
-
-
 
 # Hacks to ensure that native modules are built on your platform ...
 for module_gyp in $(find -L node_modules -name 'binding.gyp' ) ; do

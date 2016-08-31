@@ -5,7 +5,7 @@
 import createLog from 'silk-log/device';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
-import {getDateTime} from './utils';
+import {getDateTime, encodeRate} from './utils';
 
 import {
   default as createEnvironment,
@@ -35,6 +35,7 @@ import {
 } from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
 import {recordKeyword} from './keyword/saga';
+import {spellWord} from './spelling/saga';
 
 import type {DialogEngine} from 'silk-dialog-engine';
 
@@ -99,6 +100,7 @@ const concurrentIntents: Set<string> = new Set([
   `startTimer`,
   `turnOff`,
   `turnOn`,
+  `spellWord`,
 ]);
 
 // A simple saga that speaks the current time.
@@ -132,11 +134,10 @@ export function* saySoftwareVersion(
    * can write unit tests that run the generator one step at a time.
    */
   const silkVersion = require('silk-core-version');
-  yield call(speak,
-             (silkVersion.official ? 'Official ' : '') +
-             silkVersion.semver + ' on ' + silkVersion.branch +
-             ' with a sha1 of ' + silkVersion.sha.substr(0, 8),
-             `idle`);
+  let version = (silkVersion.official ? 'Official ' : '') +
+                silkVersion.semver + ' on ' + silkVersion.branch +
+                ' with a sha1 of ' + encodeRate(silkVersion.sha.substr(0, 8), 'slow');
+  yield call(speak, version);
 }
 
 /**
@@ -386,6 +387,10 @@ export default function*(
         break;
       case `recordKeyword`:
         sagaFunction = recordKeyword;
+        args.push(entities);
+        break;
+      case `spellWord`:
+        sagaFunction = spellWord;
         args.push(entities);
         break;
       default:

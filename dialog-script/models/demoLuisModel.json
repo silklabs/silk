@@ -26,6 +26,9 @@
       "name": "turnOn"
     },
     {
+      "name": "spellWord"
+    },
+    {
       "name": "playMusic"
     },
     {
@@ -51,6 +54,9 @@
     }
   ],
   "entities": [
+    {
+      "name": "word"
+    },
     {
       "name": "stock"
     },
@@ -810,6 +816,83 @@
       "text": "play songs on sonos",
       "intent": "playSonos",
       "entities": []
+    },
+    {
+      "text": "how do you spell keyboard",
+      "intent": "spellWord",
+      "entities": [
+        {
+          "entity": "word",
+          "startPos": 4,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "please spell monitor",
+      "intent": "spellWord",
+      "entities": [
+        {
+          "entity": "word",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "spell telephone",
+      "intent": "spellWord",
+      "entities": [
+        {
+          "entity": "word",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "how do you spell cellphone",
+      "intent": "spellWord",
+      "entities": [
+        {
+          "entity": "word",
+          "startPos": 4,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "spell dog",
+      "intent": "spellWord",
+      "entities": [
+        {
+          "entity": "word",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "spell airplane",
+      "intent": "spellWord",
+      "entities": [
+        {
+          "entity": "word",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "what is the spelling of fantabulous",
+      "intent": "spellWord",
+      "entities": [
+        {
+          "entity": "word",
+          "startPos": 5,
+          "endPos": 5
+        }
+      ]
     }
   ]
 }

@@ -68,8 +68,29 @@ ai(`sudo make me a sandwich`, 'xkcd', 'number', '149-sudo', {});
 
 ai(`software version`, 'getSoftwareVersion');
 
-/*
 ai(`what time is it`, 'getCurrentTime');
+ai(`what's the time now`, 'getCurrentTime');
+ai(`what is the time now`, 'getCurrentTime');
+
+ai(`start music`, 'playMusic');
+ai(`play music`, 'playMusic');
+ai(`stop music`, 'pauseMusic');
+ai(`pause music`, 'pauseMusic');
+ai(`play sonos`, 'playSonos');
+ai(`pause sonos`, 'pauseSonos');
+ai(`stop sonos`, 'pauseSonos');
+
+ai(`turn on the light`, 'turnOn', 'light', 'light', {});
+ai(`turn on the lights`, 'turnOn', 'light', 'lights', {});
+ai(`turn the light on`, 'turnOn', 'light', 'light', {});
+ai(`turn the lights on`, 'turnOn', 'light', 'lights', {});
+
+ai(`turn off the light`, 'turnOff', 'light', 'light', {});
+ai(`turn off the lights`, 'turnOff', 'light', 'lights', {});
+ai(`turn the light off`, 'turnOff', 'light', 'light', {});
+ai(`turn the lights off`, 'turnOff', 'light', 'lights', {});
+
+/*
 ai(`start a timer for 5 seconds`, 'startTimer', 'builtin.datetime.duration',
     '5 seconds', { resolution: { duration: 'PT5S' } } );
 ai(`cancel the 5 seconds timer`, 'cancelTimer', 'builtin.datetime.duration',
@@ -83,27 +104,6 @@ ai(`how's qualcomm stock doing`, 'getStockPrice', 'stock', 'qualcomm', {});
 ai(`how is google stock doing`, 'getStockPrice', 'stock', 'google', {});
 ai(`how's amazon stock doing today`, 'getStockPrice', 'stock', 'amazon', {});
 ai(`how is mattel stock doing today`, 'getStockPrice', 'stock', 'mattel', {});
-ai(`what's the weather today?`, 'getWeather');
-ai(`what's the weather like today?`, 'getWeather');
-ai(`how's the weather?`, 'getWeather');
-ai(`how's the weather today?`, 'getWeather');
-
-ai(`start music`, 'playMusic');
-ai(`play music`, 'playMusic');
-ai(`play sonos`, 'playSonos');
-ai(`stop music`, 'pauseMusic');
-ai(`pause music`, 'pauseMusic');
-ai(`pause sonos`, 'pauseSonos');
-
-ai(`turn on the light`, 'turnOn', 'light', 'light', {});
-ai(`turn on the lights`, 'turnOn', 'light', 'lights', {});
-ai(`turn the light on`, 'turnOn', 'light', 'light', {});
-ai(`turn the lights on`, 'turnOn', 'light', 'lights', {});
-
-ai(`turn off the light`, 'turnOff', 'light', 'light', {});
-ai(`turn off the lights`, 'turnOff', 'light', 'lights', {});
-ai(`turn the light off`, 'turnOff', 'light', 'light', {});
-ai(`turn the lights off`, 'turnOff', 'light', 'lights', {});
 */
 
 module.exports = intentions;

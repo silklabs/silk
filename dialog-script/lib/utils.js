@@ -35,9 +35,11 @@ export function parseIso8601(s: string, useLocal: boolean) {
     return null;
   }
   let d = new Date();
-  d.setUTCFullYear(parseInt(matches[0].substring(0, 4)));
-  d.setUTCMonth(matches[1] ? parseInt(matches[1].substr(0, 2)) - 1 : 0);
-  d.setUTCDate(matches[2] ? parseInt(matches[2].substr(0, 2)) : 1);
+  let year = parseInt(matches[0].substring(0, 4));
+  let month = matches[1] ? parseInt(matches[1].substr(0, 2)) - 1 : 0;
+  let day = matches[2] ? parseInt(matches[2].substr(0, 2)) : 1;
+  d.setUTCFullYear(year);
+  d.setUTCMonth(month, day);
   let hours = 0, minutes = 0, seconds = 0, milliseconds = 0;
   let fraction = matches[6] ? parseFloat(matches[6]) : 0;
   if (matches[3]) {

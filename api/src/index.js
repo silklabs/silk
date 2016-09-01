@@ -296,18 +296,22 @@ export class SilkApi {
     return socket;
   }
 
-  canReachServer: () => Promise<bool> = async () => {
-    let path = '/v1/account/socketio/url';
-    let url = URL.resolve(this.config.serverUrl, path);
-    try {
-      await fetch(url, { method: 'POST' });
-      log.info('canReachServer(): true');
-      return true;
-    } catch (ex) {
-      log.info('canReachServer(): false');
-      return false;
-    }
-  };
+  canReachServer(): Promise<bool> {
+    const path = '/v1/account/socketio/url';
+    const url = URL.resolve(this.config.serverUrl, path);
+    log.verbose('canReachServer() ...', url);
+    return fetch(url, {method: 'POST'})
+      .then(() => {
+        log.info('canReachServer(): true');
+        return true;
+      })
+      .catch(() => {
+        log.info('canReachServer(): false');
+        return false;
+      });
+  }
+
+  canReachServer: () => Promise<bool> = this.canReachServer.bind(this);
 }
 
 export default function (config: Config): SilkApi {

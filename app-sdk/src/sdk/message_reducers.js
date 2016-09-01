@@ -118,6 +118,7 @@ function NETWORK_SERVER_REACHABLE(
       ...state,
       CLIENT_STATUS: {
         ...state.CLIENT_STATUS,
+        clientConnectionError: null,
         clientConnectionStatus: 'CONNECTING',
       },
     };

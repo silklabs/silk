@@ -23,7 +23,7 @@ const CLIENT_MODULE = '../http_client';
 const ROUTE_PATH = path.join(__dirname, '../../server/src/server/routes');
 
 // Create list of all the route modules...
-const ROUTES = fs.readdirSync(ROUTE_PATH);
+const ROUTES = fs.readdirSync(ROUTE_PATH).filter(f => f.substr(-3) === '.js');
 
 export default function generate() {
   // XXX: The routes should not need any context for this but perhaps we will

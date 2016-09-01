@@ -35,4 +35,4 @@ export type FetchOptions = {
 declare export default (
   url: string,
   options?: FetchOptions,
-) => Response;
+) => Promise<Response>;

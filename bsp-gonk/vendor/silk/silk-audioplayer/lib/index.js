@@ -4,11 +4,12 @@
  */
 
 import createLog from 'silk-log/device';
-import player from './player';
+import bindings from './player';
 import fs from 'mz/fs';
 import wav from 'wav';
 import Speaker from 'silk-speaker';
 
+import type { PlayerType } from './player';
 import type { ConfigDeviceMic } from 'silk-config';
 
 const log = createLog('audioplayer');
@@ -25,12 +26,13 @@ type soundMapDataType = {
  * @module silk-audioplayer
  *
  * @example
- * const player = require('silk-audioplayer');
+ * const Player = require('silk-audioplayer').default;
  * const log = require('silk-alog');
+ * const player = new Player();
  *
  * player.setVolume(1.0);
  * player.play('data/media/test.mp3')
- * .then(() => log.info('Done playing'));
+ * .then(() => log.info('Done playing'))
  * .catch(err => log.error(err));
  * player.pause();
  * player.setVolume(0.5);
@@ -42,10 +44,15 @@ type soundMapDataType = {
  * .then(() => log.info('Done playing'));
  * .catch(err => log.error(err));
  */
-class Player {
+export default class Player {
 
   _gain: number = GAIN_MAX;
   _soundMap: {[key: string]: soundMapDataType} = {};
+  _player: PlayerType = null;
+
+  constructor() {
+    this._player = new bindings.Player();
+  }
 
   /**
    * Sets the specified output gain value on all channels of this sound file. Gain
@@ -61,7 +68,7 @@ class Player {
    */
   setVolume(gain: number) {
     this._gain = this._clampGain(gain);
-    player.setVolume(this._gain);
+    this._player.setVolume(this._gain);
   }
 
   /**
@@ -107,7 +114,7 @@ class Player {
     }
 
     return new Promise((resolve, reject) => {
-      player.play(fileName, (err) => {
+      this._player.play(fileName, (err) => {
         if (err) {
           reject(err);
           return;
@@ -125,7 +132,7 @@ class Player {
    * @instance
    */
   stop(): boolean {
-    return player.stop();
+    return this._player.stop();
   }
 
   /**
@@ -135,7 +142,7 @@ class Player {
    * @instance
    */
   pause(): boolean {
-    return player.pause();
+    return this._player.pause();
   }
 
   /**
@@ -145,7 +152,7 @@ class Player {
    * @instance
    */
   resume(): boolean {
-    return player.resume();
+    return this._player.resume();
   }
 
   /**
@@ -209,5 +216,3 @@ class Player {
     });
   }
 }
-
-module.exports = new Player();

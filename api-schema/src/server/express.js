@@ -3,13 +3,13 @@
  */
 
 import assert from 'assert';
-import makeDebug from 'debug';
+import createLog from 'silk-log';
 import { validate } from 'joi';
 import uuid from 'uuid';
 
 import { HttpApi } from '../types';
 
-const debug = makeDebug('silk:express-schema');
+const log = createLog('express-schema');
 
 /**
  * A helper class which manages the internal http api state and adds routes to
@@ -57,7 +57,7 @@ export class ExpressRoutes {
             let validation = validate(body, action.output);
             if (validation.error) {
               let id = uuid.v1();
-              debug(
+              log.info(
                 `Invalid response this should never happen (id: ${id})`,
                 validation.error.annotate()
               );
@@ -81,7 +81,7 @@ export class ExpressRoutes {
         return null;
       } catch (e) {
         let id = uuid.v1();
-        debug(`
+        log.warn(`
           Error handling route: ${action.method} ${action.path}
             id: ${id}
 

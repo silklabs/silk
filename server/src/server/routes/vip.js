@@ -58,17 +58,19 @@ export default function (ctx: RouteContext): ExpressRoutes {
     userAgent: Joi.string().required(),
   });
 
+  const ACCOUNT_RESPONSE_SCHEMA = Object.assign({}, {
+    success: Joi.boolean().required(),
+    beaconUUID: Joi.string().guid(),
+    userId: Joi.string(),
+  });
+
   api.define({
     path: 'create',
     method: 'post',
     params: [],
     name: 'createAccount',
     description: 'Create a user account',
-    output: Joi.object().keys({
-      success: Joi.boolean().required(),
-      beaconUUID: Joi.string().guid(),
-      userId: Joi.string().required(),
-    }),
+    output: Joi.object().keys(ACCOUNT_RESPONSE_SCHEMA),
     input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
   }, async (req, res) => {
     let account = await ctx.accounts.create({
@@ -104,11 +106,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     params: [],
     name: 'signIn',
     description: 'Sign into an account',
-    output: Joi.object().keys({
-      success: Joi.boolean().required(),
-      beaconUUID: Joi.string().guid(),
-      userId: Joi.string().required(),
-    }),
+    output: Joi.object().keys(ACCOUNT_RESPONSE_SCHEMA),
     input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
   }, async (req, res) => {
     let account = await ctx.accounts.signIn({

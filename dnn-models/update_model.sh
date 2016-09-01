@@ -22,22 +22,22 @@ fi
 
 cp train/models/aristotle.caffemodel silk-dnn/models/keyword/
 pushd silk-dnn/models/keyword  > /dev/null
-git branch update_model -D
 git checkout -b update_model
 git add .
 git commit -m "Update keyword model with #$LATEST_MODEL_SHA"
 git push origin update_model -f
 LATEST_MODEL_SHA=$(git rev-parse HEAD)
+git branch update_model -D
 popd  > /dev/null
 
 # Update silk-core
 git checkout master
-git branch update_model -D
 git checkout -b update_model
 sed -i -e "s/\(SHA1=\).*/\1$LATEST_MODEL_SHA/" bin/sync
 rm bin/sync-e
 git add bin/sync
 git commit -m "Update keyword model"
 git push origin update_model -f
+git branch update_model -D
 
 rm -rf train

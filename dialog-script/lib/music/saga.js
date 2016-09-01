@@ -6,7 +6,7 @@ import createLog from 'silk-log/device';
 import {call} from 'redux-saga/effects';
 import invariant from 'assert';
 import sonos from 'silk-sonos';
-import player from 'silk-audioplayer';
+import Player from 'silk-audioplayer';
 import fs from 'mz/fs';
 import path from 'path';
 
@@ -19,6 +19,7 @@ type MediaState = 'playing' | 'stopped';
 const DIR = '/data/media/music';
 let songs = null;
 let mediaState: MediaState = 'stopped';
+const player = new Player();
 
 function readMusicDir(dir: string): Promise<Array<string>> {
   if (!songs) {

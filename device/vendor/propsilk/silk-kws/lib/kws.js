@@ -20,7 +20,7 @@ import * as util from 'silk-sysutils';
 import {MelFeatureExtractor, Framer, Normalizer} from 'mel-features';
 import netstatus from 'silk-netstatus';
 import SpeechToText from 'silk-stt';
-import player from 'silk-audioplayer';
+import Player from 'silk-audioplayer';
 import {
   PosKeywordUploadOperation,
   NegKeywordUploadOperation,
@@ -109,6 +109,7 @@ export default class KeywordSpotting extends EventEmitter {
   _ready: boolean = false;
   _vadEnabled: boolean = false;
   _outbox: Outbox;
+  _player: Player;
 
   constructor(voiceActivityDetector: VoiceActivityDetector, standAlone: boolean = false) {
     super();
@@ -144,6 +145,7 @@ export default class KeywordSpotting extends EventEmitter {
     this._onSpeechStop = when => {
       this._pauseSpotting(when);
     };
+    this._player = new Player();
   }
 
   get MEL_COEFFS(): number {
@@ -430,7 +432,7 @@ export default class KeywordSpotting extends EventEmitter {
    */
   _playHotKeywordSound() {
     if (this._standAlone) {
-      return player.play(path.join(__dirname, '..', 'media',
+      return this._player.play(path.join(__dirname, '..', 'media',
           'hotkeyword_detected.mp3'));
     } else {
       return Promise.resolve();

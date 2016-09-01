@@ -19,7 +19,7 @@ import {EventEmitter} from 'events';
 import createLog from 'silk-log/device';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
-import player from 'silk-audioplayer';
+import Player from 'silk-audioplayer';
 
 import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
 import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
@@ -62,6 +62,7 @@ export type DialogScriptOptions = {
 export type DialogState = 'waiting' | 'idle';
 
 const log = createLog('dialog-engine');
+const player = new Player();
 
 /**
  * Dialog Engine Class

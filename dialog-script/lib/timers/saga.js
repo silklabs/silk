@@ -9,7 +9,7 @@ import invariant from 'assert';
 import moment from 'moment';
 import {parseIso8601, getDateTime} from '../utils';
 import path from 'path';
-import player from 'silk-audioplayer';
+import Player from 'silk-audioplayer';
 import humanizeDuration from 'humanize-duration';
 
 import {
@@ -32,6 +32,7 @@ type WakeConditions = {
 const log = createLog(`dialog-script-timers-saga`);
 const ALARM_TONE = path.join(__dirname, '../media', 'funny_alarm.mp3');
 const MAX_INT32 = 0x7FFFFFFF;
+const player = new Player();
 
 // Slice the timers array.
 export function getTimers(state: Object): Array<TimerState> {

@@ -13,7 +13,7 @@ import MotionZone from './motionzone';
 import DiffSubtractor from './diffsubtractor';
 import MogSubtractor from './mogsubtractor';
 import * as util from 'silk-sysutils';
-import player from 'silk-audioplayer';
+import Player from 'silk-audioplayer';
 
 import type { Env, Log, Camera, Timeline } from 'silk-exttest';
 type PreviewType = (when: number) => void;
@@ -44,6 +44,7 @@ const GAUSSIAN_KERNEL_SIZE = 15;
 const MOTION_DURATION_MS = 250;
 
 const SOUND_FILE = path.join(__dirname, '../motion_detected.mp3');
+const player = new Player();
 
 /**
  * Play a sound when motion is detected

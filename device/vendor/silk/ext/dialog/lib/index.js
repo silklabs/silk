@@ -21,7 +21,7 @@ import say from 'silk-say';
 import fs from 'fs';
 import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
-import player from 'silk-audioplayer';
+import Player from 'silk-audioplayer';
 import ui from 'silk-device-ui';
 import api from 'silk-device-api';
 import {Metric} from 'silk-api';
@@ -114,11 +114,13 @@ class Dialog {
   _kws: KeywordSpotting;
   _localTts: boolean;
   _speechStopWhen: number;
+  _player: Player;
 
   constructor(env: Env) {
     camera = env.camera;
     timeline = env.timeline;
     this._monitor(true);
+    this._player = new Player();
     this._kwsEnabled = util.getboolprop(KWS_ENABLED_PROP, true);
     this._localTts = util.getboolprop(LOCAL_TTS_ENABLED_PROP, false);
     let kwsTestMode = util.getboolprop(KWS_TEST_MODE_PROP, false);
@@ -196,8 +198,8 @@ class Dialog {
   async _init() {
     // Preload sounds to reduce run time play latency
     try {
-      await player.load(KEYWORD_DETECTED_SOUND_FILE);
-      await player.load(ERROR_SOUND_FILE);
+      await this._player.load(KEYWORD_DETECTED_SOUND_FILE);
+      await this._player.load(ERROR_SOUND_FILE);
     } catch (err) {
       log.error(err);
     }
@@ -272,7 +274,7 @@ class Dialog {
   _playSound(file: string) {
     log.debug(`Playing ${file}`);
     this._activePlaySoundPromise = this._activePlaySoundPromise.then(() => {
-      return player.play(file);
+      return this._player.play(file);
     })
     .catch(err => {
       log.error(`cannot play ${file}, error: `, err);

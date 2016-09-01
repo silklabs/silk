@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,8 +33,11 @@ import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.silklabs.appsdk.SilkAppSDKService;
 import com.silklabs.appsdk.SilkAppSDKDelegate;
 
@@ -41,7 +45,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends FragmentActivity implements
+  GoogleApiClient.OnConnectionFailedListener {
 
   private final String TAG = "SilkAppSDKExample";
   private final int REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW = 1234; // Random number
@@ -515,6 +520,7 @@ public class MainActivity extends FragmentActivity {
     // Build a GoogleApiClient with access to the Google Sign-In API and the
     // options specified by gso.
     mGoogleApiClient = new GoogleApiClient.Builder(this)
+      .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
       .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
       .build();
   }
@@ -721,6 +727,19 @@ public class MainActivity extends FragmentActivity {
       Map<String, Object> message = new HashMap<>();
       message.put("type", "ACCOUNT_LOGOUT");
       mSilkService.postMessage(message);
+
+      // Sign out of google services
+      try {
+        Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
+          new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+              Log.d(TAG, "Google sign out result" + status);
+            }
+          });
+      } catch(Exception e) {
+        Log.e(TAG, "Failed to sign out: " + e.toString());
+      }
     }
   };
 
@@ -962,5 +981,10 @@ public class MainActivity extends FragmentActivity {
       // Signed out
       onError("Failed to login to google account. " + result.getStatus().getStatusMessage());
     }
+  }
+
+  @Override
+  public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    Log.d(TAG, "onConnectionFailed:" + connectionResult);
   }
 }

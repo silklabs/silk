@@ -9,8 +9,9 @@ import {
 } from 'redux';
 import createReduxLogger from 'redux-logger';
 import thunk from 'redux-thunk';
-import watch from 'redux-watch';
 import createLog from 'silk-log';
+
+import watch from './watch';
 
 import type {
   Middleware,
@@ -18,10 +19,10 @@ import type {
   Store as ReduxStore,
 } from 'redux';
 
-type PathSubscriber<T> = (newValue: T, oldValue: T, objectPath: string) => any;
+import type {PathSubscriber} from './watch';
 
 export type Store<S> = ReduxStore<S> & {
-  subscribeToPath: (path: string, listener: PathSubscriber<*>) => (() => void);
+  subscribeToPath: (path: string, listener: PathSubscriber<S, *>) => (() => void);
 };
 
 const DEBUG = (global.__DEV__) || (process.env.NODE_ENV !== `production`);
@@ -93,7 +94,7 @@ export default function createStore(
   return {
     ...store,
     subscribeToPath: (path, listener) => {
-      const wrappedListener = watch(store.getState, path)(listener);
+      const wrappedListener = watch(store.getState, path, listener);
       return store.subscribe(wrappedListener);
     },
   };

@@ -1,7 +1,7 @@
 import createLog from 'silk-log';
 const log = createLog(`mock-silk-audioplayer`);
 
-class Player {
+export default class Player {
   setVolume(gain) {
   }
 
@@ -13,7 +13,13 @@ class Player {
   load(fileName) {
     return Promise.resolve();
   }
-}
 
-let player = new Player();
-export default player;
+  stop() {
+  }
+
+  pause() {
+  }
+
+  resume() {
+  }
+}

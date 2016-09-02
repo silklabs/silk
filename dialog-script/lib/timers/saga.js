@@ -9,7 +9,7 @@ import invariant from 'assert';
 import moment from 'moment';
 import {parseIso8601, getDateTime} from '../utils';
 import path from 'path';
-import player from 'silk-audioplayer';
+import Player from 'silk-audioplayer';
 import humanizeDuration from 'humanize-duration';
 
 import {
@@ -32,6 +32,15 @@ type WakeConditions = {
 const log = createLog(`dialog-script-timers-saga`);
 const ALARM_TONE = path.join(__dirname, '../media', 'funny_alarm.mp3');
 const MAX_INT32 = 0x7FFFFFFF;
+const player = new Player();
+
+const dialogStartListener: (() => void) = () => {
+  player.pause();
+};
+
+const dialogEndListener: (() => void) = () => {
+  player.resume();
+};
 
 // Slice the timers array.
 export function getTimers(state: Object): Array<TimerState> {
@@ -225,7 +234,11 @@ export function* timerMonitorSaga(
         if (timer.type === 'alarm') {
           let [timeString] = getDateTime();
           try {
+            dialogEngine.addListener(`dialog-start`, dialogStartListener);
+            dialogEngine.addListener(`dialog-end`, dialogEndListener);
             yield call(() => player.play(ALARM_TONE));
+            dialogEngine.removeListener(`dialog-start`, dialogStartListener);
+            dialogEngine.removeListener(`dialog-end`, dialogEndListener);
           } catch (err) {
             log.error(`Failed to play alarm: `, err);
           }

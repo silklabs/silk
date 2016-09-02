@@ -19,7 +19,6 @@ import {EventEmitter} from 'events';
 import createLog from 'silk-log/device';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
-import player from 'silk-audioplayer';
 
 import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
 import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
@@ -133,6 +132,20 @@ export class DialogEngine extends EventEmitter {
    * @memberof silk-dialog-engine.DialogEngine
    * @instance
    */
+  /**
+   * This event is emitted when a dialog starts
+   *
+   * @event dialog-start
+   * @memberof silk-dialog-engine.DialogEngine
+   * @instance
+   */
+  /**
+   * This event is emitted when a dialog ends
+   *
+   * @event dialog-end
+   * @memberof silk-dialog-engine.DialogEngine
+   * @instance
+   */
 
   _uiMode: DialogUiMode;
   _options: DialogEngineOptions;
@@ -225,17 +238,17 @@ export class DialogEngine extends EventEmitter {
   _onDialogStart: (() => void) = () => {
     log.debug(`Dialog started; pausing audio`);
     this._dialogStarted = true;
+    this.emit(`dialog-start`);
     this._dialogPromise = new Promise(resolve => {
       this._dialogPromiseResolve = resolve;
     });
-    player.pause();
   };
 
   _onDialogEnd: (() => void) = () => {
     log.debug(`Dialog ended; resuming audio`);
     this._dialogStarted = false;
+    this.emit(`dialog-end`);
     this._dialogPromiseResolve();
-    player.resume();
   };
 
   _onSpeakBegin: (() => void) = () => {
@@ -246,7 +259,7 @@ export class DialogEngine extends EventEmitter {
       this._dialogPromise = new Promise(resolve => {
         this._dialogPromiseResolve = resolve;
       });
-      player.pause();
+      this.emit(`dialog-start`);
     }
   };
 

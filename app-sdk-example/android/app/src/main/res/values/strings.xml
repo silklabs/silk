@@ -9,6 +9,7 @@
     <string name="logout">Logout</string>
     <string name="send_echo_message">Send echo</string>
     <string name="configure">configure</string>
+    <string name="reconfigure">reconfigure</string>
     <string name="ssid">Select ssid:</string>
     <string name="wifi_title">Which Wi-Fi network should your device connect to?</string>
     <string name="ignore">ignore</string>

@@ -839,8 +839,10 @@ public class MainActivity extends FragmentActivity implements
       }
 
       if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
+        configureButton.setText(getString(R.string.configure));
         configureButton.setEnabled(device.deviceConfigId != null);
       } else {
+        configureButton.setText(getString(R.string.reconfigure));
         configureButton.setEnabled(true);
       }
       deviceStatusTextView.setText(device.status());

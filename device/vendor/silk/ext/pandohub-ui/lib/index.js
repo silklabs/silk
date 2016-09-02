@@ -6,7 +6,6 @@
  * @flow
  */
 
-import fs from 'fs';
 import invariant from 'assert';
 
 import createLog from 'silk-log/device';
@@ -20,6 +19,7 @@ import { genDialogEngine } from 'silk-dialog-engine';
 import type { DialogEngine, DialogUiModeEventCallback } from 'silk-dialog-engine';
 import { Nightlight, Ring } from './leds';
 import { FactoryResetUi } from './factoryReset';
+import * as sysutil from 'silk-sysutils';
 
 const log = createLog('silkext-pandohubui');
 
@@ -57,9 +57,8 @@ class PandoHubUi {
   connectingSubstate: ConnectingSubstate;
   connectingTimer: ?number;
   alertTimer: ?number;
-  ledsPresent: bool;
-  nightlight: Nightlight;
-  ring: Ring;
+  nightlight: ?Nightlight;
+  ring: ?Ring;
   rendering: bool;
   renderReentered: bool;
   renderReenteredAlert: ?Alert;
@@ -74,7 +73,6 @@ class PandoHubUi {
     this.dialogState = 'idle';
     this.connectingTimer = null;
     this.alertTimer = null;
-    this.ledsPresent = false;
     this.rendering = false;
     this.renderReentered = false;
     this.factoryResetUi = new FactoryResetUi(() => {
@@ -92,31 +90,33 @@ class PandoHubUi {
     env.timeline.on('finished_processing_speech', this.onDialogFinished);
 
     volume.on('level', this.onVolumeLevel);
+    this._init();
+  }
 
+  async _init() {
     this.rendering = true; // Halt rendering until async init is complete
-    genDialogEngine()
-    .then(dialogEngine => {
-      this.dialogEngine = dialogEngine;
-      dialogEngine.on('ui-mode', this.onDialogUiMode);
-      volume.mute = dialogEngine.uiMode === 'mute';
-      fs.access('/sys/bus/i2c/drivers/lp5523x', async (err) => {
-        if (!err) {
-          const [nightlight, ring] = await Promise.all([
-            Nightlight.create(),
-            Ring.create(),
-          ]);
-          this.nightlight = nightlight;
-          this.nightlightWhite = lights.get('nightlightWhite');
-          this.nightlightRgb = lights.get('nightlightRgb');
-          this.nightlightWhite.on('change', this.onNightlightChange);
-          this.nightlightRgb.on('change', this.onNightlightChange);
-          this.ring = ring;
-          this.ledsPresent = true;
-        }
-        this.rendering = false;
-        this.render();
-      });
-    });
+
+    const dialogEngine = await genDialogEngine();
+    this.dialogEngine = dialogEngine;
+    dialogEngine.on('ui-mode', this.onDialogUiMode);
+    volume.mute = dialogEngine.uiMode === 'mute';
+
+    const pcbver = sysutil.getintprop('ro.boot.pcb_ver', -1);
+    if (pcbver === 0) {
+      const [nightlight, ring] = await Promise.all([
+        Nightlight.create(),
+        Ring.create(),
+      ]);
+      this.nightlight = nightlight;
+      this.ring = ring;
+      this.nightlightWhite = lights.get('nightlightWhite');
+      this.nightlightRgb = lights.get('nightlightRgb');
+      this.nightlightWhite.on('change', this.onNightlightChange);
+      this.nightlightRgb.on('change', this.onNightlightChange);
+    }
+
+    this.rendering = false;
+    this.render();
   }
 
   onNightlightChange: ((event: string) => void) = () => {
@@ -226,9 +226,12 @@ class PandoHubUi {
 
 
   async renderInternal(alert: ?Alert): Promise<void> {
-    if (!this.dialogEngine || !this.ledsPresent) {
+    if (!this.dialogEngine) {
       return;
     }
+
+    const ring = this.ring;
+    const nightlight = this.nightlight;
 
     // Alerts are temporary notifications that are rendered over the normal UI
     // state
@@ -243,22 +246,28 @@ class PandoHubUi {
       switch (alert) {
       case 'configStarted':
         alertTimeMs = 2250;
-        await this.ring.unconfiguredPing();
+        if (ring) {
+          await ring.unconfiguredPing();
+        }
         break;
       case 'volumeChanged':
         {
           alertTimeMs = 2000;
           const volumeIndex = clamp(volume.level / VOLUME_STEP_INC, 0, VOLUME_STEPS);
           log.info(`volume is ${volume.level} (${volumeIndex}/${VOLUME_STEPS})`);
-          await this.ring.volume(volumeIndex);
+          if (ring) {
+            await ring.volume(volumeIndex);
+          }
           break;
         }
       case 'dialogDone':
         alertTimeMs = 1000;
-        await Promise.all([
-          this.ring.finishedDialog(),
-          this.nightlight.blue(),
-        ]);
+        if (ring && nightlight) {
+          await Promise.all([
+            ring.finishedDialog(),
+            nightlight.blue(),
+          ]);
+        }
         break;
       default:
         invariant(false, 'Unknown alert:', alert);
@@ -289,45 +298,50 @@ class PandoHubUi {
       // Alert is still pending, don't disturb it
       return;
     }
+
+    if (!ring || !nightlight) {
+      return;
+    }
+
     switch (this.deviceUiState) {
     case 'bootanimation':
     case 'charging':
       await Promise.all([
-        this.ring.initializing(),
-        this.nightlight.blue(),
+        ring.initializing(),
+        nightlight.blue(),
       ]);
       break;
     case 'unconfigured':
     case 'configStarted':
       await Promise.all([
-        this.ring.unconfigured(),
-        this.nightlight.orange(),
+        ring.unconfigured(),
+        nightlight.orange(),
       ]);
       break;
     case 'configRegistering':
       await Promise.all([
-        this.ring.configuring(),
-        this.nightlight.orange(),
+        ring.configuring(),
+        nightlight.orange(),
       ]);
       break;
     case 'connecting':
       switch (this.connectingSubstate) {
       case 'ok':
         await Promise.all([
-          this.ring.processing(),
-          this.nightlight.blueWithGlow(),
+          ring.processing(),
+          nightlight.blueWithGlow(),
         ]);
         break;
       case 'littleSlow':
         await Promise.all([
-          this.ring.speakingError(),
-          this.nightlight.orange(),
+          ring.speakingError(),
+          nightlight.orange(),
         ]);
         break;
       case 'somethingsWrong':
         await Promise.all([
-          this.ring.online(),
-          this.nightlight.userColor(),
+          ring.online(),
+          nightlight.userColor(),
         ]);
         break;
       default:
@@ -337,8 +351,8 @@ class PandoHubUi {
     case 'online':
       if (this.dialogEngine.uiMode === 'mute') {
         await Promise.all([
-          this.ring.mute(),
-          this.nightlight.red(),
+          ring.mute(),
+          nightlight.red(),
         ]);
         break;
       }
@@ -348,14 +362,14 @@ class PandoHubUi {
         switch (this.dialogEngine.uiMode) {
         case 'normal':
           await Promise.all([
-            this.ring.online(),
-            this.nightlight.userColor(),
+            ring.online(),
+            nightlight.userColor(),
           ]);
           break;
         case 'dnd':
           await Promise.all([
-            this.ring.silent(),
-            this.nightlight.blue(),
+            ring.silent(),
+            nightlight.blue(),
           ]);
           break;
         default:
@@ -364,26 +378,26 @@ class PandoHubUi {
         break;
       case 'listening':
         await Promise.all([
-          this.ring.listening(),
-          this.nightlight.blue(),
+          ring.listening(),
+          nightlight.blue(),
         ]);
         break;
       case 'processing_speech':
         await Promise.all([
-          this.ring.processing(),
-          this.nightlight.blueWithGlow(),
+          ring.processing(),
+          nightlight.blueWithGlow(),
         ]);
         break;
       case 'speaking':
         await Promise.all([
-          this.ring.speaking(),
-          this.nightlight.blue(),
+          ring.speaking(),
+          nightlight.blue(),
         ]);
         break;
       case 'speaking_network_error':
         await Promise.all([
-          this.ring.speakingError(),
-          this.nightlight.orange(),
+          ring.speakingError(),
+          nightlight.orange(),
         ]);
         break;
       default:
@@ -392,8 +406,8 @@ class PandoHubUi {
       break;
     case 'powerdown':
       await Promise.all([
-        this.ring.online(),
-        this.nightlight.userColor(),
+        ring.online(),
+        nightlight.userColor(),
       ]);
       break;
     default:

@@ -42,7 +42,6 @@ export default class WebSocketDuplexStream extends Duplex {
   _ws: WebSocket | NodeWebSocket;
   _buffers: Array<Buffer | string> = [];
   _finished: bool = false;
-  _autoClose: bool = true;
   _log: Logger = log;
 
   get readyState(): number {
@@ -57,6 +56,9 @@ export default class WebSocketDuplexStream extends Duplex {
    * Attempt to immediately terminate connection without sending further frames.
    */
   terminate() {
+    // Prevent a later warning about closing prematurely.
+    this._finished = true;
+
     if (typeof this._ws.terminate === 'function') {
       this._ws.terminate();
       return;

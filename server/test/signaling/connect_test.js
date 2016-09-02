@@ -178,4 +178,91 @@ suite('connect test', () => {
     servers = await serversTable.query();
     assert.equal(servers.length, 0);
   });
+
+  test('error on account when device stream is destroyed', async () => {
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+
+    const {accessToken} = account;
+
+    const [deviceUrl, signedPublicKey] = await Promise.all([
+      device.api.genSignSignalingUrl('device', servers[0].host),
+      accessToken.genSign(accessToken.pub),
+    ]);
+    let deviceWs = new WebSocket(deviceUrl);
+    let deviceWsDuplex = new WebSocketDuplexStream(deviceWs);
+    let deviceMux = new MultiplexStream(deviceWsDuplex);
+    await eventToPromise(deviceWs, 'open');
+
+    const accountUrl = await account.api.genSignSignalingUrl(
+      'account',
+      servers[0].host,
+      {deviceId: device.record.accessToken.publicKey, signedPublicKey}
+    );
+    let accountWs = new WebSocketDuplexStream(new WebSocket(accountUrl));
+
+    const accountPeer = await eventToPromise(deviceMux, 'data');
+
+    const accountWsErrorEvent =
+      eventToPromise(accountWs, 'error', {ignoreErrors: true});
+    const accountWsCloseEvent =
+      eventToPromise(accountWs, 'close', {ignoreErrors: true});
+    const accountPeerCloseEvent = eventToPromise(accountPeer, 'close');
+
+    accountPeer.destroy();
+
+    const error = await accountWsErrorEvent;
+    assert(error instanceof Error);
+
+    await Promise.all([
+      accountPeerCloseEvent,
+      accountWsCloseEvent,
+    ]);
+  });
+
+  test('error on device when account stream is destroyed', async () => {
+    let servers = await serversTable.query();
+    assert.equal(servers.length, 1);
+
+    const {accessToken} = account;
+
+    const [deviceUrl, signedPublicKey] = await Promise.all([
+      device.api.genSignSignalingUrl('device', servers[0].host),
+      accessToken.genSign(accessToken.pub),
+    ]);
+    let deviceWs = new WebSocket(deviceUrl);
+    let deviceWsDuplex = new WebSocketDuplexStream(deviceWs);
+    let deviceMux = new MultiplexStream(deviceWsDuplex);
+
+    await eventToPromise(deviceWs, 'open');
+
+    const accountUrl = await account.api.genSignSignalingUrl(
+      'account',
+      servers[0].host,
+      {deviceId: device.record.accessToken.publicKey, signedPublicKey}
+    );
+    let accountWs = new WebSocket(accountUrl);
+
+    const [accountPeer] = await Promise.all([
+      eventToPromise(deviceMux, 'data'),
+      eventToPromise(accountWs, 'open'),
+    ]);
+
+    const accountPeerErrorEvent =
+      eventToPromise(accountPeer, 'error', {ignoreErrors: true});
+    const accountPeerCloseEvent =
+      eventToPromise(accountPeer, 'close', {ignoreErrors: true});
+    const accountWsCloseEvent = eventToPromise(accountWs, 'close');
+
+    accountWs.terminate();
+
+    const error = await accountPeerErrorEvent;
+    assert(error instanceof Error);
+
+    await Promise.all([
+      accountPeerCloseEvent,
+      accountWsCloseEvent,
+    ]);
+  });
+
 });

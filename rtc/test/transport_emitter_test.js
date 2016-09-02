@@ -52,4 +52,18 @@ suite('transport emitter', function() {
     assert(gotStuff);
   });
 
+  test('errors', async () => {
+    const event = eventToPromise(subject, 'error', {ignoreErrors: true});
+    const payload = 'badbadbad';
+    transport.write(['error', payload]);
+
+    const result = await event;
+    assert(result instanceof Error);
+    assert(result.message === payload);
+
+    const end = eventToPromise(subject, 'end');
+    transport.end();
+    await end;
+  });
+
 });

@@ -66,6 +66,7 @@ export class VirtualStream extends Duplex {
   _body: CreateStreamBody;
   _type: VirtualStreamType;
   _closed: bool = false;
+  _error: bool = false;
 
   _virtualState: VirtualStreamState = {
     localFinish: false,
@@ -184,7 +185,7 @@ export class VirtualStream extends Duplex {
       this.end();
     }
 
-    // If we never saw the otherside finish writing we have not yet emitted
+    // If we never saw the other side finish writing we have not yet emitted
     // the end event.
     if (!state.remoteFinish) {
       // ensure readable side of duplex is complete.
@@ -196,10 +197,14 @@ export class VirtualStream extends Duplex {
 
   notifyError(err: Error) {
     log.verbose(`${this.name} notifyErr`, err);
+    if (this._error) {
+      return;
+    }
+    this._error = true;
     this._cleanListeners();
     this.emit(
       'error',
-      new Error(`Underlying stream has closed: ${err.stack}`),
+      new Error(`Underlying stream has closed: ${err.message}`),
     );
     this._cleanStreamState();
   }
@@ -236,6 +241,10 @@ export class VirtualStream extends Duplex {
    * closing the underling multiplexed stream.
    */
   destroy() {
+    if (this._error || this._virtualState.localFinish) {
+      return;
+    }
+
     this._cleanListeners();
     this._writeDest.write(buildHeader(STREAM_DESTROY, this._id));
     this._cleanStreamState();
@@ -391,7 +400,7 @@ export default class DemuxStream extends Transform {
   _handleStreamDestroy(id: string, callback: TransformCb) {
     const stream = this._streams.get(id);
     if (!stream) {
-      callback(new Error(`read end for unknown stream`));
+      callback(new Error(`destroy for unknown stream`));
       return;
     }
     stream.notifyError(new Error(`Remote stream no longer listening.`));

@@ -74,6 +74,17 @@
             android:layout_below="@+id/loginButton"
             android:layout_alignParentLeft="true" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/googleAuthStatusResultView"
+            android:layout_below="@id/loginButton"
+            android:layout_toRightOf="@+id/googleLoginButton"
+            android:singleLine="true"
+            android:layout_alignParentRight="true"
+            android:paddingLeft="10dp"
+            android:layout_marginTop="10dp" />
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

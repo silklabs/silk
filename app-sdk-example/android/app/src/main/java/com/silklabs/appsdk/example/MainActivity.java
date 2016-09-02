@@ -57,6 +57,7 @@ public class MainActivity extends FragmentActivity implements
   private TextView networkStatusTextView = null;
   private TextView authStatusTextView = null;
   private Button silkLoginButton = null;
+  private TextView googleAuthStatusTextView = null;
   private Button logoutButton = null;
   private SignInButton googleLoginButton = null;
   private EditText emailText = null;
@@ -553,6 +554,7 @@ public class MainActivity extends FragmentActivity implements
 
     googleLoginButton = (SignInButton) findViewById(R.id.googleLoginButton);
     googleLoginButton.setOnClickListener(googleLoginButtonListener);
+    googleAuthStatusTextView = (TextView) findViewById(R.id.googleAuthStatusResultView);
 
     echoButton = (Button) findViewById(R.id.sendEchoMessageButton);
     echoButton.setOnClickListener(echoButtonListener);
@@ -735,6 +737,7 @@ public class MainActivity extends FragmentActivity implements
             @Override
             public void onResult(Status status) {
               Log.d(TAG, "Google sign out result" + status);
+              onGoogleAuthStatusChanged("");
             }
           });
       } catch(Exception e) {
@@ -964,7 +967,7 @@ public class MainActivity extends FragmentActivity implements
       // Signed in successfully
       GoogleSignInAccount acct = result.getSignInAccount();
       String idToken = acct.getIdToken();
-      Log.d(TAG, "Logged in as: " +  acct.getDisplayName());
+      onGoogleAuthStatusChanged("Logged in as: " +  acct.getDisplayName());
       Log.d(TAG, "idToken:" + idToken);
 
       Map<String, Object> message = new HashMap<>();
@@ -977,6 +980,18 @@ public class MainActivity extends FragmentActivity implements
       // Signed out
       onError("Failed to login to google account. " + result.getStatus().getStatusMessage());
     }
+  }
+
+  /**
+   * Handle google auth status result
+   * @param authStatus
+   */
+  private void onGoogleAuthStatusChanged(final String authStatus) {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        googleAuthStatusTextView.setText(authStatus);
+      }
+    });
   }
 
   @Override

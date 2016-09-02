@@ -21,7 +21,7 @@ function createStore(initialState: ?Object) {
   if (initialState) {
     // XXX This is a good indication that we shouldn't persist these.
     initialState.speaking = null;
-    initialState.intepreting = false;
+    initialState.interpreting = false;
   }
 
   // This middleware runs all of our saga machinery.

@@ -11,31 +11,42 @@
 import createLog from 'silk-log';
 import invariant from 'assert';
 import { default as createApi, AccessToken } from 'silk-api';
+import {
+  createNewState,
+  PERSIST_PATH as SILK_CONFIG_FILEPATH,
+} from 'silk-device-core/lib/store/persist_reducers';
+import {
+  encode,
+  decode,
+} from 'silk-device-core/lib/store/storage';
 
 import type {SilkApi} from 'silk-api';
+import type {PersistState} from 'silk-device-core/lib/store/persist_reducers';
 import type {Adb} from './adb';
 import type Account from './account';
 
 type DeviceOptions = {
   serverUrl?: ?string;
+  newAccessToken?: ?boolean;
 };
 
 const log = createLog('device');
-
-const SILK_ID_FILEPATH = 'data/silk/config/id.json';
-const SILK_CONFIG_FILEPATH = 'data/silk/config/config.json';
 
 export default class Device {
   adb: Adb;
   api: SilkApi;
   serverUrl: ?string;
-  accessToken: AccessToken;
+  createNewAccessToken: boolean;
+
+  accessToken: ?AccessToken = null;
+  state: ?PersistState = null;
 
   constructor(options: DeviceOptions, adb: Adb) {
     log.debug(`new device using server: ${String(options.serverUrl)}`);
 
     this.adb = adb;
     this.serverUrl = options.serverUrl;
+    this.createNewAccessToken = options.newAccessToken || false;
     this.api = createApi({
       serverUrl: this.serverUrl,
       metrics: {
@@ -45,26 +56,46 @@ export default class Device {
     });
   }
 
-  async pullDeviceId(): Promise<void> {
-    const id = await this.adb.pull(SILK_ID_FILEPATH);
-    this.accessToken = this.api.accessToken = AccessToken.import(id);
+  async init(): Promise<void> {
+    if (this.createNewAccessToken) {
+      this.state = await createNewState();
+    } else {
+      let encoded;
+      try {
+        encoded = await this.adb.pull(SILK_CONFIG_FILEPATH);
+      } catch (error) {
+        log.warn(error);
+      }
+      invariant(encoded, `Need to create a new access token`);
+      const cast: PersistState = decode(encoded);
+      this.state = cast;
+    }
+
+    const {pub, priv} = this.state.accessToken;
+    this.accessToken = this.api.accessToken = new AccessToken(pub, priv);
   }
 
-  async pushNewDeviceId(): Promise<void> {
-    this.accessToken = this.api.accessToken = await AccessToken.gen();
-    await this.adb.push(SILK_ID_FILEPATH, this.accessToken.export());
+  async pullDeviceId(): Promise<void> {
+    if (!this.state) {
+      await this.init();
+    }
+
+    const {accessToken} = this;
+    invariant(accessToken);
   }
 
   async setupDevice(account: Account, deviceName: string): Promise<boolean> {
     log.debug(`setupDevice with ${deviceName}`);
 
-    invariant(
-      this.accessToken && this.api.accessToken,
-      'Need to pull existing device ID or push new one before setting up device'
-    );
+    if (!this.state) {
+      await this.init();
+    }
+
+    const {accessToken} = this;
+    invariant(accessToken);
 
     let { success, regToken, regPublicKey } =
-      await account.registerDevice(this.accessToken.pub, deviceName);
+      await account.registerDevice(accessToken.pub, deviceName);
 
     if (!success) {
       return false;
@@ -79,20 +110,39 @@ export default class Device {
       return false;
     }
 
-    const configData = {
-      registrarPublicKey: regPublicKey,
-      registrationToken: regToken,
-      serverUrl: this.serverUrl,
-      success: success,
-      beaconUUID: result.beaconUUID,
-    };
-    await this.adb.push(SILK_CONFIG_FILEPATH, JSON.stringify(configData));
+    invariant(result.beaconUUID);
 
+    const {state} = this;
+    invariant(state);
+
+    state.config = {
+      accountBeaconUuid: result.beaconUUID,
+      accountDeviceNumber: result.accountDeviceNumber,
+      serverUrl: this.serverUrl,
+    };
+    state.permissions = new Map();
+    const permissionsMap = new Map();
+    permissionsMap.set('full', {
+      type: 'full',
+      expires: null,
+      actor: null,
+    });
+    state.permissions.set(regPublicKey, permissionsMap);
+
+    await this.adb.push(SILK_CONFIG_FILEPATH, encode(state));
     return true;
   }
 
   async removeConfig(): Promise<boolean> {
-    await this.adb.shell(['rm', SILK_CONFIG_FILEPATH]);
-    return true;
+    try {
+      await this.adb.shell(['rm', SILK_CONFIG_FILEPATH]);
+      return true;
+    } catch (error) {
+      log.warn(`Failed to remove '${SILK_CONFIG_FILEPATH}'`, error);
+      return false;
+    } finally {
+      this.accessToken = null;
+      this.state = null;
+    }
   }
 }

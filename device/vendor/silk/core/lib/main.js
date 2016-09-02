@@ -62,6 +62,11 @@ import CameraClipRecorder from './camera_clip_recorder';
 import makeExtensions from './ext';
 import JSStartup from './metrics/js_startup';
 import startCollectingProcessMetrics from './process_metrics';
+import {
+  default as getStore,
+  loadStore,
+} from './store';
+import startPermissionManager from './permissions';
 
 // Start the profile server ASAP.
 initProfiler();
@@ -208,12 +213,17 @@ function main() {
     util.setprop('persist.sys.timezone', 'America/Los_Angeles');
   }
 
-  return getDeviceId()
-    .then(deviceId => {
-      api.accessToken = id = deviceId;
-      crashreporter.assignDeviceId(deviceId);
-      logcat = new Logcat(deviceId.toString(), outbox);
+  return loadStore()
+    .then(() => {
+      log.info(`State`, getStore().getState());
+    })
+    .then(() => {
+      api.accessToken = id = getDeviceId();
+      crashreporter.assignDeviceId(id);
+      logcat = new Logcat(id.toString(), outbox);
       logcat.start();
+
+      startPermissionManager();
 
       // Wait for the battery to initialize and block until there's enough
       // capacity to fully boot.

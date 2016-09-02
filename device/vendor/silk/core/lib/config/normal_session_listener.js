@@ -15,6 +15,7 @@ import SessionListenerBase from './session_listener_base';
 
 import type {DeviceConfig} from './index';
 import type ParentSocketSession from '../btle/parent_socket_session';
+import getStore from '../store';
 
 const log = createLog('normal-session-listener');
 
@@ -48,7 +49,7 @@ export default class NormalSessionListener extends SessionListenerBase {
 
     super(deviceConfig, socketSession, SCHEMA);
 
-    const config = this._deviceConfig._config;
+    const {config} = getStore().getState().persist;
     invariant(config);
     invariant(config.accountDeviceNumber);
 

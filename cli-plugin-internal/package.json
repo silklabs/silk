@@ -23,7 +23,8 @@
     "eslint-config-silk": "/pub/eslint-config",
     "silk-log": "/pub/log",
     "silk-api": "/api",
-    "silk-babeldeps": "/babeldeps"
+    "silk-babeldeps": "/babeldeps",
+    "silk-device-core": "/device/vendor/silk/core"
   },
   "devDependencies": {
     "eslint": "2.13.1",

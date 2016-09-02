@@ -124,7 +124,7 @@ class Adb {
     });
   }
 
-  async push(filepath: string, data: string): Promise<void> {
+  async push(filepath: string, data: Buffer | string): Promise<void> {
     if (this.sim) {
       await mkdirp(path.dirname(filepath));
       await fs.writeFile(filepath, data);
@@ -138,7 +138,7 @@ class Adb {
     await fs.unlink(tmpFilename);
   }
 
-  async pull(filepath: string): Promise<string> {
+  async pull(filepath: string): Promise<Buffer> {
     if (this.sim) {
       return await fs.readFile(filepath);
     }
@@ -157,4 +157,3 @@ export type {Adb};
 export default function createAdb(device: ?string): Adb {
   return new Adb(device);
 }
-

@@ -9,21 +9,22 @@
 
 import invariant from 'assert';
 import {EventEmitter} from 'events';
-import fs from 'mz/fs';
 import getUpdateEmitter from 'silk-update';
 import * as Joi from 'joi';
 import {BTLE_SOCKET_UUIDS} from 'silk-api';
 import {createDeferred} from 'silk-async-utils';
 import * as util from 'silk-sysutils';
 import wifi from 'silk-wifi';
-
 import api from 'silk-device-api';
-import ConfigSessionListener from './config_session_listener';
 import createLog from 'silk-log/device';
-import getBTLE from '../btle/parent';
-import getDeviceId from '../deviceid';
+
+import ConfigSessionListener from './config_session_listener';
 import NormalSessionListener from './normal_session_listener';
-import type {default as Connections, ConnectionsState} from '../connections';
+import getDeviceId from '../deviceid';
+import getPermissionManager from '../permissions';
+import getStore from '../store';
+import getBTLE from '../btle/parent';
+import actions from '../store/actions';
 
 import type {StatusEvent as UpdateStatusEvent} from 'silk-update';
 import type {
@@ -34,23 +35,15 @@ import type {
 
 import type SessionListenerBase from './session_listener_base';
 import type {
+  default as Connections,
+  ConnectionsState,
+} from '../connections';
+import type {PermissionManagerConnection} from '../permissions';
+import type {
   AdvertisingInfo,
   BluetoothLE,
 } from '../btle/parent';
 import type ParentSocketSession from '../btle/parent_socket_session';
-
-export type ConfigData = {
-  registrarPublicKey: string;
-  registrationToken: string;
-  success: boolean;
-
-  // Only present when |success| is true.
-  beaconUUID?: string;
-  accountDeviceNumber?: number;
-
-  // Not always present.
-  serverUrl?: string;
-};
 
 export type Secret = {
   accessPoint: string;
@@ -59,6 +52,13 @@ export type Secret = {
   regToken: string;
   serverUrl: string;
 };
+
+export type ConfigData = {
+  beaconUuid: string;
+  deviceNumber: number;
+  registrarPublicKey: string;
+  serverUrl: string;
+}
 
 export type ConnectionType = 'wifi' | 'server';
 
@@ -73,8 +73,6 @@ type AugmentedWifiState =
   'offline';
 
 const log = createLog('config');
-
-const CONFIG_PATH = 'data/silk/config/config.json';
 
 const CONFIG_ADVERTISING_INFO: AdvertisingInfo = {
   uuid: BTLE_SOCKET_UUIDS.service,
@@ -128,6 +126,11 @@ const SERVER_STATE_MAP: Map<ConnectionsState, string> = new Map();
 // Maps server errors to custom error codes.
 const SERVER_ERROR_MAP: Map<string, string> = new Map();
 
+function getConfig() {
+  return getStore().getState().persist.config;
+}
+
+
 /**
  *
  */
@@ -139,7 +142,6 @@ export class DeviceConfig extends EventEmitter {
   _btle: ?BluetoothLE = null;
   _wifiAbortConnection: ?((error: Error) => void) = null;
   _unconfigurePromise: ?Promise<void> = null;
-  _config: ?ConfigData = null;
   _serverConnected: boolean = false;
   _server: Connections = null;
   _socketSessionListeners: Array<SessionListenerBase> = [ ];
@@ -148,46 +150,12 @@ export class DeviceConfig extends EventEmitter {
   _sessionErrorMessages: Map<ConnectionType, string> = new Map();
   _lastWifiScanResults: ?Array<ScanResult> = null;
   _lastUpdateEvent: ?UpdateStatusEvent = null;
-
-  async _writeConfig(config: ConfigData): Promise<void> {
-    log.info('Writing config file', CONFIG_PATH, config);
-    await fs.writeFile(CONFIG_PATH, JSON.stringify(config));
-    log.debug('Finished writing config file');
-  }
-
-  /**
-   * Persist the configuration after the device has completed registration.
-   * @private
-   */
-  async _persistConfig(secret: Secret, response?: Object = { }): Promise<void> {
-    const config: ConfigData = {
-      registrarPublicKey: secret.publicKey,
-      registrationToken: secret.regToken,
-      serverUrl: secret.serverUrl,
-      ...response,
-    };
-
-    await this._writeConfig(config);
-    this._config = config;
-  }
-
-  async _loadConfig(): Promise<void> {
-    if (!await fs.exists(CONFIG_PATH)) {
-      return;
-    }
-    try {
-      this._config = JSON.parse(await fs.readFile(CONFIG_PATH, 'utf8'));
-    } catch (error) {
-      log.warn(`Failed to parse config, removing`, error);
-      await fs.unlink(CONFIG_PATH);
-      this._config = null;
-    }
-  }
+  _permissionManager: ?PermissionManagerConnection = null;
 
   _beginConfigure(sessionListener: ConfigSessionListener): void {
     log.debug(`DeviceConfig._beginConfigure()`);
 
-    invariant(!this._config);
+    invariant(!getConfig());
     invariant(!this._configuringSocketSessionListener);
     invariant(this._socketSessionListeners.length);
 
@@ -221,7 +189,7 @@ export class DeviceConfig extends EventEmitter {
     invariant(this._configuringSocketSessionListener);
     this._configuringSocketSessionListener = null;
 
-    if (!this._config || !this._config.success) {
+    if (!getConfig()) {
       this.emit('unconfigured');
     }
   }
@@ -292,22 +260,21 @@ export class DeviceConfig extends EventEmitter {
 
       log.info('Registration complete', response);
 
+      const data: ConfigData = {
+        beaconUuid: response.beaconUUID,
+        deviceNumber: response.accountDeviceNumber,
+        registrarPublicKey: secret.publicKey,
+        serverUrl: secret.serverUrl || null,
+      };
+
       // Update the config on disk with the response so that we know we are
       // completely registered.
-      await this._persistConfig(secret, response);
+      getStore().dispatch(actions.persist.configure(data));
     } catch (error) {
       log.warn('Failed to register device', error);
       this.stopRetryingWifiConnection(error);
 
-      await Promise.all([
-        fs.exists(CONFIG_PATH)
-          .then(exists => {
-            if (exists) {
-              fs.unlink(CONFIG_PATH);
-            }
-          }),
-        this._unconfigureNetwork(),
-      ]);
+      await this._unconfigureNetwork();
 
       // If we're still connected then we can try again.
       if (this._configuringSocketSessionListener) {
@@ -321,7 +288,8 @@ export class DeviceConfig extends EventEmitter {
     invariant(!this._wifiAbortConnection);
     invariant(this._configuringSocketSessionListener);
 
-    const {accountDeviceNumber} = this._config;
+    const {accountDeviceNumber} = getConfig();
+    invariant(accountDeviceNumber);
 
     this._configuringSocketSessionListener.sendComplete(accountDeviceNumber);
 
@@ -343,9 +311,10 @@ export class DeviceConfig extends EventEmitter {
 
     await btle.changeMode('off');
 
-    invariant(this._config);
-    btle.publicKeys = [this._config.registrarPublicKey];
+    const permissionManager = this._permissionManager;
+    invariant(permissionManager);
 
+    btle.publicKeys = permissionManager.match(`ble`);
     btle.advertisingInfo = this._getAdvertisingInfo();
 
     this._server.addListener(`connect`, this._onConfiguredServerConnect);
@@ -358,8 +327,7 @@ export class DeviceConfig extends EventEmitter {
   _onConfiguredServerConnect: (() => Promise<void>) = async () => {
     log.debug(`DeviceConfig._onConfiguredServerConnect()`);
 
-    invariant(this._config);
-    invariant(this._config.beaconUUID);
+    invariant(getConfig());
     invariant(!this._serverConnected);
 
     this._serverConnected = true;
@@ -380,8 +348,7 @@ export class DeviceConfig extends EventEmitter {
   _onConfiguredServerDisconnect: (() => Promise<void>) = async () => {
     log.debug(`DeviceConfig._onConfiguredServerDisconnect()`);
 
-    invariant(this._config);
-    invariant(this._config.beaconUUID);
+    invariant(getConfig());
 
     this._serverConnected = false;
 
@@ -390,14 +357,15 @@ export class DeviceConfig extends EventEmitter {
   };
 
   _getAdvertisingInfo(): AdvertisingInfo {
-    if (this._config && this._config.success) {
-      const {beaconUUID, accountDeviceNumber} = this._config;
-      invariant(beaconUUID);
+    const config = getConfig();
+    if (config) {
+      const {accountBeaconUuid, accountDeviceNumber} = config;
+      invariant(accountBeaconUuid);
 
-      log.debug(`Returning advertising uuid '${String(beaconUUID)}'`);
+      log.debug(`Returning advertising uuid '${String(accountBeaconUuid)}'`);
       return {
-        uuid: beaconUUID,
-        id: accountDeviceNumber || 0,
+        uuid: accountBeaconUuid,
+        id: accountDeviceNumber,
       };
     }
 
@@ -413,11 +381,6 @@ export class DeviceConfig extends EventEmitter {
    then fall back to the default URL in the API itself
   */
   _setApiServerUrl(serverUrl?: string): void {
-    if (!serverUrl) {
-      if (this._config && this._config.success) {
-        serverUrl = this._config.serverUrl;
-      }
-    }
     log.info(`api serverUrl: ${String(serverUrl)}`);
     api.loadConfig({serverUrl: serverUrl});
   }
@@ -537,7 +500,7 @@ export class DeviceConfig extends EventEmitter {
     }
 
     let listener;
-    if (this._config && this._config.success) {
+    if (getConfig()) {
       listener = new NormalSessionListener(this, socketSession);
 
       if (wifi.isOnline()) {
@@ -609,6 +572,17 @@ export class DeviceConfig extends EventEmitter {
     this._initializing = true;
     log.info('Initializing config service');
 
+    const permissionManager = getPermissionManager();
+    permissionManager.on(`change`, () => {
+      const btle = this._btle;
+      if (!btle) {
+        return;
+      }
+      btle.publicKeys = permissionManager.match(`ble`);
+    });
+
+    this._permissionManager = permissionManager;
+
     if (wifi.isOnline()) {
       this._onWifiStateChange(`online`);
     } else {
@@ -629,15 +603,10 @@ export class DeviceConfig extends EventEmitter {
     update.addListener(`status`,
                        (message) => this._notifyListenersOfUpdateInfo(message));
 
-    let [ deviceId, btle ] = await Promise.all([
-      getDeviceId(),
-      getBTLE(),
-      this._loadConfig(),
-    ]);
-
-    const config = this._config;
-
+    const deviceId = getDeviceId();
     invariant(deviceId);
+
+    const btle = await getBTLE();
     invariant(btle);
     invariant(btle.mode === btle.MODE_OFF);
 
@@ -650,12 +619,13 @@ export class DeviceConfig extends EventEmitter {
             (socketSession) => this._onSocketSession(socketSession));
     btle.advertisingInfo = this._getAdvertisingInfo();
 
-    if (config && config.success) {
+    const config = getConfig();
 
+    if (config) {
       log.info(`Already configured`, config);
-      btle.publicKeys = [ config.registrarPublicKey ];
+      btle.publicKeys = permissionManager.match(`ble`);
 
-      this._setApiServerUrl();
+      this._setApiServerUrl(config.serverUrl);
 
       await btle.changeMode('beacon');
       this.emit('configured');
@@ -664,7 +634,6 @@ export class DeviceConfig extends EventEmitter {
       server.addListener(`disconnect`, this._onConfiguredServerDisconnect);
     } else {
       log.info(`Not yet configured`);
-      this._config = null;
 
       // Ensure we don't have any stale state lying around...
       await Promise.all([
@@ -734,11 +703,14 @@ export class DeviceConfig extends EventEmitter {
     log.debug(`Turning off bluetooth`);
     await btle.changeMode('off');
 
+    const permissionManager = this._permissionManager;
+    invariant(permissionManager);
+
     const advertisingInfo = this._getAdvertisingInfo();
     invariant(advertisingInfo === CONFIG_ADVERTISING_INFO);
 
     btle.advertisingInfo = advertisingInfo;
-    btle.publicKeys = [];
+    btle.publicKeys = permissionManager.match(`ble`);
 
     log.debug(`Turning bluetooth back on`);
     await btle.changeMode('beacon');
@@ -754,17 +726,12 @@ export class DeviceConfig extends EventEmitter {
       throw new Error('Not initialized yet');
     }
 
-    if (!this._config) {
+    if (!getConfig()) {
       log.info('Device already unconfigured');
       return;
     }
 
-    this._config = null;
-
-    // Remove the config file so we know we need to reconfigure...
-    if (await fs.exists(CONFIG_PATH)) {
-      await fs.unlink(CONFIG_PATH);
-    }
+    getStore().dispatch(actions.persist.unconfigure());
 
     // Unconfigure BTLE and our network setup...
     await Promise.all([
@@ -776,10 +743,9 @@ export class DeviceConfig extends EventEmitter {
   /**
    * Clear the server URL received from the app during device configuration.
    */
-  async forceDefaultServerUrl(): Promise<void> {
-    if (this._config && this._config.serverUrl) {
-      delete this._config.serverUrl;
-      await this._writeConfig(this._config);
+  forceDefaultServerUrl() {
+    if (getConfig()) {
+      getStore().dispatch(actions.persist.forceDefaultServerUrl());
     }
   }
 

@@ -23,6 +23,7 @@
     "silk-api": "/api",
     "silk-azure-storage": "/azure-storage",
     "silk-raygun": "/raygun",
+    "silk-redux": "/redux",
     "silk-sdk": "/pub/sdk",
     "silk-server": "/server",
     "silk-streams": "/streams",

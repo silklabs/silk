@@ -32,7 +32,7 @@ suite('silk-rtc', function() {
     });
 
     // We simply use our reference implementation here to more closely test reality.
-    connections = new Connections();
+    connections = new Connections('disable permissions');
     connections.start();
     await eventToPromise(connections, 'connect');
   });

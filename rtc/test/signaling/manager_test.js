@@ -26,7 +26,7 @@ suite('Call / Answer manager', function() {
       serverUrl: context.url,
     });
 
-    connections = new Connections();
+    connections = new Connections('disable permissions');
     connections.start();
     await eventToPromise(connections, 'connect');
 

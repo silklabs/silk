@@ -25,9 +25,15 @@ const PASSWORD_HASH = Joi.string().required().min(64).max(256);
 /**
  * Any operation which adds an accessToken will require these details...
  */
-const ACCESS_TOKEN_ADD_SCHEMA = Joi.object().keys({
+const ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA = Joi.object().keys({
   email: EMAIL,
   passwordHash: PASSWORD_HASH,
+  publicKey: Joi.string().required(),
+  userAgent: Joi.string().required(),
+}).required();
+
+const ACCESS_TOKEN_ADD_BY_TOKEN_SCHEMA = Joi.object().keys({
+  uniqueAccountId: Joi.string().min(16).required(),
   publicKey: Joi.string().required(),
   userAgent: Joi.string().required(),
 }).required();
@@ -163,9 +169,11 @@ export default class Accounts extends Base {
       publicKey: Joi.string().hex().required(),
     }).unknown(true).required(),
 
-    create: ACCESS_TOKEN_ADD_SCHEMA,
+    create: ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA,
 
-    signIn: ACCESS_TOKEN_ADD_SCHEMA,
+    signIn: ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA,
+
+    signInByToken: ACCESS_TOKEN_ADD_BY_TOKEN_SCHEMA,
 
     checkPassword: Joi.object().keys({
       publicKey: Joi.string().required(),
@@ -180,6 +188,9 @@ export default class Accounts extends Base {
      * designed so it can be updated atomically as a single record.
      */
     record: Joi.object().keys({
+      // Account source (pando, google, or null for 'internal')
+      source: Joi.string(),
+
       email: Joi.string().email().required(),
 
       password: Joi.object().keys({
@@ -393,6 +404,93 @@ export default class Accounts extends Base {
     return {
       id: account._id.toString(),
       beaconUUID: account.beaconUUID,
+    };
+  }
+
+  async signInByToken(payload: any): any {
+    payload = this.validate(payload, 'signInByToken');
+
+    // TODO: Don't abuse the email/password hash fields when we get off mongodb
+    const bogusAccountEmail = payload.uniqueAccountId + '@suchahack.silk.io';
+    const bogusPasswordHash = 'beef';
+
+    let account = await this.collection.findOne({
+      email: bogusAccountEmail,
+    });
+
+    if (!account) {
+      // Create a new account if one matching the uniqueAccountId doesn't yet
+      // exist.
+
+      let account = this.validate({
+        email: bogusAccountEmail,
+        password: {
+          date: new Date(),
+          hash: bogusPasswordHash,
+        },
+        accountTokens: [this.accessToken(payload)],
+        beaconUUID: uuid.v4(),
+      }, 'record');
+
+      // Insert the document but do not override any other accounts with the same
+      // "email" address!
+      let insert = await this.collection.updateOne(
+        {
+          $or: [
+            { email: payload.email },
+            { 'accountTokens.publicKey': payload.publicKey },
+          ],
+        },
+        { $setOnInsert: account },
+        { upsert: true }
+      );
+      let didInsert = insert.upsertedId;
+      if (didInsert && didInsert._id) {
+        return {
+          id: didInsert._id.toString(),
+          beaconUUID: account.beaconUUID,
+          created: true,
+        };
+      }
+      throw new Error(
+        `signInByToken failed for unknown reasons: ${
+            JSON.stringify(insert)
+          }`
+      );
+    }
+
+    let accessToken = this.accessToken(payload);
+
+    /**
+     * We need to take some extra steps... While multiple accounts are
+     * enforced not to have duplicate publicKeys at the collection level those
+     * protections do not work within a single document.
+     */
+    let { result: update } = await this.collection.update(
+      {
+        _id: account._id,
+        'accountTokens.publicKey': {
+          $ne: payload.publicKey,
+        },
+      },
+      {
+        $push: {
+          accountTokens: accessToken,
+        },
+      }
+    );
+
+    if (update.n !== 1) {
+      throw new Error(
+        `signIn update failed for unknown reasons: ${
+            JSON.stringify(update)
+          }`
+      );
+    }
+    return {
+      id: account._id.toString(),
+      beaconUUID: account.beaconUUID,
+      created: false,
     };
   }
 

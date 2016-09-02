@@ -13,6 +13,7 @@ import { expressApi } from 'silk-api-schema';
 import createLog from 'silk-log';
 import URL from 'url';
 import querystring from 'querystring';
+import fetch from 'silk-fetch';
 
 import jwtMiddleware from '../jwt';
 import Accounts from '../models/accounts';
@@ -22,6 +23,29 @@ import type { RouteContext } from '../server';
 
 const log = createLog('routes:vip');
 const PREFIX = '/v1/vip/';
+
+async function GoogleIdTokenToUserId(idToken: string): Promise<string> {
+  const urlBase = 'https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=';
+  const res = await fetch(urlBase + idToken);
+  if (res.status !== 200) {
+    log.error('Failed to fetch google tokeninfo:', res.status, res.statusText);
+    throw new Error('Unable to fetch google tokeninfo');
+  }
+  const tokenInfo = await res.json();
+  if (typeof tokenInfo.sub !== 'string') {
+    throw new Error('Google tokeninfo invalid');
+  }
+  return tokenInfo.sub;
+}
+
+async function PandoOAuth2TokenToUserId(accessToken: string): Promise<string> {
+  throw new Error('Not implemented');
+}
+
+const tokenToUserId = {
+  google: GoogleIdTokenToUserId,
+  pando: PandoOAuth2TokenToUserId,
+};
 
 export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();
@@ -54,7 +78,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       description('Password hash'),
   };
 
-  const ACCESS_TOKEN_SCHEMA = Object.assign({}, COMMON_SCHEMA, {
+  const SIGNIN_WITH_PASSWORD_SCHEMA = Object.assign({}, COMMON_SCHEMA, {
     userAgent: Joi.string().required(),
   });
 
@@ -64,6 +88,55 @@ export default function (ctx: RouteContext): ExpressRoutes {
     userId: Joi.string(),
   });
 
+  const SIGNIN_WITH_TOKEN_SCHEMA = Object.assign({}, {
+    source: Joi.string().only(Object.keys(tokenToUserId)).required(),
+    token: Joi.string().required(),
+    userAgent: Joi.string().required(),
+  });
+
+
+  api.define({
+    path: 'sign_in_token',
+    method: 'post',
+    params: [],
+    name: 'signInWithToken',
+    description: 'Sign into an account using a token',
+    output: Joi.object().keys(ACCOUNT_RESPONSE_SCHEMA),
+    input: Joi.object().keys(SIGNIN_WITH_TOKEN_SCHEMA),
+  }, async (req, res) => {
+
+    const {source, token, userAgent} = req.body;
+
+    if (!tokenToUserId[source]) {
+      throw new Error(`Unknown account source: ${source}`);
+    }
+
+    const sourceAccountId = await tokenToUserId[source](token);
+
+    // Generate an id that's unique across all account sources
+    const uniqueAccountId = `${source}-${sourceAccountId}`;
+
+    let account = await ctx.accounts.signInByToken({
+      userAgent,
+      uniqueAccountId,
+      publicKey: req.unsafeJwt.header.id,
+    });
+    if (account.error) {
+      throw new Error(`Unexpected signInByToken error: ${account}`);
+    }
+    if (account.created) {
+      log.info('created new token account', account.id);
+    } else {
+      // TODO: Notify user of new sign in
+      log.info('token sign in', account.id);
+    }
+    res.respond({
+      success: true,
+      beaconUUID: account.beaconUUID,
+      userId: account.id,
+    });
+  });
+
   api.define({
     path: 'create',
     method: 'post',
@@ -71,11 +144,9 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'createAccount',
     description: 'Create a user account',
     output: Joi.object().keys(ACCOUNT_RESPONSE_SCHEMA),
-    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
+    input: Joi.object().keys(SIGNIN_WITH_PASSWORD_SCHEMA),
   }, async (req, res) => {
     let account = await ctx.accounts.create({
-      // Where this key was created (i.e. iPhone 5s ...)
-      // XXX: Should we infer this with another method?
       userAgent: req.body.userAgent,
       email: req.body.email,
       /**
@@ -107,7 +178,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'signIn',
     description: 'Sign into an account',
     output: Joi.object().keys(ACCOUNT_RESPONSE_SCHEMA),
-    input: Joi.object().keys(ACCESS_TOKEN_SCHEMA),
+    input: Joi.object().keys(SIGNIN_WITH_PASSWORD_SCHEMA),
   }, async (req, res) => {
     let account = await ctx.accounts.signIn({
       userAgent: req.body.userAgent,

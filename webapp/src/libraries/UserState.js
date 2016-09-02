@@ -125,7 +125,7 @@ export class UserState extends EventEmitter {
     this.accessToken = this.api.accessToken = accessToken;
 
     // XXX: Put some more useful information here...
-    let userAgent = 'iOS';
+    let userAgent = 'WebConsole';
 
     let result;
     switch (signInType) {
@@ -136,17 +136,15 @@ export class UserState extends EventEmitter {
         userAgent,
       });
       break;
-    /*
     case 'token':
       result = await this.api.vip.signInWithToken({
+        source: signInData.source,
         token: signInData.token,
-        type: signInData.type,
         userAgent,
       });
       break;
-    */
     default:
-      throw new Error('Unknown sign in type: ' + signInType);
+      throw new Error('Unknown sign in source: ' + signInType);
     }
 
     if (!result.success) {
@@ -165,8 +163,8 @@ export class UserState extends EventEmitter {
     return true;
   }
 
-  /*async*/ attemptSignInWithToken(type, value) {
-    return this._attemptSignIn('token', {type, value});
+  /*async*/ attemptSignInWithToken(source, token) {
+    return this._attemptSignIn('token', {source, token});
   }
 
   /*async*/ attemptSignInWithPassword(email, password) {
@@ -183,7 +181,7 @@ export class UserState extends EventEmitter {
     this.accessToken = this.api.accessToken = accessToken;
 
     // XXX: Put some more useful information here...
-    let userAgent = 'iOS';
+    let userAgent = 'WebConsole';
 
     let {
       success,

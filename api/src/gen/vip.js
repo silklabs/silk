@@ -6,6 +6,18 @@
 
 import BaseClass from '../http_client';
 
+export type SignInWithTokenInput = {
+ source: string;
+ token: string;
+ userAgent: string;
+};
+
+export type SignInWithTokenOutput = {
+ success: bool;
+ beaconUUID: ?string;
+ userId: string;
+};
+
 export type CreateAccountInput = {
  email: string;
  passwordHash: string;
@@ -63,6 +75,19 @@ export default class Vip extends BaseClass {
   prefix: string = '/v1/vip/';
 
   
+  /**
+  Sign into an account using a token
+
+  @param Object payload of request
+  */
+  signInWithToken(payload: SignInWithTokenInput): Promise<SignInWithTokenOutput> {
+    let method = 'post';
+    let url = '/v1/vip/sign_in_token';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
   /**
   Create a user account
 

@@ -4,7 +4,7 @@
 
 import {call} from 'redux-saga/effects';
 import invariant from 'assert';
-import {encodeBreak} from '../utils';
+import {encodeBreak, encodeRate} from '../utils';
 
 import type {Environment} from '../environment';
 import type {Entities} from 'silk-dialog-engine';
@@ -36,5 +36,6 @@ export function* spellWord(
     spell = spell + encodeBreak(word.charAt(i), 'x-weak');
   }
 
+  spell = encodeRate(spell, 'slow');
   yield call(speak, spell, `idle`);
 }

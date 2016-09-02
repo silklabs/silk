@@ -1,7 +1,7 @@
 /* global suite, suiteSetup, suiteTeardown, setup, test */
 
 import {UserScriptTester} from './utils';
-import {encodeBreak} from '../lib/utils';
+import {encodeBreak, encodeRate} from '../lib/utils';
 
 suite(`userScript`, () => {
 
@@ -30,6 +30,7 @@ suite(`userScript`, () => {
     for (let i = 0; i < word.length; i++) {
       spell = spell + encodeBreak(word.charAt(i), 'x-weak');
     }
+    spell = encodeRate(spell, 'slow');
     await tester.listenCheck(`^${spell}`, `idle`);
     done();
   });

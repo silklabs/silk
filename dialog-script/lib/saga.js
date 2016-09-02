@@ -137,7 +137,7 @@ export function* saySoftwareVersion(
   let version = (silkVersion.official ? 'Official ' : '') +
                 silkVersion.semver + ' on ' + silkVersion.branch +
                 ' with a sha1 of ' + encodeRate(silkVersion.sha.substr(0, 8), 'slow');
-  yield call(speak, version);
+  yield call(speak, version, 'idle');
 }
 
 /**

@@ -21,6 +21,14 @@ let songs = null;
 let mediaState: MediaState = 'stopped';
 const player = new Player();
 
+const dialogStartListener: (() => void) = () => {
+  player.pause();
+};
+
+const dialogEndListener: (() => void) = () => {
+  player.resume();
+};
+
 function readMusicDir(dir: string): Promise<Array<string>> {
   if (!songs) {
     return fs.readdir(dir)
@@ -64,7 +72,13 @@ function playNextSong(environment: Environment, songs: Array<string>): Promise<v
     return dialogEngine.dialogDone().then(() => {
       if (mediaState === 'playing') {
         log.debug(`Starting to play song ${song}`);
-        return player.play(song);
+        dialogEngine.addListener(`dialog-start`, dialogStartListener);
+        dialogEngine.addListener(`dialog-end`, dialogEndListener);
+        return player.play(song).then(() => {
+          log.debug(`Done playing song ${song}`);
+          dialogEngine.removeListener(`dialog-start`, dialogStartListener);
+          dialogEngine.removeListener(`dialog-end`, dialogEndListener);
+        });
       } else {
         log.warn(`Ignoring play request as an explicit stop is requested`);
         return Promise.resolve();

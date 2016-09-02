@@ -34,6 +34,14 @@ const ALARM_TONE = path.join(__dirname, '../media', 'funny_alarm.mp3');
 const MAX_INT32 = 0x7FFFFFFF;
 const player = new Player();
 
+const dialogStartListener: (() => void) = () => {
+  player.pause();
+};
+
+const dialogEndListener: (() => void) = () => {
+  player.resume();
+};
+
 // Slice the timers array.
 export function getTimers(state: Object): Array<TimerState> {
   return state.timers.timers.slice();
@@ -226,7 +234,11 @@ export function* timerMonitorSaga(
         if (timer.type === 'alarm') {
           let [timeString] = getDateTime();
           try {
+            dialogEngine.addListener(`dialog-start`, dialogStartListener);
+            dialogEngine.addListener(`dialog-end`, dialogEndListener);
             yield call(() => player.play(ALARM_TONE));
+            dialogEngine.removeListener(`dialog-start`, dialogStartListener);
+            dialogEngine.removeListener(`dialog-end`, dialogEndListener);
           } catch (err) {
             log.error(`Failed to play alarm: `, err);
           }

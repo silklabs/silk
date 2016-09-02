@@ -215,17 +215,19 @@ function initBLE(store: Store<*>) {
     if (oldBeaconUuid) {
       log.debug('No longer monitoring account uuid beacon', oldBeaconUuid);
       const oldDevices = oldState.devices.registered;
-      oldDevices.forEach((oldDevice) => {
-        if (!oldDevice.ble.connectionRequested) {
-          return;
-        }
-        const {accountDeviceNumber} = oldDevice;
-        BLESocketManager.scanForDevice(
-          oldBeaconUuid,
-          accountDeviceNumber,
-          false
-        );
-      });
+      if (oldDevices) {
+        oldDevices.forEach((oldDevice) => {
+          if (!oldDevice.ble.connectionRequested) {
+            return;
+          }
+          const {accountDeviceNumber} = oldDevice;
+          BLESocketManager.scanForDevice(
+              oldBeaconUuid,
+              accountDeviceNumber,
+              false
+          );
+        });
+      }
     }
 
     log.debug('Disabling BLESocketManager');

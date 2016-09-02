@@ -10,6 +10,7 @@
 import createLog from 'silk-log/device';
 import invariant from 'assert';
 import fs from 'mz/fs';
+import mkdirp from 'mkdirp-promise';
 import msgpack from 'msgpack-lite';
 
 import wrapNoEntity from '../fs/wrap_no_entity';
@@ -155,7 +156,7 @@ export async function ensureDirectory(path: string): Promise<boolean> {
   }
 
   log.debug(`Creating '${path}'`);
-  await fs.mkdir(path);
+  await mkdirp(path);
 
   return true;
 }

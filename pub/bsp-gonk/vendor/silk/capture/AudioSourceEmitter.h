@@ -13,12 +13,14 @@ public:
   class Observer: public RefBase {
   public:
     // The implementation is responsible for free()-ing data
-    virtual void OnData(void *data, size_t size) = 0;
+    virtual void OnData(bool vad, void *data, size_t size) = 0;
   };
 
   AudioSourceEmitter(const sp<MediaSource> &source,
                      sp<Observer> observer,
-                     int audioChannels);
+                     int audioSampleRate,
+                     int audioChannels,
+                     bool vadEnabled = false);
 
   virtual ~AudioSourceEmitter();
   virtual status_t start(MetaData *params = NULL);
@@ -31,9 +33,13 @@ private:
   sp<MediaSource> mSource;
   DISALLOW_EVIL_CONSTRUCTORS(AudioSourceEmitter);
 
+  bool mVadEnabled;
+  bool vadCheck();
+
   uint8_t *mAudioBuffer;
   uint32_t mAudioBufferIdx;
   uint32_t mAudioBufferLen;
+  bool mAudioBufferVad;
 };
 
 #endif

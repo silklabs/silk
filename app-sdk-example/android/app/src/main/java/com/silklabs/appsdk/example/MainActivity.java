@@ -395,6 +395,13 @@ public class MainActivity extends FragmentActivity implements
               continue;
             }
 
+            boolean nowPaired = (Boolean) message.get("paired");
+            if (device.isPairing && !device.paired && nowPaired) {
+              onSuccess("Successfully authorized (" + deviceId.substring(0, 5) + "...)");
+              device.isPairing = false;
+            }
+            device.paired = nowPaired;
+
             device.wifiConnectionStatus = (String) message.get("wifiStatus");
             device.wifiSSID = (String) message.get("wifiSSID");
             Double signalStrength = (Double) message.get("wifiLevel");
@@ -810,6 +817,7 @@ public class MainActivity extends FragmentActivity implements
     public void onClick(View v) {
       // Attempt device authorization
       Device device = (Device) deviceListSpinner.getSelectedItem();
+      device.isPairing = true;
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_BLE_CONNECT");
       message.put("deviceId", device.deviceId);

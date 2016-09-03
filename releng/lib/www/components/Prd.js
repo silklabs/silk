@@ -209,7 +209,7 @@ export default class Prd extends React.Component {
     };
   }
 
-  selectLint = (evt, index) => {
+  selectLint = (index) => {
     this.setState({lint: PrdLintOptions[index]});
   };
 

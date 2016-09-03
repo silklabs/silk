@@ -31,7 +31,7 @@ All you have to do then is create a new program with the Silk CLI by running<br>
 `silk init <program_name>`<br>
 It will create a new node package you can start hacking on immediately. Here's the full list of Silk commands that you can use with the CLI: [Silk Command Line Interface Reference](docs/tutorial/cli-reference.md).
 
-We offer a robust set of API you can use in your Silk program. Check them all out: [Silk API reference](http://silklabs.github.io/silk/master/api/device/index.html).
+We offer a robust set of API you can use in your Silk program. Check them all out: [Silk API reference](http://api.silk.io).
 
 Also don't forget to check out the links in the `Resources` of this page for all the code examples you can try right away.
 
@@ -61,7 +61,7 @@ If you like, you can build Silk from the source we offer. It also helps to start
 - [All about Downloading and Installing Silk](docs/tutorial/installing-silk.md)
 - [Quick start with Silk](docs/tutorial/quick-start.md)
 - [Silk Command Line Interface Reference](docs/tutorial/cli-reference.md)
-- [Silk APIs reference](http://silklabs.github.io/silk/master/api/device/index.html)
+- [Silk APIs reference](http://api.silk.io)
 
 **Examples to follow:**
 

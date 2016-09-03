@@ -4,7 +4,7 @@ Let's get started by building a simple program for Silk and push it to the devic
 
 ## Available APIs
 
-You should look at the set of APIs we have made available for you, check them out here [APIs reference: understanding what kind of superpower Silk gives you](http://silklabs.github.io/silk/master/api/device/index.html).
+You should look at the set of APIs we have made available for you, check them out here [APIs reference: understanding what kind of superpower Silk gives you](http://api.silk.io).
 
 ## Installing Silk
 

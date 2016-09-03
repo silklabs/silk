@@ -148,6 +148,7 @@ class PrdSection extends React.Component {
           <ProgressBar bsStyle="success" label="In Progress %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[4]} />
           <ProgressBar label="Validate %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[5]} />
           <ProgressBar label="Ship %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[6]} />
+          <ProgressBar label="Deferred %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[0]} />
         </ProgressBar>;
       } catch (e) {
         log.info(e.stack);

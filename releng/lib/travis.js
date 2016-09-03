@@ -43,6 +43,13 @@ async function _genAuthTravis(): Promise<Travis> {
   let travis = new Travis({
     version: '2.0.0',
     pro: true,
+    headers: {
+      // Magic header that makes the Travis auth/github API work.
+      // Yeah, wtfs...
+      //
+      // https://github.com/travis-ci/travis-ci/issues/5649
+      'User-Agent': 'Travis/1.0',
+    },
   });
   let auth = await cb2promise(travis.authenticate.bind(travis), {
     github_token: process.env.GITHUB_TOKEN,

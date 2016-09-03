@@ -12,6 +12,16 @@ import invariant from 'assert';
 import { getBranchHeadCommit } from './github';
 import { triggerBuildsForEvent } from './github-travis-integration';
 
+function bail(reason, err) {
+  console.error('Exiting process due to ' + reason);
+  console.error(err.stack || err);
+  process.exit(1);
+}
+
+['unhandledRejection', 'uncaughtException'].forEach(reason => {
+  process.on(reason, err => bail(reason, err));
+});
+
 export async function triggerBuilds(
   owner: string,
   repo: string,
@@ -68,8 +78,7 @@ Examples:
   const repo = 'silk-core';
   let [/*node*/, /*script*/, branch, type, name] = process.argv;
   triggerBuilds(owner, repo, branch, type, name)
-    .then((numBuilds) => console.log(`Triggered ${numBuilds} builds.`))
-    .catch((err) => console.error(err.stack));
+  .then((numBuilds) => console.log(`Triggered ${numBuilds} builds.`));
 }
 
 cli();

@@ -127,6 +127,18 @@ class PrdItem extends React.Component {
   }
 }
 
+function RenderProgressBar(numberByWorkflowLabel, max) {
+  return <ProgressBar max={max} >
+           <ProgressBar bsStyle="danger" label="Draft %(percent)s%" max={max} now={numberByWorkflowLabel[1]} />
+           <ProgressBar bsStyle="warning" label="Review %(percent)s%" max={max} now={numberByWorkflowLabel[2]} />
+           <ProgressBar bsStyle="info" label="Ready %(percent)s%" max={max} now={numberByWorkflowLabel[3]} />
+           <ProgressBar bsStyle="success" label="In Progress %(percent)s%" max={max} now={numberByWorkflowLabel[4]} />
+           <ProgressBar label="Validate %(percent)s%" max={max} now={numberByWorkflowLabel[5]} />
+           <ProgressBar label="Ship %(percent)s%" max={max} now={numberByWorkflowLabel[6]} />
+           <ProgressBar label="Deferred %(percent)s%" max={max} now={numberByWorkflowLabel[0]} />
+         </ProgressBar>;
+}
+
 class PrdSection extends React.Component {
   state = {};
 
@@ -141,15 +153,8 @@ class PrdSection extends React.Component {
           numberByWorkflowLabel[state.value]++;
         });
 
-        progress = <ProgressBar max={this.props.items.length} >
-          <ProgressBar bsStyle="danger" label="Draft %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[1]} />
-          <ProgressBar bsStyle="warning" label="Review %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[2]} />
-          <ProgressBar bsStyle="info" label="Ready %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[3]} />
-          <ProgressBar bsStyle="success" label="In Progress %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[4]} />
-          <ProgressBar label="Validate %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[5]} />
-          <ProgressBar label="Ship %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[6]} />
-          <ProgressBar label="Deferred %(percent)s%" max={this.props.items.length} now={numberByWorkflowLabel[0]} />
-        </ProgressBar>;
+        progress = RenderProgressBar(numberByWorkflowLabel,
+          this.props.items.length);
       } catch (e) {
         log.info(e.stack);
       }
@@ -311,8 +316,9 @@ export default class Prd extends React.Component {
       </Well>
     );
 
-    let prdBody;
     let prdTitle;
+    let prdProgress;
+    let prdBody;
     if (!this.state.itemsByMilestone) {
       prdBody = <Alert bsStyle="warning">{this.state.loadingMessage}</Alert>;
     } else {
@@ -326,6 +332,21 @@ export default class Prd extends React.Component {
           </a></sup>;
       }
       prdTitle = <h3>{this.state.prdDescription}{prdRepoLink}<hr/></h3>;
+
+      if (this.state.progress) {
+        let numberByWorkflowLabel = Array(prd.workflowLabels.length).fill(0);
+        let maxItems = 0;
+
+        Object.keys(this.state.itemsByMilestone).forEach(section => {
+          const items = this.state.itemsByMilestone[section];
+          maxItems += items.length;
+          items.forEach(item => {
+            const state = prd.issueState(item);
+            numberByWorkflowLabel[state.value]++;
+          });
+        });
+        prdProgress = RenderProgressBar(numberByWorkflowLabel, maxItems);
+      }
 
       prdBody = Object.keys(this.state.itemsByMilestone).sort().map(
           section => {
@@ -349,6 +370,7 @@ export default class Prd extends React.Component {
         {zen}
         {navBar}
         {prdTitle}
+        {prdProgress}
         {prdBody}
       </div>
     );

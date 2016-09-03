@@ -21,6 +21,7 @@ import InternalMessageFilterStream from './internal_message_stream';
 import * as Metrics from '../metrics/btle';
 
 import type {Socket} from 'net';
+import type {AuthenticateStatus} from 'silk-streams/src/authenticate';
 
 const log = createLog(`btle-parent-socketsession`);
 
@@ -36,9 +37,9 @@ export default class ParentSocketSession extends DuplexTransform {
   _rssiUpdatesEnabled: boolean = false;
   _rssiUpdatesKilled: boolean = false;
 
-  _authenticatedPublicKey: ?string = null;
-  _allowUnauthenticated: ?boolean = null;
-  _emittedUnauthenticated: boolean = false;
+  _status: AuthenticateStatus = 'unknown';
+  _publicKey: ?string = null;
+  _allowCalled: boolean = false;
 
   // Stuff that gets tracked for metrics.
   _startTime: number = Date.now();
@@ -113,39 +114,6 @@ export default class ParentSocketSession extends DuplexTransform {
     this.emit(`error`, error);
   }
 
-  _onAuthenticated(authenticatedPublicKey: string): void {
-    log.debug(`_onAuthenticated`, authenticatedPublicKey);
-
-    invariant(!this._emittedUnauthenticated);
-
-    if (authenticatedPublicKey) {
-      log.info(`Authenticated`);
-      this._authenticatedPublicKey = authenticatedPublicKey;
-      this.emit(`authenticated`, authenticatedPublicKey);
-      return;
-    }
-
-    invariant(!this._authenticatedPublicKey);
-
-    if (this._allowUnauthenticated !== null) {
-      log.debug(`Already informed child`);
-      return;
-    }
-
-    this._emittedUnauthenticated = true;
-    this.emit(`unauthenticated`);
-
-    if (this._allowUnauthenticated === null) {
-      log.warn(`Unauthenticated data was not explicitly allowed`);
-      this._allowUnauthenticated = false;
-
-      this._internalStream.writeInternal(createInternalMessage({
-        name: `allowUnauthenticated`,
-        allow: false,
-      }));
-    }
-  }
-
   _onEnd: (() => void) = () => {
     log.debug(`_onEnd`);
 
@@ -180,7 +148,7 @@ export default class ParentSocketSession extends DuplexTransform {
       duration,
       this._receivedBytes,
       this._sentBytes,
-      this.authenticated,
+      this.status,
     ];
 
     let metric;
@@ -207,6 +175,33 @@ export default class ParentSocketSession extends DuplexTransform {
       break;
     }
 
+    case `status`: {
+      const {name, status, publicKey} = message;
+      this._status = status;
+      if (publicKey) {
+        this._publicKey = publicKey;
+      }
+      this.emit(name, status);
+      break;
+    }
+
+    case `unauthenticated`: {
+      this.emit(message.name);
+      break;
+    }
+
+    case `authenticated`: {
+      this._publicKey = message.publicKey;
+      this.emit(message.name);
+      break;
+    }
+
+    case `paired`: {
+      this._publicKey = message.publicKey;
+      this.emit(message.name);
+      break;
+    }
+
     case `flatline`: {
       this._onFlatline();
       break;
@@ -214,11 +209,6 @@ export default class ParentSocketSession extends DuplexTransform {
 
     case `rssi`: {
       this._onRssiUpdate(message.value);
-      break;
-    }
-
-    case `authenticated`: {
-      this._onAuthenticated(message.authenticatedPublicKey);
       break;
     }
 
@@ -254,6 +244,36 @@ export default class ParentSocketSession extends DuplexTransform {
     return super.end(chunkOrEncodingOrCallback, encodingOrCallback, callback);
   }
 
+  allow(allowed: boolean): void {
+    log.debug(`allow`, allowed);
+
+    invariant(!this._allowCalled);
+    this._allowCalled = true;
+
+    this._internalStream.writeInternal(createInternalMessage({
+      name: `allow`,
+      allowed,
+    }));
+  }
+
+  setPaired(publicKey: string): void {
+    log.debug(`setPaired`, publicKey);
+
+    invariant(this._status === 'unauthenticated' ||
+              this._status === 'authenticated');
+    if (this._status === 'authenticated') {
+      invariant(this._publicKey === publicKey);
+    }
+
+    this._status = 'paired';
+    this._publicKey = publicKey;
+
+    this._internalStream.writeInternal(createInternalMessage({
+      name: `setPaired`,
+      publicKey,
+    }));
+  }
+
   get connected(): boolean {
     return !this._ending && !this._ended;
   }
@@ -286,23 +306,20 @@ export default class ParentSocketSession extends DuplexTransform {
     this._rssiUpdatesEnabled = val;
   }
 
+  get publicKey(): ?string {
+    return this._publicKey;
+  }
+
+  get status(): AuthenticateStatus {
+    return this._status;
+  }
+
   get authenticated(): boolean {
-    return this._authenticatedPublicKey !== null;
+    return this._status === 'authenticated' || this._status === 'paired';
   }
 
-  get authenticatedPublicKey(): ?string {
-    return this._authenticatedPublicKey;
+  get paired(): boolean {
+    return this._status === 'paired';
   }
 
-  allowUnauthenticated(allow: boolean): void {
-    log.debug(`allowUnauthenticated`, allow);
-
-    invariant(this._allowUnauthenticated === null);
-    this._allowUnauthenticated = allow;
-
-    this._internalStream.writeInternal(createInternalMessage({
-      name: `allowUnauthenticated`,
-      allow,
-    }));
-  }
 }

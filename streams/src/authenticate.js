@@ -14,13 +14,18 @@ import createLog from 'silk-log';
 import ClosingTransform from './closing_transform';
 import {CryptoDuplexStream} from './crypto';
 import DuplexTransform from './duplex_transform';
-import * as Metrics from './metrics';
 
 import type {Duplex} from 'stream';
 import type {Deferred} from 'silk-async-utils';
 import type {DuplexStreamOptions} from 'silk-streams';
 
 type TransformCallback = (error: ?Error, data?: Buffer | string) => void;
+
+export type AuthenticateStatus =
+  'unknown' |
+  'unauthenticated' |
+  'authenticated' |
+  'paired';
 
 const PROPERTY_NAME = `_0--"_`;
 
@@ -35,9 +40,9 @@ export class AuthenticateStreamBase extends ClosingTransform {
   _onSharedSecret: ((sharedSecret: Buffer) => void);
 
   _blocked: boolean = true;
+  _allowCalled: boolean = false;
   _transformData: ?Object = null;
   _transformCallback: ?TransformCallback = null;
-  _allowUnauthenticatedDeferred: Deferred<boolean> = createDeferred();
 
   _error: ?Error = null;
 
@@ -101,37 +106,42 @@ export class AuthenticateStreamBase extends ClosingTransform {
     }
   }
 
-  allowUnauthenticated(allow: boolean): void {
-    AuthenticateStreamBase.log.debug(`allowUnauthenticated`, allow);
-
-    this._allowUnauthenticatedDeferred.accept(allow);
-  }
-
 }
 
 export class AuthenticateReadStream extends AuthenticateStreamBase {
 
   static log = createLog(`streams:authenticate-read`);
 
-  _publicKeys: ?Array<string> = null;
+  _pairedPublicKeys: ?Array<string>;
+  _unpairedPublicKeys: ?Array<string>;
   _sharedSecret: ?string = null;
   _receivedAuthData: boolean = false;
-  _authenticatedPublicKey: ?string = null;
+  _publicKey: ?string = null;
+  _status: AuthenticateStatus = 'unknown';
 
   constructor(
     cryptoStream: CryptoDuplexStream,
-    publicKeys: Array<string>,
+    pairedPublicKeys: Array<string>,
+    unpairedPublicKeys: Array<string>,
     options?: DuplexStreamOptions,
   ) {
     AuthenticateReadStream.log.debug(`constructor`);
 
-    invariant(publicKeys);
-    invariant(Array.isArray(publicKeys));
-    publicKeys.forEach((publicKey) => invariant(typeof publicKey === `string`));
+    invariant(pairedPublicKeys);
+    invariant(Array.isArray(pairedPublicKeys));
+    pairedPublicKeys.forEach(
+      (publicKey) => invariant(typeof publicKey === `string`)
+    );
+
+    invariant(Array.isArray(unpairedPublicKeys));
+    unpairedPublicKeys.forEach(
+      (publicKey) => invariant(typeof publicKey === `string`)
+    );
 
     super(cryptoStream, options);
 
-    this._publicKeys = publicKeys;
+    this._pairedPublicKeys = pairedPublicKeys;
+    this._unpairedPublicKeys = unpairedPublicKeys;
   }
 
   _transform(
@@ -171,6 +181,7 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
         this._transformCallback = callback;
         return;
       }
+
       callback(this._error, data);
       return;
     }
@@ -183,7 +194,8 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
 
     this._receivedAuthData = true;
 
-    invariant(!this.authenticated);
+    invariant(this._publicKey === null);
+    invariant(!this._paired);
 
     // Auth data never get pushed into the stream.
     const authData: string = data[PROPERTY_NAME];
@@ -202,9 +214,10 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
   async _verify(authData: string, callback: TransformCallback): Promise<void> {
     AuthenticateReadStream.log.debug(`verify`, authData);
 
-    invariant(this._publicKeys);
+    invariant(this._pairedPublicKeys);
     invariant(this._sharedSecret);
-    invariant(!this.authenticated);
+    invariant(this._publicKey === null);
+    invariant(this._status === 'unknown');
 
     try {
       await this._verifyAuthData(authData);
@@ -213,67 +226,68 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     }
 
     // No need to hang on to these any more.
-    this._publicKeys = null;
+    this._pairedPublicKeys = null;
+    this._unpairedPublicKeys = null;
 
-    if (this._error) {
-      process.nextTick(() => {
-        invariant(this._error);
-        this.emit(`metrics`, new Metrics.AuthFailure(this._error.message));
-      });
-    }
-
-    this._unblock();
     callback(this._error);
   }
 
   async _verifyAuthData(authData: string): Promise<void> {
     AuthenticateReadStream.log.debug(`_verifyAuthData`, authData);
 
-    invariant(this._publicKeys);
-    invariant(!this.authenticated);
+    invariant(this._pairedPublicKeys);
+    invariant(this._unpairedPublicKeys);
+    invariant(this._publicKey === null);
+    invariant(this._status === 'unknown');
 
     const sharedSecret = this._sharedSecret;
     invariant(sharedSecret);
 
-    const publicKeys = this._publicKeys.slice();
-    AuthenticateReadStream.log.debug(`Attempting to verify signature`,
-                                     publicKeys);
+    const pairedPublicKeyCount = this._pairedPublicKeys.length;
 
     // Try to verify the signature against all public keys known to us.
-    const verifyResults = await Promise.all(
+    const publicKeys = this._pairedPublicKeys.concat(this._unpairedPublicKeys);
+    AuthenticateReadStream.log.debug(`Attempting to verify signature`,
+                                     publicKeys);
+    let verifyResults = await Promise.all(
       publicKeys.map((publicKey) => {
         const id = AccessToken.importPub(publicKey);
         return id.genVerify(sharedSecret, authData);
       })
     );
 
+    let status = this._status;
+
     for (let index = 0; index < verifyResults.length; index++) {
       if (verifyResults[index]) {
-        const publicKey = publicKeys[index];
-        AuthenticateReadStream.log.info(`Receiving authenticated data`,
-                                        publicKey);
-        this._authenticatedPublicKey = publicKey;
-        this.emit(`authenticated`, publicKey);
-        return;
+        const publicKey = this._publicKey = publicKeys[index];
+        const paired = index < pairedPublicKeyCount;
+
+        const pairedMessage = paired ? `paired and ` : ``;
+        AuthenticateReadStream.log.info(
+          `Receiving ${pairedMessage}authenticated data from`,
+          publicKey,
+        );
+
+        status = paired ? 'paired' : 'authenticated';
+        break;
       }
     }
 
-    AuthenticateReadStream.log.debug(
-      `No known keys could authenticate the signature`
-    );
-    this.emit(`unauthenticated`);
-
-    AuthenticateReadStream.log.debug(`Waiting to see if unauthenticated data ` +
-                                     `is allowed`);
-    const allowUnauthenticated =
-      await this._allowUnauthenticatedDeferred.promise;
-
-    if (allowUnauthenticated) {
-      AuthenticateReadStream.log.info(`Receiving unauthenticated data`);
-      return;
+    if (status === 'unknown') {
+      AuthenticateReadStream.log.debug(
+        `Receiving unauthenticated data from unknown source`
+      );
+      status = 'unauthenticated';
     }
 
-    throw new Error(`Unauthenticated data not allowed`);
+    invariant(status !== 'unknown');
+    this._status = status;
+
+    process.nextTick(() => {
+      this.emit(`status`, status);
+      this.emit(status);
+    });
   }
 
   _onSharedSecret(sharedSecret: Buffer): void {
@@ -284,12 +298,45 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
     this._sharedSecret = sharedSecret.toString('hex');
   }
 
-  get authenticated(): boolean {
-    return this._authenticatedPublicKey !== null;
+  allow(allowed: boolean): void {
+    AuthenticateReadStream.log.debug(`allow`, allowed);
+
+    invariant(!this._allowCalled);
+    this._allowCalled = true;
+
+    process.nextTick(() => {
+      if (allowed) {
+        this._unblock();
+      } else {
+        this._setError(new Error(`Not allowed`));
+      }
+    });
   }
 
-  get authenticatedPublicKey(): ?string {
-    return this._authenticatedPublicKey;
+  setPaired(publicKey: string): void {
+    AuthenticateReadStream.log.debug(`setPaired`, publicKey);
+
+    invariant(this._status === 'unauthenticated' ||
+              this._status === 'authenticated');
+    if (this._status === 'authenticated') {
+      invariant(this._publicKey === publicKey);
+    }
+
+    const status = this._status = 'paired';
+    this._publicKey = publicKey;
+
+    process.nextTick(() => {
+      this.emit(`status`, status);
+      this.emit(status);
+    });
+  }
+
+  get publicKey(): ?string {
+    return this._publicKey;
+  }
+
+  get status(): AuthenticateStatus {
+    return this._status;
   }
 
 }
@@ -298,22 +345,21 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
 
   static log = createLog(`streams:authenticate-write`);
 
-  _accessToken: ?AccessToken;
+  _accessToken: AccessToken;
   _sentSignatureDeferred: Deferred<void> = createDeferred();
 
   constructor(
     cryptoStream: CryptoDuplexStream,
-    privateKey: string,
+    accessToken: AccessToken,
     options?: DuplexStreamOptions,
   ) {
     AuthenticateWriteStream.log.debug(`constructor`);
 
-    invariant(privateKey);
-    invariant(typeof privateKey === `string`);
+    invariant(accessToken);
 
     super(cryptoStream, options);
 
-    this._accessToken = new AccessToken(``, privateKey);
+    this._accessToken = accessToken;
   }
 
   _transform(
@@ -363,12 +409,8 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
   async _sendSignature(sharedSecret: string): Promise<void> {
     AuthenticateWriteStream.log.debug(`_sendSignature`, sharedSecret);
 
-    const accessToken = this._accessToken;
-    this._accessToken = null;
-    invariant(accessToken);
-
     try {
-      const signature = await accessToken.genSign(sharedSecret);
+      const signature = await this._accessToken.genSign(sharedSecret);
       // $FlowFixMe: Flow doesn't understand streams in object mode.
       this.push({
         [PROPERTY_NAME]: signature,
@@ -380,22 +422,21 @@ export class AuthenticateWriteStream extends AuthenticateStreamBase {
     this._sentSignatureDeferred.accept();
   }
 
-  async setAuthenticated(authenticated: boolean): Promise<void> {
-    AuthenticateWriteStream.log.debug(`setAuthenticated`, authenticated);
+  allow(allowed: boolean): void {
+    AuthenticateWriteStream.log.debug(`allow`, allowed);
 
-    await this._sentSignatureDeferred.promise;
+    invariant(!this._allowCalled);
+    this._allowCalled = true;
 
-    let allowUnauthenticated = false;
+    process.nextTick(async () => {
+      await this._sentSignatureDeferred.promise;
 
-    if (!authenticated) {
-      allowUnauthenticated = await this._allowUnauthenticatedDeferred.promise;
-    }
-
-    if (authenticated || allowUnauthenticated) {
-      this._unblock();
-    } else {
-      this._setError(new Error(`Unauthenticated data is not allowed`));
-    }
+      if (allowed) {
+        this._unblock();
+      } else {
+        this._setError(new Error(`Not allowed`));
+      }
+    });
   }
 
 }
@@ -409,15 +450,23 @@ export class AuthenticateDuplexStream extends DuplexTransform {
 
   constructor(wrappedStream: Duplex,
               cryptoStream: CryptoDuplexStream,
-              privateKey: string,
-              publicKeys: Array<string>,
+              accessToken: AccessToken,
+              pairedPublicKeys: Array<string>,
+              unpairedPublicKeys: Array<string>,
               options?: DuplexStreamOptions) {
     AuthenticateDuplexStream.log.debug(`constructor`);
 
-    const reader =
-      new AuthenticateReadStream(cryptoStream, publicKeys, options);
-    const writer =
-      new AuthenticateWriteStream(cryptoStream, privateKey, options);
+    const reader = new AuthenticateReadStream(
+      cryptoStream,
+      pairedPublicKeys,
+      unpairedPublicKeys,
+      options,
+    );
+    const writer = new AuthenticateWriteStream(
+      cryptoStream,
+      accessToken,
+      options,
+    );
 
     options = Object.assign({}, options);
     if (!(`objectMode` in options)) {
@@ -429,38 +478,34 @@ export class AuthenticateDuplexStream extends DuplexTransform {
 
     super(wrappedStream, wrappedStream, reader, writer, options);
 
-    reader.once(`authenticated`, (publicKey) => {
-      AuthenticateDuplexStream.log.debug(`This stream is authenticated`,
-                                         publicKey);
-      invariant(this.authenticated);
-      writer.setAuthenticated(true);
-      this.emit(`authenticated`, publicKey);
-    });
-
-    reader.once(`unauthenticated`, () => {
-      AuthenticateDuplexStream.log.debug(`This stream is unauthenticated`);
-      invariant(!this.authenticated);
-      writer.setAuthenticated(false);
-      this.emit(`unauthenticated`);
-    });
+    reader.addListener(`status`, (status) => this.emit(`status`, status));
+    reader.once(`unauthenticated`, (status) => this.emit(`unauthenticated`));
+    reader.once(`authenticated`, (status) => this.emit(`authenticated`));
+    reader.once(`paired`, (status) => this.emit(`paired`));
 
     this.__reader = reader;
     this.__writer = writer;
   }
 
-  allowUnauthenticated(allow: boolean): void {
-    AuthenticateDuplexStream.log.info(`allowUnauthenticated`, allow);
+  allow(allowed: boolean): void {
+    AuthenticateDuplexStream.log.info(`allow`, allowed);
 
-    this.__reader.allowUnauthenticated(allow);
-    this.__writer.allowUnauthenticated(allow);
+    this.__reader.allow(allowed);
+    this.__writer.allow(allowed);
   }
 
-  get authenticated(): boolean {
-    return this.__reader.authenticated;
+  setPaired(publicKey: string): void {
+    AuthenticateDuplexStream.log.info(`setPaired`, publicKey);
+
+    this.__reader.setPaired(publicKey);
   }
 
-  get authenticatedPublicKey(): ?string {
-    return this.__reader.authenticatedPublicKey;
+  get publicKey(): ?string {
+    return this.__reader.publicKey;
+  }
+
+  get status(): AuthenticateStatus {
+    return this.__reader.status;
   }
 
 }

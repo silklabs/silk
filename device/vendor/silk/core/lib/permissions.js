@@ -36,6 +36,8 @@ export class PermissionManager extends EventEmitter {
     invariant(store);
 
     store.subscribeToPath(`persist.permissions`, this._onPermissionsChanged);
+
+    // TODO: Set a real timer based on the next expiring entry.
     setInterval(this._expirePermissions, EXPIRE_INTERVAL_MS);
 
     this._store = store;

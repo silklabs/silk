@@ -78,12 +78,12 @@ export class StreamWrite extends Metric {
 
 class SocketSessionBase extends Metric {
 
-  static INDEX = new Set([`authenticated`]);
+  static INDEX = new Set([`status`]);
 
   constructor(durationMs: number,
               receivedBytes: number,
               sentBytes: number,
-              authenticated: boolean,
+              status: string,
               errorMessage: string = ``) {
     invariant(durationMs >= 0, `Invalid duration ${durationMs}`);
     invariant(receivedBytes >= 0, `Invalid received ${receivedBytes}`);
@@ -93,7 +93,7 @@ class SocketSessionBase extends Metric {
       durationMs: new MetricTypes.Integer(durationMs),
       receivedBytes: new MetricTypes.Integer(receivedBytes),
       sentBytes: new MetricTypes.Integer(sentBytes),
-      authenticated,
+      status,
       errorMessage,
     });
   }
@@ -108,8 +108,8 @@ export class SocketSession extends SocketSessionBase {
   constructor(durationMs: number,
               receivedBytes: number,
               sentBytes: number,
-              authenticated: boolean) {
-    super(durationMs, receivedBytes, sentBytes, authenticated);
+              status: string) {
+    super(durationMs, receivedBytes, sentBytes, status);
   }
 
 }
@@ -122,8 +122,8 @@ export class SocketSessionFlatline extends SocketSessionBase {
   constructor(durationMs: number,
               receivedBytes: number,
               sentBytes: number,
-              authenticated: boolean) {
-    super(durationMs, receivedBytes, sentBytes, authenticated);
+              status: string) {
+    super(durationMs, receivedBytes, sentBytes, status);
   }
 
 }
@@ -138,11 +138,11 @@ export class SocketSessionError extends SocketSessionBase {
   constructor(durationMs: number,
               receivedBytes: number,
               sentBytes: number,
-              authenticated: boolean,
+              status: string,
               errorMessage: string) {
     invariant(errorMessage, `Empty error message`);
 
-    super(durationMs, receivedBytes, sentBytes, authenticated, errorMessage);
+    super(durationMs, receivedBytes, sentBytes, status, errorMessage);
   }
 
 }

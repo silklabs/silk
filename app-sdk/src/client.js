@@ -222,9 +222,9 @@ function initBLE(store: Store<*>) {
           }
           const {accountDeviceNumber} = oldDevice;
           BLESocketManager.scanForDevice(
-              oldBeaconUuid,
-              accountDeviceNumber,
-              false
+            oldBeaconUuid,
+            accountDeviceNumber,
+            false
           );
         });
       }
@@ -314,15 +314,15 @@ function initBLE(store: Store<*>) {
           status.message === 'connected') {
         if (sessionIsConfig) {
           session.dismiss();
-        } else {
-          const {registered} = store.getState().devices;
-          const device =
-            (session.deviceId && registered) ?
-            registered.get(session.deviceId) :
-            null;
-          if (!device || !device.ble.connectionRequested) {
-            session.disconnect();
-          }
+          return;
+        }
+        const {registered} = store.getState().devices;
+        const device =
+          (session.deviceId && registered) ?
+          registered.get(session.deviceId) :
+          null;
+        if (!device || !device.ble.connectionRequested) {
+          session.disconnect();
         }
       }
     });

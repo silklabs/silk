@@ -40,6 +40,8 @@ const log = createLog('connections');
 const MAX_RECONNECT_SLEEP = 30 * 1000;
 const RECONNECT_SLEEP_INTERVAL = 250;
 
+const BLE_ACCESS_GRANT_MS = 30 * 1000;
+
 const OPENHOUSE_PROP = `persist.silk.rtc.openhouse`;
 
 // Only allow unauthenticated streams on debug builds with the 'openhouse' prop.
@@ -458,28 +460,36 @@ export default class Connections extends EventEmitter {
 
   _onSignaling: (stream: VirtualStream) => Promise<void> = async (stream) => {
     const { type, publicKey, signedPublicKey } = stream.body;
+    const jsonStream = new JSONDuplexStream(stream);
+
+    const unauthorized = [`error`, `UNAUTHORIZED`];
+
     if (type !== `signaling`) {
       log.warn(`Unknown stream type '${type}'`);
-      stream.destroy();
+      // XXX Use destroy() once server handles it better.
+      jsonStream.end(unauthorized);
       return;
     }
 
     if (!publicKey) {
       log.warn(`Missing public key`);
-      stream.destroy();
+      // XXX Use destroy() once server handles it better.
+      jsonStream.end(unauthorized);
       return;
     }
 
     if (!signedPublicKey) {
       log.warn(`Missing signed public key`);
-      stream.destroy();
+      // XXX Use destroy() once server handles it better.
+      jsonStream.end(unauthorized);
       return;
     }
 
     const accessToken = AccessToken.importPub(publicKey);
     if (!await accessToken.genVerify(publicKey, signedPublicKey)) {
       log.warn(`Unable to verify public key`, publicKey);
-      stream.destroy();
+      // XXX Use destroy() once server handles it better.
+      jsonStream.end(unauthorized);
       return;
     }
 
@@ -488,12 +498,22 @@ export default class Connections extends EventEmitter {
       const pairedKeys = permissionManager.match(`rtc`);
       if (pairedKeys.indexOf(publicKey) === -1) {
         log.warn(`This public key is not paired`, publicKey);
+
+        log.info(`Granting BLE access to ${publicKey} for ` +
+                 `${(BLE_ACCESS_GRANT_MS / 1000)} seconds after rtc connection`);
+        permissionManager.add(publicKey, {
+          type: 'ble-temp',
+          expires: Date.now() + BLE_ACCESS_GRANT_MS,
+          actor: null,
+        });
+
         if (ALLOW_UNAUTHENTICATED_STREAMS) {
           log.warn(`Allowing connection because the '${OPENHOUSE_PROP}' ` +
                    `property is set. This connection would not be possible in ` +
                    `production builds.`);
         } else {
-          stream.destroy();
+          // XXX Use destroy() once server handles it better.
+          jsonStream.end(unauthorized);
           return;
         }
       }
@@ -504,7 +524,7 @@ export default class Connections extends EventEmitter {
     this.emit('request', stream);
     let recipient;
     try {
-      recipient = answer(new JSONDuplexStream(stream));
+      recipient = answer(jsonStream);
 
       // This essentially lets the peer request any kind of media it wants without restrictions.
       // In the future we will need more advanced logic here to limit the total number of streams

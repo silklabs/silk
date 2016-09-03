@@ -17,7 +17,10 @@ import {
   setprop,
 } from 'silk-sysutils';
 
-import SessionListenerBase from './session_listener_base';
+import {
+  default as SessionListenerBase,
+  RSSI_THRESHOLD,
+} from './session_listener_base';
 
 import type {
   ConnectionType,
@@ -39,7 +42,6 @@ type State =
 
 const DISMISS_TIMEOUT_MS = 15000;
 const MAX_WIFI_ERRORS = 3;
-const RSSI_THRESHOLD = -60;
 
 // Minimum acceleration for "device motion" threshold (units are m/s^2).
 // This threshold was obtained by nudging a device IRL and may need to be
@@ -75,6 +77,10 @@ const SCHEMA = {
     stripUnknown: true,
   }).required(),
 
+  wifiInfo: Joi.object().keys({
+    name: Joi.string().equal(`wifiInfo`).required(),
+  }).required(),
+
   dismiss: Joi.object().keys({
     name: Joi.string().equal(`dismiss`).required(),
   }).required(),
@@ -96,11 +102,15 @@ export default class ConfigSessionListener extends SessionListenerBase {
   constructor(deviceConfig: DeviceConfig, socketSession: ParentSocketSession) {
     log.debug(`ConfigSessionListener()`);
 
-    // We're attempting to configure this device so we can't use authenticated
-    // streams yet.
-    socketSession.allowUnauthenticated(true);
+    socketSession.once(`unauthenticated`, () => {
+      // We're attempting to configure this device so we can't use authenticated
+      // streams yet.
+      socketSession.allow(true);
+    });
 
     super(deviceConfig, socketSession, SCHEMA);
+
+    this._sendId();
 
     // Tell the app that we need to be configured.
     this._sendRegister();
@@ -268,6 +278,9 @@ export default class ConfigSessionListener extends SessionListenerBase {
           serverUrl: data.serverUrl,
         };
 
+        invariant(this._socketSession);
+        this._socketSession.setPaired(data.publicKey);
+
         const time = new Date(data.time);
         log.verbose(`Setting time to`, time);
 
@@ -287,6 +300,19 @@ export default class ConfigSessionListener extends SessionListenerBase {
         setprop('persist.sys.timezone', timezone);
       }
       return;
+
+    case `wifiInfo`:
+      if (this._state !== 'complete') {
+        log.warn(`Received '${data.name}' while in state ${this._state}`);
+        break;
+      }
+
+      invariant(this._socketSession);
+      invariant(this._socketSession.paired);
+
+      this._deviceConfig.getWifiConnectionInfo(this);
+      return;
+
 
     case `dismiss`:
       if (this._state !== 'complete' && this._state !== 'dismissed') {

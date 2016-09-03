@@ -61,10 +61,12 @@ const MESSAGES_FROM_CHILD = Object.assign({}, MESSAGES_FROM_BOTH, {
 
 const MESSAGES_FROM_PARENT = Object.assign({}, MESSAGES_FROM_BOTH, {
   initialize: messageSchema(`initialize`, {
+    publicKey: KEY_SCHEMA.required(),
     privateKey: KEY_SCHEMA.required(),
     serverPath: Joi.string().required(),
     mode: MODE_SCHEMA.required(),
-    publicKeys: PUBLIC_KEYS_SCHEMA.required(),
+    pairedPublicKeys: PUBLIC_KEYS_SCHEMA.required(),
+    unpairedPublicKeys: PUBLIC_KEYS_SCHEMA.required(),
     manufacturerCode: UINT16_SCHEMA.required(),
     deviceType: UINT16_SCHEMA.required(),
     beaconPower: BEACON_POWER_SCHEMA.required(),
@@ -72,7 +74,8 @@ const MESSAGES_FROM_PARENT = Object.assign({}, MESSAGES_FROM_BOTH, {
   }),
 
   publicKeys: messageSchema(`publicKeys`, {
-    publicKeys: PUBLIC_KEYS_SCHEMA.required(),
+    paired: PUBLIC_KEYS_SCHEMA.required(),
+    unpaired: PUBLIC_KEYS_SCHEMA.required(),
   }),
 
   advertisingInfo: messageSchema(`advertisingInfo`, {

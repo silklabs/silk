@@ -129,12 +129,13 @@ function configDecline(
 
 function configAbort(
   state: StateWithDevices,
-): DeviceSession {
+): ?DeviceSession {
   const {unconfigured, configuring} = state.devices;
   invariant(configuring);
   const session = unconfigured.get(configuring.socketId);
-  invariant(session);
-  session.restart();
+  if (session) {
+    session.restart();
+  }
   return session;
 }
 

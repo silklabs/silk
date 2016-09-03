@@ -344,6 +344,9 @@ public class MainActivity extends FragmentActivity implements
             device.bleConnectionError = (String) message.get("bleConnectionError");
             device.rtcConnectionStatus = (String) message.get("rtcConnectionStatus");
             device.rtcConnectionError = (String) message.get("rtcConnectionError");
+            if (device.rtcConnectionStatus.equals("CONNECTED")) {
+              device.paired = true;
+            }
             if (device.deviceConfigStatus.equals("CONFIGURED")) {
               device.accountDeviceNumber =
                 ((Double) message.get("accountDeviceNumber")).intValue();
@@ -358,19 +361,24 @@ public class MainActivity extends FragmentActivity implements
             if (device == currentDevice) {
               updateUI(device);
 
-              if (currentDevice.deviceConfigStatus.equals("CONFIGURED") &&
-                  currentDevice.bleConnectionStatus.equals("CONNECTED")) {
-                if (wifiDialog.isShowing()) {
+              if (currentDevice.bleConnectionStatus.equals("CONNECTED")) {
+                if (currentDevice.deviceConfigStatus.equals("CONFIGURED")) {
+                  if (wifiDialog.isShowing()) {
+                    Map<String, Object> message = new HashMap<>();
+                    message.put("type", "DEVICE_WIFI_LIST");
+                    message.put("deviceId", currentDevice.deviceId);
+                    mSilkService.postMessage(message);
+                  }
+
                   Map<String, Object> message = new HashMap<>();
-                  message.put("type", "DEVICE_WIFI_LIST");
+                  message.put("type", "DEVICE_WIFI_GETINFO");
                   message.put("deviceId", currentDevice.deviceId);
                   mSilkService.postMessage(message);
+                } else if (wifiDialog.isShowing() && device.deviceId != null) {
+                  final Button button =
+                    wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                  button.setEnabled(device != null && device.deviceId != null);
                 }
-
-                Map<String, Object> message = new HashMap<>();
-                message.put("type", "DEVICE_WIFI_GETINFO");
-                message.put("deviceId", currentDevice.deviceId);
-                mSilkService.postMessage(message);
               }
             }
             break;
@@ -383,6 +391,15 @@ public class MainActivity extends FragmentActivity implements
       runOnUiThread(new Runnable() {
         public void run() {
           final String deviceId = (String) message.get("deviceId");
+          Integer accountDeviceNumber = null;
+          if (message.get("accountDeviceNumber") != null) {
+            accountDeviceNumber =
+              ((Double) message.get("accountDeviceNumber")).intValue();
+          }
+
+          if (deviceId == null && accountDeviceNumber == null) {
+            return;
+          }
 
           Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
 
@@ -391,7 +408,10 @@ public class MainActivity extends FragmentActivity implements
           for (int index = 0; index < count; index++) {
             Device device = (Device) adapter.getItem(index);
 
-            if (!deviceId.equals(device.deviceId)) {
+            if ((deviceId != null &&
+                  !deviceId.equals(device.deviceId)) ||
+                (accountDeviceNumber != null &&
+                  !accountDeviceNumber.equals((device.accountDeviceNumber)))) {
               continue;
             }
 

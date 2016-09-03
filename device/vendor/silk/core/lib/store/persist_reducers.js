@@ -55,6 +55,7 @@ type ImmutablePermissionType = $Enum<typeof IMMUTABLE_PERMISSION_TYPES>;
 // actions.
 export type MutablePermissionType =
   'ble' |
+  'ble-temp' |
   'rtc';
 
 type PermissionType = ImmutablePermissionType | MutablePermissionType;
@@ -76,6 +77,7 @@ type MutablePermissionBase<T: MutablePermissionType> = PermissionBase<T>;
 type PermissionFull = ImmutablePermissionBase<'full'>;
 
 type PermissionBle = MutablePermissionBase<'ble'>;
+type PermissionBleTemp = MutablePermissionBase<'ble-temp'>;
 type PermissionRtc = MutablePermissionBase<'rtc'>;
 
 type ImmutablePermission =
@@ -83,6 +85,7 @@ type ImmutablePermission =
 
 export type MutablePermission =
   PermissionBle |
+  PermissionBleTemp |
   PermissionRtc;
 
 type Permission = ImmutablePermission | MutablePermission;

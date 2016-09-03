@@ -1,5 +1,6 @@
 /**
  * @noflow
+ * @private
  */
 
 import assert from 'assert';

@@ -325,7 +325,7 @@ public class MainActivity extends FragmentActivity implements
 
           Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
 
-          SpinnerAdapter adapter = deviceListSpinner.getAdapter();
+          ArrayAdapter<Device> adapter = (ArrayAdapter<Device>) deviceListSpinner.getAdapter();
           final int count = adapter.getCount();
           for (int index = 0; index < count; index++) {
             Device device = (Device) adapter.getItem(index);
@@ -350,20 +350,12 @@ public class MainActivity extends FragmentActivity implements
               device.deviceConfigId = deviceConfigId;
             }
 
-            if (device == currentDevice) {
-              if (device.rtcConnectionStatus != null &&
-                  device.rtcConnectionStatus.equals("CONNECTED")) {
-                echoButton.setEnabled(true);
-              } else {
-                echoButton.setEnabled(false);
-              }
+            // Notify adapter that the device status is updated so it can refresh
+            // itself if needed
+            adapter.notifyDataSetChanged();
 
-              if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
-                configureButton.setEnabled(device.deviceConfigId != null);
-              } else {
-                configureButton.setEnabled(true);
-              }
-              deviceStatusTextView.setText(device.status());
+            if (device == currentDevice) {
+              updateUI(device);
 
               if (currentDevice.deviceConfigStatus.equals("CONFIGURED") &&
                   currentDevice.bleConnectionStatus.equals("CONNECTED")) {
@@ -830,20 +822,7 @@ public class MainActivity extends FragmentActivity implements
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
       Device device = (Device) parent.getItemAtPosition(position);
-
-      if (device.rtcConnectionStatus != null &&
-          device.rtcConnectionStatus.equals("CONNECTED")) {
-        echoButton.setEnabled(true);
-      } else {
-        echoButton.setEnabled(false);
-      }
-
-      if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
-        configureButton.setEnabled(device.deviceConfigId != null);
-      } else {
-        configureButton.setEnabled(true);
-      }
-      deviceStatusTextView.setText(device.status());
+      updateUI(device);
     }
 
     @Override
@@ -853,6 +832,32 @@ public class MainActivity extends FragmentActivity implements
       deviceStatusTextView.setText("");
     }
   };
+
+  /**
+   * Update the state of various buttons such as config and echo
+   * @param device
+   */
+  private void updateUI(final Device device) {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        if (device.rtcConnectionStatus != null &&
+          device.rtcConnectionStatus.equals("CONNECTED")) {
+          echoButton.setEnabled(true);
+        } else {
+          echoButton.setEnabled(false);
+        }
+
+        if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
+          configureButton.setText(getString(R.string.configure));
+          configureButton.setEnabled(device.deviceConfigId != null);
+        } else {
+          configureButton.setText(getString(R.string.reconfigure));
+          configureButton.setEnabled(true);
+        }
+        deviceStatusTextView.setText(device.status());
+      }
+    });
+  }
 
   /**
    * Select the deviceListSpinner item that was previously selected

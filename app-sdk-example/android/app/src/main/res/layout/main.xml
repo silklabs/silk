@@ -66,6 +66,25 @@
             android:paddingLeft="10dp"
             android:layout_marginTop="10dp" />
 
+        <com.google.android.gms.common.SignInButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/googlelogin"
+            android:id="@+id/googleLoginButton"
+            android:layout_below="@+id/loginButton"
+            android:layout_alignParentLeft="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/googleAuthStatusResultView"
+            android:layout_below="@id/loginButton"
+            android:layout_toRightOf="@+id/googleLoginButton"
+            android:singleLine="true"
+            android:layout_alignParentRight="true"
+            android:paddingLeft="10dp"
+            android:layout_marginTop="10dp" />
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -80,7 +99,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/deviceList"
-            android:layout_below="@+id/loginButton"
+            android:layout_below="@+id/googleLoginButton"
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="true"
             android:spinnerMode="dialog"
@@ -112,10 +131,20 @@
             android:singleLine="true"
             android:paddingTop="16dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <ScrollView
+            android:id="@+id/deviceStatusScrollView"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/deviceStatusTextView"
-            android:layout_below="@+id/deviceStatusLabel" />
+            android:layout_below="@+id/deviceStatusLabel"
+            android:scrollbars="vertical"
+            android:fillViewport="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/deviceStatusTextView"
+                android:nestedScrollingEnabled="false"
+                android:layout_weight="1.0" />
+        </ScrollView>
 
 </RelativeLayout>

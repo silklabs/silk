@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +29,15 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.view.View.OnClickListener;
 
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.silklabs.appsdk.SilkAppSDKService;
 import com.silklabs.appsdk.SilkAppSDKDelegate;
 
@@ -34,17 +45,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity implements
+  GoogleApiClient.OnConnectionFailedListener {
 
   private final String TAG = "SilkAppSDKExample";
   private final int REQUEST_CODE_PERMISION_SYSTEM_ALERT_WINDOW = 1234; // Random number
+  private static final int RC_GET_TOKEN = 9001;
   private boolean mResumed = false;
 
   private SilkAppSDKService mSilkService = null;
   private TextView networkStatusTextView = null;
   private TextView authStatusTextView = null;
-  private Button loginButton = null;
+  private Button silkLoginButton = null;
+  private TextView googleAuthStatusTextView = null;
   private Button logoutButton = null;
+  private SignInButton googleLoginButton = null;
   private EditText emailText = null;
   private EditText passwordText = null;
   private Button echoButton = null;
@@ -53,6 +68,7 @@ public class MainActivity extends Activity {
   private Spinner ssidListSpinner = null;
   private AlertDialog wifiDialog = null;
   private TextView deviceStatusTextView = null;
+  private GoogleApiClient mGoogleApiClient = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -208,9 +224,11 @@ public class MainActivity extends Activity {
           }
 
           if (authStatus.equals("NOT_AUTHENTICATED")) {
-            loginButton.setEnabled(true);
+            silkLoginButton.setEnabled(true);
+            googleLoginButton.setEnabled(true);
           } else {
-            loginButton.setEnabled(false);
+            silkLoginButton.setEnabled(false);
+            googleLoginButton.setEnabled(false);
           }
 
           authStatusTextView.setText(authStatus);
@@ -491,6 +509,21 @@ public class MainActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     checkDrawOverlayPermission();
+
+    // Configure sign-in to request the user's ID, email address, and basic
+    // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+    String serverClientId = getString(R.string.server_client_id);
+    GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+      .requestIdToken(serverClientId)
+      .requestEmail()
+      .build();
+
+    // Build a GoogleApiClient with access to the Google Sign-In API and the
+    // options specified by gso.
+    mGoogleApiClient = new GoogleApiClient.Builder(this)
+      .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+      .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+      .build();
   }
 
   /**
@@ -511,13 +544,17 @@ public class MainActivity extends Activity {
     deviceListSpinner = (Spinner) findViewById(R.id.deviceList);
     deviceListSpinner.setOnItemSelectedListener(deviceSelectedListener);
 
-    loginButton = (Button) findViewById(R.id.loginButton);
-    loginButton.setEnabled(false);
-    loginButton.setOnClickListener(loginButtonListener);
+    silkLoginButton = (Button) findViewById(R.id.loginButton);
+    silkLoginButton.setEnabled(false);
+    silkLoginButton.setOnClickListener(silkLoginButtonListener);
 
     logoutButton = (Button) findViewById(R.id.logoutButton);
     logoutButton.setEnabled(false);
-    logoutButton.setOnClickListener(logoutButtonListener);
+    logoutButton.setOnClickListener(silkLogoutButtonListener);
+
+    googleLoginButton = (SignInButton) findViewById(R.id.googleLoginButton);
+    googleLoginButton.setOnClickListener(googleLoginButtonListener);
+    googleAuthStatusTextView = (TextView) findViewById(R.id.googleAuthStatusResultView);
 
     echoButton = (Button) findViewById(R.id.sendEchoMessageButton);
     echoButton.setOnClickListener(echoButtonListener);
@@ -631,6 +668,11 @@ public class MainActivity extends Activity {
         }
       }
     }
+    // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+    if (requestCode == RC_GET_TOKEN) {
+      GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+      handleSignInResult(result);
+    }
   }
 
   @Override
@@ -664,9 +706,9 @@ public class MainActivity extends Activity {
   }
 
   /**
-   * Handle Login button click
+   * Handle Silk Login button click
    */
-  private OnClickListener loginButtonListener = new View.OnClickListener() {
+  private OnClickListener silkLoginButtonListener = new View.OnClickListener() {
     public void onClick(View view) {
       hideKeyboard(view);
       Map<String, Object> message = new HashMap<>();
@@ -680,13 +722,38 @@ public class MainActivity extends Activity {
   };
 
   /**
-   * Handle Logout button click
+   * Handle Silk Logout button click
    */
-  private OnClickListener logoutButtonListener = new View.OnClickListener() {
+  private OnClickListener silkLogoutButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       Map<String, Object> message = new HashMap<>();
       message.put("type", "ACCOUNT_LOGOUT");
       mSilkService.postMessage(message);
+
+      // Sign out of google services
+      try {
+        Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
+          new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+              Log.d(TAG, "Google sign out result" + status);
+              onGoogleAuthStatusChanged("");
+            }
+          });
+      } catch(Exception e) {
+        Log.e(TAG, "Failed to sign out: " + e.toString());
+      }
+    }
+  };
+
+  /**
+   * Handle Google Login button click
+   */
+  private OnClickListener googleLoginButtonListener = new View.OnClickListener() {
+    public void onClick(View view) {
+      hideKeyboard(view);
+      Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+      startActivityForResult(signInIntent, RC_GET_TOKEN);
     }
   };
 
@@ -856,29 +923,79 @@ public class MainActivity extends Activity {
    * Display error messge dialog
    * @param errorMsg
    */
-  private void onError(String errorMsg) {
-    AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
-    alertDialog.setTitle("Error");
-    alertDialog.setMessage(errorMsg);
-    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-        new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int which) {
-            dialog.dismiss();
-          }
-        });
-    alertDialog.show();
+  private void onError(final String errorMsg) {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+        alertDialog.setTitle("Error");
+        alertDialog.setMessage(errorMsg);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+          new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.dismiss();
+            }
+          });
+        alertDialog.show();
+      }
+    });
   }
 
-  private void onSuccess(String msg) {
-    AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
-    alertDialog.setTitle("Success");
-    alertDialog.setMessage(msg);
-    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-      new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int which) {
-          dialog.dismiss();
-        }
-      });
-    alertDialog.show();
+  private void onSuccess(final String msg) {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+        alertDialog.setTitle("Success");
+        alertDialog.setMessage(msg);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+          new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.dismiss();
+            }
+          });
+        alertDialog.show();
+      }
+    });
+  }
+
+  /**
+   * Handle signin result from google login
+   * @param result
+   */
+  private void handleSignInResult(GoogleSignInResult result) {
+    Log.d(TAG, "handleSignInResult:" + result.isSuccess());
+    if (result.isSuccess()) {
+      // Signed in successfully
+      GoogleSignInAccount acct = result.getSignInAccount();
+      String idToken = acct.getIdToken();
+      onGoogleAuthStatusChanged("Logged in as: " +  acct.getDisplayName());
+      Log.d(TAG, "idToken:" + idToken);
+
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "ACCOUNT_LOGIN");
+      message.put("source", "google");
+      message.put("token", idToken);
+      mSilkService.postMessage(message);
+
+    } else {
+      // Signed out
+      onError("Failed to login to google account. " + result.getStatus().getStatusMessage());
+    }
+  }
+
+  /**
+   * Handle google auth status result
+   * @param authStatus
+   */
+  private void onGoogleAuthStatusChanged(final String authStatus) {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        googleAuthStatusTextView.setText(authStatus);
+      }
+    });
+  }
+
+  @Override
+  public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    Log.d(TAG, "onConnectionFailed:" + connectionResult);
   }
 }

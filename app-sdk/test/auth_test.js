@@ -79,7 +79,7 @@ suite('store', () => {
       serverUrl: serverContext.url,
     }));
 
-    store.dispatch(actions.auth.signIn(accountInfo));
+    store.dispatch(actions.auth.signInWithPassword(accountInfo));
     await whenAuthenticated(store);
   });
 });

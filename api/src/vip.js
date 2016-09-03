@@ -15,6 +15,8 @@ import type {
   CheckPasswordOutput,
   SignInInput,
   SignInOutput,
+  SignInWithTokenInput,
+  SignInWithTokenOutput,
 } from './gen/vip';
 
 export type RawPasswordInput = {
@@ -28,6 +30,8 @@ export type HashedPasswordInput = {
  passwordHash: string;
  userAgent: string;
 };
+
+export type { SignInWithTokenInput };
 
 const PBKDF2_ROUNDS = 64000; // (recommendation from 2009)
 
@@ -66,6 +70,8 @@ export default class Auth extends VIPBase {
     = this.checkPassword.bind(this);
   signIn: (payload: SignInInput) => Promise<SignInOutput>
     = this.signIn.bind(this);
+  signInWithToken: (payload: SignInWithTokenInput) => Promise<SignInWithTokenOutput>
+    = this.signInWithToken.bind(this);
 
   createAccountWithPassword(payload: RawPasswordInput): any {
     return genFromPassword(payload).then(this.createAccount);
@@ -79,4 +85,7 @@ export default class Auth extends VIPBase {
     return genFromPassword(payload).then(this.signIn);
   }
 
+  signInWithOAuth2(payload: SignInWithTokenInput): any {
+    return this.signInWithToken(payload);
+  }
 }

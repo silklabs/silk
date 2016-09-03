@@ -69,6 +69,7 @@ public class MainActivity extends FragmentActivity implements
   private AlertDialog wifiDialog = null;
   private TextView deviceStatusTextView = null;
   private GoogleApiClient mGoogleApiClient = null;
+  private Button authorizeButton = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -556,6 +557,10 @@ public class MainActivity extends FragmentActivity implements
     configureButton.setOnClickListener(configureButtonListener);
     configureButton.setEnabled(false);
 
+    authorizeButton = (Button) findViewById(R.id.authorizeButton);
+    authorizeButton.setOnClickListener(authorizeButtonListener);
+    authorizeButton.setEnabled(false);
+
     deviceStatusTextView = (TextView) findViewById(R.id.deviceStatusTextView);
 
     createWifiDialog();
@@ -799,6 +804,20 @@ public class MainActivity extends FragmentActivity implements
   };
 
   /**
+   * Handle Configure button click
+   */
+  private OnClickListener authorizeButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      // Attempt device authorization
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "DEVICE_BLE_CONNECT");
+      message.put("deviceId", device.deviceId);
+      mSilkService.postMessage(message);
+    }
+  };
+
+  /**
    * Hide keyboard when clicked outside of the EditText
    */
   private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {
@@ -854,6 +873,14 @@ public class MainActivity extends FragmentActivity implements
           configureButton.setText(getString(R.string.reconfigure));
           configureButton.setEnabled(true);
         }
+
+        if (device.rtcConnectionError != null &&
+          device.rtcConnectionError.equals("UNAUTHORIZED")) {
+          authorizeButton.setEnabled(true);
+        } else {
+          authorizeButton.setEnabled(false);
+        }
+
         deviceStatusTextView.setText(device.status());
       }
     });

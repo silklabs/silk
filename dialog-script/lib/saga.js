@@ -134,9 +134,12 @@ export function* saySoftwareVersion(
    * can write unit tests that run the generator one step at a time.
    */
   const silkVersion = require('silk-core-version');
+  let [timeString, dateString] = getDateTime(parseInt(silkVersion.buildtime));
+
   let version = (silkVersion.official ? 'Official ' : '') +
                 silkVersion.semver + ' on ' + silkVersion.branch +
-                ' with a sha1 of ' + encodeRate(silkVersion.sha.substr(0, 8), 'slow');
+                ' with a sha1 of ' + encodeRate(silkVersion.sha.substr(0, 8), 'slow') +
+                ` from ${timeString} on ${dateString}`;
   yield call(speak, version, 'idle');
 }
 

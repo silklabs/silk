@@ -26,11 +26,11 @@ const GAIN_MAX = 1.0;
  * @example
  * 'use strict';
  *
- * const Speaker = require('silk-speaker');
+ * const Speaker = require('silk-speaker').default;
  * const log = require('silk-alog');
  *
- * let speaker = new Speaker({ numChannels: 1,
- *                             sampleRate: 16000,
+ * let speaker = new Speaker({ numChannels: 1,    // Default is 2
+ *                             sampleRate: 16000, // Default is 44100
  *                             bytesPerSample: 2,
  *                             encoding: 'signed-integer'
  *                           });
@@ -50,8 +50,8 @@ export default class Speaker extends Writable {
   constructor(options: SpeakerOptions) {
     super(options); // Calls the stream.Writable() constructor
     this._options = {
-      numChannels: 1,
-      sampleRate: 16000,
+      numChannels: 2,
+      sampleRate: 44100,
       bytesPerSample: 2,
       encoding: 'signed-integer',
       ...options,

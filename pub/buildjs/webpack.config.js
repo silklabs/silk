@@ -64,6 +64,7 @@ const externals = [
   // TODO: auto generate these ...
   'bleno',
   'kissfft',
+  'lame',
   'mic',
   'noble',
   'node-hid',

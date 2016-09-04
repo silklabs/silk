@@ -1,0 +1,78 @@
+From 4ed4e64ed37790f435939829be0ae8c061362c1a Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 3 Sep 2016 20:28:54 -0700
+Subject: [PATCH] Gonkify
+
+---
+ Android.mk                 | 3 +++
+ binding.gyp                | 3 +++
+ deps/lame/config/android   | 1 +
+ deps/mpg123/config/android | 1 +
+ deps/mpg123/mpg123.gyp     | 1 +
+ lib/bindings.js            | 2 +-
+ 6 files changed, 10 insertions(+), 1 deletion(-)
+ create mode 100644 Android.mk
+ create mode 120000 deps/lame/config/android
+ create mode 120000 deps/mpg123/config/android
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..71c521b
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,3 @@
++LOCAL_PATH:= $(call my-dir)
++include $(CLEAR_VARS)
++include $(BUILD_NODE_MODULE)
+diff --git a/binding.gyp b/binding.gyp
+index be0d553..a4c2379 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -10,6 +10,9 @@
+       "include_dirs" : [
+         '<!(node -e "require(\'nan\')")'
+       ],
++      "libraries": [
++        '<!(echo $Android_mk__LIBRARIES)'
++      ],
+       'dependencies': [
+         'deps/lame/libmp3lame.gyp:mp3lame',
+         'deps/mpg123/mpg123.gyp:mpg123'
+diff --git a/deps/lame/config/android b/deps/lame/config/android
+new file mode 120000
+index 0000000..9c52cb3
+--- /dev/null
++++ b/deps/lame/config/android
+@@ -0,0 +1 @@
++linux
+\ No newline at end of file
+diff --git a/deps/mpg123/config/android b/deps/mpg123/config/android
+new file mode 120000
+index 0000000..9c52cb3
+--- /dev/null
++++ b/deps/mpg123/config/android
+@@ -0,0 +1 @@
++linux
+\ No newline at end of file
+diff --git a/deps/mpg123/mpg123.gyp b/deps/mpg123/mpg123.gyp
+index eaccebc..96cad7e 100644
+--- a/deps/mpg123/mpg123.gyp
++++ b/deps/mpg123/mpg123.gyp
+@@ -160,6 +160,7 @@
+           ['OS=="linux"', { 'mpg123_backend%': 'alsa' }],
+           ['OS=="freebsd"', { 'mpg123_backend%': 'alsa' }],
+           ['OS=="solaris"', { 'mpg123_backend%': 'sun' }],
++          ['OS=="android"', { 'mpg123_backend%': 'dummy' }],
+         ]
+       },
+       'include_dirs': [
+diff --git a/lib/bindings.js b/lib/bindings.js
+index 05b413d..4f89812 100644
+--- a/lib/bindings.js
++++ b/lib/bindings.js
+@@ -1 +1 @@
+-module.exports = require('bindings')('bindings');
++module.exports = require('../build/Release/bindings.node');
+-- 
+2.7.0
+

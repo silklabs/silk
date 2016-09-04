@@ -119,6 +119,9 @@ PRODUCT_PACKAGES += librecovery_test
 # external/{bleno,noble}/
 PRODUCT_PACKAGES += bleno noble
 
+# external/node-lame/
+PRODUCT_PACKAGES += lame
+
 # external/node-opencv/
 PRODUCT_PACKAGES += opencv
 

@@ -207,22 +207,6 @@ const builds = {
     events: ['nightly'],
     branches: ['master', 'next', 'release'],
   },
-  'bob-littlefinger-demo': {
-    title: '',
-    travis_yml: 'bob/travis.yml',
-    travis_config: {
-      os: ['linux'],
-      env: {
-        global: [
-          'BOB_BUILD_COMMAND=bob/littlefinger-demo.sh',
-          'BOB_BUILD_HOST=silksd.ddns.net',
-          'BOB_BUILD_HOST_PORT=888',
-        ],
-      },
-    },
-    events: ['nightly'],
-    branches: ['master', 'next', 'release'],
-  },
 
   'npm-dialog-test': runNpmTestForPackages([
     'dialog-engine',

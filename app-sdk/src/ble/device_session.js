@@ -165,6 +165,7 @@ export default class DeviceSession extends RobustEventEmitter {
   static STATE_REGISTERED = 6;
   static STATE_DISMISSED = 7;
   static STATE_RESTARTED = 8;
+  static STATE_UNAUTHORIZED = 9;
 
   static STATE_ERROR = 10;
 
@@ -218,8 +219,9 @@ export default class DeviceSession extends RobustEventEmitter {
 
     const socketSession = new SocketSession(
       socket,
-      accessToken.priv,
+      accessToken,
       registeredDevicesPublicKeys,
+      /* unpairedPublicKeys */ [],
       metrics
     );
     socketSession.addListener(`error`, this._onError);
@@ -285,7 +287,8 @@ export default class DeviceSession extends RobustEventEmitter {
   _emitConnect() {
     log.debug(`DeviceSession._emitConnect()`);
 
-    invariant(this._state === DeviceSession.STATE_REGISTER_REQUESTED ||
+    invariant(this._state === DeviceSession.STATE_UNAUTHORIZED ||
+              this._state === DeviceSession.STATE_REGISTER_REQUESTED ||
               this._state === DeviceSession.STATE_REGISTERED);
     invariant(!this._connectEmitted);
     this._connectEmitted = true;
@@ -379,16 +382,20 @@ export default class DeviceSession extends RobustEventEmitter {
         return;
       }
 
-      log.warn(`Not authorized to connect to registered device ` +
+      log.info(`Not authorized to connect to registered device ` +
                data.accountDeviceNumber);
+      this._state = DeviceSession.STATE_UNAUTHORIZED;
       this._isRegistered = true;
       this._accountDeviceNumber = data.accountDeviceNumber;
-      this._emitError(new Error(`Not authorized`));
+
+      this._emitConnect();
+      this.emit(`unauthorized`, data.accountDeviceNumber);
       return;
     }
 
     case `id`: {
-      if (state !== DeviceSession.STATE_UNKNOWN) {
+      if (state !== DeviceSession.STATE_UNKNOWN &&
+          state !== DeviceSession.STATE_UNAUTHORIZED) {
         const error =
           new Error(`Received '${data.name}' while in state ${state}`);
         this._emitError(error);
@@ -410,21 +417,17 @@ export default class DeviceSession extends RobustEventEmitter {
     }
 
     case `registered`: {
-      if (!this.authenticated) {
+      if (!this.paired) {
         const error =
-          new Error(`Received '${data.name}' on an unauthenticated stream`);
+          new Error(`Received '${data.name}' on an unpaired stream`);
         this._emitError(error);
         return;
       }
 
-      if (this._socketSession.authenticatedPublicKey !== data.deviceId) {
+      if (this._socketSession.publicKey !== data.deviceId) {
         const message = `Authentication key does not match device id`;
-        log.warn(message,
-                 this._socketSession.authenticatedPublicKey,
-                 data.deviceId);
-
-        const error = new Error(`Received '${data.name}' on an unauthenticated stream`);
-        this._emitError(error);
+        log.warn(message, this._socketSession.publicKey, data.deviceId);
+        this._emitError(new Error(message));
         return;
       }
 
@@ -438,8 +441,11 @@ export default class DeviceSession extends RobustEventEmitter {
       this._isRegistered = true;
       this._deviceId = data.deviceId;
       this._accountDeviceNumber = data.accountDeviceNumber;
+
       this._state = DeviceSession.STATE_REGISTERED;
-      this._emitConnect();
+      if (!this._connectEmitted) {
+        this._emitConnect();
+      }
       this._emitRegistered();
       return;
     }
@@ -534,13 +540,6 @@ export default class DeviceSession extends RobustEventEmitter {
     }
 
     case `register`: {
-      if (this.authenticated) {
-        const error =
-          new Error(`Received '${data.name}' on an authenticated stream`);
-        this._emitError(error);
-        return;
-      }
-
       if (state !== DeviceSession.STATE_ID_RECEIVED &&
           state !== DeviceSession.STATE_RESTARTED) {
         const error =
@@ -637,6 +636,7 @@ export default class DeviceSession extends RobustEventEmitter {
     log.info(`Passed proximity gate`);
 
     this._socketSession.rssiUpdatesEnabled = false;
+    this._socketSession.setPaired(this._deviceId);
     this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
 
     this._maybeEmitSecret();
@@ -648,6 +648,10 @@ export default class DeviceSession extends RobustEventEmitter {
 
   get authenticated(): boolean {
     return this._socketSession.authenticated;
+  }
+
+  get paired(): boolean {
+    return this._socketSession.paired;
   }
 
   get manufacturer(): string {
@@ -664,6 +668,10 @@ export default class DeviceSession extends RobustEventEmitter {
 
   get image(): ?Buffer {
     return this._image;
+  }
+
+  get isUnauthorized(): boolean {
+    return this._state === DeviceSession.STATE_UNAUTHORIZED;
   }
 
   get isRegistered(): boolean {
@@ -863,8 +871,16 @@ export default class DeviceSession extends RobustEventEmitter {
 
   listWifi() {
     log.debug(`DeviceSession.listWifi()`);
-    invariant(this._state === DeviceSession.STATE_REGISTERED);
-    invariant(this.authenticated);
+
+    if (!this.paired) {
+      log.warn(`Ignoring listWifi() on an unpaired stream`);
+      return;
+    }
+
+    if (this._state !== DeviceSession.STATE_REGISTERED) {
+      log.warn(`Ignoring getWifiInfo() in state ${this._state}`);
+      return;
+    }
 
     this._socketSession.write({
       name: `wifiScan`,
@@ -873,8 +889,13 @@ export default class DeviceSession extends RobustEventEmitter {
 
   selectWifi(config: WifiConfiguration) {
     log.debug(`DeviceSession.selectWifi('${config.accessPoint}')`);
+
+    if (!this.paired) {
+      log.warn(`Ignoring selectWifi() on an unpaired stream`);
+      return;
+    }
+
     invariant(this._state === DeviceSession.STATE_REGISTERED);
-    invariant(this.authenticated);
 
     this._socketSession.write({
       name: `wifiSelect`,
@@ -885,13 +906,14 @@ export default class DeviceSession extends RobustEventEmitter {
 
   getWifiInfo() {
     log.debug(`DeviceSession.getWifiInfo()`);
-    if (this._state !== DeviceSession.STATE_REGISTERED) {
-      log.warn(`Ignoring getWifiInfo() in state ${this._state}`);
+
+    if (!this.paired) {
+      log.warn(`Ignoring getWifiInfo() on an unpaired stream`);
       return;
     }
 
-    if (!this.authenticated) {
-      log.warn(`Ignoring getWifiInfo() on unauthenticated stream`);
+    if (this._state !== DeviceSession.STATE_REGISTERED) {
+      log.warn(`Ignoring getWifiInfo() in state ${this._state}`);
       return;
     }
 

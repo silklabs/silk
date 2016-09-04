@@ -254,13 +254,32 @@ function DEVICE_BLE_CONNECTED(
     };
   }
 
-  const {accountDeviceNumber, deviceId} = session;
-  invariant(accountDeviceNumber);
-  invariant(deviceId);
-  if (!state.registered || !state.registered.has(deviceId)) {
+  let {registered} = state;
+  if (!registered) {
     return state;
   }
-  const registered = new Map(state.registered);
+
+  const {accountDeviceNumber} = session;
+  invariant(accountDeviceNumber);
+
+  let {deviceId} = session;
+  if (!deviceId) {
+    // No deviceId, so it must be an unauthorized session. Try to find
+    // out which device it belongs to.
+    invariant(session.isUnauthorized);
+    for (let device of registered.values()) {
+      if (device.accountDeviceNumber === accountDeviceNumber) {
+        deviceId = device.deviceId;
+        break;
+      }
+    }
+  }
+
+  if (!deviceId || !registered.has(deviceId)) {
+    return state;
+  }
+
+  registered = new Map(registered);
   const device = registered.get(deviceId);
   invariant(device);
   invariant(!device.ble.session);
@@ -369,11 +388,13 @@ function DEVICE_CONFIG_ACCEPT(
 
 function DEVICE_CONFIG_ABORT(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_CONFIG_ABORT', DeviceSession>
+  action: SimpleAction<'DEVICE_CONFIG_ABORT', ?DeviceSession>
 ): DevicesState {
   const session = action.payload;
   invariant(state.configuring);
-  invariant(state.configuring.socketId === session.socketId);
+  if (session) {
+    invariant(state.configuring.socketId === session.socketId);
+  }
   return {
     ...state,
     configuring: null,

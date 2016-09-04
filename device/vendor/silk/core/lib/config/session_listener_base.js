@@ -23,6 +23,8 @@ export type ValidMessageData = {
   [key: string]: any;
 }
 
+export const RSSI_THRESHOLD = -60;
+
 const log = createLog(`config-session-listener-base`);
 
 const DEVICE_TYPE =
@@ -49,6 +51,10 @@ export default class SessionListenerBase {
     socketSession.addListener(`data`, (data) => this._onData(data));
     socketSession.addListener(`error`, (error) => this._onError(error));
     socketSession.addListener(`rssiUpdate`, (rssi) => this._onRssiUpdate(rssi));
+  }
+
+  _sendId(): void {
+    log.debug(`SessionListenerBase._sendId()`);
 
     this._send({
       name: `id`,
@@ -160,6 +166,7 @@ export default class SessionListenerBase {
     this._disconnecting = true;
 
     if (this._socketSession) {
+      this._socketSession.rssiUpdatesEnabled = false;
       this._socketSession.end();
       this._socketSession = null;
     }

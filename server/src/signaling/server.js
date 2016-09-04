@@ -352,7 +352,7 @@ async function main (config: any): any {
         return await main(config);
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.log(`Failed to restart: ${err.stack}`);
+        log.error(`Failed to restart`, err);
         throw err;
       }
     },

@@ -122,6 +122,14 @@
             android:layout_below="@+id/deviceList"
             android:layout_toRightOf="@+id/configureButton" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/authorize"
+            android:id="@+id/authorizeButton"
+            android:layout_below="@+id/deviceList"
+            android:layout_toRightOf="@+id/sendEchoMessageButton" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

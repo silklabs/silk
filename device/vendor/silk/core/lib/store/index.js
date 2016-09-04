@@ -24,7 +24,7 @@ export type {State};
 
 const SAVE_DELAY_MS = 200;
 
-const middleware = immutableStateInvariantMiddleware();
+const additionalMiddleware = immutableStateInvariantMiddleware();
 
 let loaded = false;
 let store: ?Store = null;
@@ -44,7 +44,7 @@ export default function getStore(): Store {
   }
 
   if (!store) {
-    store = createStore(reducers, undefined, middleware);
+    store = createStore(reducers, {additionalMiddleware});
 
     // Watch for changes to save back to disk.
     store.subscribeToPath(`persist`, (newPersist, oldPersist) => {

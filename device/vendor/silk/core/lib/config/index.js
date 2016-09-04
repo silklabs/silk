@@ -130,7 +130,6 @@ function getConfig() {
   return getStore().getState().persist.config;
 }
 
-
 /**
  *
  */
@@ -138,7 +137,7 @@ export class DeviceConfig extends EventEmitter {
 
   _initialized: boolean = false;
   _initializing: boolean = false;
-  _deviceId: string = ``;
+  _deviceId: ?string = null;
   _btle: ?BluetoothLE = null;
   _wifiAbortConnection: ?((error: Error) => void) = null;
   _unconfigurePromise: ?Promise<void> = null;
@@ -151,6 +150,22 @@ export class DeviceConfig extends EventEmitter {
   _lastWifiScanResults: ?Array<ScanResult> = null;
   _lastUpdateEvent: ?UpdateStatusEvent = null;
   _permissionManager: ?PermissionManagerConnection = null;
+
+  _setBtlePublicKeys(): void {
+    const btle = this._btle;
+    invariant(btle);
+
+    const permissionManager = this._permissionManager;
+    invariant(permissionManager);
+
+    const paired = permissionManager.match('ble');
+    const pairedSet = new Set(paired);
+
+    const unpaired =
+      permissionManager.match('ble-temp').filter((key) => !pairedSet.has(key));
+
+    btle.setPublicKeys(paired, unpaired);
+  }
 
   _beginConfigure(sessionListener: ConfigSessionListener): void {
     log.debug(`DeviceConfig._beginConfigure()`);
@@ -311,10 +326,7 @@ export class DeviceConfig extends EventEmitter {
 
     await btle.changeMode('off');
 
-    const permissionManager = this._permissionManager;
-    invariant(permissionManager);
-
-    btle.publicKeys = permissionManager.match(`ble`);
+    this._setBtlePublicKeys();
     btle.advertisingInfo = this._getAdvertisingInfo();
 
     this._server.addListener(`connect`, this._onConfiguredServerConnect);
@@ -331,15 +343,6 @@ export class DeviceConfig extends EventEmitter {
     invariant(!this._serverConnected);
 
     this._serverConnected = true;
-
-    if (this._socketSessionListeners.length) {
-      let existingListeners = this._socketSessionListeners;
-      this._socketSessionListeners = [ ];
-
-      for (let listener of existingListeners) {
-        listener.disconnect();
-      }
-    }
 
     invariant(this._btle);
     await this._btle.changeMode('on');
@@ -572,16 +575,14 @@ export class DeviceConfig extends EventEmitter {
     this._initializing = true;
     log.info('Initializing config service');
 
-    const permissionManager = getPermissionManager();
-    permissionManager.on(`change`, () => {
+    this._permissionManager = getPermissionManager();
+    this._permissionManager.on(`change`, () => {
       const btle = this._btle;
       if (!btle) {
         return;
       }
-      btle.publicKeys = permissionManager.match(`ble`);
+      this._setBtlePublicKeys();
     });
-
-    this._permissionManager = permissionManager;
 
     if (wifi.isOnline()) {
       this._onWifiStateChange(`online`);
@@ -623,7 +624,7 @@ export class DeviceConfig extends EventEmitter {
 
     if (config) {
       log.info(`Already configured`, config);
-      btle.publicKeys = permissionManager.match(`ble`);
+      this._setBtlePublicKeys();
 
       this._setApiServerUrl(config.serverUrl);
 
@@ -703,14 +704,11 @@ export class DeviceConfig extends EventEmitter {
     log.debug(`Turning off bluetooth`);
     await btle.changeMode('off');
 
-    const permissionManager = this._permissionManager;
-    invariant(permissionManager);
-
     const advertisingInfo = this._getAdvertisingInfo();
     invariant(advertisingInfo === CONFIG_ADVERTISING_INFO);
 
     btle.advertisingInfo = advertisingInfo;
-    btle.publicKeys = permissionManager.match(`ble`);
+    this._setBtlePublicKeys();
 
     log.debug(`Turning bluetooth back on`);
     await btle.changeMode('beacon');
@@ -737,6 +735,26 @@ export class DeviceConfig extends EventEmitter {
     await Promise.all([
       this._unconfigureBTLE(),
       this._unconfigureNetwork(),
+    ]);
+  }
+
+  _addPairedKey(publicKey: string) {
+    log.debug(`DeviceConfig._addPairedKey(${publicKey})`);
+
+    const permissionManager = this._permissionManager;
+    invariant(permissionManager);
+
+    permissionManager.add(publicKey, [
+      {
+        type: 'ble',
+        expires: null,
+        actor: null,
+      },
+      {
+        type: 'rtc',
+        expires: null,
+        actor: null,
+      },
     ]);
   }
 

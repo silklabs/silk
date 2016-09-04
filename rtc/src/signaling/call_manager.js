@@ -145,8 +145,8 @@ export default class CallManager extends Manager {
     const systemTransport = new TransportEmitter(
       new JSONDuplexStream(new DataChannelDuplex(systemChannel))
     );
-    await this._negotiateOffer(pc, transport);
-    await pendingDoneAck;
+
+    await Promise.all([this._negotiateOffer(pc, transport), pendingDoneAck]);
     return systemTransport;
   }
 }

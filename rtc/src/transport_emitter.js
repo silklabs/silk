@@ -32,7 +32,11 @@ export default class TransportEmitter extends EventEmitter {
 
   _onData: (payload: Array<mixed>) => void = (payload: Array<mixed>) => {
     const name = payload[0];
-    const data = payload.slice(1);
+    let data = payload.slice(1);
+
+    if (name === 'error' && data.length === 1 && typeof data[0] === 'string') {
+      data[0] = new Error(data[0]);
+    }
 
     // If we are currently holding this just buffer it and move on.
     const holding = this._heldEvents.get(name);
@@ -55,7 +59,7 @@ export default class TransportEmitter extends EventEmitter {
     }
 
     // Avoid having stream errors become uncaught exceptions.
-    this.on('error', (err) => log.debug('Stream error:', err));
+    this.on('error', (err) => log.warn('Stream error:', err));
   }
 
   releaseIncomingEvent(name: string): number {

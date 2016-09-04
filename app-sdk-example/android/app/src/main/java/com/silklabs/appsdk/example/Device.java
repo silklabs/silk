@@ -19,6 +19,8 @@ public class Device {
   public String rtcConnectionStatus;
   public String rtcConnectionError;
   public String updateState;
+  public boolean paired = false;
+  public boolean isPairing = false;
 
   @Override
   public String toString() {
@@ -34,7 +36,7 @@ public class Device {
     builder.append("deviceId: ").append(deviceId).append("\n");
     builder.append("accountDeviceNumber: ").append(accountDeviceNumber).append("\n");
     builder.append("deviceConfigId: ").append(deviceConfigId).append("\n");
-    builder.append("deviceConfigStatus: ").append(deviceConfigStatus).append("\n");
+    builder.append("deviceConfigStatus: ").append(deviceConfigStatus).append("- paired: ").append(paired).append("\n");
     builder.append("wifiConnectionStatus: ").append(wifiConnectionStatus).append("\n");
     builder.append("wifiSSID: ").append(wifiSSID).append("\n");
     builder.append("wifiSignalStrength: ").append(wifiSignalStrength).append("\n");

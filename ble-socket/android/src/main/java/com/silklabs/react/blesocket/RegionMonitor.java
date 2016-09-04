@@ -93,10 +93,8 @@ public class RegionMonitor implements BootstrapNotifier, RangeNotifier {
 
     if (BuildConfig.DEBUG || true /* XXX REMOVE BEFORE RELEASE */) {
       LogManager.setLogger(Loggers.verboseLogger());
-      LogManager.setVerboseLoggingEnabled(true);
     } else {
       LogManager.setLogger(Loggers.warningLogger());
-      LogManager.setVerboseLoggingEnabled(false);
     }
 
     final Context context = reactContext.getApplicationContext();

@@ -25,6 +25,10 @@ import type {UnregisterRegisteredDeviceResult} from '../store/device_actions';
 export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,
   DEVICES: DeviceListMessage,
+  // For unconfigured devices and devices that we already paired with
+  // we send these messages when the device's connection status
+  // changes and/or the WiFi info is requested. For devices we haven't
+  // paired with yet, we send this message right away after connecting.
   CONNECTIONS: Array<DeviceConnectionDetailsMessage>,
   UPDATES: Array<DeviceUpdateStatusMessage>,
 };
@@ -227,12 +231,61 @@ function DEVICE_BLE_CONNECTED(
   action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
 ): MessagesState {
   const session = action.payload;
-  const connections = state.CONNECTIONS;
+  let connections = state.CONNECTIONS;
   let {devices} = state.DEVICES;
 
-  if (session.isRegistered) {
-    const {deviceId} = session;
+  const connectionTemplate: DeviceConnectionDetailsMessage = {
+    type: 'DEVICE_CONNECTION_DETAILS',
+    deviceId: null,
+    accountDeviceNumber: null,
+    paired: false,
+    wifiStatus: null,
+    wifiSSID: null,
+    wifiLevel: null,
+    wifiError: null,
+    serverStatus: null,
+    serverError: null,
+  };
+
+  if (session.isUnauthorized) {
+    invariant(session.isRegistered);
+
+    const {accountDeviceNumber} = session;
+    invariant(accountDeviceNumber);
+
+    const index = devices.findIndex(
+      (device) => device.accountDeviceNumber === accountDeviceNumber
+    );
+    if (index === -1) {
+      return state;
+    }
+
+    const oldDevice = devices[index];
+
+    const {deviceId} = oldDevice;
     invariant(deviceId);
+
+    invariant(-1 === connections.findIndex(
+      (connection) => connection.deviceId === deviceId
+    ));
+
+    devices = devices.slice();
+    devices[index] = {
+      ...oldDevice,
+      deviceVersion: session.version,
+      bleConnectionStatus: 'CONNECTED',
+      bleConnectionError: null,
+    };
+
+    connections = connections.concat({
+      ...connectionTemplate,
+      deviceId,
+      accountDeviceNumber,
+    });
+  } else if (session.isRegistered) {
+    const {deviceId, accountDeviceNumber} = session;
+    invariant(deviceId);
+    invariant(accountDeviceNumber);
 
     const index = devices.findIndex((device) => device.deviceId === deviceId);
     if (index === -1) {
@@ -250,6 +303,13 @@ function DEVICE_BLE_CONNECTED(
       bleConnectionStatus: 'CONNECTED',
       bleConnectionError: null,
     };
+
+    connections = connections.concat({
+      ...connectionTemplate,
+      deviceId,
+      accountDeviceNumber,
+      paired: true,
+    });
   } else {
     const unconfiguredDevice = {
       type: 'DEVICE_STATUS',
@@ -273,6 +333,7 @@ function DEVICE_BLE_CONNECTED(
       ...state.DEVICES,
       devices,
     },
+    CONNECTIONS: connections,
   };
 }
 
@@ -446,8 +507,7 @@ function DEVICE_CONFIG_WIFISCANRESULTS(
   // We can't check |isRegistered| here because if this session was just
   // just successfully configured then |isRegistered| will now be true and we
   // want to keep sending DEVICE_CONFIG_WIFI_NETWORKS messages.
-  if (session.authenticated) {
-    invariant(session.deviceId);
+  if (session.deviceId) {
     emitter.postMessage({
       type: 'DEVICE_WIFI_NETWORKS',
       deviceId: session.deviceId,
@@ -470,13 +530,17 @@ function DEVICE_CONFIG_CONNECTIONSTATUS(
   action: SimpleAction<'DEVICE_CONFIG_CONNECTIONSTATUS' | 'DEVICE_CONFIG_WIFIINFO', DeviceSession>
 ): MessagesState {
   const session = action.payload;
-  invariant(session.deviceId);
+  invariant(session);
+  const {deviceId} = session;
+  invariant(deviceId);
 
   let connections = state.CONNECTIONS;
 
   let connection: DeviceConnectionDetailsMessage = {
     type: 'DEVICE_CONNECTION_DETAILS',
-    deviceId: session.deviceId,
+    deviceId,
+    accountDeviceNumber: null,
+    paired: false,
     wifiStatus: 'NOT_CONNECTED',
     wifiSSID: null,
     wifiLevel: null,
@@ -486,7 +550,7 @@ function DEVICE_CONFIG_CONNECTIONSTATUS(
   };
 
   let index = connections.findIndex(
-    (connection) => connection.deviceId === session.deviceId
+    (connection) => connection.deviceId === deviceId
   );
   if (index === -1) {
     connections = connections.concat(connection);
@@ -584,27 +648,45 @@ function DEVICE_CONFIG_REGISTERED(
 ): MessagesState {
   const session = action.payload;
   let {devices} = state.DEVICES;
-  const index = devices.findIndex((device) => device.deviceConfigId === session.socketId);
-  if (index === -1) {
-    return state;
-  }
+  let connections = state.CONNECTIONS;
 
   const {accountDeviceNumber} = session;
   invariant(accountDeviceNumber);
 
-  // Update the device's configuration status now that's it's registered.
-  devices = devices.slice();
-  devices[index] = {
-    ...devices[index],
-    deviceConfigStatus: 'CONFIGURED',
-    accountDeviceNumber,
-  };
+  // Session is for a device that's being configured.
+  const devicesIndex = devices.findIndex((device) => device.deviceConfigId === session.socketId);
+  if (devicesIndex !== -1) {
+    const device = devices[devicesIndex];
+    invariant(device.deviceId === session.deviceId);
+
+    devices = devices.slice();
+    devices[devicesIndex] = {
+      ...device,
+      deviceConfigStatus: 'CONFIGURED',
+      accountDeviceNumber,
+    };
+  }
+
+  // Session is for a device that was unauthorized or unconfigured
+  // previously but now is no longer.
+  const connectionsIndex = connections.findIndex((connection) => connection.deviceId === session.deviceId);
+  if (connectionsIndex !== -1) {
+    const connection = connections[connectionsIndex];
+    connections = connections.slice();
+    connections[connectionsIndex] = {
+      ...connection,
+      paired: true,
+      accountDeviceNumber,
+    };
+  }
+
   return {
     ...state,
     DEVICES: {
       ...state.DEVICES,
       devices,
     },
+    CONNECTIONS: connections,
   };
 }
 

@@ -36,6 +36,8 @@ export class PermissionManager extends EventEmitter {
     invariant(store);
 
     store.subscribeToPath(`persist.permissions`, this._onPermissionsChanged);
+
+    // TODO: Set a real timer based on the next expiring entry.
     setInterval(this._expirePermissions, EXPIRE_INTERVAL_MS);
 
     this._store = store;
@@ -136,7 +138,7 @@ export class PermissionManager extends EventEmitter {
 
     const permission = permissionMap.get(permissionType);
     if (permission) {
-      if (permission.expires && permission.expires > Date.now()) {
+      if (permission.expires && permission.expires <= Date.now()) {
         this._removeSoon(publicKey, permissionType);
       } else {
         match = true;
@@ -158,7 +160,7 @@ export class PermissionManager extends EventEmitter {
 
       const permission = permissionMap.get(permissionType);
       if (permission) {
-        if (permission.expires && permission.expires > now) {
+        if (permission.expires && permission.expires <= now) {
           this._removeSoon(publicKey, permissionType);
         } else {
           match = true;

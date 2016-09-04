@@ -26,6 +26,7 @@ import validateMessage from './validate_process_message';
 
 import type {ChildProcess} from 'child_process';
 import type {Server, Socket} from 'net';
+import type {AccessToken} from 'silk-api';
 import type {Deferred} from 'silk-async-utils';
 
 export type BluetoothMode = 'off' | 'on' | 'beacon';
@@ -70,12 +71,13 @@ export class BluetoothLE extends EventEmitter {
   MODE_ON: string = BluetoothLE.MODE_ON;
   MODE_BEACON: string = BluetoothLE.MODE_BEACON;
 
-  _privateKey: string = ``;
+  _accessToken: AccessToken;
   _child: ?ChildProcess = null;
   _server: ?Server = null;
 
   _mode: BluetoothMode = BluetoothLE.MODE_OFF;
-  _publicKeys: Array<string> = [];
+  _pairedPublicKeys: Array<string> = [];
+  _unpairedPublicKeys: Array<string> = [];
   _advertisingInfo: ?AdvertisingInfo = null;
 
   _childProcessDeferred: Deferred<void> = createDeferred();
@@ -93,27 +95,28 @@ export class BluetoothLE extends EventEmitter {
     log.debug(`constructor`);
 
     super();
+
+    this._accessToken = getDeviceId();
   }
 
   get mode(): BluetoothMode {
     return this._mode;
   }
 
-  get publicKeys(): Array<string> {
-    return this._publicKeys.slice();
-  }
-
-  set publicKeys(value: Array<string>) {
-    invariant(Array.isArray(value));
+  setPublicKeys(paired: Array<string>, unpaired: Array<string>) {
+    invariant(Array.isArray(paired));
+    invariant(Array.isArray(unpaired));
 
     if (BT_HW_ENABLED) {
       this._sendMessage({
         name: `publicKeys`,
-        publicKeys: value,
+        paired,
+        unpaired,
       });
     }
 
-    this._publicKeys = value;
+    this._pairedPublicKeys = paired;
+    this._unpairedPublicKeys = unpaired;
   }
 
   get advertisingInfo(): AdvertisingInfo {
@@ -248,12 +251,6 @@ export class BluetoothLE extends EventEmitter {
 
   async _startAll(): Promise<void> {
     log.debug(`_startAll`);
-
-    const deviceId = getDeviceId();
-    invariant(deviceId.priv);
-
-    this._privateKey = deviceId.priv;
-    invariant(this._privateKey);
 
     if (!BT_HW_ENABLED) {
       log.warn(`Bluetooth hardware unavailable`);
@@ -437,10 +434,12 @@ export class BluetoothLE extends EventEmitter {
 
     const message: Object = {
       name: `initialize`,
-      privateKey: this._privateKey,
+      publicKey: this._accessToken.pub,
+      privateKey: this._accessToken.priv,
       serverPath: SOCKET_PATH,
       mode: this._mode,
-      publicKeys: this._publicKeys,
+      pairedPublicKeys: this._pairedPublicKeys,
+      unpairedPublicKeys: this._unpairedPublicKeys,
       manufacturerCode: BT_MANUFACTURER_CODE,
       deviceType: BT_DEVICE_TYPE,
       beaconPower: BT_BEACON_POWER,

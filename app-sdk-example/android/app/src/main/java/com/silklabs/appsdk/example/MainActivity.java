@@ -69,6 +69,7 @@ public class MainActivity extends FragmentActivity implements
   private AlertDialog wifiDialog = null;
   private TextView deviceStatusTextView = null;
   private GoogleApiClient mGoogleApiClient = null;
+  private Button authorizeButton = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -343,6 +344,9 @@ public class MainActivity extends FragmentActivity implements
             device.bleConnectionError = (String) message.get("bleConnectionError");
             device.rtcConnectionStatus = (String) message.get("rtcConnectionStatus");
             device.rtcConnectionError = (String) message.get("rtcConnectionError");
+            if (device.rtcConnectionStatus.equals("CONNECTED")) {
+              device.paired = true;
+            }
             if (device.deviceConfigStatus.equals("CONFIGURED")) {
               device.accountDeviceNumber =
                 ((Double) message.get("accountDeviceNumber")).intValue();
@@ -357,19 +361,24 @@ public class MainActivity extends FragmentActivity implements
             if (device == currentDevice) {
               updateUI(device);
 
-              if (currentDevice.deviceConfigStatus.equals("CONFIGURED") &&
-                  currentDevice.bleConnectionStatus.equals("CONNECTED")) {
-                if (wifiDialog.isShowing()) {
+              if (currentDevice.bleConnectionStatus.equals("CONNECTED")) {
+                if (currentDevice.deviceConfigStatus.equals("CONFIGURED")) {
+                  if (wifiDialog.isShowing()) {
+                    Map<String, Object> message = new HashMap<>();
+                    message.put("type", "DEVICE_WIFI_LIST");
+                    message.put("deviceId", currentDevice.deviceId);
+                    mSilkService.postMessage(message);
+                  }
+
                   Map<String, Object> message = new HashMap<>();
-                  message.put("type", "DEVICE_WIFI_LIST");
+                  message.put("type", "DEVICE_WIFI_GETINFO");
                   message.put("deviceId", currentDevice.deviceId);
                   mSilkService.postMessage(message);
+                } else if (wifiDialog.isShowing() && device.deviceId != null) {
+                  final Button button =
+                    wifiDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                  button.setEnabled(device != null && device.deviceId != null);
                 }
-
-                Map<String, Object> message = new HashMap<>();
-                message.put("type", "DEVICE_WIFI_GETINFO");
-                message.put("deviceId", currentDevice.deviceId);
-                mSilkService.postMessage(message);
               }
             }
             break;
@@ -382,6 +391,15 @@ public class MainActivity extends FragmentActivity implements
       runOnUiThread(new Runnable() {
         public void run() {
           final String deviceId = (String) message.get("deviceId");
+          Integer accountDeviceNumber = null;
+          if (message.get("accountDeviceNumber") != null) {
+            accountDeviceNumber =
+              ((Double) message.get("accountDeviceNumber")).intValue();
+          }
+
+          if (deviceId == null && accountDeviceNumber == null) {
+            return;
+          }
 
           Device currentDevice = (Device) deviceListSpinner.getSelectedItem();
 
@@ -390,9 +408,19 @@ public class MainActivity extends FragmentActivity implements
           for (int index = 0; index < count; index++) {
             Device device = (Device) adapter.getItem(index);
 
-            if (!deviceId.equals(device.deviceId)) {
+            if ((deviceId != null &&
+                  !deviceId.equals(device.deviceId)) ||
+                (accountDeviceNumber != null &&
+                  !accountDeviceNumber.equals((device.accountDeviceNumber)))) {
               continue;
             }
+
+            boolean nowPaired = (Boolean) message.get("paired");
+            if (device.isPairing && !device.paired && nowPaired) {
+              onSuccess("Successfully authorized (" + deviceId.substring(0, 5) + "...)");
+              device.isPairing = false;
+            }
+            device.paired = nowPaired;
 
             device.wifiConnectionStatus = (String) message.get("wifiStatus");
             device.wifiSSID = (String) message.get("wifiSSID");
@@ -555,6 +583,10 @@ public class MainActivity extends FragmentActivity implements
     configureButton = (Button) findViewById(R.id.configureButton);
     configureButton.setOnClickListener(configureButtonListener);
     configureButton.setEnabled(false);
+
+    authorizeButton = (Button) findViewById(R.id.authorizeButton);
+    authorizeButton.setOnClickListener(authorizeButtonListener);
+    authorizeButton.setEnabled(false);
 
     deviceStatusTextView = (TextView) findViewById(R.id.deviceStatusTextView);
 
@@ -799,6 +831,21 @@ public class MainActivity extends FragmentActivity implements
   };
 
   /**
+   * Handle Configure button click
+   */
+  private OnClickListener authorizeButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      // Attempt device authorization
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      device.isPairing = true;
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "DEVICE_BLE_CONNECT");
+      message.put("deviceId", device.deviceId);
+      mSilkService.postMessage(message);
+    }
+  };
+
+  /**
    * Hide keyboard when clicked outside of the EditText
    */
   private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {
@@ -854,6 +901,14 @@ public class MainActivity extends FragmentActivity implements
           configureButton.setText(getString(R.string.reconfigure));
           configureButton.setEnabled(true);
         }
+
+        if (device.rtcConnectionError != null &&
+          device.rtcConnectionError.equals("UNAUTHORIZED")) {
+          authorizeButton.setEnabled(true);
+        } else {
+          authorizeButton.setEnabled(false);
+        }
+
         deviceStatusTextView.setText(device.status());
       }
     });

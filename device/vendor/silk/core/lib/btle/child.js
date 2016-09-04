@@ -37,6 +37,7 @@ import bleno from 'bleno';
 import invariant from 'assert';
 import * as net from 'net';
 import noble from 'noble';
+import {AccessToken} from 'silk-api';
 import {createDeferred} from 'silk-async-utils';
 import createBledroidConnection from 'silk-bledroid';
 import {MessagePackDuplexStream, SocketDuplexStream} from 'silk-streams';
@@ -70,10 +71,11 @@ const MANUFACTURER_DATA_VERSION = 1;
 class BluetoothLEChild {
 
   // State that comes from the parent process.
-  _privateKey: string = ``;
+  _accessToken: ?AccessToken = null;
   _serverPath: string = ``;
   _mode: BluetoothMode = BluetoothLE.MODE_OFF;
-  _publicKeys: Array<string> = [];
+  _pairedPublicKeys: Array<string> = [];
+  _unpairedPublicKeys: Array<string> = [];
   _manufacturerCode: number = 0;
   _deviceType: number = 0;
   _beaconPower: number = -100;
@@ -193,7 +195,7 @@ class BluetoothLEChild {
     }
 
     case `publicKeys`: {
-      this._onPublicKeys(message.publicKeys);
+      this._onPublicKeys(message.paired, message.unpaired);
       break;
     }
 
@@ -225,13 +227,14 @@ class BluetoothLEChild {
 
     invariant(this._mode === BluetoothLE.MODE_OFF);
 
-    this._privateKey = message.privateKey;
+    this._accessToken = new AccessToken(message.publicKey, message.privateKey);
     this._serverPath = message.serverPath;
+    this._pairedPublicKeys = message.pairedPublicKeys;
+    this._unpairedPublicKeys = message.unpairedPublicKeys;
     this._manufacturerCode = message.manufacturerCode;
     this._deviceType = message.deviceType;
     this._beaconPower = message.beaconPower;
 
-    this._onPublicKeys(message.publicKeys);
     this._onAdvertisingInfo(message.advertisingInfo || null);
 
     this._desiredMode = message.mode;
@@ -246,10 +249,11 @@ class BluetoothLEChild {
     });
   }
 
-  _onPublicKeys(publicKeys: Array<string>): void {
-    log.debug(`_onPublicKeys`, publicKeys);
+  _onPublicKeys(paired: Array<string>, unpaired: Array<string>): void {
+    log.debug(`_onPublicKeys`, paired, unpaired);
 
-    this._publicKeys = publicKeys;
+    this._pairedPublicKeys = paired;
+    this._unpairedPublicKeys = unpaired;
   }
 
   _onAdvertisingInfo(advertisingInfo: ?AdvertisingInfo): void {
@@ -763,8 +767,9 @@ class BluetoothLEChild {
     const session = new ChildSocketSession(
       stream,
       peripheral,
-      this._privateKey,
-      this._publicKeys,
+      this._accessToken,
+      this._pairedPublicKeys,
+      this._unpairedPublicKeys,
       accountDeviceNumber,
     );
     const socket = net.connect(this._serverPath);
@@ -878,14 +883,14 @@ class BluetoothLEChild {
     event: string,
     args: Array<any>,
   ): void {
-    const {id, socket} = sessionInfo;
+    const {id, session, socket} = sessionInfo;
 
     switch (event) {
     case `error`: {
       const [error] = args;
       log.error(`Session error`, error);
       socket.writeInternal(createInternalMessage({
-        name: `error`,
+        name: event,
         message: error.message,
         stack: error.stack,
       }));
@@ -893,20 +898,41 @@ class BluetoothLEChild {
       break;
     }
 
-    case `authenticated`: {
-      const [publicKey] = args;
-      invariant(publicKey);
+    case `status`: {
+      const [status] = args;
+      const {publicKey} = session;
+      invariant(status !== 'unknown');
       socket.writeInternal(createInternalMessage({
-        name: `authenticated`,
-        authenticatedPublicKey: publicKey,
+        name: event,
+        status,
+        publicKey,
       }));
       break;
     }
 
     case `unauthenticated`: {
       socket.writeInternal(createInternalMessage({
-        name: `authenticated`,
-        authenticatedPublicKey: ``,
+        name: event,
+      }));
+      break;
+    }
+
+    case `authenticated`: {
+      const {publicKey} = session;
+      invariant(publicKey);
+      socket.writeInternal(createInternalMessage({
+        name: event,
+        publicKey,
+      }));
+      break;
+    }
+
+    case `paired`: {
+      const {publicKey} = session;
+      invariant(publicKey);
+      socket.writeInternal(createInternalMessage({
+        name: event,
+        publicKey,
       }));
       break;
     }
@@ -931,11 +957,13 @@ class BluetoothLEChild {
     log.debug(`_onSocketInternalMessage`, id, message);
 
     switch (message.name) {
-    case `allowUnauthenticated`: {
-      if (!message.allow) {
-        session.sendAuthFailure();
-      }
-      session.allowUnauthenticated(message.allow);
+    case `allow`: {
+      session.allow(message.allowed);
+      break;
+    }
+
+    case `setPaired`: {
+      session.setPaired(message.publicKey);
       break;
     }
 

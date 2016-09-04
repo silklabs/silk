@@ -14,12 +14,14 @@ import {
   CryptoDuplexStream,
   MessagePackDuplexStream,
 } from 'silk-streams';
-
 import createLog from 'silk-log/device';
 import api from 'silk-device-api';
+
 import * as Metrics from '../metrics/btle';
 
 import type {Peripheral} from 'noble';
+import type {AccessToken} from 'silk-api';
+
 import type SocketStream from './socket_stream';
 
 const log = createLog(`btle-child-socketsession`);
@@ -52,13 +54,12 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
   _sentBytes: number = 0;
   _errorMessage: string = ``;
 
-  _msgpackStream: ?MessagePackDuplexStream;
-
   constructor(
     stream: SocketStream,
     peripheral: Peripheral,
-    privateKey: string,
-    publicKeys: Array<string>,
+    accessToken: AccessToken,
+    pairedPublicKeys: Array<string>,
+    unpairedPublicKeys: Array<string>,
     accountDeviceNumber: number,
   ) {
     log.debug(`constructor`);
@@ -77,11 +78,11 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
 
     super(msgpackStream,
           cryptoStream,
-          privateKey,
-          publicKeys);
+          accessToken,
+          pairedPublicKeys,
+          unpairedPublicKeys);
 
     this._accountDeviceNumber = accountDeviceNumber;
-    this._msgpackStream = msgpackStream;
 
     peripheral.addListener(`rssiUpdate`, this._onRssiUpdate);
     peripheral.addListener(`disconnect`, this._onDisconnect);
@@ -165,7 +166,7 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
       duration,
       this._receivedBytes,
       this._sentBytes,
-      this.authenticated,
+      this.status,
     ];
 
     let metric;
@@ -247,21 +248,12 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
     return super.end(chunkOrEncodingOrCallback, encodingOrCallback, callback);
   }
 
-  sendAuthFailure(): void {
-    log.debug(`sendAuthFailure`);
+  get authenticated(): boolean {
+    return this.status === 'authenticated' || this.status === 'paired';
+  }
 
-    invariant(this._accountDeviceNumber > 0);
-
-    const stream = this._msgpackStream;
-    this._msgpackStream = null;
-
-    if (stream) {
-      stream.write({
-        name: `unauthorized`,
-        accountDeviceNumber: this._accountDeviceNumber,
-      });
-      stream.end();
-    }
+  get paired(): boolean {
+    return this.status === 'paired';
   }
 
   get connected(): boolean {

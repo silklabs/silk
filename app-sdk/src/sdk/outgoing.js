@@ -127,6 +127,8 @@ type DeviceWifiNetworksMessage = {
 export type DeviceConnectionDetailsMessage = {
   type: 'DEVICE_CONNECTION_DETAILS',
   deviceId: ?string;
+  accountDeviceNumber: ?number;
+  paired: boolean;
   wifiStatus: ?ConnectionStatus;
   wifiSSID: ?string;
   wifiLevel: ?number;

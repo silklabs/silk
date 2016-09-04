@@ -3,7 +3,7 @@
  */
 
 import invariant from 'assert';
-import { RssiSmoother } from 'silk-api';
+import {RssiSmoother} from 'silk-api';
 import makeLog from 'silk-log';
 import {
   AuthenticateDuplexStream,
@@ -14,16 +14,17 @@ import {
 import * as Metrics from './metrics';
 import Stream from './stream';
 
+import type {AccessToken} from 'silk-api';
 import type MetricsAgent from 'silk-api/src/metrics_agent';
 import type {Socket} from 'silk-ble-socket';
+import type {AuthenticateStatus} from 'silk-streams/src/authenticate';
 
 const log = makeLog(`btle-SocketSession`);
 
 export default class SocketSession extends AuthenticateDuplexStream {
 
   _socket: Socket;
-  _privateKey: string;
-  _publicKeys: Array<string>;
+  _accessToken: AccessToken;
 
   _disconnecting: boolean = false;
   _finished: boolean = false;
@@ -39,8 +40,9 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _errorMessage: string = ``;
 
   constructor(socket: Socket,
-              privateKey: string,
-              publicKeys: Array<string>,
+              accessToken: AccessToken,
+              pairedPublicKeys: Array<string>,
+              unpairedPublicKeys: Array<string>,
               metrics: MetricsAgent) {
     log.debug(`constructor`);
 
@@ -65,9 +67,9 @@ export default class SocketSession extends AuthenticateDuplexStream {
     super(
       msgpackStream,
       cryptoStream,
-      privateKey,
-      publicKeys,
-      metrics
+      accessToken,
+      pairedPublicKeys,
+      unpairedPublicKeys,
     );
 
     socket.addListener(`rssiUpdate`, this._onSocketRssiUpdate);
@@ -79,10 +81,11 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this.once(`finish`, this._onFinish);
     this.once(`close`, this._onClose);
 
-    this.once(`unauthenticated`, () => {
-      log.info(`Receiving unauthenticated data`);
+    this.once(`status`, (status: AuthenticateStatus) => {
+      log.info(`Receiving ${status} data`);
+      invariant(status !== 'unknown');
       // XXX Someday maybe be smarter about when to accept unauthenticated data.
-      this.allowUnauthenticated(true);
+      this.allow(true);
     });
 
     socketStream.on(`data`, (data) => {
@@ -154,7 +157,7 @@ export default class SocketSession extends AuthenticateDuplexStream {
       Date.now() - this._startTime,
       this._receivedBytes,
       this._sentBytes,
-      this.authenticated,
+      this.status,
     ];
 
     const metric = this._errorMessage ?
@@ -172,6 +175,14 @@ export default class SocketSession extends AuthenticateDuplexStream {
     this.rssiUpdatesEnabled = false;
     this._socket.removeListener(`rssiUpdate`, this._onSocketRssiUpdate);
     this._socket.removeListener(`disconnect`, this._onSocketDisconnect);
+  }
+
+  get authenticated(): boolean {
+    return this.status === 'authenticated' || this.status === 'paired';
+  }
+
+  get paired(): boolean {
+    return this.status === 'paired';
   }
 
   get connected(): boolean {

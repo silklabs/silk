@@ -9,6 +9,7 @@
 import Joi from 'joi';
 
 const PROPERTY_NAME = `_[@*@]_`;
+const KEY_SCHEMA = Joi.string().hex().length(64);
 
 function controlSchema(): Object {
   const schema = {
@@ -31,8 +32,23 @@ const MESSAGES_FROM_CHILD = {
     stack: Joi.string().required(),
   }),
 
+  status: messageSchema(`status`, {
+    status: Joi.string().only([
+      `unauthenticated`,
+      `authenticated`,
+      `paired`,
+    ]).required(),
+    publicKey: KEY_SCHEMA.allow(null).required(),
+  }),
+
+  unauthenticated: messageSchema(`unauthenticated`),
+
   authenticated: messageSchema(`authenticated`, {
-    authenticatedPublicKey: Joi.string().allow(``).required(),
+    publicKey: KEY_SCHEMA.required(),
+  }),
+
+  paired: messageSchema(`paired`, {
+    publicKey: KEY_SCHEMA.required(),
   }),
 
   flatline: messageSchema(`flatline`),
@@ -43,8 +59,12 @@ const MESSAGES_FROM_CHILD = {
 };
 
 const MESSAGES_FROM_PARENT = {
-  allowUnauthenticated: messageSchema(`allowUnauthenticated`, {
-    allow: Joi.boolean().required(),
+  allow: messageSchema(`allow`, {
+    allowed: Joi.boolean().required(),
+  }),
+
+  setPaired: messageSchema(`setPaired`, {
+    publicKey: KEY_SCHEMA.required(),
   }),
 
   rssi: messageSchema(`rssi`, {

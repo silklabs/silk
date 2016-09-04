@@ -54,7 +54,7 @@
   [text appendFormat:@"\ndeviceId:\t\t%@", deviceInfo[@"deviceId"]];
   [text appendFormat:@"\nacctDevNum:\t%@", deviceInfo[@"accountDeviceNumber"]];
   [text appendFormat:@"\nconfigId:\t\t%@", deviceInfo[@"deviceConfigId"]];
-  [text appendFormat:@"\nconfigStatus:\t%@", deviceInfo[@"deviceConfigStatus"]];
+  [text appendFormat:@"\nconfigStatus:\t%@ - paired: %@", deviceInfo[@"deviceConfigStatus"], deviceInfo[@"paired"]];
   [text appendFormat:@"\nserver:\t\t%@", deviceInfo[@"serverConnectionStatus"]];
   [text appendFormat:@"\nbleConn:\t\t%@", [self formatStatus:deviceInfo[@"bleConnectionStatus"] andError:deviceInfo[@"bleConnectionError"]]];
   [text appendFormat:@"\nwifiConn:\t\t%@", [self formatStatus:deviceInfo[@"wifiStatus"] andError:deviceInfo[@"wifiError"]]];

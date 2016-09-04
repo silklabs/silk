@@ -184,6 +184,7 @@ static AppState *singletonInstance;
     NSString *deviceId = connectionDetails[@"deviceId"];
     NSMutableDictionary* deviceInfo = _devices[deviceId];
 
+    deviceInfo[@"paired"]= connectionDetails[@"paired"];
     deviceInfo[@"wifiStatus"] = connectionDetails[@"wifiStatus"];
     deviceInfo[@"wifiSSID"] = connectionDetails[@"wifiSSID"];
     deviceInfo[@"wifiLevel"] = connectionDetails[@"wifiLevel"];

@@ -43,6 +43,11 @@
            revision="refs/tags/v1.0.20"
            remote="github" clone-depth="1" />
 
+  <project name="TooTallNate/node-lame"
+           path="external/node-lame"
+           revision="refs/tags/v1.2.4"
+           remote="github" clone-depth="1" />
+
   <!-- node-hid 0.5.1 -->
   <project name="silklabs/node-hid"
            path="external/node-hid"

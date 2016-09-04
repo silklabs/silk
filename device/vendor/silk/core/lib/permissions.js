@@ -21,13 +21,13 @@ import type {
   MutablePermissionType,
 } from './store/persist_reducers';
 
-const EXPIRE_INTERVAL_MS = 5 * 60 * 1000;
-
 const log = createLog(`permissions`);
 
 export class PermissionManager extends EventEmitter {
 
   _store: Store;
+  _nextExpirationTime: ?number = null;
+  _expirationTimer: ?number = null;
 
   constructor() {
     super();
@@ -36,10 +36,6 @@ export class PermissionManager extends EventEmitter {
     invariant(store);
 
     store.subscribeToPath(`persist.permissions`, this._onPermissionsChanged);
-
-    // TODO: Set a real timer based on the next expiring entry.
-    setInterval(this._expirePermissions, EXPIRE_INTERVAL_MS);
-
     this._store = store;
 
     this._expirePermissions();
@@ -53,15 +49,30 @@ export class PermissionManager extends EventEmitter {
   _expirePermissions: (() => void) = () => {
     log.debug(`_expirePermissions`);
 
+    this._nextExpirationTime = null;
+
+    if (this._expirationTimer) {
+      clearTimeout(this._expirationTimer);
+      this._expirationTimer = null;
+    }
+
     const now = Date.now();
+    const nextExpirationTime = null;
 
     const {permissions} = this._store.getState().persist;
     permissions.forEach((permissionMap, publicKey) => {
       const expired = [];
 
       permissionMap.forEach((permission, permissionType) => {
-        if (permission.expires && permission.expires <= now) {
-          expired.push(permissionType);
+        if (permission.expires) {
+          if (permission.expires <= now) {
+            expired.push(permissionType);
+          } else {
+            this._nextExpirationTime =
+              nextExpirationTime === null ?
+              permission.expires :
+              Math.min(nextExpirationTime, permission.expires);
+          }
         }
       });
 
@@ -74,18 +85,15 @@ export class PermissionManager extends EventEmitter {
         });
       }
     });
+
+    if (nextExpirationTime) {
+      log.debug(`Next expiration time`, nextExpirationTime);
+      this._expirationTimer =
+        setTimeout(Math.max(0, nextExpirationTime - now),
+                   this._expirePermissions);
+      this._nextExpirationTime = nextExpirationTime;
+    }
   };
-
-  _removeSoon(publicKey: string, permissionType: MutablePermissionType): void {
-    log.debug(`_removeSoon`, publicKey, permissionType);
-
-    process.nextTick(() => {
-      this._store.dispatch(actions.persist.removePermissions({
-        publicKey,
-        permissions: [permissionType],
-      }));
-    });
-  }
 
   add(
     publicKey: string,
@@ -101,6 +109,26 @@ export class PermissionManager extends EventEmitter {
       publicKey,
       permissions,
     }));
+
+    const nextExpirationTime = permissions.reduce((time, permission) => {
+      if (!permission.expires) {
+        return time;
+      }
+      return time === null ?
+             permission.expires :
+             Math.min(time, permission.expires);
+    }, null);
+
+    if (nextExpirationTime) {
+      log.debug(`Next expiration time`, nextExpirationTime);
+
+      if (this._expirationTimer) {
+        clearTimeout(this._expirationTimer);
+      }
+      this._expirationTimer =
+        setTimeout(this._expirePermissions,
+                   Math.max(0, nextExpirationTime - Date.now()));
+    }
   }
 
   remove(
@@ -134,18 +162,13 @@ export class PermissionManager extends EventEmitter {
       return false;
     }
 
-    let match = permissionMap.has('full');
-
-    const permission = permissionMap.get(permissionType);
-    if (permission) {
-      if (permission.expires && permission.expires <= Date.now()) {
-        this._removeSoon(publicKey, permissionType);
-      } else {
-        match = true;
-      }
+    if (permissionMap.has('full')) {
+      return true;
     }
 
-    return match;
+    const permission = permissionMap.get(permissionType);
+    return permission &&
+           (!permission.expires || permission.expires > Date.now());
   }
 
   match(permissionType: MutablePermissionType): Array<string> {
@@ -156,19 +179,13 @@ export class PermissionManager extends EventEmitter {
 
     const {permissions} = this._store.getState().persist;
     permissions.forEach((permissionMap, publicKey) => {
-      let match = permissionMap.has('full');
-
-      const permission = permissionMap.get(permissionType);
-      if (permission) {
-        if (permission.expires && permission.expires <= now) {
-          this._removeSoon(publicKey, permissionType);
-        } else {
-          match = true;
-        }
-      }
-
-      if (match) {
+      if (permissionMap.has('full')) {
         matches.push(publicKey);
+      } else {
+        const permission = permissionMap.get(permissionType);
+        if (permission && (!permission.expires || permission.expires > now)) {
+          matches.push(publicKey);
+        }
       }
     });
 

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# CI environment?
+[[ -n $CI ]] || exit 0
+
+echo
+echo Mirroring the Fuhu PandoHub dialog-script implementation into github
+echo
+set -ex
+
+pwd
+source ../pub/version/branch
+
+rm -rf pandohub-dialogscript/
+git clone git@github.com:silklabs/pandohub-dialogscript
+cd pandohub-dialogscript/
+git remote add fuhu ssh://git_mattel@git.matteldigitalkitchen.com/pandohubdialogscript.git
+git fetch fuhu
+
+git checkout $BRANCH
+git reset --hard fuhu/$BRANCH
+npm install
+rm -rf node_modules/flow-bin/
+git add --force node_modules
+git commit -m "npm install"
+git push --force origin $BRANCH
+exit 0

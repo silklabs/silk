@@ -198,14 +198,34 @@ const builds = {
       os: ['linux'],
       env: {
         global: [
-          'BOB_BUILD_COMMAND=bob/device-pandohub.sh',
+          'BOB_BUILD_COMMAND=bob/device.sh',
           'BOB_BUILD_HOST=silksd.ddns.net',
           'BOB_BUILD_HOST_PORT=888',
+          'BOARD=pandohub',
+          'PRODUCT=silkhub',
         ],
       },
     },
     events: ['nightly'],
     branches: ['master', 'next', 'release'],
+  },
+
+  'bob-device-pandohub-fuhuhub': {
+    title: '',
+    travis_yml: 'bob/travis.yml',
+    travis_config: {
+      os: ['linux'],
+      env: {
+        global: [
+          'BOB_BUILD_COMMAND=bob/device.sh',
+          'BOB_BUILD_HOST=silksd.ddns.net',
+          'BOARD=pandohub',
+          'PRODUCT=fuhuhub',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['next', 'release'],
   },
 
   'npm-dialog-test': runNpmTestForPackages([
@@ -520,6 +540,18 @@ const builds = {
         global: [
           'BOARD=kenzo',
           'PRODUCT=silkhub',
+        ],
+      },
+    },
+  }),
+  'device-kenzo-fuhuhub': nightlyBuild('device', {
+    branches: ['master', 'next', 'release'],
+    title: 'kenzo fuhuhub',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=kenzo',
+          'PRODUCT=fuhuhub',
         ],
       },
     },

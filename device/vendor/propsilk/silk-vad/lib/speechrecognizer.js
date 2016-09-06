@@ -7,7 +7,7 @@
  */
 
 import * as pocketsphinx from 'pocketsphinx';
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import createLog from 'silk-log/device';
 import config from 'silk-config';
 import path from 'path';

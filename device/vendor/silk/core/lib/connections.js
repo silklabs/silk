@@ -8,7 +8,7 @@
  */
 
 import invariant from 'assert';
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import { answer } from 'silk-rtc';
 import createLog from 'silk-log/device';
 import SasCompositeClient from 'silk-azure-storage/src/sas_composite_table';
@@ -369,13 +369,13 @@ export default class Connections extends EventEmitter {
 
     // Whichever server has started most recently will be on top.
     servers.sort((a, b) => {
-      invariant(a.start);
-      invariant(b.start);
+      invariant(typeof a.start === 'number');
+      invariant(typeof b.start === 'number');
       return (new Date(b.start)) - (new Date(a.start));
     });
 
     const server = servers[0];
-    invariant(server.host);
+    invariant(typeof server.host === 'string');
     return server.host;
   }
 

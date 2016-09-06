@@ -9,7 +9,7 @@
 
 import crypto from 'crypto';
 
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import { APICallOperation } from 'silk-outbox';
 import createLog from 'silk-log/device';
 const log = createLog('events');

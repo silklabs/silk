@@ -1,5 +1,5 @@
 /**
- * @flow
+ * @noflow
  */
 
 import TransportEmitter from '../src/transport_emitter';
@@ -9,7 +9,6 @@ import eventToPromise from 'event-to-promise';
 import assert from 'assert';
 
 suite('transport emitter', function() {
-
 
   let transport, subject;
   setup(() => {
@@ -35,7 +34,6 @@ suite('transport emitter', function() {
     transport.end();
     await end;
   });
-
 
   test('buffering emits', async () => {
     let gotStuff = false;

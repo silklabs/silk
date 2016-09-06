@@ -2,7 +2,7 @@
  * @flow
  */
 
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import createLog from 'silk-log';
 import { VideoPlayback } from 'silk-cam';
 

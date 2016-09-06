@@ -3,6 +3,7 @@
  */
 
 import assert from 'assert';
+import invariant from 'assert';
 import eventToPromise from 'event-to-promise';
 import Blob from 'node-webrtc/lib/blob';
 import deviceApi from 'silk-device-api';
@@ -117,8 +118,12 @@ suite('silk-rtc', function() {
       const devicePeerStreams = peer.getMediaStreams();
       assert(peerStreams.has('preview'));
       assert(devicePeerStreams.has('preview'));
-      assert(peerStreams.get('preview').stream === media);
-      assert(peerStreams.get('preview').stream.id);
+      const preview = peerStreams.get('preview');
+      invariant(preview);
+      const previewStream = preview.stream;
+      invariant(previewStream);
+      assert(previewStream === media);
+      assert(previewStream.id);
 
       peer.removeStream('preview');
       const removeStreamEvent = await eventToPromise(peer, 'removestream');

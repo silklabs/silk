@@ -73,7 +73,12 @@ export default function(session: Session, ctx: RouteContext): EventHandlers {
     return device;
   }
 
-  function sendToDeviceRoom(roomType, msg, device = null, received = 0) {
+  function sendToDeviceRoom(
+    roomType: string,
+    msg: VideoMessage | DiagMessage | MicMessage,
+    device = null,
+    received = 0
+  ) {
     received = received || Date.now();
     device = device || ensureValidDevice();
     if (!device) {

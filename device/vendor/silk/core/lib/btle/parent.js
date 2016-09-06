@@ -7,7 +7,7 @@
  * @flow
  */
 
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import fs from 'mz/fs';
 import invariant from 'assert';
 import * as net from 'net';

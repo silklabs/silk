@@ -1,16 +1,16 @@
-/* @flow */
+/**
+ * @flow
+ */
+
 /* globals MediaStream */
-import { EventEmitter } from 'events';
+
 import invariant from 'assert';
+import EventEmitter from 'events';
 import eventToPromise from 'event-to-promise';
 import {Lock} from 'silk-async-utils';
 import createLog from 'silk-log';
 
-import {
-  webrtcPromise,
-  ICE_ERROR,
-} from './utils';
-
+import {webrtcPromise, ICE_ERROR} from './utils';
 import * as WebRTC from './webrtc';
 import StructuredDataChannel from './structured_data_channel';
 import Manager from './signaling/manager';
@@ -21,7 +21,7 @@ import type {
   RTCDataChannelEvent,
   RTCStreamEvent,
   UserMediaConstraints,
-} from '../interface/webrtc';
+} from './webrtc';
 
 import type TransportEmitter from './transport_emitter';
 

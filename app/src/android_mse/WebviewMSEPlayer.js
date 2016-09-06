@@ -9,7 +9,7 @@
  * @flow
  */
 
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import React from 'react';
 import { MSEPlayer } from 'silk-mse-player';
 

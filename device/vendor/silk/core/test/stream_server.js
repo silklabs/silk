@@ -2,21 +2,20 @@
  * Copyright (c) 2015-2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
- */
-
-/**
+ *
  * Helper for testing stream based retries. Will simulate various network
  * conditions shallowly.
+ *
+ * @noflow
  */
 
+import assert from 'assert';
+import EventEmitter from 'events';
 import http from 'http';
 import net from 'net';
 import eventToPromise from 'event-to-promise';
-import assert from 'assert';
 import createLog from 'silk-log';
-
 import {StoringStream} from 'silk-streams';
-import { EventEmitter } from 'events';
 
 const log = createLog('stream-server');
 

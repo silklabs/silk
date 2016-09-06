@@ -7,8 +7,9 @@
  */
 
 import {spawn} from 'child_process';
+import EventEmitter from 'events';
+
 import type {ChildProcess} from 'child_process';
-import {EventEmitter} from 'events';
 import type {ChannelEventEmitter} from './connections';
 
 import createLog from 'silk-log/device';

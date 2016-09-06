@@ -6,12 +6,13 @@
  * @flow
  */
 
-import { EventEmitter } from 'events';
-import AudioAnalyzer from './AudioAnalyzer';
+import EventEmitter from 'events';
 import svmjs from 'svm';
-import type { SvmSoundsConfig, SvmSoundsConfigs } from '..';
 
+import AudioAnalyzer from './AudioAnalyzer';
 import FeatureVectorExtractor from './FeatureVectorExtractor';
+
+import type { SvmSoundsConfig, SvmSoundsConfigs } from '..';
 
 class SoundClassDetector {
   cfg: SvmSoundsConfig;

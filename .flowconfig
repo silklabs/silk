@@ -38,13 +38,7 @@ node_modules/fbjs/flow/lib/
 # Ignore browserify reimplementations of core node modules.
 .*/node_modules/events/.*
 
-# Ignore tests
-.*/api/test/.*
-.*/azure-storage/test/.*
-.*/rtc/test/.*
-.*/server/test/.*
 .*/server/tmp/.*
-.*/streams/test/.*
 
 # Prefer JS implementations over their interface files. We do need to
 # use interface files, however, when modules are implemented in native.
@@ -91,4 +85,4 @@ suppress_type=$FlowFixMe
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.31.0
+0.32.0

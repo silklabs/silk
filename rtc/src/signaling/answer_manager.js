@@ -6,14 +6,9 @@ import { JSONDuplexStream } from 'silk-streams';
 import Manager from './manager';
 import TransportEmitter from '../transport_emitter';
 import DataChannelDuplex from '../data_channel_duplex';
+import {waitForDataChannel} from '../utils';
 
-import type {
-  RTCPeerConnection,
-} from '../../interface/webrtc';
-
-import {
-  waitForDataChannel,
-} from '../utils';
+import type {RTCPeerConnection} from '../webrtc';
 
 const log = createLog('rtc:signaling:answer_manager');
 

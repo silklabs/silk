@@ -1,4 +1,6 @@
-/* @flow */
+/**
+ * @flow
+ */
 import invariant from 'assert';
 import eventToPromise from 'event-to-promise';
 import WebSocket from 'ws';
@@ -10,12 +12,10 @@ import Manager from './manager';
 import TransportEmitter from '../transport_emitter';
 import DataChannelDuplex from '../data_channel_duplex';
 
-import type {
-  RTCPeerConnection,
-} from '../../interface/webrtc';
-
 import type { Duplex } from 'stream';
 import type { SilkApi } from 'silk-api';
+
+import type { RTCPeerConnection } from '../webrtc';
 
 export type CallPeer = {
   transport: TransportEmitter;
@@ -105,7 +105,7 @@ export default class CallManager extends Manager {
     }
 
     const entity = query[0];
-    invariant(entity.host);
+    invariant(typeof entity.host === 'string');
     return ensureWebSocketScheme(entity.host);
   }
 

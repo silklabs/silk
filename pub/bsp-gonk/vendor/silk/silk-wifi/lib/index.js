@@ -4,13 +4,13 @@
  */
 
 import invariant from 'assert';
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import * as net from 'net';
 import {Netmask} from 'netmask';
 import * as util from 'silk-sysutils';
 import createLog from 'silk-log/device';
 
-import type { Socket } from 'net';
+import type {Socket} from 'net';
 
 export type ConnectedNetworkInfo = {
   ssid: string;

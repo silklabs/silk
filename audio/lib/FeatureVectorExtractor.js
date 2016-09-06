@@ -6,9 +6,11 @@
  * @flow
  */
 
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
+
 import AudioAnalyzer from './AudioAnalyzer';
-import type { SvmSoundsConfig } from '..';
+
+import type {SvmSoundsConfig} from '..';
 
 /**
  * Return the value of the maximum element of `array`.

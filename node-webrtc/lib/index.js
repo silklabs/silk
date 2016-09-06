@@ -1,9 +1,9 @@
 // All the various native stuff we need ...
 
+import EventEmitter from 'events';
+
 import * as native from './native';
 import Blob from './blob';
-
-import {EventEmitter} from 'events';
 
 // Re-export the things that do not need extra wrapping ...
 export {

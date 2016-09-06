@@ -9,11 +9,12 @@
 import createLog from 'silk-log/device';
 
 import fs from 'mz/fs';
+import EventEmitter from 'events';
 import path from 'path';
-import { EventEmitter } from 'events';
-import * as util from 'silk-sysutils';
-import wrapNoEntity from './fs/wrap_no_entity';
 import modwatcher from 'silk-modwatcher';
+import * as util from 'silk-sysutils';
+
+import wrapNoEntity from './fs/wrap_no_entity';
 
 const log = createLog('ext');
 const extDirs = [ 'system/silk/node_modules' ];

@@ -7,17 +7,17 @@
  */
 
 import invariant from 'assert';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import CBuffer from 'CBuffer';
-
 import api from 'silk-device-api';
+import createLog from 'silk-log/device';
+import {BufferReadable} from 'silk-streams';
+import * as util from 'silk-sysutils';
+
 //import * as VideoMetrics from './metrics/video';
 import CameraRestart from './metrics/camera_restart';
-import {BufferReadable} from 'silk-streams';
 import EventTracker from './eventtracker';
 import { VideoUploadOperation, PreviewUploadOperation } from './outbox';
-import createLog from 'silk-log/device';
-import * as util from 'silk-sysutils';
 
 const log = createLog('timeline');
 

@@ -8,14 +8,15 @@
  */
 
 import createLog from 'silk-log/device';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import * as https from 'https';
-import TtsCache from './tts_cache';
-import {uptime} from 'silk-sysutils';
-import api from 'silk-device-api';
 import {Metric, MetricTypes} from 'silk-api';
+import api from 'silk-device-api';
+import {uptime} from 'silk-sysutils';
 
-import type { SpeechOptions } from 'silk-dialog-script';
+import TtsCache from './tts_cache';
+
+import type {SpeechOptions} from 'silk-dialog-script';
 
 const log = createLog('tts');
 let options: SpeechOptions;

@@ -8,7 +8,7 @@
  * @providesModule child_process
  */
 
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import type {Readable, Writable} from 'stream';
 
 type ExecOpts = {

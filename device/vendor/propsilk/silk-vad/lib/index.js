@@ -7,7 +7,7 @@
  */
 
 import createLog from 'silk-log/device';
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 
 import SpeechRecognizer from './speechrecognizer';
 import WebRtcVad from './webrtc_vad';

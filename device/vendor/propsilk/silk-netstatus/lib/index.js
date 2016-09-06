@@ -22,9 +22,9 @@
  */
 
 import assert from 'assert';
-import createLog from 'silk-log/device';
+import EventEmitter from 'events';
 import checkOnline from 'is-online';
-import { EventEmitter } from 'events';
+import createLog from 'silk-log/device';
 import silkWifi from 'silk-wifi';
 
 import type { Wifi, StubWifi } from 'silk-wifi';

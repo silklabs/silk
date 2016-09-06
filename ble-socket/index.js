@@ -7,7 +7,7 @@ import {NativeModules, DeviceEventEmitter} from 'react-native';
 import makeLog from 'silk-log';
 import RobustEventEmitter from 'silk-utils/robust_event_emitter';
 
-import type {EventEmitter} from 'events';
+import type EventEmitter from 'events';
 
 type ConnectMessage = {
   id: number;

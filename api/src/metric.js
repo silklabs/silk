@@ -22,7 +22,7 @@ export type Convertable = string|boolean|Integer|Float;
 export type StringToConvertableDict = {[key: string]: Convertable};
 export type StringToStringDict = {[key: string]: string};
 export type Point =
-  [string, StringToConvertableDict, StringToConvertableDict, number];
+  [string, StringToStringDict, StringToStringDict, number];
 
 function convertType(input: Convertable): string {
   if (input instanceof Float) {

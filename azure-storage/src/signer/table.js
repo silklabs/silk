@@ -8,6 +8,7 @@ import hmac from './hmac';
 import invariant from 'assert';
 
 export type Sas = {
+  se: string;
   sv: string;
   sp: string;
   tn: string;

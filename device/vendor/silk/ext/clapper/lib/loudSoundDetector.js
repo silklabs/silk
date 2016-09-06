@@ -6,8 +6,9 @@
  * @noflow
  */
 
+import EventEmitter from 'events';
+
 let log;
-import { EventEmitter } from 'events';
 
 //
 // LoudSoundDetector

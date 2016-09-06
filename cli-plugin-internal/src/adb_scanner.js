@@ -11,7 +11,7 @@
 /* eslint-disable no-console */
 
 import Bonjour from 'bonjour';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 
 // How often to rescan.
 // Devices that don't respond within this window will be considered offline

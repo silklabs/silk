@@ -8,7 +8,7 @@
  */
 
 import invariant from 'assert';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import getUpdateEmitter from 'silk-update';
 import * as Joi from 'joi';
 import {BTLE_SOCKET_UUIDS} from 'silk-api';

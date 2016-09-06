@@ -127,16 +127,21 @@ class PrdItem extends React.Component {
   }
 }
 
-function renderProgressBar(numberByWorkflowLabel, max) {
-  return <ProgressBar max={max} >
-           <ProgressBar bsStyle="danger" label="Draft %(percent)s%" max={max} now={numberByWorkflowLabel[1]} />
-           <ProgressBar bsStyle="warning" label="Review %(percent)s%" max={max} now={numberByWorkflowLabel[2]} />
-           <ProgressBar bsStyle="info" label="Ready %(percent)s%" max={max} now={numberByWorkflowLabel[3]} />
-           <ProgressBar bsStyle="success" label="In Progress %(percent)s%" max={max} now={numberByWorkflowLabel[4]} />
-           <ProgressBar label="Validate %(percent)s%" max={max} now={numberByWorkflowLabel[5]} />
-           <ProgressBar label="Ship %(percent)s%" max={max} now={numberByWorkflowLabel[6]} />
-           <ProgressBar label="Deferred %(percent)s%" max={max} now={numberByWorkflowLabel[0]} />
-         </ProgressBar>;
+function renderProgressBar(numberByWorkflowLabel, max, title = null) {
+  return (
+    <div>
+       {title}
+       <ProgressBar max={max} >
+         <ProgressBar bsStyle="danger" label="Draft %(percent)s%" max={max} now={numberByWorkflowLabel[1]} />
+         <ProgressBar bsStyle="warning" label="Review %(percent)s%" max={max} now={numberByWorkflowLabel[2]} />
+         <ProgressBar bsStyle="info" label="Ready %(percent)s%" max={max} now={numberByWorkflowLabel[3]} />
+         <ProgressBar bsStyle="success" label="In Progress %(percent)s%" max={max} now={numberByWorkflowLabel[4]} />
+         <ProgressBar label="Validate %(percent)s%" max={max} now={numberByWorkflowLabel[5]} />
+         <ProgressBar label="Ship %(percent)s%" max={max} now={numberByWorkflowLabel[6]} />
+         <ProgressBar label="Deferred %(percent)s%" max={max} now={numberByWorkflowLabel[0]} />
+       </ProgressBar>
+    </div>
+  );
 }
 
 class PrdSection extends React.Component {
@@ -335,17 +340,33 @@ export default class Prd extends React.Component {
 
       if (this.state.progress) {
         let numberByWorkflowLabel = Array(prd.workflowLabels.length).fill(0);
+        let numberByWorkflowLabelMustHave = Array(prd.workflowLabels.length).fill(0);
         let maxItems = 0;
+        let maxItemsMustHave = 0;
 
         Object.keys(this.state.itemsByMilestone).forEach(section => {
           const items = this.state.itemsByMilestone[section];
-          maxItems += items.length;
           items.forEach(item => {
             const state = prd.issueState(item);
+            maxItems++;
             numberByWorkflowLabel[state.value]++;
+            switch (prd.issuePriority(item).name) {
+            case 'must-have':
+            case 'high-want':
+              numberByWorkflowLabelMustHave[state.value]++;
+              maxItemsMustHave++;
+              break;
+            default:
+              break;
+            }
           });
         });
-        prdProgress = renderProgressBar(numberByWorkflowLabel, maxItems);
+        prdProgress = (
+          <div>
+            {renderProgressBar(numberByWorkflowLabel, maxItems, 'All')}
+            {renderProgressBar(numberByWorkflowLabelMustHave, maxItemsMustHave, 'must-have / high-want')}
+          </div>
+        );
       }
 
       prdBody = Object.keys(this.state.itemsByMilestone).sort().map(

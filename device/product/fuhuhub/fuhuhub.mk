@@ -1,0 +1,2 @@
+SILK_DIALOG_SCRIPT_PATH=pandohub-dialogscript
+include product/silkhub/silkhub.mk

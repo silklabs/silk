@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<manifest>
+  <include name="silkhub.xml" />
+  <project name="pandohub-dialogscript"
+           path="pandohub-dialogscript"
+           remote="silk"
+           revision="master" />
+</manifest>
+

@@ -277,27 +277,53 @@ export default class Residents {
     wsDuplex.pipe(stream);
     stream.pipe(wsDuplex);
 
-    const onClose = () => {
+    const onWSError = (err) => {
+      log.warn(`Websocket stream error`, err.message);
       cleanup();
     };
 
     const onError = (err) => {
-      log.warn(`Error encountered during bridge: ${err.stack}`);
+      log.warn(`Mux stream error`, err.message);
       cleanup();
     };
 
     const cleanup = () => {
       log.info(`Disconnect client (${streamId})`);
-      wsDuplex.removeListener('close', onClose);
-      wsDuplex.removeListener('error', onError);
+
+      wsDuplex.removeListener('close', cleanup);
+      wsDuplex.removeListener('error', onWSError);
+      stream.removeListener('close', cleanup);
+      stream.removeListener('error', onError);
+
       resident.clients.delete(streamId);
       this._clients.delete(client);
+
+      // Drain both streams.
+      wsDuplex.unpipe(stream);
+      wsDuplex.resume();
+      stream.unpipe(wsDuplex);
+      stream.resume();
+
+      // Forcefully close both streams.
+      try {
+        stream.destroy();
+      } catch (destroyErr) {
+        log.warn(`Error destroying mux stream`, destroyErr);
+      }
+
+      try {
+        wsDuplex.terminate();
+      } catch (terminateErr) {
+        log.warn(`Error terminating websocket stream`, terminateErr);
+      }
     };
 
     log.info(`Client stream ${streamId} setup for ${deviceId}`);
     this._clients.add(client);
     resident.clients.set(streamId, client);
-    wsDuplex.on('close', onClose);
-    wsDuplex.on('error', onError);
+    wsDuplex.on('close', cleanup);
+    wsDuplex.on('error', onWSError);
+    stream.on('close', cleanup);
+    stream.on('error', onError);
   }
 }

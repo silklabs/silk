@@ -118,43 +118,44 @@ updatebranch__silk_device() {
   (
     set -x
 
-    # Update the revision attribute for the all silk.xml projects on the $from
-    # branch
-    local silk_xml=product/silk/silk.xml
-    if [[ ! -f $silk_xml ]]; then
-      echo Error: $silk_xml does not exist.
-      exit 1
-    fi
-    for p in $(xmlstarlet sel -t -v "//project[@revision='$from']/@name" $silk_xml); do
-
-      # All the silk.xml projects that are about to get their revisions updated
-      # should be in the list of projects that are getting branched, to ensure
-      # the updated revision actually exists.
-      if [ ! -d ../../$p ]; then
-        echo "Error: $p not listed in GITS variable?"
-        echo "       ../../$p not a directory ($(readlink -f ../../$p))"
+    # Update the revision attribute for the all projects on the $from branch
+    for product in silk fuhuhub; do
+      local product_xml=product/$product/${product}.xml
+      if [[ ! -f $product_xml ]]; then
+        echo Error: $product_xml does not exist.
         exit 1
       fi
+      for p in $(xmlstarlet sel -t -v "//project[@revision='$from']/@name" $product_xml); do
 
-      local HEAD=$to
-      if [[ $to == release ]]; then
-        # Lock to SHA1 for release branch
-        HEAD=$(git -C ../../$p rev-parse HEAD)
-      fi
+        # All the silk.xml projects that are about to get their revisions updated
+        # should be in the list of projects that are getting branched, to ensure
+        # the updated revision actually exists.
+        if [ ! -d ../../$p ]; then
+          echo "Error: $p not listed in GITS variable?"
+          echo "       ../../$p not a directory ($(readlink -f ../../$p))"
+          exit 1
+        fi
 
-      xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" $silk_xml
-      xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n revision -v $HEAD $silk_xml
+        local HEAD=$to
+        if [[ $to == release ]]; then
+          # Lock to SHA1 for release branch
+          HEAD=$(git -C ../../$p rev-parse HEAD)
+        fi
 
-      if [[ $to == release ]]; then
-        # When locking to a SHA1, ensure the "clone-depth" attribute is removed,
-        # as github does not support fetching a shallow clone of a SHA1 it seems
-        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@clone-depth" $silk_xml
+        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@revision" $product_xml
+        xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n revision -v $HEAD $product_xml
 
-        # Add upstream attribute as a convenience to help decode the SHA1
-        xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@upstream" $silk_xml
-        xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n upstream -v $to $silk_xml
-      fi
+        if [[ $to == release ]]; then
+          # When locking to a SHA1, ensure the "clone-depth" attribute is removed,
+          # as github does not support fetching a shallow clone of a SHA1 it seems
+          xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@clone-depth" $product_xml
 
+          # Add upstream attribute as a convenience to help decode the SHA1
+          xmlstarlet ed --pf --inplace --delete "//project[@name='$p']/@upstream" $product_xml
+          xmlstarlet ed --pf --inplace --insert "//project[@name='$p']" -t attr -n upstream -v $to $product_xml
+        fi
+
+      done
     done
 
     local msg="device: Automated branch update from ${from} to ${to}"

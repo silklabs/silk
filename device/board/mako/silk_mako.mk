@@ -24,7 +24,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # the extensions bring the mako system.img up around 370MB, which exceeds
 # the fastboot limit for .img file sizes)
 SILK_FEATURE_VIDEOANALYTICS := false
-SILK_FEATURE_AUDIOANALYTICS := false
+SILK_FEATURE_SVM_AUDIOANALYTICS := false
 SILK_FEATURE_DEMOS := false
 
 PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png

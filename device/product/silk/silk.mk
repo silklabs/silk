@@ -113,8 +113,8 @@ PRODUCT_PACKAGES += \
 
 endif
 
-# Extensions for audio analytics
-ifneq ($(strip $(SILK_FEATURE_AUDIOANALYTICS)),false)
+# Extensions for SVM based audio analytics
+ifneq ($(strip $(SILK_FEATURE_SVM_AUDIOANALYTICS)),false)
 PRODUCT_PACKAGES += \
   silkext-svmsounds \
   silkext-svmsounds-babycry \

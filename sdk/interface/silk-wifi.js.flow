@@ -3,7 +3,7 @@
  * @flow
  */
 
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 
 declare export class Wifi extends EventEmitter {
   init(): Promise<void>;

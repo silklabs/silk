@@ -20,14 +20,14 @@
  * @noflow
  */
 
-import * as util from 'silk-sysutils';
+import invariant from 'assert';
 import CBuffer from 'CBuffer';
-import createLog from 'silk-log/device';
+import EventEmitter from 'events';
+import net from 'net';
 import cv from 'opencv';
 import silkcapture from 'silk-capture';
-import invariant from 'assert';
-import net from 'net';
-import { EventEmitter } from 'events';
+import createLog from 'silk-log/device';
+import * as util from 'silk-sysutils';
 
 /**
  * Type representing an object rectangle

@@ -3,12 +3,12 @@
  * @flow
  */
 
-import * as util from 'silk-sysutils';
+import EventEmitter from 'events';
 import ntpClient from 'external-node-ntp-client';
-import { EventEmitter } from 'events';
-import wifi from 'silk-wifi';
+import * as util from 'silk-sysutils';
 import createLog from 'silk-log/device';
 import version from 'silk-core-version';
+import wifi from 'silk-wifi';
 
 const log = createLog('ntp');
 

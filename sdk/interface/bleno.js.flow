@@ -3,7 +3,7 @@
  * @flow
  */
 
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 
 export type AdapterState =
   'unknown' |

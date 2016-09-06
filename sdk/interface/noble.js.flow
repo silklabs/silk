@@ -3,7 +3,7 @@
  * @flow
  */
 
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 
 type ConnectCallback = (error: any) => void;
 type RssiCallback = (error: any, rssi?: number) => void;

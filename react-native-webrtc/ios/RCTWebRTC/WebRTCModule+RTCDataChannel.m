@@ -73,7 +73,7 @@ RCT_EXPORT_METHOD(dataChannelSetBinaryType:(nonnull NSNumber *)dataChannelId bin
 }
 
 // Called when a data buffer was successfully received.
--(void)dataChannel:(RTCDataChannel *)channel didReceiveMessageWithBuffer:(RTCDataBuffer *)buffer
+- (void)dataChannel:(RTCDataChannel *)channel didReceiveMessageWithBuffer:(RTCDataBuffer *)buffer
 {
   NSString *type = @"text";
   id data;

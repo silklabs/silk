@@ -36,9 +36,9 @@ import type {
   Env,
   Camera,
   Timeline,
-  TimelineEventCallback,
 } from 'silk-exttest';
 import { Duplex } from 'stream';
+import type { OnAudioEvent } from 'silk-kws';
 
 type MicData = {
    when: number;
@@ -169,28 +169,14 @@ class Dialog {
       this._kws.start();
 
       if (!kwsTestMode) {
-        this._kws.on('keyword', () => {
-          log.debug(`Keyword detected`);
-          api.metrics.add(new KeywordDetected());
-          this._kws.stop();
-          this._dialogEngine.startDialog();
-          this._playSound(KEYWORD_DETECTED_SOUND_FILE)
-          .then(() => this._onSpeechStart());
-        });
-        this._vad.on('speech_stop', (when) => {
-          // Stop processing after mic data upto this time has been processed
-          this._speechStopWhen = when;
-        });
-        this._vad.on('speech_timeout', () => {
-          log.debug('Speech timedout');
-          this._onSpeechStop();
-        });
+        this._kws.on('keyword', this._onKeywordEvent);
+        this._kws.on('cry', this._onCryEvent);
+
+        this._vad.on('speech_stop', this._onSpeechStop);
+        this._vad.on('speech_timeout', this._onSpeechTimeout);
       }
     }
     this._input.on('down', this._onKeyPress);
-
-    // Notify dialog engine that a sound event has been detected
-    timeline.on('sound', this._onSoundEvent);
 
     this._init();
   }
@@ -223,7 +209,7 @@ class Dialog {
 
     // Stop processing after speech stop
     if (when > this._speechStopWhen) {
-      this._onSpeechStop();
+      this._stopSpeech();
       return;
     }
 
@@ -248,7 +234,7 @@ class Dialog {
       .then(() => this._onSpeechStart());
     } else {
       if (!this._kwsEnabled) {
-        this._onSpeechStop();
+        this._stopSpeech();
       }
     }
   };
@@ -262,7 +248,7 @@ class Dialog {
    */
   _onInterpretEnd: InterpretEndCallback = error => {
     if (error) {
-      this._onSpeechStop();
+      this._stopSpeech();
       this._playErrorMessage(NETWORK_ERROR_MESSAGE, NETWORK_ERROR_SOUND_FILE);
     }
   };
@@ -450,11 +436,34 @@ class Dialog {
     }
   }
 
+  _onKeywordEvent: OnAudioEvent = (label, when, confidence) => {
+    api.metrics.add(new KeywordDetected());
+    this._kws.stop();
+    this._dialogEngine.startDialog();
+    this._playSound(KEYWORD_DETECTED_SOUND_FILE)
+    .then(() => this._onSpeechStart());
+  };
+
+  _onCryEvent: OnAudioEvent = (label, when, confidence) => {
+    // Notify dialog engine of sound events
+    this._dialogEngine.notifySoundEvent(label, when);
+  };
+
+  _onSpeechStop: (when: number) => void = when => {
+    // Stop processing after mic data upto this time has been processed
+    this._speechStopWhen = when;
+  };
+
+  _onSpeechTimeout: () => void = () => {
+    log.debug('Speech timed out');
+    this._stopSpeech();
+  };
+
   /**
    * Handle end of speech. On end of speech close the mic stream
    * and interpret the result of speech to text
    */
-  _onSpeechStop() {
+  _stopSpeech() {
     log.info(`onSpeechStop`);
 
     if (!this._stream) {
@@ -535,14 +544,6 @@ class Dialog {
     }]);
   }
 
-  /**
-   * Notify dialog engine of sound events
-   */
-  _onSoundEvent: TimelineEventCallback = (when, rects, source, name) => {
-    log.debug(`Received event ${name} at {when}`);
-    this._dialogEngine.notifySoundEvent(name, when);
-  };
-
   willUnload(): void {
     log.info('unloading....');
     this._monitor(false);
@@ -553,7 +554,16 @@ class Dialog {
     this._dialogEngine.removeListener('speech', this._onSpeak);
     this._dialogEngine.removeListener('speak-begin', this._onSpeakBegin);
     this._dialogEngine.removeListener('interpret-end', this._onInterpretEnd);
-    timeline.removeListener('sound', this._onSoundEvent);
+
+    if (this._kws) {
+      this._kws.removeListener('keyword', this._onKeywordEvent);
+      this._kws.removeListener('cry', this._onCryEvent);
+    }
+
+    if (this._vad) {
+      this._vad.removeListener('speech_stop', this._onSpeechStop);
+      this._vad.removeListener('speech_timeout', this._onSpeechTimeout);
+    }
   }
 }
 

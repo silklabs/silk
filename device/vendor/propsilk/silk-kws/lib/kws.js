@@ -39,6 +39,7 @@ const MODEL_DICTIONARY = path.join(__dirname, '..', 'model', 'keyword.labels');
 const KEYWORDS = path.join(__dirname, '..', 'model', 'keywords.txt');
 const TOPK = 3; // Return top K predictions
 const HOT_KEYWORD = 'keyword';
+const CRY = 'cry';
 
 // List of possible texts that SpeechToText service converts the `pando`
 // audio sample to. All of these are considered as positive samples.
@@ -76,16 +77,18 @@ const VAD_ENABLED_PROP = 'persist.silk.kws.vad.enabled';
 const WAV_HEADER_CHUNK_SIZE = 4;
 const WAV_HEADER_SUBCHUNK2_SIZE = 40;
 
-type SampleType = 'pos' | 'neg';
+type SampleType = 'pos' | 'neg' | 'cry';
 
 type MicData = {
   when: number;
   frames: Buffer;
 };
 
+export type OnAudioEvent = (label: string, when: number, confidence: number) => void;
+
 /**
- * This class receives mic data stream and tries to detect a specific keyword
- * using keyword spotting with neural networks
+ * This class receives mic data stream and tries to detect a specific sound
+ * using neural networks.
  */
 export default class KeywordSpotting extends EventEmitter {
   _netCaffe: caffe.Model;
@@ -124,7 +127,7 @@ export default class KeywordSpotting extends EventEmitter {
 
     this._extractor = new MelFeatureExtractor(MEL_COEFFS, this._sampleRate, FFT_SIZE);
     this._framer = new Framer(STEP_SIZE, FFT_SIZE, (signal) => {
-      this._detectKeyword(signal);
+      this._processFramerSamples(signal);
     });
 
     this._uploadEnabled = util.getboolprop(UPLOAD_KEYWORD_WAV, false);
@@ -175,7 +178,7 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Start keyword spotting
+   * Start spotting
    */
   start() {
     log.info(`Starting kws`);
@@ -190,7 +193,7 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Stop keyword spotting
+   * Stop spotting
    */
   stop() {
     log.info(`Stopping kws`);
@@ -208,7 +211,7 @@ export default class KeywordSpotting extends EventEmitter {
    * @private
    */
   _loadAsync(modelProto: string, modelBin: string) {
-    log.verbose(`Loading keyword spotting model`);
+    log.verbose(`Loading model`);
     return new Promise((resolve, reject) => {
       let start = Date.now();
       this._netCaffe.load(modelProto, modelBin, err => {
@@ -242,8 +245,8 @@ export default class KeywordSpotting extends EventEmitter {
 
           const label = predictions[0].label;
 
-          // Emit event if a successful keyword is spotted
-          if (label === HOT_KEYWORD) {
+          // Emit event if a successful keyword or crying is spotted
+          if ((label === HOT_KEYWORD) || (label === CRY)) {
             const confidence = parseInt((predictions[0].confidence * 100).toFixed(2));
             log.info(`***** ${label} spotted with confidence: ${confidence}%`);
             if (confidence >= THRESHOLD) {
@@ -364,7 +367,7 @@ export default class KeywordSpotting extends EventEmitter {
    *
    * @private
    */
-  _detectKeyword(signal: Float32Array) {
+  _processFramerSamples(signal: Float32Array) {
     assert(signal.length === FFT_SIZE);
 
     // Extract mel features
@@ -379,12 +382,12 @@ export default class KeywordSpotting extends EventEmitter {
 
   /**
    * Process next window of size NUM_SAMPLES x MEL_COEFFS. Once we have enough
-   * samples we run caffe prediction on it to detect keyword.
+   * samples we run caffe prediction on it to detect specific sounds.
    * @private
    */
   async _processNextWindow(): Promise<void> {
     assert(this._predicting);
-    // Wait to collect enough samples before running keyword detection on it
+    // Wait to collect enough samples before running detection on it
     if (this._output.length < NUM_SAMPLES) {
       this._predicting = false;
       return;
@@ -404,7 +407,7 @@ export default class KeywordSpotting extends EventEmitter {
         await this._playHotKeywordSound();
         this._saveAsWav();
         this._onKeywordDetected();
-        this.emit(label, { when: Date.now(), confidence});
+        this.emit(label, Date.now(), confidence);
 
         // Skip an entire window of samples to prevent same keyword to be
         // spotted again. In a non-standalone mode (w/ dialog extension) the
@@ -412,6 +415,8 @@ export default class KeywordSpotting extends EventEmitter {
         if (this._standAlone) {
           skipCount = NUM_SAMPLES;
         }
+      } else if (label && (label === CRY)) {
+        this.emit(label, Date.now(), confidence);
       }
     } catch (err) {
       log.error(`Prediction failed err: ${err.stack}||${err}`);
@@ -440,7 +445,7 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Stop listening for the keyword
+   * Stop listening
    */
   _pauseSpotting() {
     if (!this._spotting) {
@@ -452,7 +457,7 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Start listening for the keyword
+   * Start listening
    */
   _resumeSpotting() {
     if (this._spotting) {

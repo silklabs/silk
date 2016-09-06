@@ -15,6 +15,8 @@ BUILDS="\
   kenzo-silk-$BRANCH-userdebug \
   kenzo-silkhub-$BRANCH-userdebug \
   pandohub-silkhub-$BRANCH-userdebug \
+  kenzo-fuhuhub-$BRANCH-userdebug \
+  pandohub-fuhuhub-$BRANCH-userdebug \
 "
 
 if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
@@ -40,7 +42,7 @@ for BUILD in $BUILDS; do
     prevprev_target_files.zip
 
   mkdir -p ota_dist
-  
+
   wget -O sha1 $BUILD_URL_PREFIX/$BRANCH/$BUILD/last || true
   LATEST_SHA1=$(cat sha1)
   if [[ -z $LATEST_SHA1 ]]; then

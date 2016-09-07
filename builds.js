@@ -264,14 +264,6 @@ const builds = {
     events: ['push', 'pr'],
     branches: ['master', 'next', 'release'],
   },
-  'app-lint': npmPackageBuild('app', {
-    // Always run lint when JS files change.
-    travis_yml: 'app/.travis-lint.yml',
-    files: [
-      'app/.eslintrc',
-      'app/**/*.js',
-    ],
-  }),
   'app-ios-debug': npmPackageBuild('app', {
     // Only build the iOS app if relevant files changed.
     travis_yml: 'app/ios/travis/debug.yml',
@@ -308,14 +300,6 @@ const builds = {
     // Always build the app on a branch push, no matter what changed.
     travis_yml: 'app/android/travis/release.yml',
     events: ['push'],
-  }),
-  'app-sdk-lint': npmPackageBuild('app-sdk', {
-    // Always run lint when JS files change.
-    travis_yml: 'app-sdk/.travis-lint.yml',
-    files: [
-      'app-sdk/.eslintrc',
-      'app-sdk/**/*.js',
-    ],
   }),
   'app-sdk-ios': npmPackageBuild('app-sdk', {
     travis_yml: 'app-sdk-example/ios/.travis.yml',

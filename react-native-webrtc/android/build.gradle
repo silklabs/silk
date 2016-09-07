@@ -17,6 +17,6 @@ android {
 
 dependencies {
     compile 'com.facebook.react:react-native:+'
-    compile 'io.pristine:libjingle:10111@aar'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':silk-react-native-blobs')
 }

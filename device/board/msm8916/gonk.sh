@@ -6,6 +6,6 @@
 #
 
 export TARGET_PRODUCT=msm8916_32
-export TARGET_BUILD_VARIANT=userdebug
-export TARGET_BUILD_TYPE=release
+
+
 

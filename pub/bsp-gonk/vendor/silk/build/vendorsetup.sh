@@ -128,6 +128,13 @@ if [[ ! -f product/$SILK_PRODUCT/$SILK_PRODUCT.xml ]]; then
   return
 fi
 
+
+if [[ "$NODE_ENV" = "production" ]]; then
+  export TARGET_BUILD_VARIANT=user
+else
+  export TARGET_BUILD_VARIANT=userdebug
+fi
+export TARGET_BUILD_TYPE=release
 source board/$SILK_BOARD/gonk.sh
 
 # Traverses a manifest, outputting the name of all included manifests

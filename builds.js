@@ -528,14 +528,27 @@ const builds = {
       },
     },
   }),
-  'device-kenzo-silkhub': nightlyBuild('device', {
+  'device-kenzo-silkhub-userdebug': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
-    title: 'kenzo silkhub',
+    title: 'kenzo silkhub userdebug',
     travis_config: {
       env: {
         global: [
           'BOARD=kenzo',
           'PRODUCT=silkhub',
+        ],
+      },
+    },
+  }),
+  'device-kenzo-silkhub-user': nightlyBuild('device', {
+    branches: ['master', 'next', 'release'],
+    title: 'kenzo silkhub user',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=kenzo',
+          'PRODUCT=silkhub',
+          'NODE_ENV=production',
         ],
       },
     },

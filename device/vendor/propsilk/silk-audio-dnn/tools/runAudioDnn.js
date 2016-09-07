@@ -18,7 +18,7 @@ import * as speechOptions from 'silk-dialog-script/lib/speechAccessToken';
 configureSpeechToText(speechOptions);
 
 configureLog('*');
-const log = createLog('runKws');
+const log = createLog('runAudioDnn');
 
 // Create instance of keyword spotting module
 let kws = new KeywordSpotting(null, true);

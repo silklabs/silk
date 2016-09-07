@@ -1,8 +1,8 @@
 {
-  "name": "silk-kws",
+  "name": "silk-audio-dnn",
   "version": "0.0.1",
-  "description": "Module for keyword spotting using neural networks",
-  "main": "./lib/kws.js",
+  "description": "Module for sounds detection using neural networks",
+  "main": "./lib/audio-dnn.js",
   "scripts": {
     "build": "npm run silk-build",
     "silk-build": "silk-buildjs .",

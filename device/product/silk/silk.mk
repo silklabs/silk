@@ -47,7 +47,7 @@ PRODUCT_PACKAGES += \
   silk-factory-reset \
   silk-gc1 \
   silk-gonk-version \
-  silk-kws \
+  silk-audio-dnn \
   silk-lifx \
   silk-modwatcher \
   silk-netstatus \
@@ -113,8 +113,8 @@ PRODUCT_PACKAGES += \
 
 endif
 
-# Extensions for audio analytics
-ifneq ($(strip $(SILK_FEATURE_AUDIOANALYTICS)),false)
+# Extensions for SVM based audio analytics
+ifneq ($(strip $(SILK_FEATURE_SVM_AUDIOANALYTICS)),false)
 PRODUCT_PACKAGES += \
   silkext-svmsounds \
   silkext-svmsounds-babycry \

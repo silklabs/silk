@@ -11,38 +11,23 @@ import fs from 'mz/fs';
 import path from 'path';
 import assert from 'assert';
 import {EventEmitter} from 'events';
-import wav from 'wav';
 import config from 'silk-config';
 import caffe from 'silk-caffe';
 import Vibrator from 'silk-vibrator';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
 import {MelFeatureExtractor, Framer, Normalizer} from 'mel-features';
-import netstatus from 'silk-netstatus';
-import SpeechToText from 'silk-stt';
 import Player from 'silk-audioplayer';
-import {
-  PosKeywordUploadOperation,
-  NegKeywordUploadOperation,
-  getOutboxInstance,
-} from 'silk-outbox';
-import {BufferReadable} from 'silk-streams';
 
 import type {VoiceActivityDetector} from 'silk-vad';
-import type {Outbox} from 'silk-outbox';
 
-const log = createLog('kws');
+const log = createLog('audio-dnn');
 
 const MODEL_PROTO = path.join(__dirname, '..', 'model', 'keyword.prototxt');
 const MODEL_BIN = path.join(__dirname, '..', 'model', 'aristotle.caffemodel');
 const MODEL_DICTIONARY = path.join(__dirname, '..', 'model', 'keyword.labels');
-const KEYWORDS = path.join(__dirname, '..', 'model', 'keywords.txt');
 const TOPK = 3; // Return top K predictions
-const HOT_KEYWORD = 'keyword';
-
-// List of possible texts that SpeechToText service converts the `pando`
-// audio sample to. All of these are considered as positive samples.
-let keywordTexts;
+const LABEL_OTHER = 'other';
 
 const MEL_COEFFS = 26;
 const FFT_SIZE = 512;
@@ -69,25 +54,20 @@ const PCM_BUFFER_COUNT = PCM_BUFFER_SECS / 100; // 96ms (~100) of buffer per TAG
 const KWS_THRESHOLD = 'persist.silk.kws.threshold';
 let THRESHOLD = util.getintprop(KWS_THRESHOLD, 50);
 
-const STT_CONFIDENCE_THRESHOLD = 0.35;
-
-const UPLOAD_KEYWORD_WAV = 'persist.silk.kws.upload';
 const VAD_ENABLED_PROP = 'persist.silk.kws.vad.enabled';
-const WAV_HEADER_CHUNK_SIZE = 4;
-const WAV_HEADER_SUBCHUNK2_SIZE = 40;
-
-type SampleType = 'pos' | 'neg';
 
 type MicData = {
   when: number;
   frames: Buffer;
 };
 
+export type OnAudioEvent = (when: number, confidence: number, pcmData: Buffer) => void;
+
 /**
- * This class receives mic data stream and tries to detect a specific keyword
- * using keyword spotting with neural networks
+ * This class receives mic data stream and tries to detect a specific sound
+ * using neural networks.
  */
-export default class KeywordSpotting extends EventEmitter {
+export default class AudioDnn extends EventEmitter {
   _netCaffe: caffe.Model;
   _spotting: bool = false;
   _predicting: bool = false;
@@ -102,13 +82,11 @@ export default class KeywordSpotting extends EventEmitter {
   _vib: Vibrator;
   _standAlone: boolean;
   _wavDataBuffer: Buffer;
-  _uploadEnabled: boolean;
   _onSpeechStart: (when: number) => void;
   _onSpeechStop: (when: number) => void;
   _voiceActivityDetector: VoiceActivityDetector;
   _ready: boolean = false;
   _vadEnabled: boolean = false;
-  _outbox: Outbox;
   _player: Player;
 
   constructor(voiceActivityDetector: VoiceActivityDetector, standAlone: boolean = false) {
@@ -124,20 +102,15 @@ export default class KeywordSpotting extends EventEmitter {
 
     this._extractor = new MelFeatureExtractor(MEL_COEFFS, this._sampleRate, FFT_SIZE);
     this._framer = new Framer(STEP_SIZE, FFT_SIZE, (signal) => {
-      this._detectKeyword(signal);
+      this._processFramerSamples(signal);
     });
 
-    this._uploadEnabled = util.getboolprop(UPLOAD_KEYWORD_WAV, false);
     this._vadEnabled = util.getboolprop(VAD_ENABLED_PROP, false);
 
     this._pcmDataArray = [];
     this._pcmDataSizeInBytes = 0; // Size of all the pcmData buffers in the queue
     this._output = [];
     this._wavDataBuffer = new Buffer(0); // Array of raw pcmData
-
-    this._outbox = getOutboxInstance();
-    this._outbox.registerOperation(PosKeywordUploadOperation);
-    this._outbox.registerOperation(NegKeywordUploadOperation);
 
     this._onSpeechStart = when => {
       this._resumeSpotting();
@@ -175,7 +148,7 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Start keyword spotting
+   * Start spotting
    */
   start() {
     log.info(`Starting kws`);
@@ -190,7 +163,7 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Stop keyword spotting
+   * Stop spotting
    */
   stop() {
     log.info(`Stopping kws`);
@@ -208,7 +181,7 @@ export default class KeywordSpotting extends EventEmitter {
    * @private
    */
   _loadAsync(modelProto: string, modelBin: string) {
-    log.verbose(`Loading keyword spotting model`);
+    log.verbose(`Loading model`);
     return new Promise((resolve, reject) => {
       let start = Date.now();
       this._netCaffe.load(modelProto, modelBin, err => {
@@ -242,8 +215,7 @@ export default class KeywordSpotting extends EventEmitter {
 
           const label = predictions[0].label;
 
-          // Emit event if a successful keyword is spotted
-          if (label === HOT_KEYWORD) {
+          if (label !== LABEL_OTHER) {
             const confidence = parseInt((predictions[0].confidence * 100).toFixed(2));
             log.info(`***** ${label} spotted with confidence: ${confidence}%`);
             if (confidence >= THRESHOLD) {
@@ -268,33 +240,25 @@ export default class KeywordSpotting extends EventEmitter {
     // Load a DNN model
     try {
       // Check if all the required files exist on device
-      let exists = fs.exists(MODEL_PROTO);
+      let exists = await fs.exists(MODEL_PROTO);
       if (!exists) {
         log.error(`${MODEL_PROTO} not available on the device`);
         return;
       }
 
-      exists = fs.exists(MODEL_BIN);
+      exists = await fs.exists(MODEL_BIN);
       if (!exists) {
         log.error(`${MODEL_BIN} not available on the device`);
         return;
       }
 
-      exists = fs.exists(MODEL_DICTIONARY);
+      exists = await fs.exists(MODEL_DICTIONARY);
       if (!exists) {
         log.error(`${MODEL_DICTIONARY} not available on the device`);
         return;
       }
       await this._loadAsync(MODEL_PROTO, MODEL_BIN);
       this._netCaffe.setLabels(MODEL_DICTIONARY);
-
-      exists = fs.exists(KEYWORDS);
-      if (!exists) {
-        log.error(`${KEYWORDS} not available on the device`);
-        return;
-      }
-      let keywordsJson = await fs.readFile(KEYWORDS);
-      keywordTexts = JSON.parse(keywordsJson);
     } catch (err) {
       log.error(`Failed to load caffe model err: ${err}`);
       return;
@@ -348,9 +312,7 @@ export default class KeywordSpotting extends EventEmitter {
     }
 
     // Store raw PCM data
-    if (this._uploadEnabled) {
-      this._wavDataBuffer = Buffer.concat([this._wavDataBuffer, pcmData]);
-    }
+    this._wavDataBuffer = Buffer.concat([this._wavDataBuffer, pcmData]);
 
     this._framer.addData(wavData);
 
@@ -364,7 +326,7 @@ export default class KeywordSpotting extends EventEmitter {
    *
    * @private
    */
-  _detectKeyword(signal: Float32Array) {
+  _processFramerSamples(signal: Float32Array) {
     assert(signal.length === FFT_SIZE);
 
     // Extract mel features
@@ -379,12 +341,12 @@ export default class KeywordSpotting extends EventEmitter {
 
   /**
    * Process next window of size NUM_SAMPLES x MEL_COEFFS. Once we have enough
-   * samples we run caffe prediction on it to detect keyword.
+   * samples we run caffe prediction on it to detect specific sounds.
    * @private
    */
   async _processNextWindow(): Promise<void> {
     assert(this._predicting);
-    // Wait to collect enough samples before running keyword detection on it
+    // Wait to collect enough samples before running detection on it
     if (this._output.length < NUM_SAMPLES) {
       this._predicting = false;
       return;
@@ -400,11 +362,12 @@ export default class KeywordSpotting extends EventEmitter {
     let skipCount = SKIP_SAMPLES;
     try {
       let [label, confidence] = await this._predictAsync(output);
-      if (label && (label === HOT_KEYWORD)) {
+      if (label) {
         await this._playHotKeywordSound();
-        this._saveAsWav();
-        this._onKeywordDetected();
-        this.emit(label, { when: Date.now(), confidence});
+
+        let pcmData = new Buffer(WINDOW_SIZE_IN_BYTES);
+        this._wavDataBuffer.copy(pcmData);
+        this.emit(label, Date.now(), confidence, pcmData);
 
         // Skip an entire window of samples to prevent same keyword to be
         // spotted again. In a non-standalone mode (w/ dialog extension) the
@@ -419,10 +382,8 @@ export default class KeywordSpotting extends EventEmitter {
 
     // Skip a few samples
     this._output.splice(0, skipCount);
-    if (this._uploadEnabled) {
-      let bytesToSkip = skipCount * STEP_SIZE * 2;
-      this._wavDataBuffer = this._wavDataBuffer.slice(bytesToSkip);
-    }
+    let bytesToSkip = skipCount * STEP_SIZE * 2;
+    this._wavDataBuffer = this._wavDataBuffer.slice(bytesToSkip);
 
     process.nextTick(() => this._processNextWindow()); // Process next sample
   }
@@ -440,7 +401,7 @@ export default class KeywordSpotting extends EventEmitter {
   }
 
   /**
-   * Stop listening for the keyword
+   * Stop listening
    */
   _pauseSpotting() {
     if (!this._spotting) {
@@ -449,10 +410,11 @@ export default class KeywordSpotting extends EventEmitter {
     }
     log.debug(`Pause spotting`);
     this._spotting = false;
+    this._output = []; // Clear buffer to stop predictions right away
   }
 
   /**
-   * Start listening for the keyword
+   * Start listening
    */
   _resumeSpotting() {
     if (this._spotting) {
@@ -465,108 +427,5 @@ export default class KeywordSpotting extends EventEmitter {
     this._pcmDataSizeInBytes = 0;
     this._output = [];
     this._wavDataBuffer = new Buffer(0);
-  }
-
-  /**
-   * Stop processsing data as soon as keyword is detected
-   */
-  _onKeywordDetected() {
-    if (this._standAlone) {
-      return;
-    }
-    this._output = []; // Clear buffer to stop predictions right away
-    this._spotting = false;
-  }
-
-  /**
-   * Run speech to text service to qualify the keyword and then save the pcm
-   * samples to the file
-   */
-  _saveAsWav(): void {
-    if (this._uploadEnabled && (netstatus.online || this._standAlone)) {
-      let pcmData = new Buffer(WINDOW_SIZE_IN_BYTES);
-      this._wavDataBuffer.copy(pcmData);
-
-      let stt = new SpeechToText();
-      stt.startRequest((error, text = '', confidence = 0) => {
-        if (error) {
-          log.error('Not saving the keyword: ', error);
-          return;
-        }
-        log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
-        let sampleType = this._isAKeyword(text, keywordTexts) ? 'pos' : 'neg';
-        if (confidence >= STT_CONFIDENCE_THRESHOLD) {
-          this._uploadWav(sampleType, pcmData);
-        } else {
-          log.warn(`Not saving the keyword ${confidence}`);
-        }
-      });
-      log.debug(`Converting keyword to text`);
-      stt.write(pcmData);
-      stt.finish();
-    }
-  }
-
-  /**
-   * Check if the text matches any of the strings or its substrings in the list
-   * of know keywords and its variants as returned by speech-to-text service
-   */
-  _isAKeyword(text: string, keywords: Array<string>) {
-    for (let i = 0; i < keywords.length; i++) {
-      let keyword = keywords[i];
-      if (text.indexOf(keyword) !== -1) {
-        log.debug(`Keyword match`);
-        return true;
-      }
-    }
-    log.debug(`No keyword match found`);
-    return false;
-  }
-
-  /**
-   * Upload wav data to the server
-   */
-  _uploadWav(sampleType: SampleType, pcmData: Buffer): void {
-    let wavData = new Buffer(0);
-    let writer = new wav.Writer({
-      sampleRate: this._sampleRate,
-      channels: this._numChannels,
-      bitDepth: this._bytesPerSample * 8,
-    });
-    writer.on('data', samples => {
-      wavData = Buffer.concat([wavData, samples]);
-    });
-    writer.on('header', header => {
-      // Overwrite the wav data length with the correct header information
-      let size = header.readInt32LE(WAV_HEADER_SUBCHUNK2_SIZE);
-      wavData.writeInt32LE(36 + size, WAV_HEADER_CHUNK_SIZE);
-      wavData.writeInt32LE(size, WAV_HEADER_SUBCHUNK2_SIZE);
-
-      let op;
-      if (sampleType === 'pos' ) {
-        op = new PosKeywordUploadOperation({
-          size: wavData.length,
-          metadata: {
-            metaType: PosKeywordUploadOperation.META_TYPE,
-            startUTC: Date.now(),
-          },
-        });
-      } else {
-        op = new NegKeywordUploadOperation({
-          size: wavData.length,
-          metadata: {
-            metaType: NegKeywordUploadOperation.META_TYPE,
-            startUTC: Date.now(),
-          },
-        });
-      }
-
-      this._outbox.addToQueue(op, new BufferReadable(wavData));
-    });
-    writer.on('error', err => {
-      log.error(err);
-    });
-    writer.write(pcmData);
-    writer.end();
   }
 }

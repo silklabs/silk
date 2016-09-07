@@ -1,6 +1,6 @@
 
 # Turn off unneeded platform features
-SILK_FEATURE_AUDIOANALYTICS := true
+SILK_FEATURE_SVM_AUDIOANALYTICS := false
 SILK_FEATURE_DEMOS := false
 SILK_FEATURE_DIALOG := true
 SILK_FEATURE_QDN := false

@@ -88,7 +88,7 @@ const externals = [
   'silk-factory-reset',
   'silk-gc1',
   'silk-input',
-  'silk-kws',
+  'silk-audio-dnn',
   'silk-lifx',
   'silk-lights',
   'silk-modwatcher',

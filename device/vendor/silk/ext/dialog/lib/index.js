@@ -16,16 +16,25 @@ import Input from 'silk-input';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import config from 'silk-config';
 import VoiceActivityDetector from 'silk-vad';
-import KeywordSpotting from 'silk-kws';
+import AudioDnn from 'silk-audio-dnn';
 import say from 'silk-say';
-import fs from 'fs';
+import fs from 'mz/fs';
 import netstatus from 'silk-netstatus';
 import Speaker from 'silk-speaker';
 import Player from 'silk-audioplayer';
 import ui from 'silk-device-ui';
 import api from 'silk-device-api';
 import {Metric} from 'silk-api';
+import wav from 'wav';
+import {BufferReadable} from 'silk-streams';
+import {
+  PosKeywordUploadOperation,
+  NegKeywordUploadOperation,
+  getOutboxInstance,
+} from 'silk-outbox';
+import SpeechToText from 'silk-stt';
 
+import type {Outbox} from 'silk-outbox';
 import type {
   DialogEngine,
   DialogEngineOptions,
@@ -36,9 +45,9 @@ import type {
   Env,
   Camera,
   Timeline,
-  TimelineEventCallback,
 } from 'silk-exttest';
 import { Duplex } from 'stream';
+import type { OnAudioEvent } from 'silk-audio-dnn';
 
 type MicData = {
    when: number;
@@ -51,6 +60,7 @@ type InterpretEndCallback = (error: ?Error) => void;
 type SpeakBeginCallback = (text: string, nextState: ?DialogState) => void;
 type EventType = 'listening' | 'processing_speech' | 'speaking' |
                  'speaking_network_error' | 'finished_processing_speech';
+type SampleType = 'pos' | 'neg';
 
 const KEYWORD_DETECTED_SOUND_FILE = path.join(__dirname, '..', 'media', 'hotkeyword_detected.wav');
 const ERROR_SOUND_FILE = path.join(__dirname, '..', 'media', 'error.wav');
@@ -60,7 +70,15 @@ const NETWORK_ERROR_MESSAGE = 'Unable to talk to the server, please try again';
 const NETWORK_ERROR_SOUND_FILE = 'network_error.mp3';
 
 const KWS_ENABLED_PROP = 'persist.silk.kws.enabled';
+const UPLOAD_KEYWORD_WAV = 'persist.silk.kws.upload';
 const LOCAL_TTS_ENABLED_PROP = 'persist.silk.dialog.tts.enabled';
+const STT_CONFIDENCE_THRESHOLD = 0.35;
+const WAV_HEADER_CHUNK_SIZE = 4;
+const WAV_HEADER_SUBCHUNK2_SIZE = 40;
+
+// List of possible words that SpeechToText service converts the keyword
+// audio sample to. All of these are considered as positive samples.
+const KEYWORD_MATCH = path.join(__dirname, '..', 'data', 'keywords.txt');
 
 // In this mode dialog extension starts the keyword spotting but doesn't process
 // the speech that follows. This helps with testing the keyword spotting on the
@@ -111,10 +129,13 @@ class Dialog {
   _stream: ?Duplex;
   _activePlaySoundPromise: Promise<void> = Promise.resolve();
   _vad: VoiceActivityDetector;
-  _kws: KeywordSpotting;
+  _audioDnn: AudioDnn;
   _localTts: boolean;
   _speechStopWhen: number;
   _player: Player;
+  _outbox: Outbox;
+  _uploadEnabled: boolean;
+  _keywordMatch: Array<string>;
 
   constructor(env: Env) {
     camera = env.camera;
@@ -149,8 +170,14 @@ class Dialog {
     this._input = new Input();
 
     // Start mic-data handler right away so the mic data can be passed
-    // over to keyword spotting and voice activity modules
+    // over to audio dnn and voice activity modules
     camera.on('mic-data', this._onMicData);
+
+    // Setup outbox to upload the keyword utterances to the cloud
+    this._outbox = getOutboxInstance();
+    this._outbox.registerOperation(PosKeywordUploadOperation);
+    this._outbox.registerOperation(NegKeywordUploadOperation);
+    this._uploadEnabled = util.getboolprop(UPLOAD_KEYWORD_WAV, false);
 
     // If TTS on device is used then use silk-say service to generate TTS.
     // Dialog engine only sends the speak-begin event in that case and expects
@@ -165,32 +192,18 @@ class Dialog {
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
-      this._kws = new KeywordSpotting(this._vad, (kwsTestMode ? true : false));
-      this._kws.start();
+      this._audioDnn = new AudioDnn(this._vad, (kwsTestMode ? true : false));
+      this._audioDnn.start();
 
       if (!kwsTestMode) {
-        this._kws.on('keyword', () => {
-          log.debug(`Keyword detected`);
-          api.metrics.add(new KeywordDetected());
-          this._kws.stop();
-          this._dialogEngine.startDialog();
-          this._playSound(KEYWORD_DETECTED_SOUND_FILE)
-          .then(() => this._onSpeechStart());
-        });
-        this._vad.on('speech_stop', (when) => {
-          // Stop processing after mic data upto this time has been processed
-          this._speechStopWhen = when;
-        });
-        this._vad.on('speech_timeout', () => {
-          log.debug('Speech timedout');
-          this._onSpeechStop();
-        });
+        this._audioDnn.on('keyword', this._onKeywordEvent);
+        this._audioDnn.on('cry', this._onCryEvent);
+
+        this._vad.on('speech_stop', this._onSpeechStop);
+        this._vad.on('speech_timeout', this._onSpeechTimeout);
       }
     }
     this._input.on('down', this._onKeyPress);
-
-    // Notify dialog engine that a sound event has been detected
-    timeline.on('sound', this._onSoundEvent);
 
     this._init();
   }
@@ -200,6 +213,8 @@ class Dialog {
     try {
       await this._player.load(KEYWORD_DETECTED_SOUND_FILE);
       await this._player.load(ERROR_SOUND_FILE);
+      let keywordsJson = await fs.readFile(KEYWORD_MATCH);
+      this._keywordMatch = JSON.parse(keywordsJson);
     } catch (err) {
       log.error(err);
     }
@@ -211,7 +226,7 @@ class Dialog {
   _onMicData: MicDataCallback = pkt => {
     // Feed mic-data to kws and vad modules
     if (this._kwsEnabled) {
-      this._kws.addMicData(pkt);
+      this._audioDnn.addMicData(pkt);
     }
 
     if (!this._stream) {
@@ -223,7 +238,7 @@ class Dialog {
 
     // Stop processing after speech stop
     if (when > this._speechStopWhen) {
-      this._onSpeechStop();
+      this._stopSpeech();
       return;
     }
 
@@ -240,7 +255,7 @@ class Dialog {
     log.info(`Received key down event ${JSON.stringify(event)}`);
     if (!this._stream) {
       if (this._kwsEnabled) {
-        this._kws.stop();
+        this._audioDnn.stop();
       }
       api.metrics.add(new KeywordButtonPress());
       this._dialogEngine.startDialog();
@@ -248,7 +263,7 @@ class Dialog {
       .then(() => this._onSpeechStart());
     } else {
       if (!this._kwsEnabled) {
-        this._onSpeechStop();
+        this._stopSpeech();
       }
     }
   };
@@ -262,7 +277,7 @@ class Dialog {
    */
   _onInterpretEnd: InterpretEndCallback = error => {
     if (error) {
-      this._onSpeechStop();
+      this._stopSpeech();
       this._playErrorMessage(NETWORK_ERROR_MESSAGE, NETWORK_ERROR_SOUND_FILE);
     }
   };
@@ -450,11 +465,35 @@ class Dialog {
     }
   }
 
+  _onKeywordEvent: OnAudioEvent = (when, confidence, pcmData) => {
+    api.metrics.add(new KeywordDetected());
+    this._audioDnn.stop();
+    this._dialogEngine.startDialog();
+    this._playSound(KEYWORD_DETECTED_SOUND_FILE)
+    .then(() => this._onSpeechStart());
+    this._saveAsWav(pcmData);
+  };
+
+  _onCryEvent: OnAudioEvent = (when, confidence, pcmData) => {
+    // Notify dialog engine of cry event
+    this._dialogEngine.notifySoundEvent('cry', when);
+  };
+
+  _onSpeechStop: (when: number) => void = when => {
+    // Stop processing after mic data upto this time has been processed
+    this._speechStopWhen = when;
+  };
+
+  _onSpeechTimeout: () => void = () => {
+    log.debug('Speech timed out');
+    this._stopSpeech();
+  };
+
   /**
    * Handle end of speech. On end of speech close the mic stream
    * and interpret the result of speech to text
    */
-  _onSpeechStop() {
+  _stopSpeech() {
     log.info(`onSpeechStop`);
 
     if (!this._stream) {
@@ -477,7 +516,7 @@ class Dialog {
     this._dialogEngine.endDialog();
     this._emitEvent('finished_processing_speech');
     if (this._kwsEnabled) {
-      this._kws.start();
+      this._audioDnn.start();
     }
   }
 
@@ -536,12 +575,93 @@ class Dialog {
   }
 
   /**
-   * Notify dialog engine of sound events
+   * Run speech to text service to qualify the keyword and then save the pcm
+   * samples on the cloud
    */
-  _onSoundEvent: TimelineEventCallback = (when, rects, source, name) => {
-    log.debug(`Received event ${name} at {when}`);
-    this._dialogEngine.notifySoundEvent(name, when);
-  };
+  _saveAsWav(pcmData: Buffer): void {
+    if (this._uploadEnabled && netstatus.online) {
+      let stt = new SpeechToText();
+      stt.startRequest((error, text = '', confidence = 0) => {
+        if (error) {
+          log.error('Not saving the keyword: ', error);
+          return;
+        }
+        log.debug(`Speech to text service detected: ${text}, confidence: ${confidence}`);
+        let sampleType = this._isAKeyword(text, this._keywordMatch) ? 'pos' : 'neg';
+        if (confidence >= STT_CONFIDENCE_THRESHOLD) {
+          this._uploadWav(sampleType, pcmData);
+        } else {
+          log.warn(`Not saving the keyword ${confidence}`);
+        }
+      });
+      log.debug(`Converting keyword to text`);
+      stt.write(pcmData);
+      stt.finish();
+    }
+  }
+
+  /**
+   * Check if the text matches any of the strings or its substrings in the list
+   * of know keywords and its variants as returned by speech-to-text service
+   */
+  _isAKeyword(text: string, keywords: Array<string>) {
+    for (let i = 0; i < keywords.length; i++) {
+      let keyword = keywords[i];
+      if (text.indexOf(keyword) !== -1) {
+        log.debug(`Keyword match`);
+        return true;
+      }
+    }
+    log.debug(`No keyword match found`);
+    return false;
+  }
+
+  /**
+   * Upload wav data to the cloud
+   */
+  _uploadWav(sampleType: SampleType, pcmData: Buffer): void {
+    let wavData = new Buffer(0);
+    let writer = new wav.Writer({
+      sampleRate: config.deviceMic.sampleRate,
+      channels: config.deviceMic.numChannels,
+      bitDepth: config.deviceMic.bytesPerSample * 8,
+    });
+    writer.on('data', samples => {
+      wavData = Buffer.concat([wavData, samples]);
+    });
+    writer.on('header', header => {
+      // Overwrite the wav data length with the correct header information
+      let size = header.readInt32LE(WAV_HEADER_SUBCHUNK2_SIZE);
+      wavData.writeInt32LE(36 + size, WAV_HEADER_CHUNK_SIZE);
+      wavData.writeInt32LE(size, WAV_HEADER_SUBCHUNK2_SIZE);
+
+      let op;
+      if (sampleType === 'pos' ) {
+        op = new PosKeywordUploadOperation({
+          size: wavData.length,
+          metadata: {
+            metaType: PosKeywordUploadOperation.META_TYPE,
+            startUTC: Date.now(),
+          },
+        });
+      } else {
+        op = new NegKeywordUploadOperation({
+          size: wavData.length,
+          metadata: {
+            metaType: NegKeywordUploadOperation.META_TYPE,
+            startUTC: Date.now(),
+          },
+        });
+      }
+
+      this._outbox.addToQueue(op, new BufferReadable(wavData));
+    });
+    writer.on('error', err => {
+      log.error(err);
+    });
+    writer.write(pcmData);
+    writer.end();
+  }
 
   willUnload(): void {
     log.info('unloading....');
@@ -553,7 +673,16 @@ class Dialog {
     this._dialogEngine.removeListener('speech', this._onSpeak);
     this._dialogEngine.removeListener('speak-begin', this._onSpeakBegin);
     this._dialogEngine.removeListener('interpret-end', this._onInterpretEnd);
-    timeline.removeListener('sound', this._onSoundEvent);
+
+    if (this._audioDnn) {
+      this._audioDnn.removeListener('keyword', this._onKeywordEvent);
+      this._audioDnn.removeListener('cry', this._onCryEvent);
+    }
+
+    if (this._vad) {
+      this._vad.removeListener('speech_stop', this._onSpeechStop);
+      this._vad.removeListener('speech_timeout', this._onSpeechTimeout);
+    }
   }
 }
 

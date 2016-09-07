@@ -8,7 +8,6 @@ import {SilkApi, AccessToken} from 'silk-api';
 import version from 'silk-core-version';
 import uuid from 'uuid';
 
-// $FlowFixMe: not sure why it doesn't like this.
 import createContext from '../../server/test/server/context';
 import * as actions from '../src/store/actions';
 import createStore from '../src/store';

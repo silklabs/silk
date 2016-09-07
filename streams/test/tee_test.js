@@ -3,7 +3,7 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @flow
+ * @noflow
  */
 
 import TeeStream from '../src/tee';

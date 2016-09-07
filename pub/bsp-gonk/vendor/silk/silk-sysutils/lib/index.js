@@ -1,9 +1,4 @@
 /**
- * @flow
- * @private
- */
-
-/**
  * This module provides system utility functions
  * @module silk-sysutils
  *
@@ -11,10 +6,13 @@
  * const util = require('silk-sysutils');
  *
  * util.getprop('ro.product.name', 'unknown');
+ *
+ * @flow
+ * @private
  */
 
-import { EventEmitter } from 'events';
-import { execFile, spawn, spawnSync } from 'child_process';
+import {execFile, spawn, spawnSync} from 'child_process';
+import EventEmitter from 'events';
 
 import createLog from 'silk-log/device';
 
@@ -86,7 +84,8 @@ export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
         code = err.code;
       }
       return resolve(
-        { code: code, stdout: stdout.toString(), stderr: stderr.toString() }
+        // $FlowFixMe: https://github.com/facebook/flow/pull/2407
+        {code, stdout: stdout.toString(), stderr: stderr.toString()}
       );
     });
   });

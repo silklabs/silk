@@ -43,14 +43,14 @@ function handleOpenEndRequest(provider, request, response, offset): void {
   if (typeof offset === 'number') {
     response.writeHead(206, {
       'content-type': 'video/mp4',
-      'content-length': PRETEND_CONTENT_LENGTH - offset,
+      'content-length': `${PRETEND_CONTENT_LENGTH - offset}`,
       'content-range': `bytes ${offset}-${PRETEND_CONTENT_LENGTH - 1}/${PRETEND_CONTENT_LENGTH}`,
     });
   } else {
     offset = 0;
     response.writeHead(200, {
       'content-type': 'video/mp4',
-      'content-length': PRETEND_CONTENT_LENGTH,
+      'content-length': `${PRETEND_CONTENT_LENGTH}`,
     });
   }
 
@@ -70,7 +70,7 @@ function handleOpenEndRequest(provider, request, response, offset): void {
     }
 
     segment.served = true;
-    response.write(buffer, null, () => {
+    response.write(buffer, () => {
       log.info(`    wrote ${buffer.length} bytes`);
       totalBytesWritten += buffer.length;
     });
@@ -109,10 +109,10 @@ function handleRangeRequest(provider, request, response, start, end): void {
 
   response.writeHead(206, {
     'content-type': 'video/mp4',
-    'content-length': buffer.length,
+    'content-length': `${buffer.length}`,
     'content-range': `bytes ${start}-${end}/${PRETEND_CONTENT_LENGTH}`,
   });
-  response.write(buffer, null, () => {
+  response.write(buffer, () => {
     log.info(`  wrote ${buffer.length} bytes`);
   });
   response.on('finish', () => {

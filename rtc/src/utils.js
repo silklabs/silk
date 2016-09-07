@@ -4,24 +4,18 @@
  * @flow
  */
 
+import invariant from 'assert';
 import eventToPromise from 'event-to-promise';
 import toJSON from 'silk-utils/calltojson';
 
 import * as WebRTC from './webrtc';
 import StructuredDataChannel from './structured_data_channel';
 
-import type { Logger } from 'silk-log';
+import type {Logger} from 'silk-log';
+
 import type TransportEmitter from './transport_emitter';
-
-import type {
-  RTCPeerConnection,
-  RTCDataChannel,
-} from '../interface/webrtc';
-
-import type {
-  DataChannels,
-  PeerTypes,
-} from './types';
+import type {RTCPeerConnection, RTCDataChannel} from './webrtc';
+import type {DataChannels, PeerTypes} from './types';
 
 /**
  * Via ICE we can now communicate with our peer ... ICE may still be ongoing but
@@ -54,14 +48,15 @@ export const ICE_FINISHED_STATES = new Set([
 ]);
 
 export function webrtcPromise(
-  peerConnection: RTCPeerConnection,
+  obj: Object,
   name: string,
   ...args: Array<mixed>
 ): Promise<any> {
   return new Promise((accept, reject) => {
     try {
-      // $FlowFixMe: dynamic method call ...
-      peerConnection[name](...args, accept, reject);
+      const func = obj[name];
+      invariant(typeof func === 'function');
+      func.call(obj, ...args, accept, reject);
     } catch (err) {
       reject(err);
     }

@@ -12,7 +12,7 @@ async function assertThrows(func, ErrorClass) {
   } catch (ex) {
     error = ex;
   }
-  assert(error instanceof ErrorClass, `Expected ${ErrorClass.name} exception, got ${error}`);
+  assert(error instanceof ErrorClass, `Expected ${ErrorClass.name} exception, got ${error || ''}`);
 }
 
 suite('check key', () => {

@@ -147,6 +147,7 @@ export default function parseQuery(
     let result;
     if (prop === '$or') {
       invariant(Array.isArray(query.$or));
+      // $FlowFixMe: having a hard time convincing Flow what type query.$or is.
       result = [parseOrClause(query.$or)];
     } else {
       result = normalizeQueryValue(prop, query[prop]);

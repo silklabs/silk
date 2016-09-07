@@ -18,7 +18,7 @@ const PEER_CONFIG = {
   ],
 };
 
-export type { UserMediaConstraints } from './interface/webrtc';
+export type { UserMediaConstraints } from './src/webrtc';
 export type { default as StructuredDataChannel } from './src/structured_data_channel';
 
 export { default as Peer } from './src/peer';

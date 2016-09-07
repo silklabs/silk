@@ -6,10 +6,11 @@
  * @noflow
  */
 
-let log;
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import { fft } from 'kissfft';
 import * as util from 'silk-sysutils';
+
+let log;
 
 // Url to send audio diag data. Consider disabled if prop not set
 const AUDIO_DIAG_URL_PROP = 'persist.silk.audioDiagUrl';

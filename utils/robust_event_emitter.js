@@ -5,7 +5,7 @@
  * @flow
  */
 
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import createLog from 'silk-log';
 
 const log = createLog('RobustEventEmitter');

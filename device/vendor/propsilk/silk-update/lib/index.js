@@ -9,21 +9,21 @@
 /* eslint camelcase:0 */
 
 import invariant from 'assert';
-import crypto from 'crypto';
-import {EventEmitter} from 'events';
-import fs from 'fs';
-import silkCoreVersion from 'silk-core-version';
-import silkBspVersion from 'silk-bsp-version';
 import {spawn, spawnSync} from 'child_process';
+import crypto from 'crypto';
+import EventEmitter from 'events';
+import fs from 'fs';
 import validator from 'validator';
-import api from 'silk-device-api';
 import createProgressStream from 'progress-stream';
 import http from 'http';
-import ForwardingEventEmitter from 'silk-utils/forwarding_event_emitter';
-import * as UpdaterMetrics from './updater_metrics';
-
+import silkBspVersion from 'silk-bsp-version';
+import silkCoreVersion from 'silk-core-version';
+import api from 'silk-device-api';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
+import ForwardingEventEmitter from 'silk-utils/forwarding_event_emitter';
+
+import * as UpdaterMetrics from './updater_metrics';
 
 export type UpdateState =
   'disabled' |

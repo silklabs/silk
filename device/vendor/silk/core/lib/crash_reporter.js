@@ -7,6 +7,8 @@
  */
 
 import assert from 'assert';
+import byline from 'byline';
+import EventEmitter from 'events';
 import path from 'path';
 import fs from 'mz/fs';
 import createLog from 'silk-log/device';
@@ -14,13 +16,10 @@ import eventToPromise from 'event-to-promise';
 import mkdirp from 'mkdirp-promise';
 import net from 'net';
 import wrapNoEntity from './fs/wrap_no_entity';
-import {getboolprop} from 'silk-sysutils';
 import version from 'silk-core-version';
-import raygun from 'silk-raygun/node';
-import byline from 'byline';
-
 import {CrashReporterOperation} from 'silk-outbox';
-import {EventEmitter} from 'events';
+import raygun from 'silk-raygun/node';
+import {getboolprop} from 'silk-sysutils';
 import {PassThrough} from 'stream';
 
 const log = createLog('crash_reporter');

@@ -5,7 +5,7 @@
  */
 
 import invariant from 'assert';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 
 type ForwardingFunctions = {
   add: () => void;

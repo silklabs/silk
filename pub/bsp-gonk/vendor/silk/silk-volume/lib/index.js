@@ -1,12 +1,4 @@
 /**
- * @private
- * @flow
- */
-
-import * as util from 'silk-sysutils';
-import { EventEmitter } from 'events';
-
-/**
  * Silk volume module
  *
  * @module silk-volume
@@ -14,7 +6,14 @@ import { EventEmitter } from 'events';
  * const volume = require('silk-volume').default;
  * volume.level = 50;
  * volume.mute = false;
+ *
+ * @private
+ * @flow
  */
+
+import EventEmitter from 'events';
+import * as util from 'silk-sysutils';
+
 class Volume extends EventEmitter {
   _level: number;
   _mute: bool;

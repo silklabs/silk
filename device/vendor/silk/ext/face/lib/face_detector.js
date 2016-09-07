@@ -2,17 +2,17 @@
  * Copyright (c) 2016 Silk Labs, Inc.
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
+ *
+ * @noflow
  */
 
+import EventEmitter from 'events';
+import fs from 'fs';
 import cv from 'opencv';
 import silkcv from 'silk-cv';
-import {
-  FaceRect,
-  Matrix,
-} from './face';
+
+import {FaceRect, Matrix} from './face';
 import safeRoi from './safe_roi.js';
-import fs from 'fs';
-import { EventEmitter } from 'events';
 
 let camera;
 let log;

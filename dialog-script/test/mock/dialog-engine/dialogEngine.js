@@ -2,7 +2,7 @@
  * @flow
  */
 
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import * as https from 'https';
 import createLog from 'silk-log';
 

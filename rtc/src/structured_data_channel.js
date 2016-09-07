@@ -10,12 +10,10 @@
  */
 
 import invariant from 'assert';
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import createLog from 'silk-log';
 
-import type {
-  RTCDataChannel,
-} from '../interface/webrtc';
+import type {RTCDataChannel} from './webrtc';
 
 const MIRROR_EVENTS = new Set([
   'close',

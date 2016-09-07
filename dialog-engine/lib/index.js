@@ -3,29 +3,29 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @flow
- * @private
- */
-/**
  * Silk Dialog Engine
  * @module silk-dialog-engine
  * @example
  * const getDialogEngine = require('silk-dialog-engine').default;
  * let dialogEngine = getDialogEngine();
+ *
+ * @flow
+ * @private
  */
 
 import invariant from 'assert';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import createLog from 'silk-log/device';
+import netstatus from 'silk-netstatus';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
+import SpeechToText, {configureSpeechToText} from 'silk-stt';
+import TextToSpeech, {configureTextToSpeech} from 'silk-tts';
 
-import { default as SpeechToText, configureSpeechToText } from 'silk-stt';
-import { default as TextToSpeech, configureTextToSpeech } from 'silk-tts';
 import TextToIntention from './textToIntention';
-import type { UtteranceType } from 'silk-stt';
 
-export type {Intention, Entity, Entities} from './textToIntention';
+import type {SpeechOptions} from 'silk-dialog-script';
+import type {UtteranceType} from 'silk-stt';
 
 import type {
   Intention,
@@ -33,8 +33,7 @@ import type {
   CustomIntentions,
 } from './textToIntention';
 
-import type { SpeechOptions } from 'silk-dialog-script';
-import netstatus from 'silk-netstatus';
+export type {Intention, Entity, Entities} from './textToIntention';
 
 export type DialogEngineOptions = {
   localTts?: boolean;

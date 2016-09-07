@@ -22,7 +22,7 @@ import {
 } from '../webrtc';
 
 
-import type { RTCPeerConnection } from '../../interface/webrtc';
+import type { RTCPeerConnection } from '../webrtc';
 import type TransportEmitter from '../transport_emitter';
 import type { PeerTypes } from '../types';
 

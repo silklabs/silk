@@ -14,7 +14,7 @@ import { Duplex } from 'stream';
 import createLog from 'silk-log';
 
 import type { Logger } from 'silk-log';
-import type { EventEmitter } from 'events';
+import type EventEmitter from 'events';
 import type NodeWebSocket from 'ws';
 
 const log = createLog('streams:websocket');

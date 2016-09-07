@@ -7,7 +7,7 @@
  * @providesModule net
  */
 
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import {Duplex, Readable} from 'stream';
 
 type SocketAddress = {

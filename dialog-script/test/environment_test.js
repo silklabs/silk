@@ -4,7 +4,7 @@
 /* global suiteTeardown */
 
 import assert from 'assert';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import {channel} from 'redux-saga';
 import {call, fork, put, take} from 'redux-saga/effects';
 import {createMockTask as createMockSaga} from 'redux-saga/utils';

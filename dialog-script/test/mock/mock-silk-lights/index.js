@@ -1,5 +1,5 @@
 import invariant from 'assert';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 
 class Light extends EventEmitter {
   set color(val: number) {

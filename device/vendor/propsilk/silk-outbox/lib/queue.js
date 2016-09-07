@@ -10,12 +10,12 @@
 /*eslint no-loop-func:0*/
 
 import assert from 'assert';
+import EventEmitter from 'events';
 import fs from 'mz/fs';
-import { statSync } from 'fs';
+import {statSync} from 'fs';
 import path from 'path';
 import createLog from 'silk-log/device';
 
-import { EventEmitter } from 'events';
 import Operation from './operation';
 
 const log = createLog('outbox:queue');

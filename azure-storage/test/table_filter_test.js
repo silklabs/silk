@@ -1,5 +1,5 @@
 /**
- * @flow
+ * @noflow
  */
 import assert from 'assert';
 import tableFilter from '../src/table_filter';

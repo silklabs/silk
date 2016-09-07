@@ -9,7 +9,7 @@
 // $FlowFixMe: Flow doesn't understand importing of a node module
 import webrtcvad from '../build/Release/webrtc_vad.node';
 
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import createLog from 'silk-log/device';
 import config from 'silk-config';
 

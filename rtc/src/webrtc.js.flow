@@ -1,5 +1,5 @@
 /**
- * Interface for the collection of webrtc interfaces.
+ * Interface for the collection of WebRTC interfaces.
  *
  * @flow
  */
@@ -7,8 +7,8 @@
 export type UserMediaConstraints = {
   // The constraints are platform specific and fairly complex so they are typed
   // simply as "Object".
-  audio: bool | Object;
-  video: bool | Object;
+  audio?: bool | Object;
+  video?: bool | Object;
 };
 
 // Taken from https://w3c.github.io/webrtc-pc/#widl-RTCDataChannelInit
@@ -18,13 +18,6 @@ export type RTCDataChannelInit = {
   negotiated?: bool;
   ordered?: bool;
   protocol?: bool;
-};
-
-// https://www.w3.org/TR/webmessaging/#the-messageevent-interfaces
-export type RTCIceCandidate = {
-  candidate?: string;
-  sdpMid?: string;
-  sdpMLineIndex?: number;
 };
 
 declare export class RTCPeerConnectionIceEvent extends Event {
@@ -80,6 +73,12 @@ type RTCPeerConnectionState =
   'disconnected' |
   'failed';
 
+declare export class RTCIceCandidate extends WebrtcEventTarget {
+  candidate?: string;
+  sdpMid?: string;
+  sdpMLineIndex?: number;
+}
+
 declare export class RTCPeerConnection extends WebrtcEventTarget {
   signalingState: RTCSignalingState;
   iceGatheringState: RTCIceGatheringState;
@@ -110,10 +109,8 @@ declare export class RTCDataChannel extends WebrtcEventTarget {
   send: (data: string | Buffer | ArrayBuffer) => void;
 }
 
-// strictly speaking this is not a real "interface" but we expect it to handle
-// node/vs browser differences...
-export interface WebRTC {
-  RTCIceCandidate: RTCIceCandidate;
-  RTCPeerConnection: typeof RTCPeerConnection;
-  RTCSessionDescription: typeof RTCSessionDescription;
-}
+declare export function getUserMedia(
+  constraints: UserMediaConstraints,
+  successCallback: () => void,
+  errorCallback: (error: Error) => void,
+): void;

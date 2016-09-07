@@ -145,7 +145,8 @@ export default class MetricsAgent {
 
     log.debug(`Adding metric: ${metric.constructor.NAME}`, metric);
 
-    const point = metric.serialize(this._commonTags).concat(timeOffset);
+    const [name, tags, measurements] = metric.serialize(this._commonTags);
+    const point = [name, tags, measurements, timeOffset];
     this._points.push(point);
   }
 

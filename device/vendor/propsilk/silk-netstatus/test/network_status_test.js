@@ -4,7 +4,7 @@
 
 import assert from 'assert';
 import eventToPromise from 'event-to-promise';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 import {NetworkStatus} from '..';
 
 suite('network_status', () => {

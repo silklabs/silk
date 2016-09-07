@@ -101,7 +101,6 @@ export const create = {
   arguments: [
     [['email'], { help: 'email account to create' }],
     [['password'], { help: 'new account password' }],
-    // $FlowFixMe: property `serverUrl`. Missing annotation
     COMMON_ARGS.serverUrl,
   ],
 
@@ -122,7 +121,6 @@ export const login = {
   arguments: [
     [['email'], { help: 'email account to log into' }],
     [['password'], { help: 'account password' }],
-    // $FlowFixMe: property `serverUrl`. Missing annotation
     COMMON_ARGS.serverUrl,
   ],
 
@@ -184,7 +182,6 @@ export const configure = {
     [['password'], {
       help: 'Wi-Fi network password credential (supply empty string for open networks)',
     }],
-    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
     COMMON_ARGS.deviceSerialNumber,
     [['-n'], {
       help: 'set flag to create a new device id',
@@ -228,7 +225,6 @@ export const unconfig = {
     ** Requires |adb shell stop silk; adb shell start silk| to take effect **
   `,
   arguments: [
-    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
     COMMON_ARGS.deviceSerialNumber,
   ],
   main: async (args: UnconfigArgs) => {
@@ -288,7 +284,6 @@ export const remove = {
     |silk login| must have been ran previously.
   `,
   arguments: [
-    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
     COMMON_ARGS.deviceSerialNumber,
     [['-i'], {
       dest: 'interactive',
@@ -358,7 +353,6 @@ export const adbscan = {
     them.
   `,
   arguments: [
-    // $FlowFixMe: property `deviceSerialNumber`. Missing annotation
     COMMON_ARGS.deviceSerialNumber,
   ],
   main: async (args: AdbScanArgs) => {

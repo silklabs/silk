@@ -6,8 +6,9 @@
  * @noflow
  */
 
+import EventEmitter from 'events';
+
 let env;
-import { EventEmitter } from 'events';
 
 class ClapDetector extends EventEmitter {
   constructor(cfg = {}) {

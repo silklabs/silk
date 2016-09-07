@@ -76,9 +76,13 @@ export default class MetricAgent {
     log.debug(`Adding metric: ${metric.constructor.NAME}`, metric);
 
     // InfluxDB wants the timestamp to be in nanoseconds
-    const point: Point =
-      metric.serialize(COMMON_TAGS).concat(nowInNanoSeconds());
-    point[0] = `${SERVER_PREFIX}${point[0]}`;
+    const [name, tags, measurements] = metric.serialize(COMMON_TAGS);
+    const point = [
+      `${SERVER_PREFIX}${name}`,
+      tags,
+      measurements,
+      nowInNanoSeconds(),
+    ];
     this._points.push(point);
   }
 

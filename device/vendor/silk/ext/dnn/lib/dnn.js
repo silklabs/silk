@@ -10,7 +10,7 @@
 import caffe from 'silk-caffe';
 import fs from 'mz/fs';
 import path from 'path';
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 
 import type { Env, Log } from 'silk-exttest';
 

@@ -3,7 +3,7 @@
  * @providesModule sonos
  */
 
-import {EventEmitter} from 'events';
+import EventEmitter from 'events';
 
 type QueryOptions = {
   start?: number;

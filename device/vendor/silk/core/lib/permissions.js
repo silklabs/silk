@@ -7,10 +7,10 @@
  * @flow
  */
 
-import createLog from 'silk-log/device';
-import {EventEmitter} from 'events';
-import ForwardingEventEmitter from 'silk-utils/forwarding_event_emitter';
 import invariant from 'assert';
+import EventEmitter from 'events';
+import createLog from 'silk-log/device';
+import ForwardingEventEmitter from 'silk-utils/forwarding_event_emitter';
 
 import getStore from './store';
 import actions from './store/actions';

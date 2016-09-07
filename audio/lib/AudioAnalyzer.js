@@ -7,7 +7,7 @@
  */
 
 import createLog from 'silk-log';
-import { EventEmitter} from 'events';
+import EventEmitter from 'events';
 
 const log = createLog('audio-AudioAnalyzer');
 

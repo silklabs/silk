@@ -109,9 +109,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/* global BabelFileResult, BabelParserOptions, BabelFileMetadata */
-/* eslint max-len: 0 */
-
 var INTERNAL_PLUGINS = [[_blockHoist2.default], [_shadowFunctions2.default]];
 
 var errorVisitor = {
@@ -150,13 +147,9 @@ var File = function (_Store) {
     _this.pluginVisitors = [];
     _this.pluginPasses = [];
 
-    // Plugins for top-level options.
     _this.buildPluginsForOptions(_this.opts);
 
-    // If we are in the "pass per preset" mode, build
-    // also plugins for each preset.
     if (_this.opts.passPerPreset) {
-      // All the "per preset" options are inherited from the main options.
       _this.perPresetOpts = [];
       _this.opts.presets.forEach(function (presetOpts) {
         var perPresetOpts = (0, _assign2.default)((0, _create2.default)(_this.opts), presetOpts);
@@ -267,7 +260,6 @@ var File = function (_Store) {
     var currentPluginVisitors = [];
     var currentPluginPasses = [];
 
-    // init plugins!
     for (var _iterator2 = plugins, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : (0, _getIterator3.default)(_iterator2);;) {
       var _ref2;
 
@@ -282,7 +274,8 @@ var File = function (_Store) {
 
       var ref = _ref2;
       var plugin = ref[0];
-      var pluginOpts = ref[1]; // todo: fix - can't embed in loop head because of flow bug
+      var pluginOpts = ref[1];
+
 
       currentPluginVisitors.push(plugin.visitor);
       currentPluginPasses.push(new _pluginPass2.default(this, plugin, pluginOpts));
@@ -302,7 +295,6 @@ var File = function (_Store) {
       return null;
     }
 
-    // moduleId is n/a if a `getModuleId()` is provided
     if (opts.moduleId != null && !opts.getModuleId) {
       return opts.moduleId;
     }
@@ -319,21 +311,17 @@ var File = function (_Store) {
     }
 
     if (opts.sourceRoot != null) {
-      // remove sourceRoot from filename
       var sourceRootRegEx = new RegExp("^" + opts.sourceRoot + "\/?");
       filenameRelative = filenameRelative.replace(sourceRootRegEx, "");
     }
 
-    // remove extension
     filenameRelative = filenameRelative.replace(/\.(\w*?)$/, "");
 
     moduleName += filenameRelative;
 
-    // normalize path separators
     moduleName = moduleName.replace(/\\/g, "/");
 
     if (opts.getModuleId) {
-      // If return is falsy, assume they want us to use our generated default name
       return opts.getModuleId(moduleName) || moduleName;
     } else {
       return moduleName;
@@ -415,8 +403,6 @@ var File = function (_Store) {
   };
 
   File.prototype.addTemplateObject = function addTemplateObject(helperName, strings, raw) {
-    // Generate a unique name based on the string literals so we dedupe
-    // identical strings used in the program.
     var stringIds = raw.elements.map(function (string) {
       return string.value;
     });
@@ -433,8 +419,7 @@ var File = function (_Store) {
     this.scope.push({
       id: uid,
       init: init,
-      _blockHoist: 1.9 // This ensures that we don't fail if not using function expression helpers
-    });
+      _blockHoist: 1.9 });
     return uid;
   };
 
@@ -475,8 +460,6 @@ var File = function (_Store) {
           sourceRoot: inputMapConsumer.sourceRoot
         });
 
-        // This assumes the output map always has a single source, since Babel always compiles a single source file to a
-        // single output file.
         var source = outputMapConsumer.sources[0];
 
         inputMapConsumer.eachMapping(function (mapping) {
@@ -539,13 +522,14 @@ var File = function (_Store) {
   };
 
   File.prototype.transform = function transform() {
-    // In the "pass per preset" mode, we have grouped passes.
-    // Otherwise, there is only one plain pluginPasses array.
     for (var i = 0; i < this.pluginPasses.length; i++) {
       var pluginPasses = this.pluginPasses[i];
       this.call("pre", pluginPasses);
       this.log.debug("Start transform traverse");
-      (0, _babelTraverse2.default)(this.ast, _babelTraverse2.default.visitors.merge(this.pluginVisitors[i], pluginPasses), this.scope);
+
+      var visitor = _babelTraverse2.default.visitors.merge(this.pluginVisitors[i], pluginPasses, this.opts.wrapPluginVisitorMethod);
+      (0, _babelTraverse2.default)(this.ast, visitor, this.scope);
+
       this.log.debug("End transform traverse");
       this.call("post", pluginPasses);
     }
@@ -578,8 +562,6 @@ var File = function (_Store) {
       }
 
       if (process.browser) {
-        // chrome has it's own pretty stringifier which doesn't use the stack property
-        // https://github.com/babel/babel/issues/2175
         err.message = message;
       }
 
@@ -698,7 +680,6 @@ var File = function (_Store) {
     this.log.debug("Generation end");
 
     if (this.shebang) {
-      // add back shebang
       result.code = this.shebang + "\n" + result.code;
     }
 

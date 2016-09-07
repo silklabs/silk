@@ -46,10 +46,8 @@ var Logger = function () {
 
     msg = this._buildMessage(msg);
 
-    // already seen this message
     if (seenDeprecatedMessages.indexOf(msg) >= 0) return;
 
-    // make sure we don't see it again
     seenDeprecatedMessages.push(msg);
 
     console.error(msg);

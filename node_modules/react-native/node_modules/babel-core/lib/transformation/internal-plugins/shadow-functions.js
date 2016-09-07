@@ -34,6 +34,8 @@ var superVisitor = {
 };
 
 exports.default = new _plugin2.default({
+  name: "internal.shadowFunctions",
+
   visitor: {
     ThisExpression: function ThisExpression(path) {
       remap(path, "this");
@@ -56,7 +58,6 @@ function shouldShadow(path, shadowPath) {
 }
 
 function remap(path, key) {
-  // ensure that we're shadowed
   var shadowPath = path.inShadow(key);
   if (!shouldShadow(path, shadowPath)) return;
 
@@ -67,7 +68,6 @@ function remap(path, key) {
 
   var fnPath = path.findParent(function (path) {
     if (path.isProgram() || path.isFunction()) {
-      // catch current function in case this is the shadowed one and we can ignore it
       currentFunction = currentFunction || path;
     }
 
@@ -90,19 +90,13 @@ function remap(path, key) {
   });
 
   if (shadowFunction && fnPath.isProgram() && !shadowFunction.isProgram()) {
-    // If the shadow wasn't found, take the closest function as a backup.
-    // This is a bit of a hack, but it will allow the parameter transforms to work properly
-    // without introducing yet another shadow-controlling flag.
     fnPath = path.findParent(function (p) {
       return p.isProgram() || p.isFunction();
     });
   }
 
-  // no point in realiasing if we're in this function
   if (fnPath === currentFunction) return;
 
-  // If the only functions that were encountered are arrow functions, skip remapping the
-  // binding since arrow function syntax already does that.
   if (!passedShadowFunction) return;
 
   var cached = fnPath.getData(key);

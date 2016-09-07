@@ -19,52 +19,13 @@ exports.evaluate = evaluate;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// This file contains Babels metainterpreter that can evaluate static code.
-
-/* eslint eqeqeq: 0 */
-
-var VALID_CALLEES = ["String", "Number", "Math"]; /* eslint indent: 0 */
-/* eslint max-len: 0 */
-
+var VALID_CALLEES = ["String", "Number", "Math"];
 var INVALID_METHODS = ["random"];
-
-/**
- * Walk the input `node` and statically evaluate if it's truthy.
- *
- * Returning `true` when we're sure that the expression will evaluate to a
- * truthy value, `false` if we're sure that it will evaluate to a falsy
- * value and `undefined` if we aren't sure. Because of this please do not
- * rely on coercion when using this method and check with === if it's false.
- *
- * For example do:
- *
- *   if (t.evaluateTruthy(node) === false) falsyLogic();
- *
- * **AND NOT**
- *
- *   if (!t.evaluateTruthy(node)) falsyLogic();
- *
- */
 
 function evaluateTruthy() {
   var res = this.evaluate();
   if (res.confident) return !!res.value;
 }
-
-/**
- * Walk the input `node` and statically evaluate it.
- *
- * Returns an object in the form `{ confident, value }`. `confident` indicates
- * whether or not we had to drop out of evaluating the expression because of
- * hitting an unknown node that we couldn't confidently find the value of.
- *
- * Example:
- *
- *   t.evaluate(parse("5 + 5")) // { confident: true, value: 10 }
- *   t.evaluate(parse("!true")) // { confident: true, value: false }
- *   t.evaluate(parse("foo + foo")) // { confident: false, value: undefined }
- *
- */
 
 function evaluate() {
   var confident = true;
@@ -85,13 +46,6 @@ function evaluate() {
     value: value
   };
 
-  // we wrap the _evaluate method so we can track `seen` nodes, we push an item
-  // to the map before we actually evaluate it so we can deopt on self recursive
-  // nodes such as:
-  //
-  //   var g = a ? 1 : 2,
-  //       a = g * this.foo
-  //
   function evaluate(path) {
     var node = path.node;
 
@@ -109,8 +63,10 @@ function evaluate() {
       seen.set(node, item);
 
       var val = _evaluate(path);
-      item.resolved = true;
-      item.value = value;
+      if (confident) {
+        item.resolved = true;
+        item.value = val;
+      }
       return val;
     }
   }
@@ -154,13 +110,10 @@ function evaluate() {
 
         var elem = _ref;
 
-        // not confident, evaluated an expression we don't like
         if (!confident) break;
 
-        // add on cooked element
         str += elem.value.cooked;
 
-        // add on interpolated expression if it's present
         var expr = _exprs[i++];
         if (expr) str += String(evaluate(expr));
       }
@@ -180,11 +133,9 @@ function evaluate() {
     }
 
     if (path.isExpressionWrapper()) {
-      // TypeCastExpression, ExpressionStatement etc
       return evaluate(path.get("expression"));
     }
 
-    // "foo".length
     if (path.isMemberExpression() && !path.parentPath.isCallExpression({ callee: node })) {
       var property = path.get("property");
       var object = path.get("object");
@@ -200,6 +151,11 @@ function evaluate() {
 
     if (path.isReferencedIdentifier()) {
       var binding = path.scope.getBinding(node.name);
+
+      if (binding && binding.constantViolations.length > 0) {
+        return deopt(binding.path);
+      }
+
       if (binding && binding.hasValue) {
         return binding.value;
       } else {
@@ -222,7 +178,6 @@ function evaluate() {
 
     if (path.isUnaryExpression({ prefix: true })) {
       if (node.operator === "void") {
-        // we don't need to evaluate the argument to know what this will return
         return undefined;
       }
 
@@ -275,13 +230,9 @@ function evaluate() {
       return arr;
     }
 
-    if (path.isObjectExpression()) {
-      // todo
-    }
+    if (path.isObjectExpression()) {}
 
     if (path.isLogicalExpression()) {
-      // If we are confident that one side of an && is false, or the left
-      // side of an || is true, we can be confident about the entire expression
       var wasConfident = confident;
       var left = evaluate(path.get("left"));
       var leftConfident = confident;
@@ -292,8 +243,6 @@ function evaluate() {
 
       switch (node.operator) {
         case "||":
-          // TODO consider having a "truthy type" that doesn't bail on
-          // left uncertainity but can still evaluate to truthy.
           if (left && leftConfident) {
             confident = true;
             return left;
@@ -368,7 +317,6 @@ function evaluate() {
       var context = void 0;
       var func = void 0;
 
-      // Number(1);
       if (callee.isIdentifier() && !path.scope.getBinding(callee.node.name, true) && VALID_CALLEES.indexOf(callee.node.name) >= 0) {
         func = global[node.callee.name];
       }
@@ -377,13 +325,11 @@ function evaluate() {
         var _object = callee.get("object");
         var _property = callee.get("property");
 
-        // Math.min(1, 2)
         if (_object.isIdentifier() && _property.isIdentifier() && VALID_CALLEES.indexOf(_object.node.name) >= 0 && INVALID_METHODS.indexOf(_property.node.name) < 0) {
           context = global[_object.node.name];
           func = context[_property.node.name];
         }
 
-        // "abc".charCodeAt(4)
         if (_object.isLiteral() && _property.isIdentifier()) {
           var _type = (0, _typeof3.default)(_object.node.value);
           if (_type === "string" || _type === "number") {

@@ -1,8 +1,6 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+exports.__esModule = true;
 exports.getOptions = getOptions;
 // A second optional argument can be given to further configure
 var defaultOptions = exports.defaultOptions = {

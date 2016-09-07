@@ -146,10 +146,6 @@ function runScripts() {
   var types = ["text/ecmascript-6", "text/6to5", "text/babel", "module"];
   var index = 0;
 
-  /**
-   * Transform and execute script. Ensures correct load order.
-   */
-
   function exec() {
     var param = scripts[index];
     if (param instanceof Array) {
@@ -158,10 +154,6 @@ function runScripts() {
       exec();
     }
   }
-
-  /**
-   * Load, transform, and execute all scripts.
-   */
 
   function run(script, i) {
     var opts = {};
@@ -177,8 +169,6 @@ function runScripts() {
     }
   }
 
-  // Collect scripts with Babel `types`.
-
   var _scripts = global.document.getElementsByTagName("script");
 
   for (var i = 0; i < _scripts.length; ++i) {
@@ -192,10 +182,6 @@ function runScripts() {
 
   exec();
 }
-
-/**
- * Register load event to transform and execute scripts.
- */
 
 if (global.addEventListener) {
   global.addEventListener("DOMContentLoaded", runScripts, false);

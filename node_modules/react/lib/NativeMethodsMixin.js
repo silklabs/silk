@@ -162,6 +162,6 @@ function mountSafeCallback(context, callback) {
     }
     return callback.apply(context, arguments);
   };
-};
+}
 
 module.exports = NativeMethodsMixin;

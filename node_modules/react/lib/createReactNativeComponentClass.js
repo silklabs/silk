@@ -27,7 +27,7 @@ var createReactNativeComponentClass = function (viewConfig) {
     this._topLevelWrapper = null;
     this._hostParent = null;
     this._hostContainerInfo = null;
-    this._rootNodeID = null;
+    this._rootNodeID = 0;
     this._renderedChildren = null;
   };
   Constructor.displayName = viewConfig.uiViewClassName;

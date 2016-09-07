@@ -15,6 +15,7 @@ var _assign = require('object-assign');
 
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
+var ReactComponentEnvironment = require('./ReactComponentEnvironment');
 var ReactDefaultBatchingStrategy = require('./ReactDefaultBatchingStrategy');
 var ReactEmptyComponent = require('./ReactEmptyComponent');
 var ReactMultiChild = require('./ReactMultiChild');
@@ -56,6 +57,11 @@ ReactTestComponent.prototype.receiveComponent = function (nextElement, transacti
   this.updateChildren(nextElement.props.children, transaction, context);
 };
 ReactTestComponent.prototype.getHostNode = function () {};
+ReactTestComponent.prototype.getPublicInstance = function () {
+  // I can't say this makes a ton of sense but it seems better than throwing.
+  // Maybe we'll revise later if someone has a good use case.
+  return null;
+};
 ReactTestComponent.prototype.unmountComponent = function () {};
 ReactTestComponent.prototype.toJSON = function () {
   var _currentElement$props = this._currentElement.props;
@@ -119,6 +125,11 @@ ReactHostComponent.injection.injectGenericComponentClass(ReactTestComponent);
 ReactHostComponent.injection.injectTextComponentClass(ReactTestTextComponent);
 ReactEmptyComponent.injection.injectEmptyComponentFactory(function () {
   return new ReactTestEmptyComponent();
+});
+
+ReactComponentEnvironment.injection.injectEnvironment({
+  processChildrenUpdates: function () {},
+  replaceNodeWithMarkup: function () {}
 });
 
 var ReactTestRenderer = {

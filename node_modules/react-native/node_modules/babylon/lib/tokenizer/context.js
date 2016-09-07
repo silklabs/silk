@@ -1,26 +1,18 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+exports.__esModule = true;
 exports.types = exports.TokContext = undefined;
-
-var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
-
-var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
 var _types = require("./types");
 
 var _whitespace = require("../util/whitespace");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// The algorithm used to determine whether a regexp can appear at a
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } } // The algorithm used to determine whether a regexp can appear at a
 // given point in the program is loosely based on sweet.js' approach.
 // See https://github.com/mozilla/sweet.js/wiki/design
 
 var TokContext = exports.TokContext = function TokContext(token, isExpr, preserveSpace, override) {
-  (0, _classCallCheck3.default)(this, TokContext);
+  _classCallCheck(this, TokContext);
 
   this.token = token;
   this.isExpr = !!isExpr;

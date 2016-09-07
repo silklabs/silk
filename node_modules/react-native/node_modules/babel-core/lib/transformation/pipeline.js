@@ -75,8 +75,7 @@ var Pipeline = function () {
   };
 
   return Pipeline;
-}(); /* global BabelFileResult, BabelFileMetadata */
-
+}();
 
 exports.default = Pipeline;
 module.exports = exports["default"];

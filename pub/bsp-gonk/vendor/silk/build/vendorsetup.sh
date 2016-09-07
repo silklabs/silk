@@ -128,7 +128,12 @@ if [[ ! -f product/$SILK_PRODUCT/$SILK_PRODUCT.xml ]]; then
   return
 fi
 
-export TARGET_BUILD_VARIANT=userdebug
+
+if [[ "$NODE_ENV" = "production" ]]; then
+  export TARGET_BUILD_VARIANT=user
+else
+  export TARGET_BUILD_VARIANT=userdebug
+fi
 export TARGET_BUILD_TYPE=release
 source board/$SILK_BOARD/gonk.sh
 

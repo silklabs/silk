@@ -29,13 +29,15 @@ echo $TRAVIS_COMMIT > dist/$BUILD_NAME/last
 TARGET_FILES=dist/$BUILD_NAME/$TRAVIS_COMMIT/target_files.zip
 mv -v $ANDROID_PRODUCT_OUT/obj/PACKAGING/target_files_intermediates/*.zip $TARGET_FILES
 
+# Re-sign everything with our home-rolled dev keys, replacing the stock AOSP
+# keys.  This allows us to validate parts of the release signing workflow.
+../releng/gonk-signing/sign_target_files_zip.sh $TARGET_FILES
+
 # Replace image files in $ANDROID_PRODUCT_OUT (boot.img and system.img notably)
-# with the versions from target_files.zip, as the versions from target_files.zip
-# are used to generate incremental OTAs and they can be slightly different than
-# the ones in $ANDROID_PRODUCT_OUT, causing an incremental OTA to fail.
+# with the versions from target_files.zip for the benefit of
+# build_device_archive.sh
 #
-# TODO: Why are they different?!  Seems a little bad...
-#
+# TODO: Refactor build_device_archive.sh to consume target_files.zip directly?
 unzip $TARGET_FILES IMAGES/*
 mv -vf IMAGES/* $ANDROID_PRODUCT_OUT/
 

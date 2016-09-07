@@ -128,6 +128,8 @@ if [[ ! -f product/$SILK_PRODUCT/$SILK_PRODUCT.xml ]]; then
   return
 fi
 
+export TARGET_BUILD_VARIANT=userdebug
+export TARGET_BUILD_TYPE=release
 source board/$SILK_BOARD/gonk.sh
 
 # Traverses a manifest, outputting the name of all included manifests

@@ -215,7 +215,7 @@ const builds = {
       os: ['linux'],
       env: {
         global: [
-          'BOB_BUILD_COMMAND=bob/device-pandohub-silkhub.sh',
+          'BOB_BUILD_COMMAND=bob/device-pandohub-fuhuhub.sh',
           'BOB_BUILD_HOST=silksd.ddns.net',
         ],
       },

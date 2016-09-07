@@ -3,6 +3,9 @@
 # Updates the internal device OTA location with the latest builds
 #
 
+LOCAL_PATH=$(readlink -f $(dirname $0))
+KEYS_DIR=$(readlink -f $LOCAL_PATH/../gonk-signing/keys/)
+
 cd $(dirname $0)/../..
 source setup
 source pub/version/branch
@@ -88,6 +91,7 @@ for BUILD in $BUILDS; do
     build/tools/releasetools/ota_from_target_files \
       --block \
       --verify \
+      --package_key $KEYS_DIR/releasekey \
       latest_target_files.zip \
       ota_dist/${BUILD}-full.zip
   )
@@ -110,6 +114,7 @@ for BUILD in $BUILDS; do
       build/tools/releasetools/ota_from_target_files \
         --block \
         --verify \
+        --package_key $KEYS_DIR/releasekey \
         --incremental_from prev_target_files.zip \
         latest_target_files.zip \
         ota_dist/${BUILD}-${PREV_SHA1}-inc.zip
@@ -133,6 +138,7 @@ for BUILD in $BUILDS; do
       build/tools/releasetools/ota_from_target_files \
         --block \
         --verify \
+        --package_key $KEYS_DIR/releasekey \
         --incremental_from prevprev_target_files.zip \
         latest_target_files.zip \
         ota_dist/${BUILD}-${PREVPREV_SHA1}-inc.zip

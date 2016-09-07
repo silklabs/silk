@@ -13,8 +13,55 @@ mkdir -p $CCACHE_DISTDIR
 # Reclaim disk space for later
 rm -rf $CCACHE_DISTDIR $CCACHE_DIR
 
+# Upload build artifacts s3
 if [[ "$TRAVIS_PULL_REQUEST" = "false" ]] && [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
-  ./travis/deploy
+  set +x
+  source build/envsetup.sh
+  set -x
+  source ../pub/version/branch
+  test -n $BRANCH
+  test -n $SILK_BOARD
+  test -n $SILK_PRODUCT
+  test -n $TARGET_BUILD_VARIANT
+  test -n $TRAVIS_COMMIT
+
+  BUILD_NAME=$SILK_BOARD-$SILK_PRODUCT-$BRANCH-$TARGET_BUILD_VARIANT
+
+  mkdir -p dist/$BUILD_NAME/$TRAVIS_COMMIT
+  (
+    cd dist/$BUILD_NAME/$TRAVIS_COMMIT
+    wget https://s3-us-west-2.amazonaws.com/silk-device/$BRANCH/$BUILD_NAME/last || true
+    touch last
+  )
+  LAST_TRAVIS_COMMIT=$(cat dist/$BUILD_NAME/$TRAVIS_COMMIT/last)
+  if [[ "$LAST_TRAVIS_COMMIT" = "$TRAVIS_COMMIT" ]]; then
+    echo Gracias por nada
+    exit 0
+  fi
+
+  echo $TRAVIS_COMMIT > dist/$BUILD_NAME/last
+
+  TARGET_FILES=dist/$BUILD_NAME/$TRAVIS_COMMIT/target_files.zip
+  mv -v $ANDROID_PRODUCT_OUT/obj/PACKAGING/target_files_intermediates/*.zip $TARGET_FILES
+
+  # Re-sign everything with our home-rolled dev keys, replacing the stock AOSP
+  # keys.  This allows us to validate parts of the release signing workflow.
+  ../releng/gonk-signing/sign_target_files_zip.sh $TARGET_FILES
+
+  ./travis/build_device_archive.sh $TARGET_FILES $BUILD_NAME
+  mv $BUILD_NAME.tgz dist/$BUILD_NAME/$TRAVIS_COMMIT
+
+  # Save flashable archive in OLD location too
+  # TODO: Remove this eventually
+  ln dist/$BUILD_NAME/$TRAVIS_COMMIT/$BUILD_NAME.tgz dist/latest/
+
+  ../s3-artifacts/bin/upload \
+      silk-device \
+      $BRANCH \
+      $(readlink -f dist) \
+      --credentials temporary_artifacts \
+      --noindex \
+      --lossy \
 fi
 
 exit 0

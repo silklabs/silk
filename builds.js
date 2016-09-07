@@ -198,11 +198,9 @@ const builds = {
       os: ['linux'],
       env: {
         global: [
-          'BOB_BUILD_COMMAND=bob/device.sh',
+          'BOB_BUILD_COMMAND=bob/device-pandohub-silkhub.sh',
           'BOB_BUILD_HOST=silksd.ddns.net',
           'BOB_BUILD_HOST_PORT=888',
-          'BOARD=pandohub',
-          'PRODUCT=silkhub',
         ],
       },
     },
@@ -217,10 +215,8 @@ const builds = {
       os: ['linux'],
       env: {
         global: [
-          'BOB_BUILD_COMMAND=bob/device.sh',
+          'BOB_BUILD_COMMAND=bob/device-pandohub-silkhub.sh',
           'BOB_BUILD_HOST=silksd.ddns.net',
-          'BOARD=pandohub',
-          'PRODUCT=fuhuhub',
         ],
       },
     },

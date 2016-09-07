@@ -31,7 +31,7 @@ import {BufferReadable} from 'silk-streams';
 import type {VoiceActivityDetector} from 'silk-vad';
 import type {Outbox} from 'silk-outbox';
 
-const log = createLog('kws');
+const log = createLog('audio-dnn');
 
 const MODEL_PROTO = path.join(__dirname, '..', 'model', 'keyword.prototxt');
 const MODEL_BIN = path.join(__dirname, '..', 'model', 'aristotle.caffemodel');
@@ -90,7 +90,7 @@ export type OnAudioEvent = (label: string, when: number, confidence: number) => 
  * This class receives mic data stream and tries to detect a specific sound
  * using neural networks.
  */
-export default class KeywordSpotting extends EventEmitter {
+export default class AudioDnn extends EventEmitter {
   _netCaffe: caffe.Model;
   _spotting: bool = false;
   _predicting: bool = false;

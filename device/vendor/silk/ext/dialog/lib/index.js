@@ -16,7 +16,7 @@ import Input from 'silk-input';
 import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import config from 'silk-config';
 import VoiceActivityDetector from 'silk-vad';
-import KeywordSpotting from 'silk-kws';
+import AudioDnn from 'silk-audio-dnn';
 import say from 'silk-say';
 import fs from 'fs';
 import netstatus from 'silk-netstatus';
@@ -38,7 +38,7 @@ import type {
   Timeline,
 } from 'silk-exttest';
 import { Duplex } from 'stream';
-import type { OnAudioEvent } from 'silk-kws';
+import type { OnAudioEvent } from 'silk-audio-dnn';
 
 type MicData = {
    when: number;
@@ -111,7 +111,7 @@ class Dialog {
   _stream: ?Duplex;
   _activePlaySoundPromise: Promise<void> = Promise.resolve();
   _vad: VoiceActivityDetector;
-  _kws: KeywordSpotting;
+  _audioDnn: AudioDnn;
   _localTts: boolean;
   _speechStopWhen: number;
   _player: Player;
@@ -149,7 +149,7 @@ class Dialog {
     this._input = new Input();
 
     // Start mic-data handler right away so the mic data can be passed
-    // over to keyword spotting and voice activity modules
+    // over to audio dnn and voice activity modules
     camera.on('mic-data', this._onMicData);
 
     // If TTS on device is used then use silk-say service to generate TTS.
@@ -165,12 +165,12 @@ class Dialog {
 
     if (this._kwsEnabled) {
       this._vad = new VoiceActivityDetector();
-      this._kws = new KeywordSpotting(this._vad, (kwsTestMode ? true : false));
-      this._kws.start();
+      this._audioDnn = new AudioDnn(this._vad, (kwsTestMode ? true : false));
+      this._audioDnn.start();
 
       if (!kwsTestMode) {
-        this._kws.on('keyword', this._onKeywordEvent);
-        this._kws.on('cry', this._onCryEvent);
+        this._audioDnn.on('keyword', this._onKeywordEvent);
+        this._audioDnn.on('cry', this._onCryEvent);
 
         this._vad.on('speech_stop', this._onSpeechStop);
         this._vad.on('speech_timeout', this._onSpeechTimeout);
@@ -197,7 +197,7 @@ class Dialog {
   _onMicData: MicDataCallback = pkt => {
     // Feed mic-data to kws and vad modules
     if (this._kwsEnabled) {
-      this._kws.addMicData(pkt);
+      this._audioDnn.addMicData(pkt);
     }
 
     if (!this._stream) {
@@ -226,7 +226,7 @@ class Dialog {
     log.info(`Received key down event ${JSON.stringify(event)}`);
     if (!this._stream) {
       if (this._kwsEnabled) {
-        this._kws.stop();
+        this._audioDnn.stop();
       }
       api.metrics.add(new KeywordButtonPress());
       this._dialogEngine.startDialog();
@@ -438,7 +438,7 @@ class Dialog {
 
   _onKeywordEvent: OnAudioEvent = (label, when, confidence) => {
     api.metrics.add(new KeywordDetected());
-    this._kws.stop();
+    this._audioDnn.stop();
     this._dialogEngine.startDialog();
     this._playSound(KEYWORD_DETECTED_SOUND_FILE)
     .then(() => this._onSpeechStart());
@@ -486,7 +486,7 @@ class Dialog {
     this._dialogEngine.endDialog();
     this._emitEvent('finished_processing_speech');
     if (this._kwsEnabled) {
-      this._kws.start();
+      this._audioDnn.start();
     }
   }
 
@@ -555,9 +555,9 @@ class Dialog {
     this._dialogEngine.removeListener('speak-begin', this._onSpeakBegin);
     this._dialogEngine.removeListener('interpret-end', this._onInterpretEnd);
 
-    if (this._kws) {
-      this._kws.removeListener('keyword', this._onKeywordEvent);
-      this._kws.removeListener('cry', this._onCryEvent);
+    if (this._audioDnn) {
+      this._audioDnn.removeListener('keyword', this._onKeywordEvent);
+      this._audioDnn.removeListener('cry', this._onCryEvent);
     }
 
     if (this._vad) {

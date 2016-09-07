@@ -47,7 +47,7 @@ PRODUCT_PACKAGES += \
   silk-factory-reset \
   silk-gc1 \
   silk-gonk-version \
-  silk-kws \
+  silk-audio-dnn \
   silk-lifx \
   silk-modwatcher \
   silk-netstatus \

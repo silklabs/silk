@@ -9,7 +9,7 @@ fi
 echo "## Running unit tests ##"
 dirs=(core \
       ext/*/ \
-      ../propsilk/silk-kws/ \
+      ../propsilk/silk-audio-dnn/ \
       ../propsilk/silk-dialog-storage/ \
       )
 for dir in ${dirs[@]}; do

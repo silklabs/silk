@@ -13,6 +13,7 @@ OTA_URL_PREFIX=http://update.silklabs.com/ota-internal
 BUILDS="\
   mako-silk-$BRANCH-userdebug \
   kenzo-silk-$BRANCH-userdebug \
+  kenzo-silkhub-$BRANCH-user \
   kenzo-silkhub-$BRANCH-userdebug \
   pandohub-silkhub-$BRANCH-userdebug \
   kenzo-fuhuhub-$BRANCH-userdebug \

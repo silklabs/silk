@@ -71,9 +71,9 @@ export function genDecodeAndVerify<T>(
 export function genDecodeAndVerifyForUnknownSender<T>(
   args: DecodeArgsForUnknownSender
 ): Promise<ReceivedMessageForKnownRecipient<T>> {
-  const {input, allowedChannels, allowedSenders, recipientIdentity} = args;
+  const {input, allowedChannels, recipientIdentity} = args;
   return genDecodeAndVerifyCurrentVersion(
-    {input, allowedChannels, allowedSenders, recipientIdentity}
+    {input, allowedChannels, recipientIdentity}
   ).then((message) => {
     const {channel, recipientIdentity, senderIdentity, payload} = message;
     invariant(recipientIdentity);
@@ -84,9 +84,9 @@ export function genDecodeAndVerifyForUnknownSender<T>(
 export function genDecodeAndVerifyForUnknownRecipient<T>(
   args: DecodeArgsForUnknownRecipient
 ): Promise<ReceivedMessageForUnknownRecipient<T>> {
-  const {input, allowedChannels, allowedSenders, recipientIdentity} = args;
+  const {input, allowedChannels, allowedSenders} = args;
   return genDecodeAndVerifyCurrentVersion(
-    {input, allowedChannels, allowedSenders, recipientIdentity}
+    {input, allowedChannels, allowedSenders}
   ).then((message) => {
     const {channel, senderIdentity, payload} = message;
     return {channel, senderIdentity, payload};

@@ -21,7 +21,6 @@ export type EncodeArgsForKnownParties<T> = {|
  */
 export type EncodeForUnknownRecipientArgs<T> = {|
   senderIdentity: AccessToken;
-  recipientIdentity?: AccessToken;
   channel: string;
   payload: T;
 |};
@@ -45,7 +44,6 @@ export type DecodeArgsForKnownParties = {|
 export type DecodeArgsForUnknownSender = {|
   input: Buffer;
   allowedChannels: Array<string>;
-  allowedSenders?: Array<AccessToken>;
   recipientIdentity: AccessToken;
 |};
 
@@ -57,7 +55,6 @@ export type DecodeArgsForUnknownRecipient = {|
   input: Buffer;
   allowedChannels: Array<string>;
   allowedSenders: Array<AccessToken>;
-  recipientIdentity?: AccessToken;
 |};
 
 /**
@@ -68,8 +65,6 @@ export type DecodeArgsForUnknownRecipient = {|
 export type DecodeArgsForUnknownParties = {|
   input: Buffer;
   allowedChannels: Array<string>;
-  allowedSenders?: Array<AccessToken>;
-  recipientIdentity?: AccessToken;
 |};
 
 export type ReceivedMessageForKnownRecipient<T> = {|

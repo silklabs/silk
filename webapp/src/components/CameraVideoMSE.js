@@ -286,6 +286,13 @@ export default class CameraVideo extends React.Component {
     this._redrawCanvas();
   };
 
+  _onActiveCameraStateChanged = () => {
+    const online = this.state.camera.online;
+    if (this.state.cameraOnline !== online) {
+      this._setStateAsync({cameraOnline: online});
+    }
+  }
+
   _onCamerasStateChanged = state => {
     const oldCamera = this.state.camera;
     const newCamera = state.cameras[this.deviceId];
@@ -299,10 +306,12 @@ export default class CameraVideo extends React.Component {
 
     if (oldCamera) {
       oldCamera.removeListener('videoClip', this._onNextVideoClip);
+      oldCamera.removeListener('stateChanged', this._onActiveCameraStateChanged);
     }
 
     if (newCamera) {
       newCamera.addListener('videoClip', this._onNextVideoClip);
+      newCamera.addListener('stateChanged', this._onActiveCameraStateChanged);
     }
 
     this._setStateAsync({

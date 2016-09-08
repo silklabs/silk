@@ -55,3 +55,11 @@ cp IMAGES/{boot,recovery}.img BOOTABLE_IMAGES/
 # Put signed images back into TARGET_FILES_ZIP
 zip $TARGET_FILES_ZIP {BOOTABLE_IMAGES,IMAGES}/*
 
+# Sneak oem_keystore.h into the RADIO/ area to ensure that it gets picked up in
+# external releases for inclusion into the ODM's bootloader
+rm -rf RADIO
+mkdir RADIO
+cp $KEYS_DIR/oem_keystore.h RADIO
+zip $TARGET_FILES_ZIP RADIO/*
+rm -rf RADIO
+

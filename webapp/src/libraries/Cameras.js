@@ -407,11 +407,15 @@ class Camera extends EventEmitter {
     if (config.deviceMic.bytesPerSample === 2
         && config.deviceMic.encoding === 'signed-integer'
         && config.deviceMic.endian === 'little') {
-      msg.samples = new Int16Array(msg.samples);
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(msg.samples);
+      reader.onloadend = () => {
+        msg.samples = new Int16Array(reader.result);
+        this.emit('micData', msg);
+      };
     } else {
       throw new Error(`Unhandled deviceMic configuration: ${config.deviceMic}`);
     }
-    this.emit('micData', msg);
   };
 
   _updateObjectStream() {

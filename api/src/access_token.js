@@ -55,13 +55,13 @@ export default class AccessToken {
     return !!this.pub && this.pub.length === 2 * silkCrypto.ED25519_KEY_BYTES;
   }
 
-  genSign(message: string): Promise<string> {
+  genSign(message: string | Buffer): Promise<string> {
     const hash = crypto.createHash('sha256').update(message).digest('hex');
     invariant(this.priv, 'no private key');
     return silkCrypto.genEd25519Sign(hash, this.priv);
   }
 
-  genVerify(message: string, signatureHex: string): Promise<boolean> {
+  genVerify(message: string | Buffer, signatureHex: string): Promise<boolean> {
     return silkCrypto.genEd25519Verify(
       crypto.createHash('sha256').update(message).digest('hex'),
       signatureHex,

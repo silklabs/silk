@@ -8,7 +8,7 @@ import type {AccessToken} from 'silk-api';
  * Encode and sign a payload, intended for a particular recipient, to be sent
  * over a particular channel.
  */
-export type EncodeArgs<T> = {|
+export type EncodeArgsForKnownParties<T> = {|
   senderIdentity: AccessToken;
   recipientIdentity: AccessToken;
   channel: string;
@@ -30,10 +30,22 @@ export type EncodeForUnknownRecipientArgs<T> = {|
  * Decode an incoming message and verify signature, channel, sender,
  * and intended recipient.
  */
-export type DecodeArgs = {|
+export type DecodeArgsForKnownParties = {|
   input: Buffer;
   allowedChannels: Array<string>;
   allowedSenders: Array<AccessToken>;
+  recipientIdentity: AccessToken;
+|};
+
+/**
+ * Decode an incoming message that is meant for a specific recipient
+ * but comes from an unknown sender, and verify signature, channel,
+ * and recipient.
+ */
+export type DecodeArgsForUnknownSender = {|
+  input: Buffer;
+  allowedChannels: Array<string>;
+  allowedSenders?: Array<AccessToken>;
   recipientIdentity: AccessToken;
 |};
 
@@ -60,8 +72,38 @@ export type DecodeArgsForUnknownParties = {|
   recipientIdentity?: AccessToken;
 |};
 
-export type ReceivedMessage<T> = {|
+export type ReceivedMessageForKnownRecipient<T> = {|
   channel: string;
   senderIdentity: AccessToken;
+  recipientIdentity: AccessToken;
+  payload: T;
+|};
+
+export type ReceivedMessageForUnknownRecipient<T> = {|
+  channel: string;
+  senderIdentity: AccessToken;
+  payload: T;
+|};
+
+// Internal types for public API <--> specific version implementation
+
+export type EncodeArgsInternal<T> = {|
+  senderIdentity: AccessToken;
+  recipientIdentity?: AccessToken;
+  channel: string;
+  payload: T;
+|};
+
+export type DecodeArgsInternal = {|
+  input: Buffer;
+  allowedChannels: Array<string>;
+  allowedSenders?: Array<AccessToken>;
+  recipientIdentity?: AccessToken;
+|};
+
+export type ReceivedMessageInternal<T> = {|
+  channel: string;
+  senderIdentity: AccessToken;
+  recipientIdentity: ?AccessToken;
   payload: T;
 |};

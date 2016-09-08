@@ -29,6 +29,30 @@ suite('onion', () => {
 
     assert.equal(decoded.payload, 'the best payload');
     assert.equal(decoded.senderIdentity.pub, senderIdentity.pub);
+    assert.equal(decoded.recipientIdentity.pub, recipientIdentity.pub);
+  });
+
+  test(`simple roundtrip where recipient is known, but sender isn't`, async () => {
+    const [senderIdentity, recipientIdentity] = await Promise.all([
+      AccessToken.gen(),
+      AccessToken.gen(),
+    ]);
+    const encoded = await onion.genEncode({
+      senderIdentity,
+      recipientIdentity,
+      channel: 'unit_test',
+      payload: 'the best payload',
+    });
+
+    const decoded = await onion.genDecodeAndVerifyForUnknownSender({
+      input: encoded,
+      allowedChannels: ['unit_test'],
+      recipientIdentity,
+    });
+
+    assert.equal(decoded.payload, 'the best payload');
+    assert.equal(decoded.senderIdentity.pub, senderIdentity.pub);
+    assert.equal(decoded.recipientIdentity.pub, recipientIdentity.pub);
   });
 
   test(`simple roundtrip where sender and recipient don't know each other`, async () => {

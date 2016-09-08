@@ -24,6 +24,7 @@ import { Colors, LayoutStyles } from '../CommonStyles';
 import NetworkWarning from '../NetworkWarning';
 
 import type {GlobalProps} from '../Root';
+import type {Credentials} from './AuthForm';
 
 export default class NotLoggedIn extends AsyncComponent {
 
@@ -171,12 +172,14 @@ export default class NotLoggedIn extends AsyncComponent {
     );
   }
 
-  _signUp = (credentials) => {
+  _signUp(credentials: Credentials) {
     this.props.dispatch(actions.auth.createAccount({
       userAgent: 'app',
       ...credentials,
     }));
-  };
+  }
+
+  _signUp: ((credentials: Credentials) => void) = this._signUp.bind(this);
 
   _renderSignIn() {
     return (
@@ -216,18 +219,23 @@ export default class NotLoggedIn extends AsyncComponent {
     );
   }
 
-  _signIn = async (credentials) => {
-    this.props.dispatch(actions.auth.signIn({
+  _signIn(credentials: Credentials) {
+    this.props.dispatch(actions.auth.signInWithPassword({
       userAgent: 'app',
       ...credentials,
     }));
-  };
+  }
 
-  _forgotPassword = async (credentials) => {
+  _signIn: ((credentials: Credentials) => void) = this._signIn.bind(this);
+
+  _forgotPassword(credentials: Credentials) {
     this.props.dispatch(actions.auth.resetPassword({
       ...credentials,
     }));
-  };
+  }
+
+  _forgotPassword: ((credentials: Credentials) => void)
+    = this._forgotPassword.bind(this);
 
   _renderControls() {
     switch (this.state.controls) {

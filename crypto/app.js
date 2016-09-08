@@ -69,6 +69,7 @@ export function genEd25519Verify(
 }
 
 export const ED25519_KEY_BYTES = SLKCrypto.crypto_sign_ed25519_PUBLICKEYBYTES;
+export const ED25519_SIG_BYTES = SLKCrypto.crypto_sign_ed25519_BYTES;
 
 
 /**

@@ -87,6 +87,7 @@ export function genEd25519Verify(
 }
 
 export const ED25519_KEY_BYTES = ed25519.encodingLength;
+export const ED25519_SIG_BYTES = 2 * ed25519.encodingLength;
 
 
 /**

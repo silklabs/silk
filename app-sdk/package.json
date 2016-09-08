@@ -15,6 +15,7 @@
     "silk-utils": "/utils"
   },
   "dependencies": {
+    "joi": "6.10.1",
     "lodash.merge": "3.3.2",
     "react": "15.2.0",
     "react-native": "0.30.0-rc.0"

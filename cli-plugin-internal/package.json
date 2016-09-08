@@ -21,10 +21,11 @@
     "cli": "/pub/cli",
     "silk-sdk": "/pub/sdk",
     "eslint-config-silk": "/pub/eslint-config",
-    "silk-log": "/pub/log",
     "silk-api": "/api",
     "silk-babeldeps": "/babeldeps",
-    "silk-device-core": "/device/vendor/silk/core"
+    "silk-device-core": "/device/vendor/silk/core",
+    "silk-log": "/pub/log",
+    "silk-onion": "/onion"
   },
   "devDependencies": {
     "eslint": "2.13.1",

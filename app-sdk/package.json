@@ -7,6 +7,7 @@
     "silk-core-version": "/pub/version",
     "silk-crypto": "/crypto",
     "silk-log": "/pub/log",
+    "silk-onion": "/onion",
     "silk-react-native-blobs": "/pub/react-native-blobs",
     "silk-react-native-transformer": "/react-native-transformer",
     "silk-redux": "/redux",

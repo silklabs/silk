@@ -1,18 +1,19 @@
 {
   "symlinkDependencies": {
     "api-schema": "/api-schema",
+    "eslint-config-silk": "/pub/eslint-config",
+    "silk-api": "/api",
     "silk-async-utils": "/async-utils",
     "silk-azure-storage": "/azure-storage",
-    "eslint-config-silk": "/pub/eslint-config",
-    "silk-jsonwebtoken": "/jsonwebtoken",
-    "silk-api": "/api",
+    "silk-babel-run": "/pub/babel-run",
     "silk-babeldeps": "/babeldeps",
     "silk-core-version": "/pub/version",
+    "silk-jsonwebtoken": "/jsonwebtoken",
     "silk-log": "/pub/log",
+    "silk-onion": "/onion",
     "silk-raygun": "/raygun",
     "silk-streams": "/streams",
-    "silk-utils": "/utils",
-    "silk-babel-run": "/pub/babel-run"
+    "silk-utils": "/utils"
   },
   "dependencies": {
     "aliyun-oss": "1.1.0",

@@ -53,6 +53,7 @@ if [[ "$TRAVIS_PULL_REQUEST" = "false" ]] && [[ "$TRAVIS_OS_NAME" = "linux" ]]; 
 
   # Save flashable archive in OLD location too
   # TODO: Remove this eventually
+  mkdir -p dist/latest/
   ln dist/$BUILD_NAME/$TRAVIS_COMMIT/$BUILD_NAME.tgz dist/latest/
 
   ../s3-artifacts/bin/upload \

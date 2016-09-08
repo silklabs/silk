@@ -8,6 +8,9 @@ echo Mirroring the Fuhu PandoHub dialog-script implementation into github
 echo
 set -ex
 
+echo -e "Host git.matteldigitalkitchen.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+ssh -T git_mattel@git.matteldigitalkitchen.com
+
 pwd
 source ../pub/version/branch
 

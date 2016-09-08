@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "immutable": "3.8.1",
-    "joi": "6.10.1",
     "lodash.merge": "3.3.2",
     "moment": "2.13.0",
     "react": "15.2.0",

@@ -46,27 +46,32 @@ class StyledTextInput extends React.Component {
   }
 }
 
+export type Credentials = {
+  email: string;
+  password: string;
+};
+
 type AuthFormProps = GlobalProps & {
   password: boolean;
   verifyPassword: boolean;
+  primaryLabel: string;
+  secondaryLabel: string;
+  textLinkLabel?: ?string;
+  onPrimary: (credentials: Credentials) => void;
+  onSecondary: () => void;
+  onTextLink?: ?Function;
+  onChangeTextInputFocus: Function;
+};
+
+type AuthFormState = {
+  email: string;
+  password: string;
+  passwordVerification: string;
 };
 
 export default class AuthForm extends AsyncComponent {
 
-  static propTypes = {
-    style: View.propTypes.style,
-    password: React.PropTypes.bool.isRequired,
-    verifyPassword: React.PropTypes.bool.isRequired,
-    primaryLabel: React.PropTypes.string.isRequired,
-    secondaryLabel: React.PropTypes.string.isRequired,
-    textLinkLabel: React.PropTypes.string,
-    onPrimary: React.PropTypes.func.isRequired,
-    onSecondary: React.PropTypes.func.isRequired,
-    onTextLink: React.PropTypes.func,
-    onChangeTextInputFocus: React.PropTypes.func.isRequired,
-  };
-
-  state = {
+  state: AuthFormState = {
     email: '',
     password: '',
     passwordVerification: '',

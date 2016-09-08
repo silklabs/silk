@@ -191,7 +191,7 @@ const builds = {
     branches: ['master', 'next', 'release'],
   },
 
-  'bob-device-pandohub-silkhub': {
+  'bob-device-pandohub-silkhub-userdebug': {
     title: '',
     travis_yml: 'bob/travis.yml',
     travis_config: {
@@ -208,7 +208,7 @@ const builds = {
     branches: ['master', 'next', 'release'],
   },
 
-  'bob-device-pandohub-fuhuhub': {
+  'bob-device-pandohub-fuhuhub-userdebug': {
     title: '',
     travis_yml: 'bob/travis.yml',
     travis_config: {
@@ -454,7 +454,7 @@ const builds = {
   },
 
   // Nightly device builds
-  'device-qemu-silk': nightlyBuild('device', {
+  'device-qemu-silk-userdebug': nightlyBuild('device', {
     branches: ['master', 'next'],
     title: 'qemu silk',
     travis_config: {
@@ -488,7 +488,7 @@ const builds = {
     },
   }),
   */
-  'device-mako-silk': nightlyBuild('device', {
+  'device-mako-silk-userdebug': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
     title: 'mako silk',
     travis_config: {
@@ -500,7 +500,7 @@ const builds = {
       },
     },
   }),
-  'device-kenzo-silk': nightlyBuild('device', {
+  'device-kenzo-silk-userdebug': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
     title: 'kenzo silk',
     travis_config: {
@@ -537,9 +537,9 @@ const builds = {
       },
     },
   }),
-  'device-kenzo-fuhuhub': nightlyBuild('device', {
+  'device-kenzo-fuhuhub-userdebug': nightlyBuild('device', {
     branches: ['master', 'next', 'release'],
-    title: 'kenzo fuhuhub',
+    title: 'kenzo fuhuhub userdebug',
     travis_config: {
       env: {
         global: [

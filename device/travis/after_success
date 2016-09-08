@@ -62,6 +62,7 @@ if [[ "$TRAVIS_PULL_REQUEST" = "false" ]] && [[ "$TRAVIS_OS_NAME" = "linux" ]]; 
       --credentials temporary_artifacts \
       --noindex \
       --lossy \
+
 fi
 
 exit 0

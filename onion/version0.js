@@ -11,9 +11,9 @@ import {AccessToken} from 'silk-api';
 import * as silkCrypto from 'silk-crypto';
 
 import type {
-  EncodeForUnknownRecipientArgs,
-  DecodeArgsForUnknownParties,
-  ReceivedMessage,
+  EncodeArgsInternal,
+  DecodeArgsInternal,
+  ReceivedMessageInternal,
 } from './args';
 
 /**
@@ -73,9 +73,7 @@ const OnionSchema = Joi.object().keys({
 
 // API
 
-export function genEncodeForUnknownRecipient<T>(
-  args: EncodeForUnknownRecipientArgs<T>
-): Promise<Buffer> {
+export function genEncode<T>(args: EncodeArgsInternal<T>): Promise<Buffer> {
   const {senderIdentity, recipientIdentity} = args;
 
   const message: SignedMessage<T> = {
@@ -99,13 +97,13 @@ export function genEncodeForUnknownRecipient<T>(
   });
 }
 
-export function genDecodeAndVerifyForUnknownParties<T>(
-  args: DecodeArgsForUnknownParties
-): Promise<ReceivedMessage<T>> {
-  const {allowedSenders, allowedChannels, recipientIdentity} = args;
+export function genDecodeAndVerify<T>(
+  args: DecodeArgsInternal
+): Promise<ReceivedMessageInternal<T>> {
+  const {input, allowedSenders, allowedChannels, recipientIdentity} = args;
 
-  invariant(Buffer.isBuffer(args.input));
-  const onion = msgpack.decode(args.input);
+  invariant(Buffer.isBuffer(input));
+  const onion = msgpack.decode(input);
   Joi.assert(onion, OnionSchema);
 
   const senderIdentity = AccessToken.importPub(onion.i.toString('hex'));
@@ -133,6 +131,7 @@ export function genDecodeAndVerifyForUnknownParties<T>(
       if (message.r) {
         recipientVerifyingKeyHex = message.r.toString('hex');
       }
+
       if (recipientIdentity) {
         invariant(recipientIdentity.pub === recipientVerifyingKeyHex,
           `Invalid recipient. Expected ${recipientIdentity.pub} instead of ` +
@@ -142,6 +141,7 @@ export function genDecodeAndVerifyForUnknownParties<T>(
 
       return {
         senderIdentity,
+        recipientIdentity,
         channel: message.c,
         payload: message.p,
       };

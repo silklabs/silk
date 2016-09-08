@@ -25,19 +25,26 @@ import invariant from 'assert';
 import * as current from './version0';
 
 import type {
-  EncodeArgs,
+  EncodeArgsForKnownParties,
   EncodeForUnknownRecipientArgs,
-  DecodeArgs,
+  DecodeArgsForKnownParties,
+  DecodeArgsForUnknownSender,
   DecodeArgsForUnknownRecipient,
   DecodeArgsForUnknownParties,
-  ReceivedMessage,
+  ReceivedMessageForKnownRecipient,
+  ReceivedMessageForUnknownRecipient,
+  EncodeArgsInternal,
+  DecodeArgsInternal,
+  ReceivedMessageInternal,
 } from './args';
 
 const CURRENT_VERSION = 0;
 
-export function genEncode<T>(args: EncodeArgs<T>): Promise<Buffer> {
+export function genEncode<T>(
+  args: EncodeArgsForKnownParties<T>
+): Promise<Buffer> {
   const {senderIdentity, recipientIdentity, channel, payload} = args;
-  return genEncodeForUnknownRecipient(
+  return genEncodeCurrentVersion(
     {senderIdentity, recipientIdentity, channel, payload}
   );
 }
@@ -45,7 +52,62 @@ export function genEncode<T>(args: EncodeArgs<T>): Promise<Buffer> {
 export function genEncodeForUnknownRecipient<T>(
   args: EncodeForUnknownRecipientArgs<T>
 ): Promise<Buffer> {
-  return current.genEncodeForUnknownRecipient(args).then((onion) => {
+  return genEncodeCurrentVersion(args);
+}
+
+export function genDecodeAndVerify<T>(
+  args: DecodeArgsForKnownParties
+): Promise<ReceivedMessageForKnownRecipient<T>> {
+  const {input, allowedChannels, allowedSenders, recipientIdentity} = args;
+  return genDecodeAndVerifyCurrentVersion(
+    {input, allowedChannels, allowedSenders, recipientIdentity}
+  ).then((message) => {
+    const {channel, recipientIdentity, senderIdentity, payload} = message;
+    invariant(recipientIdentity);
+    return {channel, recipientIdentity, senderIdentity, payload};
+  });
+}
+
+export function genDecodeAndVerifyForUnknownSender<T>(
+  args: DecodeArgsForUnknownSender
+): Promise<ReceivedMessageForKnownRecipient<T>> {
+  const {input, allowedChannels, allowedSenders, recipientIdentity} = args;
+  return genDecodeAndVerifyCurrentVersion(
+    {input, allowedChannels, allowedSenders, recipientIdentity}
+  ).then((message) => {
+    const {channel, recipientIdentity, senderIdentity, payload} = message;
+    invariant(recipientIdentity);
+    return {channel, recipientIdentity, senderIdentity, payload};
+  });
+}
+
+export function genDecodeAndVerifyForUnknownRecipient<T>(
+  args: DecodeArgsForUnknownRecipient
+): Promise<ReceivedMessageForUnknownRecipient<T>> {
+  const {input, allowedChannels, allowedSenders, recipientIdentity} = args;
+  return genDecodeAndVerifyCurrentVersion(
+    {input, allowedChannels, allowedSenders, recipientIdentity}
+  ).then((message) => {
+    const {channel, senderIdentity, payload} = message;
+    return {channel, senderIdentity, payload};
+  });
+}
+
+export function genDecodeAndVerifyForUnknownParties<T>(
+  args: DecodeArgsForUnknownParties
+): Promise<ReceivedMessageForUnknownRecipient<T>> {
+  return genDecodeAndVerifyCurrentVersion(args).then((message) => {
+    const {channel, senderIdentity, payload} = message;
+    return {channel, senderIdentity, payload};
+  });
+}
+
+// Helpers:
+
+function genEncodeCurrentVersion<T>(
+  args: EncodeArgsInternal<T>
+): Promise<Buffer> {
+  return current.genEncode(args).then((onion) => {
     return Buffer.concat(
       [new Buffer([CURRENT_VERSION]), onion],
       onion.length + 1
@@ -53,30 +115,12 @@ export function genEncodeForUnknownRecipient<T>(
   });
 }
 
-export function genDecodeAndVerify<T>(
-  args: DecodeArgs
-): Promise<ReceivedMessage<T>> {
-  const {input, allowedChannels, allowedSenders, recipientIdentity} = args;
-  return genDecodeAndVerifyForUnknownParties(
-    {input, allowedChannels, allowedSenders, recipientIdentity}
-  );
-}
-
-export function genDecodeAndVerifyForUnknownRecipient<T>(
-  args: DecodeArgsForUnknownRecipient
-): Promise<ReceivedMessage<T>> {
-  const {input, allowedChannels, allowedSenders, recipientIdentity} = args;
-  return genDecodeAndVerifyForUnknownParties(
-    {input, allowedChannels, allowedSenders, recipientIdentity}
-  );
-}
-
-export function genDecodeAndVerifyForUnknownParties<T>(
-  args: DecodeArgsForUnknownParties
-): Promise<ReceivedMessage<T>> {
+function genDecodeAndVerifyCurrentVersion<T>(
+  args: DecodeArgsInternal
+): Promise<ReceivedMessageInternal<T>> {
   invariant(args.input.length >= 1);
   invariant(args.input[0] === CURRENT_VERSION);
-  return current.genDecodeAndVerifyForUnknownParties({
+  return current.genDecodeAndVerify({
     ...args,
     input: args.input.slice(1),
   });

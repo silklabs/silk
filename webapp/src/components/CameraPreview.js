@@ -290,18 +290,34 @@ export default class CameraPreview extends React.Component {
 
     context.textAlign = 'end';
     context.textBaseline = 'top';
-    if (camera.online) {
+
+    let text;
+    switch (camera.state) {
+    case 'online':
       // Timestamp
       if (this._previewTimestamp) {
         const dateString = this._previewTimestamp.toLocaleDateString();
         const timeString = this._previewTimestamp.toLocaleTimeString();
 
-        context.fillText(`${dateString} ${timeString}`, canvasWidth - 5, 5);
+        text = `${dateString} ${timeString}`;
+      } else {
+        text = 'No preview available';
       }
-    } else {
+      break;
+    case 'offline':
       // Offline indicator.
-      context.fillText('Offline since ' + camera.lastSeenAt.toTimeString(), canvasWidth - 5, 5);
+      text = 'Offline since ' + camera.lastSeenAt.toTimeString();
+      break;
+    case 'connecting':
+      text = 'Connecting...';
+      break;
+    case 'unauthorized':
+      text = 'Unauthorized';
+      break;
+    default:
+      invariant(false, `Unknown camera state: ${camera.state}`);
     }
+    context.fillText(text, canvasWidth - 5, 5);
 
     // Logo
     if (this._logoImgLoaded) {

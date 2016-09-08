@@ -12,13 +12,15 @@ import PreviewQueue from './PreviewQueue';
 
 const log = createLog('Cameras');
 
+type CameraState = 'offline' | 'connecting' | 'unauthorized' | 'online';
+
 class Camera extends EventEmitter {
   id = '';
   logoImage = null;
   logs = {};
   name = '';
   objects = null;
-  online = false;
+  state: CameraState = 'offline';
   previewImage = null;
   previewSize = {
     width: 320,
@@ -53,12 +55,19 @@ class Camera extends EventEmitter {
   _connect() {
     invariant(this._peer === null);
 
+    this.state = 'connecting';
+    this._updateStreams();
+
     const devicePeer = call(Api, this.id);
 
     devicePeer.connect()
     .catch(err => {
       log.warn(`Peer connect failed for ${this.id}`);
       this._onPeerClose();
+      if (err.message === 'UNAUTHORIZED') {
+        this.state = 'unauthorized';
+        this._updateStreams();
+      }
     });
     devicePeer.on('connect', this._onPeerConnect);
     devicePeer.on('close', this._onPeerClose);
@@ -75,7 +84,7 @@ class Camera extends EventEmitter {
       clearTimeout(this._retryConnectTimeout);
       this._retryConnectTimeout = null;
     }
-    this.online = false;
+    this.state = 'offline';
     this._updateStreams();
   }
 
@@ -85,13 +94,13 @@ class Camera extends EventEmitter {
 
   _onPeerConnect = () => {
     log.info(`Peer connected, updating webrtc status for ${this.id}`);
-    this.online = true;
+    this.state = 'online';
     this._updateStreams();
   }
 
   _onPeerClose = () => {
     this._peer = null;
-    this.online = false;
+    this.state = 'offline';
     log.info(`Peer closed, updating webrtc status for ${this.id}`);
     this._updateStreams();
 
@@ -116,13 +125,17 @@ class Camera extends EventEmitter {
     this.emit('stateChanged');
   }
 
+  get online(): bool {
+    return this.state === 'online';
+  }
+
   get diagOnline(): bool {
     return this._diagChannel && this._diagChannel.open;
   }
 
   _updateDiagStream() {
     const enabled = this._logging;
-    if (enabled && this.online) {
+    if (enabled && this.state === 'online') {
       if (this._peer !== null && this._diagChannel === null) {
         log.info('Creating diag channel');
         this._diagChannel = this._peer.createChannel(
@@ -259,7 +272,7 @@ class Camera extends EventEmitter {
 
   _updatePreviewImageStream() {
     const enabled = this._requestedRooms.previewImage;
-    if (enabled && this.online) {
+    if (enabled && this.state === 'online') {
       if (this._peer !== null && this._previewChannel === null) {
         log.info('Creating preview channel');
         this._previewChannel = this._peer.createChannel(
@@ -320,7 +333,7 @@ class Camera extends EventEmitter {
 
   _updateVideoClipStream() {
     const enabled = this._requestedRooms.videoClip;
-    if (enabled && this.online) {
+    if (enabled && this.state === 'online') {
       if (this._peer !== null && this._videoChannel === null) {
         log.info('Creating video channel');
         this._videoChannel = this._peer.createChannel(
@@ -362,7 +375,7 @@ class Camera extends EventEmitter {
 
   _updateMicStream() {
     const enabled = this._requestedRooms.micData;
-    if (enabled && this.online) {
+    if (enabled && this.state === 'online') {
       if (this._peer !== null && this._micChannel === null) {
         this._micChannel = this._peer.createChannel('mic',
           {
@@ -403,7 +416,7 @@ class Camera extends EventEmitter {
 
   _updateObjectStream() {
     const enabled = this._requestedRooms.objects;
-    if (enabled && this.online) {
+    if (enabled && this.state === 'online') {
       if (this._peer !== null && this._objectsChannel === null) {
         this.objects = new ObjectCollector();
         this._objectsChannel = this._peer.createChannel(

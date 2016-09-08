@@ -251,8 +251,8 @@ $(LOCAL_INSTALLED_MODULE_MAIN): $(LOCAL_BUILT_MODULE_MAIN_PATH)
     mkdir -p $(LOCAL_INSTALLED_MODULE)/build/Release && \
     SRC=$(LOCAL_BUILT_MODULE)/$$binding && \
     DST=$(LOCAL_INSTALLED_MODULE)/build/Release/`basename $$binding` && \
-    $(PRIVATE_STRIP) --strip-all $$SRC -o $$DST && \
-    $(and $(TARGET_STRIP_EXTRA), $(PRIVATE_OBJCOPY) --add-gnu-debuglink=$$SRC $$DST ; ) \
+    $(PRIVATE_STRIP) --strip-all $$SRC -o $$DST \
+    $(and $(TARGET_STRIP_EXTRA), && $(PRIVATE_OBJCOPY) --add-gnu-debuglink=$$SRC $$DST) ; \
   done
 	@echo "Install: $(LOCAL_INSTALLED_MODULE)"
 	$(hide) mkdir -p $(LOCAL_INSTALLED_MODULE)

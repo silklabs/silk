@@ -12,31 +12,26 @@ import * as https from 'https';
 import invariant from 'assert';
 import uuid from 'uuid';
 import * as util from 'silk-sysutils';
-import {PosKeywordUploadOperation, getOutboxInstance} from 'silk-outbox';
-import {BufferReadable} from 'silk-streams';
-import path from 'path';
-import fs from 'mz/fs';
 import api from 'silk-device-api';
 import {Metric, MetricTypes} from 'silk-api';
 
 import config from 'silk-config';
 import type { ConfigDeviceMic } from 'silk-config';
 import type { SpeechOptions } from 'silk-dialog-script';
-import type {Outbox} from 'silk-outbox';
 
 const audioParams = config.deviceMic;
 
 import type {ClientRequest} from 'https';
-export type UtteranceType = 'keyword_pos' | 'unknown';
 
-type Callback = (error: ?Error, text?: string) => void;
+export type SttCallback = (error: ?Error, text?: string, confidence?: number,
+    utterance: ?Buffer) => void;
 
 const log = createLog('stt');
 let options: SpeechOptions;
 
 class SttRequest extends Metric {
   static NAME = 'stt_request';
-  static DESC = 'Measures time for a StT request';
+  static DESC = 'Measures time for a STT request';
 
   constructor(statusCode: number,
               accessTokenMs: number,
@@ -90,27 +85,17 @@ export function configureSpeechToText(speechOptions: SpeechOptions) {
  */
 export default class SpeechToText {
 
-  _cb: ?Callback;
+  _cb: ?SttCallback;
   _req: ?ClientRequest = null;
   _pendingFinish: boolean = false;
   _bufferedSamples: Array<Buffer> = [];
-  _saveEnabled: boolean;
-  _utteranceType: UtteranceType;
-  _wavDataBuffer: Buffer;
+  _enableUtterance: boolean;
+  _wavDataBuffer: ?Buffer = null;
   _requestStartUptime: number;
-  _outbox: Outbox;
-
-  constructor() {
-    this._outbox = getOutboxInstance();
-  }
 
   _callCallback(error: ?Error, text?: string, confidence?: number): void {
     if (this._cb) {
-      this._cb(error, text, confidence);
-    }
-
-    if (!error && this._saveEnabled) {
-      this._saveUtterance();
+      this._cb(error, text, confidence, this._wavDataBuffer);
     }
 
     this._req = null;
@@ -118,8 +103,7 @@ export default class SpeechToText {
     this._cb = null;
   }
 
-  async startRequest(cb: Callback, save: boolean = false,
-      type: UtteranceType = 'unknown'): Promise<void> {
+  async startRequest(cb: SttCallback, enableUtterance: boolean = false): Promise<void> {
     log.debug(`startRequest`);
     if (this._cb) {
       cb(new Error(`Another request is being processed; plese try again`));
@@ -127,9 +111,10 @@ export default class SpeechToText {
     }
 
     this._cb = cb;
-    this._saveEnabled = save;
-    this._utteranceType = type;
-    this._wavDataBuffer = new Buffer(0);
+    this._enableUtterance = enableUtterance;
+    if (this._enableUtterance) {
+      this._wavDataBuffer = new Buffer(0);
+    }
 
     if (!options) {
       this._callCallback(new Error(`Speech to text not configured?`));
@@ -263,7 +248,7 @@ export default class SpeechToText {
 
   write(pcmData: Buffer): void {
     invariant(!this._pendingFinish);
-    if (this._saveEnabled) {
+    if (this._enableUtterance && this._wavDataBuffer) {
       this._wavDataBuffer = Buffer.concat([this._wavDataBuffer, pcmData]);
     }
 
@@ -290,29 +275,5 @@ export default class SpeechToText {
     log.info(`Finishing request`);
     this._requestStartUptime = util.uptime();
     req.end();
-  }
-
-  /**
-   * Save utterance based on utterance type
-   */
-  _saveUtterance(): void {
-    const hdr = generateWavHeader(this._wavDataBuffer.length, Object.assign({},
-        audioParams));
-    let wavData = Buffer.concat([hdr, this._wavDataBuffer]);
-
-    if (this._utteranceType === 'keyword_pos') {
-      let op = new PosKeywordUploadOperation({
-        size: wavData.length,
-        metadata: {
-          metaType: PosKeywordUploadOperation.META_TYPE,
-          startUTC: Date.now(),
-        },
-      });
-      this._outbox.addToQueue(op, new BufferReadable(wavData));
-    } else {
-      // Unknown type of utterance; save it in a file
-      fs.writeFile(path.join('data', 'media', `speech_${Date.now()}.wav`), wavData)
-      .catch(err => log.error(err));
-    }
   }
 }

@@ -123,7 +123,7 @@ export function createMicEventChannel(dialogEngine: DialogEngine): Object {
      */
     const intentListeners: Set<Function> = new Set();
 
-    const textListener: ((text: string) => void) = (text) => {
+    const textListener: ((text: string, utterance: Buffer) => void) = (text, utterance) => {
       log.debug(`'${textEventName}' event`, text);
 
       const intentListener: (
@@ -138,6 +138,7 @@ export function createMicEventChannel(dialogEngine: DialogEngine): Object {
           text,
           intent,
           entities,
+          utterance,
         });
       };
 

@@ -110,6 +110,18 @@ export default class DialogEngine extends EventEmitter {
     return Promise.resolve();
   }
 
+  enableUtterance(enable: boolean): Object {
+    return {
+      'bytesPerSample': 2,
+      'encoding': 'signed-integer',
+      'endian': 'little',
+      'numChannels': 1,
+      'sampleRate': 16000,
+      'sampleMin': -32768,
+      'sampleMax': 32767,
+    };
+  }
+
   async _mockSpeak(text: string, finished: boolean): Promise<void> {
     log.info(`Mocking speak`, text, finished);
     await sleep(0);
@@ -131,7 +143,7 @@ export default class DialogEngine extends EventEmitter {
     this.emit(`interpret-begin`);
     await sleep(50);
 
-    this.emit(`text`, text);
+    this.emit(`text`, text, new Buffer(0));
     const intention: Intention = await this._getIntent(text);
 
     this.emit(`intent`, intention.intent, intention.entities);

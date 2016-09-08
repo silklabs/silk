@@ -110,7 +110,16 @@ export default class DialogEngine extends EventEmitter {
     return Promise.resolve();
   }
 
-  set enableUtterance(get: boolean) {
+  enableUtterance(enable: boolean): Object {
+    return {
+      'bytesPerSample': 2,
+      'encoding': 'signed-integer',
+      'endian': 'little',
+      'numChannels': 1,
+      'sampleRate': 16000,
+      'sampleMin': -32768,
+      'sampleMax': 32767,
+    };
   }
 
   async _mockSpeak(text: string, finished: boolean): Promise<void> {

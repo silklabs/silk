@@ -6,8 +6,7 @@ import createLog from 'silk-log/device';
 import {call, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import type {Environment} from '../environment';
-import type {Entities} from 'silk-dialog-engine';
-import config from 'silk-config';
+import type {Entities, ConfigDeviceMic} from 'silk-dialog-engine';
 import wav from 'wav';
 import {PosKeywordUploadOperation, getOutboxInstance} from 'silk-outbox';
 import {BufferReadable} from 'silk-streams';
@@ -23,7 +22,7 @@ const done = ` You are all done`;
 /**
  * Save utterance on the cloud
  */
-function saveUtterance(utterance: Buffer): Promise<void> {
+function saveUtterance(utterance: Buffer, micConfig: ConfigDeviceMic): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!utterance) {
       reject(new Error(`Invalid utterance received`));
@@ -31,9 +30,9 @@ function saveUtterance(utterance: Buffer): Promise<void> {
     }
     let wavData = new Buffer(0);
     let writer = new wav.Writer({
-      sampleRate: config.deviceMic.sampleRate,
-      channels: config.deviceMic.numChannels,
-      bitDepth: config.deviceMic.bytesPerSample * 8,
+      sampleRate: micConfig.sampleRate,
+      channels: micConfig.numChannels,
+      bitDepth: micConfig.bytesPerSample * 8,
     });
     writer.on('data', samples => {
       wavData = Buffer.concat([wavData, samples]);
@@ -68,7 +67,7 @@ function* queryKeyword(
   count: number,
 ): Generator<Object, ?number, any> {
   const {dialogEngine, micChannel, speak} = environment;
-  dialogEngine.enableUtterance = true;
+  let micConfig = dialogEngine.enableUtterance(true);
 
   for (let i = 0; i < count; i++) {
     const event = yield take(micChannel);
@@ -83,7 +82,7 @@ function* queryKeyword(
     let text = `Count ${i + 1} of ${count}.`;
     if (i < (count - 1)) {
       try {
-        yield call(saveUtterance, utterance);
+        yield call(saveUtterance, utterance, micConfig);
       } catch (err) {
         yield call(speak, `Sorry, I am unable to save the utterance. Canceling.`, `idle`);
         return;
@@ -93,7 +92,7 @@ function* queryKeyword(
       yield call(speak, text + done, `idle`); // All done
     }
   }
-  dialogEngine.enableUtterance = false;
+  dialogEngine.enableUtterance(false);
 }
 
 export function* recordKeyword(

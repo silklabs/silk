@@ -23,7 +23,9 @@ import SpeechToText, {configureSpeechToText} from 'silk-stt';
 import TextToSpeech, {configureTextToSpeech} from 'silk-tts';
 import TextToIntention from './textToIntention';
 import { getboolprop } from 'silk-sysutils';
+import config from 'silk-config';
 
+import type { ConfigDeviceMic } from 'silk-config';
 import type { SttCallback } from 'silk-stt';
 import type {SpeechOptions} from 'silk-dialog-script';
 import type {
@@ -57,6 +59,8 @@ export type DialogScriptOptions = {
  * @private
  */
 export type DialogState = 'waiting' | 'idle';
+
+export type { ConfigDeviceMic };
 
 const log = createLog('dialog-engine');
 
@@ -185,13 +189,11 @@ export class DialogEngine extends EventEmitter {
     }
   }
 
-  set enableUtterance(enable: boolean) {
+  enableUtterance(enable: boolean): ?ConfigDeviceMic {
     // Only enable getting utterance in debug builds
-    let debug = getboolprop('ro.debuggable', false);
-    if (!debug) {
-      return;
-    }
+    enable = enable && getboolprop('ro.debuggable', false);
     this._enableUtterance = enable;
+    return enable ? config.deviceMic : null;
   }
 
   /**

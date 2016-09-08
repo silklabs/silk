@@ -21,12 +21,11 @@ import ClosingPassThrough from 'silk-streams/src/closing_passthrough';
 import {Readable} from 'stream';
 import SpeechToText, {configureSpeechToText} from 'silk-stt';
 import TextToSpeech, {configureTextToSpeech} from 'silk-tts';
-
 import TextToIntention from './textToIntention';
+import { getboolprop } from 'silk-sysutils';
 
+import type { SttCallback } from 'silk-stt';
 import type {SpeechOptions} from 'silk-dialog-script';
-import type {UtteranceType} from 'silk-stt';
-
 import type {
   Intention,
   LuisOptions,
@@ -102,6 +101,7 @@ export class DialogEngine extends EventEmitter {
    *
    * @event text
    * @param {string} text Text that was interpreted.
+   * @param {Buffer} utterance Raw pcm buffer used for conversion to text
    * @memberof silk-dialog-engine.DialogEngine
    * @instance
    */
@@ -149,8 +149,7 @@ export class DialogEngine extends EventEmitter {
   _uiMode: DialogUiMode;
   _options: DialogEngineOptions;
   _scriptOptions: DialogScriptOptions;
-  _saveUtterance: boolean = false;
-  _utteranceType: UtteranceType;
+  _enableUtterance: boolean = false;
   _dialogStarted: boolean = false;
   _dialogPromise: Promise<void> = Promise.resolve();
   _dialogPromiseResolve: (value: Promise<void> | void) => void;
@@ -186,12 +185,13 @@ export class DialogEngine extends EventEmitter {
     }
   }
 
-  set saveUtterance(save: boolean) {
-    this._saveUtterance = save;
-  }
-
-  set utteranceType(type: UtteranceType) {
-    this._utteranceType = type;
+  set enableUtterance(enable: boolean) {
+    // Only enable getting utterance in debug builds
+    let debug = getboolprop('ro.debuggable', false);
+    if (!debug) {
+      return;
+    }
+    this._enableUtterance = enable;
   }
 
   /**
@@ -342,9 +342,11 @@ export class DialogEngine extends EventEmitter {
     let dataListener: ?Function = null;
     let endListener: ?Function = null;
 
-    const finish: ((error: ?Error, text?: string) => void) = (
+    const finish: SttCallback = (
       error,
       text = ``,
+      confidence,
+      utterance
     ) => {
       invariant(errorListener);
       invariant(dataListener);
@@ -360,7 +362,7 @@ export class DialogEngine extends EventEmitter {
         return;
       }
 
-      this.emit(`text`, text);
+      this.emit(`text`, text, utterance);
       if (!text) {
         log.debug(`No speech detected`);
         process.nextTick(() => {
@@ -400,7 +402,7 @@ export class DialogEngine extends EventEmitter {
     stream.addListener(`error`, errorListener);
     stream.addListener(`data`, dataListener);
     stream.addListener(`end`, endListener);
-    stt.startRequest(finish, this._saveUtterance, this._utteranceType);
+    stt.startRequest(finish, this._enableUtterance);
   }
 
   notifySoundEvent(type: string, when: number): void {

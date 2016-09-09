@@ -131,6 +131,16 @@ function initRegisteredDevices(store: Store<*>) {
         rtcTimers.set(deviceId, timer);
       }
 
+      if (oldDevice.ble.unauthorized &&
+          newDevice.ble.unauthorized === false &&
+          newDevice.rtc.unauthorized) {
+        // We just paired with this device over BLE. This means we
+        // should now be able to connect to it via WebRTC. And we can
+        // disconnect from BLE.
+        clearTimeout(rtcTimers.get(deviceId));
+        store.dispatch(rtc.signal(deviceId));
+      }
+
       // Newly established connection, make sure we update state when
       // it's torn down.
       const oldPeer = oldDevice.rtc.peer;
@@ -216,6 +226,7 @@ function initBLE(store: Store<*>) {
       return;
     }
 
+    // Stop scanning for all devices when we're logging out.
     invariant(!state.auth.isAuthenticated);
 
     if (oldBeaconUuid) {

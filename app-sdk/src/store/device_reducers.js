@@ -37,6 +37,7 @@ export type RegisteredDevice = {
   ble: {
     connectionRequested: boolean,
     session: ?DeviceSession,
+    unauthorized: ?boolean,
   },
 };
 
@@ -84,6 +85,7 @@ const registeredDeviceTemplate = {
   ble: {
     connectionRequested: false,
     session: null,
+    unauthorized: null,
   },
 };
 
@@ -293,6 +295,7 @@ function DEVICE_BLE_CONNECTED(
     ble: {
       ...device.ble,
       session,
+      unauthorized: session.isUnauthorized,
     },
   });
   return {
@@ -323,6 +326,7 @@ function DEVICE_BLE_DISCONNECTED(
         ble: {
           ...device.ble,
           session: null,
+          unauthorized: null,
         },
       });
     }
@@ -520,14 +524,33 @@ function DEVICE_CONFIG_REGISTERED(
   const session = action.payload;
   invariant(session.isRegistered);
   invariant(session.deviceId);
-  const {configuring, registered, unconfigured} = state;
+  const {configuring, unconfigured} = state;
+  let {registered} = state;
   if (!configuring || configuring.socketId !== session.socketId) {
     invariant(registered);
     const device = registered.get(session.deviceId);
     invariant(device);
     invariant(device.ble.session === session);
     invariant(session.authenticated);
-    return state;
+
+    if (!device.ble.unauthorized) {
+      return state;
+    }
+
+    // We just paired with a device that we were previously not
+    // authorized with.
+    registered = new Map(registered);
+    registered.set(device.deviceId, {
+      ...device,
+      ble: {
+        ...device.ble,
+        unauthorized: false,
+      },
+    });
+    return {
+      ...state,
+      registered,
+    };
   }
   invariant(unconfigured.has(session.socketId));
   return {

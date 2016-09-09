@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import version from 'silk-core-version';
 import raygun from 'silk-raygun/node';
 if (version.official) {

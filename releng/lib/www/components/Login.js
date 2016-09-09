@@ -1,3 +1,6 @@
+/**
+ * @noflow
+ */
 
 import React from 'react';
 import { Alert, ButtonInput, Panel, Input, Row, Col } from 'react-bootstrap';

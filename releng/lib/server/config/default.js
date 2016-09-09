@@ -2,6 +2,8 @@
  * Base configuration for the project.
  *
  * Every other configuration profile inherits from this (and can override it).
+ *
+ * @flow
  */
 
 // Provide default connection string...

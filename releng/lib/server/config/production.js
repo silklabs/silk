@@ -1,5 +1,7 @@
 /**
  * Production configuration profile.
+ *
+ * @flow
  */
 module.exports = {
 

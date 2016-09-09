@@ -1,5 +1,7 @@
 /**
  * Configuration profile used in tests.
+ *
+ * @flow
  */
 
 module.exports = {

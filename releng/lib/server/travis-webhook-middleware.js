@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import bodyParser from 'body-parser';
 import crypto from 'crypto';
 import createLog from 'silk-log';

@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 
 import makeLog from 'silk-log';
 let log = makeLog('github-event');
@@ -6,7 +9,7 @@ import * as githubPRAutomation from '../github-pr-automation.js';
 import * as githubTravisIntegration from '../github-travis-integration.js';
 import { attemptUplift } from '../github-uplifter.js';
 
-export function pullrequest(json) {
+export function pullrequest(json: Object) {
   let owner = json.pull_request.base.repo.owner.login;
   let repo = json.pull_request.base.repo.name;
   let pr = json.number;
@@ -38,7 +41,7 @@ export function pullrequest(json) {
   );
 }
 
-export function push(json) {
+export function push(json: Object) {
   let owner = json.repository.owner.name;
   let repo = json.repository.name;
   if (owner === 'silklabs' && repo === 'silk-core') {
@@ -47,7 +50,7 @@ export function push(json) {
   }
 }
 
-export function status(json) {
+export function status(json: Object) {
   let owner = json.repository.owner.login;
   let repo = json.repository.name;
 

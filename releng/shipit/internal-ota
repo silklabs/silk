@@ -4,9 +4,10 @@
 #
 
 LOCAL_PATH=$(readlink -f $(dirname $0))
+SILK_CORE=$(readlink -f $LOCAL_PATH/../..)
 KEYS_DIR=$(readlink -f $LOCAL_PATH/../gonk-signing/keys/)
 
-cd $(dirname $0)/../..
+cd $SILK_CORE
 source setup
 source pub/version/branch
 echo BRANCH: $BRANCH

@@ -1,8 +1,6 @@
-/* global suite */
-/* global setup */
-/* global suiteSetup */
-/* global suiteTeardown */
-/* global test */
+/**
+ * @noflow
+ */
 
 import assert from 'assert';
 import {buffers, channel} from 'redux-saga';

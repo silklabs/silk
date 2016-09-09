@@ -1,4 +1,6 @@
-/* global suite, suiteSetup, suiteTeardown, setup, test */
+/**
+ * @flow
+ */
 
 import invariant from 'assert';
 
@@ -46,7 +48,7 @@ suite(`userScript`, () => {
 
       dialogEngine = mockDialogEngine.default();
       invariant(dialogEngine);
-      done();
+      done && done();
     }, 500);
   });
 
@@ -58,7 +60,7 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
-    done();
+    done && done();
   });
 
   test(`Unknown intent multiple times`, async (done) => {
@@ -73,7 +75,7 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
-    done();
+    done && done();
   });
 
   test(`Register baby`, async (done) => {
@@ -93,7 +95,7 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
-    done();
+    done && done();
   });
 
   test(`Register baby bad name`, async (done) => {
@@ -121,7 +123,7 @@ suite(`userScript`, () => {
         nextState: `idle`,
       },
     ]);
-    done();
+    done && done();
   });
 
 });

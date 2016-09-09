@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import createLog from 'silk-log';
 const log = createLog(`dialog-script-textToIntention`);
 

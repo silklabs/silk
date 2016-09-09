@@ -1,4 +1,6 @@
-/* global suite, suiteSetup, suiteTeardown, setup, test */
+/**
+ * @flow
+ */
 
 import assert from 'assert';
 import {UserScriptTester} from './utils';
@@ -22,7 +24,7 @@ suite(`userScript`, () => {
   setup(done => {
     setTimeout(() => {
       tester.setup();
-      done();
+      done && done();
     }, 500);
   });
 
@@ -34,7 +36,7 @@ suite(`userScript`, () => {
 
     await tester.listenCheck(`^Timer 0 has expired`, `idle`);
     clearTimeout(timer);
-    done();
+    done && done();
   });
 
   test(`Timer test - start 10 second timer`, async (done) => {
@@ -45,7 +47,7 @@ suite(`userScript`, () => {
 
     await tester.listenCheck(`^Timer 1 has expired`, `idle`);
     clearTimeout(timer);
-    done();
+    done && done();
   });
 
   test(`Timer test - start/cancel 1 day`, async (done) => {
@@ -53,7 +55,7 @@ suite(`userScript`, () => {
     await tester.listenCheck(`^Ok, I've started a timer`, `idle`);
     tester.speak(`Cancel the timer for 1 day`);
     await tester.listenCheck(`^Ok, I've canceled that timer`, `idle`);
-    done();
+    done && done();
   });
 
 });

@@ -1,7 +1,6 @@
-/* global suite */
-/* global test */
-/* global suiteSetup */
-/* global suiteTeardown */
+/**
+ * @noflow
+ */
 
 import assert from 'assert';
 import EventEmitter from 'events';

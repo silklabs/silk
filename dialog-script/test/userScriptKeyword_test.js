@@ -1,4 +1,6 @@
-/* global suite, suiteSetup, suiteTeardown, setup, test */
+/**
+ * @flow
+ */
 
 import {UserScriptTester} from './utils';
 
@@ -18,7 +20,7 @@ suite(`userScript`, () => {
   setup(done => {
     setTimeout(() => {
       tester.setup();
-      done();
+      done && done();
     }, 500);
   });
 
@@ -33,7 +35,7 @@ suite(`userScript`, () => {
         await tester.listenCheck(`^Count ${count + 1}`, `idle`);
       }
     }
-    done();
+    done && done();
   });
 
   test(`Keyword test count spelled out`, async (done) => {
@@ -47,7 +49,7 @@ suite(`userScript`, () => {
         await tester.listenCheck(`^Count ${count + 1}`, `idle`);
       }
     }
-    done();
+    done && done();
   });
 
   test(`Keyword test invalid count`, async (done) => {
@@ -56,7 +58,7 @@ suite(`userScript`, () => {
     await tester.listenCheck(`^Start speaking the keyword`, `waiting`);
     tester.speak(`cancel`);
     await tester.listenCheck(`^Canceled recording keywords`, `idle`);
-    done();
+    done && done();
   });
 
 });

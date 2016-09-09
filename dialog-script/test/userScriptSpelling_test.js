@@ -1,4 +1,6 @@
-/* global suite, suiteSetup, suiteTeardown, setup, test */
+/**
+ * @flow
+ */
 
 import {
   UserScriptTester,
@@ -33,7 +35,7 @@ suite(`userScript`, () => {
   setup(done => {
     setTimeout(() => {
       tester.setup();
-      done();
+      done && done();
     }, 500);
   });
 
@@ -46,6 +48,6 @@ suite(`userScript`, () => {
     }
     spell = encodeRate(spell, 'slow');
     await tester.listenCheck(`^${spell}`, `idle`);
-    done();
+    done && done();
   });
 });

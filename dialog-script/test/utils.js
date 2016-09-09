@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import assert from 'assert';
 import eventToPromise from 'event-to-promise';
 import mock from 'mock-require';

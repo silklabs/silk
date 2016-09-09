@@ -1,4 +1,6 @@
-/* global suite, suiteSetup, suiteTeardown, setup, test */
+/**
+ * @flow
+ */
 
 import assert from 'assert';
 import {UserScriptTester} from './utils';
@@ -22,7 +24,7 @@ suite(`userScript`, () => {
   setup(done => {
     setTimeout(() => {
       tester.setup();
-      done();
+      done && done();
     }, 500);
   });
 
@@ -36,92 +38,92 @@ suite(`userScript`, () => {
 
     assert.equal(finished, `idle`);
     assert.equal(text, `Sorry, I'm not understanding you.`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test time 1 - What time is it?`, async (done) => {
     tester.speak(`What time is it`);
     await tester.listenCheck(`^The time is`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test no stock`, async (done) => {
     tester.speak(`What's the stock price?`);
     await tester.listenCheck(
         `Sorry, I'm not sure which stock you are asking about`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test Apple stock`, async (done) => {
     tester.speak(`What's the stock price of Apple?`);
     await tester.listenCheck(`Apple`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test Twitter stock`, async (done) => {
     tester.speak(`What's the stock price of Twitter?`);
     await tester.listenCheck(`Twitter`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test Microsoft Stock`, async (done) => {
     tester.speak(`What is the stock price of Microsoft?`);
     await tester.listenCheck(`Microsoft`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test Qualcomm stock`, async (done) => {
     tester.speak(`How's Qualcomm stock doing?`);
     await tester.listenCheck(`Qualcomm`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test Alphabet stock`, async (done) => {
     tester.speak(`How is Alphabet stock doing?`);
     await tester.listenCheck(`Alphabet`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test Amazon Stock`, async (done) => {
     tester.speak(`How's Amazon stock doing today?`);
     await tester.listenCheck(`Amazon`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test Mattel Stock`, async (done) => {
     tester.speak(`How is Mattel stock doing today?`);
     await tester.listenCheck(`Mattel`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test sonos - play`, async (done) => {
     tester.speak(`Play sonos`);
     await tester.listenCheck(`Playing`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test sonos - pause`, async (done) => {
     tester.speak(`Pause sonos`);
     await tester.listenCheck(`Pausing`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test music - current song`, async (done) => {
     tester.speak(`What's the current song playing`);
     await tester.listenCheck(`The current song is the title by the artist`,
         `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test light - turn on`, async (done) => {
     tester.speak(`Turn on lights`);
     await tester.listenCheck(`Turning on`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test light - turn off`, async (done) => {
     tester.speak(`Turn off lights`);
     await tester.listenCheck(`Turning off`, `idle`);
-    done();
+    done && done();
   });
 });

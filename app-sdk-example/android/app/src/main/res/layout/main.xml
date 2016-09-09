@@ -2,9 +2,7 @@
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingTop="16dp"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
+        android:paddingTop="5dp"
         android:clickable="true"
         android:focusableInTouchMode="true">
 
@@ -22,7 +20,7 @@
             android:layout_toRightOf="@+id/networkStatusTextView"
             android:singleLine="true"
             android:layout_alignParentRight="true"
-            android:paddingLeft="10dp" />
+            android:paddingLeft="5dp" />
 
         <EditText
             android:layout_width="wrap_content"
@@ -55,35 +53,35 @@
             android:layout_below="@id/passwordText"
             android:layout_alignParentLeft="true" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/authStatusResultView"
-            android:layout_below="@id/passwordText"
-            android:layout_toRightOf="@+id/loginButton"
-            android:singleLine="true"
-            android:layout_alignParentRight="true"
-            android:paddingLeft="10dp"
-            android:layout_marginTop="10dp" />
-
         <com.google.android.gms.common.SignInButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/googlelogin"
             android:id="@+id/googleLoginButton"
-            android:layout_below="@+id/loginButton"
-            android:layout_alignParentLeft="true" />
+            android:layout_toRightOf="@+id/loginButton"
+            android:layout_below="@+id/passwordText" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/authStatusResultView"
+            android:layout_below="@id/passwordText"
+            android:layout_toRightOf="@+id/googleLoginButton"
+            android:singleLine="true"
+            android:layout_alignParentRight="true"
+            android:paddingLeft="5dp"
+            android:layout_marginTop="2dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/googleAuthStatusResultView"
-            android:layout_below="@id/loginButton"
             android:layout_toRightOf="@+id/googleLoginButton"
             android:singleLine="true"
             android:layout_alignParentRight="true"
-            android:paddingLeft="10dp"
-            android:layout_marginTop="10dp" />
+            android:paddingLeft="5dp"
+            android:layout_below="@+id/authStatusResultView"
+            android:layout_marginTop="2dp" />
 
         <Button
             android:layout_width="wrap_content"
@@ -103,7 +101,7 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="true"
             android:spinnerMode="dialog"
-            android:paddingTop="16dp"/>
+            android:paddingTop="5dp"/>
 
         <Button
             android:layout_width="wrap_content"
@@ -130,14 +128,23 @@
             android:layout_below="@+id/deviceList"
             android:layout_toRightOf="@+id/sendEchoMessageButton" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/remove_device"
+            android:id="@+id/removeButton"
+            android:layout_below="@+id/configureButton"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/device_status"
             android:id="@+id/deviceStatusLabel"
-            android:layout_below="@+id/sendEchoMessageButton"
+            android:layout_below="@+id/removeButton"
             android:singleLine="true"
-            android:paddingTop="16dp" />
+            android:paddingTop="5dp" />
 
         <ScrollView
             android:id="@+id/deviceStatusScrollView"

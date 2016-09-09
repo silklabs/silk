@@ -70,6 +70,7 @@ public class MainActivity extends FragmentActivity implements
   private TextView deviceStatusTextView = null;
   private GoogleApiClient mGoogleApiClient = null;
   private Button authorizeButton = null;
+  private Button removeButton = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -123,6 +124,11 @@ public class MainActivity extends FragmentActivity implements
             case "DEVICE_CONFIG_SUCCESS": {
               int deviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
+              final Device device = getDeviceByDeviceConfigId(deviceConfigId);
+              if (device == null) {
+                return;
+              }
+              device.waitingForResponse = false;
               onSuccess("Successfully configured (" + deviceConfigId + ")");
               break;
             }
@@ -130,24 +136,22 @@ public class MainActivity extends FragmentActivity implements
             case "DEVICE_CONFIG_FATAL_ERROR": {
               int deviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
+              final Device device = getDeviceByDeviceConfigId(deviceConfigId);
+              if (device == null) {
+                return;
+              }
+
+              device.waitingForResponse = false;
               String configError = (String) message.get("configError");
               onError("Failed to configure (" + deviceConfigId + "): " + configError);
               break;
             }
             case "DEVICE_CONFIG_WIFI_NETWORKS": {
-              if (deviceListSpinner.getSelectedItem() == null) {
-                return;
-              }
-
-              Device device = (Device) deviceListSpinner.getSelectedItem();
-              Integer deviceConfigId =  device.deviceConfigId;
-
               Integer wifiDeviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
               Log.d(TAG, "Received wifi network message for " + wifiDeviceConfigId);
 
-              if (deviceConfigId == null ||
-                  !deviceConfigId.equals(wifiDeviceConfigId)) {
+              if (getDeviceByDeviceConfigId(wifiDeviceConfigId) == null) {
                 return;
               }
 
@@ -155,16 +159,10 @@ public class MainActivity extends FragmentActivity implements
               break;
             }
             case "DEVICE_WIFI_NETWORKS": {
-              final Device device =
-                (Device) deviceListSpinner.getSelectedItem();
-              if (device == null) {
-                return;
-              }
-
               String deviceId = ((String) message.get("deviceId"));
               Log.d(TAG, "Received wifi network message for " + deviceId);
 
-              if (!device.deviceId.equals(deviceId)) {
+              if (getDeviceByDeviceId(deviceId) == null) {
                 return;
               }
 
@@ -174,7 +172,7 @@ public class MainActivity extends FragmentActivity implements
             case "DEVICE_MESSAGE": {
               Map<String, Object> payload = (Map<String, Object>) message.get("payload");
               String command = (String) payload.get("command");
-              if (command.equals("echo")) {
+              if ("echo".equals(command)) {
                 onSuccess(payload.get("payload").toString());
               }
               break;
@@ -185,6 +183,29 @@ public class MainActivity extends FragmentActivity implements
             }
             case "DEVICE_UPDATE_STATUS": {
               onDeviceUpdateStatus(message);
+              break;
+            }
+            case "DEVICE_REMOVE_SUCCESS": {
+              String deviceId = (String) message.get("deviceId");
+              final Device device = getDeviceByDeviceId(deviceId);
+              if (device == null) {
+                return;
+              }
+
+              device.waitingForResponse = false;
+              onSuccess("Successfully removed (" + deviceId.substring(0, 5) + "...)");
+              break;
+            }
+            case "DEVICE_REMOVE_ERROR": {
+              String deviceId = (String) message.get("deviceId");
+              final Device device = getDeviceByDeviceId(deviceId);
+              if (device == null) {
+                return;
+              }
+
+              device.waitingForResponse = false;
+              String error = (String) message.get("error");
+              onError("Failed to remove (" + deviceId.substring(0, 5) + "...): " + error);
               break;
             }
             default:
@@ -218,15 +239,16 @@ public class MainActivity extends FragmentActivity implements
     private void onAuthStatusChanged(final String authStatus) {
       runOnUiThread(new Runnable() {
         public void run() {
-          if (authStatus.equals("AUTHENTICATED")) {
+          if ("AUTHENTICATED".equals(authStatus)) {
             logoutButton.setEnabled(true);
           } else {
             logoutButton.setEnabled(false);
           }
 
-          if (authStatus.equals("NOT_AUTHENTICATED")) {
+          if ("NOT_AUTHENTICATED".equals(authStatus)) {
             silkLoginButton.setEnabled(true);
             googleLoginButton.setEnabled(true);
+            disableUI();
           } else {
             silkLoginButton.setEnabled(false);
             googleLoginButton.setEnabled(false);
@@ -265,7 +287,7 @@ public class MainActivity extends FragmentActivity implements
             myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
             myDevice.rtcConnectionError = (String) device.get("rtcConnectionError");
 
-            if (myDevice.deviceConfigStatus.equals("CONFIGURED")) {
+            if ("CONFIGURED".equals(myDevice.deviceConfigStatus)) {
               myDevice.accountDeviceNumber =
                 ((Double) device.get("accountDeviceNumber")).intValue();
             } else {
@@ -295,8 +317,8 @@ public class MainActivity extends FragmentActivity implements
 
           currentDevice = (Device) deviceListSpinner.getSelectedItem();
           if (currentDevice != null &&
-              currentDevice.deviceConfigStatus.equals("CONFIGURED") &&
-              currentDevice.bleConnectionStatus.equals("CONNECTED")) {
+            "CONFIGURED".equals(currentDevice.deviceConfigStatus) &&
+            "CONNECTED".equals(currentDevice.bleConnectionStatus)) {
             if (wifiDialog.isShowing()) {
               Map<String, Object> message = new HashMap<>();
               message.put("type", "DEVICE_WIFI_LIST");
@@ -344,10 +366,10 @@ public class MainActivity extends FragmentActivity implements
             device.bleConnectionError = (String) message.get("bleConnectionError");
             device.rtcConnectionStatus = (String) message.get("rtcConnectionStatus");
             device.rtcConnectionError = (String) message.get("rtcConnectionError");
-            if (device.rtcConnectionStatus.equals("CONNECTED")) {
+            if ("CONNECTED".equals(device.rtcConnectionStatus)) {
               device.paired = true;
             }
-            if (device.deviceConfigStatus.equals("CONFIGURED")) {
+            if ("CONFIGURED".equals(device.deviceConfigStatus)) {
               device.accountDeviceNumber =
                 ((Double) message.get("accountDeviceNumber")).intValue();
             } else {
@@ -361,8 +383,8 @@ public class MainActivity extends FragmentActivity implements
             if (device == currentDevice) {
               updateUI(device);
 
-              if (currentDevice.bleConnectionStatus.equals("CONNECTED")) {
-                if (currentDevice.deviceConfigStatus.equals("CONFIGURED")) {
+              if ("CONNECTED".equals(currentDevice.bleConnectionStatus)) {
+                if ("CONFIGURED".equals(currentDevice.deviceConfigStatus)) {
                   if (wifiDialog.isShowing()) {
                     Map<String, Object> message = new HashMap<>();
                     message.put("type", "DEVICE_WIFI_LIST");
@@ -419,11 +441,17 @@ public class MainActivity extends FragmentActivity implements
             if (device.isPairing && !device.paired && nowPaired) {
               onSuccess("Successfully authorized (" + deviceId.substring(0, 5) + "...)");
               device.isPairing = false;
+              device.waitingForResponse = false;
             }
             device.paired = nowPaired;
 
             device.wifiConnectionStatus = (String) message.get("wifiStatus");
             device.wifiSSID = (String) message.get("wifiSSID");
+            if (device.waitingForResponse && "CONNECTED".equals(device.wifiConnectionStatus)) {
+              // Device successfully reconfigured
+              device.waitingForResponse = false;
+            }
+
             Double signalStrength = (Double) message.get("wifiLevel");
             if (signalStrength != null) {
               device.wifiSignalStrength = signalStrength.intValue();
@@ -435,7 +463,7 @@ public class MainActivity extends FragmentActivity implements
             device.serverConnectionError = (String) message.get("serverError");
 
             if (device == currentDevice) {
-              deviceStatusTextView.setText(device.status());
+              updateUI(device);
             }
 
             break;
@@ -456,7 +484,7 @@ public class MainActivity extends FragmentActivity implements
           for (int index = 0; index < count; index++) {
             Device device = (Device) adapter.getItem(index);
 
-            if (!deviceId.equals(device.deviceId)) {
+            if ((deviceId == null) || !deviceId.equals(device.deviceId)) {
               continue;
             }
 
@@ -588,6 +616,10 @@ public class MainActivity extends FragmentActivity implements
     authorizeButton.setOnClickListener(authorizeButtonListener);
     authorizeButton.setEnabled(false);
 
+    removeButton = (Button) findViewById(R.id.removeButton);
+    removeButton.setOnClickListener(removeButtonListener);
+    removeButton.setEnabled(false);
+
     deviceStatusTextView = (TextView) findViewById(R.id.deviceStatusTextView);
 
     createWifiDialog();
@@ -620,7 +652,9 @@ public class MainActivity extends FragmentActivity implements
         final String password = passwordEditText.getText().toString();
         final Device device = (Device) deviceListSpinner.getSelectedItem();
 
-        if (device.deviceConfigStatus.equals("CONFIGURED")) {
+        device.waitingForResponse = true;
+        disableUI();
+        if ("CONFIGURED".equals(device.deviceConfigStatus)) {
           message = new HashMap<>();
           message.put("type", "DEVICE_WIFI_SET");
           message.put("deviceId", device.deviceId);
@@ -644,7 +678,7 @@ public class MainActivity extends FragmentActivity implements
       public void onClick(DialogInterface dialog, int which) {
         Device device = (Device) deviceListSpinner.getSelectedItem();
 
-        if (device.deviceConfigStatus.equals("CONFIGURED")) {
+        if ("CONFIGURED".equals(device.deviceConfigStatus)) {
           Map<String, Object> message = new HashMap<>();
           message.put("type", "DEVICE_BLE_DISCONNECT");
           message.put("deviceId", device.deviceId);
@@ -750,6 +784,7 @@ public class MainActivity extends FragmentActivity implements
    */
   private OnClickListener silkLogoutButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
+      logoutButton.setEnabled(false);
       Map<String, Object> message = new HashMap<>();
       message.put("type", "ACCOUNT_LOGOUT");
       mSilkService.postMessage(message);
@@ -787,7 +822,7 @@ public class MainActivity extends FragmentActivity implements
   private OnClickListener echoButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       Device device = (Device) deviceListSpinner.getSelectedItem();
-      if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
+      if ("UNCONFIGURED".equals(device.deviceConfigStatus)) {
         onError("Selected device is not configured. Please configure it first");
         return;
       }
@@ -810,7 +845,7 @@ public class MainActivity extends FragmentActivity implements
   private OnClickListener configureButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       Device device = (Device) deviceListSpinner.getSelectedItem();
-      if (device.deviceConfigStatus.equals("CONFIGURED")) {
+      if ("CONFIGURED".equals(device.deviceConfigStatus)) {
         // Attempt device reconfiguration
         Map<String, Object> message = new HashMap<>();
         message.put("type", "DEVICE_BLE_CONNECT");
@@ -838,8 +873,28 @@ public class MainActivity extends FragmentActivity implements
       // Attempt device authorization
       Device device = (Device) deviceListSpinner.getSelectedItem();
       device.isPairing = true;
+      device.waitingForResponse = true;
+      disableUI();
+
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_BLE_CONNECT");
+      message.put("deviceId", device.deviceId);
+      mSilkService.postMessage(message);
+    }
+  };
+
+  /**
+   * Handle Remove button click
+   */
+  private OnClickListener removeButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      // Attempt device removal
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      device.waitingForResponse = true;
+      disableUI();
+
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "DEVICE_REMOVE");
       message.put("deviceId", device.deviceId);
       mSilkService.postMessage(message);
     }
@@ -887,29 +942,51 @@ public class MainActivity extends FragmentActivity implements
   private void updateUI(final Device device) {
     runOnUiThread(new Runnable() {
       public void run() {
+        deviceStatusTextView.setText(device.status());
+
+        if (device.waitingForResponse) {
+          return;
+        }
+        deviceListSpinner.setEnabled(true);
+
         if (device.rtcConnectionStatus != null &&
-          device.rtcConnectionStatus.equals("CONNECTED")) {
+          "CONNECTED".equals(device.rtcConnectionStatus)) {
           echoButton.setEnabled(true);
         } else {
           echoButton.setEnabled(false);
         }
 
-        if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
+        if ("UNCONFIGURED".equals(device.deviceConfigStatus)) {
           configureButton.setText(getString(R.string.configure));
           configureButton.setEnabled(device.deviceConfigId != null);
+          removeButton.setEnabled(false);
         } else {
           configureButton.setText(getString(R.string.reconfigure));
           configureButton.setEnabled(true);
+          removeButton.setEnabled(true);
         }
 
         if (device.rtcConnectionError != null &&
-          device.rtcConnectionError.equals("UNAUTHORIZED")) {
+          "UNAUTHORIZED".equals(device.rtcConnectionError) && !device.paired) {
           authorizeButton.setEnabled(true);
         } else {
           authorizeButton.setEnabled(false);
         }
+      }
+    });
+  }
 
-        deviceStatusTextView.setText(device.status());
+  /**
+   * Disable all UI buttons
+   */
+  private void disableUI() {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        echoButton.setEnabled(false);
+        configureButton.setEnabled(false);
+        removeButton.setEnabled(false);
+        authorizeButton.setEnabled(false);
+        deviceListSpinner.setEnabled(false);
       }
     });
   }
@@ -923,7 +1000,7 @@ public class MainActivity extends FragmentActivity implements
     ArrayAdapter<Device> adapter = (ArrayAdapter<Device>) deviceListSpinner.getAdapter();
     for (int position = 0; position < adapter.getCount(); position++) {
       Device device = (Device) adapter.getItem(position);
-      if (device.toString().equals(value)) {
+      if ((device != null) && device.toString().equals(value)) {
         deviceListSpinner.setSelection(position);
         return;
       }
@@ -951,8 +1028,8 @@ public class MainActivity extends FragmentActivity implements
       boolean enabled =
         device != null && ssidListSpinner.getSelectedItem() != null;
       if (enabled) {
-        if (device.deviceConfigStatus.equals("CONFIGURED")) {
-          enabled = device.bleConnectionStatus.equals("CONNECTED");
+        if ("CONFIGURED".equals(device.deviceConfigStatus)) {
+          enabled = "CONNECTED".equals(device.bleConnectionStatus);
         } else {
           enabled = device.deviceId != null;
         }
@@ -1027,7 +1104,7 @@ public class MainActivity extends FragmentActivity implements
       // Signed in successfully
       GoogleSignInAccount acct = result.getSignInAccount();
       String idToken = acct.getIdToken();
-      onGoogleAuthStatusChanged("Logged in as: " +  acct.getDisplayName());
+      onGoogleAuthStatusChanged(acct.getDisplayName());
       Log.d(TAG, "idToken:" + idToken);
 
       Map<String, Object> message = new HashMap<>();
@@ -1057,5 +1134,30 @@ public class MainActivity extends FragmentActivity implements
   @Override
   public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
     Log.d(TAG, "onConnectionFailed:" + connectionResult);
+  }
+
+  public Device getDeviceByDeviceId(String deviceId) {
+    final Device device =  (Device) deviceListSpinner.getSelectedItem();
+    if (device == null) {
+      return null;
+    }
+
+    if ((device.deviceId == null)|| !device.deviceId.equals(deviceId)) {
+      return null;
+    }
+    return device;
+  }
+
+  public Device getDeviceByDeviceConfigId(Integer deviceConfigId) {
+    final Device device =  (Device) deviceListSpinner.getSelectedItem();
+    if (device == null) {
+      return null;
+    }
+
+    if (device.deviceConfigId == null ||
+      !device.deviceConfigId.equals(deviceConfigId)) {
+      return null;
+    }
+    return device;
   }
 }

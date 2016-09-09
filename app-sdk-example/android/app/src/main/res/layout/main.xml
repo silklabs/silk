@@ -128,12 +128,21 @@
             android:layout_below="@+id/deviceList"
             android:layout_toRightOf="@+id/sendEchoMessageButton" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/remove_device"
+            android:id="@+id/removeButton"
+            android:layout_below="@+id/configureButton"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/device_status"
             android:id="@+id/deviceStatusLabel"
-            android:layout_below="@+id/sendEchoMessageButton"
+            android:layout_below="@+id/removeButton"
             android:singleLine="true"
             android:paddingTop="5dp" />
 

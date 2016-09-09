@@ -70,6 +70,7 @@ public class MainActivity extends FragmentActivity implements
   private TextView deviceStatusTextView = null;
   private GoogleApiClient mGoogleApiClient = null;
   private Button authorizeButton = null;
+  private Button removeButton = null;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -185,6 +186,18 @@ public class MainActivity extends FragmentActivity implements
             }
             case "DEVICE_UPDATE_STATUS": {
               onDeviceUpdateStatus(message);
+              break;
+            }
+            case "DEVICE_REMOVE_SUCCESS": {
+              String deviceId = (String) message.get("deviceId");
+              onSuccess("Successfully removed (" + deviceId.substring(0, 5) + "...)");
+              break;
+            }
+            case "DEVICE_REMOVE_ERROR": {
+              String deviceId = (String) message.get("deviceId");
+              String error = (String) message.get("error");
+              onError("Failed to remove (" + deviceId.substring(0, 5) + "...): " + error);
+              removeButton.setEnabled(true);
               break;
             }
             default:
@@ -588,6 +601,10 @@ public class MainActivity extends FragmentActivity implements
     authorizeButton.setOnClickListener(authorizeButtonListener);
     authorizeButton.setEnabled(false);
 
+    removeButton = (Button) findViewById(R.id.removeButton);
+    removeButton.setOnClickListener(removeButtonListener);
+    removeButton.setEnabled(false);
+
     deviceStatusTextView = (TextView) findViewById(R.id.deviceStatusTextView);
 
     createWifiDialog();
@@ -846,6 +863,21 @@ public class MainActivity extends FragmentActivity implements
   };
 
   /**
+   * Handle Remove button click
+   */
+  private OnClickListener removeButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      // Attempt device removal
+      removeButton.setEnabled(false);
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      Map<String, Object> message = new HashMap<>();
+      message.put("type", "DEVICE_REMOVE");
+      message.put("deviceId", device.deviceId);
+      mSilkService.postMessage(message);
+    }
+  };
+
+  /**
    * Hide keyboard when clicked outside of the EditText
    */
   private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {
@@ -897,9 +929,11 @@ public class MainActivity extends FragmentActivity implements
         if (device.deviceConfigStatus.equals("UNCONFIGURED")) {
           configureButton.setText(getString(R.string.configure));
           configureButton.setEnabled(device.deviceConfigId != null);
+          removeButton.setEnabled(false);
         } else {
           configureButton.setText(getString(R.string.reconfigure));
           configureButton.setEnabled(true);
+          removeButton.setEnabled(true);
         }
 
         if (device.rtcConnectionError != null &&

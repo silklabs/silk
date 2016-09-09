@@ -15,7 +15,7 @@ ssh -T git_mattel@git.matteldigitalkitchen.com
 pwd
 
 rm -rf pandohub-dialogscript/
-git clone git@github.com:silklabs/pandohub-dialogscript
+git clone git@github.com:silklabs/pandohub-dialogscript -b $BRANCH
 cd pandohub-dialogscript/
 git remote add fuhu ssh://git_mattel@git.matteldigitalkitchen.com/pandohubdialogscript.git
 git fetch fuhu

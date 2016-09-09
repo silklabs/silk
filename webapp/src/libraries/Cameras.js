@@ -105,10 +105,15 @@ class Camera extends EventEmitter {
     this._updateStreams();
 
     // Try calling the device again soon
-    this._retryConnectTimeout = setTimeout(
-      () => this._connect(),
-      10 * 1000
-    );
+    if (this._retryConnectTimeout === null) {
+      this._retryConnectTimeout = setTimeout(
+        () => {
+          this._retryConnectTimeout = null;
+          this._connect();
+        },
+        10 * 1000
+      );
+    }
   }
 
   set logging(enabled) {

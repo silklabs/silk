@@ -44,6 +44,8 @@ const BLE_ACCESS_GRANT_MS = 30 * 1000;
 
 const OPENHOUSE_PROP = `persist.silk.rtc.openhouse`;
 
+export const SYSTEM_CHANNEL_NAME = `system`;
+
 // Only allow unauthenticated streams on debug builds with the 'openhouse' prop.
 const ALLOW_UNAUTHENTICATED_STREAMS =
   getboolprop(`ro.debuggable`, false) && getboolprop(OPENHOUSE_PROP, false);
@@ -77,7 +79,7 @@ export class ChannelEventEmitter extends EventEmitter {
     return this._open;
   }
 
-  _emitLocalChannelEvent(event: string, payload: Object) {
+  _emitLocalChannelEvent(event: string, payload: Object | string) {
     super.emit(event, payload);
   }
 
@@ -436,6 +438,23 @@ export default class Connections extends EventEmitter {
     try {
       url = this._wsUrl = await this._getSignalingServerUrl();
     } catch (err) {
+      // If we failed it's possible that we're supposed to do a factory reset.
+      // Check but expect failure.
+      try {
+        const {factoryResetMessage} =
+          await api.device.getFactoryResetMessage({});
+        if (factoryResetMessage) {
+          const emitter = this._channelEmitters[SYSTEM_CHANNEL_NAME];
+          invariant(emitter);
+          emitter._emitLocalChannelEvent(SYSTEM_CHANNEL_NAME,
+                                         factoryResetMessage);
+        }
+      } catch (err2) {
+        log.debug(`Failed to check for factory reset message, probably still ` +
+                  `registered`,
+                  err2);
+      }
+
       this._onWsError(err);
       return;
     }

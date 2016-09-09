@@ -9,8 +9,9 @@
 /* eslint-disable no-console */
 
 import invariant from 'assert';
-import createLog from 'silk-log';
 import { default as createApi, AccessToken } from 'silk-api';
+import createLog from 'silk-log';
+import * as onion from 'silk-onion';
 
 import type {SilkApi} from 'silk-api';
 import type {ListDevicesOutputDevices} from 'silk-api/src/gen/account';
@@ -131,7 +132,22 @@ export default class Account {
 
   async unregisterDevice(deviceId: string): Promise<boolean> {
     log.debug(`UnregisterDevice`);
-    await this.api.account.unregisterDevice({devicePublicKey: deviceId});
-    return true;
+
+    const {accessToken} = this.api;
+    invariant(accessToken);
+
+    const buffer = await onion.genEncode({
+      senderIdentity: accessToken,
+      recipientIdentity: AccessToken.importPub(deviceId),
+      channel: 'http',
+      payload: {name: `reset`},
+    });
+
+    const {success} = await this.api.account.unregisterDevice({
+      devicePublicKey: deviceId,
+      factoryResetMessage: buffer.toString('base64'),
+    });
+
+    return success;
   }
 }

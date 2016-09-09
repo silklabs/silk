@@ -1,4 +1,6 @@
-
+/**
+ * @flow
+ */
 import assert from 'assert';
 import createApi, {AccessToken} from 'silk-api';
 import uuid from 'uuid';
@@ -11,6 +13,10 @@ import {
 
 import createContext from '../context';
 import Devices from '../../../src/server/models/devices';
+
+const invariant = assert;
+
+const dummyFactoryResetMessage = new Buffer('foo').toString('base64');
 
 suite('account auth', () => {
   let context = createContext();
@@ -85,7 +91,9 @@ suite('account auth', () => {
     assert.ok(deviceAfterComplete.registered);
 
     // The device is allowed to unregister itself
-    let unregister = await api.device.unregister();
+    let unregister = await api.device.unregister({
+      factoryResetMessage: dummyFactoryResetMessage,
+    });
     assert.ok(unregister.success);
     let deviceAfterUnregister = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString(),
@@ -95,10 +103,13 @@ suite('account auth', () => {
     // ...but not twice
     let err;
     try {
-      await api.device.unregister();
+      await api.device.unregister({
+        factoryResetMessage: dummyFactoryResetMessage,
+      });
     } catch (error) {
       err = error;
     }
+    invariant(err);
     assert.equal(err.code, 403);
   });
 
@@ -128,7 +139,7 @@ suite('account auth', () => {
 
     test('POST /list_devices', async () => {
       api.accessToken = accountOne.accessToken;
-      let result = await api.account.listDevices();
+      let result = await api.account.listDevices({});
       assert.equal(result.devices.length, numberOfDevices);
 
       const ids = result.devices.map((device) => device.accountDeviceNumber);
@@ -146,9 +157,10 @@ suite('account auth', () => {
       api.accessToken = accountOne.accessToken;
       await api.account.unregisterDevice({
         devicePublicKey: devices[0].accessToken.toString(),
+        factoryResetMessage: dummyFactoryResetMessage,
       });
 
-      let list = await api.account.listDevices();
+      let list = await api.account.listDevices({});
       assert.equal(list.devices.length, 14);
 
 
@@ -156,17 +168,18 @@ suite('account auth', () => {
       // Make sure that the device can no longer make api calls.
       let err;
       try {
-        await api.device.socketioURL();
+        await api.device.socketioURL({});
       } catch (error) {
         err = error;
       }
+      invariant(err);
       assert.equal(err.code, 403);
     });
   });
 
   test('socket.io address', async () => {
     api.accessToken = accountOne.accessToken;
-    let { url } = await api.account.socketioURL();
+    let { url } = await api.account.socketioURL({});
     assert.ok(url);
   });
 
@@ -188,7 +201,7 @@ suite('account auth', () => {
       assert.equal(read.results[0].series[0].values.length, 3);
     });
   } else {
-    test.skip('read / writeMetrics');
+    test.skip('read / writeMetrics (skipped)');
   }
 
   test('metrics query scopes', async () => {
@@ -213,9 +226,9 @@ suite('account auth', () => {
       new SharedKeyAuth(context.config.azure.regions.uswest)
     );
 
-    const { accountId } = await api.account.whoami();
+    const { accountId } = await api.account.whoami({});
     const client = new SasCompositeTable(async () => {
-      let { sas } = await api.account.getSasForDeviceSignaling();
+      let { sas } = await api.account.getSasForDeviceSignaling({});
       return sas;
     });
 

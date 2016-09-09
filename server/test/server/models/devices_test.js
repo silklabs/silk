@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import assert from 'assert';
 import Devices from '../../../src/server/models/devices';
 import Accounts from '../../../src/server/models/accounts';
@@ -56,11 +60,14 @@ suite('devices', () => {
         assert.equal(device.registration.complete, true);
         assert.equal(device.accountId.toString(), account.id);
         assert.equal(device.registration.accountDeviceNumber, 1);
+        assert(device.factoryResetMessage === undefined);
       });
 
       test('removes accountDeviceNumber on delete', async () => {
+        const factoryResetMessage = new Buffer('foo').toString('base64');
         await subject.unregister({
           publicKey: deviceId.toString(),
+          factoryResetMessage,
         });
 
         let device = await subject.findByPublicKey({
@@ -68,7 +75,9 @@ suite('devices', () => {
         });
 
         assert(device.registration.accountDeviceNumber === undefined);
+        assert.equal(device.factoryResetMessage, factoryResetMessage);
       });
+
     });
 
     test('signature mismatch', async () => {

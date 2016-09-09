@@ -15,6 +15,10 @@ import invariant from 'assert';
 import path from 'path';
 
 import {
+  FULL_PERMISSION,
+  IMMUTABLE_PERMISSION_TYPES,
+} from '../permissions';
+import {
   ensureDirectory,
   ensureUnlink,
   load as loadFromStorage,
@@ -29,6 +33,10 @@ import type {
   PermissionsRemovePayload,
   PermissionsClearPayload,
 } from './persist_actions';
+import type {
+  Permission,
+  PermissionType,
+} from '../permissions';
 import type {ConfigData} from '../config';
 
 type SerializableAccessToken = {
@@ -41,54 +49,6 @@ type ConfigState = {
   accountDeviceNumber: number;
   serverUrl: ?string;
 };
-
-const IMMUTABLE_PERMISSION_TYPES = {
-  // Can only be granted or removed by PERSIST_[UN]CONFIGURE,
-  'full': null,
-};
-
-// Permissions that cannot be added/removed/cleared with the normal permission
-// actions.
-type ImmutablePermissionType = $Enum<typeof IMMUTABLE_PERMISSION_TYPES>;
-
-// Permissions that can be added/removed/cleared with the normal permission
-// actions.
-export type MutablePermissionType =
-  'ble' |
-  'ble-temp' |
-  'rtc';
-
-type PermissionType = ImmutablePermissionType | MutablePermissionType;
-
-type PermissionBase<T: PermissionType> = {
-  // Type of permission.
-  type: T,
-
-  // Milliseconds from epoch when this permission expires. Null if never.
-  expires: ?number;
-
-  // Public key of the actor that set this permission. Null if this device.
-  actor: ?string;
-};
-
-type ImmutablePermissionBase<T: ImmutablePermissionType> = PermissionBase<T>;
-type MutablePermissionBase<T: MutablePermissionType> = PermissionBase<T>;
-
-type PermissionFull = ImmutablePermissionBase<'full'>;
-
-type PermissionBle = MutablePermissionBase<'ble'>;
-type PermissionBleTemp = MutablePermissionBase<'ble-temp'>;
-type PermissionRtc = MutablePermissionBase<'rtc'>;
-
-type ImmutablePermission =
-  PermissionFull;
-
-export type MutablePermission =
-  PermissionBle |
-  PermissionBleTemp |
-  PermissionRtc;
-
-type Permission = ImmutablePermission | MutablePermission;
 
 export type PermissionMap = Map<PermissionType, Permission>;
 export type PermissionsState = Map<string, PermissionMap>;
@@ -108,12 +68,6 @@ const ID_PATH = path.join(PERSIST_DIR, `id.json`);
 const CONFIG_PATH = path.join(PERSIST_DIR, `config.json`);
 
 const log = createLog(`redux-persist`);
-
-const FULL_PERMISSION: PermissionFull = {
-  type: 'full',
-  expires: null,
-  actor: null,
-};
 
 const initialState: PersistState = {
   // This will be replaced with a real token in load() before it's ever used.
@@ -258,7 +212,7 @@ function PERSIST_PERMISSIONS_CLEAR(
   invariant(oldPermissionsMap.size);
   const permissionsMap = new Map(oldPermissionsMap);
   oldPermissionsMap.forEach((permission, type) => {
-    if (!(type in IMMUTABLE_PERMISSION_TYPES)) {
+    if (!IMMUTABLE_PERMISSION_TYPES.has(type)) {
       permissionsMap.delete(type);
     }
   });

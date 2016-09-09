@@ -134,8 +134,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
         name: Devices.NAME_SCHEMA,
         type: Devices.TYPE_SCHEMA,
         registered: Joi.boolean().required(),
-        // XXX: HACK make this optional until some larger fixes come in...
-        accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.optional(),
+        accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.required(),
         publicKey: Joi.string().hex().required(),
         deviceId: Joi.string().hex().required(),
         lastSeenAt: Joi.date().required(),
@@ -151,7 +150,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
         name: device.name,
         type: device.type,
         registered: device.registration.complete,
-        accountDeviceNumber: device.registration.accountDeviceNumber,
+        accountDeviceNumber: device.registration.accountDeviceNumber || 0,
         publicKey: device.accessToken.publicKey,
         deviceId: device.accessToken.publicKey,
         // TODO: Implement for real but this stub will let us move on for now.
@@ -174,10 +173,12 @@ export default function (ctx: RouteContext): ExpressRoutes {
     }),
     input: Joi.object().keys({
       devicePublicKey: Joi.string().hex().required(),
+      factoryResetMessage: Devices.ONION_SCHEMA.required(),
     }).required(),
   }, async (req, res) => {
     let result = await ctx.devices.unregister({
       publicKey: req.body.devicePublicKey,
+      factoryResetMessage: req.body.factoryResetMessage,
     });
 
     if (!result || result.error) {

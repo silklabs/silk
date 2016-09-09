@@ -23,6 +23,13 @@ export type WriteMetricsInput = {
 export type WriteMetricsOutput = {
 };
 
+export type GetFactoryResetMessageInput = {
+};
+
+export type GetFactoryResetMessageOutput = {
+ factoryResetMessage: ?string;
+};
+
 export type GetSasForSignalingInput = {
 };
 
@@ -43,6 +50,7 @@ export type CompleteRegistrationOutput = {
 };
 
 export type UnregisterInput = {
+ factoryResetMessage: string;
 };
 
 export type UnregisterOutput = {
@@ -82,7 +90,20 @@ export default class Device extends BaseClass {
   }
 
   /**
-  Return SAS credentials for querying avaiable signaling servers
+  Return a factory reset message for this device if it was unregistered
+
+  @param Object payload of request
+  */
+  getFactoryResetMessage(payload: GetFactoryResetMessageInput): Promise<GetFactoryResetMessageOutput> {
+    let method = 'post';
+    let url = '/v1/device/factory_reset_message';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Return SAS credentials for querying available signaling servers
 
   @param Object payload of request
   */

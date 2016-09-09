@@ -15,7 +15,7 @@ export type SignInWithTokenInput = {
 export type SignInWithTokenOutput = {
  success: bool;
  beaconUUID: ?string;
- userId: string;
+ userId: ?string;
 };
 
 export type CreateAccountInput = {
@@ -27,7 +27,7 @@ export type CreateAccountInput = {
 export type CreateAccountOutput = {
  success: bool;
  beaconUUID: ?string;
- userId: string;
+ userId: ?string;
 };
 
 export type SignInInput = {
@@ -39,7 +39,7 @@ export type SignInInput = {
 export type SignInOutput = {
  success: bool;
  beaconUUID: ?string;
- userId: string;
+ userId: ?string;
 };
 
 export type CheckPasswordInput = {

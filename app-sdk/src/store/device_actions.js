@@ -4,7 +4,9 @@
 
 import invariant from 'assert';
 import {AsyncStorage, NativeModules} from 'react-native';
+import {AccessToken} from 'silk-api';
 import createLog from 'silk-log';
+import * as onion from 'silk-onion';
 import * as silkRTC from 'silk-rtc';
 import {
   actionFromPayload,
@@ -12,10 +14,7 @@ import {
   actionFromAsyncPayloadGen,
 } from 'silk-redux/action';
 
-import type {
-  ListDevicesOutput,
-  UnregisterDeviceInput,
-} from 'silk-api/src/gen/account';
+import type {ListDevicesOutput} from 'silk-api/src/gen/account';
 import {Peer} from 'silk-rtc';
 
 import type {StateWithApi} from './api';
@@ -81,12 +80,25 @@ function genFetchRegisteredDeviceList(
 
 function genUnregisterRegisteredDevice(
   state: StateWithApi,
-  input: UnregisterDeviceInput
+  input: string
 ): Promise<UnregisterRegisteredDeviceResult> {
   const {api} = state;
   invariant(api);
-  return api.account.unregisterDevice(input).then((result) => ({
-    deviceId: input.devicePublicKey,
+  const {accessToken} = api;
+  invariant(accessToken);
+
+  return onion.genEncode({
+    senderIdentity: accessToken,
+    recipientIdentity: AccessToken.importPub(input),
+    channel: 'http',
+    payload: {name: `reset`},
+  }).then((buffer) =>
+    api.account.unregisterDevice({
+      devicePublicKey: input,
+      factoryResetMessage: buffer.toString('base64'),
+    })
+  ).then((result) => ({
+    deviceId: input,
     success: result.success,
   }));
 }

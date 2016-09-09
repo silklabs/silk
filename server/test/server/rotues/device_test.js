@@ -1,3 +1,6 @@
+/**
+ * @flow
+ */
 import assert from 'assert';
 import createContext from '../context';
 import createApi from 'silk-api';
@@ -23,7 +26,7 @@ suite('device routes', () => {
 
   test('socket.io address', async () => {
     api.accessToken = device.accessToken;
-    let { url } = await api.device.socketioURL();
+    let { url } = await api.device.socketioURL({});
     assert.ok(url);
   });
 
@@ -31,7 +34,7 @@ suite('device routes', () => {
     api.accessToken = device.accessToken;
 
     let table = new SasCompositeTable(async () => {
-      let { sas } = await api.device.getSasForSignaling();
+      let { sas } = await api.device.getSasForSignaling({});
       return sas;
     });
 
@@ -39,8 +42,62 @@ suite('device routes', () => {
     assert.ok(Array.isArray(servers));
     let expected = `http://localhost:${context.signaling.port}`;
     assert.ok(servers.some((value) => {
+      // $FlowFixMe: Better flow for azure
       return value.host === expected;
     }));
+  });
+
+  test('factory reset message before unregister', async () => {
+    api.accessToken = device.accessToken;
+    const {factoryResetMessage} = await api.device.getFactoryResetMessage({});
+    assert(factoryResetMessage === null);
+  });
+
+  test('bad factory reset message', async () => {
+    api.accessToken = device.accessToken;
+
+    let error: ?Error = null;
+    try {
+      await api.device.unregister({
+        factoryResetMessage: `why hello there`,
+      });
+    } catch (ex) {
+      error = ex;
+    }
+
+    assert(error);
+  });
+
+  test('factory reset message', async () => {
+    api.accessToken = device.accessToken;
+
+    let {factoryResetMessage} = await api.device.getFactoryResetMessage({});
+    assert.strictEqual(factoryResetMessage, null);
+
+    const message1 = new Buffer('foo').toString('base64');
+
+    await api.device.unregister({
+      factoryResetMessage: message1,
+    });
+
+    ({factoryResetMessage} = await api.device.getFactoryResetMessage({}));
+    assert.equal(factoryResetMessage, message1);
+
+    const message2 = new Buffer('foopy').toString('base64');
+
+    let error: ?Error = null;
+    try {
+      await api.device.unregister({
+        factoryResetMessage: message2,
+      });
+    } catch (ex) {
+      error = ex;
+    }
+
+    assert(error);
+
+    ({factoryResetMessage} = await api.device.getFactoryResetMessage({}));
+    assert.equal(factoryResetMessage, message1);
   });
 
 });

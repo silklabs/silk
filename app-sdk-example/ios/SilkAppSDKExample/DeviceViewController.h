@@ -21,5 +21,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *buttonB;
 @property (weak, nonatomic) IBOutlet UIButton *buttonC;
 @property (weak, nonatomic) IBOutlet UIButton *buttonD;
+@property (weak, nonatomic) IBOutlet UIButton *buttonE;
 
 @end

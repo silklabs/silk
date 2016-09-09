@@ -967,7 +967,7 @@ public class MainActivity extends FragmentActivity implements
         }
 
         if (device.rtcConnectionError != null &&
-          "UNAUTHORIZED".equals(device.rtcConnectionError)) {
+          "UNAUTHORIZED".equals(device.rtcConnectionError) && !device.paired) {
           authorizeButton.setEnabled(true);
         } else {
           authorizeButton.setEnabled(false);

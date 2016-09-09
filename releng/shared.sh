@@ -133,7 +133,10 @@ updatebranch__silk_device() {
         if [ ! -d ../../$p ]; then
           echo "Error: $p not listed in GITS variable?"
           echo "       ../../$p not a directory ($(readlink -f ../../$p))"
-          exit 1
+
+          # Whitelist pandohub-dialogscript as it is mirrored from an external
+          # source and should not be manhandled by Releng.
+          [[ "$p" == "pandohub-dialogscript" ]] || exit 1
         fi
 
         local HEAD=$to

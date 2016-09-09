@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-silk",
-  "version": "0.20.0",
+  "version": "1.2.0",
   "description": "Silk eslint plugin",
   "main": "index.js",
   "author": "Silk Labs Inc.",

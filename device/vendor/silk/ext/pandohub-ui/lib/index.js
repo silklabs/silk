@@ -64,8 +64,8 @@ class PandoHubUi {
   renderReenteredAlert: ?Alert;
   factoryResetUi: FactoryResetUi;
 
-  nightlightWhite: Light;
-  nightlightRgb: Light;
+  nightlightWhite: ?Light;
+  nightlightRgb: ?Light;
 
   constructor(env: Env) {
     this.input = new Input();
@@ -110,9 +110,13 @@ class PandoHubUi {
       this.nightlight = nightlight;
       this.ring = ring;
       this.nightlightWhite = lights.get('nightlightWhite');
+      if (this.nightlightWhite) {
+        this.nightlightWhite.on('change', this.onNightlightChange);
+      }
       this.nightlightRgb = lights.get('nightlightRgb');
-      this.nightlightWhite.on('change', this.onNightlightChange);
-      this.nightlightRgb.on('change', this.onNightlightChange);
+      if (this.nightlightRgb) {
+        this.nightlightRgb.on('change', this.onNightlightChange);
+      }
     }
 
     this.rendering = false;
@@ -186,7 +190,9 @@ class PandoHubUi {
       }
       break;
     case 'brightnessdown':
-      this.nightlightWhite.color = Math.max(0, this.nightlightWhite.color - 32);
+      if (this.nightlightWhite) {
+        this.nightlightWhite.color = Math.max(0, this.nightlightWhite.color - 32);
+      }
       break;
     case 'brightnessup':
       this.nightlightWhite.color = Math.min(255, this.nightlightWhite.color + 32);
@@ -291,8 +297,12 @@ class PandoHubUi {
     log.debug('alert:', this.alertTimer !== null);
     log.debug('volume:', volume.level);
     log.debug('volume mute:', volume.mute);
-    log.debug('nightlight brightness:', this.nightlightWhite.color);
-    log.debug('nightlight color:', this.nightlightRgb.color);
+    if (this.nightlightWhite) {
+      log.debug('nightlight brightness:', this.nightlightWhite.color);
+    }
+    if (this.nightlightRgb) {
+      log.debug('nightlight color:', this.nightlightRgb.color);
+    }
 
     if (this.alertTimer !== null) {
       // Alert is still pending, don't disturb it
@@ -463,8 +473,12 @@ class PandoHubUi {
     this.input.removeListener('down', this.onKeyPress);
     this.input.removeListener('up', this.onKeyRelease);
     volume.removeListener('level', this.onVolumeLevel);
-    this.nightlightWhite.removeListener('change', this.onNightlightChange);
-    this.nightlightRgb.removeListener('change', this.onNightlightChange);
+    if (this.nightlightWhite) {
+      this.nightlightWhite.removeListener('change', this.onNightlightChange);
+    }
+    if (this.nightlightRgb) {
+      this.nightlightRgb.removeListener('change', this.onNightlightChange);
+    }
   }
 }
 

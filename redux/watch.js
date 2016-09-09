@@ -12,9 +12,9 @@ export type PathSubscriber<S, T> = (
   oldValue: T,
   newState: S,
   oldState: S
-) => any;
+) => mixed;
 
-type ReduxSubscriber = () => any;
+type ReduxSubscriber = () => mixed;
 
 /**
  * Wrap a PathSubscriber and return a ReduxSubscriber

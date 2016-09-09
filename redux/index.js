@@ -19,6 +19,7 @@ import type {
   Store as ReduxStore,
 } from 'redux';
 
+import type {Action} from './action';
 import type {PathSubscriber} from './watch';
 
 export type Store<S> = ReduxStore<S> & {
@@ -47,17 +48,17 @@ const defaultLogOptions = {
   },
   logger: {
     ...log,
-    log: (...args: Array<any>) => undefined,
+    log: (...args: Array<mixed>) => undefined,
   },
-  actionTransformer: (action: any) => {
-    const {type, requested, error, payload} = action;
-    if (requested) {
-      return {type, requested};
+  actionTransformer: (action: Action<*, *, *>) => {
+    const {type, error} = action;
+    if (action.requested) {
+      return {type, requested: true};
     }
     if (error) {
-      return {type, error, payload};
+      return {type, error, payload: action.payload};
     }
-    return {type, payload};
+    return {type, payload: action.payload};
   },
   colors: {
     title: false,

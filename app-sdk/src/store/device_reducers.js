@@ -31,6 +31,8 @@ export type RegisteredDevice = {
     connecting: boolean,
     peer: ?Peer,
     error: ?Error,
+    unauthorized: boolean,
+    attempts: number,
   },
   ble: {
     connectionRequested: boolean,
@@ -76,6 +78,8 @@ const registeredDeviceTemplate = {
     connecting: false,
     peer: null,
     error: null,
+    unauthorized: false,
+    attempts: 0,
   },
   ble: {
     connectionRequested: false,
@@ -614,18 +618,22 @@ function DEVICE_RTC_SIGNAL(
     device = {
       ...device,
       rtc: {
+        ...device.rtc,
         connecting: true,
         peer: null,
         error: null,
       },
     };
   } else if (action.error) {
+    const isUnauthorized = action.payload.message === 'UNAUTHORIZED';
     device = {
       ...device,
       rtc: {
         connecting: false,
         peer: null,
         error: action.payload,
+        unauthorized: device.rtc.unauthorized || isUnauthorized,
+        attempts: device.rtc.attempts + 1,
       },
     };
   } else {
@@ -635,6 +643,8 @@ function DEVICE_RTC_SIGNAL(
         connecting: false,
         peer: action.payload,
         error: null,
+        unauthorized: false,
+        attempts: 0,
       },
     };
   }
@@ -657,12 +667,15 @@ function DEVICE_RTC_CONNECTIONCLOSED(
 
   const registered = new Map(state.registered);
   const device = state.registered.get(deviceId);
+  invariant(device);
   registered.set(deviceId, {
     ...device,
     rtc: {
+      ...device.rtc,
       connecting: false,
       peer: null,
       error: null,
+      attempts: 0,
     },
   });
   return {

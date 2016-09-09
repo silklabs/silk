@@ -42,7 +42,7 @@ cd ..
 
 ls -l $BRANCH
 
-if [[ -z "$fail" ]]; then
+if [[ -n "$fail" ]]; then
   echo $fail
   exit 1
 fi

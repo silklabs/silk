@@ -1027,7 +1027,7 @@ public class MainActivity extends FragmentActivity implements
       // Signed in successfully
       GoogleSignInAccount acct = result.getSignInAccount();
       String idToken = acct.getIdToken();
-      onGoogleAuthStatusChanged("Logged in as: " +  acct.getDisplayName());
+      onGoogleAuthStatusChanged(acct.getDisplayName());
       Log.d(TAG, "idToken:" + idToken);
 
       Map<String, Object> message = new HashMap<>();

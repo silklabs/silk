@@ -3,8 +3,9 @@
 # CI environment?
 [[ -n $CI ]] || exit 0
 
+BRANCH=release
 echo
-echo Mirroring the Fuhu PandoHub dialog-script implementation into github
+echo Mirroring the $BRANCH branch of Fuhu PandoHub dialog-script implementation into github
 echo
 set -ex
 
@@ -12,7 +13,6 @@ echo -e "Host git.matteldigitalkitchen.com\n\tStrictHostKeyChecking no\n" >> ~/.
 ssh -T git_mattel@git.matteldigitalkitchen.com
 
 pwd
-source ../pub/version/branch
 
 rm -rf pandohub-dialogscript/
 git clone git@github.com:silklabs/pandohub-dialogscript

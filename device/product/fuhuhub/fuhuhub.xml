@@ -4,6 +4,6 @@
   <project name="pandohub-dialogscript"
            path="pandohub-dialogscript"
            remote="silk"
-           revision="master" />
+           revision="release" />
 </manifest>
 

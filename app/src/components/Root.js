@@ -32,6 +32,7 @@ import NotLoggedIn from './auth/NotLoggedIn';
 import ServerPicker from './auth/ServerPicker';
 import Settings from './Settings';
 
+import type {Dispatch} from 'silk-redux/action';
 import type {AppState, AppStore} from '../store';
 
 export type Route = {
@@ -46,6 +47,7 @@ export type GlobalProps = AppState & {
   route: Route;
   navigator: Navigator;
   store: AppStore;
+  dispatch: Dispatch<*>;
 };
 
 const log = createLog('Root');

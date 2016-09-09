@@ -19,12 +19,14 @@ import PreviewQueue from '../libraries/PreviewQueue';
 import * as actions from '../store/actions';
 
 import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {Dispatch} from 'silk-redux/action';
 
 type Props = {
   device: RegisteredDevice;
   previewSize: {width: number, height: number};
   width: number;
   onPress?: Function;
+  dispatch: Dispatch<*>;
 };
 
 const log = createLog('CameraPreview');
@@ -117,7 +119,7 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
     this.props.onPress();
   };
 
-  _showRemoveDeviceSheet = () => {
+  _showRemoveDeviceSheet() {
     ActionSheetIOS.showActionSheetWithOptions({
       options: [
         'Remove Device',
@@ -134,7 +136,7 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
         actions.devices.registered.unregister({devicePublicKey: deviceId})
       );
     });
-  };
+  }
 }
 
 const styles = StyleSheet.create({

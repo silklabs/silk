@@ -47,7 +47,8 @@ ai(`i am bottle feeding the baby`, 'startBottleFeeding', 'baby', 'baby', {});
 ai(`bottle`, 'None', 'bottle', 'bottle', {});
 ai(`formula`, 'None', 'formula', 'formula', {});
 ai(`breast milk`, 'None', 'breast milk', 'breast milk', {});
-ai(`100 ml`, 'None', 'number', '100 milliliters', {});
+ai(`100 ml`, 'None', 'builtin.number', '100', {});
+ai(`hundred ml`, 'None', 'builtin.number', 'hundred', {});
 ai(`register my baby`, 'register', 'baby', 'baby', {});
 ai(`rename my baby`, 'rename', 'baby', {});
 

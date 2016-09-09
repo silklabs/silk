@@ -40,7 +40,7 @@ suite(`userScript`, () => {
     invariant(dialogEngine);
   });
 
-  test(`Bottle feeding`, async () => {
+  test(`Bottle feeding 1`, async () => {
     await testUserScript(dialogEngine, [
       {
         speak: `I\'m feeding the baby`,
@@ -62,5 +62,25 @@ suite(`userScript`, () => {
     ]);
   });
 
-
+  test(`Bottle feeding 2`, async () => {
+    await testUserScript(dialogEngine, [
+      {
+        speak: `I\'m feeding the baby`,
+        hear: `Ok, Are you nursing or bottle feeding?`,
+        nextState: `waiting`,
+      }, {
+        speak: `bottle`,
+        hear: `Ok, Are you using breast milk or formula?`,
+        nextState: `waiting`,
+      }, {
+        speak: `formula`,
+        hear: `How many milliliters?`,
+        nextState: `waiting`,
+      }, {
+        speak: `hundred ML`,
+        hear: `Ok, I'll record that.`,
+        nextState: `idle`,
+      },
+    ]);
+  });
 });

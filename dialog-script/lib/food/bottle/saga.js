@@ -78,10 +78,9 @@ function* queryAmount(
 
     if (intent === `None`) {
       for (const entity of entities) {
-        const tokens = entity.entity.split(` `);
-        const num = parseInt(tokens[0]);
-        if (!isNaN(num)) {
-          amount = num;
+        if ((entity.type === 'builtin.number') && entity.entity && !isNaN(entity.entity)) {
+          amount = parseInt(entity.entity);
+          log.debug(`amount: ${amount}`);
           break;
         }
       }

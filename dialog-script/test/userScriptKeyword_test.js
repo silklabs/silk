@@ -28,11 +28,35 @@ suite(`userScript`, () => {
     for (let count = 0; count < 2; count++) {
       tester.speak(`Aristotle`);
       if (count < (2 - 1)) {
-        await tester.listenCheck(`^Count ${count + 1}`, `waiting`);
+        await tester.listenCheck(`^Count ${count + 1} of 2`, `waiting`);
       } else {
         await tester.listenCheck(`^Count ${count + 1}`, `idle`);
       }
     }
     done();
   });
+
+  test(`Keyword test count spelled out`, async (done) => {
+    tester.speak(`Record keyword Aristotle two times`);
+    await tester.listenCheck(`^Start speaking the keyword`, `waiting`);
+    for (let count = 0; count < 2; count++) {
+      tester.speak(`Aristotle`);
+      if (count < (2 - 1)) {
+        await tester.listenCheck(`^Count ${count + 1} of 2`, `waiting`);
+      } else {
+        await tester.listenCheck(`^Count ${count + 1}`, `idle`);
+      }
+    }
+    done();
+  });
+
+  test(`Keyword test invalid count`, async (done) => {
+    tester.speak(`Record keyword Aristotle`);
+    await tester.listenCheck(`^Invalid count provided`);
+    await tester.listenCheck(`^Start speaking the keyword`, `waiting`);
+    tester.speak(`cancel`);
+    await tester.listenCheck(`^Canceled recording keywords`, `idle`);
+    done();
+  });
+
 });

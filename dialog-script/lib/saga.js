@@ -6,6 +6,7 @@ import createLog from 'silk-log/device';
 import {call, put, take} from 'redux-saga/effects';
 import invariant from 'assert';
 import {getDateTime, encodeRate} from './utils';
+import wordsToNumbers from './wordsToNumbers';
 
 import {
   default as createEnvironment,
@@ -223,7 +224,7 @@ export default function*(
      * |micChannel| has given us an event, so now we have to decide what to do
      * with it.
      */
-    const {intent, entities} = event;
+    let {intent, entities} = event;
     log.debug(`Got intent`, intent, entities);
 
     /**
@@ -232,6 +233,24 @@ export default function*(
      * we can start another.
      */
     yield call(cleanupFinishedSagas, sagas);
+
+    // Sometimes STT APIs return numbers spelled out instead of being reported
+    // as digits. Preprocess enitites that may be affected by this issue.
+    if (entities) {
+      entities = entities.map(entity => {
+        let newEntity = {...entity};
+        if (entity.type === 'builtin.number') {
+          newEntity.entity = isNaN(entity.entity) ? wordsToNumbers(entity.entity) :
+              entity.entity;
+        } else if (entity.type === 'builtin.weather.absolute_location') {
+          let zipcode = isNaN(entity.entity) ? wordsToNumbers(entity.entity, {spell: true}) :
+              entity.entity;
+          newEntity.entity = zipcode ? zipcode : entity.entity;
+        }
+        return newEntity;
+      });
+    }
+    event.entities = entities;
 
     // Handle independent sagas first.
     if (!sagas.independent && independentIntents.has(intent)) {

@@ -44,9 +44,16 @@ if [[ "$TRAVIS_PULL_REQUEST" = "false" ]] && [[ "$TRAVIS_OS_NAME" = "linux" ]]; 
   TARGET_FILES=dist/$BUILD_NAME/$TRAVIS_COMMIT/target_files.zip
   mv -v $ANDROID_PRODUCT_OUT/obj/PACKAGING/target_files_intermediates/*.zip $TARGET_FILES
 
-  # Re-sign everything with our home-rolled dev keys, replacing the stock AOSP
-  # keys.  This allows us to validate parts of the release signing workflow.
-  ../releng/gonk-signing/sign_target_files_zip.sh $TARGET_FILES
+  case $SILK_BOARD in
+  pandohub)
+    # Re-sign everything with our home-rolled dev keys, replacing the stock AOSP
+    # keys.  This allows us to validate parts of the release signing workflow.
+    ../releng/gonk-signing/sign_target_files_zip.sh $TARGET_FILES
+    ;;
+  *)
+    echo Using stock AOSP keys for $SILK_BOARD
+    ;;
+  esac
 
   ./travis/build_device_archive.sh $TARGET_FILES $BUILD_NAME
   mv $BUILD_NAME.tgz dist/$BUILD_NAME/$TRAVIS_COMMIT

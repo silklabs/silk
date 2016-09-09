@@ -21,6 +21,7 @@ public class Device {
   public String updateState;
   public boolean paired = false;
   public boolean isPairing = false;
+  public boolean waitingForResponse = false;
 
   @Override
   public String toString() {

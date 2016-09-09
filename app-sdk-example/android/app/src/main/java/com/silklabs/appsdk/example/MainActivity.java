@@ -124,6 +124,11 @@ public class MainActivity extends FragmentActivity implements
             case "DEVICE_CONFIG_SUCCESS": {
               int deviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
+              final Device device = getDeviceByDeviceConfigId(deviceConfigId);
+              if (device == null) {
+                return;
+              }
+              device.waitingForResponse = false;
               onSuccess("Successfully configured (" + deviceConfigId + ")");
               break;
             }
@@ -131,24 +136,22 @@ public class MainActivity extends FragmentActivity implements
             case "DEVICE_CONFIG_FATAL_ERROR": {
               int deviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
+              final Device device = getDeviceByDeviceConfigId(deviceConfigId);
+              if (device == null) {
+                return;
+              }
+
+              device.waitingForResponse = false;
               String configError = (String) message.get("configError");
               onError("Failed to configure (" + deviceConfigId + "): " + configError);
               break;
             }
             case "DEVICE_CONFIG_WIFI_NETWORKS": {
-              if (deviceListSpinner.getSelectedItem() == null) {
-                return;
-              }
-
-              Device device = (Device) deviceListSpinner.getSelectedItem();
-              Integer deviceConfigId =  device.deviceConfigId;
-
               Integer wifiDeviceConfigId =
                 ((Double) message.get("deviceConfigId")).intValue();
               Log.d(TAG, "Received wifi network message for " + wifiDeviceConfigId);
 
-              if (deviceConfigId == null ||
-                  !deviceConfigId.equals(wifiDeviceConfigId)) {
+              if (getDeviceByDeviceConfigId(wifiDeviceConfigId) == null) {
                 return;
               }
 
@@ -156,16 +159,10 @@ public class MainActivity extends FragmentActivity implements
               break;
             }
             case "DEVICE_WIFI_NETWORKS": {
-              final Device device =
-                (Device) deviceListSpinner.getSelectedItem();
-              if (device == null) {
-                return;
-              }
-
               String deviceId = ((String) message.get("deviceId"));
               Log.d(TAG, "Received wifi network message for " + deviceId);
 
-              if (!device.deviceId.equals(deviceId)) {
+              if (getDeviceByDeviceId(deviceId) == null) {
                 return;
               }
 
@@ -190,14 +187,25 @@ public class MainActivity extends FragmentActivity implements
             }
             case "DEVICE_REMOVE_SUCCESS": {
               String deviceId = (String) message.get("deviceId");
+              final Device device = getDeviceByDeviceId(deviceId);
+              if (device == null) {
+                return;
+              }
+
+              device.waitingForResponse = false;
               onSuccess("Successfully removed (" + deviceId.substring(0, 5) + "...)");
               break;
             }
             case "DEVICE_REMOVE_ERROR": {
               String deviceId = (String) message.get("deviceId");
+              final Device device = getDeviceByDeviceId(deviceId);
+              if (device == null) {
+                return;
+              }
+
+              device.waitingForResponse = false;
               String error = (String) message.get("error");
               onError("Failed to remove (" + deviceId.substring(0, 5) + "...): " + error);
-              removeButton.setEnabled(true);
               break;
             }
             default:
@@ -240,6 +248,7 @@ public class MainActivity extends FragmentActivity implements
           if (authStatus.equals("NOT_AUTHENTICATED")) {
             silkLoginButton.setEnabled(true);
             googleLoginButton.setEnabled(true);
+            disableUI();
           } else {
             silkLoginButton.setEnabled(false);
             googleLoginButton.setEnabled(false);
@@ -432,11 +441,17 @@ public class MainActivity extends FragmentActivity implements
             if (device.isPairing && !device.paired && nowPaired) {
               onSuccess("Successfully authorized (" + deviceId.substring(0, 5) + "...)");
               device.isPairing = false;
+              device.waitingForResponse = false;
             }
             device.paired = nowPaired;
 
             device.wifiConnectionStatus = (String) message.get("wifiStatus");
             device.wifiSSID = (String) message.get("wifiSSID");
+            if (device.waitingForResponse && "CONNECTED".equals(device.wifiConnectionStatus)) {
+              // Device successfully reconfigured
+              device.waitingForResponse = false;
+            }
+
             Double signalStrength = (Double) message.get("wifiLevel");
             if (signalStrength != null) {
               device.wifiSignalStrength = signalStrength.intValue();
@@ -448,7 +463,7 @@ public class MainActivity extends FragmentActivity implements
             device.serverConnectionError = (String) message.get("serverError");
 
             if (device == currentDevice) {
-              deviceStatusTextView.setText(device.status());
+              updateUI(device);
             }
 
             break;
@@ -637,6 +652,8 @@ public class MainActivity extends FragmentActivity implements
         final String password = passwordEditText.getText().toString();
         final Device device = (Device) deviceListSpinner.getSelectedItem();
 
+        device.waitingForResponse = true;
+        disableUI();
         if (device.deviceConfigStatus.equals("CONFIGURED")) {
           message = new HashMap<>();
           message.put("type", "DEVICE_WIFI_SET");
@@ -767,6 +784,7 @@ public class MainActivity extends FragmentActivity implements
    */
   private OnClickListener silkLogoutButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
+      logoutButton.setEnabled(false);
       Map<String, Object> message = new HashMap<>();
       message.put("type", "ACCOUNT_LOGOUT");
       mSilkService.postMessage(message);
@@ -855,6 +873,9 @@ public class MainActivity extends FragmentActivity implements
       // Attempt device authorization
       Device device = (Device) deviceListSpinner.getSelectedItem();
       device.isPairing = true;
+      device.waitingForResponse = true;
+      disableUI();
+
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_BLE_CONNECT");
       message.put("deviceId", device.deviceId);
@@ -868,8 +889,10 @@ public class MainActivity extends FragmentActivity implements
   private OnClickListener removeButtonListener = new View.OnClickListener() {
     public void onClick(View v) {
       // Attempt device removal
-      removeButton.setEnabled(false);
       Device device = (Device) deviceListSpinner.getSelectedItem();
+      device.waitingForResponse = true;
+      disableUI();
+
       Map<String, Object> message = new HashMap<>();
       message.put("type", "DEVICE_REMOVE");
       message.put("deviceId", device.deviceId);
@@ -919,6 +942,13 @@ public class MainActivity extends FragmentActivity implements
   private void updateUI(final Device device) {
     runOnUiThread(new Runnable() {
       public void run() {
+        deviceStatusTextView.setText(device.status());
+
+        if (device.waitingForResponse) {
+          return;
+        }
+        deviceListSpinner.setEnabled(true);
+
         if (device.rtcConnectionStatus != null &&
           device.rtcConnectionStatus.equals("CONNECTED")) {
           echoButton.setEnabled(true);
@@ -942,8 +972,21 @@ public class MainActivity extends FragmentActivity implements
         } else {
           authorizeButton.setEnabled(false);
         }
+      }
+    });
+  }
 
-        deviceStatusTextView.setText(device.status());
+  /**
+   * Disable all UI buttons
+   */
+  private void disableUI() {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        echoButton.setEnabled(false);
+        configureButton.setEnabled(false);
+        removeButton.setEnabled(false);
+        authorizeButton.setEnabled(false);
+        deviceListSpinner.setEnabled(false);
       }
     });
   }
@@ -1091,5 +1134,30 @@ public class MainActivity extends FragmentActivity implements
   @Override
   public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
     Log.d(TAG, "onConnectionFailed:" + connectionResult);
+  }
+
+  public Device getDeviceByDeviceId(String deviceId) {
+    final Device device =  (Device) deviceListSpinner.getSelectedItem();
+    if (device == null) {
+      return null;
+    }
+
+    if (!device.deviceId.equals(deviceId)) {
+      return null;
+    }
+    return device;
+  }
+
+  public Device getDeviceByDeviceConfigId(Integer deviceConfigId) {
+    final Device device =  (Device) deviceListSpinner.getSelectedItem();
+    if (device == null) {
+      return null;
+    }
+
+    if (device.deviceConfigId == null ||
+      !device.deviceConfigId.equals(deviceConfigId)) {
+      return null;
+    }
+    return device;
   }
 }

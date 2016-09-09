@@ -68,27 +68,31 @@
   NSString *buttonBText = @"Config";
   NSString *buttonCText = @"Decline";
   NSString *buttonDText = @"Abort";
+  NSString *buttonEText = @"";
   
   SEL selectorA = @selector(onAcceptPress:);
   SEL selectorB = @selector(onConfigPress:);
   SEL selectorC = @selector(onDeclinePress:);
   SEL selectorD = @selector(onAbortPress:);
+  SEL selectorE = @selector(onNullPress:);
   
   if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
     buttonAText = @"Connect";
-    buttonBText = @"Get Wifi";
+    buttonBText = @"Wifi";
     buttonCText = @"Config";
-    buttonDText = @"Get Info";
+    buttonDText = @"Info";
+    buttonEText = @"Remove";
     
     selectorA = @selector(onBLEConnectPress:);
     selectorB = @selector(onGetWifiPress:);
     selectorC = @selector(onSetWifiPress:);
     selectorD = @selector(onGetWifiInfoPress:);
+    selectorE = @selector(onRemovePress:);
 
     // Toggle BLE Connect/Disconnect based on if ble has been requested
     NSNumber *bleRequested = deviceInfo[@"bleRequested"];
     if ([bleRequested isEqual: @YES]) {
-      buttonAText = @"Disconnect";
+      buttonAText = @"Disconn";
       selectorA = @selector(onBLEDisconnectPress:);
     }
   }
@@ -100,16 +104,25 @@
     [self.buttonB setTitle:buttonBText forState:UIControlStateNormal];
     [self.buttonC setTitle:buttonCText forState:UIControlStateNormal];
     [self.buttonD setTitle:buttonDText forState:UIControlStateNormal];
+    [self.buttonE setTitle:buttonEText forState:UIControlStateNormal];
     
     // Remove all targets and update.
     [self.buttonA removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
     [self.buttonB removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
     [self.buttonC removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
     [self.buttonD removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
+    [self.buttonE removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
     [self.buttonA addTarget:self action:selectorA forControlEvents:UIControlEventTouchUpInside];
     [self.buttonB addTarget:self action:selectorB forControlEvents:UIControlEventTouchUpInside];
     [self.buttonC addTarget:self action:selectorC forControlEvents:UIControlEventTouchUpInside];
     [self.buttonD addTarget:self action:selectorD forControlEvents:UIControlEventTouchUpInside];
+    [self.buttonE addTarget:self action:selectorE forControlEvents:UIControlEventTouchUpInside];
+    
+    if ([buttonEText isEqualToString: @""]) {
+      self.buttonE.hidden = true;
+    } else {
+      self.buttonE.hidden = false;
+    }
 
     self.statusText.text = status;
     self.deviceDetailsText.text = text;
@@ -262,6 +275,21 @@
   [silkService postMessage:@{@"type": msgType, @"deviceId": deviceId}];
   
   [appState updateStatus:@"Sent WIFI_GETINFO"];
+}
+
+- (IBAction)onNullPress:(id)sender {
+}
+
+- (IBAction)onRemovePress:(id)sender {
+  
+  NSString *msgType = @"DEVICE_REMOVE";
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *deviceId = deviceInfo[@"deviceId"];
+  
+  NSLog(@"DeviceViewController: send %@ %@", msgType, deviceId);
+  [silkService postMessage:@{@"type": msgType, @"deviceId": deviceId}];
+  
+  [appState updateStatus:@"Sent DEVICE_REMOVE"];
 }
 
 /**

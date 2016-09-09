@@ -115,6 +115,18 @@
     NSArray *wifiNetworks = message[@"wifiNetworks"];
     [appState updateWifiNetworks:wifiNetworks forDeviceKey:deviceId];
 
+  } else if ([messageType isEqualToString: @"DEVICE_REMOVE_SUCCESS"]) {
+    // Received device removal success
+    NSString *deviceId = message[@"deviceId"];
+    NSString *status = [NSString stringWithFormat:@"Device remove success (%@)", deviceId];
+    [appState updateStatus:status];
+
+  } else if ([messageType isEqualToString: @"DEVICE_REMOVE_ERROR"]) {
+    // Received device removal error
+    NSString *deviceId = message[@"deviceId"];
+    NSString *status = [NSString stringWithFormat:@"Device remove failed (%@)", deviceId];
+    [appState updateStatus:status];
+
   } else if ([messageType isEqualToString: @"DEVICE_MESSAGE"]) {
     // SDK received a message from a device
     NSDictionary *payload = message[@"payload"];

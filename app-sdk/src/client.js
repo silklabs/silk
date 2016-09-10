@@ -103,6 +103,7 @@ function initRegisteredDevices(store: Store<*>) {
 
       // Newly added device, signal it right away.
       if (!oldDevice) {
+        log.debug(`New device ${deviceId} found, attempting RTC connection.`);
         store.dispatch(rtc.signal(deviceId));
         return;
       }
@@ -129,28 +130,45 @@ function initRegisteredDevices(store: Store<*>) {
           store.dispatch(rtc.signal(deviceId));
         }, intervalMS);
         rtcTimers.set(deviceId, timer);
+        return;
       }
 
+      // Just paired with device over BLE to get RTC authorization.
       if (oldDevice.ble.unauthorized &&
           newDevice.ble.unauthorized === false &&
           newDevice.rtc.unauthorized) {
-        // We just paired with this device over BLE. This means we
-        // should now be able to connect to it via WebRTC. And we can
-        // disconnect from BLE.
-        clearTimeout(rtcTimers.get(deviceId));
+        log.debug(
+          `BLE pairing with ${deviceId} successful, ` +
+          `attempting to establish RTC connection.`
+        );
         store.dispatch(rtc.signal(deviceId));
+        return;
       }
 
-      // Newly established connection, make sure we update state when
-      // it's torn down.
       const oldPeer = oldDevice.rtc.peer;
       const newPeer = newDevice.rtc.peer;
+
+      // Newly established RTC connection.
       if (!oldPeer && newPeer) {
+        log.debug(`RTC connection for ${deviceId} established.`);
+        if (rtcTimers.has(deviceId)) {
+          log.debug(`Canceling reconnect timer for ${deviceId}.`);
+          clearTimeout(rtcTimers.get(deviceId));
+          rtcTimers.delete(deviceId);
+        }
         newPeer.on('close', () => {
+          log.debug(`RTC connection for ${deviceId} closed.`);
           store.dispatch(rtc.connectionClosed(deviceId));
-          // Try reconnecting right away.
-          store.dispatch(rtc.signal(deviceId));
         });
+      }
+
+      // RTC connection just went away.
+      if (oldPeer && !newPeer) {
+        log.debug(
+          `RTC connection for ${deviceId} is gone, ` +
+          `going to attempt to reconnect.`
+        );
+        store.dispatch(rtc.signal(deviceId));
       }
     });
   });

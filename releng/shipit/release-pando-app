@@ -36,6 +36,7 @@ WHITELIST=$(cat <<-EOF
   node_modules
   npm_postinstall
   npm_preinstall
+  onion
   pub
   raygun
   react-native-transformer

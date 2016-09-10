@@ -199,21 +199,36 @@ function DEVICE_REGISTERED_FETCH(
   };
 }
 
-function DEVICE_REGISTERED_UNREGISTER(
+function DEVICE_REGISTERED_UNREGISTER_SERVER(
   state: MessagesState,
-  action: Action<'DEVICE_REGISTERED_UNREGISTER', *, UnregisterRegisteredDeviceResult>
+  action: SimpleAction<'DEVICE_REGISTERED_UNREGISTER_SERVER', UnregisterRegisteredDeviceResult>,
 ): MessagesState {
-  if (action.requested || action.error) {
+  if (action.requested) {
     return state;
   }
 
-  const {deviceId} = action.payload; // TODO: look at success?
+  const {deviceId, success} = action.payload;
   let {devices} = state.DEVICES;
 
   const index = devices.findIndex((device) => device.deviceId === deviceId);
   if (index === -1) {
     return state;
   }
+
+  if (action.error || !success) {
+    emitter.postMessage({
+      type: 'DEVICE_REMOVE_ERROR',
+      deviceId,
+      error: 'FAILED', // TODO: probably want to enum this...
+    });
+    return state;
+  }
+
+  emitter.postMessage({
+    type: 'DEVICE_REMOVE_SUCCESS',
+    deviceId,
+  });
+
   devices = devices.slice();
   devices.splice(index, 1);
 
@@ -771,7 +786,7 @@ export const reducer = handleActions({
   AUTH_SIGNOUT,
   NETWORK_SERVER_REACHABLE,
   DEVICE_REGISTERED_FETCH,
-  DEVICE_REGISTERED_UNREGISTER,
+  DEVICE_REGISTERED_UNREGISTER_SERVER,
   DEVICE_BLE_CONNECTED,
   DEVICE_BLE_DISCONNECTED,
   DEVICE_BLE_ERROR,

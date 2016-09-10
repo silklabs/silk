@@ -28,17 +28,25 @@ export type RegisteredDevice = {
   name: string;
   type: string;
   rtc: {
-    connecting: boolean,
-    peer: ?Peer,
-    error: ?Error,
-    unauthorized: boolean,
-    attempts: number,
-  },
+    connecting: boolean;
+    peer: ?Peer;
+    error: ?Error;
+    unauthorized: boolean;
+    attempts: number;
+  };
   ble: {
-    connectionRequested: boolean,
-    session: ?DeviceSession,
-    unauthorized: ?boolean,
-  },
+    connectionRequested: boolean;
+    session: ?DeviceSession;
+    unauthorized: ?boolean;
+  };
+  unregister: ?{
+    factoryResetMessage: ?string;
+    // null means not started, false means in progress, true means done
+    serverStatus: ?boolean;
+    serverFailure: boolean;
+    // false means not sent, true means sent or failed.
+    peerNotified: boolean;
+  };
 };
 
 export type DevicesState = {
@@ -87,6 +95,7 @@ const registeredDeviceTemplate = {
     session: null,
     unauthorized: null,
   },
+  unregister: null,
 };
 
 // Registered devices
@@ -167,31 +176,131 @@ function DEVICE_REGISTERED_FETCH(
   };
 }
 
-function DEVICE_REGISTERED_UNREGISTER(
+function DEVICE_REGISTERED_UNREGISTER_BEGIN(
   state: DevicesState,
-  action: Action<'DEVICE_REGISTERED_UNREGISTER', *, UnregisterRegisteredDeviceResult>
+  action: Action<'DEVICE_REGISTERED_UNREGISTER_BEGIN', string, string>
 ): DevicesState {
-  if (action.requested || action.error) {
-    // TODO: anything we want to do here? Could optimistically remove
-    // the device from state, but then we'd have to add it back if the
-    // action fails...
+  if (action.error) {
+    // XXX How to handle this?
     return state;
   }
 
-  const {deviceId} = action.payload;
-  // TODO: look at success?
-  if (!state.registered || !state.registered.has(deviceId)) {
+  if (!state.registered) {
+    return state;
+  }
+
+  const {input: deviceId} = action;
+  const oldDevice = state.registered.get(deviceId);
+  if (!oldDevice) {
     return state;
   }
 
   const registered = new Map(state.registered);
-  registered.delete(deviceId);
+
+  if (action.requested) {
+    registered.set(deviceId, {
+      ...oldDevice,
+      unregister: {
+        factoryResetMessage: null,
+        peerNotified: false,
+        serverStatus: null,
+        serverFailure: false,
+      },
+    });
+    return {
+      ...state,
+      registered,
+    };
+  }
+
+  registered.set(deviceId, {
+    ...oldDevice,
+    unregister: {
+      ...oldDevice.unregister,
+      factoryResetMessage: action.payload,
+    },
+  });
+
   return {
     ...state,
     registered,
   };
 }
 
+function DEVICE_REGISTERED_UNREGISTER_PEER(
+  state: DevicesState,
+  action: Action<'DEVICE_REGISTERED_UNREGISTER_PEER', string, void>
+): DevicesState {
+  if (!state.registered) {
+    return state;
+  }
+
+  const {input: deviceId} = action;
+  const oldDevice = state.registered.get(deviceId);
+  if (!oldDevice) {
+    return state;
+  }
+
+  invariant(oldDevice.unregister);
+
+  const registered = new Map(state.registered);
+  registered.set(deviceId, {
+    ...oldDevice,
+    unregister: {
+      ...oldDevice.unregister,
+      peerNotified: true,
+    },
+  });
+
+  return {
+    ...state,
+    registered,
+  };
+}
+
+function DEVICE_REGISTERED_UNREGISTER_SERVER(
+  state: DevicesState,
+  action: Action<'DEVICE_REGISTERED_UNREGISTER_SERVER', string, UnregisterRegisteredDeviceResult>
+): DevicesState {
+  if (!state.registered) {
+    return state;
+  }
+
+  const {input: deviceId} = action;
+  const oldDevice = state.registered.get(deviceId);
+  if (!oldDevice) {
+    return state;
+  }
+
+  invariant(oldDevice.unregister);
+
+  const registered = new Map(state.registered);
+
+  if (action.requested) {
+    registered.set(deviceId, {
+      ...oldDevice,
+      unregister: {
+        ...oldDevice.unregister,
+        serverStatus: false,
+      },
+    });
+  } else if (action.error || !action.payload.success) {
+    registered.set(deviceId, {
+      ...oldDevice,
+      unregister: {
+        ...oldDevice.unregister,
+        serverFailure: true,
+      },
+    });
+  } else {
+    registered.delete(deviceId);
+  }
+
+  return {
+    ...state,
+    registered,
+  };
+}
 
 // BLE connections
 
@@ -728,7 +837,9 @@ function AUTH_SIGNOUT(
 export const reducer = handleActions({
   DEVICE_REGISTERED_RESTORE,
   DEVICE_REGISTERED_FETCH,
-  DEVICE_REGISTERED_UNREGISTER,
+  DEVICE_REGISTERED_UNREGISTER_BEGIN,
+  DEVICE_REGISTERED_UNREGISTER_SERVER,
+  DEVICE_REGISTERED_UNREGISTER_PEER,
   DEVICE_BLE_CONNECT,
   DEVICE_BLE_DISCONNECT,
   DEVICE_BLE_CONNECTED,

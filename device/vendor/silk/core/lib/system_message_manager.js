@@ -21,6 +21,9 @@ import type {PermissionManagerConnection} from './permissions';
 
 const log = createLog(`system-message-manager`);
 
+const BASE64_REGEX =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+
 let accessToken: ?AccessToken = null;
 let permissions: ?PermissionManagerConnection = null;
 
@@ -37,6 +40,11 @@ function makeSystemMessageSchema(name: string, ...args: Array<any>): Object {
   return Joi.object().keys(schema).unknown(false).required();
 }
 
+const WRAPPED_SYSTEM_MESSAGE_SCHEMA =
+  Joi.object().keys({
+    message: Joi.string().regex(BASE64_REGEX, 'base64'),
+  }).unknown(false).required();
+
 const VALID_SYSTEM_MESSAGE_SCHEMA =
   Joi.object().keys(makeBaseSchemaTemplate()).unknown(true).required();
 
@@ -44,12 +52,16 @@ const SYSTEM_MESSAGE_SCHEMAS = {
   reset: makeSystemMessageSchema(`reset`),
 };
 
-async function verifySystemMessage(base64Message: string): Promise<Object> {
+async function verifySystemMessage(base64Message: mixed): Promise<Object> {
   invariant(base64Message);
   invariant(accessToken);
   invariant(permissions);
 
-  const input = new Buffer(base64Message, `base64`);
+  Joi.assert(base64Message, WRAPPED_SYSTEM_MESSAGE_SCHEMA);
+  invariant(typeof base64Message === 'object');
+  invariant(typeof base64Message.message === 'string');
+
+  const input = new Buffer(base64Message.message, `base64`);
 
   const {channel, senderIdentity, payload: message} =
     await onion.genDecodeAndVerifyForUnknownSender({
@@ -90,7 +102,7 @@ async function verifySystemMessage(base64Message: string): Promise<Object> {
   return message;
 }
 
-async function systemMessageHandler(base64Message: string): Promise<void> {
+async function systemMessageHandler(base64Message: mixed): Promise<void> {
   invariant(base64Message);
   invariant(accessToken);
   invariant(permissions);

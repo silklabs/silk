@@ -447,7 +447,7 @@ export default class Connections extends EventEmitter {
           const emitter = this._channelEmitters[SYSTEM_CHANNEL_NAME];
           invariant(emitter);
           emitter._emitLocalChannelEvent(SYSTEM_CHANNEL_NAME,
-                                         factoryResetMessage);
+                                         {message: factoryResetMessage});
         }
       } catch (err2) {
         log.debug(`Failed to check for factory reset message, probably still ` +

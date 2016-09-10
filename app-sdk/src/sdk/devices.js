@@ -122,20 +122,16 @@ function DEVICE_REMOVE(
   store: SDKStore,
   message: DeviceRemoveMessage,
 ) {
-  store.dispatch(actions.devices.registered.unregister({
-    devicePublicKey: message.deviceId,
-  })).then(() => {
-    emitter.postMessage({
-      type: 'DEVICE_REMOVE_SUCCESS',
-      deviceId: message.deviceId,
-    });
-  }).catch((error) => {
-    emitter.postMessage({
-      type: 'DEVICE_REMOVE_ERROR',
-      deviceId: message.deviceId,
-      error: error.message, // TODO: probably want to enum this...
-    });
-  });
+  const {deviceId} = message;
+  const {registered} = store.getState().devices;
+  invariant(registered);
+  const device = registered.get(deviceId);
+  invariant(device);
+  const {unregister} = device;
+  invariant(!unregister ||
+            (unregister.serverStatus && unregister.serverFailure));
+
+  store.dispatch(actions.devices.registered.unregisterBegin(deviceId));
 }
 
 function DEVICE_MESSAGE(

@@ -82,6 +82,12 @@ const CONFIG_ADVERTISING_INFO: AdvertisingInfo = {
 const REGISTRATION_TIMEOUT_MS: number = 3 * 1000;
 const REGISTRATION_RETRY_LIMIT: number = 5;
 
+const NEW_PAIRED_DEVICE_PERMISSIONS = [
+  'ble',
+  'rtc',
+  'reset',
+];
+
 const REGISTRATION_RESPONSE_SCHEMA = Joi.object().keys({
   success: Joi.boolean().required(),
   beaconUUID: Joi.any().when(`success`, {
@@ -744,18 +750,15 @@ export class DeviceConfig extends EventEmitter {
     const permissionManager = this._permissionManager;
     invariant(permissionManager);
 
-    permissionManager.add(publicKey, [
-      {
-        type: 'ble',
+    const permissions = NEW_PAIRED_DEVICE_PERMISSIONS.map((permissionType) =>
+      ({
+        type: permissionType,
         expires: null,
         actor: null,
-      },
-      {
-        type: 'rtc',
-        expires: null,
-        actor: null,
-      },
-    ]);
+      })
+    );
+
+    permissionManager.add(publicKey, permissions);
   }
 
   /**

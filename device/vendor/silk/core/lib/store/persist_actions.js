@@ -12,7 +12,7 @@ import {actionFromPayload} from 'silk-redux/action';
 import type {
   MutablePermission,
   MutablePermissionType,
-} from './persist_reducers';
+} from '../permissions';
 
 export type PermissionsClearPayload = {
   publicKey: string;

@@ -13,6 +13,7 @@ import createLog from 'silk-log';
 import Devices from '../models/devices';
 import sharedRoutes from './shared';
 import authorizeDevice from '../authorize_device';
+import authorizeUnregisteredDevice from '../authorize_unregistered_device';
 
 import type { ExpressRoutes } from 'silk-api-schema';
 import type { RouteContext } from '../server';
@@ -20,15 +21,21 @@ import type { RouteContext } from '../server';
 const log = createLog('routes:device');
 const PREFIX = '/v1/device/';
 
+const FACTORY_RESET_MESSAGE_PATH = 'factory_reset_message';
+
 export default function (ctx: RouteContext): ExpressRoutes {
-  let routes = new Router();
+  const {devices} = ctx;
+  const routes = new Router();
 
-  routes.use(PREFIX, authorizeDevice({
+  // Special route that allows unregistered devices.
+  routes.use(
+    `${PREFIX}${FACTORY_RESET_MESSAGE_PATH}`,
+    authorizeUnregisteredDevice({devices}),
+  );
 
-    devices: ctx.devices,
-  }));
+  routes.use(PREFIX, authorizeDevice({devices}));
 
-  let api = expressApi(routes, {
+  const api = expressApi(routes, {
     name: 'device',
     prefix: PREFIX,
     description: `
@@ -39,12 +46,30 @@ export default function (ctx: RouteContext): ExpressRoutes {
   sharedRoutes(api, 'device', ctx);
 
   api.define({
+    path: FACTORY_RESET_MESSAGE_PATH,
+    method: 'post',
+    params: [],
+    name: 'getFactoryResetMessage',
+    description:
+      `Return a factory reset message for this device if it was unregistered`,
+
+    input: Joi.object(),
+    output: Joi.object().keys({
+      factoryResetMessage: Devices.ONION_SCHEMA.optional(),
+    }).required(),
+  }, async (req, res) => {
+    const {device} = req;
+    const factoryResetMessage = device.factoryResetMessage || null;
+    res.send({factoryResetMessage});
+  });
+
+  api.define({
     path: 'sas_signaling_servers',
     method: 'post',
     params: [],
     name: 'getSasForSignaling',
     description:
-      `Return SAS credentials for querying avaiable signaling servers`,
+      `Return SAS credentials for querying available signaling servers`,
 
     // This has no real input for the time being ...
     input: Joi.object(),
@@ -64,7 +89,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       ))*/
       publicUrl: Joi.string().optional(), // not requried
       sas: Joi.array().items(Joi.any()).required(),
-    }),
+    }).required(),
   }, async (req, res) => {
     // 6 hours in the future ...
     let expiration = new Date(Date.now() + 1000 * 60 * 60 * 6);
@@ -91,7 +116,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       success: Joi.boolean().required(),
       accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.required(),
       beaconUUID: Joi.string().guid(),
-    }),
+    }).required(),
     input: Joi.object().keys({
       // _account_ public key...
       registrarPublicKey: Joi.string().hex().required(),
@@ -99,7 +124,6 @@ export default function (ctx: RouteContext): ExpressRoutes {
       registrationToken: Joi.string(),
     }).required(),
   }, async (req, res) => {
-
     // First we need to find the account that this device belongs to so we can
     // validate the registration token.
     let account = await ctx.accounts.findByPublicKey({
@@ -115,7 +139,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       return;
     }
 
-    let result = await ctx.devices.validateRegistration(req.body.registrarPublicKey, {
+    let result = await devices.validateRegistration(req.body.registrarPublicKey, {
       publicKey: req.device.accessToken.publicKey,
       registrationToken: req.body.registrationToken,
     });
@@ -139,13 +163,16 @@ export default function (ctx: RouteContext): ExpressRoutes {
     params: [],
     name: 'unregister',
     description: 'Remove this device from the account',
-    input: Joi.object(),
+    input: Joi.object().keys({
+      factoryResetMessage: Devices.ONION_SCHEMA.required(),
+    }).required(),
     output: Joi.object().keys({
       success: Joi.boolean().required(),
-    }),
+    }).required(),
   }, async (req, res) => {
-    let result = await ctx.devices.unregister({
+    let result = await devices.unregister({
       publicKey: req.publicKey,
+      factoryResetMessage: req.body.factoryResetMessage,
     });
 
     if (!result || result.error) {

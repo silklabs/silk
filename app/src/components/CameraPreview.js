@@ -207,7 +207,7 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
       }
       const {deviceId} = this.props.device;
       this.props.dispatch(
-        actions.devices.registered.unregister({devicePublicKey: deviceId})
+        actions.devices.registered.unregisterBegin({devicePublicKey: deviceId})
       );
     });
   }

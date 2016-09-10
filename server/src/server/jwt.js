@@ -1,5 +1,6 @@
 /* @flow */
 
+import invariant from 'assert';
 import jwt from 'silk-jsonwebtoken';
 import createLog from 'silk-log';
 
@@ -53,6 +54,13 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
   }
 
   async function handle(req: any, res: any, next: RouteNextFn) {
+    if (req.publicKey) {
+      invariant(req.device);
+      invariant(req.signed);
+      next();
+      return;
+    }
+
     let signature = signatureProviderFn(req, res);
 
     if (typeof signature !== 'string') {
@@ -78,7 +86,7 @@ export default function (options: MiddlewareOptions): MiddlewareFn {
 
     let publicKey = await publicKeyProvider(jwtHeader.id, req, res);
     if (!publicKey) {
-      log.debug('Missing public key', req.path, req.method);
+      log.debug('Could not find public key', req.path, req.method);
       res.sendStatus(403);
       return;
     }

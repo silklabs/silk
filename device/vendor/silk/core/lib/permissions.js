@@ -16,12 +16,57 @@ import getStore from './store';
 import actions from './store/actions';
 
 import type {Store} from './store';
-import type {
-  MutablePermission,
-  MutablePermissionType,
-} from './store/persist_reducers';
 
 const log = createLog(`permissions`);
+
+// Permissions that cannot be added/removed/cleared with the normal permission
+// actions.
+export const IMMUTABLE_PERMISSION_TYPES = new Set([
+  // Can only be granted or removed by device configuration.
+  'full',
+]);
+type ImmutablePermissionType = $Enum<typeof IMMUTABLE_PERMISSION_TYPES>;
+
+// Permissions that can be added/removed/cleared with the normal permission
+// actions.
+export const MUTABLE_PERMISSION_TYPES = new Set([
+  // Allow bluetooth socket connections.
+  'ble',
+
+   // Allow bluetooth socket connections for a short time.
+  'ble-temp',
+
+  // Allow webrtc connections.
+  'rtc',
+
+  // Allowed to force a factory reset.
+  'reset',
+]);
+export type MutablePermissionType = $Enum<typeof MUTABLE_PERMISSION_TYPES>;
+
+export type PermissionType = ImmutablePermissionType | MutablePermissionType;
+
+type PermissionBase<T: PermissionType> = {
+  // Type of permission.
+  type: T,
+
+  // Milliseconds from epoch when this permission expires. Null if never.
+  expires: ?number;
+
+  // Public key of the actor that set this permission. Null if this device.
+  actor: ?string;
+};
+
+type ImmutablePermission = PermissionBase<ImmutablePermissionType>;
+export type MutablePermission = PermissionBase<MutablePermissionType>;
+
+export type Permission = ImmutablePermission | MutablePermission;
+
+export const FULL_PERMISSION: PermissionBase<*> = {
+  type: 'full',
+  expires: null,
+  actor: null,
+};
 
 export class PermissionManager extends EventEmitter {
 

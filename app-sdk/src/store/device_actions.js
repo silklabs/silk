@@ -4,7 +4,9 @@
 
 import invariant from 'assert';
 import {AsyncStorage, NativeModules} from 'react-native';
+import {AccessToken} from 'silk-api';
 import createLog from 'silk-log';
+import * as onion from 'silk-onion';
 import * as silkRTC from 'silk-rtc';
 import {
   actionFromPayload,
@@ -12,14 +14,12 @@ import {
   actionFromAsyncPayloadGen,
 } from 'silk-redux/action';
 
-import type {
-  ListDevicesOutput,
-  UnregisterDeviceInput,
-} from 'silk-api/src/gen/account';
+import type {ListDevicesOutput} from 'silk-api/src/gen/account';
 import {Peer} from 'silk-rtc';
 
 import type {StateWithApi} from './api';
 import type {DevicesState} from './device_reducers';
+import type {State} from './reducers';
 import type {
   default as DeviceSession,
   WifiConfiguration,
@@ -79,16 +79,80 @@ function genFetchRegisteredDeviceList(
   return api.account.listDevices({});
 }
 
-function genUnregisterRegisteredDevice(
-  state: StateWithApi,
-  input: UnregisterDeviceInput
-): Promise<UnregisterRegisteredDeviceResult> {
-  const {api} = state;
+function genUnregisterBegin(
+  state: State,
+  input: string
+): Promise<string> {
+  const {api, devices} = state;
   invariant(api);
-  return api.account.unregisterDevice(input).then((result) => ({
-    deviceId: input.devicePublicKey,
+  invariant(devices);
+
+  const {accessToken} = api;
+  invariant(accessToken);
+
+  const {registered} = devices;
+  invariant(registered);
+  const device = registered.get(input);
+  invariant(device);
+
+  const {unregister} = device;
+  invariant(unregister);
+  invariant(!unregister.factoryResetMessage);
+
+  return onion.genEncode({
+    senderIdentity: accessToken,
+    recipientIdentity: AccessToken.importPub(input),
+    channel: 'http',
+    payload: {name: `reset`},
+  }).then((buffer) => buffer.toString('base64'));
+}
+
+function genUnregisterServer(
+  state: State,
+  input: string
+): Promise<UnregisterRegisteredDeviceResult> {
+  const {api, devices} = state;
+  invariant(api);
+  invariant(devices);
+
+  const {accessToken} = api;
+  invariant(accessToken);
+
+  const {registered} = devices;
+  invariant(registered);
+  const device = registered.get(input);
+  invariant(device);
+  invariant(device.unregister);
+  invariant(device.unregister.factoryResetMessage);
+
+  return api.account.unregisterDevice({
+    devicePublicKey: input,
+    factoryResetMessage: device.unregister.factoryResetMessage,
+  }).then((result) => ({
+    deviceId: input,
     success: result.success,
   }));
+}
+
+function unregisterPeer(
+  state: StateWithDevices,
+  input: string
+): void {
+  const {devices} = state;
+  invariant(devices);
+
+  const {registered} = devices;
+  invariant(registered);
+  const device = registered.get(input);
+  invariant(device);
+
+  const {rtc, unregister} = device;
+  invariant(rtc.peer);
+  invariant(unregister);
+  invariant(unregister.factoryResetMessage);
+
+  const channel = rtc.peer.createChannel('system');
+  channel.emit('system', {message: unregister.factoryResetMessage});
 }
 
 function disconnect(
@@ -256,7 +320,9 @@ function wifiGetInfo(
 export const registered = {
   restoreList: actionFromAsyncPayloadGen('DEVICE_REGISTERED_RESTORE', genRestoreRegisteredDeviceList),
   fetchList: actionFromAsyncPayloadGen('DEVICE_REGISTERED_FETCH', genFetchRegisteredDeviceList),
-  unregister: actionFromAsyncPayloadGen('DEVICE_REGISTERED_UNREGISTER', genUnregisterRegisteredDevice),
+  unregisterBegin: actionFromAsyncPayloadGen('DEVICE_REGISTERED_UNREGISTER_BEGIN', genUnregisterBegin),
+  unregisterWithServer: actionFromAsyncPayloadGen('DEVICE_REGISTERED_UNREGISTER_SERVER', genUnregisterServer),
+  unregisterWithPeer: actionFromPayloadGen('DEVICE_REGISTERED_UNREGISTER_PEER', unregisterPeer),
 };
 
 // Actions

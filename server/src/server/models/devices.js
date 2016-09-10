@@ -10,6 +10,8 @@ import Base from './base';
 import { ObjectID } from 'mongodb';
 import AccessToken from 'silk-api/src/access_token';
 
+import type {UnregisterInput} from 'silk-api/src/gen/device';
+
 const PUBLIC_KEY = Joi.string().hex().required();
 const TYPE_SCHEMA = Joi.string().regex(/^[a-z\d_-]+$/).max(80).required();
 // XXX: Max name length was chosen randomly...
@@ -19,17 +21,24 @@ const MAX_ACCOUNT_DEVICE_NUMBER = 65535;
 const ACCOUNT_DEVICE_NUMBER_SCHEMA =
   Joi.number().integer().min(1).max(MAX_ACCOUNT_DEVICE_NUMBER);
 
+const BASE64_REGEX =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+const ONION_SCHEMA =
+  Joi.string().regex(BASE64_REGEX, 'base64');
+
 export type Record = {
   _id: ObjectID;
   accountId: string;
   name: string;
   type: string;
+  registered: boolean;
+  factoryResetMessage?: string;
   accessToken: {
     publicKey: string;
   };
   registration: {
-    accountId: ?string;
-    accountDeviceNumber: ?number;
+    accountId: string;
+    accountDeviceNumber?: number;
   }
   // TODO: finish type...
 };
@@ -39,6 +48,7 @@ export default class Devices extends Base {
   static NAME_SCHEMA = NAME_SCHEMA;
   static TYPE_SCHEMA = TYPE_SCHEMA;
   static ACCOUNT_DEVICE_NUMBER_SCHEMA = ACCOUNT_DEVICE_NUMBER_SCHEMA;
+  static ONION_SCHEMA = ONION_SCHEMA;
 
   static COLLECTION = 'devices';
 
@@ -87,6 +97,7 @@ export default class Devices extends Base {
 
     unregister: Joi.object().keys({
       publicKey: PUBLIC_KEY,
+      factoryResetMessage: ONION_SCHEMA.required(),
     }),
 
     validateRegistration: Joi.object({
@@ -116,6 +127,9 @@ export default class Devices extends Base {
 
       // Name of this device.
       name: NAME_SCHEMA,
+
+      // A factory reset message if the device was unregistered.
+      factoryResetMessage: ONION_SCHEMA.optional(),
 
       registration: Joi.object().keys({
         // We store a duplicate of accountId for the purposes of indexing certain
@@ -204,14 +218,17 @@ export default class Devices extends Base {
     return this.error('duplicatePublicKey');
   }
 
-  async unregister(payload: any): any {
+  async unregister(payload: UnregisterInput): mixed {
     payload = this.validate(payload, 'unregister');
+
+    const factoryResetMessage = payload.factoryResetMessage;
 
     let { result } = await this.collection.update(
       { 'accessToken.publicKey': payload.publicKey },
       {
         $set: {
           registered: false,
+          factoryResetMessage,
         },
         $unset: {
           // Remove from the index... This will allow us in the future to re-use

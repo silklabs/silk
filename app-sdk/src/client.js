@@ -91,6 +91,31 @@ function initRegisteredDevices(store: Store<*>) {
   store.subscribeToPath('auth.isAuthenticated', ensureDeviceConnection);
   store.subscribeToPath('network.canReachServer', ensureDeviceConnection);
 
+  const {registered} = actions.devices;
+  function handleUnregister(device) {
+    invariant(device);
+    const {unregister} = device;
+    if (!unregister) {
+      return;
+    }
+    const {factoryResetMessage, serverStatus} = unregister;
+
+    if (!factoryResetMessage) {
+      // Factory reset message is being encoded.
+      return;
+    }
+
+    if (serverStatus === null) {
+      store.dispatch(registered.unregisterWithServer(device.deviceId));
+      if (device.rtc.peer) {
+        store.dispatch(registered.unregisterWithPeer(device.deviceId));
+      } else {
+        log.warn('Not connected to device, cannot signal unregister');
+      }
+      return;
+    }
+  }
+
   // Whenever a new registered device gets added to the current state,
   // attempt to signal it immediately.
   const {rtc} = actions.devices;
@@ -100,6 +125,10 @@ function initRegisteredDevices(store: Store<*>) {
     }
     newDevices.forEach((newDevice, deviceId) => {
       const oldDevice = oldDevices ? oldDevices.get(deviceId) : null;
+
+      if (!oldDevice || (newDevice.unregister !== oldDevice.unregister)) {
+        handleUnregister(newDevice);
+      }
 
       // Newly added device, signal it right away.
       if (!oldDevice) {

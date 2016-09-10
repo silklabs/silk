@@ -32,7 +32,6 @@ if (process.platform !== 'android') {
 import assert from 'assert';
 import api from 'silk-device-api';
 import Battery from 'silk-battery';
-
 import wifi from 'silk-wifi';
 import ntp from 'silk-ntp';
 import {getUpdateController} from 'silk-update';
@@ -67,6 +66,7 @@ import {
   loadStore,
 } from './store';
 import startPermissionManager from './permissions';
+import startSystemMessageManager from './system_message_manager';
 
 // Start the profile server ASAP.
 initProfiler();
@@ -223,7 +223,9 @@ function main() {
       logcat = new Logcat(id.toString(), outbox);
       logcat.start();
 
-      startPermissionManager();
+      const permissions = startPermissionManager();
+
+      startSystemMessageManager(id, connections, permissions);
 
       // Wait for the battery to initialize and block until there's enough
       // capacity to fully boot.
@@ -402,15 +404,14 @@ async function onConfigured() {
   update.start();
 }
 
-
-async function shutdown(type: ShutdownType = 'poweroff') {
+export async function shutdown(type: ShutdownType = 'poweroff') {
   if (shutdownType) {
     log.warn('Shutdown already in progress: ', shutdownType);
     return;
   }
   shutdownType = type;
 
-  log.info('Shutdown started');
+  log.info('Shutdown started', type);
   if (!ui.goto('powerdown')) {
     log.error(`ui state was set to 'powerdown' more than once?`);
   }
@@ -425,7 +426,7 @@ async function shutdown(type: ShutdownType = 'poweroff') {
   if (shutdownType === 'factoryreset') {
     try {
       const result = await api.device.unregister();
-      log.info('Server unregisteration', result.success ? 'succeeded' : 'failed');
+      log.info('Server unregistration', result.success ? 'succeeded' : 'failed');
     } catch (err) {
       log.warn('Unable to unregister device:', err);
     }

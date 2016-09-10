@@ -16,12 +16,15 @@ import printExec from './print_exec';
 import { ArgumentParser } from 'argparse';
 import { SourceMapConsumer } from 'source-map';
 
-const DEVICE_PORT = 60024;
+const DEFAULT_DEVICE_PORT = 60024;
+
+let portInUse;
+
 // Only resolve sourcemap for files which start with this.
 const JS_FILE_PREFIX = '/system/silk';
 
 function url (path) {
-  return `http://localhost:${DEVICE_PORT}/${path}`;
+  return `http://localhost:${portInUse}/${path}`;
 }
 
 async function httpCheck(res) {
@@ -110,6 +113,10 @@ async function resolveCPUProfile(profile) {
 
 const parser = new ArgumentParser({});
 
+parser.addArgument(['--port'], {
+  help: `Use this port`,
+});
+
 const subcommands = parser.addSubparsers({
   title: 'Commands',
   dest: 'command',
@@ -175,8 +182,11 @@ async function expandSourcemap(args) {
 
 async function main() {
   let args = parser.parseArgs();
+
+  portInUse = `port` in args ? args.port : DEFAULT_DEVICE_PORT;
+
   // TODO: Allow this to be configured...
-  await printExec(`adb forward tcp:${DEVICE_PORT} tcp:${DEVICE_PORT}`);
+  await printExec(`adb forward tcp:${portInUse} tcp:${portInUse}`);
 
   switch (args.command) {
   case 'cpu-start':

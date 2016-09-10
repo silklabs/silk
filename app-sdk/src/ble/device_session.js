@@ -54,7 +54,7 @@ export type DeviceSecret = {
   deviceId: string;
 };
 
-const log = mklog('btle-DeviceManager');
+const log = mklog('btle-DeviceSession');
 
 const ACCOUNT_DEVICE_NUMBER_SCHEMA =
   Joi.number().integer().min(1).required();
@@ -335,7 +335,7 @@ export default class DeviceSession extends RobustEventEmitter {
 
   _onData: ((data: MessageData) => void) = (data) => {
     if (__DEV__) {
-      Systrace.beginEvent(`ble.DeviceManager._onData('${data.name}')`);
+      Systrace.beginEvent(`ble.DeviceSession._onData('${data.name}')`);
     }
     this._onDataImpl(data);
     if (__DEV__) {

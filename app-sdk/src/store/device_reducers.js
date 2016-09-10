@@ -31,10 +31,13 @@ export type RegisteredDevice = {
     connecting: boolean,
     peer: ?Peer,
     error: ?Error,
+    unauthorized: boolean,
+    attempts: number,
   },
   ble: {
     connectionRequested: boolean,
     session: ?DeviceSession,
+    unauthorized: ?boolean,
   },
 };
 
@@ -76,10 +79,13 @@ const registeredDeviceTemplate = {
     connecting: false,
     peer: null,
     error: null,
+    unauthorized: false,
+    attempts: 0,
   },
   ble: {
     connectionRequested: false,
     session: null,
+    unauthorized: null,
   },
 };
 
@@ -289,6 +295,7 @@ function DEVICE_BLE_CONNECTED(
     ble: {
       ...device.ble,
       session,
+      unauthorized: session.isUnauthorized,
     },
   });
   return {
@@ -319,6 +326,7 @@ function DEVICE_BLE_DISCONNECTED(
         ble: {
           ...device.ble,
           session: null,
+          unauthorized: null,
         },
       });
     }
@@ -516,14 +524,33 @@ function DEVICE_CONFIG_REGISTERED(
   const session = action.payload;
   invariant(session.isRegistered);
   invariant(session.deviceId);
-  const {configuring, registered, unconfigured} = state;
+  const {configuring, unconfigured} = state;
+  let {registered} = state;
   if (!configuring || configuring.socketId !== session.socketId) {
     invariant(registered);
     const device = registered.get(session.deviceId);
     invariant(device);
     invariant(device.ble.session === session);
     invariant(session.authenticated);
-    return state;
+
+    if (!device.ble.unauthorized) {
+      return state;
+    }
+
+    // We just paired with a device that we were previously not
+    // authorized with.
+    registered = new Map(registered);
+    registered.set(device.deviceId, {
+      ...device,
+      ble: {
+        ...device.ble,
+        unauthorized: false,
+      },
+    });
+    return {
+      ...state,
+      registered,
+    };
   }
   invariant(unconfigured.has(session.socketId));
   return {
@@ -614,18 +641,22 @@ function DEVICE_RTC_SIGNAL(
     device = {
       ...device,
       rtc: {
+        ...device.rtc,
         connecting: true,
         peer: null,
         error: null,
       },
     };
   } else if (action.error) {
+    const isUnauthorized = action.payload.message === 'UNAUTHORIZED';
     device = {
       ...device,
       rtc: {
         connecting: false,
         peer: null,
         error: action.payload,
+        unauthorized: device.rtc.unauthorized || isUnauthorized,
+        attempts: device.rtc.attempts + 1,
       },
     };
   } else {
@@ -635,6 +666,8 @@ function DEVICE_RTC_SIGNAL(
         connecting: false,
         peer: action.payload,
         error: null,
+        unauthorized: false,
+        attempts: 0,
       },
     };
   }
@@ -657,12 +690,15 @@ function DEVICE_RTC_CONNECTIONCLOSED(
 
   const registered = new Map(state.registered);
   const device = state.registered.get(deviceId);
+  invariant(device);
   registered.set(deviceId, {
     ...device,
     rtc: {
+      ...device.rtc,
       connecting: false,
       peer: null,
       error: null,
+      attempts: 0,
     },
   });
   return {

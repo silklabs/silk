@@ -19,15 +19,19 @@ import PreviewQueue from '../libraries/PreviewQueue';
 import * as actions from '../store/actions';
 
 import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {Dispatch} from 'silk-redux/action';
 
 type Props = {
   device: RegisteredDevice;
   previewSize: {width: number, height: number};
   width: number;
-  onPress?: Function;
+  onPress: Function;
+  dispatch: Dispatch<*>;
 };
 
 const log = createLog('CameraPreview');
+
+const PAIRING_TIMEOUT_MS = 30 * 1000;
 
 export default class CameraPreview extends WebRTCDataChannelReceiver {
 
@@ -35,12 +39,14 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
 
   state = {
     blob: null,
+    pairingTimedOut: false,
   };
 
   channelName: string = 'preview';
   messageType: string = 'jpeg';
 
   _timeoutTimer: ?number = null;
+  _pairing: boolean = false;
 
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
@@ -62,6 +68,30 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
     }
   }
 
+  componentWillReceiveProps(nextProps: Props) {
+    if (this._pairing) {
+      const {deviceId, ble} = this.props.device;
+      const nextBLE = nextProps.device.ble;
+
+      // Clear the timeout if we successfully connected to the device.
+      if (!ble.session && nextBLE.session) {
+        clearTimeout(this._timeoutTimer);
+        this._timeoutTimer = null;
+      }
+
+      // Automatically close the BLE connection if we created it for
+      // pairing and pairing was successful.
+      if (ble.unauthorized && nextBLE.unauthorized === false) {
+        this.props.dispatch(actions.devices.ble.disconnect(deviceId));
+        this._pairing = false;
+        if (this.state.pairingTimedOut) {
+          this.setState({pairingTimedOut: false});
+        }
+      }
+    }
+    super.componentWillReceiveProps(nextProps);
+  }
+
   /**
    * "API"
    */
@@ -71,7 +101,31 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
   };
 
   _renderPreview() {
-    const {rtc} = this.props.device;
+    const {rtc, ble} = this.props.device;
+    if (rtc.connecting) {
+      return <ActivityIndicator color="white" />;
+    }
+    if (rtc.unauthorized) {
+      if (ble.connectionRequested && !ble.session) {
+        return <ActivityIndicator color="white" />;
+      }
+      let label = 'Not paired yet. Tap to pair via Bluetooth.';
+      if (this.state.pairingTimedOut) {
+        label = (
+          `Could not connect to device via Bluetooth. ` +
+          `Ensure you're in close proximity to the device ` +
+          `and tap again to pair.`
+        );
+      } else if (ble.session && ble.unauthorized) {
+        label = (
+          'Connected via Bluetooth. ' +
+          'Hold the phone close to the device to pair.'
+        );
+      } else if (ble.session && !ble.unauthorized) {
+        label = 'Successfully paired!';
+      }
+      return <Text style={styles.timedOutLabel}>{label}</Text>;
+    }
     if (!rtc.peer && !rtc.connecting) {
       return (
         <Text style={styles.timedOutLabel}>
@@ -80,7 +134,7 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
       );
     }
     const {blob} = this.state;
-    if (rtc.connecting || !blob) {
+    if (!blob) {
       return <ActivityIndicator color="white" />;
     }
     return (
@@ -108,16 +162,38 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
     );
   }
 
-  _onPress = () => {
-    const {rtc} = this.props.device;
+  _onPress() {
+    const {rtc, ble} = this.props.device;
+    if (rtc.unauthorized) {
+      if (ble.connectionRequested || ble.session) {
+        return;
+      }
+      this._pairDevice();
+      return;
+    }
     if (!rtc.peer && !rtc.connecting) {
       this._showRemoveDeviceSheet();
       return;
     }
     this.props.onPress();
-  };
+  }
 
-  _showRemoveDeviceSheet = () => {
+  _onPress: () => void = this._onPress.bind(this);
+
+  _pairDevice() {
+    const {deviceId} = this.props.device;
+    this._pairing = true;
+    this.props.dispatch(
+      actions.devices.ble.connect(deviceId)
+    );
+    this._timeoutTimer = setTimeout(() => {
+      this.props.dispatch(actions.devices.ble.disconnect(deviceId));
+      this._pairing = false;
+      this.setState({pairingTimedOut: true});
+    }, PAIRING_TIMEOUT_MS);
+  }
+
+  _showRemoveDeviceSheet() {
     ActionSheetIOS.showActionSheetWithOptions({
       options: [
         'Remove Device',
@@ -134,7 +210,7 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
         actions.devices.registered.unregister({devicePublicKey: deviceId})
       );
     });
-  };
+  }
 }
 
 const styles = StyleSheet.create({

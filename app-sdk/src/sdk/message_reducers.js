@@ -710,10 +710,16 @@ function DEVICE_RTC_SIGNAL(
       rtcConnectionError: null,
     };
   } else if (action.error) {
+    // TODO: differentiate between network errors and a 404 from the
+    // signaling server
+    let rtcConnectionError = 'DEVICE_UNAVAILABLE';
+    if (action.payload.message === 'UNAUTHORIZED') {
+      rtcConnectionError = 'UNAUTHORIZED';
+    }
     devices[index] = {
       ...devices[index],
       rtcConnectionStatus: 'NOT_CONNECTED',
-      rtcConnectionError: action.payload.message, // TODO
+      rtcConnectionError,
     };
   } else {
     devices[index] = {

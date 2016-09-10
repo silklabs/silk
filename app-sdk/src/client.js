@@ -16,7 +16,7 @@ import * as actions from './store/actions';
 import type {Socket} from 'silk-ble-socket';
 import type {Store} from './store';
 
-const RTC_SIGNAL_INTERVAL_MS = 60000;
+const RTC_SIGNAL_INTERVALS_SEC = [0, 5, 10, 20, 30];
 
 const log = createLog('app-sdk-client');
 
@@ -75,37 +75,18 @@ function initRegisteredDevices(store: Store<*>) {
   // signal them, when the circumstances call for it. For instance,
   // right after logging in, right after the phone's network
   // connection is restored, etc.
-  let rtcTimer = null;
+  let rtcTimers: Map<string, number> = new Map();
+
   function ensureDeviceConnection() {
     const {auth, network} = store.getState();
     if (!auth.isAuthenticated || !network.canReachServer) {
-      if (rtcTimer) {
-        clearInterval(rtcTimer);
-      }
-      rtcTimer = null;
-      return;
-    }
-    if (rtcTimer !== null) {
+      rtcTimers.forEach(clearTimeout);
+      rtcTimers.clear();
       return;
     }
 
     // See if there are any new devices.
     store.dispatch(actions.devices.registered.fetchList());
-
-    // Crude way of figuring out whether a device is online: just keep
-    // signaling it every 60s.
-    rtcTimer = setInterval(() => {
-      const {registered} = store.getState().devices;
-      if (!registered) {
-        return;
-      }
-      registered.forEach((device, deviceId) => {
-        if (device.rtc.peer || device.rtc.connecting) {
-          return;
-        }
-        store.dispatch(actions.devices.rtc.signal(deviceId));
-      });
-    }, RTC_SIGNAL_INTERVAL_MS);
   }
   store.subscribeToPath('auth.isAuthenticated', ensureDeviceConnection);
   store.subscribeToPath('network.canReachServer', ensureDeviceConnection);
@@ -119,22 +100,75 @@ function initRegisteredDevices(store: Store<*>) {
     }
     newDevices.forEach((newDevice, deviceId) => {
       const oldDevice = oldDevices ? oldDevices.get(deviceId) : null;
+
+      // Newly added device, signal it right away.
       if (!oldDevice) {
-        // Newly added device, so let's signal it.
+        log.debug(`New device ${deviceId} found, attempting RTC connection.`);
+        store.dispatch(rtc.signal(deviceId));
+        return;
+      }
+
+      // We've failed to signal the device once again, re-attempt
+      // based on back-off intervals.
+      if (newDevice.rtc.attempts > oldDevice.rtc.attempts &&
+          !newDevice.rtc.connecting &&
+          !rtcTimers.has(deviceId)) {
+        const index = Math.min(
+          newDevice.rtc.attempts,
+          RTC_SIGNAL_INTERVALS_SEC.length - 1
+        );
+        const intervalMS = RTC_SIGNAL_INTERVALS_SEC[index] * 1000;
+        log.debug(`Attempting reconnection to ${deviceId} in ${intervalMS}ms`);
+
+        const timer = setTimeout(() => {
+          rtcTimers.delete(deviceId);
+          const currentDevice = store.getState().devices.registered.get(deviceId);
+          if (currentDevice.rtc.peer || currentDevice.rtc.connecting) {
+            return;
+          }
+          log.debug(`Attempt #${currentDevice.rtc.attempts} to connect to ${deviceId}.`);
+          store.dispatch(rtc.signal(deviceId));
+        }, intervalMS);
+        rtcTimers.set(deviceId, timer);
+        return;
+      }
+
+      // Just paired with device over BLE to get RTC authorization.
+      if (oldDevice.ble.unauthorized &&
+          newDevice.ble.unauthorized === false &&
+          newDevice.rtc.unauthorized) {
+        log.debug(
+          `BLE pairing with ${deviceId} successful, ` +
+          `attempting to establish RTC connection.`
+        );
         store.dispatch(rtc.signal(deviceId));
         return;
       }
 
       const oldPeer = oldDevice.rtc.peer;
       const newPeer = newDevice.rtc.peer;
+
+      // Newly established RTC connection.
       if (!oldPeer && newPeer) {
-        // Newly established connection, make sure we update state
-        // when it's torn down.
+        log.debug(`RTC connection for ${deviceId} established.`);
+        if (rtcTimers.has(deviceId)) {
+          log.debug(`Canceling reconnect timer for ${deviceId}.`);
+          clearTimeout(rtcTimers.get(deviceId));
+          rtcTimers.delete(deviceId);
+        }
         newPeer.on('close', () => {
+          log.debug(`RTC connection for ${deviceId} closed.`);
           store.dispatch(rtc.connectionClosed(deviceId));
-          // Try reconnecting right away.
-          store.dispatch(rtc.signal(deviceId));
         });
+      }
+
+      // RTC connection just went away.
+      if (oldPeer && !newPeer) {
+        log.debug(
+          `RTC connection for ${deviceId} is gone, ` +
+          `going to attempt to reconnect.`
+        );
+        store.dispatch(rtc.signal(deviceId));
       }
     });
   });
@@ -210,6 +244,7 @@ function initBLE(store: Store<*>) {
       return;
     }
 
+    // Stop scanning for all devices when we're logging out.
     invariant(!state.auth.isAuthenticated);
 
     if (oldBeaconUuid) {

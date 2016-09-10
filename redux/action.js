@@ -64,7 +64,7 @@ export type InitAction = { type: '@@redux/INIT' };
  * the ThunkAction to dispatch zero, one, or multiple individual
  * actions to the store.
  */
-export type Dispatch<A> = (action: A) => any;
+export type Dispatch<A> = (action: A) => mixed;
 export type GetState<S> = () => S;
 export type ThunkAction<S, T, I, P> = (
   dispatch: Dispatch<Action<T, I, P>>,

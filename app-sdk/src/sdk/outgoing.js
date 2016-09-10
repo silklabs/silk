@@ -57,7 +57,11 @@ export type ConnectionStatus = 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED';
 type WifiConnectionError = string;
 type ServerConnectionError = string;
 type BLEConnectionError = string;
-type RTCConnectionError = string;
+type RTCConnectionError =
+    'NETWORK_UNREACHABLE'
+  | 'DEVICE_UNAVAILABLE'
+  | 'UNAUTHORIZED'
+  ;
 
 export type DeviceStatusMessage = {
   type: 'DEVICE_STATUS',

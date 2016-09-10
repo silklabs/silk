@@ -796,6 +796,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../app-config/ios/SLKConfig",
+					"$(SRCROOT)/../../react-native-webrtc/ios/RCTWebRTC",
 				);
 				INFOPLIST_FILE = SLKAppSDK/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
@@ -827,6 +828,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../app-config/ios/SLKConfig",
+					"$(SRCROOT)/../../react-native-webrtc/ios/RCTWebRTC",
 				);
 				INFOPLIST_FILE = SLKAppSDK/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";

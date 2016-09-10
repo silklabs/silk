@@ -5,6 +5,7 @@
  */
 
 #import <Foundation/Foundation.h>
+#import <WebRTC/RTCMediaStream.h>
 #import "SLKAppSDKDelegate.h"
 
 @interface SLKAppSDKService : NSObject
@@ -16,5 +17,7 @@
 - (void)applicationDidEnterBackground;
 
 - (void)postMessage:(NSDictionary<NSString *, id> *)message;
+
+- (RTCMediaStream *)getMediaStreamForID:(NSString *)streamID;
 
 @end

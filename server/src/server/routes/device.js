@@ -119,7 +119,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     }).required(),
     input: Joi.object().keys({
       // _account_ public key...
-      registrarPublicKey: Joi.string().hex().required(),
+      registrarPublicKey: Devices.PUBLIC_KEY_SCHEMA,
       // registration token to use...
       registrationToken: Joi.string(),
     }).required(),

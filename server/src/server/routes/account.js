@@ -12,6 +12,7 @@ import createLog from 'silk-log';
 
 import sharedRoutes from './shared';
 import authorizeAccount from '../authorize_account';
+import Accounts from '../models/accounts';
 import Devices from '../models/devices';
 
 import type { ExpressRoutes } from 'silk-api-schema';
@@ -53,7 +54,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     description: 'Get basic details about the current account',
     input: Joi.object(),
     output: Joi.object().keys({
-      accountId: Joi.string().required(),
+      accountId: Accounts.PUBLIC_KEY_SCHEMA,
     }).required(),
   }, async (req, res) => {
     res.respond({
@@ -73,7 +74,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     }),
     input: Joi.object().keys({
       // publicKey of the _device_
-      devicePublicKey: Joi.string().hex().required(),
+      devicePublicKey: Devices.PUBLIC_KEY_SCHEMA,
       // type of the device...
       type: Devices.TYPE_SCHEMA,
       // name of the device...
@@ -136,8 +137,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
         registered: Joi.boolean().required(),
         accountDeviceNumber:
           Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.allow(0).required(),
-        publicKey: Joi.string().hex().required(),
-        deviceId: Joi.string().hex().required(),
+        publicKey: Devices.PUBLIC_KEY_SCHEMA,
+        deviceId: Devices.PUBLIC_KEY_SCHEMA,
         lastSeenAt: Joi.date().required(),
       })),
     }),
@@ -162,7 +163,6 @@ export default function (ctx: RouteContext): ExpressRoutes {
     res.respond({ devices: list });
   });
 
-
   api.define({
     path: 'unregister_device',
     method: 'post',
@@ -173,7 +173,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       success: Joi.boolean().required(),
     }),
     input: Joi.object().keys({
-      devicePublicKey: Joi.string().hex().required(),
+      devicePublicKey: Devices.PUBLIC_KEY_SCHEMA,
       factoryResetMessage: Devices.ONION_SCHEMA.required(),
     }).required(),
   }, async (req, res) => {

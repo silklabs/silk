@@ -12,7 +12,6 @@ import AccessToken from 'silk-api/src/access_token';
 
 import type {UnregisterInput} from 'silk-api/src/gen/device';
 
-const PUBLIC_KEY = Joi.string().hex().required();
 const TYPE_SCHEMA = Joi.string().regex(/^[a-z\d_-]+$/).max(80).required();
 // XXX: Max name length was chosen randomly...
 const NAME_SCHEMA = Joi.string().min(1).max(60).required();
@@ -49,6 +48,7 @@ export default class Devices extends Base {
   static TYPE_SCHEMA = TYPE_SCHEMA;
   static ACCOUNT_DEVICE_NUMBER_SCHEMA = ACCOUNT_DEVICE_NUMBER_SCHEMA;
   static ONION_SCHEMA = ONION_SCHEMA;
+  static PUBLIC_KEY_SCHEMA = Base.PUBLIC_KEY_SCHEMA;
 
   static COLLECTION = 'devices';
 
@@ -84,24 +84,24 @@ export default class Devices extends Base {
 
   static SCHEMA = {
     findByPublicKey: Joi.object().keys({
-      publicKey: PUBLIC_KEY,
+      publicKey: Devices.PUBLIC_KEY_SCHEMA,
     }),
 
     register: Joi.object().keys({
       accountId: Joi.string().required(),
-      publicKey: PUBLIC_KEY,
+      publicKey: Devices.PUBLIC_KEY_SCHEMA,
       type: TYPE_SCHEMA,
       name: NAME_SCHEMA,
       registrationToken: Joi.string().required(),
     }),
 
     unregister: Joi.object().keys({
-      publicKey: PUBLIC_KEY,
+      publicKey: Devices.PUBLIC_KEY_SCHEMA,
       factoryResetMessage: ONION_SCHEMA.required(),
     }),
 
     validateRegistration: Joi.object({
-      publicKey: PUBLIC_KEY,
+      publicKey: Devices.PUBLIC_KEY_SCHEMA,
       registrationToken: Joi.string().required(),
     }),
 
@@ -118,7 +118,7 @@ export default class Devices extends Base {
 
       accessToken: Joi.object({
         // Public key for this device.
-        publicKey: PUBLIC_KEY,
+        publicKey: Devices.PUBLIC_KEY_SCHEMA,
       }).required(),
 
       // What kind of device this is... Eventually we will need some more

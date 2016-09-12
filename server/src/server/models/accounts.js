@@ -28,13 +28,13 @@ const PASSWORD_HASH = Joi.string().required().min(64).max(256);
 const ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA = Joi.object().keys({
   email: EMAIL,
   passwordHash: PASSWORD_HASH,
-  publicKey: Joi.string().required(),
+  publicKey: Base.PUBLIC_KEY_SCHEMA,
   userAgent: Joi.string().required(),
 }).required();
 
 const ACCESS_TOKEN_ADD_BY_TOKEN_SCHEMA = Joi.object().keys({
   uniqueAccountId: Joi.string().min(16).required(),
-  publicKey: Joi.string().required(),
+  publicKey: Base.PUBLIC_KEY_SCHEMA,
   userAgent: Joi.string().required(),
 }).required();
 
@@ -43,7 +43,7 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
   scopes: Joi.array().items(Joi.string().max(255)),
 
   // ed25519 public key as string...
-  publicKey: Joi.string().hex().required(),
+  publicKey: Base.PUBLIC_KEY_SCHEMA,
 
   // When this key was issued...
   issued: Joi.date().required(),
@@ -117,6 +117,7 @@ export type UsePasswordResetTokenOutput = {
 
 export default class Accounts extends Base {
   static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION;
+  static PUBLIC_KEY_SCHEMA = Base.PUBLIC_KEY_SCHEMA;
 
   static ERROR = {
     duplicateEmail: 'DuplicateEmail',
@@ -243,7 +244,7 @@ export default class Accounts extends Base {
   }
 
   /**
-   * Find an account by its mongodb id.
+   * Find an account by its public key.
    */
   async findByPublicKey(payload: any): any {
     payload = this.validate(payload, 'findByPublicKey');

@@ -2,6 +2,8 @@
 import * as Joi from 'joi';
 import createLog from 'silk-log';
 
+const PUBLIC_KEY_SCHEMA = Joi.string().hex().required();
+
 const log = createLog('models:base');
 
 export type ErrorState = {
@@ -36,6 +38,8 @@ class SchemaError extends Error {
  * Provides basic structure for classes which deal with our datastore.
  */
 export default class Base {
+
+  static PUBLIC_KEY_SCHEMA = PUBLIC_KEY_SCHEMA;
 
   static INDEX: any;
   static COLLECTION: string;

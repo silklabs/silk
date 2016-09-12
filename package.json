@@ -161,7 +161,8 @@
     "gcloud": "0.37.0",
     "humanize-duration": "3.9.1",
     "progress-stream": "1.2.0",
-    "object-path": "0.9.2"
+    "object-path": "0.9.2",
+    "icy": "2.1.0"
   },
   "engines": {
     "node": "^4.1.2",

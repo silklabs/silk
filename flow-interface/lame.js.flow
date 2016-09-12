@@ -1,0 +1,11 @@
+/**
+ * @flow
+ * @providesModule lame
+ */
+
+import Transform from 'readable-stream/transform';
+
+declare class Decoder extends Transform {
+};
+
+module.exports = {Decoder};

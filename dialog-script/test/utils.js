@@ -13,6 +13,9 @@ import * as mockSysutils from './mock/mock-silk-sysutils';
 import * as mockAudioPlayer from './mock/mock-silk-audioplayer';
 import * as mockOutbox from './mock/mock-silk-outbox';
 import * as mockStreams from './mock/mock-silk-streams';
+import * as mockLame from './mock/mock-lame';
+import * as mockSpeaker from './mock/mock-silk-speaker';
+import * as mockIcy from './mock/mock-icy';
 
 import createLog from 'silk-log';
 const log = createLog(`dialog-script-test-utils`);
@@ -30,6 +33,9 @@ export function installMocks() {
   mock('silk-audioplayer', mockAudioPlayer);
   mock('silk-outbox', mockOutbox);
   mock('silk-streams', mockStreams);
+  mock('lame', mockLame);
+  mock('silk-speaker', mockSpeaker);
+  mock('icy', mockIcy);
 }
 
 export function uninstallMocks() {

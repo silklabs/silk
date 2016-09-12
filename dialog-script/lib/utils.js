@@ -2,6 +2,12 @@
  * @flow
  */
 import moment from 'moment';
+import {getstrprop} from 'silk-sysutils';
+
+// An ID for the current device that is unique and will never change
+export function getDeviceId(): string {
+  return getstrprop('ro.silk.build.board') + '-' + getstrprop('ro.serialno');
+}
 
 const iso8601extended = /^\d{4}(-\d{2}(-\d{2}([T ]\d{2}(:\d{2}(:\d{2})?)?([,.]\d+)?(Z|[+-]\d{2}(:\d{2})?)?)?)?)?$/;
 const iso8601basic = new RegExp(iso8601extended.source.replace(/[:-]\\d/g, '\\d'));

@@ -5,3 +5,7 @@ export function uptime(start?: number): number {
   let diffMs = endMs - (start ? start : 0);
   return diffMs;
 }
+
+export function getstrprop(prop: string, defaultValue?: string): string {
+  return 'mock-' + prop;
+}

@@ -5,31 +5,16 @@
   "culture": "en-us",
   "intents": [
     {
-      "name": "playSonos"
-    },
-    {
-      "name": "pauseSonos"
+      "name": "cancelTimer"
     },
     {
       "name": "getArtist"
     },
     {
-      "name": "recordKeyword"
-    },
-    {
       "name": "getCurrentSong"
     },
     {
-      "name": "resetLocation"
-    },
-    {
-      "name": "turnOn"
-    },
-    {
-      "name": "spellWord"
-    },
-    {
-      "name": "playMusic"
+      "name": "getCurrentTime"
     },
     {
       "name": "getStockPrice"
@@ -38,36 +23,57 @@
       "name": "None"
     },
     {
-      "name": "startTimer"
-    },
-    {
-      "name": "cancelTimer"
-    },
-    {
       "name": "pauseMusic"
     },
     {
-      "name": "getCurrentTime"
+      "name": "pauseShoutcast"
+    },
+    {
+      "name": "pauseSonos"
+    },
+    {
+      "name": "playMusic"
+    },
+    {
+      "name": "playShoutcast"
+    },
+    {
+      "name": "playSonos"
+    },
+    {
+      "name": "recordKeyword"
+    },
+    {
+      "name": "resetLocation"
+    },
+    {
+      "name": "spellWord"
+    },
+    {
+      "name": "startTimer"
     },
     {
       "name": "turnOff"
+    },
+    {
+      "name": "turnOn"
     }
   ],
   "entities": [
     {
-      "name": "word"
+      "name": "light"
     },
     {
       "name": "stock"
     },
     {
-      "name": "light"
+      "name": "word"
     }
   ],
   "composites": [],
   "bing_entities": [
-    "number",
-    "datetime"
+    "datetime",
+    "number"
   ],
   "actions": [],
   "model_features": [],
@@ -893,6 +899,41 @@
           "endPos": 5
         }
       ]
+    },
+    {
+      "text": "play shoutcast",
+      "intent": "playShoutcast",
+      "entities": []
+    },
+    {
+      "text": "could you play shoutcast",
+      "intent": "playShoutcast",
+      "entities": []
+    },
+    {
+      "text": "could you please play shoutcast",
+      "intent": "playShoutcast",
+      "entities": []
+    },
+    {
+      "text": "pause shoutcast",
+      "intent": "pauseShoutcast",
+      "entities": []
+    },
+    {
+      "text": "please pause shoutcast",
+      "intent": "pauseShoutcast",
+      "entities": []
+    },
+    {
+      "text": "could you please pause shoutcast",
+      "intent": "pauseShoutcast",
+      "entities": []
+    },
+    {
+      "text": "bus shoutcast",
+      "intent": "pauseShoutcast",
+      "entities": []
     }
   ]
 }

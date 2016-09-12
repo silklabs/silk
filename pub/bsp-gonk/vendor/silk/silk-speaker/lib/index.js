@@ -47,7 +47,7 @@ export default class Speaker extends Writable {
   _options: SpeakerOptions;
   _chunkSize: number;
 
-  constructor(options: SpeakerOptions) {
+  constructor(options: ?SpeakerOptions) {
     super(options); // Calls the stream.Writable() constructor
     this._options = {
       numChannels: 2,

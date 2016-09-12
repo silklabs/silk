@@ -22,6 +22,7 @@ SSH="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -l $BOB_USE
 # Remove older builds to conserve disk space
 time $SSH $BOB_BUILD_HOST " \
   cd $BOB_ROOT; \
+  rm -rf $BOB_BUILD_ROOT; \
   ls -t | tail -n +$BOB_MAX_BUILD_HISTORY | xargs rm -rf \
 "
 

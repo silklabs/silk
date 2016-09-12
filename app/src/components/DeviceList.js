@@ -6,7 +6,6 @@ import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   ActivityIndicator,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,7 +14,7 @@ import {
 import {lockToLandscape, lockToPortrait} from 'react-native-orientation';
 
 import AsyncComponent from './abstract/AsyncComponent';
-import CameraLiveVideo from './CameraLiveVideo';
+import CameraLiveVideoRTC from './CameraLiveVideoRTC';
 import CameraPreview from './CameraPreview';
 import {Colors} from './CommonStyles';
 import UnconfiguredDevice from './UnconfiguredDevice';
@@ -44,15 +43,8 @@ export default class DeviceList extends AsyncComponent {
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   startFullscreenVideo = (device: RegisteredDevice) => {
-    if (Platform.OS === 'ios') {
-      this.setStateAsync({fullscreenDeviceId: device.devicdId})
-        .then(lockToLandscape);
-    } else {
-      this.props.navigator.pushAsync({
-        name: 'CameraLiveVideo',
-        props: {device},
-      });
-    }
+    this.setStateAsync({fullscreenDeviceId: device.deviceId})
+      .then(lockToLandscape);
   };
 
   stopFullscreenVideo = () => {
@@ -86,11 +78,9 @@ export default class DeviceList extends AsyncComponent {
     if (fullscreenDeviceId) {
       const device = registered.get(fullscreenDeviceId);
       fullscreenMonitor = (
-        <CameraLiveVideo
+        <CameraLiveVideoRTC
           onClose={this.stopFullscreenVideo}
-          device={device}
-          previewSize={DEFAULT_PREVIEW_SIZE}
-          startAtTime={this.state.fullscreenStartTime}
+          peer={device.rtc.peer}
         />
       );
     }

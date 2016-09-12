@@ -30,6 +30,7 @@ export default class CameraLiveVideo extends WebRTCDataChannelReceiver {
   props: Props;
 
   state = {
+    showingControls: false,
     playing: false,
   };
 

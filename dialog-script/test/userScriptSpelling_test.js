@@ -1,7 +1,13 @@
 /* global suite, suiteSetup, suiteTeardown, setup, test */
 
-import {UserScriptTester} from './utils';
-import {encodeBreak, encodeRate} from '../lib/utils';
+import {
+  UserScriptTester,
+  installMocks,
+  uninstallMocks,
+} from './utils';
+
+let encodeBreak;
+let encodeRate;
 
 suite(`userScript`, () => {
 
@@ -14,8 +20,16 @@ suite(`userScript`, () => {
 
   // Luis is rate limits at 5QPS.
   // Run tests sequentially and wait a little between runs.
-  suiteSetup(() => tester.suiteSetup());
-  suiteTeardown(() => tester.suiteTeardown());
+  suiteSetup(() => {
+    installMocks();
+    encodeBreak = require('../lib/utils').encodeBreak;
+    encodeRate = require('../lib/utils').encodeRate;
+    tester.suiteSetup();
+  });
+  suiteTeardown(() => {
+    tester.suiteTeardown();
+    uninstallMocks();
+  });
   setup(done => {
     setTimeout(() => {
       tester.setup();

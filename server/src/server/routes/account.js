@@ -306,6 +306,42 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     res.respond(output);
   });
+/*
+  api.define({
+    path: 'list_clients',
+    method: 'post',
+    params: [],
+    name: 'listClients',
+    description: 'List all registered clients',
+    output: Joi.object().keys({
+      devices: Joi.array().required().items(Joi.object().keys({
+        publicKey: Accounts.PUBLIC_KEY_SCHEMA,
+        userAgent: Joi.string().required(),
+        issued: Joi.date().required(),
+        expires: Joi.date().required(),
+        lastSeenAt: Joi.date().required(),
+      })),
+    }),
+    input: Joi.object().keys({
+      // TODO: Pagination?
+    }).required(),
+  }, async (req, res) => {
+    let list = await ctx.accounts.findAllByAccount(req.account._id);
+    list = list.map((device) => {
+      return {
+        name: device.name,
+        type: device.type,
+        registered: device.registration.complete,
+        accountDeviceNumber: device.registration.accountDeviceNumber || 0,
+        publicKey: device.accessToken.publicKey,
+        deviceId: device.accessToken.publicKey,
+        // TODO: Implement for real but this stub will let us move on for now.
+        lastSeenAt: new Date(),
+      };
+    });
 
+    res.respond({ devices: list });
+  });
+*/
   return api;
 }

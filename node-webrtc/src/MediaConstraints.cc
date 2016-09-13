@@ -168,9 +168,44 @@ rtc::scoped_refptr<MediaConstraints> MediaConstraints::New(const Local<Object> &
     if (video_value->IsTrue() || video_value->IsFalse()) {
       self->_video = video_value->IsTrue();
     } else if (video_value->IsObject()) {
-      Local<Object> video = Local<Object>::Cast(audio_value);
-      optional_value = video->Get(Nan::New("optional").ToLocalChecked());
+      Local<Object> video = Local<Object>::Cast(video_value);
+      mandatory_value = video->Get(Nan::New("mandatory").ToLocalChecked());
+      if (!mandatory_value.IsEmpty() && mandatory_value->IsArray()) {
+        Local<Array> options = Local<Array>::Cast(mandatory_value);
+        for (unsigned int index = 0; index < options->Length(); index++) {
+          Local<Value> option_value = options->Get(index);
 
+          if (!option_value.IsEmpty() && option_value->IsObject()) {
+            Local<Object> option = Local<Object>::Cast(option_value);
+
+            Local<Value> minAspectRatio = option->Get(Nan::New("minAspectRatio").ToLocalChecked());
+            Local<Value> maxAspectRatio = option->Get(Nan::New("maxAspectRatio").ToLocalChecked());
+            Local<Value> maxWidth = option->Get(Nan::New("maxWidth").ToLocalChecked());
+            Local<Value> minWidth = option->Get(Nan::New("minWidth").ToLocalChecked());
+            Local<Value> maxHeight = option->Get(Nan::New("maxHeight").ToLocalChecked());
+            Local<Value> minHeight = option->Get(Nan::New("minHeight").ToLocalChecked());
+            Local<Value> maxFrameRate = option->Get(Nan::New("maxFrameRate").ToLocalChecked());
+            Local<Value> minFrameRate = option->Get(Nan::New("minFrameRate").ToLocalChecked());
+            Local<Value> sourceId = option->Get(Nan::New("sourceId").ToLocalChecked());
+
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMinAspectRatio, minAspectRatio);
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMaxAspectRatio, maxAspectRatio);
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMaxWidth, maxWidth);
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMinWidth, minWidth);
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMaxHeight, maxHeight);
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMinHeight, minHeight);
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMaxFrameRate, maxFrameRate);
+            self->SetMandatory(webrtc::MediaConstraintsInterface::kMinFrameRate, minFrameRate);
+
+            if (!sourceId.IsEmpty() && sourceId->IsString()) {
+              String::Utf8Value sourceId_str(sourceId->ToString());
+              self->_videoId = *sourceId_str;
+            }
+          }
+        }
+      }
+
+      optional_value = video->Get(Nan::New("optional").ToLocalChecked());
       if (!optional_value.IsEmpty() && optional_value->IsArray()) {
         Local<Array> options = Local<Array>::Cast(optional_value);
 

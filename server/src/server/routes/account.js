@@ -24,6 +24,7 @@ import type {
   UnregisterDeviceOutput,
   QueryMetricsOutput,
   GetSasForDeviceSignalingOutput,
+  ListClientsOutput,
 } from 'silk-api/src/gen/account';
 
 import type { RouteContext } from '../server';
@@ -136,7 +137,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     log.info('registered device', req.account.id);
     const output = {
-      success: false,
+      success: true,
       beaconUUID: req.account.beaconUUID,
     };
     res.respond(output);
@@ -224,8 +225,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
     // NOTE: This intentionally is identical to the format that influxdb itself
     // returns we make no attempt to transform or change the output.
     output: Joi.object().keys({
-      results: Joi.object(),
-      error: Joi.string(),
+      results: Joi.object().allow(null),
+      error: Joi.string().allow(null),
     }),
     input: Joi.object().keys({
       query: Joi.string().required(),
@@ -240,8 +241,11 @@ export default function (ctx: RouteContext): ExpressRoutes {
     }
 
     if (!ctx.influxdb) {
-      log.warn(`InfluxDB not configured`);
-      res.sendStatus(501);
+      const output: QueryMetricsOutput = {
+        results: null,
+        error: 'InfluxDB not configured',
+      };
+      res.respond(output);
       return;
     }
 
@@ -306,7 +310,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     res.respond(output);
   });
-/*
+
   api.define({
     path: 'list_clients',
     method: 'post',
@@ -314,9 +318,10 @@ export default function (ctx: RouteContext): ExpressRoutes {
     name: 'listClients',
     description: 'List all registered clients',
     output: Joi.object().keys({
-      devices: Joi.array().required().items(Joi.object().keys({
+      clients: Joi.array().required().items(Joi.object().keys({
         publicKey: Accounts.PUBLIC_KEY_SCHEMA,
         userAgent: Joi.string().required(),
+        scopes: Joi.array().items(Joi.string()).required(),
         issued: Joi.date().required(),
         expires: Joi.date().required(),
         lastSeenAt: Joi.date().required(),
@@ -326,22 +331,24 @@ export default function (ctx: RouteContext): ExpressRoutes {
       // TODO: Pagination?
     }).required(),
   }, async (req, res) => {
-    let list = await ctx.accounts.findAllByAccount(req.account._id);
-    list = list.map((device) => {
+    const account: AccountRecord = req.account;
+
+    const clients = account.accountTokens.map((accountToken) => {
+      const {publicKey, userAgent, scopes, issued, expires} = accountToken;
       return {
-        name: device.name,
-        type: device.type,
-        registered: device.registration.complete,
-        accountDeviceNumber: device.registration.accountDeviceNumber || 0,
-        publicKey: device.accessToken.publicKey,
-        deviceId: device.accessToken.publicKey,
+        publicKey,
+        userAgent: userAgent || '',
+        scopes: scopes || [],
+        issued: issued.toString(),
+        expires: expires.toString(),
         // TODO: Implement for real but this stub will let us move on for now.
-        lastSeenAt: new Date(),
+        lastSeenAt: (new Date()).toString(),
       };
     });
 
-    res.respond({ devices: list });
+    const output: ListClientsOutput = {clients};
+    res.respond(output);
   });
-*/
+
   return api;
 }

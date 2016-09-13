@@ -15,7 +15,6 @@ import createContext from '../context';
 import Devices from '../../../src/server/models/devices';
 
 import type {RawPasswordInput} from 'silk-api/src/vip';
-import type {SignInWithTokenInput} from 'silk-api/src/gen/vip';
 
 const invariant = assert;
 
@@ -264,4 +263,58 @@ suite('account auth', () => {
     });
     assert.equal(outOfScope.length, 0);
   });
+
+  suite('with multiple clients and password', () => {
+    const numberOfClients = 30;
+    const clientPublicKeys = [];
+
+    const input: RawPasswordInput = {
+      userAgent: 'flippety',
+      email: 'flippety@floppety.flu',
+      password: 'floppety',
+    };
+
+    setup(async function () {
+      this.timeout('30s');
+
+      api.accessToken = await AccessToken.gen();
+      clientPublicKeys.push(api.accessToken.pub);
+
+      let {success} = await api.vip.createAccountWithPassword(input);
+      assert(success);
+
+      for (let index = 0; index < numberOfClients - 1; index++) {
+        const newKey = await AccessToken.gen();
+        api.accessToken = newKey;
+        ({success} = await api.vip.signInWithPassword(input));
+        assert(success);
+        clientPublicKeys.push(newKey.pub);
+      }
+
+      clientPublicKeys.sort();
+    });
+
+    test('POST /list_clients', async () => {
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, numberOfClients);
+
+      const publicKeys = clients.map((client) => client.publicKey);
+      publicKeys.sort();
+
+      assert.deepEqual(clientPublicKeys, publicKeys);
+    });
+
+    test('POST /list_clients without valid accessToken', async () => {
+      api.accessToken = await AccessToken.gen();
+
+      let error: Error;
+      try {
+        await api.account.listClients({});
+      } catch (ex) {
+        error = ex;
+      }
+      assert(error instanceof Error);
+    });
+  });
+
 });

@@ -109,7 +109,9 @@ export default function (ctx: RouteContext): ExpressRoutes {
     const {source, token, userAgent} = req.body;
 
     if (!tokenToUserId[source]) {
-      throw new Error(`Unknown account source: ${source}`);
+      log.warn(`Unknown account source`, source);
+      res.sendStatus(400);
+      return;
     }
 
     const sourceAccountId = await tokenToUserId[source](token);
@@ -117,20 +119,25 @@ export default function (ctx: RouteContext): ExpressRoutes {
     // Generate an id that's unique across all account sources
     const uniqueAccountId = `${source}-${sourceAccountId}`;
 
-    let account = await ctx.accounts.signInByToken({
+    const account = await ctx.accounts.signInByToken({
       userAgent,
       uniqueAccountId,
       publicKey: req.unsafeJwt.header.id,
     });
+
     if (account.error) {
-      throw new Error(`Unexpected signInByToken error: ${account}`);
+      log.verbose('signInByToken in failure', account);
+      res.respond({ success: false });
+      return;
     }
+
     if (account.created) {
       log.info('created new token account', account.id);
     } else {
       // TODO: Notify user of new sign in
       log.info('token sign in', account.id);
     }
+
     res.respond({
       success: true,
       beaconUUID: account.beaconUUID,

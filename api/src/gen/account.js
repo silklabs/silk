@@ -88,6 +88,22 @@ export type GetSasForDeviceSignalingOutput = {
  sas: Array<any>;
 };
 
+export type ListClientsInput = {
+};
+
+export type ListClientsOutputClients = {
+ publicKey: string;
+ userAgent: string;
+ scopes: Array<string>;
+ issued: string;
+ expires: string;
+ lastSeenAt: string;
+};
+
+export type ListClientsOutput = {
+ clients: Array<ListClientsOutputClients>;
+};
+
 export default class Account extends BaseClass {
 
   name: string = 'api-account';
@@ -193,6 +209,19 @@ export default class Account extends BaseClass {
   getSasForDeviceSignaling(payload: GetSasForDeviceSignalingInput): Promise<GetSasForDeviceSignalingOutput> {
     let method = 'post';
     let url = '/v1/account/sas_signaling_devices';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  List all registered clients
+
+  @param Object payload of request
+  */
+  listClients(payload: ListClientsInput): Promise<ListClientsOutput> {
+    let method = 'post';
+    let url = '/v1/account/list_clients';
     // Perform url subtitutions:
 
     return this._apiRequestWithBody(method, url, payload);

@@ -8,10 +8,7 @@ const log = createLog('webrtc:video');
 export class VideoRenderer extends React.Component {
 
   static propTypes = {
-    media: React.PropTypes.shape({
-      label: React.PropTypes.string,
-      stream: React.PropTypes.object, // MediaStream
-    }),
+    stream: React.PropTypes.object, // MediaStream
   };
 
   state = {
@@ -21,26 +18,17 @@ export class VideoRenderer extends React.Component {
   };
 
   render() {
-    const {media} = this.props;
-    invariant(media);
-    invariant(media.stream);
-    const {currentTimeMs, videoWidth, videoHeight} = this.state;
+    const {stream} = this.props;
+    invariant(stream);
+    const {videoWidth, videoHeight} = this.state;
 
-    let videoTimeInfo = 'unknown time';
-    if (currentTimeMs) {
-      videoTimeInfo = (new Date(media.created.getTime() + currentTimeMs)).toString();
-    }
-    let videoDimensions = '?x?';
-    if (videoWidth) {
-      videoDimensions = `${videoWidth}x${videoHeight}`;
-    }
+    const videoDimensions = videoWidth ? `${videoWidth}x${videoHeight}` : '';
     return (
-      <section>
-        {videoDimensions} - {media.label}<br/>
-        {videoTimeInfo}<br/>
-        {media.stream.active ? media.stream.getTracks().length + ' tracks' : 'inactive'}<br/>
-        <video ref="video" autoPlay={true} />
-      </section>
+      <div>
+        {videoDimensions}<br/>
+        {stream.active ? stream.getTracks().length + ' tracks' : 'inactive'}<br/>
+        <video ref="video" autoPlay={true}/>
+      </div>
     );
   }
 
@@ -50,13 +38,12 @@ export class VideoRenderer extends React.Component {
   };
 
   componentDidMount() {
-    const media = this.props.media;
-    invariant(media);
-    invariant(media.stream);
+    const {stream} = this.props;
+    invariant(stream);
 
     log.info(`Starting video playback ...`);
     const videoElement = this.refs.video;
-    videoElement.src = window.URL.createObjectURL(media.stream);
+    videoElement.src = window.URL.createObjectURL(stream);
     videoElement.addEventListener('timeupdate', this.onTimeUpdate);
   }
 
@@ -97,26 +84,34 @@ export default class WebRTCVideo extends React.Component {
 
     this.setState({peer}, this._onMediaUpdate);
     if (peer) {
-      peer.requestRemoteMediaStream('full', {
-        video: true,
-        /*
+      peer.requestRemoteMediaStream('preview', {
         video: {
-          width: { max: 320 },
-          height: { min: 240 },
-          frameRate: { max: 1 },
+          mandatory: [
+            {maxWidth: 640},
+            {maxFrameRate: 1},
+          ],
         },
-        */
         audio: false,
       }).catch((err) => {
         log.error(`Failed to request stream: ${err.stack}`);
       });
+      peer.requestRemoteMediaStream('full', {
+        video: {
+          mandatory: [
+            {minFrameRate: 10},
+          ],
+        },
+        audio: true,
+      }).catch((err) => {
+        log.error(`Failed to request stream: ${err.stack}`);
+      });
 
-      peer.on('addstream', () => {
-        log.info('add stream');
+      peer.on('addstream', (foo) => {
+        log.info('add stream', foo);
         this._onMediaUpdate();
       });
-      peer.on('removestream', () => {
-        log.info('remove stream');
+      peer.on('removestream', (foo) => {
+        log.info('remove stream', foo);
         this._onMediaUpdate();
       });
     }
@@ -168,7 +163,10 @@ export default class WebRTCVideo extends React.Component {
         );
       }
       return (
-        <VideoRenderer key={media.label} media={media} />
+        <div key={media.label}>
+          <h3>{media.label}</h3>
+          <VideoRenderer stream={media.stream} />
+        </div>
       );
     });
 

@@ -10,7 +10,19 @@ import Base from './base';
 import { ObjectID } from 'mongodb';
 import AccessToken from 'silk-api/src/access_token';
 
+import type {ErrorState} from './base';
 import type {UnregisterInput} from 'silk-api/src/gen/device';
+
+type RegisterOutput = {
+  id: string;
+};
+
+type UnregisterOutput = {
+};
+
+type ValidateRegistrationOutput = {
+  accountDeviceNumber: number;
+};
 
 const TYPE_SCHEMA = Joi.string().regex(/^[a-z\d_-]+$/).max(80).required();
 // XXX: Max name length was chosen randomly...
@@ -36,7 +48,9 @@ export type Record = {
     publicKey: string;
   };
   registration: {
+    complete: boolean;
     accountId: string;
+    token: string;
     accountDeviceNumber?: number;
   }
   // TODO: finish type...
@@ -170,7 +184,10 @@ export default class Devices extends Base {
    * @param {String} registrarPublicKey to validate registration token.
    * @param {Object} payload
    */
-  async register(registrarPublicKey: string, payload: any): any {
+  async register(
+    registrarPublicKey: string,
+    payload: any,
+  ): Promise<RegisterOutput | ErrorState> {
     payload = this.validate(payload, 'register');
 
     const tokenValid = await this.genIsRegistrationTokenValid(
@@ -218,7 +235,9 @@ export default class Devices extends Base {
     return this.error('duplicatePublicKey');
   }
 
-  async unregister(payload: UnregisterInput): mixed {
+  async unregister(
+    payload: UnregisterInput,
+  ): Promise<UnregisterOutput | ErrorState> {
     payload = this.validate(payload, 'unregister');
 
     const factoryResetMessage = payload.factoryResetMessage;
@@ -259,7 +278,10 @@ export default class Devices extends Base {
    * @param {String} registrarPublicKey to validate registration token.
    * @param {Object} payload for validate.
    */
-  async validateRegistration(registrarPublicKey: string, payload: any): any {
+  async validateRegistration(
+    registrarPublicKey: string,
+    payload: any,
+  ): Promise<ValidateRegistrationOutput | ErrorState> {
     payload = this.validate(payload, 'validateRegistration');
 
     let device = await this.findByPublicKey({
@@ -324,13 +346,13 @@ export default class Devices extends Base {
       `);
     }
 
-    return { success: true, accountDeviceNumber };
+    return { accountDeviceNumber };
   }
 
   /**
    * Find the device by it's public key (for auth)
    */
-  async findByPublicKey(payload: any): any {
+  async findByPublicKey(payload: any): Promise<?Record> {
     payload = this.validate(payload, 'findByPublicKey');
     let { publicKey } = payload;
 
@@ -339,7 +361,7 @@ export default class Devices extends Base {
     });
   }
 
-  async findAllByAccount(accountId: any): any {
+  async findAllByAccount(accountId: any): Promise<Array<Record>> {
     if (!(accountId instanceof ObjectID)) {
       accountId = new ObjectID(accountId);
     }

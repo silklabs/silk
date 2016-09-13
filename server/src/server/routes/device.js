@@ -5,6 +5,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Router } from 'express';
 import * as Joi from 'joi';
 import { expressApi } from 'silk-api-schema';
@@ -124,37 +125,44 @@ export default function (ctx: RouteContext): ExpressRoutes {
       registrationToken: Joi.string(),
     }).required(),
   }, async (req, res) => {
+    const {registrarPublicKey, registrationToken} = req.body;
     // First we need to find the account that this device belongs to so we can
     // validate the registration token.
     let account = await ctx.accounts.findByPublicKey({
-      publicKey: req.body.registrarPublicKey,
+      publicKey: registrarPublicKey,
     });
 
     if (!account) {
       // No account...
-      log.info(
-        `Attempted to register device to non-existant account`, account.id
+      log.warn(
+        `Attempted to register device to non-existant account`,
+        registrarPublicKey,
+        registrationToken,
       );
       res.sendStatus(400);
       return;
     }
 
-    let result = await devices.validateRegistration(req.body.registrarPublicKey, {
+    let result = await devices.validateRegistration(registrarPublicKey, {
       publicKey: req.device.accessToken.publicKey,
-      registrationToken: req.body.registrationToken,
+      registrationToken: registrationToken,
     });
 
-    if (!result.error) {
-      log.info('validated registration', req.device.accountId);
-      res.respond({
-        success: true,
-        accountDeviceNumber: result.accountDeviceNumber,
-        beaconUUID: account.beaconUUID,
-      });
+    if (result.error) {
+      log.verbose('Failed to register device', req.device.accountId);
+      res.respond({ success: false });
       return;
     }
-    log.verbose('Failed to register device', req.device.accountId);
-    res.respond({ success: false });
+
+    log.info('validated registration', req.device.accountId);
+
+    invariant(result.accountDeviceNumber);
+
+    res.respond({
+      success: true,
+      accountDeviceNumber: result.accountDeviceNumber,
+      beaconUUID: account.beaconUUID,
+    });
   });
 
   api.define({

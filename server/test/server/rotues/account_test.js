@@ -14,6 +14,9 @@ import {
 import createContext from '../context';
 import Devices from '../../../src/server/models/devices';
 
+import type {RawPasswordInput} from 'silk-api/src/vip';
+import type {SignInWithTokenInput} from 'silk-api/src/gen/vip';
+
 const invariant = assert;
 
 const dummyFactoryResetMessage = new Buffer('foo').toString('base64');
@@ -71,7 +74,7 @@ suite('account auth', () => {
     let device = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString(),
     });
-
+    invariant(device);
     assert.equal(device.accountId, accountOne.record._id.toString());
 
     // Act as the device rather then the account...
@@ -87,6 +90,7 @@ suite('account auth', () => {
     let deviceAfterComplete = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString(),
     });
+    invariant(deviceAfterComplete);
     assert.ok(deviceAfterComplete.registration.complete);
     assert.ok(deviceAfterComplete.registered);
 
@@ -98,6 +102,7 @@ suite('account auth', () => {
     let deviceAfterUnregister = await devices.findByPublicKey({
       publicKey: deviceAccessToken.toString(),
     });
+    invariant(deviceAfterUnregister);
     assert.ok(!deviceAfterUnregister.registered);
 
     // ...but not twice

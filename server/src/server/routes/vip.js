@@ -7,6 +7,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Router } from 'express';
 import * as Joi from 'joi';
 import { expressApi } from 'silk-api-schema';
@@ -252,6 +253,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     if (reset.newToken) {
       let baseUrl = ctx.config.resetPassword.url;
       let parsed = URL.parse(baseUrl, true);
+      invariant(reset.token);
       let hashParams = {
         token: reset.token,
         email: req.body.email,

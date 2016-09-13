@@ -6,14 +6,14 @@
 import jwtMiddleware from './jwt';
 import createLog from 'silk-log';
 
-import type Account from './models/accounts';
+import type Accounts from './models/accounts';
 import type { MiddlewareFn } from './express_types';
 import type { MiddlewareOverrides } from './jwt';
 
 const log = createLog('authorize:account');
 
 export type AuthorizeAccountConfig = {
-  accounts: Account;
+  accounts: Accounts;
 }
 
 export default function (ctx: AuthorizeAccountConfig, overrides: ?MiddlewareOverrides): MiddlewareFn {

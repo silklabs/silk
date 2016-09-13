@@ -73,19 +73,19 @@ export default class Auth extends VIPBase {
   signInWithToken: (payload: SignInWithTokenInput) => Promise<SignInWithTokenOutput>
     = this.signInWithToken.bind(this);
 
-  createAccountWithPassword(payload: RawPasswordInput): any {
+  createAccountWithPassword(payload: RawPasswordInput): Promise<CreateAccountOutput> {
     return genFromPassword(payload).then(this.createAccount);
   }
 
-  checkPasswordWithPassword(payload: RawPasswordInput): any {
+  checkPasswordWithPassword(payload: RawPasswordInput): Promise<CheckPasswordOutput> {
     return genFromPassword(payload).then(this.checkPassword);
   }
 
-  signInWithPassword(payload: RawPasswordInput): any {
+  signInWithPassword(payload: RawPasswordInput): Promise<SignInOutput> {
     return genFromPassword(payload).then(this.signIn);
   }
 
-  signInWithOAuth2(payload: SignInWithTokenInput): any {
+  signInWithOAuth2(payload: SignInWithTokenInput): Promise<SignInOutput> {
     return this.signInWithToken(payload);
   }
 }

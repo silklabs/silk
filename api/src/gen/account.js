@@ -72,8 +72,11 @@ export type QueryMetricsInput = {
  query: string;
 };
 
+export type QueryMetricsOutputResults = {
+};
+
 export type QueryMetricsOutput = {
- results: any;
+ results: ?QueryMetricsOutputResults;
  error: ?string;
 };
 

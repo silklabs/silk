@@ -5,6 +5,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Router } from 'express';
 import * as Joi from 'joi';
 import { expressApi } from 'silk-api-schema';
@@ -16,7 +17,18 @@ import Accounts from '../models/accounts';
 import Devices from '../models/devices';
 
 import type { ExpressRoutes } from 'silk-api-schema';
+import type {
+  WhoamiOutput,
+  RegisterDeviceOutput,
+  ListDevicesOutput,
+  UnregisterDeviceOutput,
+  QueryMetricsOutput,
+  GetSasForDeviceSignalingOutput,
+} from 'silk-api/src/gen/account';
+
 import type { RouteContext } from '../server';
+import type {Record as AccountRecord} from '../models/accounts';
+import type {Record as DeviceRecord} from '../models/devices';
 
 const log = createLog('routes:account');
 
@@ -57,9 +69,10 @@ export default function (ctx: RouteContext): ExpressRoutes {
       accountId: Accounts.PUBLIC_KEY_SCHEMA,
     }).required(),
   }, async (req, res) => {
-    res.respond({
+    const output: WhoamiOutput = {
       accountId: req.account._id.toString(),
-    });
+    };
+    res.respond(output);
   });
 
   api.define({
@@ -83,7 +96,6 @@ export default function (ctx: RouteContext): ExpressRoutes {
       registrationToken: Joi.string().required(),
     }).required(),
   }, async (req, res) => {
-
     // XXX: Some accounts may not have beaconUUID yet so update them to include
     // it as needed...
     if (!req.account.beaconUUID) {
@@ -112,16 +124,22 @@ export default function (ctx: RouteContext): ExpressRoutes {
       }
     );
 
-    if (!result.error) {
-      log.info('registered device', req.account.id);
-      res.respond({
-        success: true,
-        beaconUUID: req.account.beaconUUID,
-      });
+    if (result.error) {
+      log.warn('Failed to register device', result, req.account);
+      const output: RegisterDeviceOutput = {
+        success: false,
+        beaconUUID: null,
+      };
+      res.respond(output);
       return;
     }
-    log.verbose('Failed to register device', result, req.account);
-    res.respond({ success: false });
+
+    log.info('registered device', req.account.id);
+    const output = {
+      success: false,
+      beaconUUID: req.account.beaconUUID,
+    };
+    res.respond(output);
   });
 
   api.define({
@@ -146,8 +164,10 @@ export default function (ctx: RouteContext): ExpressRoutes {
       // TODO: Pagination?
     }).required(),
   }, async (req, res) => {
-    let list = await ctx.devices.findAllByAccount(req.account._id);
-    list = list.map((device) => {
+    const recordList: Array<DeviceRecord> =
+      await ctx.devices.findAllByAccount(req.account._id);
+    const devices = recordList.map((device) => {
+      invariant(device.registration);
       return {
         name: device.name,
         type: device.type,
@@ -156,11 +176,12 @@ export default function (ctx: RouteContext): ExpressRoutes {
         publicKey: device.accessToken.publicKey,
         deviceId: device.accessToken.publicKey,
         // TODO: Implement for real but this stub will let us move on for now.
-        lastSeenAt: new Date(),
+        lastSeenAt: (new Date()).toString(),
       };
     });
 
-    res.respond({ devices: list });
+    const output: ListDevicesOutput = {devices};
+    res.respond(output);
   });
 
   api.define({
@@ -182,13 +203,16 @@ export default function (ctx: RouteContext): ExpressRoutes {
       factoryResetMessage: req.body.factoryResetMessage,
     });
 
+    const output: UnregisterDeviceOutput = {success: false};
+
     if (!result || result.error) {
-      log.info('Failed unregistering device for account', );
-      res.respond({ success: false });
+      log.warn('Failed unregistering device for account', );
+      res.respond(output);
       return;
     }
 
-    res.respond({ success: true });
+    output.success = true;
+    res.respond(output);
   });
 
   api.define({
@@ -200,7 +224,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     // NOTE: This intentionally is identical to the format that influxdb itself
     // returns we make no attempt to transform or change the output.
     output: Joi.object().keys({
-      results: Joi.any(),
+      results: Joi.object(),
       error: Joi.string(),
     }),
     input: Joi.object().keys({
@@ -210,18 +234,24 @@ export default function (ctx: RouteContext): ExpressRoutes {
     let {account} = req;
     let scopes = ctx.scopes.accountScopes(account);
     if (scopes.indexOf(METRICS_SCOPES) === -1) {
-      res.sendStatus(401);
       log.warn(`Attempted to query metrics without proper scope ${account.email}`);
+      res.sendStatus(401);
       return;
     }
 
     if (!ctx.influxdb) {
-      res.respond({ error: 'InfluxDB not configured.' });
+      log.warn(`InfluxDB not configured`);
+      res.sendStatus(501);
       return;
     }
+
     let {query} = req.body;
-    let result = await ctx.influxdb.query(query);
-    res.respond(result);
+    const queryResults = await ctx.influxdb.query(query);
+    const output: QueryMetricsOutput = {
+      results: queryResults.results || null,
+      error: queryResults.error || null,
+    };
+    res.respond(output);
   });
 
   api.define({
@@ -269,10 +299,12 @@ export default function (ctx: RouteContext): ExpressRoutes {
       }
     );
 
-    res.respond({
+    const output: GetSasForDeviceSignalingOutput = {
       publicUrl: ctx.config.signaling.publicUrl,
       sas,
-    });
+    };
+
+    res.respond(output);
   });
 
   return api;

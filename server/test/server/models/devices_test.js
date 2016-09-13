@@ -8,6 +8,8 @@ import Accounts from '../../../src/server/models/accounts';
 import createContext from '../context';
 import AccessToken from 'silk-api/src/access_token';
 
+const invariant = assert;
+
 suite('devices', () => {
   let context = createContext();
 
@@ -50,13 +52,15 @@ suite('devices', () => {
           publicKey: deviceId.toString(),
           registrationToken,
         });
-        assert.ok(result.success);
+        invariant(!result.error);
+        invariant(result.accountDeviceNumber);
       });
 
       test('successfully registers device', async () => {
         let device = await subject.findByPublicKey({
           publicKey: deviceId.toString(),
         });
+        invariant(device);
         assert.equal(device.registration.complete, true);
         assert.equal(device.accountId.toString(), account.id);
         assert.equal(device.registration.accountDeviceNumber, 1);
@@ -73,6 +77,7 @@ suite('devices', () => {
         let device = await subject.findByPublicKey({
           publicKey: deviceId.toString(),
         });
+        invariant(device);
 
         assert(device.registration.accountDeviceNumber === undefined);
         assert.equal(device.factoryResetMessage, factoryResetMessage);
@@ -86,12 +91,15 @@ suite('devices', () => {
         publicKey: deviceId.toString(),
         registrationToken,
       });
-      assert.ok(result.error);
+      invariant(result.error);
+      invariant(result.error.type);
       assert.equal(result.error.type, 'InvalidRegistrationToken');
 
       let device = await subject.findByPublicKey({
         publicKey: deviceId.toString(),
       });
+      invariant(device);
+
       assert.equal(device.registration.complete, false);
       assert.equal(device.accountId.toString(), account.id);
     });

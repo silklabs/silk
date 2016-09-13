@@ -8,8 +8,14 @@ suite('scopes', function() {
   // Simple helper to generate soemthing that sorta looks like an account.
   function account(email: string): AccountRecord {
     return {
-      email,
       _id: '',
+      email,
+      password: {
+        date: new Date(),
+        hash: 'abacadaba',
+      },
+      beaconUUID: 'b62630fd-57a3-4581-9c65-2a2a7ad430e0',
+      accountTokens: [],
     };
   }
 

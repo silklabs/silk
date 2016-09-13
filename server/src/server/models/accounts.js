@@ -5,14 +5,95 @@
  */
 import * as Joi from 'joi';
 import uuid from 'uuid';
-import { ObjectID } from 'mongodb';
-import AccessToken from 'silk-api/src/access_token';
+import {ObjectID} from 'mongodb';
+import {AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 
 import Base from './base';
 import scrypt from '../scrypt';
 
 import type { ErrorState } from './base';
+
+type SignInOutput = {
+  beaconUUID: string;
+  id: string;
+};
+
+type SignInWithTokenOutput = {
+  id: string;
+  beaconUUID: string;
+  created: boolean;
+};
+
+// XXX: Duplicating types so we can use them in flow too (lame).
+export type Record = {
+  _id: ObjectID;
+  email: string;
+  source?: string;
+  password: {
+    date: Date;
+    hash: string;
+  };
+  beaconUUID: string;
+  accountTokens: Array<AccessTokenRecord>;
+}
+
+type AccessTokenRecord = AccessTokenOutput & {
+  identified?: {
+    method: string;
+    token: string;
+    validated: boolean;
+    expires: Date;
+  };
+};
+
+type AccessTokenInput = {
+  publicKey: string;
+  userAgent: string;
+};
+
+type AccessTokenOutput = {
+  publicKey: string;
+  userAgent: string;
+  issued: Date;
+  expires: Date;
+  scopes?: Array<string>;
+  passwordCheck: {
+    date?: Date;
+  };
+};
+
+type SignInInput = {
+  email: string;
+  passwordHash: string;
+  publicKey: string;
+  userAgent: string;
+};
+
+type SignInWithTokenInput = {
+  uniqueAccountId: string;
+  publicKey: string;
+  userAgent: string;
+};
+
+type PasswordResetInput = {
+  email: string;
+}
+
+export type PasswordResetResult = {
+  token: string;
+  expires: number;
+  newToken: bool;
+}
+
+type UsePasswordResetTokenInput = {
+  email: string;
+  token: string;
+}
+
+export type UsePasswordResetTokenOutput = {
+  success: boolean;
+}
 
 /**
  * Password reset expires in 4 hours...
@@ -82,12 +163,6 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
   }),
 });
 
-// XXX: Duplicating types so we can use them in flow too (lame).
-export type Record = {
-  _id: ObjectID;
-  email: string;
-  // TODO: finish type...
-}
 
 const log = createLog('models:accounts');
 
@@ -95,25 +170,6 @@ const log = createLog('models:accounts');
  * The time in MS which a password check is valid.
  */
 const AUTHENTICATED_DURATION = 60 * 1000 * 15;
-
-type PasswordResetInput = {
-  email: string;
-}
-
-export type PasswordResetResult = {
-  token: string;
-  expires: number;
-  newToken: bool;
-}
-
-type UsePasswordResetTokenInput = {
-  email: string;
-  token: string;
-}
-
-export type UsePasswordResetTokenOutput = {
-  success: boolean;
-}
 
 export default class Accounts extends Base {
   static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION;
@@ -209,7 +265,6 @@ export default class Accounts extends Base {
        * account many have many of these with varying scopes.
        */
       accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA).required(),
-
     }).required(),
 
     resetPassword: Joi.object().keys({
@@ -246,19 +301,21 @@ export default class Accounts extends Base {
   /**
    * Find an account by its public key.
    */
-  async findByPublicKey(payload: any): any {
+  async findByPublicKey(payload: any): Promise<?Record> {
     payload = this.validate(payload, 'findByPublicKey');
     let { publicKey } = payload;
 
-    return await this.collection.find({
+    let record: ?Record = await this.collection.find({
       'accountTokens.publicKey': publicKey,
     }).limit(1).next();
+
+    return record;
   }
 
   /**
    * Common access token generation stuff.
    */
-  accessToken(payload: any): any {
+  accessToken(payload: AccessTokenInput): AccessTokenOutput {
     let { publicKey, userAgent } = payload;
     return this.validate({
       issued: new Date(),
@@ -358,7 +415,7 @@ export default class Accounts extends Base {
     }
   }
 
-  async signIn(payload: any): any {
+  async signIn(payload: SignInInput): Promise<ErrorState | SignInOutput> {
     payload = this.validate(payload, 'signIn');
 
     let account = await this.collection.findOne({
@@ -408,7 +465,7 @@ export default class Accounts extends Base {
     };
   }
 
-  async signInByToken(payload: any): any {
+  async signInByToken(payload: SignInWithTokenInput): Promise<SignInWithTokenOutput> {
     payload = this.validate(payload, 'signInByToken');
 
     // TODO: Don't abuse the email/password hash fields when we get off mongodb

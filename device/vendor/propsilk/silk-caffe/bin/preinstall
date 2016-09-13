@@ -25,17 +25,16 @@ if [[ -z $CI ]]; then
 fi
 
 # Download caffe
-CAFFE_SHA1=813c3c9bb02a7e8b3899e7cfd6db1885228fb914
+CAFFE_SHA1=be2f081b0a7aedc68d24a9007e5ffdd79e1a494c
 if [[ ! -d caffe ]]; then
   echo Downloading caffe
-  git clone git@github.com:BVLC/caffe.git
+  git clone git@github.com:silklabs/caffe.git
 
   # Patch caffe
   echo patching caffe
   pushd caffe
   git checkout $CAFFE_SHA1
   git am --quiet $PATCH_TREE/caffe/0001-Select-correct-version-of-vecLib.patch
-  git am --quiet $PATCH_TREE/caffe/0001-Add-switches-for-dependency-on-glog-and-hdf5.patch
   popd
 fi
 
@@ -51,7 +50,6 @@ if [[ ! -f caffe/build/lib/libcaffe.dylib ]]; then
     -DCPU_ONLY=ON \
     -DBUILD_python=OFF \
     -DBUILD_matlab=OFF \
-    -DUSE_GLOG=OFF \
     -DUSE_HDF5=OFF \
     -DUSE_LEVELDB=OFF \
     -DUSE_LMDB=OFF \

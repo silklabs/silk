@@ -134,7 +134,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
         name: Devices.NAME_SCHEMA,
         type: Devices.TYPE_SCHEMA,
         registered: Joi.boolean().required(),
-        accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.required(),
+        accountDeviceNumber:
+          Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.allow(0).required(),
         publicKey: Joi.string().hex().required(),
         deviceId: Joi.string().hex().required(),
         lastSeenAt: Joi.date().required(),

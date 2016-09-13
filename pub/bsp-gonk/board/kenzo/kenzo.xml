@@ -94,7 +94,6 @@
   <project groups="pdk" name="platform/external/libvpx" path="external/libvpx" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="platform/external/libvterm" path="external/libvterm" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk-cw-fs" name="platform/external/libxml2" path="external/libxml2" revision="LA.BR.1.3.2_rb3.14"/>
-  <project groups="pdk-cw-fs" name="platform/external/linux-tools-perf" path="external/linux-tools-perf" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk-cw-fs" name="platform/external/littlemock" path="external/littlemock" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk-cw-fs" name="platform/external/ltrace" path="external/ltrace" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk" name="platform/external/lzma" path="external/lzma" revision="LA.BR.1.3.2_rb3.14"/>
@@ -165,8 +164,6 @@
   <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.9" path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.9" revision="refs/tags/android-6.0.0_r2"/>
-  <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/headers" path="prebuilts/gcc/darwin-x86/host/headers" revision="LA.BR.1.3.2_rb3.14"/>
-  <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" path="prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" revision="LA.BR.1.3.2_rb3.14"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" revision="LA.BR.1.3.2_rb3.14"/>

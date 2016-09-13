@@ -16,7 +16,7 @@ npm build node_modules/silk-dnn-models
 
 if [[ "$(uname)" == "Darwin" && -z $GET_OFF_MY_LAWN ]]; then
   # Following packages are needed by caffe module
-  brew install -vd snappy gflags szip libtool protobuf
+  brew install -vd snappy gflags szip libtool protobuf glog
   
   # OpenCV3 wants libwebp
   brew install webp
@@ -49,6 +49,7 @@ if [[ "$(uname)" == "Linux" && -z $GET_OFF_MY_LAWN ]]; then
   package_exists libgflags-dev
   package_exists libprotobuf-dev
   package_exists protobuf-compiler
+  package_exists libgoogle-glog-dev
 fi
 
 # Hacks to ensure that native modules are built on your platform ...

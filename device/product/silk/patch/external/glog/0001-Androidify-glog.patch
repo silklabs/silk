@@ -1,0 +1,63 @@
+From 3a4e0b94b70a6913a8370b8778606cc6653acf93 Mon Sep 17 00:00:00 2001
+From: Anshul Jain <anshul@silklabs.com>
+Date: Tue, 13 Sep 2016 14:20:08 -0700
+Subject: [PATCH 1/2] Androidify glog
+
+---
+ Android.mk | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..5efb98a
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,44 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_MODULE := libglog
++LOCAL_MODULE_TAGS := optional
++LOCAL_MODULE_CLASS := STATIC_LIBRARIES
++LOCAL_MODULE_SUFFIX := .a
++LOCAL_CUSTOM_BUILT_MODULE := true
++LOCAL_32_BIT_ONLY := true
++LOCAL_STATIC_LIBRARIES += libgflags
++
++include $(BUILD_PREBUILT)
++
++GFLAGS_HOME := $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags,,,$(LOCAL_2ND_ARCH_VAR_PREFIX))
++GLOG_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
++$(GLOG_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++ifneq ($(TARGET_GE_MARSHMALLOW),)
++$(GLOG_MAKEFILE): ANDROID_TOOLCHAIN_NAME := $(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.9,arm-linux-androideabi-4.9)
++else
++$(GLOG_MAKEFILE): ANDROID_TOOLCHAIN_NAME := $(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8)
++endif
++$(GLOG_MAKEFILE): $(LOCAL_PATH)/Android.mk
++	@echo Configure: $@
++	$(hide) mkdir -p $(@D)
++	cd $(@D) && cmake \
++	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_TOOLCHAIN_CMAKE) \
++	-DANDROID_NDK=$(abspath prebuilts/ndk/current) \
++	-DCMAKE_BUILD_TYPE=Release \
++	-DANDROID_TOOLCHAIN_NAME=$(ANDROID_TOOLCHAIN_NAME) \
++	-DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
++	-DANDROID_NATIVE_API_LEVEL=21 \
++	-DGFLAGS_INCLUDE_DIR="$(ANDROID_BUILD_TOP)/${GFLAGS_HOME}/include" \
++	-DGFLAGS_LIBRARY="$(ANDROID_BUILD_TOP)/${GFLAGS_HOME}/lib/libgflags.a" \
++	-DCMAKE_INSTALL_PREFIX=$(ANDROID_BUILD_TOP)/$(dir $@) \
++ $(LOCAL_PATH)
++
++$(LOCAL_BUILT_MODULE): LOCAL_MODULE := $(LOCAL_MODULE)
++$(LOCAL_BUILT_MODULE): $(GLOG_MAKEFILE)
++	@echo Build: $@
++	$(hide) time $(MAKE) -C $(@D) install
++	$(hide) cp $(dir $@)lib/$(notdir $@) $@
++	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
++	$(hide) cp -fr $(dir $@)include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
+-- 
+2.8.2
+

@@ -110,7 +110,7 @@ rtc::scoped_refptr<MediaConstraints> MediaConstraints::New(const Local<Object> &
 
   if (!audio_value.IsEmpty()) {
     if (audio_value->IsTrue() || audio_value->IsFalse()) {
-      self->_audio = true;
+      self->_audio = audio_value->IsTrue();
     } else if (audio_value->IsObject()) {
       Local<Object> audio = Local<Object>::Cast(audio_value);
       optional_value = audio->Get(Nan::New("optional").ToLocalChecked());
@@ -166,7 +166,7 @@ rtc::scoped_refptr<MediaConstraints> MediaConstraints::New(const Local<Object> &
 
   if (!video_value.IsEmpty()) {
     if (video_value->IsTrue() || video_value->IsFalse()) {
-      self->_video = true;
+      self->_video = video_value->IsTrue();
     } else if (video_value->IsObject()) {
       Local<Object> video = Local<Object>::Cast(audio_value);
       optional_value = video->Get(Nan::New("optional").ToLocalChecked());

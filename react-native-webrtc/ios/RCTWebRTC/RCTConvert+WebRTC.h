@@ -7,10 +7,10 @@
 
 @interface RCTConvert (WebRTC)
 
-+ (RTCIceCandidate*)RTCIceCandidate:(id)json;
-+ (RTCSessionDescription*)RTCSessionDescription:(id)json;
-+ (RTCIceServer*)RTCIceServer:(id)json;
++ (RTCIceCandidate *)RTCIceCandidate:(id)json;
++ (RTCSessionDescription *)RTCSessionDescription:(id)json;
++ (RTCIceServer *)RTCIceServer:(id)json;
 + (RTCDataChannelConfiguration *)RTCDataChannelConfiguration:(id)json;
-+ (RTCConfiguration*)RTCConfiguration:(id)json;
++ (RTCConfiguration *)RTCConfiguration:(id)json;
 
 @end

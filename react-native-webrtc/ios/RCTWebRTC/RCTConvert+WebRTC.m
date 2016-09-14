@@ -5,7 +5,7 @@
 
 @implementation RCTConvert (WebRTC)
 
-+(RTCSessionDescription *)RTCSessionDescription:(id)json
++ (RTCSessionDescription *)RTCSessionDescription:(id)json
 {
   if (!json) {
     RCTLogConvertError(json, @"must not be null");
@@ -25,10 +25,10 @@
   NSString *sdp = json[@"sdp"];
   RTCSdpType sdpType = [RTCSessionDescription typeForString:json[@"type"]];
 
-  return [[RTCSessionDescription alloc]initWithType:sdpType sdp:sdp];
+  return [[RTCSessionDescription alloc] initWithType:sdpType sdp:sdp];
 }
 
-+(RTCIceCandidate *)RTCIceCandidate:(id)json
++ (RTCIceCandidate *)RTCIceCandidate:(id)json
 {
   if (!json) {
     RCTLogConvertError(json, @"must not be null");
@@ -51,10 +51,10 @@
   NSString *sdpMid = json[@"sdpMid"];
 
 
-  return [[RTCIceCandidate alloc]initWithSdp:sdp sdpMLineIndex:sdpMLineIndex sdpMid:sdpMid];
+  return [[RTCIceCandidate alloc] initWithSdp:sdp sdpMLineIndex:sdpMLineIndex sdpMid:sdpMid];
 }
 
-+(RTCIceServer *)RTCIceServer:(id)json
++ (RTCIceServer *)RTCIceServer:(id)json
 {
   if (!json) {
     RCTLogConvertError(json, @"a valid iceServer value");
@@ -67,7 +67,10 @@
   }
 
   NSArray<NSString *> *urls;
-  if ([json[@"urls"] isKindOfClass:[NSString class]]) {
+  if ([json[@"url"] isKindOfClass:[NSString class]]) {
+    // TODO: 'url' is non-standard
+    urls = @[json[@"url"]];
+  } else if ([json[@"urls"] isKindOfClass:[NSString class]]) {
     urls = @[json[@"urls"]];
   } else {
     urls = [RCTConvert NSArray:json[@"urls"]];
@@ -79,7 +82,7 @@
                                         credential:json[@"credential"]];
   }
 
-  return [[RTCIceServer alloc]initWithURLStrings:urls];
+  return [[RTCIceServer alloc] initWithURLStrings:urls];
 }
 
 + (RTCConfiguration *)RTCConfiguration:(id)json

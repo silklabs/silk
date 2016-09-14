@@ -44,6 +44,12 @@ typedef NS_ENUM(NSInteger, RTCTcpCandidatePolicy) {
   RTCTcpCandidatePolicyDisabled
 };
 
+/** Represents the candidate network policy. */
+typedef NS_ENUM(NSInteger, RTCCandidateNetworkPolicy) {
+  RTCCandidateNetworkPolicyAll,
+  RTCCandidateNetworkPolicyLowCost
+};
+
 /** Represents the continual gathering policy. */
 typedef NS_ENUM(NSInteger, RTCContinualGatheringPolicy) {
   RTCContinualGatheringPolicyGatherOnce,
@@ -74,6 +80,7 @@ RTC_EXPORT
 /** The rtcp-mux policy to use when gathering ICE candidates. */
 @property(nonatomic, assign) RTCRtcpMuxPolicy rtcpMuxPolicy;
 @property(nonatomic, assign) RTCTcpCandidatePolicy tcpCandidatePolicy;
+@property(nonatomic, assign) RTCCandidateNetworkPolicy candidateNetworkPolicy;
 @property(nonatomic, assign)
     RTCContinualGatheringPolicy continualGatheringPolicy;
 @property(nonatomic, assign) int audioJitterBufferMaxPackets;
@@ -82,6 +89,9 @@ RTC_EXPORT
 
 /** Key type used to generate SSL identity. Default is ECDSA. */
 @property(nonatomic, assign) RTCEncryptionKeyType keyType;
+
+/** ICE candidate pool size as defined in JSEP. Default is 0. */
+@property(nonatomic, assign) int iceCandidatePoolSize;
 
 - (instancetype)init NS_DESIGNATED_INITIALIZER;
 

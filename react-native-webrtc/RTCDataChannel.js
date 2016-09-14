@@ -136,7 +136,7 @@ export default class RTCDataChannel extends EventTarget(DATA_CHANNEL_EVENTS) {
         if (ev.id !== this.id) {
           return;
         }
-        let { data } = ev;
+        let data = ev.data;
         if (ev.type === 'binary') {
           data = base64.toByteArray(ev.data).buffer;
         } else if (ev.type === 'blob') {

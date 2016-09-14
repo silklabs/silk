@@ -50,6 +50,8 @@ private:
     int32_t _currentWidth;
     int32_t _currentHeight;
     int32_t _currentFrameRate;
+    int32_t _currentFrameIntervalMs;
+    int64_t _lastFrameMs;
     bool _captureStarted;
     RawVideoType _captureVideoType;
 };

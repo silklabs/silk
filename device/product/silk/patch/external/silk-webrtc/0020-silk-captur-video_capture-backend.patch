@@ -1,13 +1,13 @@
-From a0ae0dae91aaad445019358c84707b37ed330c32 Mon Sep 17 00:00:00 2001
+From fcb78b3fd6591482a5ad813c4ea964370e3ab094 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 13 Jun 2016 14:41:17 -0700
 Subject: [PATCH] silk-capture video_capture backend
 
 ---
- webrtc/modules/video_capture/gonk                     |  1 +
- webrtc/modules/video_capture/video_capture.gypi       | 18 ++++++++++++++----
- webrtc/modules/video_capture/video_capture_factory.cc |  4 ++--
- 3 files changed, 17 insertions(+), 6 deletions(-)
+ webrtc/modules/video_capture/gonk                  |  1 +
+ webrtc/modules/video_capture/video_capture.gypi    | 22 ++++++++++++++++++----
+ .../modules/video_capture/video_capture_factory.cc |  4 ++--
+ 3 files changed, 21 insertions(+), 6 deletions(-)
  create mode 120000 webrtc/modules/video_capture/gonk
 
 diff --git a/webrtc/modules/video_capture/gonk b/webrtc/modules/video_capture/gonk
@@ -19,10 +19,10 @@ index 0000000..dd7cf56
 +../../../../../vendor/propsilk/webrtc/video_capture_gonk
 \ No newline at end of file
 diff --git a/webrtc/modules/video_capture/video_capture.gypi b/webrtc/modules/video_capture/video_capture.gypi
-index c80f2bf..b166a31 100644
+index c80f2bf..03236a5 100644
 --- a/webrtc/modules/video_capture/video_capture.gypi
 +++ b/webrtc/modules/video_capture/video_capture.gypi
-@@ -53,11 +53,21 @@
+@@ -53,12 +53,26 @@
          {
            'target_name': 'video_capture_module_internal_impl',
            'type': 'static_library',
@@ -45,9 +45,14 @@ index c80f2bf..b166a31 100644
 +              'include_dirs': [
 +                '<!(echo $ANDROID_BUILD_TOP/vendor/opensilk/capture)',
 +                '<!(echo $ANDROID_BUILD_TOP/system/core/include)',
++                '<(DEPTH)/third_party/libyuv/include',
                ],
++              'dependencies': [
++                '<(DEPTH)/third_party/libyuv/libyuv.gyp:libyuv',
++               ],
              }],
              ['OS=="linux"', {
+               'sources': [
 diff --git a/webrtc/modules/video_capture/video_capture_factory.cc b/webrtc/modules/video_capture/video_capture_factory.cc
 index 927beba..ccb7678 100644
 --- a/webrtc/modules/video_capture/video_capture_factory.cc
@@ -71,5 +76,5 @@ index 927beba..ccb7678 100644
  #else
    return videocapturemodule::VideoCaptureImpl::CreateDeviceInfo(id);
 -- 
-1.9.1
+2.9.2
 

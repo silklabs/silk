@@ -72,15 +72,24 @@ int32_t DeviceInfoGonk::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
 
   _captureCapabilities.clear();
 
-  VideoCaptureCapability cap;
-  cap.width = property_get_int32("ro.silk.camera.width", 1280);
-  cap.height = property_get_int32("ro.silk.camera.height", 720);
-  cap.maxFPS = property_get_int32("ro.silk.camera.fps", 24);
-  cap.rawType = kVideoNV21;
-  cap.expectedCaptureDelay =
+  VideoCaptureCapability capFull;
+  capFull.width = property_get_int32("ro.silk.camera.width", 1280);
+  capFull.height = property_get_int32("ro.silk.camera.height", 720);
+  capFull.maxFPS = property_get_int32("ro.silk.camera.fps", 24);
+  capFull.rawType = kVideoNV21;
+  capFull.expectedCaptureDelay =
     webrtc::videocapturemodule::kDefaultCaptureDelay;
+  _captureCapabilities.push_back(capFull);
 
-  _captureCapabilities.push_back(cap);
+  VideoCaptureCapability capPreview;
+  capPreview.width = property_get_int32("ro.silk.preview.width", 320);
+  capPreview.height = property_get_int32("ro.silk.preview.height", 180);
+  capPreview.maxFPS = 1;
+  capPreview.rawType = kVideoI420;
+  capPreview.expectedCaptureDelay =
+    webrtc::videocapturemodule::kDefaultCaptureDelay;
+  _captureCapabilities.push_back(capPreview);
+
   return _captureCapabilities.size();
 }
 

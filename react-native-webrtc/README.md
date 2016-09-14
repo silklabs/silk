@@ -1,5 +1,8 @@
 # react-native-webrtc
 
+[![npm version](https://badge.fury.io/js/react-native-webrtc.svg)](https://badge.fury.io/js/react-native-webrtc)
+[![npm downloads](https://img.shields.io/npm/dm/react-native-webrtc.svg?maxAge=2592000)](https://img.shields.io/npm/dm/react-native-webrtc.svg?maxAge=2592000)
+
 A WebRTC module for React Native.
 
 ## Support
@@ -11,12 +14,15 @@ A WebRTC module for React Native.
 
 ## WebRTC Revision
 
-please see [#79](https://github.com/oney/react-native-webrtc/issues/79) for discussions.
+please see [#79](https://github.com/oney/react-native-webrtc/issues/79) for discussions.  
+and [wiki page](https://github.com/oney/react-native-webrtc/wiki) to see revisions 
 
-| react-native-webrtc | WebRTC(ios) | WebRTC(android)  |
-| :-------------: |:-------------:| :-----:|
-| <= 0.9.0    | branch ~47 beta (11177)  | branch ~47 beta (11139)  |
-| 0.10.0      | branch 52 stable (13039) | branch 52 stable (13039) |
+| react-native-webrtc | WebRTC(ios) | WebRTC(android)  | npm published |
+| :-------------: | :-------------:| :-----: | :-----: |
+| <= 0.9.0    | branch ~47 beta (11177)  | branch ~47 beta (11139)  | :heavy_check_mark: |
+| 0.10.0      | branch 52 stable (12798) | branch 52 stable (12798) | :heavy_check_mark: |
+| 0.11.0      | branch 52 stable (12798) | branch 52 stable (12798) | :heavy_check_mark: |
+| 0.12.0      | branch 53 stable (13317) | branch 53 stable (13317) | :warning: |
 
 ## Installation
 
@@ -115,3 +121,7 @@ You can open this website in browser, and then set it as signaling server in the
 
 ## Native control
 Use [react-native-incall-manager](https://github.com/zxcpoiu/react-native-incall-manager) to keep screen on, mute microphone, etc.
+
+## Sponsorship
+This repository doesn't have a plan to get sponsorship.(This can be discussed afterwards by collaborators). If you would like to pay bounty to fix some bugs or get some features, be free to open a issue that adds `[BOUNTY]` category in title. Add other bounty website link like [this](https://www.bountysource.com) will be better.
+

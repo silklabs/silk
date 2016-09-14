@@ -33,8 +33,6 @@
     _tracks = [NSMutableDictionary new];
     _dataChannels = [NSMutableDictionary new];
     _dataChannelBinaryTypeIsBlob = [NSMutableDictionary new];
-    _mediaStreamId = 0;
-    _trackId = 0;
   }
   return self;
 }

@@ -772,7 +772,7 @@ NAN_METHOD(Model::Time) {
   Caffe::set_mode(Caffe::CPU);
 
   // Instantiate caffe net
-  self->caffeNet.reset(new Net<float>(model, caffe::TRAIN));
+  Net<float> caffeNet(model, caffe::TRAIN);
 
   // Do a clean forward and backward pass, so that memory allocation are done
   // and future iterations will be more stable.
@@ -781,16 +781,16 @@ NAN_METHOD(Model::Time) {
   // Note that for the speed benchmark, we will assume that the network does
   // not take any input blobs.
   float initial_loss;
-  self->caffeNet->Forward(vector<Blob<float>*>(), &initial_loss);
+  caffeNet.Forward(&initial_loss);
   ALOGD("Initial loss: %f", initial_loss);
   ALOGD("Performing Backward");
-  self->caffeNet->Backward();
+  caffeNet.Backward();
 
-  const vector<boost::shared_ptr<Layer<float> > >& layers = self->caffeNet->layers();
-  const vector<vector<Blob<float>*> >& bottom_vecs = self->caffeNet->bottom_vecs();
-  const vector<vector<Blob<float>*> >& top_vecs = self->caffeNet->top_vecs();
+  const vector<boost::shared_ptr<Layer<float> > >& layers = caffeNet.layers();
+  const vector<vector<Blob<float>*> >& bottom_vecs = caffeNet.bottom_vecs();
+  const vector<vector<Blob<float>*> >& top_vecs = caffeNet.top_vecs();
   const vector<vector<bool> >& bottom_need_backward =
-      self->caffeNet->bottom_need_backward();
+      caffeNet.bottom_need_backward();
 
   ALOGD("*** Benchmark begins ***");
   ALOGD("Testing for %d iterations", iterations);

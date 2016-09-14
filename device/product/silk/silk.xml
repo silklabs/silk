@@ -63,7 +63,15 @@
            path="external/gflags"
            remote="github"
            revision="refs/tags/v2.1.2"
+           upstream="master"
            clone-depth="1"/>
+
+  <project name="google/glog"
+           path="external/glog"
+           remote="github"
+           revision="4d391fe692ae6b9e0105f473945c415a3ce5a401"
+           upstream="master"
+           clone-depth="42"/>
 
   <project name="boost"
            path="external/boost"
@@ -76,11 +84,11 @@
            revision="optimized_for_deeplearning"
            clone-depth="1"/>
 
-  <project name="BVLC/caffe"
+  <project name="caffe"
            path="external/caffe"
-           remote="github"
-           revision="813c3c9bb02a7e8b3899e7cfd6db1885228fb914"
-           upstream="master"
+           remote="silk"
+           revision="be2f081b0a7aedc68d24a9007e5ffdd79e1a494c"
+           upstream="android"
            clone-depth="42"/>
 
   <!-- node modules -->

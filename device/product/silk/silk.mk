@@ -156,6 +156,7 @@ PRODUCT_PACKAGES += \
   libopenblas \
   libsodium \
   sodium \
+  libglog \
 
 ifneq ($(strip $(SILK_FEATURE_TTS_CEREPROC)),false)
 # cereproc is internal-only, we don't have a license to distribute

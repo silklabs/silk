@@ -17,19 +17,4 @@ out/host/darwin-x86/bin/aprotoc --proto_path=external/caffe/src/caffe/proto --cp
 
 ### Compile libcaffe
 
-```
-git clone --recursive git@github.com:sh1r0/caffe-android-lib.git
-cd caffe-android-lib
-USE_OPENBLAS=1 ANDROID_ABI="armeabi-v7a-hard-softfp with NEON" ./build.sh <NDK Location>
-```
-
-### Compile libcaffe with QSML
-
-See: https://github.com/silklabs/silk-core/pull/1087/commits/14c0a0d0ff167be3ae4ebb6a8b89c1133a833979
-
-```
-git clone --recursive git@github.com:silklabs/caffe-android-lib.git
-cd caffe-android-lib
-USE_SML=1 ./build.sh <NDK Location>
-cp android_lib/caffe/libcaffe.so /path/to/copy/libcaffe.so
-```
+See instructions at [off device caffe compilation](https://github.com/silklabs/caffe-android-lib#build)

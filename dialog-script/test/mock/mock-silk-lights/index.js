@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import invariant from 'assert';
 import EventEmitter from 'events';
 

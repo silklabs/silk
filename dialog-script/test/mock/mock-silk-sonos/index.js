@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import createLog from 'silk-log';
 const log = createLog(`mock-sonos`);
 
@@ -10,15 +14,15 @@ class Sonos {
     log.info(`Play`);
   }
 
-  playQuery(query, value) {
+  playQuery(query: string, value: string) {
     log.info(`PlayQuery ${query}, ${value}`);
   }
 
-  playUri(uri) {
+  playUri(uri: string) {
     log.info(`PlayUri ${uri}`);
   }
 
-  getTrackInfo() {
+  getTrackInfo(): Promise<Object> {
     return Promise.resolve({artist: 'the artist', title: 'the title'});
   }
 }

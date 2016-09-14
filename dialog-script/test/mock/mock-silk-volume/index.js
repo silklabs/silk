@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import EventEmitter from 'events';
 
 class Volume extends EventEmitter {

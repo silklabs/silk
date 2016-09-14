@@ -27,25 +27,94 @@ export type RegisteredDevice = {
   accountDeviceNumber: number;
   name: string;
   type: string;
+
   rtc: {
+    /**
+     * Indicates that we're in the process of signaling the device
+     * currently. Once successfully connected to the device, this will
+     * be `false` again and the `peer` member below will be non-null.
+     */
     connecting: boolean;
+
+    /**
+     * The Peer object representing the WebRTC connection. Whenever
+     * we're connected to a device via WebRTC, this will be non-null.
+     */
     peer: ?Peer;
+
+    /**
+     * If the last connection attempt failed, this will be non-null
+     * and contain the corresponding error object. It will be cleared
+     * as soon as the next connection attempt is made.
+     */
     error: ?Error;
+
+    /**
+     * Flag that indicates that a prior connection attempt failed due
+     * to not being authorized with the device. This flag does not get
+     * cleared by subsequent connection attempts. It typically is only
+     * cleared after authorizing with the device over BLE.
+     */
     unauthorized: boolean;
+
+    /**
+     * Counts the number of connection attempts made.
+     */
     attempts: number;
   };
+
   ble: {
+    /**
+     * Flag to indicate that we want to be connected to the device via BLE.
+     */
     connectionRequested: boolean;
+
+    /**
+     * The BLE session object representing the BLE connection to the
+     * device. Whenever we're connected to a device via BLE, this will
+     * be non-null.
+     */
     session: ?DeviceSession;
+
+    /**
+     * Flag to indicate whether we're recognized by the device as an
+     * authorized app. This flag will be `true` if we've never been
+     * authorized by the device (e.g. performed BLE pairing). It will
+     * flip to `false` once the proximity gate has been crossed and
+     * the pairing has been performed. It will be `null` for
+     * connections that are already authorized.
+     */
     unauthorized: ?boolean;
   };
+
+  /**
+   * This object is added to the state to track the progress of
+   * removing a device from the account.
+   */
   unregister: ?{
+    /**
+     * Signed message (onion) for the device to factory-reset itself.
+     */
     factoryResetMessage: ?string;
-    // null means not started, false means in progress, true means done
-    serverStatus: ?boolean;
-    serverFailure: boolean;
-    // false means not sent, true means sent or failed.
+
+    /**
+     * Flag to indicate whether an attempt to notify the device has
+     * been made. `false` means the factory-reset message hasn't been
+     * sent, `true` means it was sent successfully or sending failed.
+     */
     peerNotified: boolean;
+
+    /**
+     * Flag indicating the status of notifying the server. `null`
+     * means the server hasn't been contacted yet, `false` means the
+     * operation is in progress, `true` means the operation is complete.
+     */
+    serverStatus: ?boolean;
+
+    /**
+     * Flag to indicate whther notifying the server was successful.
+     */
+    serverFailure: boolean;
   };
 };
 

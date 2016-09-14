@@ -10,10 +10,10 @@ WIPE=false
 if [ "$1" = "-f" ]; then
   shift
   WIPE=true
-  if [ -d RADIO ]; then
+  if [ -f RADIO/gpt_both0.bin ]; then
     FULL=true
   else
-    echo "No RADIO/ found"
+    echo "No RADIO binaries found"
   fi
 fi
 if [ "$1" = "-w" ]; then

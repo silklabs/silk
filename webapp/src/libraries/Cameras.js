@@ -14,6 +14,26 @@ const log = createLog('Cameras');
 
 type CameraState = 'offline' | 'connecting' | 'unauthorized' | 'online';
 
+const mediaStreamConstraints = {
+  preview: {
+    video: {
+      mandatory: [
+        {maxWidth: 640},
+        {maxFrameRate: 1},
+      ],
+    },
+    audio: false,
+  },
+  video: {
+    video: {
+      mandatory: [
+        {minFrameRate: 10},
+      ],
+    },
+    audio: true,
+  },
+};
+
 class Camera extends EventEmitter {
   id = '';
   logoImage = null;
@@ -40,6 +60,11 @@ class Camera extends EventEmitter {
   _objectsChannel: ?StructuredDataChannel = null;
   _queue = null;
   _peer = null;
+
+  _mediaStreamEnabled = {
+    preview: false,
+    video: false,
+  }
 
   constructor(device /*: ListDevicesOutputDevices*/) {
     super();
@@ -71,6 +96,9 @@ class Camera extends EventEmitter {
     });
     devicePeer.on('connect', this._onPeerConnect);
     devicePeer.on('close', this._onPeerClose);
+    devicePeer.on('addstream', this._updateStreams);
+    devicePeer.on('removestream', this._updateStreams);
+
     this._peer = devicePeer;
     this.emit('peer', this._peer);
   }
@@ -121,14 +149,14 @@ class Camera extends EventEmitter {
     this._updateDiagStream();
   }
 
-  _updateStreams() {
+  _updateStreams = () => {
     this._updateDiagStream();
     this._updatePreviewImageStream();
     this._updateVideoClipStream();
     this._updateMicStream();
     this._updateObjectStream();
     this.emit('stateChanged');
-  }
+  };
 
   get online(): bool {
     return this.state === 'online';
@@ -137,6 +165,38 @@ class Camera extends EventEmitter {
   get diagOnline(): bool {
     return this._diagChannel && this._diagChannel.open;
   }
+
+  get mediaStreams() {
+    if (this._peer === null) {
+      return new Map();
+    }
+    return this._peer.getMediaStreams();
+  }
+
+  setMediaStream(label, enabled: bool) {
+    invariant(typeof mediaStreamConstraints[label] === 'object', `Invalid ${label}`);
+    invariant(typeof this._mediaStreamEnabled[label] === 'boolean', `Invalid ${label}`);
+    if (enabled) {
+      if (!this._mediaStreamEnabled[label]) {
+        this._mediaStreamEnabled[label] = true;
+        if (this._peer !== null) {
+          this._peer.requestRemoteMediaStream(label, mediaStreamConstraints[label])
+          .catch((err) => {
+            log.error(`Failed to request stream: ${err.stack}`);
+            this._mediaStreamEnabled[label] = false;
+          });
+        }
+      }
+    } else {
+      if (this._mediaStreamEnabled[label]) {
+        this._mediaStreamEnabled[label] = false;
+        if (this._peer !== null) {
+          this._peer.removeStream(label);
+        }
+      }
+    }
+  }
+
 
   _updateDiagStream() {
     const enabled = this._logging;

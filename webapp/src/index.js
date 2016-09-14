@@ -38,7 +38,7 @@ import Login from './components/Login';
 import ForgotPassword from './components/ForgotPassword';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
 import MissingChunks from './components/MissingChunks';
-import WebRTCVideo from './components/WebRTCVideo';
+import WebRTCVideoList from './components/WebRTCVideoList';
 import DataChannel from './components/DataChannel';
 
 let userState;
@@ -69,7 +69,7 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />
         <Route onEnter={loginCheck} path="/video/:deviceId" component={CameraVideoMSE} />
         <Route onEnter={loginCheck} path="/audiostudio/:deviceId" component={AudioStudio} />
-        <Route onEnter={loginCheck} path="/webrtc/:deviceId" component={WebRTCVideo} />
+        <Route onEnter={loginCheck} path="/webrtc/:deviceId" component={WebRTCVideoList} />
         <Route onEnter={loginCheck} path="/datachannel/:deviceId" component={DataChannel} />
         <Route path="/forgot_password" component={ForgotPassword} userState={userState} />
       </Router>

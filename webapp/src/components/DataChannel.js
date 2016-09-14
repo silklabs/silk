@@ -49,16 +49,12 @@ export default class DataChannel extends React.Component {
 
   componentWillUnmount() {
     Cameras.removeListener('stateChanged', this.onCamerasStateChanged);
-    let camera = this.state.camera;
-    if (camera) {
-      camera.removeListener('peer', this.onPeer);
-      this.onPeer(null);
-    }
+    this.onCamerasStateChanged({cameras: {}});
   }
 
-  onCamerasStateChanged = state => {
+  onCamerasStateChanged = camerasState => {
     let oldCamera = this.state.camera;
-    let newCamera = state.cameras[this.deviceId];
+    let newCamera = camerasState.cameras[this.deviceId];
 
     if (oldCamera === newCamera) {
       return;

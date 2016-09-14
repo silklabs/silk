@@ -864,8 +864,12 @@ export default class DeviceSession extends RobustEventEmitter {
   disconnect() {
     log.debug(`DeviceSession.disconnect()`);
 
-    invariant(this._state === DeviceSession.STATE_REGISTERED);
-    this._state = DeviceSession.STATE_DISMISSED;
+    if (this._state === DeviceSession.STATE_REGISTERED ||
+        this._state === DeviceSession.STATE_UNAUTHORIZED) {
+      this._state = DeviceSession.STATE_DISMISSED;
+    } else {
+      this._state = DeviceSession.STATE_ERROR;
+    }
     this._socketSession.disconnect();
   }
 

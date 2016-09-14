@@ -890,14 +890,6 @@ function AUTH_SIGNOUT(
   state: DevicesState,
   action: Action<'AUTH_SIGNOUT', void>
 ): DevicesState {
-  const {registered} = state;
-  if (registered) {
-    registered.forEach((device) => {
-      if (device.rtc.peer) {
-        device.rtc.peer.destroy();
-      }
-    });
-  }
   return {
     ...initialState,
   };

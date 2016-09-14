@@ -2,6 +2,8 @@
  * @flow
  */
 
+/* global MediaStream */
+
 import invariant from 'assert';
 import {handleActions} from 'redux-actions';
 
@@ -20,6 +22,12 @@ import type {
   UnregisterRegisteredDeviceResult,
   RegisterConfiguringDeviceResult,
 } from './device_actions';
+
+type RTCMediaStreamEvent = {
+  deviceId: string;
+  label: string;
+  stream: MediaStream;
+};
 
 export type RegisteredDevice = {
   deviceId: string;
@@ -61,6 +69,28 @@ export type RegisteredDevice = {
      * Counts the number of connection attempts made.
      */
     attempts: number;
+
+    /**
+     * Flag that indicates that whenever we're connected to the
+     * device, it should send the preview stream.
+     */
+    previewEnabled: boolean;
+
+    /**
+     * The preview stream, when available.
+     */
+    previewStream: ?MediaStream;
+
+    /**
+     * Flag that indicates that whenever we're connected to the
+     * device, it should send the full format live stream.
+     */
+    videoEnabled: boolean;
+
+    /**
+     * The video stream, when available.
+     */
+    videoStream: ?MediaStream;
   };
 
   ble: {
@@ -158,6 +188,10 @@ const registeredDeviceTemplate = {
     error: null,
     unauthorized: false,
     attempts: 0,
+    previewEnabled: false,
+    previewStream: null,
+    videoEnabled: false,
+    videoStream: null,
   },
   ble: {
     connectionRequested: false,
@@ -830,6 +864,7 @@ function DEVICE_RTC_SIGNAL(
     device = {
       ...device,
       rtc: {
+        ...device.rtc,
         connecting: false,
         peer: null,
         error: action.payload,
@@ -841,6 +876,7 @@ function DEVICE_RTC_SIGNAL(
     device = {
       ...device,
       rtc: {
+        ...device.rtc,
         connecting: false,
         peer: action.payload,
         error: null,
@@ -877,6 +913,8 @@ function DEVICE_RTC_CONNECTIONCLOSED(
       peer: null,
       error: null,
       attempts: 0,
+      previewStream: null,
+      videoStream: null,
     },
   });
   return {
@@ -885,6 +923,84 @@ function DEVICE_RTC_CONNECTIONCLOSED(
   };
 }
 
+function rtcMediaStreamToggle(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_RTC_PREVIEW_ENABLE' | 'DEVICE_RTC_PREVIEW_DISABLE' | 'DEVICE_RTC_VIDEO_ENABLE' | 'DEVICE_RTC_VIDEO_DISABLE', string>
+): DevicesState {
+  const deviceId = action.payload;
+  if (!state.registered || !state.registered.has(deviceId)) {
+    return state;
+  }
+
+  let flag = null;
+  let value = null;
+  switch (action.type) {
+  case 'DEVICE_RTC_PREVIEW_ENABLE':
+  case 'DEVICE_RTC_PREVIEW_DISABLE':
+    flag = 'previewEnabled';
+    value = action.type === 'DEVICE_RTC_PREVIEW_ENABLE';
+    break;
+  case 'DEVICE_RTC_VIDEO_ENABLE':
+  case 'DEVICE_RTC_VIDEO_DISABLE':
+    flag = 'videoEnabled';
+    value = action.type === 'DEVICE_RTC_VIDEO_ENABLE';
+    break;
+  default:
+    return state;
+  }
+
+  const registered = new Map(state.registered);
+  const device = state.registered.get(deviceId);
+  invariant(device);
+  registered.set(deviceId, {
+    ...device,
+    rtc: {
+      ...device.rtc,
+      [flag]: value,
+    },
+  });
+  return {
+    ...state,
+    registered,
+  };
+}
+
+function rtcMediaStreamAddedRemoved(
+  state: DevicesState,
+  action: SimpleAction<'DEVICE_RTC_MEDIASTREAMADDED' | 'DEVICE_RTC_MEDIASTREAMREMOVED', RTCMediaStreamEvent>
+): DevicesState {
+  const {deviceId, label, stream} = action.payload;
+  if (!state.registered || !state.registered.has(deviceId)) {
+    return state;
+  }
+
+  let attr = null;
+  switch (label) {
+  case 'preview':
+    attr = 'previewStream';
+    break;
+  case 'video':
+    attr = 'videoStream';
+    break;
+  default:
+    return state;
+  }
+
+  const registered = new Map(state.registered);
+  const device = state.registered.get(deviceId);
+  invariant(device);
+  registered.set(deviceId, {
+    ...device,
+    rtc: {
+      ...device.rtc,
+      [attr]: action.type === 'DEVICE_RTC_MEDIASTREAMADDED' ? stream : null,
+    },
+  });
+  return {
+    ...state,
+    registered,
+  };
+}
 
 function AUTH_SIGNOUT(
   state: DevicesState,
@@ -918,5 +1034,11 @@ export const reducer = handleActions({
   DEVICE_CONFIG_FINISH,
   DEVICE_RTC_SIGNAL,
   DEVICE_RTC_CONNECTIONCLOSED,
+  DEVICE_RTC_PREVIEW_ENABLE: rtcMediaStreamToggle,
+  DEVICE_RTC_PREVIEW_DISABLE: rtcMediaStreamToggle,
+  DEVICE_RTC_VIDEO_ENABLE: rtcMediaStreamToggle,
+  DEVICE_RTC_VIDEO_DISABLE: rtcMediaStreamToggle,
+  DEVICE_RTC_MEDIASTREAMADDED: rtcMediaStreamAddedRemoved,
+  DEVICE_RTC_MEDIASTREAMREMOVED: rtcMediaStreamAddedRemoved,
   AUTH_SIGNOUT,
 }, initialState);

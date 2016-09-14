@@ -364,5 +364,13 @@ export const config = {
 
 export const rtc = {
   signal: actionFromAsyncPayloadGen('DEVICE_RTC_SIGNAL', genRTCSignalDevice),
+  previewEnable: actionFromPayload('DEVICE_RTC_PREVIEW_ENABLE'),
+  previewDisable: actionFromPayload('DEVICE_RTC_PREVIEW_DISABLE'),
+  videoEnable: actionFromPayload('DEVICE_RTC_VIDEO_ENABLE'),
+  videoDisable: actionFromPayload('DEVICE_RTC_VIDEO_DISABLE'),
+
+  // These actions are dispatched by events emitted from the RTC machinery.
   connectionClosed: actionFromPayload('DEVICE_RTC_CONNECTIONCLOSED'),
+  mediaStreamAdded: actionFromPayload('DEVICE_RTC_MEDIASTREAMADDED'),
+  mediaStreamRemoved: actionFromPayload('DEVICE_RTC_MEDIASTREAMREMOVED'),
 };

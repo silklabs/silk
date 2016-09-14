@@ -1,0 +1,9 @@
+{
+  "name": "mock-lame",
+  "version": "0.0.1",
+  "description": "Mock for lame",
+  "main": "index.js",
+  "dependencies": {
+    "babel-preset-silk-node4": "^1.0.0"
+  }
+}

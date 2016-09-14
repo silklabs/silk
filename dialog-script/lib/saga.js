@@ -33,6 +33,8 @@ import {
   getArtist,
   playMusic,
   pauseMusic,
+  playShoutcast,
+  pauseShoutcast,
 } from './music/saga';
 import {turnOnLight, turnOffLight} from './lights/saga';
 import {recordKeyword} from './keyword/saga';
@@ -92,6 +94,8 @@ const concurrentIntents: Set<string> = new Set([
   `playSonos`,
   `pauseMusic`,
   `playMusic`,
+  `playShoutcast`,
+  `pauseShoutcast`,
   `recordKeyword`,
   `resetLocation`,
   `xkcd`,
@@ -390,6 +394,12 @@ export default function*(
         break;
       case `pauseMusic`:
         sagaFunction = pauseMusic;
+        break;
+      case `playShoutcast`:
+        sagaFunction = playShoutcast;
+        break;
+      case `pauseShoutcast`:
+        sagaFunction = pauseShoutcast;
         break;
       case `getCurrentSong`:
         sagaFunction = getCurrentSong;

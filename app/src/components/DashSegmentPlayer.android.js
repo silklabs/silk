@@ -12,8 +12,6 @@ import {
 } from 'react-native';
 import createLog from 'silk-log';
 
-import Config from '../libraries/config';
-
 const MSEPlayer = requireNativeComponent('SilkMSEPlayer');
 
 const log = createLog('DashSegmentPlayer');
@@ -24,12 +22,13 @@ const DEFAULT_WEBVIEW_URL = 'file:///android_asset/mse.html';
 export default class DashSegmentPlayer extends React.Component {
 
   render() {
+    const {current} = this.props.config;
     return (
       <View style={this.props.style}>
         <MSEPlayer
           style={styles.player}
           ref={NATIVE_REF}
-          source={{uri: Config.get().mseWebviewUrl || DEFAULT_WEBVIEW_URL}}
+          source={{uri: current.get().mseWebviewUrl || DEFAULT_WEBVIEW_URL}}
           javaScriptEnabled={true}
           onLoadingStart={this.onLoadingStart}
           onLoadingFinish={this.onLoadingFinish}

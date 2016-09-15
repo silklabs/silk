@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   ActivityIndicator,
   Modal,
@@ -12,68 +13,38 @@ import {
   View,
 } from 'react-native';
 import {RTCView} from 'react-native-webrtc';
-import createLog from 'silk-log';
 
 import AsyncComponent from './abstract/AsyncComponent';
+import * as actions from '../store/actions';
 
-import type {Peer} from 'silk-rtc';
+import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {Dispatch} from 'silk-redux/action';
 
 type Props = {
-  peer: Peer,
+  device: RegisteredDevice;
   onClose?: Function;
+  dispatch: Dispatch<*>;
 };
-
-const log = createLog('CameraLiveVideoRTC');
-const STREAM_LABEL = 'full';
 
 export default class CameraLiveVideoRTC extends AsyncComponent {
 
   props: Props;
   state = {
     showingControls: false,
-    stream: null,
   };
 
-  mounted = false;
+  shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillMount() {
-    this.mounted = true;
-    this.initStream();
+    this.props.dispatch(
+      actions.devices.rtc.videoEnable(this.props.device.deviceId)
+    );
   }
 
   componentWillUnmount() {
-    this.mounted = false;
-    this.props.peer.removeStream(STREAM_LABEL);
-  }
-
-  initStream() {
-    if (!this.mounted) {
-      return;
-    }
-
-    log.debug('Requesting remote media stream', STREAM_LABEL);
-    const {peer} = this.props;
-    peer.requestRemoteMediaStream(STREAM_LABEL, {
-      video: true,
-      audio: false,
-    }).catch((err) => {
-      log.error(`Failed to request stream: ${err.stack}`);
-      this.initStream();
-    });
-
-    peer.on('addstream', ({label, stream}) => {
-      log.debug('added stream', label);
-      if (label === STREAM_LABEL) {
-        this.setStateAsync({stream});
-      }
-    });
-    peer.on('removestream', ({label, stream}) => {
-      log.debug('removed stream', label);
-      if (label === STREAM_LABEL) {
-        this.setStateAsync({stream: null});
-        this.initStream();
-      }
-    });
+    this.props.dispatch(
+      actions.devices.rtc.videoDisable(this.props.device.deviceId)
+    );
   }
 
   _toggleControls = () => {
@@ -99,10 +70,11 @@ export default class CameraLiveVideoRTC extends AsyncComponent {
 
   render() {
     let video = <ActivityIndicator color="white" />;
-    if (this.state.stream) {
+    const {videoStream} = this.props.device.rtc;
+    if (videoStream) {
       video = (
         <RTCView
-          streamURL={this.state.stream.toURL()}
+          streamURL={videoStream.id}
           style={styles.video}
         />
       );

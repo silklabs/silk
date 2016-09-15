@@ -7,15 +7,13 @@ import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {
   ActionSheetIOS,
   ActivityIndicator,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
 } from 'react-native';
-import createLog from 'silk-log';
+import {RTCView} from 'react-native-webrtc';
 
-import WebRTCDataChannelReceiver from './abstract/WebRTCDataChannelReceiver';
-import PreviewQueue from '../libraries/PreviewQueue';
+import AsyncComponent from './abstract/AsyncComponent';
 import * as actions from '../store/actions';
 
 import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
@@ -29,21 +27,15 @@ type Props = {
   dispatch: Dispatch<*>;
 };
 
-const log = createLog('CameraPreview');
-
 const PAIRING_TIMEOUT_MS = 30 * 1000;
 
-export default class CameraPreview extends WebRTCDataChannelReceiver {
+export default class CameraPreview extends AsyncComponent {
 
   props: Props;
 
   state = {
-    blob: null,
     pairingTimedOut: false,
   };
-
-  channelName: string = 'preview';
-  messageType: string = 'jpeg';
 
   _timeoutTimer: ?number = null;
   _pairing: boolean = false;
@@ -51,21 +43,15 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   componentWillMount() {
-    super.componentWillMount();
-    this._queue = new PreviewQueue(this.props.device.name, (blob) => {
-      if (!this.mounted) {
-        return;
-      }
-      this.setStateAsync({blob});
-    });
+    this.props.dispatch(
+      actions.devices.rtc.previewEnable(this.props.device.deviceId)
+    );
   }
 
   componentWillUnmount() {
-    super.componentWillUnmount();
-    if (this._queue) {
-      this._queue.deinit();
-      this._queue = null;
-    }
+    this.props.dispatch(
+      actions.devices.rtc.previewDisable(this.props.device.deviceId)
+    );
   }
 
   componentWillReceiveProps(nextProps: Props) {
@@ -89,22 +75,14 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
         }
       }
     }
-    super.componentWillReceiveProps(nextProps);
   }
-
-  /**
-   * "API"
-   */
-  onMessage = (message) => {
-    log.debug('preview frame', message.frame);
-    this._queue.push(message.frame);
-  };
 
   _renderPreview() {
     const {rtc, ble} = this.props.device;
     if (rtc.connecting) {
       return <ActivityIndicator color="white" />;
     }
+
     if (rtc.unauthorized) {
       if (ble.connectionRequested && !ble.session) {
         return <ActivityIndicator color="white" />;
@@ -126,6 +104,7 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
       }
       return <Text style={styles.timedOutLabel}>{label}</Text>;
     }
+
     if (!rtc.peer && !rtc.connecting) {
       return (
         <Text style={styles.timedOutLabel}>
@@ -133,15 +112,15 @@ export default class CameraPreview extends WebRTCDataChannelReceiver {
         </Text>
       );
     }
-    const {blob} = this.state;
-    if (!blob) {
+
+    const {previewStream} = rtc;
+    if (!previewStream) {
       return <ActivityIndicator color="white" />;
     }
     return (
-      <Image
+      <RTCView
         style={styles.preview}
-        source={{uri: URL.createObjectURL(blob)}}
-        onLoadEnd={() => blob.close()}
+        streamURL={previewStream.id}
       />
     );
   }

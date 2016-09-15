@@ -15,6 +15,7 @@ import * as actions from './store/actions';
 
 import type {Socket} from 'silk-ble-socket';
 import type {Store} from './store';
+import type {RegisteredDevice} from './store/device_reducers';
 
 const RTC_SIGNAL_INTERVALS_SEC = [0, 5, 10, 20, 30];
 
@@ -65,17 +66,19 @@ function initNetworkAndAPI(store: Store<*>) {
 }
 
 /**
- * Automation for interacting with registered devices, such
+ * Automation for interacting with registered devices, such as
  * maintaining a list of them, connecting to them, etc.
  */
 function initRegisteredDevices(store: Store<*>) {
   log.debug('initRegisteredDevices');
 
+  const {rtc, registered} = actions.devices;
+
   // Ensure we have the latest list of devices, and are attempting to
   // signal them, when the circumstances call for it. For instance,
   // right after logging in, right after the phone's network
   // connection is restored, etc.
-  let rtcTimers: Map<string, number> = new Map();
+  const rtcTimers: Map<string, number> = new Map();
 
   function ensureDeviceConnection() {
     const {auth, network} = store.getState();
@@ -91,13 +94,49 @@ function initRegisteredDevices(store: Store<*>) {
   store.subscribeToPath('auth.isAuthenticated', ensureDeviceConnection);
   store.subscribeToPath('network.canReachServer', ensureDeviceConnection);
 
-  const {registered} = actions.devices;
-  function handleUnregister(device) {
+  function cancelRTCTimer(deviceId: string) {
+    if (!rtcTimers.has(deviceId)) {
+      return;
+    }
+    log.debug(`Canceling reconnect timer for ${deviceId}.`);
+    clearTimeout(rtcTimers.get(deviceId));
+    rtcTimers.delete(deviceId);
+  }
+
+  function setConnectTimer(device: RegisteredDevice) {
+    const {deviceId} = device;
+    if (device.rtc.connecting || rtcTimers.has(deviceId)) {
+      return;
+    }
+
+    const index = Math.min(
+      device.rtc.attempts,
+      RTC_SIGNAL_INTERVALS_SEC.length - 1
+    );
+    const intervalMS = RTC_SIGNAL_INTERVALS_SEC[index] * 1000;
+    log.debug(`Attempting reconnection to ${deviceId} in ${intervalMS}ms`);
+
+    const timer = setTimeout(() => {
+      rtcTimers.delete(deviceId);
+      const currentDevice = store.getState().devices.registered.get(deviceId);
+      if (currentDevice.rtc.peer || currentDevice.rtc.connecting) {
+        return;
+      }
+      log.debug(
+        `Attempt #${currentDevice.rtc.attempts} to connect to ${deviceId}.`
+      );
+      store.dispatch(rtc.signal(deviceId));
+    }, intervalMS);
+    rtcTimers.set(deviceId, timer);
+  }
+
+  function handleUnregisterDevice(device: RegisteredDevice) {
     invariant(device);
-    const {unregister} = device;
+    const {deviceId, unregister} = device;
     if (!unregister) {
       return;
     }
+
     const {factoryResetMessage, serverStatus} = unregister;
 
     if (!factoryResetMessage) {
@@ -105,10 +144,12 @@ function initRegisteredDevices(store: Store<*>) {
       return;
     }
 
+    cancelRTCTimer(deviceId);
+
     if (serverStatus === null) {
-      store.dispatch(registered.unregisterWithServer(device.deviceId));
+      store.dispatch(registered.unregisterWithServer(deviceId));
       if (device.rtc.peer) {
-        store.dispatch(registered.unregisterWithPeer(device.deviceId));
+        store.dispatch(registered.unregisterWithPeer(deviceId));
       } else {
         log.warn('Not connected to device, cannot signal unregister');
       }
@@ -116,19 +157,96 @@ function initRegisteredDevices(store: Store<*>) {
     }
   }
 
-  // Whenever a new registered device gets added to the current state,
-  // attempt to signal it immediately.
-  const {rtc} = actions.devices;
-  store.subscribeToPath('devices.registered', (newDevices, oldDevices) => {
-    if (!newDevices) {
-      return;
-    }
-    newDevices.forEach((newDevice, deviceId) => {
-      const oldDevice = oldDevices ? oldDevices.get(deviceId) : null;
+  function handleRTC(
+    newDevice: RegisteredDevice,
+    oldDevice: RegisteredDevice
+  ) {
+    const {deviceId} = newDevice;
 
-      if (!oldDevice || (newDevice.unregister !== oldDevice.unregister)) {
-        handleUnregister(newDevice);
+    // We've failed to signal the device once again, re-attempt
+    // based on back-off intervals.
+    if (newDevice.rtc.attempts > oldDevice.rtc.attempts) {
+      setConnectTimer(newDevice);
+    }
+
+    let addPreviewStream =
+      !oldDevice.rtc.previewEnabled &&
+      newDevice.rtc.previewEnabled;
+    let addVideoStream =
+      !oldDevice.rtc.videoEnabled &&
+      newDevice.rtc.videoEnabled;
+
+    const oldPeer = oldDevice.rtc.peer;
+    const newPeer = newDevice.rtc.peer;
+
+    // Newly established RTC connection.
+    if (!oldPeer && newPeer) {
+      log.debug(`RTC connection for ${deviceId} established.`);
+      cancelRTCTimer(deviceId);
+      newPeer.on('close', () => {
+        log.debug(`RTC connection for ${deviceId} closed.`);
+        store.dispatch(rtc.connectionClosed(deviceId));
+      });
+      newPeer.on('addstream', ({label, stream}) => {
+        log.debug(`RTC MediaStream '${label}' for ${deviceId} added.`);
+        store.dispatch(rtc.mediaStreamAdded({deviceId, label, stream}));
+      });
+      newPeer.on('removestream', ({label, stream}) => {
+        log.debug(`RTC MediaStream '${label}' for ${deviceId} removed.`);
+        store.dispatch(rtc.mediaStreamRemoved({deviceId, label, stream}));
+      });
+
+      // Since this is a new peer connection, we need to (re-)request
+      // the media streams if they're supposed to be enabled.
+      addPreviewStream = newDevice.rtc.previewEnabled;
+      addVideoStream = newDevice.rtc.videoEnabled;
+    }
+
+    // RTC media streams
+    if (newPeer) {
+      if (addPreviewStream) {
+        log.debug(`Requesting RTC MediaStream 'preview' for ${deviceId}.`);
+        newPeer.requestRemoteMediaStream('preview', {
+          video: {mandatory: [{maxWidth: 640}, {maxFrameRate: 1}]},
+          audio: false,
+        });
       }
+      if (addVideoStream) {
+        log.debug(`Requesting RTC MediaStream 'video' for ${deviceId}.`);
+        newPeer.requestRemoteMediaStream('video', {
+          video: {mandatory: [{minFrameRate: 20}]},
+          audio: true,
+        });
+      }
+      if (oldDevice.rtc.previewEnabled && !newDevice.rtc.previewEnabled) {
+        log.debug(`Removing RTC MediaStream 'preview' for ${deviceId}.`);
+        newPeer.removeStream('preview');
+      }
+      if (oldDevice.rtc.videoEnabled && !newDevice.rtc.videoEnabled) {
+        log.debug(`Removing RTC MediaStream 'video' for ${deviceId}.`);
+        newPeer.removeStream('video');
+      }
+    }
+
+    // RTC connection just went away.
+    if (oldPeer && !newPeer) {
+      log.debug(
+        `RTC connection for ${deviceId} is gone, going to attempt to reconnect.`
+      );
+      store.dispatch(rtc.signal(deviceId));
+    }
+  }
+
+  // Handle changes to the registered devices, such as RTC connection
+  // status, new devices coming online, etc.
+  store.subscribeToPath('devices.registered', (newDevices, oldDevices, state) => {
+    // Normalize these maps as they might be null. Also, we're going to
+    // modify `oldDevices` locally, so we need a shallow copy anyway.
+    newDevices = new Map(newDevices);
+    oldDevices = new Map(oldDevices);
+
+    newDevices.forEach((newDevice, deviceId) => {
+      const oldDevice = oldDevices.get(deviceId);
 
       // Newly added device, signal it right away.
       if (!oldDevice) {
@@ -137,29 +255,11 @@ function initRegisteredDevices(store: Store<*>) {
         return;
       }
 
-      // We've failed to signal the device once again, re-attempt
-      // based on back-off intervals.
-      if (newDevice.rtc.attempts > oldDevice.rtc.attempts &&
-          !newDevice.rtc.connecting &&
-          !rtcTimers.has(deviceId)) {
-        const index = Math.min(
-          newDevice.rtc.attempts,
-          RTC_SIGNAL_INTERVALS_SEC.length - 1
-        );
-        const intervalMS = RTC_SIGNAL_INTERVALS_SEC[index] * 1000;
-        log.debug(`Attempting reconnection to ${deviceId} in ${intervalMS}ms`);
+      oldDevices.delete(deviceId);
 
-        const timer = setTimeout(() => {
-          rtcTimers.delete(deviceId);
-          const currentDevice = store.getState().devices.registered.get(deviceId);
-          if (currentDevice.rtc.peer || currentDevice.rtc.connecting) {
-            return;
-          }
-          log.debug(`Attempt #${currentDevice.rtc.attempts} to connect to ${deviceId}.`);
-          store.dispatch(rtc.signal(deviceId));
-        }, intervalMS);
-        rtcTimers.set(deviceId, timer);
-        return;
+      // Device is being unregistered.
+      if (newDevice.unregister !== oldDevice.unregister) {
+        handleUnregisterDevice(newDevice);
       }
 
       // Just paired with device over BLE to get RTC authorization.
@@ -171,33 +271,30 @@ function initRegisteredDevices(store: Store<*>) {
           `attempting to establish RTC connection.`
         );
         store.dispatch(rtc.signal(deviceId));
-        return;
       }
 
-      const oldPeer = oldDevice.rtc.peer;
-      const newPeer = newDevice.rtc.peer;
-
-      // Newly established RTC connection.
-      if (!oldPeer && newPeer) {
-        log.debug(`RTC connection for ${deviceId} established.`);
-        if (rtcTimers.has(deviceId)) {
-          log.debug(`Canceling reconnect timer for ${deviceId}.`);
-          clearTimeout(rtcTimers.get(deviceId));
-          rtcTimers.delete(deviceId);
-        }
-        newPeer.on('close', () => {
-          log.debug(`RTC connection for ${deviceId} closed.`);
-          store.dispatch(rtc.connectionClosed(deviceId));
-        });
+      if (newDevice.rtc !== oldDevice.rtc) {
+        handleRTC(newDevice, oldDevice);
       }
+    });
 
-      // RTC connection just went away.
-      if (oldPeer && !newPeer) {
-        log.debug(
-          `RTC connection for ${deviceId} is gone, ` +
-          `going to attempt to reconnect.`
+    // For any device that is no longer in the list of registered
+    // devices, kill any connections we might have for it.
+    oldDevices.forEach((oldDevice) => {
+      if (oldDevice.rtc.peer) {
+        oldDevice.rtc.peer.destroy();
+      }
+      cancelRTCTimer(oldDevice.deviceId);
+
+      if (oldDevice.ble.session) {
+        oldDevice.ble.session.disconnect();
+      }
+      if (state.auth.beaconUuid) {
+        NativeModules.BLESocketManager.scanForDevice(
+          state.auth.beaconUuid,
+          oldDevice.accountDeviceNumber,
+          false
         );
-        store.dispatch(rtc.signal(deviceId));
       }
     });
   });

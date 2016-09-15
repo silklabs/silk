@@ -80,7 +80,8 @@ export default class DeviceList extends AsyncComponent {
       fullscreenMonitor = (
         <CameraLiveVideoRTC
           onClose={this.stopFullscreenVideo}
-          peer={device.rtc.peer}
+          device={device}
+          dispatch={this.props.dispatch}
         />
       );
     }

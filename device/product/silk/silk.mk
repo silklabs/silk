@@ -157,6 +157,8 @@ PRODUCT_PACKAGES += \
   libsodium \
   sodium \
   libglog \
+  libQSML \
+  libsymphony-cpu \
 
 ifneq ($(strip $(SILK_FEATURE_TTS_CEREPROC)),false)
 # cereproc is internal-only, we don't have a license to distribute

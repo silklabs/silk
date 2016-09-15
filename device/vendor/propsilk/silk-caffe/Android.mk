@@ -19,6 +19,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := \
  libopenblas \
  libgflags \
+ libglog \
 
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_STATIC_LIBRARIES += libprotobuf-cpp-full-gnustl-rtti

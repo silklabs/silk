@@ -20,7 +20,10 @@ import type {
   DeviceUpdateStatusMessage,
 } from './outgoing';
 import type DeviceSession from '../ble/device_session';
-import type {UnregisterRegisteredDeviceResult} from '../store/device_actions';
+import type {
+  UnregisterRegisteredDeviceResult,
+  RTCMediaStreamResult,
+} from '../store/device_actions';
 
 export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,
@@ -50,6 +53,20 @@ const initialState: MessagesState = {
   },
   CONNECTIONS: [],
   UPDATES: [],
+};
+
+const deviceStatusTemplate = {
+  type: 'DEVICE_STATUS',
+  deviceVersion: null,
+  deviceId: null,
+  deviceConfigId: null,
+  accountDeviceNumber: null,
+  bleConnectionStatus: null,
+  bleConnectionError: null,
+  rtcConnectionStatus: null,
+  rtcConnectionError: null,
+  rtcPreviewStreamId: null,
+  rtcVideoStreamId: null,
 };
 
 function handleAuthAction(
@@ -183,17 +200,14 @@ function DEVICE_REGISTERED_FETCH(
     DEVICES: {
       ...state.DEVICES,
       devices: state.DEVICES.devices.concat(newDevices.map((device) => ({
-        type: 'DEVICE_STATUS',
+        ...deviceStatusTemplate,
         deviceType: device.type,
         deviceVersion: null,
         deviceId: device.deviceId,
         accountDeviceNumber: device.accountDeviceNumber,
-        deviceConfigId: null,
         deviceConfigStatus: 'CONFIGURED',
         bleConnectionStatus: 'NOT_CONNECTED',
-        bleConnectionError: null,
         rtcConnectionStatus: 'NOT_CONNECTED',
-        rtcConnectionError: null,
       }))),
     },
   };
@@ -327,17 +341,13 @@ function DEVICE_BLE_CONNECTED(
     });
   } else {
     const unconfiguredDevice = {
-      type: 'DEVICE_STATUS',
+      ...deviceStatusTemplate,
       deviceType: session.model,
       deviceVersion: session.version,
-      deviceId: null,
-      accountDeviceNumber: null,
       deviceConfigId: session.socketId,
       deviceConfigStatus: 'UNCONFIGURED',
       bleConnectionStatus: 'CONNECTED',
-      bleConnectionError: null,
       rtcConnectionStatus: 'NOT_CONNECTED',
-      rtcConnectionError: null,
     };
     devices = [unconfiguredDevice].concat(devices);
   }
@@ -778,6 +788,45 @@ function DEVICE_RTC_CONNECTIONCLOSED(
   };
 }
 
+function rtcMediaStreamAddedRemoved(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_RTC_MEDIASTREAMADDED' | 'DEVICE_RTC_MEDIASTREAMREMOVED', RTCMediaStreamResult>
+): MessagesState {
+  const {deviceId, label, stream} = action.payload;
+  let {devices} = state.DEVICES;
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+
+  let attr = null;
+  switch (label) {
+  case 'preview':
+    attr = 'rtcPreviewStreamId';
+    break;
+  case 'video':
+    attr = 'rtcVideoStreamId';
+    break;
+  default:
+    return state;
+  }
+
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    [attr]: action.type === 'DEVICE_RTC_MEDIASTREAMADDED' ? stream.id : null,
+  };
+
+  return {
+    ...state,
+    DEVICES: {
+      ...state.DEVICES,
+      devices,
+    },
+  };
+}
+
+
 export const reducer = handleActions({
   AUTH_RESTORE: handleAuthAction,
   AUTH_SIGNIN_WITH_PASSWORD: handleAuthAction,
@@ -798,4 +847,6 @@ export const reducer = handleActions({
   DEVICE_CONFIG_REGISTERED,
   DEVICE_RTC_SIGNAL,
   DEVICE_RTC_CONNECTIONCLOSED,
+  DEVICE_RTC_MEDIASTREAMADDED: rtcMediaStreamAddedRemoved,
+  DEVICE_RTC_MEDIASTREAMREMOVED: rtcMediaStreamAddedRemoved,
 }, initialState);

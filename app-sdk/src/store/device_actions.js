@@ -2,6 +2,8 @@
  * @flow
  */
 
+/* global MediaStream */
+
 import invariant from 'assert';
 import {AsyncStorage, NativeModules} from 'react-native';
 import {AccessToken} from 'silk-api';
@@ -53,6 +55,12 @@ export type RegisterConfiguringDeviceResult = {
   name: string;
   beaconUUID: ?string;
   registrationToken: string;
+};
+
+export type RTCMediaStreamResult = {
+  deviceId: string;
+  label: string;
+  stream: MediaStream;
 };
 
 export type ChangeWifiConfiguration = WifiConfiguration & {

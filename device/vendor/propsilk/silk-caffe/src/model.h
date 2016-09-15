@@ -15,10 +15,8 @@
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 
-using namespace std;
-using namespace caffe;
-using namespace v8;
-using namespace node;
+using std::string;
+using std::vector;
 
 /* Pair (label, confidence) representing a prediction. */
 typedef std::pair<string, float> Prediction;
@@ -76,12 +74,12 @@ private:
   ~Model();
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
-  template<typename Dtype> vector<Prediction> Predict(Blob<Dtype>* blob, int topK);
+  template<typename Dtype> vector<Prediction> Predict(caffe::Blob<Dtype>* blob, int topK);
   cv::Mat Preprocess(const cv::Mat& img);
   template<typename Dtype> void cvMatToBlob(const cv::Mat& image,
-      Blob<Dtype>* blob);
+      caffe::Blob<Dtype>* blob);
   template<typename Dtype> void arrayToBlob(vector<vector<float>> &array,
-      Blob<Dtype>* blob);
+      caffe::Blob<Dtype>* blob);
 
   JSFUNC(Load);
   JSFUNC(SetMean);
@@ -92,7 +90,7 @@ private:
   JSFUNC(Time);
 
 public:
-  boost::shared_ptr<Net<float>> caffeNet;
+  boost::shared_ptr<caffe::Net<float>> caffeNet;
   cv::Size inputGeometry;
   int numChannels;
   cv::Mat mean;

@@ -31,6 +31,11 @@
 #include "Matrix.h"
 #include "cvutils.h"
 
+using namespace std;
+using namespace caffe;
+using namespace v8;
+using namespace node;
+
 Nan::Persistent<Function> Model::constructor;
 
 /**

@@ -111,6 +111,7 @@ export default class Device {
     }
 
     invariant(result.beaconUUID);
+    invariant(result.accountDeviceNumber);
 
     const {state} = this;
     invariant(state);

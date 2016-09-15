@@ -76,7 +76,8 @@
   "scripts": {
     "build": "./build.sh",
     "lint": "eslint test src bin",
-    "mocha": "DEBUG=silk-* mocha --timeout 10000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
+    "mocha": "DEBUG=silk-*,-silk-*:debug,-silk-*:verbose mocha --timeout 10000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
+    "mocha-full-log": "DEBUG=silk-* mocha --timeout 10000 $(find test ! -path 'test/rntest/*' -name '*_test.js')",
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall && ../pub/babel-run/babel-node src/email_generate.js",
     "silk-install": "./install.sh",

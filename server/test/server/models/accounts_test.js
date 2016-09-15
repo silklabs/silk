@@ -1,7 +1,10 @@
+/* @flow */
 import assert from 'assert';
 import Accounts from '../../../src/server/models/accounts';
 import createContext from '../context';
 import AccessToken from 'silk-api/src/access_token';
+
+const invariant = assert;
 
 suite('accounts', () => {
   let context = createContext();
@@ -22,9 +25,8 @@ suite('accounts', () => {
 
     let account = await subject.create(input);
     assert.ok(account.id);
-    let byPublicKey = await subject.findByPublicKey({
-      publicKey: input.publicKey,
-    });
+    let byPublicKey = await subject.findByPublicKey(input.publicKey);
+    invariant(byPublicKey);
     assert.equal(byPublicKey._id, account.id);
   });
 
@@ -121,6 +123,7 @@ suite('accounts', () => {
       input,
       { publicKey: newKey.toString() }
     ));
+    invariant(!signIn.error);
     assert.equal(signIn.id, account.id);
 
     let duplicateErr;
@@ -140,6 +143,8 @@ suite('accounts', () => {
       input,
       { email: 'user2@example.com' }
     ));
+    invariant(unknownSignIn.error);
+    invariant(unknownSignIn.error.type);
     assert.equal(unknownSignIn.error.type, 'UnknownAccount');
 
     let badPass = await subject.signIn(Object.assign(
@@ -147,6 +152,8 @@ suite('accounts', () => {
       input,
       { passwordHash: context.passwordHash('foobar') }
     ));
+    invariant(badPass.error);
+    invariant(badPass.error.type);
     assert.equal(badPass.error.type, 'CheckPasswordFailure');
 
     let accountDetails = await subject.collection.findOne({
@@ -161,7 +168,7 @@ suite('accounts', () => {
     let result = await subject.resetPassword({
       email: 'nothere@example.com',
     });
-    assert(result.error);
+    invariant(result.error);
   });
 
   suite('.resetPassword', function() {
@@ -175,6 +182,7 @@ suite('accounts', () => {
     });
 
     test('first reset', async () => {
+      invariant(!resetValue.error);
       assert(resetValue.token, 'has reset token');
       let newPass = context.passwordHash('newpass');
 
@@ -193,11 +201,13 @@ suite('accounts', () => {
         publicKey: accessToken.toString(),
         userAgent: 'test',
       });
+      invariant(!auth.error);
       assert(auth.id, 'can reset password..');
 
       let secondReset = await subject.resetPassword({
         email: account.record.email,
       });
+      invariant(!secondReset.error);
       assert(secondReset.token, 'can reset again...');
       // After using the reset token it should be reset to a new token for next
       // password reset...
@@ -208,6 +218,8 @@ suite('accounts', () => {
       let secondReset = await subject.resetPassword({
         email: account.record.email,
       });
+      invariant(!secondReset.error);
+      invariant(!resetValue.error);
       assert(secondReset.token, 'second has second reset...');
       assert.equal(
         secondReset.token, resetValue.token, 'second reset gets same token'

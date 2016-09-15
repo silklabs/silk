@@ -5,37 +5,20 @@
  * Note that the devices list here may or may not be unique physical devices we
  * reset the identity entirely between device factory resets.
  */
+
+import invariant from 'assert';
 import * as Joi from 'joi';
-import Base from './base';
 import { ObjectID } from 'mongodb';
 import AccessToken from 'silk-api/src/access_token';
+import createLog from 'silk-log';
+
+import {
+  default as Base,
+  PUBLIC_KEY_SCHEMA,
+} from './base';
 
 import type {ErrorState} from './base';
 import type {UnregisterInput} from 'silk-api/src/gen/device';
-
-type RegisterOutput = {
-  id: string;
-};
-
-type UnregisterOutput = {
-};
-
-type ValidateRegistrationOutput = {
-  accountDeviceNumber: number;
-};
-
-const TYPE_SCHEMA = Joi.string().regex(/^[a-z\d_-]+$/).max(80).required();
-// XXX: Max name length was chosen randomly...
-const NAME_SCHEMA = Joi.string().min(1).max(60).required();
-const MAX_ACCOUNT_DEVICE_NUMBER = 65535;
-
-const ACCOUNT_DEVICE_NUMBER_SCHEMA =
-  Joi.number().integer().min(1).max(MAX_ACCOUNT_DEVICE_NUMBER);
-
-const BASE64_REGEX =
-  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-const ONION_SCHEMA =
-  Joi.string().regex(BASE64_REGEX, 'base64');
 
 export type Record = {
   _id: ObjectID;
@@ -52,9 +35,51 @@ export type Record = {
     accountId: string;
     token: string;
     accountDeviceNumber?: number;
-  }
-  // TODO: finish type...
+  };
+  mailbox?: Array<string>;
 };
+
+type RegisterOutput = {
+  id: string;
+};
+
+type UnregisterOutput = {
+};
+
+type ValidateRegistrationInput = {
+  publicKey: string;
+  registrationToken: string;
+};
+
+type ValidateRegistrationOutput = {
+  accountDeviceNumber: number;
+};
+
+type AddToMailboxInput = {
+  publicKey: string;
+  message: string;
+};
+
+type AddToMailboxOutput = {};
+
+type AcknowledgeMessageOutput = {};
+
+const log = createLog('models:devices');
+
+const TYPE_SCHEMA = Joi.string().regex(/^[a-z\d_-]+$/).max(80).required();
+// XXX: Max name length was chosen randomly...
+const NAME_SCHEMA = Joi.string().min(1).max(60).required();
+const MAX_ACCOUNT_DEVICE_NUMBER = 65535;
+
+const ACCOUNT_DEVICE_NUMBER_SCHEMA =
+  Joi.number().integer().min(1).max(MAX_ACCOUNT_DEVICE_NUMBER);
+
+const BASE64_REGEX =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+const ONION_SCHEMA =
+  Joi.string().regex(BASE64_REGEX, 'onion');
+
+const REGISTRATION_TOKEN_SCHEMA = Joi.string().hex().required();
 
 export default class Devices extends Base {
 
@@ -62,7 +87,7 @@ export default class Devices extends Base {
   static TYPE_SCHEMA = TYPE_SCHEMA;
   static ACCOUNT_DEVICE_NUMBER_SCHEMA = ACCOUNT_DEVICE_NUMBER_SCHEMA;
   static ONION_SCHEMA = ONION_SCHEMA;
-  static PUBLIC_KEY_SCHEMA = Base.PUBLIC_KEY_SCHEMA;
+  static PUBLIC_KEY_SCHEMA = PUBLIC_KEY_SCHEMA;
 
   static COLLECTION = 'devices';
 
@@ -97,27 +122,34 @@ export default class Devices extends Base {
   ];
 
   static SCHEMA = {
-    findByPublicKey: Joi.object().keys({
-      publicKey: Devices.PUBLIC_KEY_SCHEMA,
-    }),
+    findByPublicKey: PUBLIC_KEY_SCHEMA,
 
     register: Joi.object().keys({
       accountId: Joi.string().required(),
-      publicKey: Devices.PUBLIC_KEY_SCHEMA,
+      publicKey: PUBLIC_KEY_SCHEMA,
       type: TYPE_SCHEMA,
       name: NAME_SCHEMA,
-      registrationToken: Joi.string().required(),
-    }),
+      registrationToken: REGISTRATION_TOKEN_SCHEMA,
+    }).required(),
 
     unregister: Joi.object().keys({
-      publicKey: Devices.PUBLIC_KEY_SCHEMA,
+      publicKey: PUBLIC_KEY_SCHEMA,
       factoryResetMessage: ONION_SCHEMA.required(),
-    }),
+    }).required(),
 
     validateRegistration: Joi.object({
-      publicKey: Devices.PUBLIC_KEY_SCHEMA,
-      registrationToken: Joi.string().required(),
-    }),
+      publicKey: PUBLIC_KEY_SCHEMA,
+      registrationToken: REGISTRATION_TOKEN_SCHEMA,
+    }).required(),
+
+    addToMailbox: Joi.object({
+      publicKey: PUBLIC_KEY_SCHEMA,
+      message: ONION_SCHEMA.required(),
+    }).required(),
+
+    getMessages: PUBLIC_KEY_SCHEMA,
+
+    acknowledgeMessage: PUBLIC_KEY_SCHEMA,
 
     // When the record is persisted to disk...
     record: Joi.object().keys({
@@ -132,7 +164,7 @@ export default class Devices extends Base {
 
       accessToken: Joi.object({
         // Public key for this device.
-        publicKey: Devices.PUBLIC_KEY_SCHEMA,
+        publicKey: PUBLIC_KEY_SCHEMA,
       }).required(),
 
       // What kind of device this is... Eventually we will need some more
@@ -145,6 +177,10 @@ export default class Devices extends Base {
       // A factory reset message if the device was unregistered.
       factoryResetMessage: ONION_SCHEMA.optional(),
 
+      /**
+       * TODO: Device registration details are very important details that we
+       * should monitor closely... We likely will want to record more details.
+       */
       registration: Joi.object().keys({
         // We store a duplicate of accountId for the purposes of indexing certain
         // other fields only when the device is fully registered.
@@ -162,11 +198,8 @@ export default class Devices extends Base {
         token: Joi.string().required(),
       }).required(),
 
-      /**
-       * TODO: Device registration details are very important details that we
-       * should monitor closely... We likely will want to record more details.
-       */
-    }),
+      mailbox: Joi.array().items(ONION_SCHEMA),
+    }).required(),
   };
 
   genIsRegistrationTokenValid(
@@ -217,18 +250,19 @@ export default class Devices extends Base {
       },
     }, 'record');
 
+    const {publicKey} = record.accessToken;
+
     // Insert the document but do not override any other accounts with the same
     // public key!
     let { result: insert } = await this.collection.update(
-      { 'accessToken.publicKey': record.accessToken.publicKey }, // query
+      { 'accessToken.publicKey': publicKey }, // query
       { $setOnInsert: record }, // insert only if no duplicates...
       { upsert: true }
     );
 
     if (insert.n === 1) {
-      let device = await this.findByPublicKey({
-        publicKey: record.accessToken.publicKey,
-      });
+      let device = await this.findByPublicKey(publicKey);
+      invariant(device);
       return { id: device._id };
     }
 
@@ -255,6 +289,7 @@ export default class Devices extends Base {
           'registration.accountDeviceNumber': '',
           // This field should only be present when we are registered.
           'registration.accountId': '',
+          mailbox: '',
         },
       }
     );
@@ -280,22 +315,20 @@ export default class Devices extends Base {
    */
   async validateRegistration(
     registrarPublicKey: string,
-    payload: any,
+    payload: ValidateRegistrationInput,
   ): Promise<ValidateRegistrationOutput | ErrorState> {
     payload = this.validate(payload, 'validateRegistration');
+    const {publicKey, registrationToken} = payload;
 
-    let device = await this.findByPublicKey({
-      publicKey: payload.publicKey,
-    });
-
+    let device = await this.findByPublicKey(publicKey);
     if (!device) {
       return this.error('unknownDevice');
     }
 
     const tokenValid = await this.genIsRegistrationTokenValid(
       registrarPublicKey,
-      payload.publicKey,
-      payload.registrationToken
+      publicKey,
+      registrationToken
     );
 
     if (!tokenValid) {
@@ -352,16 +385,14 @@ export default class Devices extends Base {
   /**
    * Find the device by it's public key (for auth)
    */
-  async findByPublicKey(payload: any): Promise<?Record> {
-    payload = this.validate(payload, 'findByPublicKey');
-    let { publicKey } = payload;
-
+  async findByPublicKey(publicKey: string): Promise<?Record> {
+    publicKey = this.validate(publicKey, 'findByPublicKey');
     return await this.collection.findOne({
       'accessToken.publicKey': publicKey,
     });
   }
 
-  async findAllByAccount(accountId: any): Promise<Array<Record>> {
+  async findAllByAccount(accountId: ObjectID | string): Promise<Array<Record>> {
     if (!(accountId instanceof ObjectID)) {
       accountId = new ObjectID(accountId);
     }
@@ -403,6 +434,99 @@ export default class Devices extends Base {
     return publicKeys.every((publicKey) => {
       return listedPublicKeys.has(publicKey);
     });
+  }
+
+  async addToMailbox(
+    payload: AddToMailboxInput,
+  ): Promise<AddToMailboxOutput | ErrorState> {
+    payload = this.validate(payload, 'addToMailbox');
+
+    const {publicKey, message} = payload;
+
+    const {
+      matchedCount,
+      modifiedCount,
+      result,
+    } = await this.collection.updateOne({
+      registered: true,
+      'accessToken.publicKey': publicKey,
+    }, {
+      $addToSet: {
+        mailbox: message,
+      },
+    });
+
+    if (!result.ok) {
+      throw new Error(`addToMailbox operation has failed: ` +
+                      `${JSON.stringify(result)}`);
+    }
+
+    if (matchedCount !== 1) {
+      log.warn(`Unknown device`, publicKey);
+      return this.error('unknownDevice');
+    }
+
+    if (modifiedCount !== 1) {
+      log.warn(`Didn't push duplicate message`, publicKey, message);
+    }
+
+    return {};
+  }
+
+  async getMessages(publicKey: string): Promise<Array<string> | ErrorState> {
+    publicKey = this.validate(publicKey, 'getMessages');
+
+    const results = await this.collection.find(
+      {
+        registered: true,
+        'accessToken.publicKey': publicKey,
+      },
+    ).toArray();
+
+    invariant(results.length <= 1);
+
+    if (!results.length) {
+      log.warn(`Unknown device`, publicKey);
+      return this.error('unknownDevice');
+    }
+
+    const mailbox = results[0].mailbox;
+    return mailbox ? mailbox.slice() : [];
+  }
+
+  async acknowledgeMessage(
+    publicKey: string,
+  ): Promise<AcknowledgeMessageOutput | ErrorState> {
+    publicKey = this.validate(publicKey, 'acknowledgeMessage');
+
+    const {
+      matchedCount,
+      modifiedCount,
+      result,
+    } = await this.collection.updateOne({
+      registered: true,
+      'accessToken.publicKey': publicKey,
+    }, {
+      $pop: {
+        mailbox: -1,
+      },
+    });
+
+    if (!result.ok) {
+      throw new Error(`acknowledgeMessage operation has failed: ` +
+                      JSON.stringify(result));
+    }
+
+    if (matchedCount !== 1) {
+      log.warn(`Unknown device`, publicKey);
+      return this.error('unknownDevice');
+    }
+
+    if (modifiedCount !== 1) {
+      log.warn(`Failed to pop message, mailbox empty`, publicKey);
+    }
+
+    return {};
   }
 
 }

@@ -1,3 +1,4 @@
+/* @flow */
 import crypto from 'crypto';
 import createApi from 'silk-api';
 import merge from 'lodash.merge';
@@ -13,19 +14,25 @@ import createDb from '../../src/server/db';
 import Accounts from '../../src/server/models/accounts';
 import Devices from '../../src/server/models/devices';
 
-export function passwordHash(context, text) {
+import type {AccessToken} from 'silk-api';
+
+export function passwordHash(context: Object, text: string) {
   // The assumption here is this will be much stronger when sent from the
   // client!
   return crypto.pbkdf2Sync(text, 'salt', 1, 32, 'sha256').toString('hex');
 }
 
-export function sha256(context, text) {
+export function sha256(context: Object, text: string) {
   const sha1 = crypto.createHash('sha256');
   sha1.update(text);
   return sha1.digest('hex');
 }
 
-export async function httpErrCode(context, code, fn) {
+export async function httpErrCode(
+  context: Object,
+  code: number,
+  fn: (() => Promise<*>),
+) {
   try {
     await fn();
   } catch (err) {
@@ -37,7 +44,11 @@ export async function httpErrCode(context, code, fn) {
   throw new Error('Expected an http error to be thrown...');
 }
 
-export async function assertThrows(context, asyncFn, testRegex) {
+export async function assertThrows(
+  context: Object,
+  asyncFn: (() => Promise<*>),
+  testRegex: ?RegExp,
+) {
   try {
     await asyncFn();
   } catch (err) {
@@ -58,7 +69,7 @@ let testAccountId = 0;
 // Allow tests to be run in parallel...
 let uniqueId = uuid.v4();
 
-export async function testAccount(context, overrides = {}) {
+export async function testAccount(context: Object, overrides?: Object = {}) {
   const id = await Id.gen();
   let account = new Accounts(context.db);
   let email = `test.${uniqueId}.${String(testAccountId++)}@example.com`;
@@ -73,9 +84,7 @@ export async function testAccount(context, overrides = {}) {
     throw new Error(`Failed to create test account: ${res.error.type}`);
   }
 
-  let record = await account.findByPublicKey({
-    publicKey: id.toString(),
-  });
+  let record = await account.findByPublicKey(id.toString());
 
   let api = createApi({
     serverUrl: context.url,
@@ -84,8 +93,6 @@ export async function testAccount(context, overrides = {}) {
       tags: { },
     },
   });
-  // Fail fast...
-  api.maxRetries = 0;
   api.accessToken = id;
 
   return {
@@ -96,18 +103,21 @@ export async function testAccount(context, overrides = {}) {
   };
 }
 
-export async function testDevice(context) {
+export async function testDevice(context: Object) {
   let account = await testAccount(context);
   return await registeredDevice(context, account.accessToken);
 }
 
-export async function testPair(context) {
+export async function testPair(context: Object) {
   let account = await testAccount(context);
   let device = await registeredDevice(context, account.accessToken);
   return { device, account };
 }
 
-export async function registeredDevice(ctx, accountAccessToken) {
+export async function registeredDevice(
+  ctx: Object,
+  accountAccessToken: AccessToken,
+) {
   let api = createApi({
     serverUrl: ctx.url,
     metrics: {
@@ -128,14 +138,10 @@ export async function registeredDevice(ctx, accountAccessToken) {
     registrationToken: token,
   });
 
-  let device = await devices.findByPublicKey({
-    publicKey: deviceAccessToken.toString(),
-  });
+  let device = await devices.findByPublicKey(deviceAccessToken.toString());
 
   // Act as the device rather then the account...
   api.accessToken = deviceAccessToken;
-  // Fail fast...
-  api.maxRetries = 0;
   await api.device.completeRegistration({
     registrarPublicKey: accountAccessToken.toString(),
     registrationToken: token,
@@ -166,7 +172,7 @@ function computeAzureTable(prefix) {
 /**
 Main sets up and configures the test context...
 */
-export default function createContext(overrides = {}) {
+export default function createContext(overrides?: Object = {}): Object {
   let context = {};
   let azureTables = [];
   let tableClients;

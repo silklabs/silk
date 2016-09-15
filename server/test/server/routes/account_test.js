@@ -70,9 +70,8 @@ suite('account auth', () => {
     }).toArray();
     assert.equal(allByPubKey.length, 1);
 
-    let device = await devices.findByPublicKey({
-      publicKey: deviceAccessToken.toString(),
-    });
+    const publicKey = deviceAccessToken.toString();
+    let device = await devices.findByPublicKey(publicKey);
     invariant(device);
     assert.equal(device.accountId, accountOne.record._id.toString());
 
@@ -86,9 +85,7 @@ suite('account auth', () => {
     assert.ok(complete.beaconUUID);
     assert.equal(complete.accountDeviceNumber, 1);
 
-    let deviceAfterComplete = await devices.findByPublicKey({
-      publicKey: deviceAccessToken.toString(),
-    });
+    let deviceAfterComplete = await devices.findByPublicKey(publicKey);
     invariant(deviceAfterComplete);
     assert.ok(deviceAfterComplete.registration.complete);
     assert.ok(deviceAfterComplete.registered);
@@ -98,9 +95,7 @@ suite('account auth', () => {
       factoryResetMessage: dummyFactoryResetMessage,
     });
     assert.ok(unregister.success);
-    let deviceAfterUnregister = await devices.findByPublicKey({
-      publicKey: deviceAccessToken.toString(),
-    });
+    let deviceAfterUnregister = await devices.findByPublicKey(publicKey);
     invariant(deviceAfterUnregister);
     assert.ok(!deviceAfterUnregister.registered);
 
@@ -115,6 +110,78 @@ suite('account auth', () => {
     }
     invariant(err);
     assert.equal(err.code, 403);
+  });
+
+  test('/register_device - unknown account', async () => {
+    api.accessToken = accountOne.accessToken;
+
+    const deviceAccessToken = await AccessToken.gen();
+    const devicePublicKey = deviceAccessToken.toString();
+    const registrationToken =
+      await accountOne.accessToken.genSign(devicePublicKey);
+
+    let result = await api.account.registerDevice({
+      devicePublicKey,
+      name: 'test',
+      type: 'camera',
+      registrationToken,
+    });
+    assert.ok(result.success);
+    assert.ok(result.beaconUUID);
+
+    const registrarPublicKey = (await AccessToken.gen()).toString();
+
+    // Act as the device rather then the account...
+    api.accessToken = deviceAccessToken;
+
+    let error;
+    try {
+      await api.device.completeRegistration({
+        registrarPublicKey,
+        registrationToken,
+      });
+    } catch (ex) {
+      error = ex;
+    }
+
+    invariant(error);
+    assert.equal(error.code, 400);
+  });
+
+  test('/register_device - wrong account', async () => {
+    api.accessToken = accountOne.accessToken;
+
+    const deviceAccessToken = await AccessToken.gen();
+    const devicePublicKey = deviceAccessToken.toString();
+    const registrationToken =
+      await accountOne.accessToken.genSign(devicePublicKey);
+
+    let result = await api.account.registerDevice({
+      devicePublicKey,
+      name: 'test',
+      type: 'camera',
+      registrationToken,
+    });
+    assert.ok(result.success);
+    assert.ok(result.beaconUUID);
+
+    const registrarPublicKey = accountTwo.accessToken.toString();
+
+    // Act as the device rather then the account...
+    api.accessToken = deviceAccessToken;
+
+    let error;
+    try {
+      await api.device.completeRegistration({
+        registrarPublicKey,
+        registrationToken,
+      });
+    } catch (ex) {
+      error = ex;
+    }
+
+    invariant(error);
+    assert.equal(error.code, 403);
   });
 
   suite('with devices', () => {
@@ -167,7 +234,6 @@ suite('account auth', () => {
       let list = await api.account.listDevices({});
       assert.equal(list.devices.length, 14);
 
-
       api.accessToken = devices[0].accessToken;
       // Make sure that the device can no longer make api calls.
       let err;
@@ -179,6 +245,71 @@ suite('account auth', () => {
       invariant(err);
       assert.equal(err.code, 403);
     });
+
+    test('POST /unregister_device unowned device', async () => {
+      api.accessToken = accountTwo.accessToken;
+
+      let error;
+      try {
+        await api.account.unregisterDevice({
+          devicePublicKey: devices[0].accessToken.toString(),
+          factoryResetMessage: dummyFactoryResetMessage,
+        });
+      } catch (ex) {
+        error = ex;
+      }
+
+      invariant(error);
+      assert.equal(error.code, 403);
+    });
+
+    test('POST /post_message', async () => {
+      api.accessToken = accountOne.accessToken;
+
+      const messages = [];
+      for (let i = 0; i < 10; i++) {
+        messages.push(new Buffer('foo' + i).toString('base64'));
+      }
+
+      const publicKey = devices[0].accessToken.toString();
+
+      for (let message of messages) {
+        await api.account.postMessage({
+          devicePublicKey: publicKey,
+          message,
+        });
+      }
+
+      const devicesModel = new Devices(context.db);
+      const device = await devicesModel.findByPublicKey(publicKey);
+      invariant(device);
+      assert.deepEqual(device.mailbox, messages);
+    });
+
+    test('POST /post_message bad account', async () => {
+      api.accessToken = accountTwo.accessToken;
+
+      const publicKey = devices[0].accessToken.toString();
+
+      let error;
+      try {
+        await api.account.postMessage({
+          devicePublicKey: publicKey,
+          message: new Buffer('foo').toString('base64'),
+        });
+      } catch (ex) {
+        error = ex;
+      }
+
+      invariant(error);
+      assert.equal(error.code, 403);
+
+      const devicesModel = new Devices(context.db);
+      const device = await devicesModel.findByPublicKey(publicKey);
+      invariant(device);
+      assert.strictEqual(device.mailbox, undefined);
+    });
+
   });
 
   test('socket.io address', async () => {

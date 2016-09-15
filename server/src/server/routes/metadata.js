@@ -79,7 +79,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
         `${req.account._id} attempting to access devices it does not own.`,
         deviceIds
       );
-      res.sendStatus(401);
+      res.sendStatus(403);
       return;
     }
 

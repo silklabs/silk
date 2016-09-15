@@ -42,7 +42,7 @@ suite('account auth', () => {
     };
     let create = await api.vip.createAccountWithPassword(input);
     assert.ok(create.success);
-    let record = await accounts.findByPublicKey({ publicKey: id.pub });
+    let record = await accounts.findByPublicKey(id.pub);
     assert.equal(record.email, input.email);
 
     // Ensure we use a new key so we don't hit key duplicate errors...
@@ -73,7 +73,7 @@ suite('account auth', () => {
       password: 'password',
     });
     assert.ok(create.success);
-    let record = await accounts.findByPublicKey({ publicKey: id.pub });
+    let record = await accounts.findByPublicKey(id.pub);
     assert.equal(record.email, email);
 
     let auth = await api.vip.checkPasswordWithPassword({

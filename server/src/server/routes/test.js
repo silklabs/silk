@@ -41,10 +41,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     signatureProvider: null,
     publicKeyProvider: async (publicKey) => {
       // Attempt to find an account with this id...
-      let account = await ctx.accounts.findByPublicKey({
-        publicKey: publicKey,
-      });
-
+      let account = await ctx.accounts.findByPublicKey(publicKey);
       if (!account) {
         return null;
       }

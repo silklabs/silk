@@ -104,6 +104,14 @@ export type ListClientsOutput = {
  clients: Array<ListClientsOutputClients>;
 };
 
+export type PostMessageInput = {
+ devicePublicKey: string;
+ message: string;
+};
+
+export type PostMessageOutput = {
+};
+
 export default class Account extends BaseClass {
 
   name: string = 'api-account';
@@ -222,6 +230,19 @@ export default class Account extends BaseClass {
   listClients(payload: ListClientsInput): Promise<ListClientsOutput> {
     let method = 'post';
     let url = '/v1/account/list_clients';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Deliver a message to a device
+
+  @param Object payload of request
+  */
+  postMessage(payload: PostMessageInput): Promise<PostMessageOutput> {
+    let method = 'post';
+    let url = '/v1/account/post_message';
     // Perform url subtitutions:
 
     return this._apiRequestWithBody(method, url, payload);

@@ -25,6 +25,7 @@ import type {
   QueryMetricsOutput,
   GetSasForDeviceSignalingOutput,
   ListClientsOutput,
+  PostMessageOutput,
 } from 'silk-api/src/gen/account';
 
 import type { RouteContext } from '../server';
@@ -199,9 +200,20 @@ export default function (ctx: RouteContext): ExpressRoutes {
       factoryResetMessage: Devices.ONION_SCHEMA.required(),
     }).required(),
   }, async (req, res) => {
+    const accountId = req.account._id;
+    const {devicePublicKey: publicKey, factoryResetMessage} = req.body;
+
+    const valid = await ctx.devices.belongsToAccount(accountId, publicKey);
+    if (!valid) {
+      log.warn(`Account '${accountId}' is attempting to unregister device ` +
+               `'${publicKey}' that it doesn't own`);
+      res.sendStatus(403);
+      return;
+    }
+
     let result = await ctx.devices.unregister({
-      publicKey: req.body.devicePublicKey,
-      factoryResetMessage: req.body.factoryResetMessage,
+      publicKey,
+      factoryResetMessage,
     });
 
     const output: UnregisterDeviceOutput = {success: false};
@@ -347,6 +359,38 @@ export default function (ctx: RouteContext): ExpressRoutes {
     });
 
     const output: ListClientsOutput = {clients};
+    res.respond(output);
+  });
+
+  api.define({
+    path: 'post_message',
+    method: 'post',
+    params: [],
+    name: 'postMessage',
+    description: 'Deliver a message to a device',
+    output: Joi.object(),
+    input: Joi.object().keys({
+      devicePublicKey: Devices.PUBLIC_KEY_SCHEMA,
+      message: Devices.ONION_SCHEMA.required(),
+    }).required(),
+  }, async (req, res) => {
+    const accountId = req.account._id;
+    const {devicePublicKey: publicKey, message} = req.body;
+
+    const valid = await ctx.devices.belongsToAccount(accountId, publicKey);
+    if (!valid) {
+      log.warn(`Account '${accountId}' is attempting to send a message to ` +
+               `device '${publicKey}' that it doesn't own`);
+      res.sendStatus(403);
+      return;
+    }
+
+    const result = await ctx.devices.addToMailbox({publicKey, message});
+    if (result.error) {
+      log.warn(`addToMailbox failed`, publicKey, message);
+    }
+
+    const output: PostMessageOutput = {};
     res.respond(output);
   });
 

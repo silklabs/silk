@@ -103,7 +103,7 @@ export default class Residents {
 
         const pingDelta = Date.now() - resident.lastPing;
         if (pingDelta > config.pingIntervalMs) {
-          log.info(`Sending connection ping to resident: ${id}`);
+          log.debug(`Sending connection ping to resident: ${id}`);
           resident.lastPing = now;
           resident.connection.ping();
         }
@@ -200,12 +200,12 @@ export default class Residents {
     };
 
     const onPong = () => {
-      log.info(`Got pong for resident: ${id}....`);
+      log.debug(`Got pong for resident: ${id}....`);
       resident.lastPong = Date.now();
     };
 
     const onPing = () => {
-      log.info(`Got ping for resident: ${id} sending pong`);
+      log.debug(`Got ping for resident: ${id} sending pong`);
       connection.pong();
     };
 

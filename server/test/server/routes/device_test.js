@@ -100,4 +100,36 @@ suite('device routes', () => {
     assert.equal(factoryResetMessage, message1);
   });
 
+  test('messages when connecting to signaling server', async () => {
+    const postedMessages = [];
+    for (let i = 0; i < 10; i++) {
+      postedMessages.push(new Buffer('foo' + i).toString('base64'));
+    }
+
+    api.accessToken = account.accessToken;
+
+    for (let message of postedMessages) {
+      await api.account.postMessage({
+        devicePublicKey: device.accessToken.toString(),
+        message,
+      });
+    }
+
+    api.accessToken = device.accessToken;
+
+    let {messages} = await api.device.getSasForSignaling({});
+    assert.deepEqual(messages, postedMessages);
+
+    ({messages} = await api.device.getSasForSignaling({}));
+    assert.deepEqual(messages, postedMessages);
+
+    while (messages.length) {
+      await api.device.acknowledgeMessage({});
+      postedMessages.shift();
+
+      ({messages} = await api.device.getSasForSignaling({}));
+      assert.deepEqual(messages, postedMessages);
+    }
+  });
+
 });

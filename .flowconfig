@@ -16,7 +16,6 @@ node_modules/fbjs/flow/lib/
 .*/node_modules/config-chain/test/.*
 .*/node_modules/json5/test/.*
 .*/node_modules/read-package-tree/test/.*
-.*/node_modules/silk-socket.io-client-node/.*
 .*/node_modules/node-inspector/.*
 .*/node_modules/protobufjs/.*
 

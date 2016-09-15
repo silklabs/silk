@@ -76,7 +76,6 @@ public class SilkAppSDKService extends Service {
 
   protected ReactInstanceManager createReactInstanceManager() {
     ReactInstanceManager.Builder builder = ReactInstanceManager.builder()
-      .setUseOldBridge(true)
       .setApplication(getApplication())
       .setJSMainModuleName(getJSMainModuleName())
       .setBundleAssetName(getBundleAssetName())

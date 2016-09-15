@@ -82,6 +82,7 @@ export default class CameraLiveVideoRTC extends AsyncComponent {
     return (
       <Modal
         visible={true}
+        supportedOrientations={['landscape']}
         onRequestClose={() => undefined}>
         <View style={styles.container}>
           <TouchableWithoutFeedback onPress={this._toggleControls}>

@@ -38,6 +38,7 @@
 		3531639B1D77785300BA7D20 /* SLKConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = 353163991D77785300BA7D20 /* SLKConfig.h */; };
 		3531639C1D77785300BA7D20 /* SLKConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 3531639A1D77785300BA7D20 /* SLKConfig.m */; };
 		3531639E1D77786C00BA7D20 /* SLKConfigTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 3531639D1D77786C00BA7D20 /* SLKConfigTests.m */; };
+		35D60D2F1D8B5FEA00313070 /* RCTJavaScriptLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 3504B1591D587E8800C327FA /* RCTJavaScriptLoader.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		35D700801D29957E00993A9C /* SLKAppSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 35D7007F1D29957E00993A9C /* SLKAppSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		35D700871D29957E00993A9C /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7007C1D29957E00993A9C /* SLKAppSDK.framework */; };
 		35D7008C1D29957E00993A9C /* SLKAppSDKTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7008B1D29957E00993A9C /* SLKAppSDKTests.m */; };
@@ -442,6 +443,7 @@
 				3504B21C1D587F9F00C327FA /* RCTEventDispatcher.h in Headers */,
 				3504B2191D587F0E00C327FA /* RCTFrameUpdate.h in Headers */,
 				3504B21A1D587F1300C327FA /* RCTInvalidating.h in Headers */,
+				35D60D2F1D8B5FEA00313070 /* RCTJavaScriptLoader.h in Headers */,
 				3504B21B1D587F1800C327FA /* RCTJavaScriptExecutor.h in Headers */,
 				3504D0781D2C4FA900BB24A2 /* SLKAppSDKEventEmitter.h in Headers */,
 			);

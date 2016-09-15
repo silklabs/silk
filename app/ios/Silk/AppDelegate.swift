@@ -128,7 +128,7 @@ class AppDelegate : UIResponder,
     return self.config!.jsBundleURL!
   }
 
-  func extraModulesForBridge(bridge: RCTBridge!) -> [AnyObject]! {
+  func extraModulesForBridge(bridge: RCTBridge!) -> [RCTBridgeModule]! {
     return [
       self.config!,
       // We're overriding React Native's WebSocket module by the same name.

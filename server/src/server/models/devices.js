@@ -440,7 +440,6 @@ export default class Devices extends Base {
     payload: AddToMailboxInput,
   ): Promise<AddToMailboxOutput | ErrorState> {
     payload = this.validate(payload, 'addToMailbox');
-
     const {publicKey, message} = payload;
 
     const {

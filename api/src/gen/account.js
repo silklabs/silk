@@ -112,6 +112,15 @@ export type PostMessageInput = {
 export type PostMessageOutput = {
 };
 
+export type RevokeClientInput = {
+ clientPublicKey: string;
+ revokeClientMessageForDevices: string;
+};
+
+export type RevokeClientOutput = {
+ success: bool;
+};
+
 export default class Account extends BaseClass {
 
   name: string = 'api-account';
@@ -243,6 +252,19 @@ export default class Account extends BaseClass {
   postMessage(payload: PostMessageInput): Promise<PostMessageOutput> {
     let method = 'post';
     let url = '/v1/account/post_message';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Revoke a client
+
+  @param Object payload of request
+  */
+  revokeClient(payload: RevokeClientInput): Promise<RevokeClientOutput> {
+    let method = 'post';
+    let url = '/v1/account/revoke_client';
     // Perform url subtitutions:
 
     return this._apiRequestWithBody(method, url, payload);

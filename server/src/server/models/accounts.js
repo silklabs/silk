@@ -95,6 +95,14 @@ type UsePasswordResetTokenOutput = {
   success: boolean;
 };
 
+type RevokeClientInput = {
+  accountId: ObjectID;
+  publicKey: string;
+};
+
+type RevokeClientOutput = {
+};
+
 /**
  * Password reset expires in 4 hours...
  */
@@ -181,6 +189,7 @@ export default class Accounts extends Base {
     unknownAccount: 'UnknownAccount',
     resetPasswordFailure: 'ResetPasswordFailure',
     resetPasswordTokenMismatch: 'ResetPasswordTokenMismatch',
+    unknownClient: 'UnknownClient',
   };
 
   static INDEX = [
@@ -221,7 +230,7 @@ export default class Accounts extends Base {
     ensureDevAccount: Joi.object().keys({
       email: EMAIL,
       passwordHash: PASSWORD_HASH,
-      publicKey: Joi.string().hex().required(),
+      publicKey: PUBLIC_KEY_SCHEMA,
     }).unknown(true).required(),
 
     create: ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA,
@@ -231,12 +240,27 @@ export default class Accounts extends Base {
     signInByToken: ACCESS_TOKEN_ADD_BY_TOKEN_SCHEMA,
 
     checkPassword: Joi.object().keys({
-      publicKey: Joi.string().required(),
+      publicKey: PUBLIC_KEY_SCHEMA,
       email: EMAIL,
       passwordHash: PASSWORD_HASH,
     }).required(),
 
     accessToken: ACCESS_TOKEN_SCHEMA,
+
+    resetPassword: Joi.object().keys({
+      email: EMAIL,
+    }).required(),
+
+    usePasswordResetToken: Joi.object().keys({
+      email: EMAIL,
+      token: Joi.string().hex().required(),
+      passwordHash: PASSWORD_HASH,
+    }).required(),
+
+    revokeClient: Joi.object().keys({
+      accountId: Joi.object().type(ObjectID).required(),
+      publicKey: PUBLIC_KEY_SCHEMA,
+    }),
 
     /**
      * This is the canonical representation of accounts in our datastore it is
@@ -263,16 +287,6 @@ export default class Accounts extends Base {
        * account many have many of these with varying scopes.
        */
       accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA),
-    }).required(),
-
-    resetPassword: Joi.object().keys({
-      email: EMAIL,
-    }).required(),
-
-    usePasswordResetToken: Joi.object().keys({
-      email: EMAIL,
-      token: Joi.string().hex().required(),
-      passwordHash: PASSWORD_HASH,
     }).required(),
   };
 
@@ -713,4 +727,37 @@ export default class Accounts extends Base {
 
     return { success: true };
   }
+
+  async revokeClient(
+    payload: RevokeClientInput,
+  ): Promise<RevokeClientOutput | ErrorState> {
+    payload = this.validate(payload, 'revokeClient');
+    const {accountId, publicKey} = payload;
+
+    const {
+      modifiedCount,
+      result,
+    } = await this.collection.updateOne({
+      _id: accountId,
+    }, {
+      $pull: {
+        accountTokens: {
+          publicKey,
+        },
+      },
+    });
+
+    if (!result.ok) {
+      throw new Error(`revokeClient operation has failed: ` +
+                      `${JSON.stringify(result)}`);
+    }
+
+    if (modifiedCount !== 1) {
+      log.warn(`Public key not found`, publicKey);
+      return this.error('unknownClient');
+    }
+
+    return {};
+  }
+
 }

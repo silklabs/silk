@@ -1,8 +1,10 @@
 /* @flow */
 import assert from 'assert';
+import {ObjectID} from 'mongodb';
+import AccessToken from 'silk-api/src/access_token';
+
 import Accounts from '../../../src/server/models/accounts';
 import createContext from '../context';
-import AccessToken from 'silk-api/src/access_token';
 
 const invariant = assert;
 
@@ -225,7 +227,135 @@ suite('accounts', () => {
         secondReset.token, resetValue.token, 'second reset gets same token'
       );
     });
-
   });
 
+  test('#revokeClient - success', async () => {
+    const key = (await AccessToken.gen()).toString();
+    const input = {
+      publicKey: key,
+      email: 'user@example.com',
+      passwordHash: context.passwordHash('password'),
+      userAgent: 'nodejs',
+    };
+
+    const account = await subject.create(input);
+    invariant(!account.error);
+    assert(account.id);
+
+    const accountId = new ObjectID(account.id);
+
+    const newKey = (await AccessToken.gen()).toString();
+    const signIn = await subject.signIn(Object.assign(
+      {},
+      input,
+      {publicKey: newKey}
+    ));
+    invariant(!signIn.error);
+    assert.equal(signIn.id, account.id);
+
+    let record =
+      await subject.collection.findOne({_id: accountId});
+    invariant(record);
+    assert.equal(record.accountTokens.length, 2);
+
+    const revoke = await subject.revokeClient({
+      accountId: accountId,
+      publicKey: newKey,
+    });
+    invariant(!revoke.error);
+
+    record = await subject.collection.findOne({_id: accountId});
+    invariant(record);
+    assert.equal(record.accountTokens.length, 1);
+    assert.equal(record.accountTokens[0].publicKey, key);
+  });
+
+  suite('revokeClient', () => {
+    let accountId;
+    let firstKey;
+    let secondKey;
+
+    setup(async () => {
+      firstKey = (await AccessToken.gen()).toString();
+      const input = {
+        publicKey: firstKey,
+        email: 'user@example.com',
+        passwordHash: context.passwordHash('password'),
+        userAgent: 'nodejs',
+      };
+
+      const account = await subject.create(input);
+      invariant(!account.error);
+      assert(account.id);
+
+      accountId = new ObjectID(account.id);
+
+      secondKey = (await AccessToken.gen()).toString();
+      const signIn = await subject.signIn(Object.assign(
+        {},
+        input,
+        {publicKey: secondKey}
+      ));
+      invariant(!signIn.error);
+      assert.equal(signIn.id, account.id);
+
+      const record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      assert.equal(record.accountTokens.length, 2);
+
+      const set = new Set(record.accountTokens.map((token) => token.publicKey));
+      assert(set.has(firstKey));
+      assert(set.has(secondKey));
+    });
+
+    test('revokeClient success', async () => {
+      const revoke = await subject.revokeClient({
+        accountId,
+        publicKey: secondKey,
+      });
+      invariant(!revoke.error);
+
+      const record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      assert.equal(record.accountTokens.length, 1);
+      assert.equal(record.accountTokens[0].publicKey, firstKey);
+    });
+
+    test('revokeClient bad account id', async () => {
+      const revoke = await subject.revokeClient({
+        accountId: new ObjectID('abababababababababababab'),
+        publicKey: secondKey,
+      });
+      invariant(revoke.error);
+      invariant(revoke.error.type);
+      assert.equal(revoke.error.type, 'UnknownClient');
+
+      const record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      assert.equal(record.accountTokens.length, 2);
+
+      const set = new Set(record.accountTokens.map((token) => token.publicKey));
+      assert(set.has(firstKey));
+      assert(set.has(secondKey));
+    });
+
+    test('revokeClient bad client', async () => {
+      const revoke = await subject.revokeClient({
+        accountId,
+        publicKey: (await AccessToken.gen()).toString(),
+      });
+      invariant(revoke.error);
+      invariant(revoke.error.type);
+      assert.equal(revoke.error.type, 'UnknownClient');
+
+      const record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      assert.equal(record.accountTokens.length, 2);
+
+      const set = new Set(record.accountTokens.map((token) => token.publicKey));
+      assert(set.has(firstKey));
+      assert(set.has(secondKey));
+    });
+
+  });
 });

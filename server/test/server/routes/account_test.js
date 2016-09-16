@@ -12,13 +12,14 @@ import {
 } from 'silk-azure-storage/src/table';
 
 import createContext from '../context';
+import Accounts from '../../../src/server/models/accounts';
 import Devices from '../../../src/server/models/devices';
 
 import type {RawPasswordInput} from 'silk-api/src/vip';
 
 const invariant = assert;
 
-const dummyFactoryResetMessage = new Buffer('foo').toString('base64');
+const dummyDeviceMessage = new Buffer('foo').toString('base64');
 
 suite('account auth', () => {
   let context = createContext();
@@ -92,7 +93,7 @@ suite('account auth', () => {
 
     // The device is allowed to unregister itself
     let unregister = await api.device.unregister({
-      factoryResetMessage: dummyFactoryResetMessage,
+      factoryResetMessage: dummyDeviceMessage,
     });
     assert.ok(unregister.success);
     let deviceAfterUnregister = await devices.findByPublicKey(publicKey);
@@ -103,7 +104,7 @@ suite('account auth', () => {
     let err;
     try {
       await api.device.unregister({
-        factoryResetMessage: dummyFactoryResetMessage,
+        factoryResetMessage: dummyDeviceMessage,
       });
     } catch (error) {
       err = error;
@@ -228,7 +229,7 @@ suite('account auth', () => {
       api.accessToken = accountOne.accessToken;
       await api.account.unregisterDevice({
         devicePublicKey: devices[0].accessToken.toString(),
-        factoryResetMessage: dummyFactoryResetMessage,
+        factoryResetMessage: dummyDeviceMessage,
       });
 
       let list = await api.account.listDevices({});
@@ -253,7 +254,7 @@ suite('account auth', () => {
       try {
         await api.account.unregisterDevice({
           devicePublicKey: devices[0].accessToken.toString(),
-          factoryResetMessage: dummyFactoryResetMessage,
+          factoryResetMessage: dummyDeviceMessage,
         });
       } catch (ex) {
         error = ex;
@@ -448,4 +449,138 @@ suite('account auth', () => {
     });
   });
 
+  suite('unregisterClient', () => {
+    const credentials = {
+      userAgent: 'mosaic',
+      email: 'mars@candy.com',
+      password: 'password',
+    };
+    const numberOfDevices = 5;
+
+    let accountsModel;
+    let devicesModel;
+
+    let accessToken1;
+    let accessToken2;
+    let accountId;
+
+    setup(async function() {
+      this.timeout('30s');
+
+      accountsModel = new Accounts(context.db);
+      devicesModel = new Devices(context.db);
+
+      accessToken1 = await AccessToken.gen();
+      api.accessToken = accessToken1;
+
+      let {success} = await api.vip.createAccountWithPassword(credentials);
+      assert(success);
+
+      const accountRecord =
+        await accountsModel.findByPublicKey(accessToken1.pub);
+      invariant(accountRecord);
+      accountId = accountRecord._id;
+
+      const ops = [];
+      for (let i = 0; i < numberOfDevices; i++) {
+        ops.push(context.registeredDevice(accessToken1));
+      }
+
+      await Promise.all(ops);
+
+      accessToken2 = await AccessToken.gen();
+      api.accessToken = accessToken2;
+      ({success} = await api.vip.signInWithPassword(credentials));
+      assert(success);
+
+      api.accessToken = accessToken1;
+
+      let {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+
+      let publicKeys = new Set(clients.map((client) => client.publicKey));
+      assert(publicKeys.has(accessToken1.pub));
+      assert(publicKeys.has(accessToken2.pub));
+
+      let devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+      }
+
+      // Do not assume a particular account in the below tests...
+      api.accessToken = null;
+    });
+
+    test('POST /revoke_client - success', async () => {
+      api.accessToken = accessToken1;
+
+      const {success} = await api.account.revokeClient({
+        clientPublicKey: accessToken2.pub,
+        revokeClientMessageForDevices: dummyDeviceMessage,
+      });
+      assert(success);
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 1);
+      assert.equal(clients[0].publicKey, accessToken1.pub);
+
+      const devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.deepEqual(device.mailbox, [dummyDeviceMessage]);
+      }
+    });
+
+    test('POST /revoke_client - unknown client', async () => {
+      api.accessToken = accessToken1;
+
+      context.httpErrCode(context, 404, api.account.revokeClient({
+        clientPublicKey: (await AccessToken.gen()).pub,
+        revokeClientMessageForDevices: dummyDeviceMessage,
+      }));
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+
+      const publicKeys = new Set(clients.map((client) => client.publicKey));
+      assert(publicKeys.has(accessToken1.pub));
+      assert(publicKeys.has(accessToken2.pub));
+
+      const devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+      }
+    });
+
+    test('POST /revoke_client - client from another account', async () => {
+      api.accessToken = accountOne.accessToken;
+
+      context.httpErrCode(context, 403, api.account.revokeClient({
+        clientPublicKey: accessToken1.pub,
+        revokeClientMessageForDevices: dummyDeviceMessage,
+      }));
+
+      api.accessToken = accessToken1;
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+
+      const publicKeys = new Set(clients.map((client) => client.publicKey));
+      assert(publicKeys.has(accessToken1.pub));
+      assert(publicKeys.has(accessToken2.pub));
+
+      const devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+      }
+    });
+
+  });
 });

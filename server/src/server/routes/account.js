@@ -26,6 +26,7 @@ import type {
   GetSasForDeviceSignalingOutput,
   ListClientsOutput,
   PostMessageOutput,
+  RevokeClientOutput,
 } from 'silk-api/src/gen/account';
 
 import type { RouteContext } from '../server';
@@ -218,8 +219,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     const output: UnregisterDeviceOutput = {success: false};
 
-    if (!result || result.error) {
-      log.warn('Failed unregistering device for account', );
+    if (result.error) {
+      log.warn('Failed unregistering device for account', result);
       res.respond(output);
       return;
     }
@@ -387,10 +388,70 @@ export default function (ctx: RouteContext): ExpressRoutes {
 
     const result = await ctx.devices.addToMailbox({publicKey, message});
     if (result.error) {
-      log.warn(`addToMailbox failed`, publicKey, message);
+      log.warn(`addToMailbox failed`, result, publicKey, message);
     }
 
     const output: PostMessageOutput = {};
+    res.respond(output);
+  });
+
+  api.define({
+    path: 'revoke_client',
+    method: 'post',
+    params: [],
+    name: 'revokeClient',
+    description: 'Revoke a client',
+    output: Joi.object().keys({
+      success: Joi.boolean().required(),
+    }).required(),
+    input: Joi.object().keys({
+      clientPublicKey: Accounts.PUBLIC_KEY_SCHEMA,
+      revokeClientMessageForDevices: Devices.ONION_SCHEMA.required(),
+    }).required(),
+  }, async (req, res) => {
+    const accountId = req.account._id;
+    const {
+      clientPublicKey: publicKey,
+      revokeClientMessageForDevices: message,
+    } = req.body;
+
+    const clientAccount = await ctx.accounts.findByPublicKey(publicKey);
+    if (!clientAccount) {
+      log.warn(`Account '${accountId}' is attempting to revoke an unknown ` +
+               `client '${publicKey}'`);
+      res.sendStatus(404);
+      return;
+    }
+
+    if (!accountId.equals(clientAccount._id)) {
+      log.warn(`Account '${accountId}' is attempting to revoke client ` +
+               `'${publicKey}' that belongs to a different account ` +
+               `'${clientAccount._id}'`);
+      res.sendStatus(403);
+      return;
+    }
+
+    const result = await ctx.accounts.revokeClient({accountId, publicKey});
+    if (result.error) {
+      log.warn(`revokeClient failed`, result, publicKey, message);
+      const output: RevokeClientOutput = {success: false};
+      res.respond(output);
+      return;
+    }
+
+    const devices = await ctx.devices.findAllByAccount(accountId);
+    for (const device of devices) {
+      const devicePublicKey = device.accessToken.publicKey;
+      const result = ctx.devices.addToMailbox({
+        publicKey: devicePublicKey,
+        message,
+      });
+      if (result.error) {
+        log.warn(`addToMailbox failed`, result, devicePublicKey, message);
+      }
+    }
+
+    const output: RevokeClientOutput = {success: true};
     res.respond(output);
   });
 

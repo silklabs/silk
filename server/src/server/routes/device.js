@@ -161,7 +161,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
       return;
     }
 
-    if (req.device.accountId.toString() !== account._id.toString()) {
+    if (!account._id.equals(req.device.accountId)) {
       // Wrong account...
       log.warn(
         `Attempted to register device to the wrong account`,

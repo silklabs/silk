@@ -10,6 +10,9 @@ export default class WebRTCVideo extends React.Component {
     deviceId: React.PropTypes.string,
     label: React.PropTypes.string.isRequired, // 'preview' or 'video'
 
+    // type OnVideoActiveCB = (label: string, active: bool) => void;
+    onVideoActive: React.PropTypes.func,
+
     // type OnVideoUpdateCB = (label: string, currentTime: number, width: number: height: number) => void;
     onVideoUpdate: React.PropTypes.func,
   };
@@ -30,6 +33,7 @@ export default class WebRTCVideo extends React.Component {
     const videoElement = this.refs.video;
     invariant(videoElement);
     videoElement.addEventListener('timeupdate', this._onTimeUpdate);
+    videoElement.addEventListener('playing', this.onPlaying);
   }
 
   componentWillUnmount() {
@@ -43,14 +47,23 @@ export default class WebRTCVideo extends React.Component {
     const videoElement = this.refs.video;
     invariant(videoElement);
 
-    log.info(`Updating video element source for ${label}`);
     const mediaStream = this._camera.mediaStreams.get(label);
     if (!mediaStream || !mediaStream.stream) {
-      log.info(`No stream for ${label}`);
+      log.info(`No stream availble for ${label}`);
       videoElement.src = 'nuthin';
+      if (this.props.onVideoActive) {
+        this.props.onVideoActive(label, false);
+      }
     } else {
+      log.info(`Updating video element source for ${label}`);
       invariant(mediaStream.label === label);
       videoElement.src = window.URL.createObjectURL(mediaStream.stream);
+    }
+  };
+
+  onPlaying = () => {
+    if (this.props.onVideoActive) {
+      this.props.onVideoActive(this.props.label, true);
     }
   };
 

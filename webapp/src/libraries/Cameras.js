@@ -8,7 +8,6 @@ import type { StructuredDataChannel } from 'silk-rtc';
 
 import Api from './Api';
 import ObjectCollector from './ObjectCollector';
-import PreviewQueue from './PreviewQueue';
 
 const log = createLog('Cameras');
 
@@ -41,12 +40,10 @@ class Camera extends EventEmitter {
   name = '';
   objects = null;
   state: CameraState = 'offline';
-  previewImage = null;
   previewSize = {
     width: 320,
     height: 180,
   };
-  previewTimestamp = null;
   lastSeenAt: Date;
   publicKey: string;
   _retryConnectTimeout = null;
@@ -56,14 +53,18 @@ class Camera extends EventEmitter {
   _diagChannel: ?StructuredDataChannel = null;
   _micChannel: ?StructuredDataChannel = null;
   _videoChannel: ?StructuredDataChannel = null;
-  _previewChannel: ?StructuredDataChannel = null;
   _objectsChannel: ?StructuredDataChannel = null;
-  _queue = null;
   _peer = null;
 
   _mediaStreamEnabled = {
-    preview: false,
-    video: false,
+    preview: {
+      enabled: false,
+      active: false,
+    },
+    video: {
+      enabled: false,
+      active: false,
+    },
   }
 
   constructor(device /*: ListDevicesOutputDevices*/) {
@@ -150,11 +151,10 @@ class Camera extends EventEmitter {
   }
 
   _updateStreams = () => {
+    this._updateMediaStreams();
     this._updateDiagStream();
-    this._updatePreviewImageStream();
     this._updateVideoClipStream();
     this._updateMicStream();
-    this._updateObjectStream();
     this.emit('stateChanged');
   };
 
@@ -173,30 +173,42 @@ class Camera extends EventEmitter {
     return this._peer.getMediaStreams();
   }
 
-  setMediaStream(label, enabled: bool) {
-    invariant(typeof mediaStreamConstraints[label] === 'object', `Invalid ${label}`);
-    invariant(typeof this._mediaStreamEnabled[label] === 'boolean', `Invalid ${label}`);
-    if (enabled) {
-      if (!this._mediaStreamEnabled[label]) {
-        this._mediaStreamEnabled[label] = true;
-        if (this._peer !== null) {
-          this._peer.requestRemoteMediaStream(label, mediaStreamConstraints[label])
-          .catch((err) => {
-            log.error(`Failed to request stream: ${err.stack}`);
-            this._mediaStreamEnabled[label] = false;
-          });
+  _updateMediaStreams() {
+    let requestObjects = false;
+    for (let label of Object.keys(this._mediaStreamEnabled)) {
+      const state = this._mediaStreamEnabled[label];
+      log.info(label, state);
+      if (state.enabled) {
+        requestObjects = true;
+        if (!state.active) {
+          if (this.online) {
+            state.active = true;
+            this._peer.requestRemoteMediaStream(label, mediaStreamConstraints[label])
+            .catch((err) => {
+              log.error(`Failed to request stream for ${this.id}: ${err.stack}`);
+              state.active = false;
+            });
+          }
         }
-      }
-    } else {
-      if (this._mediaStreamEnabled[label]) {
-        this._mediaStreamEnabled[label] = false;
-        if (this._peer !== null) {
-          this._peer.removeStream(label);
+      } else {
+        if (state.active) {
+          state.active = false;
+          if (this._peer !== null) {
+            this._peer.removeStream(label);
+          }
         }
       }
     }
+
+    this._updateObjectStream(requestObjects);
   }
 
+  setMediaStream(label, enabled: bool) {
+    invariant(typeof mediaStreamConstraints[label] === 'object', `Invalid ${label}`);
+    invariant(typeof this._mediaStreamEnabled[label] === 'object', `Invalid ${label}`);
+    this._mediaStreamEnabled[label].enabled = enabled;
+    this._updateMediaStreams();
+  }
 
   _updateDiagStream() {
     const enabled = this._logging;
@@ -312,7 +324,6 @@ class Camera extends EventEmitter {
 
   _adjustRooms(event) {
     switch (event) {
-    case 'previewImage':
     case 'videoClip':
     case 'micData':
       {
@@ -320,13 +331,9 @@ class Camera extends EventEmitter {
         const enabled = count > 0;
 
         this._requestedRooms[event] = enabled;
-        this._requestedRooms.objects = this._requestedRooms.previewImage ||
-          this._requestedRooms.videoClip;
 
-        this._updatePreviewImageStream();
         this._updateVideoClipStream();
         this._updateMicStream();
-        this._updateObjectStream();
         break;
       }
     default:
@@ -334,67 +341,6 @@ class Camera extends EventEmitter {
       break;
     }
   }
-
-  _updatePreviewImageStream() {
-    const enabled = this._requestedRooms.previewImage;
-    if (enabled && this.state === 'online') {
-      if (this._peer !== null && this._previewChannel === null) {
-        log.info('Creating preview channel');
-        this._previewChannel = this._peer.createChannel(
-          'preview',
-          {
-            maxRetransmitTime: 1000,
-          }
-        );
-        this._previewChannel.on('open', () => {
-          log.debug('Preview channel open');
-        });
-        this._previewChannel.on('close', this._onPreviewChannelClose);
-        this._previewChannel.on('error', this._onChannelError);
-        this._previewChannel.on('jpeg', this._onPreviewStream);
-
-        this._queue = new PreviewQueue(this.name, msg => {
-          if (msg.frame.size) {
-            this.previewImage = msg.frame;
-            this.previewTimestamp = new Date(msg.when);
-            this.emit('previewImage', this.previewImage);
-          }
-        });
-      }
-    } else {
-      if (this._previewChannel) {
-        log.info('Closing preview channel');
-        this._previewChannel.close();
-        this._previewChannel = null;
-      }
-      if (this._queue) {
-        this._queue.deinit();
-        this._queue = null;
-      }
-    }
-  }
-
-  _onPreviewChannelClose = () => {
-    log.info('Preview channel closed');
-  };
-
-
-  _onPreviewStream = (msg) => {
-    if (msg.frame instanceof ArrayBuffer) {
-      // socket.io still sends ArrayBuffer
-      msg.frame = new Blob([msg.frame], { type: 'image/jpg' });
-    }
-    if (!msg || !msg.frame || !msg.frame.size || !msg.when) {
-      log.warn('Received bad preview message', msg);
-      return;
-    }
-    log.info(`Received preview message networkLag=${Date.now() - msg.deviceEmitMs}ms`);
-    if (this._queue === null) {
-      log.warn('NULL preview queue');
-      return;
-    }
-    this._queue.push(msg);
-  };
 
   _updateVideoClipStream() {
     const enabled = this._requestedRooms.videoClip;
@@ -483,8 +429,7 @@ class Camera extends EventEmitter {
     }
   };
 
-  _updateObjectStream() {
-    const enabled = this._requestedRooms.objects;
+  _updateObjectStream(enabled) {
     if (enabled && this.state === 'online') {
       if (this._peer !== null && this._objectsChannel === null) {
         this.objects = new ObjectCollector();

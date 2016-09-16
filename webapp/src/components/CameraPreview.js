@@ -6,15 +6,13 @@ import invariant from 'assert';
 
 import Cameras from '../libraries/Cameras';
 import * as CanvasUtils from '../libraries/CanvasUtils';
+import WebRTCVideo from './WebRTCVideo';
 
 const log = createLog('CameraPreview');
 
 const styles = {
   container: {
     position: 'relative',
-  },
-  img: {
-    display: 'block',
   },
   canvas: {
     position: 'absolute',
@@ -28,15 +26,12 @@ export default class CameraPreview extends React.Component {
     deviceId: React.PropTypes.string,
   };
 
-  _img = null;
   _canvas = null;
   _context = null;
   _logoImg = null;
 
-  _previewTimestamp = 0;
-  _logoImgLoaded = false;
+  _previewActive = false;
 
-  _renderedSize = null;
   _pixelRatio = 1;
 
   _camera = null;
@@ -56,54 +51,30 @@ export default class CameraPreview extends React.Component {
 
     this._camera = Cameras.get(this.deviceId);
     invariant(this._camera, 'No camera');
-
-    this._camera.on('previewImage', this._renderImg);
-    this._camera.on('stateChanged', this._onCameraStateChanged);
-    this._onCameraStateChanged();
   }
 
   componentDidMount() {
-    this._img = ReactDOM.findDOMNode(this.refs.img);
     this._canvas = ReactDOM.findDOMNode(this.refs.canvas);
     this._context = this._canvas.getContext('2d');
-    this._logoImg = document.createElement(`img`);
-
-    this._renderImg();
-  }
-
-  componentWillUnmount() {
-    if (this._logoImg.src) {
-      URL.revokeObjectURL(this._logoImg.src);
-    }
-    this._camera.removeListener('previewImage', this._renderImg);
-    this._camera.removeListener('stateChanged', this._onCameraStateChanged);
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    const camera = this._camera;
-    if (camera) {
-      this._renderedSize = camera.previewSize;
-    } else {
-      this._renderedSize = null;
-    }
-    this._renderImg();
   }
 
   render() {
     const camera = this._camera;
 
-    let canvasWidth, imgWidth;
-    let canvasHeight, imgHeight;
+    let width, height;
+    let canvasWidth, canvasHeight;
 
     if (camera && camera.previewSize) {
-      canvasWidth = imgWidth = camera.previewSize.width;
-      canvasHeight = imgHeight = camera.previewSize.height;
+      width = camera.previewSize.width;
+      height = camera.previewSize.height;
     } else {
       // XXX Lame but we need some kind of default placeholder.
-      canvasWidth = imgWidth = 320;
-      canvasHeight = imgHeight = 180;
+      width = 320;
+      height = 180;
     }
 
+    canvasWidth = width;
+    canvasHeight = height;
     let canvasStyle = Object.assign({}, styles.canvas);
     if (this._pixelRatio !== 1) {
       canvasStyle.width = Math.floor(canvasWidth) + 'px';
@@ -115,11 +86,12 @@ export default class CameraPreview extends React.Component {
 
     return (
       <div style={styles.container}>
-        <img
-          width={imgWidth}
-          height={imgHeight}
-          style={styles.img}
-          ref="img"
+        <WebRTCVideo
+          width={width}
+          height={height}
+          deviceId={this.deviceId}
+          onVideoActive={this._onVideoActive}
+          label="preview"
         />
         <canvas
           width={canvasWidth}
@@ -131,54 +103,9 @@ export default class CameraPreview extends React.Component {
     );
   }
 
-  _onCameraStateChanged = () => {
-    const camera = this._camera;
-
-    if (camera.previewSize !== this._renderedSize) {
-      if (this._img) {
-        this._img.width = this._canvas.width = camera.previewSize.width;
-        this._img.height = this._canvas.height = camera.previewSize.height;
-      }
-      this._renderedSize = camera.previewSize;
-    }
-    this._renderImg();
-  };
-
-  _resetLogoImg() {
-    this._logoImgLoaded = false;
-    if (this._logoImg) {
-      this._logoImg.onload = null;
-      if (this._logoImg.src) {
-        URL.revokeObjectURL(this._logoImg.src);
-        this._logoImg.src = ``;
-      }
-    }
-  }
-
-  _renderImg = () => {
-    const img = this._img;
-    if (!img) {
-      return;
-    }
-    const camera = this._camera;
-
-    if (img.src) {
-      URL.revokeObjectURL(img.src);
-    }
-
-    if (camera && camera.previewImage) {
-      const src = URL.createObjectURL(camera.previewImage);
-      const timestamp = camera.previewTimestamp;
-      img.onload = () => {
-        URL.revokeObjectURL(src);
-        this._previewTimestamp = timestamp;
-        this._renderCanvas();
-      };
-      img.src = src;
-    } else {
-      this._previewTimestamp = 0;
-      this._renderCanvas();
-    }
+  _onVideoActive = (label, active) => {
+    this._previewActive = active;
+    this._renderCanvas();
   };
 
   _renderCanvas = () => {
@@ -212,7 +139,7 @@ export default class CameraPreview extends React.Component {
 
     const defaultFont = ' DINRound';
 
-    if (!camera.online || !this._previewTimestamp) {
+    if (!camera.online || !this._previewActive) {
       context.fillStyle =
         camera.online ?
         CanvasUtils.colors.transparentDarkGray :
@@ -221,8 +148,8 @@ export default class CameraPreview extends React.Component {
     }
 
     // Objects.
-    if (camera.online && this._previewTimestamp) {
-      const time = this._previewTimestamp.getTime();
+    if (camera.online && this._previewActive) {
+      const time = Date.now();
       const objects = camera.objects.collect(time - 1000, time);
       if (objects.size) {
         context.lineWidth = 1;
@@ -294,14 +221,11 @@ export default class CameraPreview extends React.Component {
     let text;
     switch (camera.state) {
     case 'online':
-      // Timestamp
-      if (this._previewTimestamp) {
-        const dateString = this._previewTimestamp.toLocaleDateString();
-        const timeString = this._previewTimestamp.toLocaleTimeString();
-
-        text = `${dateString} ${timeString}`;
-      } else {
+      if (!this._previewActive) {
         text = 'No preview available';
+      } else {
+        // TODO: Timestamp?
+        text = '';
       }
       break;
     case 'offline':
@@ -318,29 +242,5 @@ export default class CameraPreview extends React.Component {
       invariant(false, `Unknown camera state: ${camera.state}`);
     }
     context.fillText(text, canvasWidth - 5, 5);
-
-    // Logo
-    if (this._logoImgLoaded) {
-      context.globalAlpha = 0.50;
-      try {
-        context.drawImage(this._logoImg, 0, 0);
-      } catch (err) {
-        if (err.name === 'NS_ERROR_NOT_AVAILABLE') {
-          // Ignore the occasional Firefox "NS_ERROR_NOT_AVAILABLE: Component is
-          // not available" complaint
-          log.warn(err);
-        } else {
-          throw err;
-        }
-      }
-    } else if (camera.logoImage && !this._logoImg.src) {
-      const src = URL.createObjectURL(camera.logoImage);
-      this._logoImg.onload = () => {
-        this._logoImg.onload = null;
-        URL.revokeObjectURL(src);
-        this._logoImgLoaded = true;
-      };
-      this._logoImg.src = src;
-    }
   }
 }

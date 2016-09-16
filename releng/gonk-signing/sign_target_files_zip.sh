@@ -36,7 +36,7 @@ cp -vf $KEYS_DIR/verity* build/target/product/security/
 
 # Rebuild res/keys file with production OTA key
 rm -f $OUT/obj/PACKAGING/ota_keys_intermediates/keys
-make $OUT/obj/PACKAGING/ota_keys_intermediates/keys
+make otakeys
 
 # Place production OTA/verity keys into TARGET_FILES_ZIP
 mkdir -p {BOOT,RECOVERY}/RAMDISK/res/

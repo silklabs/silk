@@ -1,4 +1,4 @@
-From 2f326d39dd802a9dac53ca68c970e51a54b85d4f Mon Sep 17 00:00:00 2001
+From f1f9c62fef439e6590e274a15a6694cf03c54545 Mon Sep 17 00:00:00 2001
 From: Anshul Jain <anshul@silklabs.com>
 Date: Tue, 13 Sep 2016 14:20:08 -0700
 Subject: [PATCH] Androidify glog
@@ -10,7 +10,7 @@ Subject: [PATCH] Androidify glog
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..58a6e60
+index 0000000..1e02890
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,42 @@
@@ -28,8 +28,8 @@ index 0000000..58a6e60
 +
 +GLOG_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(GLOG_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
-+$(GLOG_MAKEFILE): GFLAGS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags))
-+$(GLOG_MAKEFILE): $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags)/libgflags.a
++$(GLOG_MAKEFILE): GFLAGS_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags,,,$(TARGET_2ND_ARCH)))
++$(GLOG_MAKEFILE): $(call intermediates-dir-for,STATIC_LIBRARIES,libgflags,,,$(TARGET_2ND_ARCH))/libgflags.a
 +ifneq ($(TARGET_GE_MARSHMALLOW),)
 +$(GLOG_MAKEFILE): ANDROID_TOOLCHAIN_NAME := $(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.9,arm-linux-androideabi-4.9)
 +else

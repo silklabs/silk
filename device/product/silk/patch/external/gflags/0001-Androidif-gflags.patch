@@ -1,4 +1,4 @@
-From 6d7d3816a5e2d96e4d882f51057d4ca603e48904 Mon Sep 17 00:00:00 2001
+From cf3fd1fdef1807723a8697cf961e3913925d0596 Mon Sep 17 00:00:00 2001
 From: Travis CI <engineering@silklabs.com>
 Date: Wed, 20 Jan 2016 21:50:51 -0800
 Subject: [PATCH] Androidif gflags
@@ -23,7 +23,7 @@ index 39cb957..59743f7 100644
  /test/gflags_unittest-main.cc
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..59baacc
+index 0000000..f49484f
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,42 @@
@@ -57,7 +57,7 @@ index 0000000..59baacc
 +	-DCMAKE_BUILD_TYPE=Release \
 +	-DANDROID_TOOLCHAIN_NAME=$(ANDROID_TOOLCHAIN_NAME) \
 +	-DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
-+	-DANDROID_NATIVE_API_LEVEL=19 \
++	-DANDROID_NATIVE_API_LEVEL=21 \
 +	-DTHREADS_PTHREAD_ARG=OFF \
 +	-DCMAKE_INSTALL_PREFIX=$(ANDROID_BUILD_TOP)/$(dir $@) \
 + $(LOCAL_PATH)
@@ -70,5 +70,5 @@ index 0000000..59baacc
 +	$(hide) mkdir -p $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 +	$(hide) cp -fr $(dir $@)include $(TARGET_OUT_HEADERS)/$(LOCAL_MODULE)
 -- 
-1.9.1
+2.8.2
 

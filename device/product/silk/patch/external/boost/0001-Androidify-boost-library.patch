@@ -1,23 +1,23 @@
-From b7ebbe2c81d581e2ab5c98379c09d74c8af1d99b Mon Sep 17 00:00:00 2001
+From 75026b4339c87d0e5b5c34ec3c0d8bfdd1f01cf0 Mon Sep 17 00:00:00 2001
 From: Travis CI <engineering@silklabs.com>
 Date: Thu, 21 Jan 2016 23:32:22 -0800
 Subject: [PATCH] Androidify boost library
 
 ---
- Android.mk           | 35 +++++++++++++++++++++
+ Android.mk           | 41 +++++++++++++++++++++++++
  BoostConfig.cmake.in |  6 ++++
  CMakeLists.txt       | 87 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 128 insertions(+)
+ 3 files changed, 134 insertions(+)
  create mode 100644 Android.mk
  create mode 100755 BoostConfig.cmake.in
  create mode 100644 CMakeLists.txt
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..ea4ebbe
+index 0000000..cca4d52
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,41 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -34,6 +34,11 @@ index 0000000..ea4ebbe
 +
 +BOOST_MAKEFILE := $(dir $(LOCAL_BUILT_MODULE))/Makefile
 +$(BOOST_MAKEFILE): LOCAL_PATH := $(abspath $(LOCAL_PATH))
++ifneq ($(TARGET_GE_MARSHMALLOW),)
++$(BOOST_MAKEFILE): ANDROID_TOOLCHAIN_NAME := $(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.9,arm-linux-androideabi-4.9)
++else
++$(BOOST_MAKEFILE): ANDROID_TOOLCHAIN_NAME := $(if $(findstring x86,$(TARGET_ARCH)),x86_64-linux-android-4.8,arm-linux-androideabi-4.8)
++endif
 +$(BOOST_MAKEFILE): $(LOCAL_PATH)/Android.mk
 +	@echo Configure: $@
 +	$(hide) mkdir -p $(@D)
@@ -41,8 +46,9 @@ index 0000000..ea4ebbe
 +	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_TOOLCHAIN_CMAKE) \
 +	-DANDROID_NDK=$(abspath prebuilts/ndk/current) \
 +	-DCMAKE_BUILD_TYPE=Release \
++	-DANDROID_TOOLCHAIN_NAME=$(ANDROID_TOOLCHAIN_NAME) \
 +	-DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
-+	-DANDROID_NATIVE_API_LEVEL=19 \
++	-DANDROID_NATIVE_API_LEVEL=21 \
 +	-DCMAKE_INSTALL_PREFIX="$(ANDROID_BUILD_TOP)/$(dir $@)" \
 + $(LOCAL_PATH)
 +
@@ -159,5 +165,5 @@ index 0000000..48a29ab
 +install(TARGETS boost_random DESTINATION lib)
 +install(TARGETS boost_math DESTINATION lib)
 -- 
-2.4.5
+2.8.2
 

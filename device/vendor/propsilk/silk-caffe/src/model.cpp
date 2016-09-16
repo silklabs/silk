@@ -759,14 +759,6 @@ NAN_METHOD(Model::Time) {
   if (info.Length() >= 3) {
     INT_FROM_ARGS(numThreads, 2);
   }
-#ifdef ANDROID
-  if (numThreads != -1) {
-    ALOGD("Setting threads count %d", numThreads);
-    openblas_set_num_threads(numThreads);
-  }
-  ALOGD("openblas using threads: %d num_procs: %d", openblas_get_num_threads(),
-        openblas_get_num_procs());
-#endif
 
   ALOGD("Use CPU");
   Caffe::set_mode(Caffe::CPU);

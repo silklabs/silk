@@ -23,9 +23,9 @@ import type {VoiceActivityDetector} from 'silk-vad';
 
 const log = createLog('audio-dnn');
 
-const MODEL_PROTO = path.join(__dirname, '..', 'model', 'keyword.prototxt');
-const MODEL_BIN = path.join(__dirname, '..', 'model', 'aristotle.caffemodel');
-const MODEL_DICTIONARY = path.join(__dirname, '..', 'model', 'keyword.labels');
+const MODEL_PROTO = path.join(__dirname, '..', 'model', 'pandohub.prototxt');
+const MODEL_BIN = path.join(__dirname, '..', 'model', 'pandohub.caffemodel');
+const MODEL_DICTIONARY = path.join(__dirname, '..', 'model', 'pandohub.labels');
 const TOPK = 3; // Return top K predictions
 const LABEL_OTHER = 'other';
 

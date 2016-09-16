@@ -26,19 +26,22 @@ cd $BSP_GONK
 set -x
 rm -rf BOOT/ BOOTABLE_IMAGES/ IMAGES/ RECOVERY/
 
+# Remove unsigned images and AOSP keys from TARGET_FILES_ZIP
+zip -d $TARGET_FILES_ZIP IMAGES/* BOOTABLE_IMAGES/* {BOOT,RECOVERY}/RAMDISK/{verity_key,res/keys}
+
+# Swap in production OTA/verity keys
 cp -vf $KEYS_DIR/releasekey.pk8 build/target/product/security/testkey.pk8
 cp -vf $KEYS_DIR/releasekey.x509.pem build/target/product/security/testkey.x509.pem
 cp -vf $KEYS_DIR/verity* build/target/product/security/
 
-# Remove unsigned images and AOSP keys from TARGET_FILES_ZIP
-zip -d $TARGET_FILES_ZIP IMAGES/* BOOTABLE_IMAGES/* {BOOT,RECOVERY}/RAMDISK/{verity_key,res/keys}
+# Rebuild res/keys file with production OTA key
+rm -f $OUT/obj/PACKAGING/ota_keys_intermediates/keys
+make $OUT/obj/PACKAGING/ota_keys_intermediates/keys
 
 # Place production OTA/verity keys into TARGET_FILES_ZIP
 mkdir -p {BOOT,RECOVERY}/RAMDISK/res/
-make $OUT/obj/PACKAGING/ota_keys_intermediates/keys
 cp -v $OUT/obj/PACKAGING/ota_keys_intermediates/keys BOOT/RAMDISK/res/keys
 cp -v $OUT/obj/PACKAGING/ota_keys_intermediates/keys RECOVERY/RAMDISK/res/keys
-
 cp -v build/target/product/security/verity_key BOOT/RAMDISK/
 cp -v build/target/product/security/verity_key RECOVERY/RAMDISK/
 

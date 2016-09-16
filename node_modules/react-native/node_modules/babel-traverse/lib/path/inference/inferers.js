@@ -59,7 +59,6 @@ TypeCastExpression.validParent = true;
 
 function NewExpression(node) {
   if (this.get("callee").isIdentifier()) {
-    // only resolve identifier callee
     return t.genericTypeAnnotation(node.callee);
   }
 }
@@ -94,14 +93,11 @@ function BinaryExpression(node) {
     var left = this.get("left");
 
     if (left.isBaseType("number") && right.isBaseType("number")) {
-      // both numbers so this will be a number
       return t.numberTypeAnnotation();
     } else if (left.isBaseType("string") || right.isBaseType("string")) {
-      // one is a string so the result will be a string
       return t.stringTypeAnnotation();
     }
 
-    // unsure if left and right are strings or numbers so stay on the safe side
     return t.unionTypeAnnotation([t.stringTypeAnnotation(), t.numberTypeAnnotation()]);
   }
 }
@@ -190,9 +186,7 @@ function resolveCall(callee) {
     } else {
       if (callee.node.returnType) {
         return callee.node.returnType;
-      } else {
-        // todo: get union type of all return arguments
-      }
+      } else {}
     }
   }
 }

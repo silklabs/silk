@@ -1,33 +1,7 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+exports.__esModule = true;
 exports.plugins = undefined;
-
-var _getIterator2 = require("babel-runtime/core-js/get-iterator");
-
-var _getIterator3 = _interopRequireDefault(_getIterator2);
-
-var _getPrototypeOf = require("babel-runtime/core-js/object/get-prototype-of");
-
-var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
-
-var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
-
-var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-
-var _createClass2 = require("babel-runtime/helpers/createClass");
-
-var _createClass3 = _interopRequireDefault(_createClass2);
-
-var _possibleConstructorReturn2 = require("babel-runtime/helpers/possibleConstructorReturn");
-
-var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
-
-var _inherits2 = require("babel-runtime/helpers/inherits");
-
-var _inherits3 = _interopRequireDefault(_inherits2);
 
 var _identifier = require("../util/identifier");
 
@@ -39,17 +13,23 @@ var _tokenizer2 = _interopRequireDefault(_tokenizer);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var plugins = exports.plugins = {};
 
 var Parser = function (_Tokenizer) {
-  (0, _inherits3.default)(Parser, _Tokenizer);
+  _inherits(Parser, _Tokenizer);
 
   function Parser(options, input) {
-    (0, _classCallCheck3.default)(this, Parser);
+    _classCallCheck(this, Parser);
 
     options = (0, _options.getOptions)(options);
 
-    var _this = (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(Parser).call(this, options, input));
+    var _this = _possibleConstructorReturn(this, _Tokenizer.call(this, options, input));
 
     _this.options = options;
     _this.inModule = _this.options.sourceType === "module";
@@ -65,70 +45,57 @@ var Parser = function (_Tokenizer) {
     return _this;
   }
 
-  (0, _createClass3.default)(Parser, [{
-    key: "hasPlugin",
-    value: function hasPlugin(name) {
-      return !!(this.plugins["*"] || this.plugins[name]);
-    }
-  }, {
-    key: "extend",
-    value: function extend(name, f) {
-      this[name] = f(this[name]);
-    }
-  }, {
-    key: "loadPlugins",
-    value: function loadPlugins(plugins) {
-      var pluginMap = {};
+  Parser.prototype.hasPlugin = function hasPlugin(name) {
+    return !!(this.plugins["*"] || this.plugins[name]);
+  };
 
-      if (plugins.indexOf("flow") >= 0) {
-        // ensure flow plugin loads last
-        plugins = plugins.filter(function (plugin) {
-          return plugin !== "flow";
-        });
-        plugins.push("flow");
+  Parser.prototype.extend = function extend(name, f) {
+    this[name] = f(this[name]);
+  };
+
+  Parser.prototype.loadPlugins = function loadPlugins(plugins) {
+    var pluginMap = {};
+
+    if (plugins.indexOf("flow") >= 0) {
+      // ensure flow plugin loads last
+      plugins = plugins.filter(function (plugin) {
+        return plugin !== "flow";
+      });
+      plugins.push("flow");
+    }
+
+    for (var _iterator = plugins, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      var _ref;
+
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
       }
 
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      var name = _ref;
 
-      try {
-        for (var _iterator = (0, _getIterator3.default)(plugins), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var name = _step.value;
+      if (!pluginMap[name]) {
+        pluginMap[name] = true;
 
-          if (!pluginMap[name]) {
-            pluginMap[name] = true;
-
-            var plugin = exports.plugins[name];
-            if (plugin) plugin(this);
-          }
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        var plugin = exports.plugins[name];
+        if (plugin) plugin(this);
       }
+    }
 
-      return pluginMap;
-    }
-  }, {
-    key: "parse",
-    value: function parse() {
-      var file = this.startNode();
-      var program = this.startNode();
-      this.nextToken();
-      return this.parseTopLevel(file, program);
-    }
-  }]);
+    return pluginMap;
+  };
+
+  Parser.prototype.parse = function parse() {
+    var file = this.startNode();
+    var program = this.startNode();
+    this.nextToken();
+    return this.parseTopLevel(file, program);
+  };
+
   return Parser;
 }(_tokenizer2.default);
 

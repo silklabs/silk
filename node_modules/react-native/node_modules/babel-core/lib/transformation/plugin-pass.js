@@ -18,10 +18,6 @@ var _store = require("../store");
 
 var _store2 = _interopRequireDefault(_store);
 
-var _babelTraverse = require("babel-traverse");
-
-var _babelTraverse2 = _interopRequireDefault(_babelTraverse);
-
 var _file5 = require("./file");
 
 var _file6 = _interopRequireDefault(_file5);
@@ -38,17 +34,11 @@ var PluginPass = function (_Store) {
     var _this = (0, _possibleConstructorReturn3.default)(this, _Store.call(this));
 
     _this.plugin = plugin;
+    _this.key = plugin.key;
     _this.file = file;
     _this.opts = options;
     return _this;
   }
-
-  PluginPass.prototype.transform = function transform() {
-    var file = this.file;
-    file.log.debug("Start transformer " + this.key);
-    (0, _babelTraverse2.default)(file.ast, this.plugin.visitor, file.scope, file);
-    file.log.debug("Finish transformer " + this.key);
-  };
 
   PluginPass.prototype.addHelper = function addHelper() {
     var _file;

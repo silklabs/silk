@@ -236,6 +236,7 @@ var ReactTransitionGroup = React.createClass({
     delete props.childFactory;
     delete props.transitionLeaveTimeout;
     delete props.transitionEnterTimeout;
+    delete props.transitionAppearTimeout;
     delete props.component;
 
     return React.createElement(this.props.component, props, childrenToRender);

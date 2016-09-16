@@ -87,8 +87,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-//
-
 exports.util = util;
 exports.messages = messages;
 exports.types = t;
@@ -98,8 +96,6 @@ function Plugin(alias) {
   throw new Error("The (" + alias + ") Babel 5 plugin is being run with Babel 6.");
 }
 
-//
-
 exports.Pipeline = _pipeline2.default;
 
 
@@ -107,8 +103,6 @@ var pipeline = new _pipeline2.default();
 var analyse = exports.analyse = pipeline.analyse.bind(pipeline);
 var transform = exports.transform = pipeline.transform.bind(pipeline);
 var transformFromAst = exports.transformFromAst = pipeline.transformFromAst.bind(pipeline);
-
-//
 
 function transformFile(filename, opts, callback) {
   if ((0, _isFunction2.default)(opts)) {

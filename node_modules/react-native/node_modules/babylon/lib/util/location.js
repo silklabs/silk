@@ -1,32 +1,25 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+exports.__esModule = true;
 exports.SourceLocation = exports.Position = undefined;
-
-var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
-
-var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-
 exports.getLineInfo = getLineInfo;
 
 var _whitespace = require("./whitespace");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 // These are used when `options.locations` is on, for the
 // `startLoc` and `endLoc` properties.
 
 var Position = exports.Position = function Position(line, col) {
-  (0, _classCallCheck3.default)(this, Position);
+  _classCallCheck(this, Position);
 
   this.line = line;
   this.column = col;
 };
 
 var SourceLocation = exports.SourceLocation = function SourceLocation(start, end) {
-  (0, _classCallCheck3.default)(this, SourceLocation);
+  _classCallCheck(this, SourceLocation);
 
   this.start = start;
   this.end = end;

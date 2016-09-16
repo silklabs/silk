@@ -1,8 +1,6 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+exports.__esModule = true;
 exports.isNewLine = isNewLine;
 // Matches a whole line break (where CRLF is considered a single
 // line break). Used to count lines.

@@ -14,7 +14,6 @@
 var _prodInvariant = require('./reactProdInvariant'),
     _assign = require('object-assign');
 
-var ReactInstrumentation = require('./ReactInstrumentation');
 var ReactNativeComponentTree = require('./ReactNativeComponentTree');
 var ReactNativeTagHandles = require('./ReactNativeTagHandles');
 var UIManager = require('react-native/lib/UIManager');
@@ -26,16 +25,12 @@ var ReactNativeTextComponent = function (text) {
   this._currentElement = text;
   this._stringText = '' + text;
   this._hostParent = null;
-  this._rootNodeID = null;
+  this._rootNodeID = 0;
 };
 
 _assign(ReactNativeTextComponent.prototype, {
 
   mountComponent: function (transaction, hostParent, hostContainerInfo, context) {
-    if (process.env.NODE_ENV !== 'production') {
-      ReactInstrumentation.debugTool.onSetText(this._debugID, this._stringText);
-    }
-
     // TODO: hostParent should have this context already. Stop abusing context.
     !context.isInAParentText ? process.env.NODE_ENV !== 'production' ? invariant(false, 'RawText "%s" must be wrapped in an explicit <Text> component.', this._stringText) : _prodInvariant('20', this._stringText) : void 0;
     this._hostParent = hostParent;
@@ -60,9 +55,6 @@ _assign(ReactNativeTextComponent.prototype, {
       if (nextStringText !== this._stringText) {
         this._stringText = nextStringText;
         UIManager.updateView(this._rootNodeID, 'RCTRawText', { text: this._stringText });
-        if (process.env.NODE_ENV !== 'production') {
-          ReactInstrumentation.debugTool.onSetText(this._debugID, nextStringText);
-        }
       }
     }
   },
@@ -71,7 +63,7 @@ _assign(ReactNativeTextComponent.prototype, {
     ReactNativeComponentTree.uncacheNode(this);
     this._currentElement = null;
     this._stringText = null;
-    this._rootNodeID = null;
+    this._rootNodeID = 0;
   }
 
 });

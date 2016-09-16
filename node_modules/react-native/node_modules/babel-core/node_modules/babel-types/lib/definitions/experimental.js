@@ -20,9 +20,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 (0, _index2.default)("BindExpression", {
   visitor: ["object", "callee"],
   aliases: ["Expression"],
-  fields: {
-    // todo
-  }
+  fields: {}
 });
 
 (0, _index2.default)("Decorator", {

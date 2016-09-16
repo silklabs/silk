@@ -1,6 +1,8 @@
---- node_modules/react-native-orientation/android/build.gradle.orig	2016-07-04 13:02:00.000000000 -0700
-+++ node_modules/react-native-orientation/android/build.gradle	2016-07-04 13:03:15.000000000 -0700
-@@ -2,7 +2,7 @@
+diff --git a/node_modules/react-native-orientation/android/build.gradle b/node_modules/react-native-orientation/android/build.gradle
+index e09fb27..26967a0 100644
+--- a/node_modules/react-native-orientation/android/build.gradle
++++ b/node_modules/react-native-orientation/android/build.gradle
+@@ -2,11 +2,11 @@ apply plugin: 'com.android.library'
  
  android {
      compileSdkVersion 23
@@ -8,11 +10,10 @@
 +    buildToolsVersion "23.0.3"
  
      defaultConfig {
-         minSdkVersion 16
-@@ -16,5 +16,5 @@
- }
- 
- dependencies {
--    compile 'com.facebook.react:react-native:0.11.+'
-+    compile 'com.facebook.react:react-native:+'
- }
+-        minSdkVersion 16
+-        targetSdkVersion 22
++        minSdkVersion 21
++        targetSdkVersion 23
+         versionCode 1
+         versionName "1.0"
+         ndk {

@@ -53,8 +53,8 @@ pp.eatContextual = function (name) {
 
 // Asserts that following token is given contextual keyword.
 
-pp.expectContextual = function (name) {
-  if (!this.eatContextual(name)) this.unexpected();
+pp.expectContextual = function (name, message) {
+  if (!this.eatContextual(name)) this.unexpected(null, message);
 };
 
 // Test whether a semicolon can be inserted at the current position.
@@ -77,14 +77,16 @@ pp.semicolon = function () {
 };
 
 // Expect a token of a given type. If found, consume it, otherwise,
-// raise an unexpected token error.
+// raise an unexpected token error at given pos.
 
-pp.expect = function (type) {
-  return this.eat(type) || this.unexpected();
+pp.expect = function (type, pos) {
+  return this.eat(type) || this.unexpected(pos);
 };
 
 // Raise an unexpected token error.
 
 pp.unexpected = function (pos) {
-  this.raise(pos != null ? pos : this.state.start, "Unexpected token");
+  var message = arguments.length <= 1 || arguments[1] === undefined ? "Unexpected token" : arguments[1];
+
+  this.raise(pos != null ? pos : this.state.start, message);
 };

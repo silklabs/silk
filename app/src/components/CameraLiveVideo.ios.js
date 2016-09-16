@@ -93,7 +93,10 @@ export default class CameraLiveVideo extends WebRTCDataChannelReceiver {
 
   render() {
     return (
-      <Modal visible={true}>
+      <Modal
+        visible={true}
+        supportedOrientations={['landscape']}
+        onRequestClose={() => undefined}>
         <View style={styles.container}>
           <TouchableWithoutFeedback onPress={this._toggleControls}>
             <View style={[styles.video, styles.videoContainer]}>

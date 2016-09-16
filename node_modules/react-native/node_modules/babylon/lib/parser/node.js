@@ -1,13 +1,5 @@
 "use strict";
 
-var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
-
-var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-
-var _createClass2 = require("babel-runtime/helpers/createClass");
-
-var _createClass3 = _interopRequireDefault(_createClass2);
-
 var _index = require("./index");
 
 var _index2 = _interopRequireDefault(_index);
@@ -16,6 +8,8 @@ var _location = require("../util/location");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 // Start an AST node, attaching a start offset.
 
 var pp = _index2.default.prototype;
@@ -23,7 +17,7 @@ var commentKeys = ["leadingComments", "trailingComments", "innerComments"];
 
 var Node = function () {
   function Node(pos, loc, filename) {
-    (0, _classCallCheck3.default)(this, Node);
+    _classCallCheck(this, Node);
 
     this.type = "";
     this.start = pos;
@@ -32,20 +26,18 @@ var Node = function () {
     if (filename) this.loc.filename = filename;
   }
 
-  (0, _createClass3.default)(Node, [{
-    key: "__clone",
-    value: function __clone() {
-      var node2 = new Node();
-      for (var key in this) {
-        // Do not clone comments that are already attached to the node
-        if (commentKeys.indexOf(key) < 0) {
-          node2[key] = this[key];
-        }
+  Node.prototype.__clone = function __clone() {
+    var node2 = new Node();
+    for (var key in this) {
+      // Do not clone comments that are already attached to the node
+      if (commentKeys.indexOf(key) < 0) {
+        node2[key] = this[key];
       }
-
-      return node2;
     }
-  }]);
+
+    return node2;
+  };
+
   return Node;
 }();
 

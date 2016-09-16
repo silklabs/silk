@@ -1,0 +1,13 @@
+diff --git a/node_modules/readable-stream/package.json b/node_modules/readable-stream/package.json
+index bae9dc5..a2742f2 100644
+--- a/node_modules/readable-stream/package.json
++++ b/node_modules/readable-stream/package.json
+@@ -39,7 +39,7 @@
+   "_spec": "readable-stream@^2.0.2",
+   "_where": "/Users/sahajalal/workspace/silk/silk-core/node_modules/readdirp",
+   "browser": {
+-    "util": false
++    "util": "node-libs-browser/mock/empty"
+   },
+   "bugs": {
+     "url": "https://github.com/nodejs/readable-stream/issues"

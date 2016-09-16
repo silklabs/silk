@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import {lockToLandscape, lockToPortrait} from 'react-native-orientation';
+import {unlockAllOrientations, lockToPortrait} from 'react-native-orientation';
 
 import AsyncComponent from './abstract/AsyncComponent';
 import CameraLiveVideoRTC from './CameraLiveVideoRTC';
@@ -43,13 +43,13 @@ export default class DeviceList extends AsyncComponent {
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
   startFullscreenVideo = (device: RegisteredDevice) => {
-    this.setStateAsync({fullscreenDeviceId: device.deviceId})
-      .then(lockToLandscape);
+    unlockAllOrientations();
+    this.setState({fullscreenDeviceId: device.deviceId});
   };
 
   stopFullscreenVideo = () => {
     this.setStateAsync({fullscreenDeviceId: null})
-      .then(() => setTimeout(lockToPortrait, 0));
+      .then(() => setTimeout(() => lockToPortrait, 100));
   };
 
   render() {

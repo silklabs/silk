@@ -19,12 +19,10 @@ var ReferencedIdentifier = exports.ReferencedIdentifier = {
       if (t.isJSXIdentifier(node, opts)) {
         if (_babelTypes.react.isCompatTag(node.name)) return false;
       } else {
-        // not a JSXIdentifier or an Identifier
         return false;
       }
     }
 
-    // check if node is referenced
     return t.isReferenced(node, parent);
   }
 };

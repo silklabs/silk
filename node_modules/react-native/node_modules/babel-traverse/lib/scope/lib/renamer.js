@@ -53,12 +53,9 @@ var Renamer = function () {
     var exportDeclar = parentDeclar.parentPath.isExportDeclaration() && parentDeclar.parentPath;
     if (!exportDeclar) return;
 
-    // build specifiers that point back to this export declaration
     var isDefault = exportDeclar.isExportDefaultDeclaration();
 
     if (isDefault && (parentDeclar.isFunctionDeclaration() || parentDeclar.isClassDeclaration()) && !parentDeclar.node.id) {
-      // Ensure that default class and function exports have a name so they have a identifier to
-      // reference from the export specifier list.
       parentDeclar.node.id = parentDeclar.scope.generateUidIdentifier("default");
     }
 
@@ -73,7 +70,6 @@ var Renamer = function () {
 
     var aliasDeclar = t.exportNamedDeclaration(null, specifiers);
 
-    // hoist to the top if it's a function
     if (parentDeclar.isFunctionDeclaration()) {
       aliasDeclar._blockHoist = 3;
     }
@@ -83,9 +79,7 @@ var Renamer = function () {
   };
 
   Renamer.prototype.maybeConvertFromClassFunctionDeclaration = function maybeConvertFromClassFunctionDeclaration(path) {
-    return; // TODO
-
-    // retain the `name` of a class/function declaration
+    return;
 
     if (!path.isFunctionDeclaration() && !path.isClassDeclaration()) return;
     if (this.binding.kind !== "hoisted") return;
@@ -97,9 +91,7 @@ var Renamer = function () {
   };
 
   Renamer.prototype.maybeConvertFromClassFunctionExpression = function maybeConvertFromClassFunctionExpression(path) {
-    return; // TODO
-
-    // retain the `name` of a class/function expression
+    return;
 
     if (!path.isFunctionExpression() && !path.isClassExpression()) return;
     if (this.binding.kind !== "local") return;
@@ -136,10 +128,7 @@ var Renamer = function () {
       this.binding.identifier.name = newName;
     }
 
-    if (binding.type === "hoisted") {
-      // https://github.com/babel/babel/issues/2435
-      // todo: hoist and convert function to a let
-    }
+    if (binding.type === "hoisted") {}
 
     if (parentDeclar) {
       this.maybeConvertFromClassFunctionDeclaration(parentDeclar);

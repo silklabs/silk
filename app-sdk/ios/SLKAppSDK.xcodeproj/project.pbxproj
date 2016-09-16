@@ -78,6 +78,13 @@
 			remoteGlobalIDString = 35A2221F1CB493700015FD5C;
 			remoteInfo = RCTWebRTC;
 		};
+		357E9C6E1D8CBA94006A6D18 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 357E9C631D8CBA94006A6D18 /* SLKUtil.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 35835D051D8C991A0096D416;
+			remoteInfo = SLKUtil;
+		};
 		35D700881D29957E00993A9C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 35D700731D29957E00993A9C /* Project object */;
@@ -166,6 +173,7 @@
 		353163991D77785300BA7D20 /* SLKConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKConfig.h; sourceTree = "<group>"; };
 		3531639A1D77785300BA7D20 /* SLKConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKConfig.m; sourceTree = "<group>"; };
 		3531639D1D77786C00BA7D20 /* SLKConfigTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SLKConfigTests.m; path = "../../../app-config/ios/SLKConfigTests/SLKConfigTests.m"; sourceTree = "<group>"; };
+		357E9C631D8CBA94006A6D18 /* SLKUtil.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKUtil.xcodeproj; path = "../../app-util/ios/SLKUtil.xcodeproj"; sourceTree = "<group>"; };
 		35D7007C1D29957E00993A9C /* SLKAppSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SLKAppSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		35D7007F1D29957E00993A9C /* SLKAppSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SLKAppSDK.h; sourceTree = "<group>"; };
 		35D700811D29957E00993A9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -321,6 +329,14 @@
 			path = "../../../app-config/ios/SLKConfig";
 			sourceTree = "<group>";
 		};
+		357E9C641D8CBA94006A6D18 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				357E9C6F1D8CBA94006A6D18 /* libSLKUtil.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		35D700721D29957E00993A9C = {
 			isa = PBXGroup;
 			children = (
@@ -383,8 +399,9 @@
 				35D700A11D29AB0500993A9C /* React.xcodeproj */,
 				35D700DB1D29AEBB00993A9C /* RCTNetwork.xcodeproj */,
 				35D700C21D29ADCF00993A9C /* RCTWebSocket.xcodeproj */,
-				351041871D3D9E0B00452CB2 /* SLKCrypto.xcodeproj */,
 				351041951D3D9E6100452CB2 /* SLKBlobs.xcodeproj */,
+				351041871D3D9E0B00452CB2 /* SLKCrypto.xcodeproj */,
+				357E9C631D8CBA94006A6D18 /* SLKUtil.xcodeproj */,
 				3510419B1D3D9E7500452CB2 /* RCTWebRTC.xcodeproj */,
 			);
 			name = Libraries;
@@ -531,6 +548,10 @@
 					ProductGroup = 351041881D3D9E0B00452CB2 /* Products */;
 					ProjectRef = 351041871D3D9E0B00452CB2 /* SLKCrypto.xcodeproj */;
 				},
+				{
+					ProductGroup = 357E9C641D8CBA94006A6D18 /* Products */;
+					ProjectRef = 357E9C631D8CBA94006A6D18 /* SLKUtil.xcodeproj */;
+				},
 			);
 			projectRoot = "";
 			targets = (
@@ -567,6 +588,13 @@
 			fileType = archive.ar;
 			path = libRCTWebRTC.a;
 			remoteRef = 3510419F1D3D9E7500452CB2 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		357E9C6F1D8CBA94006A6D18 /* libSLKUtil.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libSLKUtil.a;
+			remoteRef = 357E9C6E1D8CBA94006A6D18 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		35D700A61D29AB0500993A9C /* libReact.a */ = {

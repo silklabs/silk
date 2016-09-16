@@ -221,7 +221,9 @@ export class DialogEngine extends EventEmitter {
 
   _onOnline: (() => void) = () => {
     // Opportunistically try acquire the access token once online
-    this._scriptOptions.speechOptions.getAccessToken();
+    this._scriptOptions.speechOptions.getAccessToken().catch((error) => {
+      log.warn(`Failed to get access token`, error);
+    });
   }
 
   // Returns intention from text (utterance)

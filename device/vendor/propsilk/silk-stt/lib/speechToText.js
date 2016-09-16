@@ -161,7 +161,7 @@ export default class SpeechToText {
       headers: {
         'Content-type': `audio/wav; samplerate=${audioParams.sampleRate}`,
         //'Content-Length' : wav.length,
-        'Authorization': `Bearer ${String(accessToken)}`,
+        'Authorization': `Bearer ${accessToken}`,
       },
     };
 

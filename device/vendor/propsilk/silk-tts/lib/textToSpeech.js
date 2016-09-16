@@ -93,7 +93,7 @@ export default class TextToSpeech extends EventEmitter {
       headers: {
         'Content-Type': `application/ssml+xml`,
         'X-Microsoft-OutputFormat': `raw-16khz-16bit-mono-pcm`,
-        'Authorization': `Bearer ${String(accessToken)}`,
+        'Authorization': `Bearer ${accessToken}`,
         'X-Search-AppId': options.APP_ID_NO_DASH,
         'X-Search-ClientID': options.INSTANCE_ID_NO_DASH,
         'User-Agent': `silk`,

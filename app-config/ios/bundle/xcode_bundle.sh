@@ -41,7 +41,7 @@ node node_modules/react-native/local-cli/cli.js bundle \
   --entry-file "$SLK_JS_BUNDLE_ENTRY_FILE".js \
   --platform ios \
   --dev $DEV \
-  --reset-cache true \
+  --reset-cache \
   --bundle-output "$DEST_FILE" \
   --assets-dest "$DEST" \
   --verbose

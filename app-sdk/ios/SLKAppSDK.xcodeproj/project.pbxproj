@@ -156,7 +156,6 @@
 		351041871D3D9E0B00452CB2 /* SLKCrypto.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKCrypto.xcodeproj; path = ../../crypto/ios/SLKCrypto.xcodeproj; sourceTree = "<group>"; };
 		351041951D3D9E6100452CB2 /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../pub/react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
 		3510419B1D3D9E7500452CB2 /* RCTWebRTC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebRTC.xcodeproj; path = "../../react-native-webrtc/ios/RCTWebRTC.xcodeproj"; sourceTree = "<group>"; };
-		351041C31D3D9F1700452CB2 /* libWebRTC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libWebRTC.a; sourceTree = "<group>"; };
 		351041F61D3D9FBC00452CB2 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		351041F81D3D9FC200452CB2 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		351041FA1D3D9FCA00452CB2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -312,15 +311,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		351041A31D3D9F1700452CB2 /* libjingle_peerconnection */ = {
-			isa = PBXGroup;
-			children = (
-				351041C31D3D9F1700452CB2 /* libWebRTC.a */,
-			);
-			name = libjingle_peerconnection;
-			path = "../../react-native-webrtc/ios/libjingle_peerconnection";
-			sourceTree = "<group>";
-		};
 		353163981D77785300BA7D20 /* SLKConfig */ = {
 			isa = PBXGroup;
 			children = (
@@ -390,7 +380,6 @@
 		35D700A01D29AA2300993A9C /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				351041A31D3D9F1700452CB2 /* libjingle_peerconnection */,
 				35D700A11D29AB0500993A9C /* React.xcodeproj */,
 				35D700DB1D29AEBB00993A9C /* RCTNetwork.xcodeproj */,
 				35D700C21D29ADCF00993A9C /* RCTWebSocket.xcodeproj */,

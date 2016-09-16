@@ -244,7 +244,6 @@ function main() {
         diag: connections.getChannel('diag'),
         mic: connections.getChannel('mic'),
         objects: connections.getChannel('objects'),
-        preview: connections.getChannel('preview'),
         video: connections.getChannel('video'),
       });
 

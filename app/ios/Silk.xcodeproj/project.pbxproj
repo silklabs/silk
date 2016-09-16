@@ -19,6 +19,7 @@
 		353163901D77755400BA7D20 /* SLKConfigTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 3531638F1D77755400BA7D20 /* SLKConfigTests.m */; };
 		356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 356CF7211D28AAF900BE44CF /* libRCTOrientation.a */; };
 		357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357AF0361D20E27E0075394A /* libSLKBlobs.a */; };
+		357E9C3B1D8C9A63006A6D18 /* libSLKUtil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 357E9C3A1D8C9A3D006A6D18 /* libSLKUtil.a */; };
 		35A222911CB4A0350015FD5C /* libstdc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222901CB4A0350015FD5C /* libstdc++.tbd */; };
 		35A222941CB4A0510015FD5C /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222931CB4A0510015FD5C /* libsqlite3.tbd */; };
 		35A222961CB4A0580015FD5C /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35A222951CB4A0580015FD5C /* VideoToolbox.framework */; };
@@ -71,7 +72,6 @@
 		F91A54FC1B8B9D48009C75C9 /* OpenSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */; };
 		F91A54FD1B8B9D48009C75C9 /* OpenSans-Semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */; };
 		F91A54FE1B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */; };
-		F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = F9E92CD71B3864A100C10C24 /* SLKUtil.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -165,6 +165,13 @@
 			proxyType = 2;
 			remoteGlobalIDString = 358F4ED71D1E81A9004DF814;
 			remoteInfo = SLKBlobs;
+		};
+		357E9C391D8C9A3D006A6D18 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 357E9C351D8C9A3D006A6D18 /* SLKUtil.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 35835D051D8C991A0096D416;
+			remoteInfo = SLKUtil;
 		};
 		35A2222F1CB493710015FD5C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -320,6 +327,7 @@
 		3531638F1D77755400BA7D20 /* SLKConfigTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SLKConfigTests.m; path = ../SLKConfigTests/SLKConfigTests.m; sourceTree = "<group>"; };
 		356CF71C1D28AAF900BE44CF /* RCTOrientation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTOrientation.xcodeproj; path = "../../node_modules/react-native-orientation/iOS/RCTOrientation.xcodeproj"; sourceTree = "<group>"; };
 		357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKBlobs.xcodeproj; path = "../../pub/react-native-blobs/ios/SLKBlobs.xcodeproj"; sourceTree = "<group>"; };
+		357E9C351D8C9A3D006A6D18 /* SLKUtil.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SLKUtil.xcodeproj; path = "../../app-util/ios/SLKUtil.xcodeproj"; sourceTree = "<group>"; };
 		35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebRTC.xcodeproj; path = "../../react-native-webrtc/ios/RCTWebRTC.xcodeproj"; sourceTree = "<group>"; };
 		35A222791CB49DAE0015FD5C /* libWebRTC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWebRTC.a; path = "../../react-native-webrtc/ios/libjingle_peerconnection/libWebRTC.a"; sourceTree = "<group>"; };
 		35A222901CB4A0350015FD5C /* libstdc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libstdc++.tbd"; path = "usr/lib/libstdc++.tbd"; sourceTree = SDKROOT; };
@@ -366,8 +374,6 @@
 		F91A54F21B8B9D48009C75C9 /* OpenSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Regular.ttf"; sourceTree = "<group>"; };
 		F91A54F31B8B9D48009C75C9 /* OpenSans-Semibold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-Semibold.ttf"; sourceTree = "<group>"; };
 		F91A54F41B8B9D48009C75C9 /* OpenSans-SemiboldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "OpenSans-SemiboldItalic.ttf"; sourceTree = "<group>"; };
-		F9E92CCC1B38642000C10C24 /* SLKUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKUtil.h; sourceTree = "<group>"; };
-		F9E92CD71B3864A100C10C24 /* SLKUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKUtil.m; sourceTree = "<group>"; };
 		F9E92CF71B3900C200C10C24 /* main.jsbundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = main.jsbundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -389,6 +395,7 @@
 				356CF7261D28AB0100BE44CF /* libRCTOrientation.a in Frameworks */,
 				357AF03D1D20E3580075394A /* libSLKBlobs.a in Frameworks */,
 				352DCF2D1D18C98F0056D623 /* libSLKCrypto.a in Frameworks */,
+				357E9C3B1D8C9A63006A6D18 /* libSLKUtil.a in Frameworks */,
 				35A222A41CB4A09A0015FD5C /* AVFoundation.framework in Frameworks */,
 				35A222A21CB4A0940015FD5C /* AudioToolbox.framework in Frameworks */,
 				35A222A01CB4A08D0015FD5C /* CoreGraphics.framework in Frameworks */,
@@ -535,6 +542,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		357E9C361D8C9A3D006A6D18 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				357E9C3A1D8C9A3D006A6D18 /* libSLKUtil.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		35A2222C1CB493700015FD5C /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -580,15 +595,6 @@
 			path = "../../../ble-socket/ios/SLKBLESocket";
 			sourceTree = "<group>";
 		};
-		35C03E931CC03357008EF119 /* SLKUtil */ = {
-			isa = PBXGroup;
-			children = (
-				F9E92CCC1B38642000C10C24 /* SLKUtil.h */,
-				F9E92CD71B3864A100C10C24 /* SLKUtil.m */,
-			);
-			path = SLKUtil;
-			sourceTree = "<group>";
-		};
 		35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */ = {
 			isa = PBXGroup;
 			children = (
@@ -626,7 +632,6 @@
 				57C30C2D1B92CDF4003F9EFF /* DebugLog */,
 				35C1A55A1C5042B400551FC6 /* DashSegmentPlayer */,
 				3531638B1D77754200BA7D20 /* SLKConfig */,
-				35C03E931CC03357008EF119 /* SLKUtil */,
 				57AC687E1B4F08D5009B70A3 /* App-Bridging-Header.h */,
 				57AC68721B4F03B2009B70A3 /* AppDelegate.swift */,
 				5714A0AB1B756B0900B0630C /* Assertions.swift */,
@@ -675,6 +680,7 @@
 				356CF71C1D28AAF900BE44CF /* RCTOrientation.xcodeproj */,
 				357AF0311D20E27E0075394A /* SLKBlobs.xcodeproj */,
 				352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */,
+				357E9C351D8C9A3D006A6D18 /* SLKUtil.xcodeproj */,
 				35A2222B1CB493700015FD5C /* RCTWebRTC.xcodeproj */,
 			);
 			name = Libraries;
@@ -890,6 +896,10 @@
 					ProductGroup = 352DCEB51D18BB810056D623 /* Products */;
 					ProjectRef = 352DCEB41D18BB810056D623 /* SLKCrypto.xcodeproj */;
 				},
+				{
+					ProductGroup = 357E9C361D8C9A3D006A6D18 /* Products */;
+					ProjectRef = 357E9C351D8C9A3D006A6D18 /* SLKUtil.xcodeproj */;
+				},
 			);
 			projectRoot = "";
 			targets = (
@@ -982,6 +992,13 @@
 			fileType = archive.ar;
 			path = libSLKBlobs.a;
 			remoteRef = 357AF0351D20E27E0075394A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		357E9C3A1D8C9A3D006A6D18 /* libSLKUtil.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libSLKUtil.a;
+			remoteRef = 357E9C391D8C9A3D006A6D18 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		35A222301CB493710015FD5C /* libRCTWebRTC.a */ = {
@@ -1125,7 +1142,6 @@
 				35DEE2D01C5069E6000BBF61 /* DashSegmentPlayback.swift in Sources */,
 				35C1A5621C5042B400551FC6 /* DashSegmentPlayerManager.swift in Sources */,
 				57AC68731B4F03B2009B70A3 /* AppDelegate.swift in Sources */,
-				F9E92CD81B3864A100C10C24 /* SLKUtil.m in Sources */,
 				35B113711D4004F2005A5896 /* BLESocketManager.m in Sources */,
 				35C1A5611C5042B400551FC6 /* DashSegmentPlayerManager.m in Sources */,
 				6C5839011C1D04610004EC78 /* CrashReporter.swift in Sources */,

@@ -18,7 +18,8 @@ android {
 
 dependencies {
     compile "com.android.support:appcompat-v7:23.0.1"
-    compile "com.facebook.react:react-native:+"  // From node_modules
+    compile "com.facebook.react:react-native:+"  // from node_modules
+    compile project(":silk-app-util")
     compile project(":silk-crypto")
     compile project(":silk-ble-socket")
     compile project(":silk-react-native-blobs")

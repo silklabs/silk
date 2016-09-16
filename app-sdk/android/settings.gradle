@@ -1,3 +1,6 @@
+include ":silk-app-util"
+project(":silk-app-util").projectDir = file("../../app-util/android")
+
 include ":silk-crypto"
 project(":silk-crypto").projectDir = file("../../crypto/android")
 

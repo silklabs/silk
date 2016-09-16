@@ -1,10 +1,10 @@
 package com.silklabs.app;
 
-import com.silklabs.app.modules.Util;
 import com.silklabs.react.blesocket.BLESocketManagerBridge;
 import com.silklabs.react.blobs.BlobModule;
 import com.silklabs.react.blobs.WebSocketModule;
 import com.silklabs.react.crypto.CryptoModule;
+import com.silklabs.react.util.UtilModule;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;
@@ -26,7 +26,7 @@ public class SilkReactPackage implements ReactPackage {
     modules.add(new BlobModule(reactContext));
     modules.add(new BLESocketManagerBridge(reactContext));
     modules.add(new CryptoModule(reactContext));
-    modules.add(new Util(reactContext));
+    modules.add(new UtilModule(reactContext));
     modules.add(new WebSocketModule(reactContext));
     return modules;
   }

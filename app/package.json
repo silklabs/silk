@@ -4,6 +4,7 @@
     "react-native-webrtc": "/react-native-webrtc",
     "silk-api": "/api",
     "silk-app-sdk": "/app-sdk",
+    "silk-app-util": "/app-util",
     "silk-core-version": "/pub/version",
     "silk-crypto": "/crypto",
     "silk-mse-player": "/mse-player",

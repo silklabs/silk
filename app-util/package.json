@@ -1,0 +1,11 @@
+{
+  "name": "silk-app-util",
+  "version": "1.2.0",
+  "description": "",
+  "license": "proprietary",
+  "main": "index.js",
+  "peerDependencies": {
+    "react-native": "0.34.0-rc.0"
+  },
+  "private": true
+}

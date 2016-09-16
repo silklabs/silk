@@ -5,14 +5,13 @@
 import invariant from 'assert';
 import createLog from 'silk-log';
 import {handleActions} from 'redux-actions';
+import type {WifiInfo} from 'silk-app-util';
 import type {Action, SimpleAction} from 'silk-redux/action';
 
 import type {
   default as DeviceSession,
   DeviceWifiNetwork,
 } from 'silk-app-sdk/src/ble/device_session';
-
-import type {WifiInfo} from '../libraries/Util.js';
 
 const log = createLog('reducer-wifi');
 

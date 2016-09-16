@@ -1,8 +1,7 @@
-
 #import "SLKUtil.h"
 
 #import <Foundation/Foundation.h>
-@import SystemConfiguration.CaptiveNetwork;
+#import <SystemConfiguration/CaptiveNetwork.h>
 
 #import "RCTBridge.h"
 
@@ -10,7 +9,7 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(getWifiInfo:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+RCT_EXPORT_METHOD(genWifiInfo:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
   NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
   NSLog(@"%s: Supported interfaces: %@", __func__, interfaceNames);
 
@@ -34,6 +33,7 @@ RCT_EXPORT_METHOD(exitApp) {
 - (NSDictionary *)constantsToExport {
 
   return @{
+    @"manufacturer": @"Apple",
     @"model": [[UIDevice currentDevice] model],
     @"name": [[UIDevice currentDevice] name],
     @"systemName": [[UIDevice currentDevice] systemName],

@@ -18,8 +18,7 @@ android {
 }
 
 dependencies {
-    compile 'com.facebook.react:react-native:+'
-    // From node_modules
     compile 'com.android.support:appcompat-v7:23.0.1'
     compile 'org.altbeacon:android-beacon-library:2.9.1'
+    compile 'com.facebook.react:react-native:+'  // from node_modules
 }

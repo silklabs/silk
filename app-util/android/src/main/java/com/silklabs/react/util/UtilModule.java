@@ -1,4 +1,4 @@
-package com.silklabs.app.modules;
+package com.silklabs.react.util;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -18,10 +18,10 @@ import android.os.Build;
 import java.util.Map;
 import java.util.HashMap;
 
-public class Util extends ReactContextBaseJavaModule {
+public class UtilModule extends ReactContextBaseJavaModule {
   private ReactContext mReactContext;
 
-  public Util(ReactApplicationContext reactContext) {
+  public UtilModule(ReactApplicationContext reactContext) {
     super(reactContext);
     mReactContext = reactContext;
   }
@@ -32,7 +32,7 @@ public class Util extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void getWifiInfo(Promise promise) {
+  public void genWifiInfo(Promise promise) {
     WifiManager wifiManager = (WifiManager)mReactContext.getSystemService(Context.WIFI_SERVICE);
     WifiInfo wifiInfo = wifiManager.getConnectionInfo();
     if (wifiInfo.getSupplicantState() == SupplicantState.COMPLETED) {
@@ -48,9 +48,9 @@ public class Util extends ReactContextBaseJavaModule {
   @Override
   public Map<String, Object> getConstants() {
     final Map<String, Object> constants = new HashMap<>();
-    // TODO verify
+    constants.put("manufacturer", Build.MANUFACTURER);
     constants.put("model", Build.MODEL);
-    constants.put("name", Build.DEVICE);
+    constants.put("name", null);
     constants.put("systemName", "Android");
     constants.put("systemVersion", Build.VERSION.RELEASE);
     return constants;

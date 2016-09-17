@@ -3,13 +3,17 @@ import React from 'react';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { Input, ButtonInput } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
+import WebRTCVideo from './WebRTCVideo';
 import { MSEPlayerWithStats } from 'silk-mse-player';
 import createLog from 'silk-log';
 
 import Cameras from '../libraries/Cameras';
 import * as CanvasUtils from '../libraries/CanvasUtils';
 
-const log = createLog('CameraVideoMSE');
+const log = createLog('CameraVideo');
+
+// Enable WebRTC video by default.
+const useMSEPlayer = false;
 
 const desiredFramesPerSecond = 60;
 const desiredFrameDurationMs = 1000 / desiredFramesPerSecond;
@@ -188,7 +192,7 @@ export default class CameraVideo extends React.Component {
     showFaces: true,
     showVideoStats: false,
     stats: null,
-    muted: true,
+    muted: useMSEPlayer,
   };
 
   get deviceId() {
@@ -232,7 +236,7 @@ export default class CameraVideo extends React.Component {
   componentWillUnmount() {
     Cameras.removeListener('stateChanged', this._onCamerasStateChanged);
     const camera = this.state.camera;
-    if (camera) {
+    if (camera && useMSEPlayer) {
       camera.removeListener('videoClip', this._onNextVideoClip);
     }
     window.removeEventListener('resize', this._updateCanvasSize);
@@ -262,13 +266,13 @@ export default class CameraVideo extends React.Component {
   _updateCanvasSizeInternal = () => {
     invariant(this.currentAnimationFrameTimestamp);
 
-    if (!this.refs.msePlayer) {
+    if (!this.refs.player) {
       this.canvas.style.display = 'none';
       return;
     }
 
     this.canvas.style.display = 'inherit';
-    const video = this.refs.msePlayer.videoElement;
+    const video = this.refs.player.videoElement;
     let width = video.clientWidth;
     let height = video.clientHeight;
 
@@ -305,12 +309,16 @@ export default class CameraVideo extends React.Component {
     }
 
     if (oldCamera) {
-      oldCamera.removeListener('videoClip', this._onNextVideoClip);
+      if (useMSEPlayer) {
+        oldCamera.removeListener('videoClip', this._onNextVideoClip);
+      }
       oldCamera.removeListener('stateChanged', this._onActiveCameraStateChanged);
     }
 
     if (newCamera) {
-      newCamera.addListener('videoClip', this._onNextVideoClip);
+      if (useMSEPlayer) {
+        newCamera.addListener('videoClip', this._onNextVideoClip);
+      }
       newCamera.addListener('stateChanged', this._onActiveCameraStateChanged);
     }
 
@@ -346,7 +354,7 @@ export default class CameraVideo extends React.Component {
       this.clogQueue.push({segmentData, when});
       return;
     }
-    this.refs.msePlayer.feedSegmentData(segmentData, when);
+    this.refs.player.feedSegmentData(segmentData, when);
   }
 
   _onMotionEventsCheck = () => {
@@ -373,6 +381,10 @@ export default class CameraVideo extends React.Component {
   };
 
   _onVideoMutedCheck = () => {
+    if (!useMSEPlayer) {
+      alert('TODO: Mute not yet available for WebRTC video');
+      return;
+    }
     const muted = this.refs.checkMuted.getChecked();
     if (muted === this.state.muted) {
       return;
@@ -410,7 +422,7 @@ export default class CameraVideo extends React.Component {
         (now - this.lastAnimationTimestamp >= minimumFrameDurationMs)) {
 
       // Figure out the window of time for which we should draw objects.
-      const video = this.refs.msePlayer.videoElement;
+      const video = this.refs.player.videoElement;
       const videoElapsedMs = Math.floor(video.currentTime * 1000);
       const videoEndTimestamp =
         this.videoStartTimestampDevice +
@@ -781,6 +793,14 @@ export default class CameraVideo extends React.Component {
     return visible ? `Saw a ${name}.` : `The ${name} is gone.`;
   }
 
+  _onVideoActive = (label, active) => {
+    invariant(!useMSEPlayer);
+    if (active) {
+      this._onLoadedData();
+      this._startAnimationLoop()
+    }
+  };
+
   _startAnimationLoop = () => {
     if (this.animationToken) {
       return;
@@ -820,11 +840,15 @@ export default class CameraVideo extends React.Component {
   };
 
   _clogNetwork = () => {
+    if (!useMSEPlayer) {
+      log.warn('_clogNetwork not available');
+      return;
+    }
     this.clogQueue = [];
     setTimeout(() => {
       log.debug(`Network is "unclogged". Found ${this.clogQueue.length} segments in queue.`);
       for (let {segmentData, when} of this.clogQueue) {
-        this.refs.msePlayer.feedSegmentData(segmentData, when);
+        this.refs.player.feedSegmentData(segmentData, when);
       }
       this.clogQueue = null;
     }, clogDurationMs);
@@ -915,7 +939,7 @@ export default class CameraVideo extends React.Component {
       totalDroppedMs,
       reloadCount,
     } = this.state.stats;
-    const {playbackRate} = this.refs.msePlayer.videoElement;
+    const {playbackRate} = this.refs.player.videoElement;
 
     return (
       <div style={styles.videoStats}>
@@ -1000,7 +1024,7 @@ export default class CameraVideo extends React.Component {
         <form className="form-inline" style={styles.debugMenuForm}>
           <div className="form-group" style={styles.debugMenuFormGroup}>
             <ButtonInput
-              onClick={() => this.refs.msePlayer.forceReload()}
+              onClick={() => useMSEPlayer && this.refs.player.forceReload()}
               bsSize="small"
               standalone>
               Reload &lt;video&gt; element
@@ -1035,31 +1059,45 @@ export default class CameraVideo extends React.Component {
       stats = this._renderStats();
     }
 
-    let msePlayer = null;
+    let player = null;
     if (this.state.camera) {
-      msePlayer = (
-        <MSEPlayerWithStats
-          ref="msePlayer"
-          key={this.state.camera.id}
-          maxStatsUpdateIntervalMs={maxStatsUpdateIntervalMs}
-          autoPlay="true"
-          muted={(this.state.muted ? 'true' : null)}
-          style={styles.video}
-          onStatsUpdate={this._onStatsUpdate}
-          onLoadedMetadata={this._updateCanvasSize}
-          onLoadedData={this._onLoadedData}
-          onResize={this._updateCanvasSize}
-          onPlaying={this._startAnimationLoop}
-          onReload={this._onReload}
-        />
-      );
+      if (useMSEPlayer) {
+        player = (
+          <MSEPlayerWithStats
+            ref="player"
+            key={this.state.camera.id}
+            maxStatsUpdateIntervalMs={maxStatsUpdateIntervalMs}
+            autoPlay="true"
+            muted={(this.state.muted ? 'true' : null)}
+            style={styles.video}
+            onStatsUpdate={this._onStatsUpdate}
+            onLoadedMetadata={this._updateCanvasSize}
+            onLoadedData={this._onLoadedData}
+            onResize={this._updateCanvasSize}
+            onPlaying={this._startAnimationLoop}
+            onReload={this._onReload}
+          />
+        );
+      } else {
+        player = (
+          <WebRTCVideo
+            ref="player"
+            key={this.state.camera.id}
+            width="1280"
+            height="720"
+            deviceId={this.deviceId}
+            onVideoActive={this._onVideoActive}
+            label="video"
+          />
+        );
+      }
     }
 
     return (
       <div style={styles.global}>
         <h1 style={styles.header}>Silk Labs</h1>
         <div style={styles.videoContainer}>
-          {msePlayer}
+          {player}
           {this._renderConsole()}
           {stats}
           <canvas

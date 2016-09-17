@@ -1,10 +1,12 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import Cameras from '../libraries/Cameras';
 import createLog from 'silk-log';
 import invariant from 'assert';
 const log = createLog('webrtcvideo');
 
 export default class WebRTCVideo extends React.Component {
+  videoElement: ?HTMLVideoElement = null;
 
   static propTypes = {
     deviceId: React.PropTypes.string,
@@ -25,13 +27,15 @@ export default class WebRTCVideo extends React.Component {
   }
 
   componentDidMount() {
+    this.videoElement = ReactDOM.findDOMNode(this.refs.video);
+    const videoElement = this.videoElement;
+    invariant(videoElement);
+
     const label = this.props.label;
     this._camera.setMediaStream(label, true);
     this._camera.on('stateChanged', this.onCameraStateChanged);
     this.onCameraStateChanged();
 
-    const videoElement = this.refs.video;
-    invariant(videoElement);
     videoElement.addEventListener('timeupdate', this._onTimeUpdate);
     videoElement.addEventListener('playing', this.onPlaying);
   }
@@ -44,20 +48,21 @@ export default class WebRTCVideo extends React.Component {
 
   onCameraStateChanged = () => {
     const label = this.props.label;
-    const videoElement = this.refs.video;
+    const videoElement = this.videoElement;
     invariant(videoElement);
 
     const mediaStream = this._camera.mediaStreams.get(label);
     if (!mediaStream || !mediaStream.stream) {
       log.info(`No stream availble for ${label}`);
-      videoElement.src = 'nuthin';
+      URL.revokeObjectURL(videoElement.src);
       if (this.props.onVideoActive) {
         this.props.onVideoActive(label, false);
       }
     } else {
       log.info(`Updating video element source for ${label}`);
       invariant(mediaStream.label === label);
-      videoElement.src = window.URL.createObjectURL(mediaStream.stream);
+      URL.revokeObjectURL(videoElement.src);
+      videoElement.src = URL.createObjectURL(mediaStream.stream);
     }
   };
 

@@ -65,28 +65,38 @@
   
   // Buttons/actions change depending on device configuration state
   NSString *buttonAText = @"Accept";
-  NSString *buttonBText = @"Config";
-  NSString *buttonCText = @"Decline";
+  NSString *buttonBText = @"Decline";
+  NSString *buttonCText = @"Config";
   NSString *buttonDText = @"Abort";
   NSString *buttonEText = @"";
-  
+
+  BOOL buttonAEnabled = YES;
+  BOOL buttonBEnabled = YES;
+  BOOL buttonCEnabled = YES;
+  BOOL buttonDEnabled = YES;
+  BOOL buttonEEnabled = YES;
+
   SEL selectorA = @selector(onAcceptPress:);
-  SEL selectorB = @selector(onConfigPress:);
-  SEL selectorC = @selector(onDeclinePress:);
+  SEL selectorB = @selector(onDeclinePress:);
+  SEL selectorC = @selector(onConfigPress:);
   SEL selectorD = @selector(onAbortPress:);
   SEL selectorE = @selector(onNullPress:);
   
   if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
-    buttonAText = @"Connect";
+    buttonAText = @"BLE Conn";
     buttonBText = @"Wifi";
-    buttonCText = @"Config";
-    buttonDText = @"Info";
+    buttonCText = @"Info";
+    buttonDText = @"Config";
     buttonEText = @"Remove";
-    
+
+    buttonBEnabled = [deviceInfo[@"bleConnectionStatus"] isEqualToString:@"CONNECTED"];
+    buttonCEnabled = [deviceInfo[@"bleConnectionStatus"] isEqualToString:@"CONNECTED"];
+    buttonDEnabled = [deviceInfo[@"bleConnectionStatus"] isEqualToString:@"CONNECTED"];
+
     selectorA = @selector(onBLEConnectPress:);
-    selectorB = @selector(onGetWifiPress:);
-    selectorC = @selector(onSetWifiPress:);
-    selectorD = @selector(onGetWifiInfoPress:);
+    selectorB = @selector(onGetWifiListPress:);
+    selectorC = @selector(onGetWifiInfoPress:);
+    selectorD = @selector(onSetWifiPress:);
     selectorE = @selector(onRemovePress:);
 
     // Toggle BLE Connect/Disconnect based on if ble has been requested
@@ -105,7 +115,13 @@
     [self.buttonC setTitle:buttonCText forState:UIControlStateNormal];
     [self.buttonD setTitle:buttonDText forState:UIControlStateNormal];
     [self.buttonE setTitle:buttonEText forState:UIControlStateNormal];
-    
+
+    [self.buttonA setEnabled:buttonAEnabled];
+    [self.buttonB setEnabled:buttonBEnabled];
+    [self.buttonC setEnabled:buttonCEnabled];
+    [self.buttonD setEnabled:buttonDEnabled];
+    [self.buttonE setEnabled:buttonEEnabled];
+
     // Remove all targets and update.
     [self.buttonA removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
     [self.buttonB removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
@@ -235,7 +251,7 @@
   [appState updateStatus:@"Sent BLE_DISCONNECT"];
 }
 
-- (IBAction)onGetWifiPress:(id)sender {
+- (IBAction)onGetWifiListPress:(id)sender {
   NSString *msgType = @"DEVICE_WIFI_LIST";
   NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
   NSString *deviceId = deviceInfo[@"deviceId"];

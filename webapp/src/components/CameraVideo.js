@@ -382,7 +382,7 @@ export default class CameraVideo extends React.Component {
 
   _onVideoMutedCheck = () => {
     if (!useMSEPlayer) {
-      alert('TODO: Mute not yet available for WebRTC video');
+      alert('TODO: Mute not yet available for WebRTC video'); //eslint-disable-line no-alert
       return;
     }
     const muted = this.refs.checkMuted.getChecked();
@@ -797,7 +797,7 @@ export default class CameraVideo extends React.Component {
     invariant(!useMSEPlayer);
     if (active) {
       this._onLoadedData();
-      this._startAnimationLoop()
+      this._startAnimationLoop();
     }
   };
 

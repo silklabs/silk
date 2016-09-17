@@ -27,7 +27,7 @@
   [self updateView];
 }
 
-- (void)refreshView:(NSNotification*) notifiction {
+- (void)refreshView:(NSNotification*) notification {
   [self updateView];
 }
 

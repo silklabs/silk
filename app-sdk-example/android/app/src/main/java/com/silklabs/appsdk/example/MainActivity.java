@@ -6,14 +6,19 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +26,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -40,6 +47,11 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.silklabs.appsdk.SilkAppSDKService;
 import com.silklabs.appsdk.SilkAppSDKDelegate;
+
+import org.webrtc.MediaStream;
+import org.webrtc.RendererCommon;
+import org.webrtc.VideoRenderer;
+import org.webrtc.VideoRendererGui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,6 +83,14 @@ public class MainActivity extends FragmentActivity implements
   private GoogleApiClient mGoogleApiClient = null;
   private Button authorizeButton = null;
   private Button removeButton = null;
+  private Button togglePreviewButton = null;
+  private ScrollView deviceStatusScrollView = null;
+
+  private LinearLayout previewContainer = null;
+  private GLSurfaceView previewView = null;
+  private VideoRenderer.Callbacks previewRendererGui;
+  private VideoRenderer previewRenderer;
+  private MediaStream previewStream;
 
   private ServiceConnection mSilkServiceConnection = new ServiceConnection() {
     @Override
@@ -286,6 +306,7 @@ public class MainActivity extends FragmentActivity implements
             myDevice.bleConnectionError = (String) device.get("bleConnectionError");
             myDevice.rtcConnectionStatus = (String) device.get("rtcConnectionStatus");
             myDevice.rtcConnectionError = (String) device.get("rtcConnectionError");
+            myDevice.rtcPreviewStreamId = (String) device.get("rtcPreviewStreamId");
 
             if ("CONFIGURED".equals(myDevice.deviceConfigStatus)) {
               myDevice.accountDeviceNumber =
@@ -366,6 +387,8 @@ public class MainActivity extends FragmentActivity implements
             device.bleConnectionError = (String) message.get("bleConnectionError");
             device.rtcConnectionStatus = (String) message.get("rtcConnectionStatus");
             device.rtcConnectionError = (String) message.get("rtcConnectionError");
+            device.rtcPreviewStreamId = (String) message.get("rtcPreviewStreamId");
+
             if ("CONNECTED".equals(device.rtcConnectionStatus)) {
               device.paired = true;
             }
@@ -620,7 +643,33 @@ public class MainActivity extends FragmentActivity implements
     removeButton.setOnClickListener(removeButtonListener);
     removeButton.setEnabled(false);
 
+    togglePreviewButton = (Button) findViewById(R.id.togglePreviewButton);
+    togglePreviewButton.setOnClickListener(togglePreviewButtonListener);
+    togglePreviewButton.setEnabled(false);
+
+    deviceStatusScrollView = (ScrollView) findViewById(R.id.deviceStatusScrollView);
     deviceStatusTextView = (TextView) findViewById(R.id.deviceStatusTextView);
+
+    // Set up WebRTC preview views (hidden by default)
+    previewView = new GLSurfaceView(this);
+    int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 320, getResources().getDisplayMetrics());
+    int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 180, getResources().getDisplayMetrics());
+    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
+    layoutParams.gravity = Gravity.CENTER;
+    previewView.setLayoutParams(layoutParams);
+    previewView.setBackgroundColor(Color.BLACK);
+
+    previewContainer = (LinearLayout) findViewById(R.id.previewContainer);
+    previewContainer.setVisibility(View.GONE);
+    previewContainer.addView(previewView);
+
+    VideoRendererGui.setView(previewView, new Runnable() {
+      @Override
+      public void run() {
+      }
+    });
+    RendererCommon.ScalingType scalingType = RendererCommon.ScalingType.SCALE_ASPECT_FILL;
+    previewRendererGui = VideoRendererGui.create(0, 0, 100, 100, scalingType, false);
 
     createWifiDialog();
 
@@ -702,7 +751,7 @@ public class MainActivity extends FragmentActivity implements
    */
   public void checkDrawOverlayPermission() {
     if(Build.VERSION.SDK_INT >= 23) {
-      // Check if we already  have permission to draw over other apps
+      // Check if we already have permission to draw over other apps
       if (!Settings.canDrawOverlays(this)) {
         // If not construct intent to request permission
         Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -901,6 +950,26 @@ public class MainActivity extends FragmentActivity implements
   };
 
   /**
+   * Handle Remove button click
+   */
+  private OnClickListener togglePreviewButtonListener = new View.OnClickListener() {
+    public void onClick(View v) {
+      // Attempt device removal
+      Device device = (Device) deviceListSpinner.getSelectedItem();
+      disableUI();
+
+      Map<String, Object> message = new HashMap<>();
+      if (device.rtcPreviewStreamId == null) {
+        message.put("type", "DEVICE_RTC_PREVIEW_ENABLE");
+      } else {
+        message.put("type", "DEVICE_RTC_PREVIEW_DISABLE");
+      }
+      message.put("deviceId", device.deviceId);
+      mSilkService.postMessage(message);
+    }
+  };
+
+  /**
    * Hide keyboard when clicked outside of the EditText
    */
   private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {
@@ -923,6 +992,12 @@ public class MainActivity extends FragmentActivity implements
   private AdapterView.OnItemSelectedListener deviceSelectedListener = new AdapterView.OnItemSelectedListener() {
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+      if (previewStream != null) {
+        previewStream.videoTracks.get(0).removeRenderer(previewRenderer);
+        previewStream = null;
+        previewRenderer = null;
+      }
+
       Device device = (Device) parent.getItemAtPosition(position);
       updateUI(device);
     }
@@ -952,8 +1027,34 @@ public class MainActivity extends FragmentActivity implements
         if (device.rtcConnectionStatus != null &&
           "CONNECTED".equals(device.rtcConnectionStatus)) {
           echoButton.setEnabled(true);
+          togglePreviewButton.setEnabled(true);
         } else {
           echoButton.setEnabled(false);
+          togglePreviewButton.setEnabled(false);
+        }
+
+        if (device.rtcPreviewStreamId == null) {
+          togglePreviewButton.setText("enable preview");
+          if (previewStream != null) {
+            previewStream.videoTracks.get(0).removeRenderer(previewRenderer);
+            previewStream = null;
+            previewRenderer = null;
+            deviceStatusScrollView.setVisibility(View.VISIBLE);
+            previewContainer.setVisibility(View.GONE);
+          }
+        } else {
+          togglePreviewButton.setText("disable preview");
+          if (previewStream == null) {
+            previewStream = mSilkService.getMediaStreamForID(device.rtcPreviewStreamId);
+            if (previewStream != null) {
+              previewRenderer = new VideoRenderer(previewRendererGui);
+              previewStream.videoTracks.get(0).addRenderer(previewRenderer);
+              RendererCommon.ScalingType scalingType = RendererCommon.ScalingType.SCALE_ASPECT_FILL;
+              VideoRendererGui.update(previewRendererGui, 0, 0, 100, 100, scalingType, false);
+              deviceStatusScrollView.setVisibility(View.GONE);
+              previewContainer.setVisibility(View.VISIBLE);
+            }
+          }
         }
 
         if ("UNCONFIGURED".equals(device.deviceConfigStatus)) {
@@ -985,6 +1086,7 @@ public class MainActivity extends FragmentActivity implements
         echoButton.setEnabled(false);
         configureButton.setEnabled(false);
         removeButton.setEnabled(false);
+        togglePreviewButton.setEnabled(false);
         authorizeButton.setEnabled(false);
         deviceListSpinner.setEnabled(false);
       }

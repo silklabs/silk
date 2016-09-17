@@ -137,6 +137,14 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/toggle_preview"
+            android:id="@+id/togglePreviewButton"
+            android:layout_below="@+id/configureButton"
+            android:layout_toRightOf="@+id/removeButton" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -145,6 +153,14 @@
             android:layout_below="@+id/removeButton"
             android:singleLine="true"
             android:paddingTop="5dp" />
+
+        <LinearLayout
+            android:id="@+id/previewContainer"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_below="@+id/deviceStatusLabel"
+            />
 
         <ScrollView
             android:id="@+id/deviceStatusScrollView"

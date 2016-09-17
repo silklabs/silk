@@ -21,4 +21,5 @@
     <string name="server_client_id">797108770604-m1jnq3atgub93vf86lktspbqg8m3tcop.apps.googleusercontent.com</string>
     <string name="authorize">authorize</string>
     <string name="remove_device">remove</string>
+    <string name="toggle_preview">enable preview</string>
 </resources>

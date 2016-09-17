@@ -27,7 +27,10 @@ import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.shell.MainReactPackage;
+import com.oney.WebRTCModule.WebRTCModule;
 import com.oney.WebRTCModule.WebRTCModulePackage;
+
+import org.webrtc.MediaStream;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -185,5 +188,10 @@ public class SilkAppSDKService extends Service {
     mReactInstanceManager.getCurrentReactContext()
       .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
       .emit("silkAppSDKMessage", toWritableMap(message));
+  }
+
+  public MediaStream getMediaStreamForID(String id) {
+    WebRTCModule module = mReactInstanceManager.getCurrentReactContext().getNativeModule(WebRTCModule.class);
+    return module.mMediaStreams.get(id);
   }
 }

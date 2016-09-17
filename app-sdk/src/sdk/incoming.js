@@ -62,3 +62,11 @@ export type DeviceWifiGetInfoMessage = {
   type: 'DEVICE_WIFI_GETINFO';
   deviceId: string;
 };
+
+export type DeviceMediaStreamMessage = {
+  type: 'DEVICE_RTC_PREVIEW_ENABLE'
+      | 'DEVICE_RTC_PREVIEW_DISABLE'
+      | 'DEVICE_RTC_VIDEO_ENABLE'
+      | 'DEVICE_RTC_VIDEO_DISABLE';
+  deviceId: string;
+};

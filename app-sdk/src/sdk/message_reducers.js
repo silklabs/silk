@@ -20,7 +20,10 @@ import type {
   DeviceUpdateStatusMessage,
 } from './outgoing';
 import type DeviceSession from '../ble/device_session';
-import type {UnregisterRegisteredDeviceResult} from '../store/device_actions';
+import type {
+  UnregisterRegisteredDeviceResult,
+  RTCMediaStreamResult,
+} from '../store/device_actions';
 
 export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,
@@ -50,6 +53,33 @@ const initialState: MessagesState = {
   },
   CONNECTIONS: [],
   UPDATES: [],
+};
+
+const deviceStatusTemplate = {
+  type: 'DEVICE_STATUS',
+  deviceVersion: null,
+  deviceId: null,
+  deviceConfigId: null,
+  accountDeviceNumber: null,
+  bleConnectionStatus: null,
+  bleConnectionError: null,
+  rtcConnectionStatus: null,
+  rtcConnectionError: null,
+  rtcPreviewStreamId: null,
+  rtcVideoStreamId: null,
+};
+
+const connectionTemplate: DeviceConnectionDetailsMessage = {
+  type: 'DEVICE_CONNECTION_DETAILS',
+  deviceId: null,
+  accountDeviceNumber: null,
+  paired: false,
+  wifiStatus: null,
+  wifiSSID: null,
+  wifiLevel: null,
+  wifiError: null,
+  serverStatus: null,
+  serverError: null,
 };
 
 function handleAuthAction(
@@ -183,17 +213,14 @@ function DEVICE_REGISTERED_FETCH(
     DEVICES: {
       ...state.DEVICES,
       devices: state.DEVICES.devices.concat(newDevices.map((device) => ({
-        type: 'DEVICE_STATUS',
+        ...deviceStatusTemplate,
         deviceType: device.type,
         deviceVersion: null,
         deviceId: device.deviceId,
         accountDeviceNumber: device.accountDeviceNumber,
-        deviceConfigId: null,
         deviceConfigStatus: 'CONFIGURED',
         bleConnectionStatus: 'NOT_CONNECTED',
-        bleConnectionError: null,
         rtcConnectionStatus: 'NOT_CONNECTED',
-        rtcConnectionError: null,
       }))),
     },
   };
@@ -241,6 +268,35 @@ function DEVICE_REGISTERED_UNREGISTER_SERVER(
   };
 }
 
+function DEVICE_BLE_CONNECT(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_BLE_CONNECT', string>
+): MessagesState {
+  const deviceId = action.payload;
+  invariant(deviceId);
+  let {devices} = state.DEVICES;
+
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    bleConnectionStatus: 'CONNECTING',
+  };
+
+  return {
+    ...state,
+    DEVICES: {
+      ...state.DEVICES,
+      devices,
+    },
+  };
+}
+
+
 function DEVICE_BLE_CONNECTED(
   state: MessagesState,
   action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
@@ -248,19 +304,6 @@ function DEVICE_BLE_CONNECTED(
   const session = action.payload;
   let connections = state.CONNECTIONS;
   let {devices} = state.DEVICES;
-
-  const connectionTemplate: DeviceConnectionDetailsMessage = {
-    type: 'DEVICE_CONNECTION_DETAILS',
-    deviceId: null,
-    accountDeviceNumber: null,
-    paired: false,
-    wifiStatus: null,
-    wifiSSID: null,
-    wifiLevel: null,
-    wifiError: null,
-    serverStatus: null,
-    serverError: null,
-  };
 
   if (session.isUnauthorized) {
     invariant(session.isRegistered);
@@ -327,17 +370,13 @@ function DEVICE_BLE_CONNECTED(
     });
   } else {
     const unconfiguredDevice = {
-      type: 'DEVICE_STATUS',
+      ...deviceStatusTemplate,
       deviceType: session.model,
       deviceVersion: session.version,
-      deviceId: null,
-      accountDeviceNumber: null,
       deviceConfigId: session.socketId,
       deviceConfigStatus: 'UNCONFIGURED',
       bleConnectionStatus: 'CONNECTED',
-      bleConnectionError: null,
       rtcConnectionStatus: 'NOT_CONNECTED',
-      rtcConnectionError: null,
     };
     devices = [unconfiguredDevice].concat(devices);
   }
@@ -778,6 +817,45 @@ function DEVICE_RTC_CONNECTIONCLOSED(
   };
 }
 
+function rtcMediaStreamAddedRemoved(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_RTC_MEDIASTREAMADDED' | 'DEVICE_RTC_MEDIASTREAMREMOVED', RTCMediaStreamResult>
+): MessagesState {
+  const {deviceId, label, stream} = action.payload;
+  let {devices} = state.DEVICES;
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+
+  let attr = null;
+  switch (label) {
+  case 'preview':
+    attr = 'rtcPreviewStreamId';
+    break;
+  case 'video':
+    attr = 'rtcVideoStreamId';
+    break;
+  default:
+    return state;
+  }
+
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    [attr]: action.type === 'DEVICE_RTC_MEDIASTREAMADDED' ? stream.id : null,
+  };
+
+  return {
+    ...state,
+    DEVICES: {
+      ...state.DEVICES,
+      devices,
+    },
+  };
+}
+
+
 export const reducer = handleActions({
   AUTH_RESTORE: handleAuthAction,
   AUTH_SIGNIN_WITH_PASSWORD: handleAuthAction,
@@ -787,6 +865,7 @@ export const reducer = handleActions({
   NETWORK_SERVER_REACHABLE,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER_SERVER,
+  DEVICE_BLE_CONNECT,
   DEVICE_BLE_CONNECTED,
   DEVICE_BLE_DISCONNECTED,
   DEVICE_BLE_ERROR,
@@ -798,4 +877,6 @@ export const reducer = handleActions({
   DEVICE_CONFIG_REGISTERED,
   DEVICE_RTC_SIGNAL,
   DEVICE_RTC_CONNECTIONCLOSED,
+  DEVICE_RTC_MEDIASTREAMADDED: rtcMediaStreamAddedRemoved,
+  DEVICE_RTC_MEDIASTREAMREMOVED: rtcMediaStreamAddedRemoved,
 }, initialState);

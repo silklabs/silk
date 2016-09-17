@@ -72,14 +72,14 @@ static AppState *singletonInstance;
 }
 
 -(void) _updateDeviceStatus: (NSDictionary*) deviceStatus {
-  NSNumber *deviceConfigId = deviceStatus[@"deviceConfigId"];
-  NSString *deviceId = deviceStatus[@"deviceId"];
+  id deviceConfigId = deviceStatus[@"deviceConfigId"];
+  id deviceId = deviceStatus[@"deviceId"];
   NSMutableDictionary* deviceInfo;
   
   // Use previous deviceInfo if exists, else create one.
-  if (![deviceId isKindOfClass:[NSNull class]] && [_devices objectForKey:deviceId]) {
+  if (deviceId != [NSNull null] && _devices[deviceId]) {
     deviceInfo = _devices[deviceId];
-  } else if (![deviceConfigId isKindOfClass:[NSNull class]] && [_devices objectForKey:[deviceConfigId stringValue]]) {
+  } else if (deviceConfigId != [NSNull null] && _devices[[deviceConfigId stringValue]]) {
     deviceInfo = _devices[[deviceConfigId stringValue]];
   } else {
     deviceInfo = [[NSMutableDictionary alloc] init];
@@ -96,29 +96,30 @@ static AppState *singletonInstance;
   deviceInfo[@"bleConnectionError"] = deviceStatus[@"bleConnectionError"];
   deviceInfo[@"rtcConnectionStatus"] = deviceStatus[@"rtcConnectionStatus"];
   deviceInfo[@"rtcConnectionError"] = deviceStatus[@"rtcConnectionError"];
+  deviceInfo[@"rtcPreviewStreamId"] = deviceStatus[@"rtcPreviewStreamId"];
 
   // If ble channel is not connected, the wifi and connection details are invalid, clear them
   // TODO: move wifi channel info in here and remove.
   if (![deviceInfo[@"bleConnectionStatus"] isEqualToString: @"CONNECTED"]) {
-    deviceInfo[@"wifiStatus"] = [[NSNull alloc] init];
-    deviceInfo[@"wifiSSID"] = [[NSNull alloc] init];
-    deviceInfo[@"wifiLevel"] = [[NSNull alloc] init];
-    deviceInfo[@"wifiError"] = [[NSNull alloc] init];
-    deviceInfo[@"serverStatus"] = [[NSNull alloc] init];
-    deviceInfo[@"serverError"] = [[NSNull alloc] init];
+    deviceInfo[@"wifiStatus"] = [NSNull null];
+    deviceInfo[@"wifiSSID"] = [NSNull null];
+    deviceInfo[@"wifiLevel"] = [NSNull null];
+    deviceInfo[@"wifiError"] = [NSNull null];
+    deviceInfo[@"serverStatus"] = [NSNull null];
+    deviceInfo[@"serverError"] = [NSNull null];
     
-    deviceInfo[@"updateState"]  = [[NSNull alloc] init];
-    deviceInfo[@"updateError"]  = [[NSNull alloc] init];
-    deviceInfo[@"updateDownloadRemainingSec"]  = [[NSNull alloc] init];
+    deviceInfo[@"updateState"] = [NSNull null];
+    deviceInfo[@"updateError"] = [NSNull null];
+    deviceInfo[@"updateDownloadRemainingSec"]  = [NSNull null];
   }
   
   // Keep deviceStatus in dictionary for easy access, key off of both deviceConfigId and
   // deviceId as they can be indexed both ways as their state changes
-  if (![deviceConfigId isKindOfClass:[NSNull class]]) {
+  if (deviceConfigId != [NSNull null]) {
     NSLog(@"AppState: Adding device using deviceConfigId (%@) %@", deviceConfigId, deviceInfo);
     _devices[[deviceConfigId stringValue]] = deviceInfo;
   }
-  if (![deviceId isKindOfClass:[NSNull class]]) {
+  if (deviceId != [NSNull null]) {
     NSLog(@"AppState: Adding device using deviceId (%@) %@", deviceId, deviceInfo);
     _devices[deviceId] = deviceInfo;
   }
@@ -184,7 +185,7 @@ static AppState *singletonInstance;
     NSString *deviceId = connectionDetails[@"deviceId"];
     NSMutableDictionary* deviceInfo = _devices[deviceId];
 
-    deviceInfo[@"paired"]= connectionDetails[@"paired"];
+    deviceInfo[@"paired"] = connectionDetails[@"paired"];
     deviceInfo[@"wifiStatus"] = connectionDetails[@"wifiStatus"];
     deviceInfo[@"wifiSSID"] = connectionDetails[@"wifiSSID"];
     deviceInfo[@"wifiLevel"] = connectionDetails[@"wifiLevel"];

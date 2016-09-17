@@ -21,13 +21,8 @@ import type {
   DeviceConfig,
   UnregisterRegisteredDeviceResult,
   RegisterConfiguringDeviceResult,
+  RTCMediaStreamResult,
 } from './device_actions';
-
-type RTCMediaStreamEvent = {
-  deviceId: string;
-  label: string;
-  stream: MediaStream;
-};
 
 export type RegisteredDevice = {
   deviceId: string;
@@ -967,7 +962,7 @@ function rtcMediaStreamToggle(
 
 function rtcMediaStreamAddedRemoved(
   state: DevicesState,
-  action: SimpleAction<'DEVICE_RTC_MEDIASTREAMADDED' | 'DEVICE_RTC_MEDIASTREAMREMOVED', RTCMediaStreamEvent>
+  action: SimpleAction<'DEVICE_RTC_MEDIASTREAMADDED' | 'DEVICE_RTC_MEDIASTREAMREMOVED', RTCMediaStreamResult>
 ): DevicesState {
   const {deviceId, label, stream} = action.payload;
   if (!state.registered || !state.registered.has(deviceId)) {

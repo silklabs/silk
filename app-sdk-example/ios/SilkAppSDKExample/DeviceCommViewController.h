@@ -13,5 +13,7 @@
 @property (nonatomic) NSString *deviceKey;
 @property (weak, nonatomic) IBOutlet UILabel *statusText;
 @property (weak, nonatomic) IBOutlet UITextView *logTextView;
+@property (weak, nonatomic) IBOutlet UIView *previewView;
+@property (weak, nonatomic) IBOutlet UIButton *togglePreviewButton;
 
 @end

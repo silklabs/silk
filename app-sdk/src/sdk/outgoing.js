@@ -75,6 +75,8 @@ export type DeviceStatusMessage = {
   bleConnectionError: ?BLEConnectionError;
   rtcConnectionStatus: ?ConnectionStatus;
   rtcConnectionError: ?RTCConnectionError;
+  rtcPreviewStreamId: ?string;
+  rtcVideoStreamId: ?string;
 };
 
 export type DeviceListMessage = {

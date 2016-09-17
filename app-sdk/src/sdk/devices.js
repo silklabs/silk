@@ -20,6 +20,7 @@ import type {
   DeviceWifiListMessage,
   DeviceWifiSetMessage,
   DeviceWifiGetInfoMessage,
+  DeviceMediaStreamMessage,
 } from './incoming';
 
 // Incoming messages:
@@ -61,6 +62,8 @@ function DEVICE_CONFIG_ABORT(
   invariant(configuring.socketId === message.deviceConfigId);
   store.dispatch(actions.devices.config.abort());
 }
+
+// TODO: send DEVICE_CONFIG_ERROR for incorrect wifi password (if we even can?)
 
 function DEVICE_BLE_CONNECT(
   store: SDKStore,
@@ -180,7 +183,34 @@ function DEVICE_MESSAGE(
   channel.emit('message', payload);
 }
 
-// TODO: send DEVICE_CONFIG_ERROR for incorrect wifi password (if we even can?)
+function DEVICE_RTC_PREVIEW_ENABLE(
+  store: SDKStore,
+  message: DeviceMediaStreamMessage,
+) {
+  store.dispatch(actions.devices.rtc.previewEnable(message.deviceId));
+}
+
+function DEVICE_RTC_PREVIEW_DISABLE(
+  store: SDKStore,
+  message: DeviceMediaStreamMessage,
+) {
+  store.dispatch(actions.devices.rtc.previewDisable(message.deviceId));
+}
+
+function DEVICE_RTC_VIDEO_ENABLE(
+  store: SDKStore,
+  message: DeviceMediaStreamMessage,
+) {
+  store.dispatch(actions.devices.rtc.videoEnable(message.deviceId));
+}
+
+function DEVICE_RTC_VIDEO_DISABLE(
+  store: SDKStore,
+  message: DeviceMediaStreamMessage,
+) {
+  store.dispatch(actions.devices.rtc.videoDisable(message.deviceId));
+}
+
 
 export const messageHandlers = {
   DEVICE_CONFIG_ACCEPT,
@@ -194,6 +224,10 @@ export const messageHandlers = {
   DEVICE_WIFI_LIST,
   DEVICE_WIFI_SET,
   DEVICE_WIFI_GETINFO,
+  DEVICE_RTC_PREVIEW_ENABLE,
+  DEVICE_RTC_PREVIEW_DISABLE,
+  DEVICE_RTC_VIDEO_ENABLE,
+  DEVICE_RTC_VIDEO_DISABLE,
 };
 
 export function init(store: SDKStore) {

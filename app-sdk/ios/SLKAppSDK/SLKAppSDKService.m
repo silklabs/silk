@@ -7,6 +7,7 @@
 #import "RCTAssert.h"
 #import "RCTBridge.h"
 #import "RCTBridgeDelegate.h"
+#import "WebRTCModule.h"
 
 #import "SLKAppSDKService.h"
 #import "SLKAppSDKDelegate.h"
@@ -78,6 +79,12 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
     return;
   }
   [_eventEmitter sendEventWithName:@"silkAppSDKMessage" body:message];
+}
+
+- (RTCMediaStream *)getMediaStreamForID:(NSString *)streamID
+{
+  WebRTCModule *module = [_bridge moduleForClass:[WebRTCModule class]];
+  return module.mediaStreams[streamID];
 }
 
 // RCTBridgeDelegate

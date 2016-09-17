@@ -31,7 +31,7 @@ import 'whatwg-fetch'; // window.fetch() polyfill for iOS
 
 import AudioStudio from './components/AudioStudio';
 import AVPipeline from './components/AVPipeline';
-import CameraVideoMSE from './components/CameraVideoMSE';
+import CameraVideo from './components/CameraVideo';
 import FindCrashById from './components/FindCrashById';
 import Diag from './components/Diag';
 import Login from './components/Login';
@@ -67,7 +67,7 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/crashById/:crashId" component={FindCrashById} />
         <Route onEnter={loginCheck} path="/diag/:deviceId" component={Diag} />
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />
-        <Route onEnter={loginCheck} path="/video/:deviceId" component={CameraVideoMSE} />
+        <Route onEnter={loginCheck} path="/video/:deviceId" component={CameraVideo} />
         <Route onEnter={loginCheck} path="/audiostudio/:deviceId" component={AudioStudio} />
         <Route onEnter={loginCheck} path="/webrtc/:deviceId" component={WebRTCVideoList} />
         <Route onEnter={loginCheck} path="/datachannel/:deviceId" component={DataChannel} />

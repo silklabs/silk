@@ -6,17 +6,27 @@
 //  Copyright © 2016 Silk Labs. All rights reserved.
 //
 
+#import <WebRTC/RTCEAGLVideoView.h>
+#import <WebRTC/RTCVideoTrack.h>
 #import "DeviceCommViewController.h"
 #import "AppState.h"
 
 @implementation DeviceCommViewController {
   AppState* appState;
   SLKAppSDKService *silkService;
+  RTCEAGLVideoView *previewRenderer;
+  BOOL addedPreviewRenderer;
 }
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  
+
+  previewRenderer = [[RTCEAGLVideoView alloc] init];
+  previewRenderer.clipsToBounds = YES;
+  [self.previewView addSubview:previewRenderer];
+  previewRenderer.frame = self.previewView.bounds;
+  addedPreviewRenderer = NO;
+
   self.title = [NSString stringWithFormat: @"Device Comms %@", self.deviceKey];
   
   appState = [AppState getInstance];
@@ -43,10 +53,31 @@
     [text appendFormat:@"%@\n%@\n", message[@"direction"], message[@"payload"]];
   }
 
-  // Dispatch to main thread for snappy UI updates
+  NSString *togglePreviewButtonLabel;
+
+  id previewStreamId = deviceInfo[@"rtcPreviewStreamId"];
+  if (previewStreamId && previewStreamId != [NSNull null]) {
+    togglePreviewButtonLabel = @"Disable Preview";
+
+    if (!addedPreviewRenderer) {
+      RTCMediaStream *stream = [silkService getMediaStreamForID:previewStreamId];
+      if (stream && stream.videoTracks.count) {
+        RTCVideoTrack *videoTrack = stream.videoTracks[0];
+        [videoTrack addRenderer:previewRenderer];
+        addedPreviewRenderer = YES;
+      }
+    }
+  } else {
+    togglePreviewButtonLabel = @"Enable Preview";
+    addedPreviewRenderer = NO;
+  }
+
   dispatch_async(dispatch_get_main_queue(), ^{
     self.statusText.text = status;
     self.logTextView.text = text;
+    if (![_togglePreviewButton.currentTitle isEqualToString:togglePreviewButtonLabel]) {
+      [_togglePreviewButton setTitle:togglePreviewButtonLabel forState:UIControlStateNormal];
+    }
   });
 }
 
@@ -65,7 +96,20 @@
   // Add message so it can be displayed in the TextView
   [appState addDeviceMessage:echoMessage andDirection:@"sent" forDeviceId:deviceId];
 
-  [appState updateStatus:@"Sent MESSAGE"];
+  [appState updateStatus:@"Sent DEVICE_MESSAGE"];
+}
+
+- (IBAction)onTogglePreviewPress:(id)sender {
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:self.deviceKey];
+  NSString *msgType;
+  id previewStreamId = deviceInfo[@"rtcPreviewStreamId"];
+  if (previewStreamId && previewStreamId != [NSNull null]) {
+    msgType = @"DEVICE_RTC_PREVIEW_DISABLE";
+  } else {
+    msgType = @"DEVICE_RTC_PREVIEW_ENABLE";
+  }
+  [silkService postMessage:@{@"type": msgType, @"deviceId": deviceInfo[@"deviceId"]}];
+  [appState updateStatus:[NSString stringWithFormat:@"Sent %@", msgType]];
 }
 
 

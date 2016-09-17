@@ -96,6 +96,7 @@ static AppState *singletonInstance;
   deviceInfo[@"bleConnectionError"] = deviceStatus[@"bleConnectionError"];
   deviceInfo[@"rtcConnectionStatus"] = deviceStatus[@"rtcConnectionStatus"];
   deviceInfo[@"rtcConnectionError"] = deviceStatus[@"rtcConnectionError"];
+  deviceInfo[@"rtcPreviewStreamId"] = deviceStatus[@"rtcPreviewStreamId"];
 
   // If ble channel is not connected, the wifi and connection details are invalid, clear them
   // TODO: move wifi channel info in here and remove.

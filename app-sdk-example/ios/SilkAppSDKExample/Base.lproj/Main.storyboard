@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="10117" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="QEk-jP-JEk">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="10116" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="QEk-jP-JEk">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -199,6 +199,10 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="12"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textView>
+                            <view contentMode="scaleToFill" ambiguous="YES" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FQl-V9-vpq" userLabel="Preview">
+                                <rect key="frame" x="120" y="180" width="360" height="240"/>
+                                <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                            </view>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="J4G-bN-1Pc">
                                 <rect key="frame" x="100" y="72" width="480" height="28"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="9"/>
@@ -222,12 +226,21 @@
                                     <action selector="onSendEchoPress:" destination="lRC-P8-wL1" eventType="touchUpInside" id="hdT-Ab-HOA"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="be8-u5-6ox">
+                                <rect key="frame" x="114" y="104" width="151" height="30"/>
+                                <state key="normal" title="Enable Preview"/>
+                                <connections>
+                                    <action selector="onTogglePreviewPress:" destination="lRC-P8-wL1" eventType="touchUpInside" id="YPW-bV-bFI"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstItem="FQl-V9-vpq" firstAttribute="centerY" secondItem="jkw-FS-quw" secondAttribute="centerY" id="2IT-DH-mug"/>
                             <constraint firstItem="gkd-Gy-RNB" firstAttribute="top" secondItem="q6I-fT-oJo" secondAttribute="bottom" constant="11" id="H2b-3P-adp"/>
                             <constraint firstItem="J4G-bN-1Pc" firstAttribute="top" secondItem="q6I-fT-oJo" secondAttribute="bottom" constant="8" symbolic="YES" id="I8B-o3-fcc"/>
                             <constraint firstItem="4gJ-8X-8gE" firstAttribute="bottom" secondItem="88I-hj-oIM" secondAttribute="top" id="O6a-CE-pt3"/>
+                            <constraint firstItem="FQl-V9-vpq" firstAttribute="centerX" secondItem="jkw-FS-quw" secondAttribute="centerX" id="PLB-af-msL"/>
                             <constraint firstItem="gkd-Gy-RNB" firstAttribute="centerY" secondItem="J4G-bN-1Pc" secondAttribute="centerY" id="QbF-ZU-mnF"/>
                             <constraint firstItem="J4G-bN-1Pc" firstAttribute="leading" secondItem="gkd-Gy-RNB" secondAttribute="trailing" constant="38" id="Tfd-Xn-x6n"/>
                             <constraint firstItem="gkd-Gy-RNB" firstAttribute="leading" secondItem="jkw-FS-quw" secondAttribute="leadingMargin" id="Y82-3H-pIk"/>
@@ -241,7 +254,9 @@
                     </view>
                     <connections>
                         <outlet property="logTextView" destination="4gJ-8X-8gE" id="wjQ-kE-IXe"/>
+                        <outlet property="previewView" destination="FQl-V9-vpq" id="uMy-YN-EkE"/>
                         <outlet property="statusText" destination="J4G-bN-1Pc" id="DXV-gH-lgD"/>
+                        <outlet property="togglePreviewButton" destination="be8-u5-6ox" id="ShX-MV-PyC"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="2Cx-fp-Ab2" userLabel="First Responder" sceneMemberID="firstResponder"/>

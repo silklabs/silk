@@ -107,7 +107,6 @@ type DataChannels = {
   diag: ChannelEventEmitter;
   mic: ChannelEventEmitter;
   objects: ChannelEventEmitter;
-  preview: ChannelEventEmitter;
   video: ChannelEventEmitter;
 };
 
@@ -136,7 +135,6 @@ export default class Timeline extends EventEmitter {
   liveDiag: boolean = false;
   liveMic: boolean = false;
   liveVideo: boolean = false;
-  livePreview: boolean = false;
   liveObjects: boolean = false;
 
   diagFrameFilter: string;
@@ -196,7 +194,6 @@ export default class Timeline extends EventEmitter {
       case 'diag':
       case 'mic':
       case 'objects':
-      case 'preview':
       case 'video':
         // This data is all live, so if the peer can't keep then just drop
         // packets rather than building up a backlog
@@ -281,15 +278,6 @@ export default class Timeline extends EventEmitter {
     this.liveDiag = liveDiag;
 
     this.liveVideo = this.channels.video.open;
-
-    const livePreview = this.channels.preview.open;
-    if (!this.livePreview && livePreview) {
-      // Force the last preview image to be transmitted immediately, to provide
-      // the client with a preview image as quick as possible when the camera
-      // first connects.
-      this._pushPreview(0, null, false);
-    }
-    this.livePreview = livePreview;
 
     const liveMic = this.channels.mic.open;
     if (!this.liveMic && liveMic) {
@@ -636,15 +624,6 @@ export default class Timeline extends EventEmitter {
       usingLastFrame = true;
       frame = this.lastPreviewFrame;
       when = this.lastPreviewFrameWhen;
-    }
-
-    if (this.livePreview) {
-      this.channels.preview.emit('jpeg', {
-        when,
-        deviceEmitMs: Date.now(),
-        frame,
-        durationMs: PREVIEW_UPLOAD_INTERVAL_MS,
-      });
     }
 
     if (this.diagJpegFrames.length > 0) {

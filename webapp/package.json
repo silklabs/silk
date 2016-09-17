@@ -80,7 +80,7 @@
   },
   "scripts": {
     "build": "webpack --progress",
-    "lint": "eslint src",
+    "lint": "eslint --fix src",
     "preinstall": "../npm_preinstall",
     "postinstall": "../npm_postinstall && ./tools/patch && npm run build",
     "start": "webpack-dev-server --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300",

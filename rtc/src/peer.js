@@ -363,6 +363,11 @@ export default class Peer extends EventEmitter {
   }
 
   destroy() {
+    this._mediaStreams.forEach((state, label) => {
+      if (state.local) {
+        this.removeStream(label);
+      }
+    });
     this._manager.destroy();
   }
 

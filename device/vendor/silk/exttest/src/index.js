@@ -68,7 +68,6 @@ export default class Env {
         diag: new ChannelEventEmitter('diag', connections),
         mic: new ChannelEventEmitter('mic', connections),
         objects: new ChannelEventEmitter('objects', connections),
-        preview: new ChannelEventEmitter('preview', connections),
         video: new ChannelEventEmitter('video', connections),
       }
     );

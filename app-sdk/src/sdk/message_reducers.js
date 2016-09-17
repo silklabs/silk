@@ -69,6 +69,19 @@ const deviceStatusTemplate = {
   rtcVideoStreamId: null,
 };
 
+const connectionTemplate: DeviceConnectionDetailsMessage = {
+  type: 'DEVICE_CONNECTION_DETAILS',
+  deviceId: null,
+  accountDeviceNumber: null,
+  paired: false,
+  wifiStatus: null,
+  wifiSSID: null,
+  wifiLevel: null,
+  wifiError: null,
+  serverStatus: null,
+  serverError: null,
+};
+
 function handleAuthAction(
   state: MessagesState,
   action: Action<AuthActionTypes, *, boolean>
@@ -255,6 +268,35 @@ function DEVICE_REGISTERED_UNREGISTER_SERVER(
   };
 }
 
+function DEVICE_BLE_CONNECT(
+  state: MessagesState,
+  action: SimpleAction<'DEVICE_BLE_CONNECT', string>
+): MessagesState {
+  const deviceId = action.payload;
+  invariant(deviceId);
+  let {devices} = state.DEVICES;
+
+  const index = devices.findIndex((device) => device.deviceId === deviceId);
+  if (index === -1) {
+    return state;
+  }
+
+  devices = devices.slice();
+  devices[index] = {
+    ...devices[index],
+    bleConnectionStatus: 'CONNECTING',
+  };
+
+  return {
+    ...state,
+    DEVICES: {
+      ...state.DEVICES,
+      devices,
+    },
+  };
+}
+
+
 function DEVICE_BLE_CONNECTED(
   state: MessagesState,
   action: SimpleAction<'DEVICE_BLE_CONNECTED', DeviceSession>
@@ -262,19 +304,6 @@ function DEVICE_BLE_CONNECTED(
   const session = action.payload;
   let connections = state.CONNECTIONS;
   let {devices} = state.DEVICES;
-
-  const connectionTemplate: DeviceConnectionDetailsMessage = {
-    type: 'DEVICE_CONNECTION_DETAILS',
-    deviceId: null,
-    accountDeviceNumber: null,
-    paired: false,
-    wifiStatus: null,
-    wifiSSID: null,
-    wifiLevel: null,
-    wifiError: null,
-    serverStatus: null,
-    serverError: null,
-  };
 
   if (session.isUnauthorized) {
     invariant(session.isRegistered);
@@ -836,6 +865,7 @@ export const reducer = handleActions({
   NETWORK_SERVER_REACHABLE,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER_SERVER,
+  DEVICE_BLE_CONNECT,
   DEVICE_BLE_CONNECTED,
   DEVICE_BLE_DISCONNECTED,
   DEVICE_BLE_ERROR,

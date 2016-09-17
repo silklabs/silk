@@ -21,6 +21,7 @@ WHITELIST=$(cat <<-EOF
   app-config
   app-sdk
   app-sdk-example
+  app-util
   async-utils
   azure-storage
   babeldeps

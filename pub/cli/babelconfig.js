@@ -1,5 +1,8 @@
 #! /usr/bin/env node
 
+/* eslint-disable no-var */
+/* eslint-disable flowtype/require-valid-file-annotation */
+
 'use strict';
 
 var path = require('path');

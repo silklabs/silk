@@ -23,7 +23,7 @@ type InputConfig = {
 
 export type Config = {
   plugins: Array<string>;
-}
+};
 
 const GLOBAL_ROOT = path.resolve('~/.silk/');
 const PLUGIN_PREFIX = 'silk-plugin-';

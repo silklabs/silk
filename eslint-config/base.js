@@ -1,5 +1,8 @@
 module.exports = {
-  "extends": ["eslint:recommended", "plugin:silk/recommended"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:flowtype/recommended"
+  ],
   "parserOptions": {
     "ecmaVersion": 7,
     "ecmaFeatures": {
@@ -7,7 +10,7 @@ module.exports = {
     }
   },
   "plugins": [
-    "silk"
+    "flowtype"
   ],
   "env": {
     "es6": true,
@@ -74,13 +77,16 @@ module.exports = {
     "key-spacing": [2, {"beforeColon": false, "afterColon": true}],
     "new-cap": 2,
     "new-parens": 2,
-    "quotes": [2, "single", { "avoidEscape": true, "allowTemplateLiterals": true }],
+    "quotes": [2, "single", {"avoidEscape": true, "allowTemplateLiterals": true}],
     "semi": 2,
     "semi-spacing": [2, {"before": false, "after": true}],
     "space-infix-ops": 2,
     "keyword-spacing": 2,
     "space-unary-ops": [2, {"words": true, "nonwords": false}],
     "strict": 0,
-    "yoda": 0
+    "yoda": 0,
+    "flowtype/delimiter-dangle": [2, "always-multiline"],
+    "flowtype/require-valid-file-annotation": [2, "always"],
+    "flowtype/semi": [2, "always"]
   }
 };

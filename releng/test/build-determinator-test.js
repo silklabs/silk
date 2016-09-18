@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 import assert from 'assert';
 
 import './mock-github';

@@ -1,9 +1,9 @@
 {
   "extends": "eslint-config-silk",
+  "env": {
+    "mocha": true
+  },
   "globals": {
     "Generator": true
-  },
-  "rules": {
-    "silk/flow": 0
   }
 }

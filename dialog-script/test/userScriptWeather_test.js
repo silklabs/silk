@@ -1,4 +1,6 @@
-/* global suite, suiteSetup, suiteTeardown, setup, test */
+/**
+ * @flow
+ */
 
 import {UserScriptTester} from './utils';
 
@@ -18,32 +20,32 @@ suite(`userScript`, () => {
   setup(done => {
     setTimeout(() => {
       tester.setup();
-      done();
+      done && done();
     }, 500);
   });
 
   test(`Demo test - Test weather with zipcode`, async (done) => {
     tester.speak(`How's the weather in 92131?`);
     await tester.listenCheck(`^It's currently`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test weather with city name`, async (done) => {
     tester.speak(`How's the weather in San Diego?`);
     await tester.listenCheck(`^It's currently.*San Diego$`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test weather with stored city name`, async (done) => {
     tester.speak(`How's the weather today?`);
     await tester.listenCheck(`^It's currently.*San Diego$`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test weather 1 - clear`, async (done) => {
     tester.speak(`clear zipcode`);
     await tester.listenCheck(`Cleared location`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test weather 2`, async (done) => {
@@ -52,24 +54,24 @@ suite(`userScript`, () => {
 
     tester.speak(`94103`);
     await tester.listenCheck(`^It's currently`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test weather 3`, async (done) => {
     tester.speak(`What's the weather like today?`);
     await tester.listenCheck(`^It's currently`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test weather 4 - clear`, async (done) => {
     tester.speak(`clear zipcode`);
     await tester.listenCheck(`Cleared location`, `idle`);
-    done();
+    done && done();
   });
 
   test(`Demo test - Test weather with zipcode spelled out`, async (done) => {
     tester.speak(`How's the weather in nine two one three one?`);
     await tester.listenCheck(`^It's currently`, `idle`);
-    done();
+    done && done();
   });
 });

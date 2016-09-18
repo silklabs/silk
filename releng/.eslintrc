@@ -5,7 +5,6 @@
     "mocha": true
   },
   "rules": {
-    "camelcase": 0,
-    "silk/flow": 0
+    "camelcase": 0
   }
 }

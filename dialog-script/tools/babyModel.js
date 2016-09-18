@@ -1,3 +1,7 @@
+/**
+ * @flow
+ */
+
 'use strict';
 
 let createLog = require('silk-log');

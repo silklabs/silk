@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 'use strict';
 
 let https = require('https');

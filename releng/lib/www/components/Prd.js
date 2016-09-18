@@ -1,3 +1,7 @@
+/**
+ * @noflow
+ */
+
 import React from 'react';
 import {
   Alert,

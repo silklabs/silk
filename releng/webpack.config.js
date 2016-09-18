@@ -1,3 +1,5 @@
+/* eslint-disable silk/flow */
+
 'use strict';
 
 let webpack = require('webpack');

@@ -8,7 +8,7 @@
  *  - Remove fuzzy option as we don't need it to avoid bringing 'clj-fuzzy' dependency
  *  - Lint fixes
  *
- * @noFlow
+ * @noflow
  */
 
 const COUNT = {
@@ -90,9 +90,11 @@ const NUMBER_WORDS = Object.keys(COUNT)
   .concat(Object.keys(MAGNITUDE))
   .concat(['and', 'point']);
 
-const clean = word => word.replace(',', '');
+function clean(word) {
+  return word.replace(',', '');
+}
 
-const extractNumberRegions = words => {
+function extractNumberRegions(words) {
   const reduced = words
     .map(word => NUMBER_WORDS.indexOf(clean(word).toLowerCase()) > -1)
     .reduce((acc, isNumberWord, i) => {
@@ -107,13 +109,13 @@ const extractNumberRegions = words => {
       return acc;
     }, {regions: [], start: null});
   return reduced.start === 0 && !reduced.regions.length ? 'whole' : reduced.regions;
-};
+}
 
-const convertWordsToDecimal = words =>
-  words.map(word => COUNT[word])
-    .join('');
+function convertWordsToDecimal(words) {
+  return words.map(word => COUNT[word]).join('');
+}
 
-const convertWordsToNonDecimal = words => {
+function convertWordsToNonDecimal(words) {
   const reduced = words.reduce((acc, word) => {
     const cleanWord = clean(word);
     if (cleanWord === 'and') {
@@ -141,17 +143,17 @@ const convertWordsToNonDecimal = words => {
   return reduced.pairs.reduce((acc, pair) =>
     acc + COUNT[pair.count] * MAGNITUDE[pair.magnitude]
   , COUNT[reduced.count] || 0) + reduced.extra;
-};
+}
 
-const convertSpelledOutWords = words => {
+function convertSpelledOutWords(words) {
   const reduced = words.reduce((acc, word) => {
     const cleanWord = clean(word);
     return acc + (COUNT[cleanWord] ? COUNT[cleanWord].toString() : MAGNITUDE[cleanWord].toString());
   }, '');
   return reduced;
-};
+}
 
-const convertWordsToNumber = (words, opts) => {
+function convertWordsToNumber(words, opts) {
   words = words.map(word => word.toLowerCase());
   const pointIndex = words.indexOf('point');
   if (pointIndex > -1) {
@@ -164,7 +166,7 @@ const convertWordsToNumber = (words, opts) => {
   } else {
     return convertWordsToNonDecimal(words);
   }
-};
+}
 
 export default function wordsToNumbers(text, options) {
   const opts = Object.assign({spell: false}, options);

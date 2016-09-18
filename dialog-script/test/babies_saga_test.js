@@ -1,6 +1,6 @@
-/* global suite */
-/* global setup */
-/* global test */
+/**
+ * @noflow
+ */
 
 import assert from 'assert';
 import {channel} from 'redux-saga';

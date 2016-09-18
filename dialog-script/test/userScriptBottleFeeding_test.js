@@ -1,4 +1,6 @@
-/* global suite, suiteSetup, suiteTeardown, setup, test */
+/**
+ * @flow
+ */
 
 import invariant from 'assert';
 

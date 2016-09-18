@@ -27,7 +27,7 @@ type Mic = EventEmitter & {
   pause(): void;
   resume(): void;
   getAudioStream(): Readable;
-}
+};
 
 const log = createLog(`dialog-audio`);
 

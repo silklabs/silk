@@ -23,17 +23,17 @@ type ConvertType = {
   typeName: string;
   types: Array<string>;
   flow: string;
-}
+};
 
 type ConvertArrayType = {
   types: Array<string>;
   typeName: string;
-}
+};
 
 export function convertObject(
   name: string,
   input: any,
-  seenNames: {[key: string]: bool} = {}
+  seenNames: {[key: string]: boolean} = {}
 ): ConvertType {
   if (name in seenNames) {
     // XXX: Lame but this is an unlikely case...

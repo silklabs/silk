@@ -46,7 +46,7 @@ type Metadata = {
 
 type MetadataId = {
   id: string;
-}
+};
 
 export default class TimeMetadata extends Base {
 

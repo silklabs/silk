@@ -12,7 +12,7 @@ suite('loadConfig', () => {
       metrics: {
         type: 'account',
         tags: { },
-      }
+      },
     });
     const defaultUrl = api.config.serverUrl;
     api.accessToken = 'Open Sesame';

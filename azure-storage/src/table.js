@@ -44,7 +44,7 @@ export type Entity = {[key: string]: any} | {
   RowKey: string;
   PartitionKey: string;
   ETag?: string;
-}
+};
 
 const SHARED_AUTH_SIGNED_HEADERS = new Set([
   'Content-MD5',
@@ -272,7 +272,7 @@ export class TableClient extends HttpClient {
   }
 
   async queryTables(): Promise<{
-    value: Array<{ TableName: string }>
+    value: Array<{ TableName: string }>;
   }> {
     let res = await this.request(['Tables', {
       method: 'GET',

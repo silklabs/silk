@@ -100,7 +100,7 @@ export default class CompositeTableClient {
   /**
    * HOOK for subclass to use to validate clients...
    */
-  _validateClients(): bool {
+  _validateClients(): boolean {
     return true;
   }
 

@@ -14,7 +14,7 @@ type Props = {
   reason: string;
   // Was the capture process restarted
   captureRestart: boolean;
-}
+};
 
 export default class CameraRestart extends Metric {
 

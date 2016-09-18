@@ -3,9 +3,6 @@
   "env": {
     "mocha": true
   },
-  "rules": {
-    "comma-dangle": 0
-  },
   "ecmaFeatures": {
     "modules": true
   }

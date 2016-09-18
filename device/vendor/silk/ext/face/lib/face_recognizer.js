@@ -32,9 +32,9 @@ const LBPH_GRID_Y = 8;
 
 
 export default class FaceRecognizer {
-  _loading: bool = false;
-  _predicting: bool = false;
-  _training: bool = false;
+  _loading: boolean = false;
+  _predicting: boolean = false;
+  _training: boolean = false;
 
   _faceMap: ?{[key: FaceId]: string} = null;
   _trainer: Trainer;
@@ -62,7 +62,7 @@ export default class FaceRecognizer {
    * Check if training data and face map is available.
    * If not train for available faces
    */
-  async _init(forceTraining: bool = true) {
+  async _init(forceTraining: boolean = true) {
     this._loading = true;
     this._faceMap = null;
 

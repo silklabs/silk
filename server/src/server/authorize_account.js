@@ -14,7 +14,7 @@ const log = createLog('authorize:account');
 
 export type AuthorizeAccountConfig = {
   accounts: Accounts;
-}
+};
 
 export default function (ctx: AuthorizeAccountConfig, overrides: ?MiddlewareOverrides): MiddlewareFn {
   const method = async (publicKey: string, req: any): Promise<?string> => {

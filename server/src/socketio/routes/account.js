@@ -20,12 +20,12 @@ type Session = {
   account: AccountRecord;
   socket: Socket;
   publicKey: string;
-}
+};
 
 type CommandMessage = {
   id: ?string;
   // ... any things...
-}
+};
 
 // XXX: Should this name be namespaced?
 const ROOM_NAMES_REGEX = /(diag|video|preview|mic|objects)-([0-9a-f]+)/;

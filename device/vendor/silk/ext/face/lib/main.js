@@ -21,8 +21,8 @@ let timeline;
 
 class Main {
   lastFaceDetect: number = 0;
-  processingMotion: bool = false;
-  processingPreview: bool = false;
+  processingMotion: boolean = false;
+  processingPreview: boolean = false;
 
   constructor(env) {
     camera = env.camera;

@@ -33,7 +33,7 @@ const log = createLog('network_status');
 
 const CHECK_INTERVAL_MS = 2000; // 2s
 const MAX_CHECK_INTERVAL_MS = 1000 * 60 * 5; // 5min
-const IS_ONLINE = (): Promise<bool> => {
+const IS_ONLINE = (): Promise<boolean> => {
   return new Promise((accept, reject) => {
     checkOnline((err, value) => {
       if (err) {
@@ -45,7 +45,7 @@ const IS_ONLINE = (): Promise<bool> => {
   });
 };
 
-export type IsOnLineTest = () => Promise<bool>;
+export type IsOnLineTest = () => Promise<boolean>;
 
 export class NetworkStatus extends EventEmitter {
   /**
@@ -66,10 +66,10 @@ export class NetworkStatus extends EventEmitter {
   _wifi: Wifi | StubWifi;
 
   // function to check if we are online or not ...
-  _isOnlineFn: () => Promise<bool>;
+  _isOnlineFn: () => Promise<boolean>;
 
   // internal flag when we are online/offline ...
-  _online: ?bool = null; // set to null so first check will set online/offline event
+  _online: ?boolean = null; // set to null so first check will set online/offline event
 
   // how often to check if we are online again ...
   _checkIntervalMS: ?number = null;
@@ -90,7 +90,7 @@ export class NetworkStatus extends EventEmitter {
    * @memberof silk-netstatus
    * @instance
    */
-  get online(): bool {
+  get online(): boolean {
     return !!this._online;
   }
 
@@ -182,7 +182,7 @@ export class NetworkStatus extends EventEmitter {
     this._changeOnlineStatus(false);
   };
 
-  _changeOnlineStatus(online: bool) {
+  _changeOnlineStatus(online: boolean) {
     // Only emit the event if there is a state change.
     let event = (online) ? 'online' : 'offline';
     let shouldEmitEvent = (online !== this._online) ?

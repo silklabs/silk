@@ -50,7 +50,7 @@ export type RegisterConfiguringDeviceInput = {
 };
 
 export type RegisterConfiguringDeviceResult = {
-  success: bool;
+  success: boolean;
   type: string;
   name: string;
   beaconUUID: ?string;

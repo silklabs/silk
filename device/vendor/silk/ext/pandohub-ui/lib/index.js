@@ -59,8 +59,8 @@ class PandoHubUi {
   alertTimer: ?number;
   nightlight: ?Nightlight;
   ring: ?Ring;
-  rendering: bool;
-  renderReentered: bool;
+  rendering: boolean;
+  renderReentered: boolean;
   renderReenteredAlert: ?Alert;
   factoryResetUi: FactoryResetUi;
 

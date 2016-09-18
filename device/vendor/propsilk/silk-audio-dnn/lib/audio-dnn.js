@@ -69,12 +69,12 @@ export type OnAudioEvent = (when: number, confidence: number, pcmData: Buffer) =
  */
 export default class AudioDnn extends EventEmitter {
   _netCaffe: caffe.Model;
-  _spotting: bool = false;
-  _predicting: bool = false;
+  _spotting: boolean = false;
+  _predicting: boolean = false;
   _extractor: MelFeatureExtractor;
   _framer: Framer;
   _output: Array<Float32Array>;
-  _sampleRate:number;
+  _sampleRate: number;
   _bytesPerSample: number;
   _numChannels: number;
   _pcmDataArray: Array<Buffer>;

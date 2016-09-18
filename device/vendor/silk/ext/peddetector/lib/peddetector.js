@@ -29,7 +29,7 @@ class Peddetector {
   _env: Env;
   _netCaffe: caffe.Model;
   _onMotion: Function;
-  working: bool = false;
+  working: boolean = false;
 
   constructor(env: Env) {
     this._env = env;

@@ -58,7 +58,7 @@ export type ConfigData = {
   deviceNumber: number;
   registrarPublicKey: string;
   serverUrl: string;
-}
+};
 
 export type ConnectionType = 'wifi' | 'server';
 

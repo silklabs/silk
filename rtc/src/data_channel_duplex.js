@@ -11,7 +11,7 @@ const log = createLog('rtc:data_channel_duplex');
 
 export default class DataChannelDuplex extends Duplex {
   _dataChannel: RTCDataChannel;
-  _ended: bool = false;
+  _ended: boolean = false;
 
   constructor(dc: RTCDataChannel) {
     super();
@@ -42,7 +42,7 @@ export default class DataChannelDuplex extends Duplex {
     });
   }
 
-  _write(data: string|Buffer, enc: string, callback: Function): boolean {
+  _write(data: string | Buffer, enc: string, callback: Function): boolean {
     this._dataChannel.send(data);
     callback();
     return true;

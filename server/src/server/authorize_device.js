@@ -14,7 +14,7 @@ const log = createLog('authorize:device');
 
 export type AuthorizeDeviceConfig = {
   devices: Devices;
-}
+};
 
 export default function (ctx: AuthorizeDeviceConfig, options: ?MiddlewareOverrides): MiddlewareFn {
   const method = async (publicKey: string, req: any): Promise<?string> => {

@@ -57,7 +57,7 @@ function getCascadeRects(cascade: any, im: Matrix): Promise<Array<FaceRect>> {
 }
 
 export default class FaceDetector extends EventEmitter {
-  _busy: bool = false;
+  _busy: boolean = false;
 
   constructor(env, haarCascade = HAAR, dlibLandmark = DLIB_LANDMARK) {
     super();

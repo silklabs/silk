@@ -16,7 +16,7 @@ import * as util from 'silk-sysutils';
 
 class Volume extends EventEmitter {
   _level: number;
-  _mute: bool;
+  _mute: boolean;
 
   constructor() {
     super();

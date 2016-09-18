@@ -15,12 +15,12 @@ const log = createLog(`script-generic-stock-saga`);
 
 export type CurrentStockPrice = {
   price: number,
-  change: number
+  change: number,
 };
 
 type CurrentStockName = {
   ticker: string,
-  name: string
+  name: string,
 };
 
 function fetchStockTicker(stock: string): Promise<CurrentStockName> {

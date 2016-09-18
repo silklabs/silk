@@ -32,7 +32,7 @@ function isIPv4(val: string) {
 export class AdbScanner extends EventEmitter {
   _adbHosts: Array<AdbHostInfo> = [];
   _bonjour: Object; // TODO: Flowify Bonjour class
-  _active: bool = false;
+  _active: boolean = false;
   _serialno: ?string;
 
   constructor(serialno: ?string) {
@@ -41,7 +41,7 @@ export class AdbScanner extends EventEmitter {
     this._serialno = serialno;
   }
 
-  _ignoreHost(hostname: string): bool {
+  _ignoreHost(hostname: string): boolean {
     if (!this._serialno) {
       return false;
     }

@@ -64,7 +64,7 @@ export class ExpressRoutes {
               res.status(500).send({
                 code: 500,
                 id,
-                message: `Internal error (id: ${id})`
+                message: `Internal error (id: ${id})`,
               });
               return res;
             }

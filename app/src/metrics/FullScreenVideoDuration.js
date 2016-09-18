@@ -6,7 +6,7 @@ import {Metric, MetricTypes} from 'silk-api';
 
 type Props = {
   durationMs: MetricTypes.Integer;
-}
+};
 
 export default class FullScreenVideo extends Metric {
   static NAME = 'ios_fullscreen_video_duration';

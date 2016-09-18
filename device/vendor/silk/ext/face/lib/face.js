@@ -34,7 +34,7 @@ export type FaceRect = {
     y: number;
     width: number;
     height: number;
-  }
+  },
 };
 
 export type FaceId = number; // index into face database
@@ -63,7 +63,7 @@ export class Face {
   _curAvgSize: number;
   _doneCollectingFaces: boolean;
   _exponentialMovingAverage: Function;
-  _movementTrackingEnabled: bool = false;
+  _movementTrackingEnabled: boolean = false;
   _heartrate: HeartRate;
 
   // Who this face has been recognized as

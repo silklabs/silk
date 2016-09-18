@@ -43,7 +43,7 @@ type CameraClipRecorderState = {
   mode: CameraClipRecorderMode;
   availableClips: Array<string>; // List of available clips to load
   msg: string; // Something to display to the diag user (eg, result of last op)
-  repeat: bool; // True if the replay should repeat once at the end
+  repeat: boolean; // True if the replay should repeat once at the end
 };
 
 type CameraClipFrameImages = [
@@ -66,7 +66,7 @@ export default class CameraClipRecorder {
   state: CameraClipRecorderState;
   _diag: ChannelEventEmitter;
   _camera: Camera;
-  _liveDiag: bool;
+  _liveDiag: boolean;
 
   _frames: CBuffer<CameraClipFrameImages>;
   _framePosition: number;
@@ -375,7 +375,7 @@ export default class CameraClipRecorder {
     }
   }
 
-  setRepeat(enabled: bool): void {
+  setRepeat(enabled: boolean): void {
     this.state.repeat = enabled;
     this._onStateChange();
   }

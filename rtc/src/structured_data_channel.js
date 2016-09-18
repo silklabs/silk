@@ -39,7 +39,7 @@ type PendingFrame = {
   when: number;
 };
 
-function isBinary(value: any): bool {
+function isBinary(value: any): boolean {
   // Note this will return true for ArrayBuffer, TypedArray (and Buffers).
   return value instanceof ArrayBuffer || ArrayBuffer.isView(value);
 }
@@ -100,7 +100,7 @@ export default class StructuredDataChannel extends EventEmitter {
     return this._channel.bufferedAmount;
   }
 
-  get open(): bool {
+  get open(): boolean {
     invariant(this._channel);
     return this._channel.readyState === 'open';
   }
@@ -266,7 +266,7 @@ export default class StructuredDataChannel extends EventEmitter {
     emit.call(this, frame.type, frame.payload);
   };
 
-  emit(type: string, data: mixed): bool {
+  emit(type: string, data: mixed): boolean {
     if (MIRROR_EVENTS.has(type)) {
       throw new Error(`Cannot emit with event name: '${type}' (reserved).`);
     }

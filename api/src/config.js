@@ -7,7 +7,7 @@
 import {branch} from 'silk-core-version';
 
 const DEFAULTS = {
-  serverUrl: `https://silk-server-${branch}.herokuapp.com`
+  serverUrl: `https://silk-server-${branch}.herokuapp.com`,
 };
 
 export default function configure(input) {

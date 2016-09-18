@@ -11,7 +11,7 @@ import type {StateWithApi} from './api';
 
 function genCanReachServer(
   state: StateWithApi
-): Promise<bool> {
+): Promise<boolean> {
   const {api} = state;
   invariant(api);
   return api.canReachServer();

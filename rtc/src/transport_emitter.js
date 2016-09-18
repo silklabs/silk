@@ -86,7 +86,7 @@ export default class TransportEmitter extends EventEmitter {
     }
   }
 
-  emit(name: string, ...data: Array<mixed>): bool {
+  emit(name: string, ...data: Array<mixed>): boolean {
     log.info(`writing: ${name}`);
     // $FlowFixMe: .write can handle objects :/
     this._transport.write([name, ...data]);

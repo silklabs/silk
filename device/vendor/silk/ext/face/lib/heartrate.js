@@ -42,7 +42,7 @@ export default class HeartRate {
   _cr: CBuffer<number>;
   _when: CBuffer<number>;
   _frameCount: number;
-  _busy: bool = false;
+  _busy: boolean = false;
   _averageBpm: Function;
 
   constructor(env: Env, face: Face) {

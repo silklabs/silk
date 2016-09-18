@@ -59,7 +59,7 @@ export type ConnectionsState =
 export class ChannelEventEmitter extends EventEmitter {
   _label: string;
   _connections: Connections;
-  _open: bool = false;
+  _open: boolean = false;
 
   maxBufferedAmount: number = Infinity;
 
@@ -75,7 +75,7 @@ export class ChannelEventEmitter extends EventEmitter {
     //       low.
   }
 
-  get open(): bool {
+  get open(): boolean {
     return this._open;
   }
 
@@ -126,7 +126,7 @@ export class ChannelEventEmitter extends EventEmitter {
     }
   }
 
-  emit(event: string, payload: Object): bool {
+  emit(event: string, payload: Object): boolean {
     let sent = false;
     if (!this._open) {
       log.info('Ignoring', event, 'on closed channel:', this._label);
@@ -158,7 +158,7 @@ export default class Connections extends EventEmitter {
   _reconnectTimer: ?number = null;
   _reconnectSleep: number = 0;
   _reconnectAttempts: number = 0;
-  _running: bool = false;
+  _running: boolean = false;
   _serversTable: ?SasCompositeClient;
   _serverUrl: ?string;
   _mux: ?MultiplexStream = null;
@@ -179,7 +179,7 @@ export default class Connections extends EventEmitter {
   /**
    * Connected to the signaling server?
    */
-  get connected(): bool {
+  get connected(): boolean {
     if (!this._ws) {
       return false;
     }
@@ -190,7 +190,7 @@ export default class Connections extends EventEmitter {
   /**
    * 1 or more peers connected?
    */
-  get peerConnected(): bool {
+  get peerConnected(): boolean {
     return this._connections.size > 0;
   }
 
@@ -285,7 +285,7 @@ export default class Connections extends EventEmitter {
   /**
    * TODO: Deprecate send() in favor of .getChannel()
    */
-  send(channelName: string, event: string, payload: Object): bool {
+  send(channelName: string, event: string, payload: Object): boolean {
     let sent = false;
     for (let recipient of this._connections) {
       const channel = recipient.getChannel(channelName);

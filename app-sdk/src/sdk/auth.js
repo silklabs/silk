@@ -19,7 +19,7 @@ export type AccountLogin = {
 };
 
 export type AccountLogoutMessage = {
-  type: 'ACCOUNT_LOGOUT'
+  type: 'ACCOUNT_LOGOUT';
 };
 
 function ACCOUNT_LOGIN_PASSWORD(

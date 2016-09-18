@@ -25,7 +25,7 @@ suite('flow conversions', function() {
       isString: Joi.string().required(),
       isBool: Joi.bool().required(),
       isNumber: Joi.number().required(),
-      isArray: Joi.array().items(Joi.string().required()).required()
+      isArray: Joi.array().items(Joi.string().required()).required(),
     });
 
     let jsonSchema = joiToJsonSchema(schema);
@@ -47,8 +47,8 @@ type ILikeStructs = {
 
     let schema = Joi.object().keys({
       arr: Joi.array().items(Joi.object().keys({
-        name: Joi.string()
-      })).required()
+        name: Joi.string(),
+      })).required(),
     });
 
     let jsonSchema = joiToJsonSchema(schema);
@@ -79,10 +79,10 @@ type ILikeStructs = {
       complex: Joi.object().keys({
         foo: Joi.object().keys({
           bar: Joi.object().keys({
-            string: Joi.string().required()
-          })
-        }).required()
-      }).required()
+            string: Joi.string().required(),
+          }),
+        }).required(),
+      }).required(),
     });
 
     let jsonSchema = joiToJsonSchema(schema);

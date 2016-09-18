@@ -61,7 +61,7 @@ export class Bool {
     'f',
     'F',
     'false',
-    'FALSE'
+    'FALSE',
   ]);
 
   static stringify(value) {

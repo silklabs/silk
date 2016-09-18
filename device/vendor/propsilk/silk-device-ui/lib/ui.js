@@ -9,7 +9,7 @@
 import assert from 'assert';
 import events from 'events';
 import Input from 'silk-input';
-import lights, {Light} from 'silk-lights';
+import lights from 'silk-lights';
 import {Movie} from 'silk-movie';
 import Vibrator from 'silk-vibrator';
 import factoryReset from 'silk-factory-reset';
@@ -44,7 +44,7 @@ export class Ui extends events.EventEmitter {
   currentMovieName: string;
   backlightTimer: ?number = null;
   idleTimer: ?number = null;
-  idle: bool = true;
+  idle: boolean = true;
 
   constructor() {
     super();
@@ -252,7 +252,7 @@ export class Ui extends events.EventEmitter {
     return true;
   }
 
-  isIdle(): bool {
+  isIdle(): boolean {
     return this.idle;
   }
 

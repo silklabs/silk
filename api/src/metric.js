@@ -18,7 +18,7 @@ export function sanitizeTagValue(value: string): string {
   return value.replace(TAG_SANITIZE, '\\$1');
 }
 
-export type Convertable = string|boolean|Integer|Float;
+export type Convertable = string | boolean | Integer | Float;
 export type StringToConvertableDict = {[key: string]: Convertable};
 export type StringToStringDict = {[key: string]: string};
 export type Point =

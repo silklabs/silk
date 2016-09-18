@@ -29,7 +29,7 @@ suite('metrics', function() {
       bar: string;
       float: Float;
       int: Integer;
-      bool: bool;
+      bool: boolean;
     };
 
     class MyFoo extends BaseMetric {
@@ -49,7 +49,7 @@ suite('metrics', function() {
       bar: 'string',
       int: new Integer(1),
       float: new Float(1),
-      bool: true
+      bool: true,
     });
 
     assert.deepEqual(instance.toJSON(), [
@@ -59,8 +59,8 @@ suite('metrics', function() {
         bar: `"string"`,
         int: '1i',
         float: '1.0',
-        bool: 'true'
-      }
+        bool: 'true',
+      },
     ]);
   });
 

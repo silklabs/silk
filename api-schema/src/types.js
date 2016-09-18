@@ -13,7 +13,7 @@ const PARAM = /:[^/]+/g;
 
 const PARAMS = Joi.array().items(Joi.object().keys({
   name: Joi.string().required(),
-  description: Joi.string()
+  description: Joi.string(),
 }).unknown(false));
 
 /**
@@ -28,7 +28,7 @@ export class HttpAction {
     path: Joi.string().required(),
     input: Joi.object().description('Joi instance'),
     output: Joi.object().description('Joi instance'),
-    params: PARAMS
+    params: PARAMS,
   }).required();
 
   /**
@@ -109,7 +109,7 @@ export class HttpApi {
     name: Joi.string(),
     description: Joi.string(),
     prefix: Joi.string(),
-    params: PARAMS
+    params: PARAMS,
   }).required();
 
   /**

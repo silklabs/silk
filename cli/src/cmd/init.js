@@ -71,7 +71,7 @@ export let init = {
     let indexPath = path.join(argv.destination, 'index.js');
     let deviceFilePath = path.join(argv.destination, 'device.js');
     let questions: {
-      properties: {[key: string]: Object}
+      properties: {[key: string]: Object},
     } = {
       // XXX: If this is trying to replace npm init then we should add all the
       // same stuff it does...

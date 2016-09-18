@@ -8,6 +8,9 @@
  * the appropriate steps.
  */
 
+/* eslint-disable no-var */
+/* eslint-disable flowtype/require-valid-file-annotation */
+
 const fs = require('fs');
 const path = require('path');
 

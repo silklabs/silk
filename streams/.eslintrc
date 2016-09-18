@@ -3,8 +3,5 @@
   "env": {
     "mocha": true,
     "browser": true
-  },
-  "ecmaFeatures": {
-    "modules": true
   }
 }

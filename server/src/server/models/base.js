@@ -2,6 +2,11 @@
 import * as Joi from 'joi';
 import createLog from 'silk-log';
 
+export const PUBLIC_KEY_SCHEMA = Joi.string().hex().required();
+export const FIND_BY_PUBLIC_KEY_SCHEMA = Joi.object({
+  publicKey: PUBLIC_KEY_SCHEMA,
+}).required();
+
 const log = createLog('models:base');
 
 export type ErrorState = {
@@ -36,6 +41,9 @@ class SchemaError extends Error {
  * Provides basic structure for classes which deal with our datastore.
  */
 export default class Base {
+
+  static PUBLIC_KEY_SCHEMA = PUBLIC_KEY_SCHEMA;
+  static FIND_BY_PUBLIC_KEY_SCHEMA = FIND_BY_PUBLIC_KEY_SCHEMA;
 
   static INDEX: any;
   static COLLECTION: string;
@@ -90,16 +98,14 @@ export default class Base {
    * @return {Object} error object with type set to ERROR value.
    */
   error(name: string): ErrorState {
-    let error = this.constructor.ERROR[name];
-    if (!error) {
+    const type = this.constructor.ERROR[name];
+    if (!type) {
       throw new Error(`Attempted to use unknown error type: ${name}`);
     }
 
     // TODO: Add more robust ids or messages.
     return {
-      error: {
-        type: error,
-      },
+      error: {type},
     };
   }
 

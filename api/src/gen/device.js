@@ -36,6 +36,7 @@ export type GetSasForSignalingInput = {
 export type GetSasForSignalingOutput = {
  publicUrl: ?string;
  sas: Array<any>;
+ messages: Array<string>;
 };
 
 export type CompleteRegistrationInput = {
@@ -45,7 +46,7 @@ export type CompleteRegistrationInput = {
 
 export type CompleteRegistrationOutput = {
  success: bool;
- accountDeviceNumber: number;
+ accountDeviceNumber: ?number;
  beaconUUID: ?string;
 };
 
@@ -55,6 +56,12 @@ export type UnregisterInput = {
 
 export type UnregisterOutput = {
  success: bool;
+};
+
+export type AcknowledgeMessageInput = {
+};
+
+export type AcknowledgeMessageOutput = {
 };
 
 export default class Device extends BaseClass {
@@ -136,6 +143,19 @@ export default class Device extends BaseClass {
   unregister(payload: UnregisterInput): Promise<UnregisterOutput> {
     let method = 'post';
     let url = '/v1/device/unregister';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Acknowledge processing the oldest message
+
+  @param Object payload of request
+  */
+  acknowledgeMessage(payload: AcknowledgeMessageInput): Promise<AcknowledgeMessageOutput> {
+    let method = 'post';
+    let url = '/v1/device/message_ack';
     // Perform url subtitutions:
 
     return this._apiRequestWithBody(method, url, payload);

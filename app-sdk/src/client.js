@@ -88,7 +88,8 @@ function initRegisteredDevices(store: Store<*>) {
       return;
     }
 
-    // See if there are any new devices.
+    // See if there are any new clients or devices.
+    store.dispatch(actions.clients.fetchList());
     store.dispatch(actions.devices.registered.fetchList());
   }
   store.subscribeToPath('auth.isAuthenticated', ensureDeviceConnection);

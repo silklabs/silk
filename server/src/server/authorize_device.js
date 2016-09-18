@@ -18,10 +18,7 @@ export type AuthorizeDeviceConfig = {
 
 export default function (ctx: AuthorizeDeviceConfig, options: ?MiddlewareOverrides): MiddlewareFn {
   const method = async (publicKey: string, req: any): Promise<?string> => {
-    let device = await ctx.devices.findByPublicKey({
-      publicKey,
-    });
-
+    const device = await ctx.devices.findByPublicKey(publicKey);
     if (!device) {
       log.warn(`${req.url}: Unauthorized device '${publicKey}'`);
       return null;

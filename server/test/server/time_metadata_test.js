@@ -61,7 +61,7 @@ suite('time metadata apis', () => {
 
     test('find/bytime/after - with wrong account', async () => {
       let secondAccount = await context.testAccount();
-      await context.httpErrCode(401, async () => {
+      await context.httpErrCode(403, async () => {
         await secondAccount.api.metadata.findOneAfterTime({
           deviceId: id,
           metaType: 'video',

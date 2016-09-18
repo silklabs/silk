@@ -9,11 +9,13 @@ import {handleActions} from 'redux-actions';
 
 import emitter from './emitter';
 
+import type {ListClientsOutput} from 'silk-api/src/gen/account';
 import type {ListDevicesOutput} from 'silk-api/src/gen/account';
 import type {Action, SimpleAction} from 'silk-redux/action';
 import type {Peer} from 'silk-rtc';
 
 import type {
+  ClientListMessage,
   ClientStatusMessage,
   DeviceConnectionDetailsMessage,
   DeviceListMessage,
@@ -27,6 +29,7 @@ import type {
 
 export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,
+  CLIENTS: ClientListMessage,
   DEVICES: DeviceListMessage,
   // For unconfigured devices and devices that we already paired with
   // we send these messages when the device's connection status
@@ -46,6 +49,10 @@ const initialState: MessagesState = {
     clientConnectionError: null,
     clientAuthStatus: 'NOT_AUTHENTICATED',
     clientAuthError: null,
+  },
+  CLIENTS: {
+    type: 'CLIENT_LIST',
+    clients: [],
   },
   DEVICES: {
     type: 'DEVICE_LIST',
@@ -792,6 +799,62 @@ function DEVICE_RTC_SIGNAL(
   };
 }
 
+function CLIENTS_LIST_FETCH(
+  state: MessagesState,
+  action: Action<'CLIENTS_LIST_FETCH', void, ListClientsOutput>
+): MessagesState {
+  if (action.requested) {
+    return state;
+  }
+  if (action.error) {
+    // Not much we can do here...
+    return state;
+  }
+
+  const {clients: oldClients} = state.CLIENTS;
+  invariant(oldClients);
+  invariant(Array.isArray(oldClients));
+
+  const oldKeys = new Set(oldClients.map((client) => client.id));
+
+  const {clients: newClients} = action.payload;
+  invariant(newClients);
+  invariant(Array.isArray(newClients));
+
+  let newClient = false;
+
+  const clients = [];
+
+  newClients.forEach((client) => {
+    const {publicKey: id, userAgent: name} = client;
+
+    if (oldKeys.has(id)) {
+      oldKeys.delete(id);
+    } else {
+      newClient = true;
+    }
+
+    clients.push({
+      id,
+      name,
+      // TODO: Fix with server support.
+      deviceType: '',
+    });
+  });
+
+  if (newClient || oldKeys.size) {
+    return {
+      ...state,
+      CLIENTS: {
+        ...state.CLIENTS,
+        clients,
+      },
+    };
+  }
+
+  return state;
+}
+
 function DEVICE_RTC_CONNECTIONCLOSED(
   state: MessagesState,
   action: SimpleAction<'DEVICE_RTC_CONNECTIONCLOSED', string>
@@ -863,6 +926,7 @@ export const reducer = handleActions({
   AUTH_CREATEACCOUNT: handleAuthAction,
   AUTH_SIGNOUT,
   NETWORK_SERVER_REACHABLE,
+  CLIENTS_LIST_FETCH,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER_SERVER,
   DEVICE_BLE_CONNECT,

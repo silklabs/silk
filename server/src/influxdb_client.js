@@ -160,7 +160,7 @@ export default class InfluxDB {
    * Usual warnings about query languages apply do not allow abitrary input
    * without a very good reason...
    */
-  async query(ql: string): Promise<{results?: Object, error?: Object}> {
+  async query(ql: string): Promise<{results?: Object, error?: string}> {
     log.verbose('query', ql);
     let res = await this.request('query', {
       q: ql.trim(),

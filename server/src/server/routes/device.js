@@ -5,6 +5,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Router } from 'express';
 import * as Joi from 'joi';
 import { expressApi } from 'silk-api-schema';
@@ -16,6 +17,13 @@ import authorizeDevice from '../authorize_device';
 import authorizeUnregisteredDevice from '../authorize_unregistered_device';
 
 import type { ExpressRoutes } from 'silk-api-schema';
+import type {
+  GetFactoryResetMessageOutput,
+  GetSasForSignalingOutput,
+  CompleteRegistrationOutput,
+  UnregisterOutput,
+  AcknowledgeMessageOutput,
+} from 'silk-api/src/gen/device';
 import type { RouteContext } from '../server';
 
 const log = createLog('routes:device');
@@ -60,7 +68,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
   }, async (req, res) => {
     const {device} = req;
     const factoryResetMessage = device.factoryResetMessage || null;
-    res.send({factoryResetMessage});
+    const output: GetFactoryResetMessageOutput = {factoryResetMessage};
+    res.send(output);
   });
 
   api.define({
@@ -89,8 +98,16 @@ export default function (ctx: RouteContext): ExpressRoutes {
       ))*/
       publicUrl: Joi.string().optional(), // not requried
       sas: Joi.array().items(Joi.any()).required(),
+      messages: Joi.array().items(Joi.string()).required(),
     }).required(),
   }, async (req, res) => {
+    const messages = await devices.getMessages(req.publicKey);
+    if (messages.error) {
+      log.warn('Failed to get messages', req.publicKey, messages.error);
+      res.sendStatus(404);
+      return;
+    }
+
     // 6 hours in the future ...
     let expiration = new Date(Date.now() + 1000 * 60 * 60 * 6);
 
@@ -100,10 +117,13 @@ export default function (ctx: RouteContext): ExpressRoutes {
       { expiration, signedPermissions: 'r' }
     );
 
-    res.respond({
+    const output: GetSasForSignalingOutput = {
       publicUrl: ctx.config.signaling.publicUrl,
       sas,
-    });
+      messages,
+    };
+
+    res.respond(output);
   });
 
   api.define({
@@ -114,47 +134,73 @@ export default function (ctx: RouteContext): ExpressRoutes {
     description: 'Complete registration of the deivce',
     output: Joi.object().keys({
       success: Joi.boolean().required(),
-      accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.required(),
+      accountDeviceNumber: Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA,
       beaconUUID: Joi.string().guid(),
     }).required(),
     input: Joi.object().keys({
       // _account_ public key...
-      registrarPublicKey: Joi.string().hex().required(),
+      registrarPublicKey: Devices.PUBLIC_KEY_SCHEMA,
       // registration token to use...
       registrationToken: Joi.string(),
     }).required(),
   }, async (req, res) => {
+    const {registrarPublicKey, registrationToken} = req.body;
     // First we need to find the account that this device belongs to so we can
     // validate the registration token.
-    let account = await ctx.accounts.findByPublicKey({
-      publicKey: req.body.registrarPublicKey,
-    });
+    const account = await ctx.accounts.findByPublicKey(registrarPublicKey);
 
     if (!account) {
       // No account...
-      log.info(
-        `Attempted to register device to non-existant account`, account.id
+      log.warn(
+        `Attempted to register device to non-existant account`,
+        req.device.accessToken.publicKey,
+        registrarPublicKey,
+        registrationToken,
       );
       res.sendStatus(400);
       return;
     }
 
-    let result = await devices.validateRegistration(req.body.registrarPublicKey, {
-      publicKey: req.device.accessToken.publicKey,
-      registrationToken: req.body.registrationToken,
-    });
-
-    if (!result.error) {
-      log.info('validated registration', req.device.accountId);
-      res.respond({
-        success: true,
-        accountDeviceNumber: result.accountDeviceNumber,
-        beaconUUID: account.beaconUUID,
-      });
+    if (!account._id.equals(req.device.accountId)) {
+      // Wrong account...
+      log.warn(
+        `Attempted to register device to the wrong account`,
+        req.device.accessToken.publicKey,
+        req.device.accountId,
+        account._id,
+        registrarPublicKey,
+        registrationToken,
+      );
+      res.sendStatus(403);
       return;
     }
-    log.verbose('Failed to register device', req.device.accountId);
-    res.respond({ success: false });
+
+    let result = await devices.validateRegistration(registrarPublicKey, {
+      publicKey: req.device.accessToken.publicKey,
+      registrationToken: registrationToken,
+    });
+
+    if (result.error) {
+      log.verbose('Failed to register device', req.device.accountId);
+      const output: CompleteRegistrationOutput = {
+        success: false,
+        accountDeviceNumber: null,
+        beaconUUID: null,
+      };
+      res.respond(output);
+      return;
+    }
+
+    log.info('validated registration', req.device.accountId);
+    invariant(result.accountDeviceNumber);
+
+    const output: CompleteRegistrationOutput = {
+      success: true,
+      accountDeviceNumber: result.accountDeviceNumber,
+      beaconUUID: account.beaconUUID,
+    };
+
+    res.respond(output);
   });
 
   api.define({
@@ -170,18 +216,39 @@ export default function (ctx: RouteContext): ExpressRoutes {
       success: Joi.boolean().required(),
     }).required(),
   }, async (req, res) => {
-    let result = await devices.unregister({
+    const result = await devices.unregister({
       publicKey: req.publicKey,
       factoryResetMessage: req.body.factoryResetMessage,
     });
 
-    if (!result || result.error) {
-      log.info('Failed to unregister device', );
-      res.respond({ success: false });
+    if (result.error) {
+      log.warn('Failed to unregister device', req.publicKey, result.error);
+      const output: UnregisterOutput = {success: false};
+      res.respond(output);
       return;
     }
 
-    res.respond({ success: true });
+    const output: UnregisterOutput = {success: true};
+    res.respond(output);
+  });
+
+  api.define({
+    path: 'message_ack',
+    method: 'post',
+    params: [],
+    name: 'acknowledgeMessage',
+    description: 'Acknowledge processing the oldest message',
+    input: Joi.object().required(),
+    output: Joi.object().required(),
+  }, async (req, res) => {
+    const result = await devices.acknowledgeMessage(req.publicKey);
+    if (result.error) {
+      log.warn('Failed to acknowledge message', req.publicKey, result.error);
+      res.sendStatus(404);
+      return;
+    }
+    const output: AcknowledgeMessageOutput = {};
+    res.respond(output);
   });
 
   return api;

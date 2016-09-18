@@ -5,6 +5,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import { Router } from 'express';
 import * as Joi from 'joi';
 import { expressApi } from 'silk-api-schema';
@@ -12,10 +13,25 @@ import createLog from 'silk-log';
 
 import sharedRoutes from './shared';
 import authorizeAccount from '../authorize_account';
+import Accounts from '../models/accounts';
 import Devices from '../models/devices';
 
 import type { ExpressRoutes } from 'silk-api-schema';
+import type {
+  WhoamiOutput,
+  RegisterDeviceOutput,
+  ListDevicesOutput,
+  UnregisterDeviceOutput,
+  QueryMetricsOutput,
+  GetSasForDeviceSignalingOutput,
+  ListClientsOutput,
+  PostMessageOutput,
+  RevokeClientOutput,
+} from 'silk-api/src/gen/account';
+
 import type { RouteContext } from '../server';
+import type {Record as AccountRecord} from '../models/accounts';
+import type {Record as DeviceRecord} from '../models/devices';
 
 const log = createLog('routes:account');
 
@@ -53,12 +69,13 @@ export default function (ctx: RouteContext): ExpressRoutes {
     description: 'Get basic details about the current account',
     input: Joi.object(),
     output: Joi.object().keys({
-      accountId: Joi.string().required(),
+      accountId: Accounts.PUBLIC_KEY_SCHEMA,
     }).required(),
   }, async (req, res) => {
-    res.respond({
+    const output: WhoamiOutput = {
       accountId: req.account._id.toString(),
-    });
+    };
+    res.respond(output);
   });
 
   api.define({
@@ -73,7 +90,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
     }),
     input: Joi.object().keys({
       // publicKey of the _device_
-      devicePublicKey: Joi.string().hex().required(),
+      devicePublicKey: Devices.PUBLIC_KEY_SCHEMA,
       // type of the device...
       type: Devices.TYPE_SCHEMA,
       // name of the device...
@@ -82,7 +99,6 @@ export default function (ctx: RouteContext): ExpressRoutes {
       registrationToken: Joi.string().required(),
     }).required(),
   }, async (req, res) => {
-
     // XXX: Some accounts may not have beaconUUID yet so update them to include
     // it as needed...
     if (!req.account.beaconUUID) {
@@ -111,16 +127,22 @@ export default function (ctx: RouteContext): ExpressRoutes {
       }
     );
 
-    if (!result.error) {
-      log.info('registered device', req.account.id);
-      res.respond({
-        success: true,
-        beaconUUID: req.account.beaconUUID,
-      });
+    if (result.error) {
+      log.warn('Failed to register device', result, req.account);
+      const output: RegisterDeviceOutput = {
+        success: false,
+        beaconUUID: null,
+      };
+      res.respond(output);
       return;
     }
-    log.verbose('Failed to register device', result, req.account);
-    res.respond({ success: false });
+
+    log.info('registered device', req.account.id);
+    const output = {
+      success: true,
+      beaconUUID: req.account.beaconUUID,
+    };
+    res.respond(output);
   });
 
   api.define({
@@ -136,8 +158,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
         registered: Joi.boolean().required(),
         accountDeviceNumber:
           Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.allow(0).required(),
-        publicKey: Joi.string().hex().required(),
-        deviceId: Joi.string().hex().required(),
+        publicKey: Devices.PUBLIC_KEY_SCHEMA,
+        deviceId: Devices.PUBLIC_KEY_SCHEMA,
         lastSeenAt: Joi.date().required(),
       })),
     }),
@@ -145,8 +167,10 @@ export default function (ctx: RouteContext): ExpressRoutes {
       // TODO: Pagination?
     }).required(),
   }, async (req, res) => {
-    let list = await ctx.devices.findAllByAccount(req.account._id);
-    list = list.map((device) => {
+    const recordList: Array<DeviceRecord> =
+      await ctx.devices.findAllByAccount(req.account._id);
+    const devices = recordList.map((device) => {
+      invariant(device.registration);
       return {
         name: device.name,
         type: device.type,
@@ -155,13 +179,13 @@ export default function (ctx: RouteContext): ExpressRoutes {
         publicKey: device.accessToken.publicKey,
         deviceId: device.accessToken.publicKey,
         // TODO: Implement for real but this stub will let us move on for now.
-        lastSeenAt: new Date(),
+        lastSeenAt: (new Date()).toString(),
       };
     });
 
-    res.respond({ devices: list });
+    const output: ListDevicesOutput = {devices};
+    res.respond(output);
   });
-
 
   api.define({
     path: 'unregister_device',
@@ -173,22 +197,36 @@ export default function (ctx: RouteContext): ExpressRoutes {
       success: Joi.boolean().required(),
     }),
     input: Joi.object().keys({
-      devicePublicKey: Joi.string().hex().required(),
+      devicePublicKey: Devices.PUBLIC_KEY_SCHEMA,
       factoryResetMessage: Devices.ONION_SCHEMA.required(),
     }).required(),
   }, async (req, res) => {
-    let result = await ctx.devices.unregister({
-      publicKey: req.body.devicePublicKey,
-      factoryResetMessage: req.body.factoryResetMessage,
-    });
+    const accountId = req.account._id;
+    const {devicePublicKey: publicKey, factoryResetMessage} = req.body;
 
-    if (!result || result.error) {
-      log.info('Failed unregistering device for account', );
-      res.respond({ success: false });
+    const valid = await ctx.devices.belongsToAccount(accountId, publicKey);
+    if (!valid) {
+      log.warn(`Account '${accountId}' is attempting to unregister device ` +
+               `'${publicKey}' that it doesn't own`);
+      res.sendStatus(403);
       return;
     }
 
-    res.respond({ success: true });
+    let result = await ctx.devices.unregister({
+      publicKey,
+      factoryResetMessage,
+    });
+
+    const output: UnregisterDeviceOutput = {success: false};
+
+    if (result.error) {
+      log.warn('Failed unregistering device for account', result);
+      res.respond(output);
+      return;
+    }
+
+    output.success = true;
+    res.respond(output);
   });
 
   api.define({
@@ -200,8 +238,8 @@ export default function (ctx: RouteContext): ExpressRoutes {
     // NOTE: This intentionally is identical to the format that influxdb itself
     // returns we make no attempt to transform or change the output.
     output: Joi.object().keys({
-      results: Joi.any(),
-      error: Joi.string(),
+      results: Joi.object().allow(null),
+      error: Joi.string().allow(null),
     }),
     input: Joi.object().keys({
       query: Joi.string().required(),
@@ -210,18 +248,27 @@ export default function (ctx: RouteContext): ExpressRoutes {
     let {account} = req;
     let scopes = ctx.scopes.accountScopes(account);
     if (scopes.indexOf(METRICS_SCOPES) === -1) {
-      res.sendStatus(401);
       log.warn(`Attempted to query metrics without proper scope ${account.email}`);
+      res.sendStatus(401);
       return;
     }
 
     if (!ctx.influxdb) {
-      res.respond({ error: 'InfluxDB not configured.' });
+      const output: QueryMetricsOutput = {
+        results: null,
+        error: 'InfluxDB not configured',
+      };
+      res.respond(output);
       return;
     }
+
     let {query} = req.body;
-    let result = await ctx.influxdb.query(query);
-    res.respond(result);
+    const queryResults = await ctx.influxdb.query(query);
+    const output: QueryMetricsOutput = {
+      results: queryResults.results || null,
+      error: queryResults.error || null,
+    };
+    res.respond(output);
   });
 
   api.define({
@@ -269,10 +316,143 @@ export default function (ctx: RouteContext): ExpressRoutes {
       }
     );
 
-    res.respond({
+    const output: GetSasForDeviceSignalingOutput = {
       publicUrl: ctx.config.signaling.publicUrl,
       sas,
+    };
+
+    res.respond(output);
+  });
+
+  api.define({
+    path: 'list_clients',
+    method: 'post',
+    params: [],
+    name: 'listClients',
+    description: 'List all registered clients',
+    output: Joi.object().keys({
+      clients: Joi.array().required().items(Joi.object().keys({
+        publicKey: Accounts.PUBLIC_KEY_SCHEMA,
+        userAgent: Joi.string().required(),
+        scopes: Joi.array().items(Joi.string()).required(),
+        issued: Joi.date().required(),
+        expires: Joi.date().required(),
+        lastSeenAt: Joi.date().required(),
+      })),
+    }),
+    input: Joi.object().keys({
+      // TODO: Pagination?
+    }).required(),
+  }, async (req, res) => {
+    const account: AccountRecord = req.account;
+
+    const clients = account.accountTokens.map((accountToken) => {
+      const {publicKey, userAgent, scopes, issued, expires} = accountToken;
+      return {
+        publicKey,
+        userAgent: userAgent || '',
+        scopes: scopes || [],
+        issued: issued.toString(),
+        expires: expires.toString(),
+        // TODO: Implement for real but this stub will let us move on for now.
+        lastSeenAt: (new Date()).toString(),
+      };
     });
+
+    const output: ListClientsOutput = {clients};
+    res.respond(output);
+  });
+
+  api.define({
+    path: 'post_message',
+    method: 'post',
+    params: [],
+    name: 'postMessage',
+    description: 'Deliver a message to a device',
+    output: Joi.object(),
+    input: Joi.object().keys({
+      devicePublicKey: Devices.PUBLIC_KEY_SCHEMA,
+      message: Devices.ONION_SCHEMA.required(),
+    }).required(),
+  }, async (req, res) => {
+    const accountId = req.account._id;
+    const {devicePublicKey: publicKey, message} = req.body;
+
+    const valid = await ctx.devices.belongsToAccount(accountId, publicKey);
+    if (!valid) {
+      log.warn(`Account '${accountId}' is attempting to send a message to ` +
+               `device '${publicKey}' that it doesn't own`);
+      res.sendStatus(403);
+      return;
+    }
+
+    const result = await ctx.devices.addToMailbox({publicKey, message});
+    if (result.error) {
+      log.warn(`addToMailbox failed`, result, publicKey, message);
+    }
+
+    const output: PostMessageOutput = {};
+    res.respond(output);
+  });
+
+  api.define({
+    path: 'revoke_client',
+    method: 'post',
+    params: [],
+    name: 'revokeClient',
+    description: 'Revoke a client',
+    output: Joi.object().keys({
+      success: Joi.boolean().required(),
+    }).required(),
+    input: Joi.object().keys({
+      clientPublicKey: Accounts.PUBLIC_KEY_SCHEMA,
+      revokeClientMessageForDevices: Devices.ONION_SCHEMA.required(),
+    }).required(),
+  }, async (req, res) => {
+    const accountId = req.account._id;
+    const {
+      clientPublicKey: publicKey,
+      revokeClientMessageForDevices: message,
+    } = req.body;
+
+    const clientAccount = await ctx.accounts.findByPublicKey(publicKey);
+    if (!clientAccount) {
+      log.warn(`Account '${accountId}' is attempting to revoke an unknown ` +
+               `client '${publicKey}'`);
+      res.sendStatus(404);
+      return;
+    }
+
+    if (!accountId.equals(clientAccount._id)) {
+      log.warn(`Account '${accountId}' is attempting to revoke client ` +
+               `'${publicKey}' that belongs to a different account ` +
+               `'${clientAccount._id}'`);
+      res.sendStatus(403);
+      return;
+    }
+
+    const result = await ctx.accounts.revokeClient({accountId, publicKey});
+    if (result.error) {
+      log.warn(`revokeClient failed`, result, publicKey, message);
+      const output: RevokeClientOutput = {success: false};
+      res.respond(output);
+      return;
+    }
+
+    const devices = await ctx.devices.findAllByAccount(accountId);
+    for (const device of devices) {
+      const devicePublicKey = device.accessToken.publicKey;
+      const result = ctx.devices.addToMailbox({
+        publicKey: devicePublicKey,
+        message,
+      });
+      if (result.error) {
+        log.warn(`addToMailbox failed`, result, devicePublicKey, message);
+      }
+    }
+
+    const output: RevokeClientOutput = {success: true};
+    res.respond(output);
   });
 
   return api;

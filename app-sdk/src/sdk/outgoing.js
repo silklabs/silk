@@ -151,6 +151,17 @@ export type DeviceUpdateStatusMessage = {
   error: ?Error;
 };
 
+export type ClientInfo = {
+  id: string;
+  name: string;
+  deviceType: string;
+};
+
+export type ClientListMessage = {
+  type: 'CLIENT_LIST';
+  clients: Array<ClientInfo>;
+};
+
 export type OutgoingMessage =
     InitializedMessage
   | MessageErrorMessage

@@ -72,8 +72,11 @@ export type QueryMetricsInput = {
  query: string;
 };
 
+export type QueryMetricsOutputResults = {
+};
+
 export type QueryMetricsOutput = {
- results: any;
+ results: ?QueryMetricsOutputResults;
  error: ?string;
 };
 
@@ -83,6 +86,39 @@ export type GetSasForDeviceSignalingInput = {
 export type GetSasForDeviceSignalingOutput = {
  publicUrl: ?string;
  sas: Array<any>;
+};
+
+export type ListClientsInput = {
+};
+
+export type ListClientsOutputClients = {
+ publicKey: string;
+ userAgent: string;
+ scopes: Array<string>;
+ issued: string;
+ expires: string;
+ lastSeenAt: string;
+};
+
+export type ListClientsOutput = {
+ clients: Array<ListClientsOutputClients>;
+};
+
+export type PostMessageInput = {
+ devicePublicKey: string;
+ message: string;
+};
+
+export type PostMessageOutput = {
+};
+
+export type RevokeClientInput = {
+ clientPublicKey: string;
+ revokeClientMessageForDevices: string;
+};
+
+export type RevokeClientOutput = {
+ success: bool;
 };
 
 export default class Account extends BaseClass {
@@ -190,6 +226,45 @@ export default class Account extends BaseClass {
   getSasForDeviceSignaling(payload: GetSasForDeviceSignalingInput): Promise<GetSasForDeviceSignalingOutput> {
     let method = 'post';
     let url = '/v1/account/sas_signaling_devices';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  List all registered clients
+
+  @param Object payload of request
+  */
+  listClients(payload: ListClientsInput): Promise<ListClientsOutput> {
+    let method = 'post';
+    let url = '/v1/account/list_clients';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Deliver a message to a device
+
+  @param Object payload of request
+  */
+  postMessage(payload: PostMessageInput): Promise<PostMessageOutput> {
+    let method = 'post';
+    let url = '/v1/account/post_message';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Revoke a client
+
+  @param Object payload of request
+  */
+  revokeClient(payload: RevokeClientInput): Promise<RevokeClientOutput> {
+    let method = 'post';
+    let url = '/v1/account/revoke_client';
     // Perform url subtitutions:
 
     return this._apiRequestWithBody(method, url, payload);

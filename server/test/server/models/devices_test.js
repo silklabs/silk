@@ -8,6 +8,8 @@ import Accounts from '../../../src/server/models/accounts';
 import createContext from '../context';
 import AccessToken from 'silk-api/src/access_token';
 
+const invariant = assert;
+
 suite('devices', () => {
   let context = createContext();
 
@@ -50,48 +52,194 @@ suite('devices', () => {
           publicKey: deviceId.toString(),
           registrationToken,
         });
-        assert.ok(result.success);
+        invariant(!result.error);
+        invariant(result.accountDeviceNumber);
       });
 
       test('successfully registers device', async () => {
-        let device = await subject.findByPublicKey({
-          publicKey: deviceId.toString(),
-        });
+        const publicKey = deviceId.toString();
+        const device = await subject.findByPublicKey(publicKey);
+        invariant(device);
         assert.equal(device.registration.complete, true);
         assert.equal(device.accountId.toString(), account.id);
         assert.equal(device.registration.accountDeviceNumber, 1);
         assert(device.factoryResetMessage === undefined);
       });
 
-      test('removes accountDeviceNumber on delete', async () => {
+      test('no device messages at first', async () => {
+        const publicKey = deviceId.toString();
+        let device = await subject.findByPublicKey(publicKey);
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+
+        const messages = await subject.getMessages(publicKey);
+        invariant(Array.isArray(messages));
+        assert.strictEqual(messages.length, 0);
+
+        device = await subject.findByPublicKey(publicKey);
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+      });
+
+      test('device messages', async () => {
+        const publicKey = deviceId.toString();
+        const message1 = new Buffer('foo').toString('base64');
+        const message2 = new Buffer('bar').toString('base64');
+        const message3 = new Buffer('baz').toString('base64');
+
+        let device = await subject.findByPublicKey(publicKey);
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+
+        let result = await subject.addToMailbox({publicKey, message: message1});
+        invariant(!result.error);
+
+        result = await subject.addToMailbox({publicKey, message: message2});
+        invariant(!result.error);
+
+        result = await subject.addToMailbox({publicKey, message: message2});
+        invariant(!result.error);
+
+        // Add duplicate message that won't get added to the db.
+        result = await subject.addToMailbox({publicKey, message: message3});
+        invariant(!result.error);
+
+        let messages = await subject.getMessages(publicKey);
+        invariant(Array.isArray(messages));
+        assert.equal(messages.length, 3);
+        assert.deepEqual(messages, [message1, message2, message3]);
+
+        device = await subject.findByPublicKey(publicKey);
+        invariant(device);
+        assert.deepEqual(device.mailbox, messages);
+
+        while (messages.length) {
+          result = await subject.acknowledgeMessage(publicKey);
+          invariant(!result.error);
+
+          messages.shift();
+
+          const currentMessages = await subject.getMessages(publicKey);
+          invariant(Array.isArray(currentMessages));
+          assert.deepEqual(messages, currentMessages);
+
+          device = await subject.findByPublicKey(publicKey);
+          invariant(device);
+          assert.deepEqual(device.mailbox, messages);
+        }
+
+        messages = await subject.getMessages(publicKey);
+        invariant(Array.isArray(messages));
+        assert.equal(messages.length, 0);
+
+        result = await subject.addToMailbox({publicKey, message: message1});
+        invariant(!result.error);
+
+        messages = await subject.getMessages(publicKey);
+        invariant(Array.isArray(messages));
+        assert.deepEqual(messages, [message1]);
+      });
+
+      test('removes state on delete', async () => {
+        const publicKey = deviceId.toString();
+        let device = await subject.findByPublicKey(publicKey);
+        invariant(device);
+
+        assert.strictEqual(device.registered, true);
+        assert(device.registration.accountDeviceNumber);
+        assert.strictEqual(device.factoryResetMessage, undefined);
+
         const factoryResetMessage = new Buffer('foo').toString('base64');
         await subject.unregister({
-          publicKey: deviceId.toString(),
+          publicKey,
           factoryResetMessage,
         });
 
-        let device = await subject.findByPublicKey({
-          publicKey: deviceId.toString(),
+        device = await subject.findByPublicKey(publicKey);
+        invariant(device);
+
+        assert.strictEqual(device.registered, false);
+        assert.strictEqual(device.registration.accountDeviceNumber, undefined);
+        assert.strictEqual(device.factoryResetMessage, factoryResetMessage);
+      });
+
+      test('removes mailbox on delete', async () => {
+        const publicKey = deviceId.toString();
+        const message = new Buffer('foo').toString('base64');
+
+        let result = await subject.getMessages(publicKey);
+        invariant(Array.isArray(result));
+        assert.strictEqual(result.length, 0);
+
+        result = await subject.addToMailbox({publicKey, message});
+        invariant(!result.error);
+
+        result = await subject.getMessages(publicKey);
+        invariant(Array.isArray(result));
+        assert.deepEqual(result, [message]);
+
+        await subject.unregister({
+          publicKey,
+          factoryResetMessage: new Buffer('foo').toString('base64'),
         });
 
-        assert(device.registration.accountDeviceNumber === undefined);
-        assert.equal(device.factoryResetMessage, factoryResetMessage);
+        const device = await subject.findByPublicKey(publicKey);
+        invariant(device);
+
+        assert.strictEqual(device.mailbox, undefined);
+
+        result = await subject.getMessages(publicKey);
+        invariant(result.error);
+        invariant(result.error.type);
+        assert.equal(result.error.type, 'UnknownDevice');
+      });
+
+      test('device messages after unregister', async () => {
+        const publicKey = deviceId.toString();
+        const message = new Buffer('foo').toString('base64');
+
+        await subject.unregister({
+          publicKey,
+          factoryResetMessage: new Buffer('foo').toString('base64'),
+        });
+
+        let result = await subject.getMessages(publicKey);
+        invariant(result.error);
+        invariant(result.error.type);
+        assert.equal(result.error.type, 'UnknownDevice');
+
+        result = await subject.addToMailbox({publicKey, message});
+        invariant(result.error);
+        invariant(result.error.type);
+        assert.equal(result.error.type, 'UnknownDevice');
+
+        result = await subject.getMessages(publicKey);
+        invariant(result.error);
+        invariant(result.error.type);
+        assert.equal(result.error.type, 'UnknownDevice');
+
+        result = await subject.acknowledgeMessage(publicKey);
+        invariant(result.error);
+        invariant(result.error.type);
+        assert.equal(result.error.type, 'UnknownDevice');
       });
 
     });
 
     test('signature mismatch', async () => {
       const registrationToken = await accountId.genSign('thisisfake');
-      let result = await subject.validateRegistration(accountId.toString(), {
+      const result = await subject.validateRegistration(accountId.toString(), {
         publicKey: deviceId.toString(),
         registrationToken,
       });
-      assert.ok(result.error);
+      invariant(result.error);
+      invariant(result.error.type);
       assert.equal(result.error.type, 'InvalidRegistrationToken');
 
-      let device = await subject.findByPublicKey({
-        publicKey: deviceId.toString(),
-      });
+      const publicKey = deviceId.toString();
+      const device = await subject.findByPublicKey(publicKey);
+      invariant(device);
+
       assert.equal(device.registration.complete, false);
       assert.equal(device.accountId.toString(), account.id);
     });
@@ -126,6 +274,28 @@ suite('devices', () => {
       firstPair.device.accessToken.toString(),
       secondPair.device.accessToken.toString(),
     ), 'mixed matching and not matching');
+  });
+
+  test('device messages with bad id', async () => {
+    const publicKey = (await AccessToken.gen()).toString();
+
+    let result = await subject.getMessages(publicKey);
+    invariant(result.error);
+    invariant(result.error.type);
+    assert.equal(result.error.type, 'UnknownDevice');
+
+    result = await subject.acknowledgeMessage(publicKey);
+    invariant(result.error);
+    invariant(result.error.type);
+    assert.equal(result.error.type, 'UnknownDevice');
+
+    result = await subject.addToMailbox({
+      publicKey,
+      message: new Buffer('foo').toString('base64'),
+    });
+    invariant(result.error);
+    invariant(result.error.type);
+    assert.equal(result.error.type, 'UnknownDevice');
   });
 
 });

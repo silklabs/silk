@@ -1,0 +1,586 @@
+/**
+ * @flow
+ */
+import assert from 'assert';
+import createApi, {AccessToken} from 'silk-api';
+import uuid from 'uuid';
+import SasCompositeTable from 'silk-azure-storage/src/sas_composite_table';
+
+import {
+  TableClient,
+  SharedKeyAuth,
+} from 'silk-azure-storage/src/table';
+
+import createContext from '../context';
+import Accounts from '../../../src/server/models/accounts';
+import Devices from '../../../src/server/models/devices';
+
+import type {RawPasswordInput} from 'silk-api/src/vip';
+
+const invariant = assert;
+
+const dummyDeviceMessage = new Buffer('foo').toString('base64');
+
+suite('account auth', () => {
+  let context = createContext();
+
+  let api, devices;
+  let accountOne, accountTwo;
+  setup(async () => {
+    devices = new Devices(context.db);
+    api = createApi({
+      serverUrl: context.url,
+      metrics: {
+        type: 'account',
+        tags: { },
+      },
+    });
+
+    accountOne = await context.testAccount();
+    accountTwo = await context.testAccount();
+  });
+
+  test('/register_device - success', async () => {
+    api.accessToken = accountOne.accessToken;
+
+    const deviceAccessToken = await AccessToken.gen();
+    const token = await accountOne.accessToken.genSign(
+      deviceAccessToken.toString()
+    );
+
+    let result = await api.account.registerDevice({
+      devicePublicKey: deviceAccessToken.toString(),
+      name: 'test',
+      type: 'camera',
+      registrationToken: token,
+    });
+    assert.ok(result.success);
+    assert.ok(result.beaconUUID);
+
+    let dup = await api.account.registerDevice({
+      devicePublicKey: deviceAccessToken.toString(),
+      name: 'test',
+      type: 'camera',
+      registrationToken: token,
+    });
+    assert.ok(dup.success, 'idempotent');
+
+    // Idempotent but should not result in multiple devices in list.
+    let allByPubKey = await devices.collection.find({
+      'accessToken.publicKey': deviceAccessToken.toString(),
+    }).toArray();
+    assert.equal(allByPubKey.length, 1);
+
+    const publicKey = deviceAccessToken.toString();
+    let device = await devices.findByPublicKey(publicKey);
+    invariant(device);
+    assert.equal(device.accountId, accountOne.record._id.toString());
+
+    // Act as the device rather then the account...
+    api.accessToken = deviceAccessToken;
+    let complete = await api.device.completeRegistration({
+      registrarPublicKey: accountOne.accessToken.toString(),
+      registrationToken: token,
+    });
+    assert.ok(complete.success);
+    assert.ok(complete.beaconUUID);
+    assert.equal(complete.accountDeviceNumber, 1);
+
+    let deviceAfterComplete = await devices.findByPublicKey(publicKey);
+    invariant(deviceAfterComplete);
+    assert.ok(deviceAfterComplete.registration.complete);
+    assert.ok(deviceAfterComplete.registered);
+
+    // The device is allowed to unregister itself
+    let unregister = await api.device.unregister({
+      factoryResetMessage: dummyDeviceMessage,
+    });
+    assert.ok(unregister.success);
+    let deviceAfterUnregister = await devices.findByPublicKey(publicKey);
+    invariant(deviceAfterUnregister);
+    assert.ok(!deviceAfterUnregister.registered);
+
+    // ...but not twice
+    let err;
+    try {
+      await api.device.unregister({
+        factoryResetMessage: dummyDeviceMessage,
+      });
+    } catch (error) {
+      err = error;
+    }
+    invariant(err);
+    assert.equal(err.code, 403);
+  });
+
+  test('/register_device - unknown account', async () => {
+    api.accessToken = accountOne.accessToken;
+
+    const deviceAccessToken = await AccessToken.gen();
+    const devicePublicKey = deviceAccessToken.toString();
+    const registrationToken =
+      await accountOne.accessToken.genSign(devicePublicKey);
+
+    let result = await api.account.registerDevice({
+      devicePublicKey,
+      name: 'test',
+      type: 'camera',
+      registrationToken,
+    });
+    assert.ok(result.success);
+    assert.ok(result.beaconUUID);
+
+    const registrarPublicKey = (await AccessToken.gen()).toString();
+
+    // Act as the device rather then the account...
+    api.accessToken = deviceAccessToken;
+
+    let error;
+    try {
+      await api.device.completeRegistration({
+        registrarPublicKey,
+        registrationToken,
+      });
+    } catch (ex) {
+      error = ex;
+    }
+
+    invariant(error);
+    assert.equal(error.code, 400);
+  });
+
+  test('/register_device - wrong account', async () => {
+    api.accessToken = accountOne.accessToken;
+
+    const deviceAccessToken = await AccessToken.gen();
+    const devicePublicKey = deviceAccessToken.toString();
+    const registrationToken =
+      await accountOne.accessToken.genSign(devicePublicKey);
+
+    let result = await api.account.registerDevice({
+      devicePublicKey,
+      name: 'test',
+      type: 'camera',
+      registrationToken,
+    });
+    assert.ok(result.success);
+    assert.ok(result.beaconUUID);
+
+    const registrarPublicKey = accountTwo.accessToken.toString();
+
+    // Act as the device rather then the account...
+    api.accessToken = deviceAccessToken;
+
+    let error;
+    try {
+      await api.device.completeRegistration({
+        registrarPublicKey,
+        registrationToken,
+      });
+    } catch (ex) {
+      error = ex;
+    }
+
+    invariant(error);
+    assert.equal(error.code, 403);
+  });
+
+  suite('with devices', () => {
+    const numberOfDevices = 15;
+    let devices;
+
+    setup(async function () {
+      this.timeout('30s');
+      api.accessToken = accountOne.accessToken;
+
+      const ops = [];
+      for (let i = 0; i < numberOfDevices; i++) {
+        ops.push(context.registeredDevice(accountOne.accessToken));
+      }
+
+      devices = await Promise.all(ops);
+
+      // Create another account just to be sure we are not contaminating our
+      // state.
+      api.accessToken = accountTwo.accessToken;
+      await context.registeredDevice(accountTwo.accessToken);
+
+      // Do not assume a particular account in the below tests...
+      api.accessToken = null;
+    });
+
+    test('POST /list_devices', async () => {
+      api.accessToken = accountOne.accessToken;
+      let result = await api.account.listDevices({});
+      assert.equal(result.devices.length, numberOfDevices);
+
+      const ids = result.devices.map((device) => device.accountDeviceNumber);
+      const expected = [];
+      ids.sort((a, b) => {
+        return a - b;
+      });
+      for (let i = 1; i <= numberOfDevices; i++) {
+        expected.push(i);
+      }
+      assert.deepEqual(ids, expected);
+    });
+
+    test('POST /unregister_device', async () => {
+      api.accessToken = accountOne.accessToken;
+      await api.account.unregisterDevice({
+        devicePublicKey: devices[0].accessToken.toString(),
+        factoryResetMessage: dummyDeviceMessage,
+      });
+
+      let list = await api.account.listDevices({});
+      assert.equal(list.devices.length, 14);
+
+      api.accessToken = devices[0].accessToken;
+      // Make sure that the device can no longer make api calls.
+      let err;
+      try {
+        await api.device.socketioURL({});
+      } catch (error) {
+        err = error;
+      }
+      invariant(err);
+      assert.equal(err.code, 403);
+    });
+
+    test('POST /unregister_device unowned device', async () => {
+      api.accessToken = accountTwo.accessToken;
+
+      let error;
+      try {
+        await api.account.unregisterDevice({
+          devicePublicKey: devices[0].accessToken.toString(),
+          factoryResetMessage: dummyDeviceMessage,
+        });
+      } catch (ex) {
+        error = ex;
+      }
+
+      invariant(error);
+      assert.equal(error.code, 403);
+    });
+
+    test('POST /post_message', async () => {
+      api.accessToken = accountOne.accessToken;
+
+      const messages = [];
+      for (let i = 0; i < 10; i++) {
+        messages.push(new Buffer('foo' + i).toString('base64'));
+      }
+
+      const publicKey = devices[0].accessToken.toString();
+
+      for (let message of messages) {
+        await api.account.postMessage({
+          devicePublicKey: publicKey,
+          message,
+        });
+      }
+
+      const devicesModel = new Devices(context.db);
+      const device = await devicesModel.findByPublicKey(publicKey);
+      invariant(device);
+      assert.deepEqual(device.mailbox, messages);
+    });
+
+    test('POST /post_message bad account', async () => {
+      api.accessToken = accountTwo.accessToken;
+
+      const publicKey = devices[0].accessToken.toString();
+
+      let error;
+      try {
+        await api.account.postMessage({
+          devicePublicKey: publicKey,
+          message: new Buffer('foo').toString('base64'),
+        });
+      } catch (ex) {
+        error = ex;
+      }
+
+      invariant(error);
+      assert.equal(error.code, 403);
+
+      const devicesModel = new Devices(context.db);
+      const device = await devicesModel.findByPublicKey(publicKey);
+      invariant(device);
+      assert.strictEqual(device.mailbox, undefined);
+    });
+
+  });
+
+  test('socket.io address', async () => {
+    api.accessToken = accountOne.accessToken;
+    let { url } = await api.account.socketioURL({});
+    assert.ok(url);
+  });
+
+  if (process.env.INFLUX_CONNECTION_STRING) {
+    test('read / writeMetrics', async () => {
+      let series = uuid.v4().replace(/-/g, '');
+      let points = [
+        [series, { tag: 'a' }, { value: '1i' }],
+        [series, { tag2: 'a' }, { value: '2i' }],
+        [series, { tag3: 'a' }, { value: '3i' }],
+      ];
+
+      await accountOne.api.account.writeMetrics({ points });
+
+      // read the metrics back out...
+      let read = await accountOne.api.account.queryMetrics({ query: `
+        SELECT * FROM account_${series}
+      `});
+      assert.equal(read.results[0].series[0].values.length, 3);
+    });
+  } else {
+    test.skip('read / writeMetrics (skipped)');
+  }
+
+  test('metrics query scopes', async () => {
+    // See config/test.js to see what is enabled....
+    let allowed = await context.testAccount({ email: 'scoped@example.com' });
+    let invalid = await context.testAccount({ email: 'user@noscopesforyou.com' });
+
+    await allowed.api.account.queryMetrics({
+      // We don't care about the results only that we don't get hit with the 401
+      query: 'does not matter',
+    });
+
+    await context.assertThrows(async () => {
+      await invalid.api.account.queryMetrics({ query: 'does not matter' });
+    }, /Unauthorized/);
+  });
+
+  test('POST /sas_signaling_devices', async () => {
+    api.accessToken = accountOne.accessToken;
+
+    const root = new TableClient(
+      new SharedKeyAuth(context.config.azure.regions.uswest)
+    );
+
+    const { accountId } = await api.account.whoami({});
+    const client = new SasCompositeTable(async () => {
+      let { sas } = await api.account.getSasForDeviceSignaling({});
+      return sas;
+    });
+
+    // Make a valid query ...
+    let devices = await client.query({
+      // NOTE: It's unfortunate that we need to call this "PartitionKey" but
+      // this is a massively faster query (indexed).
+      PartitionKey: accountId,
+    });
+    assert.ok(Array.isArray(devices));
+
+    // Insert some garbage that we should not be able to query with these
+    // credentials...
+    await root.mergeOrInsertEntity(
+      context.config.azure.tables.sigdevices,
+      {
+        PartitionKey: 'foobar',
+        RowKey: 'bar',
+      }
+    );
+
+    // SAS permissions do not actively prevent queries to ranges outside of the
+    // scope but they instead cause all queries outside of primary key range to
+    // return nothing.
+    let outOfScope = await client.query({
+      // valid but outside of our signed range query.
+      PartitionKey: 'foobar',
+    });
+    assert.equal(outOfScope.length, 0);
+  });
+
+  suite('with multiple clients and password', () => {
+    const numberOfClients = 30;
+    const clientPublicKeys = [];
+
+    const input: RawPasswordInput = {
+      userAgent: 'flippety',
+      email: 'flippety@floppety.flu',
+      password: 'floppety',
+    };
+
+    setup(async function () {
+      this.timeout('30s');
+
+      api.accessToken = await AccessToken.gen();
+      clientPublicKeys.push(api.accessToken.pub);
+
+      let {success} = await api.vip.createAccountWithPassword(input);
+      assert(success);
+
+      for (let index = 0; index < numberOfClients - 1; index++) {
+        const newKey = await AccessToken.gen();
+        api.accessToken = newKey;
+        ({success} = await api.vip.signInWithPassword(input));
+        assert(success);
+        clientPublicKeys.push(newKey.pub);
+      }
+
+      clientPublicKeys.sort();
+    });
+
+    test('POST /list_clients', async () => {
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, numberOfClients);
+
+      const publicKeys = clients.map((client) => client.publicKey);
+      publicKeys.sort();
+
+      assert.deepEqual(clientPublicKeys, publicKeys);
+    });
+
+    test('POST /list_clients without valid accessToken', async () => {
+      api.accessToken = await AccessToken.gen();
+
+      let error: Error;
+      try {
+        await api.account.listClients({});
+      } catch (ex) {
+        error = ex;
+      }
+      assert(error instanceof Error);
+    });
+  });
+
+  suite('unregisterClient', () => {
+    const credentials = {
+      userAgent: 'mosaic',
+      email: 'mars@candy.com',
+      password: 'password',
+    };
+    const numberOfDevices = 5;
+
+    let accountsModel;
+    let devicesModel;
+
+    let accessToken1;
+    let accessToken2;
+    let accountId;
+
+    setup(async function() {
+      this.timeout('30s');
+
+      accountsModel = new Accounts(context.db);
+      devicesModel = new Devices(context.db);
+
+      accessToken1 = await AccessToken.gen();
+      api.accessToken = accessToken1;
+
+      let {success} = await api.vip.createAccountWithPassword(credentials);
+      assert(success);
+
+      const accountRecord =
+        await accountsModel.findByPublicKey(accessToken1.pub);
+      invariant(accountRecord);
+      accountId = accountRecord._id;
+
+      const ops = [];
+      for (let i = 0; i < numberOfDevices; i++) {
+        ops.push(context.registeredDevice(accessToken1));
+      }
+
+      await Promise.all(ops);
+
+      accessToken2 = await AccessToken.gen();
+      api.accessToken = accessToken2;
+      ({success} = await api.vip.signInWithPassword(credentials));
+      assert(success);
+
+      api.accessToken = accessToken1;
+
+      let {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+
+      let publicKeys = new Set(clients.map((client) => client.publicKey));
+      assert(publicKeys.has(accessToken1.pub));
+      assert(publicKeys.has(accessToken2.pub));
+
+      let devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+      }
+
+      // Do not assume a particular account in the below tests...
+      api.accessToken = null;
+    });
+
+    test('POST /revoke_client - success', async () => {
+      api.accessToken = accessToken1;
+
+      const {success} = await api.account.revokeClient({
+        clientPublicKey: accessToken2.pub,
+        revokeClientMessageForDevices: dummyDeviceMessage,
+      });
+      assert(success);
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 1);
+      assert.equal(clients[0].publicKey, accessToken1.pub);
+
+      const devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.deepEqual(device.mailbox, [dummyDeviceMessage]);
+      }
+    });
+
+    test('POST /revoke_client - unknown client', async () => {
+      api.accessToken = accessToken1;
+
+      context.httpErrCode(context, 404, api.account.revokeClient({
+        clientPublicKey: (await AccessToken.gen()).pub,
+        revokeClientMessageForDevices: dummyDeviceMessage,
+      }));
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+
+      const publicKeys = new Set(clients.map((client) => client.publicKey));
+      assert(publicKeys.has(accessToken1.pub));
+      assert(publicKeys.has(accessToken2.pub));
+
+      const devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+      }
+    });
+
+    test('POST /revoke_client - client from another account', async () => {
+      api.accessToken = accountOne.accessToken;
+
+      context.httpErrCode(context, 403, api.account.revokeClient({
+        clientPublicKey: accessToken1.pub,
+        revokeClientMessageForDevices: dummyDeviceMessage,
+      }));
+
+      api.accessToken = accessToken1;
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+
+      const publicKeys = new Set(clients.map((client) => client.publicKey));
+      assert(publicKeys.has(accessToken1.pub));
+      assert(publicKeys.has(accessToken2.pub));
+
+      const devices = await devicesModel.findAllByAccount(accountId);
+      assert.equal(devices.length, numberOfDevices);
+      for (const device of devices) {
+        invariant(device);
+        assert.strictEqual(device.mailbox, undefined);
+      }
+    });
+
+  });
+});

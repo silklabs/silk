@@ -5,14 +5,103 @@
  */
 import * as Joi from 'joi';
 import uuid from 'uuid';
-import { ObjectID } from 'mongodb';
-import AccessToken from 'silk-api/src/access_token';
+import {ObjectID} from 'mongodb';
+import {AccessToken} from 'silk-api';
 import createLog from 'silk-log';
 
-import Base from './base';
+import {
+  default as Base,
+  PUBLIC_KEY_SCHEMA,
+} from './base';
 import scrypt from '../scrypt';
 
+import type {ResetPasswordInput} from 'silk-api/src/gen/vip';
 import type { ErrorState } from './base';
+
+// XXX: Duplicating types so we can use them in flow too (lame).
+export type Record = {
+  _id: ObjectID;
+  email: string;
+  source?: string;
+  password: {
+    date: Date;
+    hash: string;
+  };
+  beaconUUID: string;
+  accountTokens: Array<AccessTokenRecord>;
+};
+
+type AccessTokenRecord = AccessTokenOutput & {
+  identified?: {
+    method: string;
+    token: string;
+    validated: boolean;
+    expires: Date;
+  };
+};
+
+type AccessTokenInput = {
+  publicKey: string;
+  userAgent: string;
+};
+
+type AccessTokenOutput = {
+  publicKey: string;
+  userAgent: string;
+  issued: Date;
+  expires: Date;
+  scopes?: Array<string>;
+  passwordCheck: {
+    date?: Date;
+  };
+};
+
+type SignInInput = {
+  email: string;
+  passwordHash: string;
+  publicKey: string;
+  userAgent: string;
+};
+
+type SignInOutput = {
+  beaconUUID: string;
+  id: string;
+};
+
+type SignInWithTokenInput = {
+  uniqueAccountId: string;
+  publicKey: string;
+  userAgent: string;
+};
+
+type SignInWithTokenOutput = {
+  id: string;
+  beaconUUID: string;
+  created: boolean;
+};
+
+type PasswordResetResult = {
+  token: string;
+  expires: number;
+  newToken: bool;
+};
+
+type UsePasswordResetTokenInput = {
+  email: string;
+  token: string;
+}
+
+type UsePasswordResetTokenOutput = {
+  success: boolean;
+};
+
+type RevokeClientInput = {
+  accountId: ObjectID;
+  publicKey: string;
+};
+
+type RevokeClientOutput = {
+};
 
 /**
  * Password reset expires in 4 hours...
@@ -20,7 +109,8 @@ import type { ErrorState } from './base';
 const PASSWORD_RESET_EXPIRES_MS = (1000 * 60 * 60) * 4;
 
 const EMAIL = Joi.string().trim().email().lowercase().required();
-const PASSWORD_HASH = Joi.string().required().min(64).max(256);
+const PASSWORD_HASH = Joi.string().trim().min(64).max(256).required();
+const USER_AGENT = Joi.string().trim().required();
 
 /**
  * Any operation which adds an accessToken will require these details...
@@ -28,22 +118,22 @@ const PASSWORD_HASH = Joi.string().required().min(64).max(256);
 const ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA = Joi.object().keys({
   email: EMAIL,
   passwordHash: PASSWORD_HASH,
-  publicKey: Joi.string().required(),
-  userAgent: Joi.string().required(),
+  publicKey: PUBLIC_KEY_SCHEMA,
+  userAgent: USER_AGENT,
 }).required();
 
 const ACCESS_TOKEN_ADD_BY_TOKEN_SCHEMA = Joi.object().keys({
   uniqueAccountId: Joi.string().min(16).required(),
-  publicKey: Joi.string().required(),
-  userAgent: Joi.string().required(),
+  publicKey: PUBLIC_KEY_SCHEMA,
+  userAgent: USER_AGENT,
 }).required();
 
 const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
   // List of scopes (like OAuth2) reserved for future use.
-  scopes: Joi.array().items(Joi.string().max(255)),
+  scopes: Joi.array().items(Joi.string().max(255)).required(),
 
   // ed25519 public key as string...
-  publicKey: Joi.string().hex().required(),
+  publicKey: PUBLIC_KEY_SCHEMA,
 
   // When this key was issued...
   issued: Joi.date().required(),
@@ -52,7 +142,7 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
   expires: Joi.date().required(),
 
   // Information about who issued the public key
-  userAgent: Joi.string(),
+  userAgent: USER_AGENT,
 
   /**
    * When this key was last authenticated against a password.
@@ -79,15 +169,8 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
     validated: Joi.boolean().required(),
     // When the token associated with this method expires.
     expires: Joi.date().required(),
-  }),
-});
-
-// XXX: Duplicating types so we can use them in flow too (lame).
-export type Record = {
-  _id: ObjectID;
-  email: string;
-  // TODO: finish type...
-}
+  }).optional(),
+}).required();
 
 const log = createLog('models:accounts');
 
@@ -96,27 +179,9 @@ const log = createLog('models:accounts');
  */
 const AUTHENTICATED_DURATION = 60 * 1000 * 15;
 
-type PasswordResetInput = {
-  email: string;
-}
-
-export type PasswordResetResult = {
-  token: string;
-  expires: number;
-  newToken: bool;
-}
-
-type UsePasswordResetTokenInput = {
-  email: string;
-  token: string;
-}
-
-export type UsePasswordResetTokenOutput = {
-  success: boolean;
-}
-
 export default class Accounts extends Base {
   static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION;
+  static PUBLIC_KEY_SCHEMA = PUBLIC_KEY_SCHEMA;
 
   static ERROR = {
     duplicateEmail: 'DuplicateEmail',
@@ -124,6 +189,7 @@ export default class Accounts extends Base {
     unknownAccount: 'UnknownAccount',
     resetPasswordFailure: 'ResetPasswordFailure',
     resetPasswordTokenMismatch: 'ResetPasswordTokenMismatch',
+    unknownClient: 'UnknownClient',
   };
 
   static INDEX = [
@@ -159,14 +225,12 @@ export default class Accounts extends Base {
   ];
 
   static SCHEMA = {
-    findByPublicKey: Joi.object().keys({
-      publicKey: Joi.string().hex().required().min(32),
-    }),
+    findByPublicKey: PUBLIC_KEY_SCHEMA,
 
     ensureDevAccount: Joi.object().keys({
       email: EMAIL,
       passwordHash: PASSWORD_HASH,
-      publicKey: Joi.string().hex().required(),
+      publicKey: PUBLIC_KEY_SCHEMA,
     }).unknown(true).required(),
 
     create: ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA,
@@ -176,12 +240,27 @@ export default class Accounts extends Base {
     signInByToken: ACCESS_TOKEN_ADD_BY_TOKEN_SCHEMA,
 
     checkPassword: Joi.object().keys({
-      publicKey: Joi.string().required(),
+      publicKey: PUBLIC_KEY_SCHEMA,
       email: EMAIL,
       passwordHash: PASSWORD_HASH,
-    }),
+    }).required(),
 
     accessToken: ACCESS_TOKEN_SCHEMA,
+
+    resetPassword: Joi.object().keys({
+      email: EMAIL,
+    }).required(),
+
+    usePasswordResetToken: Joi.object().keys({
+      email: EMAIL,
+      token: Joi.string().hex().required(),
+      passwordHash: PASSWORD_HASH,
+    }).required(),
+
+    revokeClient: Joi.object().keys({
+      accountId: Joi.object().type(ObjectID).required(),
+      publicKey: PUBLIC_KEY_SCHEMA,
+    }),
 
     /**
      * This is the canonical representation of accounts in our datastore it is
@@ -207,18 +286,7 @@ export default class Accounts extends Base {
        * Individual account tokens that are used to talk to our API servers an
        * account many have many of these with varying scopes.
        */
-      accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA).required(),
-
-    }).required(),
-
-    resetPassword: Joi.object().keys({
-      email: EMAIL,
-    }).required(),
-
-    usePasswordResetToken: Joi.object().keys({
-      email: EMAIL,
-      token: Joi.string().hex().required(),
-      passwordHash: PASSWORD_HASH,
+      accountTokens: Joi.array().items(ACCESS_TOKEN_SCHEMA),
     }).required(),
   };
 
@@ -243,12 +311,10 @@ export default class Accounts extends Base {
   }
 
   /**
-   * Find an account by its mongodb id.
+   * Find an account by its public key.
    */
-  async findByPublicKey(payload: any): any {
-    payload = this.validate(payload, 'findByPublicKey');
-    let { publicKey } = payload;
-
+  async findByPublicKey(publicKey: string): Promise<?Record> {
+    publicKey = this.validate(publicKey, 'findByPublicKey');
     return await this.collection.find({
       'accountTokens.publicKey': publicKey,
     }).limit(1).next();
@@ -257,7 +323,7 @@ export default class Accounts extends Base {
   /**
    * Common access token generation stuff.
    */
-  accessToken(payload: any): any {
+  accessToken(payload: AccessTokenInput): AccessTokenOutput {
     let { publicKey, userAgent } = payload;
     return this.validate({
       issued: new Date(),
@@ -357,7 +423,7 @@ export default class Accounts extends Base {
     }
   }
 
-  async signIn(payload: any): any {
+  async signIn(payload: SignInInput): Promise<ErrorState | SignInOutput> {
     payload = this.validate(payload, 'signIn');
 
     let account = await this.collection.findOne({
@@ -407,7 +473,7 @@ export default class Accounts extends Base {
     };
   }
 
-  async signInByToken(payload: any): any {
+  async signInByToken(payload: SignInWithTokenInput): Promise<SignInWithTokenOutput> {
     payload = this.validate(payload, 'signInByToken');
 
     // TODO: Don't abuse the email/password hash fields when we get off mongodb
@@ -541,7 +607,7 @@ export default class Accounts extends Base {
    * TODO: Security questions silk-server#401
    */
   async resetPassword(
-    payload: PasswordResetInput
+    payload: ResetPasswordInput
   ): Promise<PasswordResetResult | ErrorState> {
     payload = this.validate(payload, 'resetPassword');
 
@@ -661,4 +727,37 @@ export default class Accounts extends Base {
 
     return { success: true };
   }
+
+  async revokeClient(
+    payload: RevokeClientInput,
+  ): Promise<RevokeClientOutput | ErrorState> {
+    payload = this.validate(payload, 'revokeClient');
+    const {accountId, publicKey} = payload;
+
+    const {
+      modifiedCount,
+      result,
+    } = await this.collection.updateOne({
+      _id: accountId,
+    }, {
+      $pull: {
+        accountTokens: {
+          publicKey,
+        },
+      },
+    });
+
+    if (!result.ok) {
+      throw new Error(`revokeClient operation has failed: ` +
+                      `${JSON.stringify(result)}`);
+    }
+
+    if (modifiedCount !== 1) {
+      log.warn(`Public key not found`, publicKey);
+      return this.error('unknownClient');
+    }
+
+    return {};
+  }
+
 }

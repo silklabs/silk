@@ -39,7 +39,9 @@ function actionTransformer(action: any): any {
 }
 
 function stateTransformer(state: any): any {
-  const {devices, messages} = state;
+  const {clients, devices, messages} = state;
+
+  const transformedClients = Array.from(clients.values());
 
   const transformedDevices = {
     unconfigured: [],
@@ -70,6 +72,7 @@ function stateTransformer(state: any): any {
   }
 
   return {
+    clients: transformedClients,
     devices: transformedDevices,
     messages,
   };

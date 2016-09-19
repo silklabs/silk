@@ -22,37 +22,37 @@ type Session = {
   device: DeviceRecord;
   socket: Socket;
   publicKey: string;
-}
+};
 
 type VideoMessage = {
   contents: string;
   when: number;
   serverEmitMs: ?number;
   deviceEmitMs: number;
-}
+};
 
 type DiagMessage = {
   when: number;
   serverEmitMs: ?number;
-}
+};
 
 type MicMessage = {
   when: number;
   serverEmitMs: ?number;
   samples: Buffer;
-}
+};
 
 // TODO dedupe from timeline.js
 type TimelineEventObject = {
   tag: string;
   when: number;
   [arbitraryKeys: string]: any;
-}
+};
 
 type ObjectsMessage = {
   objects: Array<TimelineEventObject>;
   serverEmitMs: ?number;
-}
+};
 
 export function deviceRoom(deviceId: string, name: string): string {
   return `${name}-${deviceId}`;

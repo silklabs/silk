@@ -26,7 +26,7 @@ const log = createLog('socketio:account_room');
 type Dimensions = {
   width: number;
   height: number;
-}
+};
 
 export type DeviceInfo = {
   id: string;
@@ -35,7 +35,7 @@ export type DeviceInfo = {
   objectsSize: ?Dimensions;
   logo: ?any;
   now: number;
-}
+};
 
 export const VIDEO_STREAMS_ROOM = 'video-streams';
 export const DEVICES_ROOM = 'devices';
@@ -49,12 +49,12 @@ function deviceRoomName(devicePublicKey: string): string {
 }
 
 type DeviceLiveStream = {
-  video: bool;
-  diag: bool;
-  preview: bool;
-  mic: bool;
-  objects: bool;
-}
+  video: boolean;
+  diag: boolean;
+  preview: boolean;
+  mic: boolean;
+  objects: boolean;
+};
 
 // How long a device has to send a livestream message when the server is
 // expecting one before it will be disconnected on
@@ -180,7 +180,7 @@ export default class AccountRoom {
     log.verbose('create account room', id);
   }
 
-  isEmptyRoom(name: string): bool {
+  isEmptyRoom(name: string): boolean {
     let room = this._prefixRoom(name);
     if (!this.io.nsps) {
       return true;

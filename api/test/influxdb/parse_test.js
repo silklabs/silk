@@ -19,16 +19,16 @@ suite('influxdb/deserialize', () => {
       tags: {
         tag: 'value',
         'tag magic': '1',
-        'bad,human': '1'
+        'bad,human': '1',
       },
       values: {
         'true': true,
         'false': false,
         float: '1.2',
         int: 2,
-        string: 'foo'
+        string: 'foo',
       },
-      timestamp: new Date(parseInt(timestamp, 10) / 1000000)
+      timestamp: new Date(parseInt(timestamp, 10) / 1000000),
     });
   });
 
@@ -39,7 +39,7 @@ suite('influxdb/deserialize', () => {
       series: metric,
       tags: {},
       values: {},
-      timestamp: undefined
+      timestamp: undefined,
     });
   });
 
@@ -50,7 +50,7 @@ suite('influxdb/deserialize', () => {
       series: 'series',
       tags: {},
       values: { value: 'yup' },
-      timestamp: undefined
+      timestamp: undefined,
     });
   });
 });

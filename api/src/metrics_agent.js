@@ -174,7 +174,7 @@ export default class MetricsAgent {
       firstPointTimestamp,
       submissionTimestamp: Date.now(),
       droppedCount,
-      points
+      points,
     });
   }
 

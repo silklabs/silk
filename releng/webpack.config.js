@@ -1,4 +1,4 @@
-/* eslint-disable silk/flow */
+/* eslint-disable flowtype/require-valid-file-annotation */
 
 'use strict';
 

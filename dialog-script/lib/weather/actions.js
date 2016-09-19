@@ -13,7 +13,7 @@ export type Action =
       location: number | string;
     };
   } | {
-    type: 'WEATHER_RESET_LOCATION'
+    type: 'WEATHER_RESET_LOCATION',
   }
 ;
 

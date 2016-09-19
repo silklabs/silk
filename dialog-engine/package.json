@@ -22,7 +22,8 @@
   },
   "devDependencies": {
     "babel-eslint": "6.1.0",
-    "eslint": "2.13.1"
+    "eslint": "2.13.1",
+    "eslint-plugin-flowtype": "2.18.1"
   },
   "license": "proprietary",
   "private": true

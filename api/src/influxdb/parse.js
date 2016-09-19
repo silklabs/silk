@@ -82,7 +82,7 @@ class LineIterator {
 
     return {
       value: { char: value, escaped },
-      done
+      done,
     };
   }
 }
@@ -199,6 +199,6 @@ export default function parse(line) {
     series,
     tags,
     values,
-    timestamp
+    timestamp,
   };
 }

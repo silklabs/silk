@@ -4,7 +4,7 @@
     "mocha": true
   },
   "rules": {
-    "silk/flow": 0
+    "flowtype/require-valid-file-annotation": 0
   },
   "globals": {
     "$Enum": false,

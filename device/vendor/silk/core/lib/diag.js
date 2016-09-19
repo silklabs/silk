@@ -84,7 +84,7 @@ class DiagLogger {
     this.helper = helper;
   }
 
-  send(dumpTologcat: bool = false) {
+  send(dumpTologcat: boolean = false) {
     if (this.data.length === 0) {
       return;
     }

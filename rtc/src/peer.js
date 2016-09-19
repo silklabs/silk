@@ -37,8 +37,8 @@ type MediaRequestEvent = {
 type MediaResponseEvent = {
   label: string;
   error: ?string;
-  success: bool;
-}
+  success: boolean;
+};
 
 type MediaRemoveStreamEvent = {
   label: string;
@@ -48,7 +48,7 @@ type OngoingMediaState = {
   created: Date;
   label: string;
   stream: ?MediaStream;
-  local: bool;
+  local: boolean;
 };
 
 type MediaRequestHandler = (
@@ -82,7 +82,7 @@ export default class Peer extends EventEmitter {
   /**
    * Has this peer ever been connected ?
    */
-  _hasConnected: bool = false;
+  _hasConnected: boolean = false;
 
   /**
    * Media stream metadata
@@ -90,7 +90,7 @@ export default class Peer extends EventEmitter {
   _mediaStreams: Map<string, OngoingMediaState> = new Map();
   _mediaRequestHandler: ?MediaRequestHandler;
   _mediaStreamRequestQueue: Array<MediaRequestEvent> = [];
-  _mediaStreamRequestRunning: bool = false;
+  _mediaStreamRequestRunning: boolean = false;
   _requestRemoteMediaStreamLock: Lock<MediaStream> = new Lock();
 
   async _processMediaRequestQueue(): Promise<void> {
@@ -318,7 +318,7 @@ export default class Peer extends EventEmitter {
    * XXX: Consider making this return a promise so we can be sure that remote has
    *      removed the other side of the stream.
    */
-  removeStream(label: string): bool {
+  removeStream(label: string): boolean {
     const state = this.getMediaStream(label);
     if (!state) {
       log.info(`Cannot remove stream with label: ${label} ( not found )`);

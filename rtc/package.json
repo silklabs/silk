@@ -4,6 +4,7 @@
   "author": "Silk Labs, Inc",
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
+    "node-webrtc": "/node-webrtc",
     "silk-api": "/api",
     "silk-async-utils": "/async-utils",
     "silk-azure-storage": "/azure-storage",
@@ -14,7 +15,6 @@
     "silk-utils": "/utils"
   },
   "dependencies": {
-    "node-webrtc": "git+ssh://git@github.com/silklabs/node-webrtc#master",
     "babel-runtime": "6.9.0",
     "event-to-promise": "0.7.0",
     "msgpack-lite": "0.1.20",
@@ -23,8 +23,8 @@
   "devDependencies": {
     "babel-eslint": "6.1.0",
     "eslint": "2.13.1",
-    "mocha": "2.4.5",
-    "node-webrtc": "git+ssh://github.com/silklabs/node-webrtc#master"
+    "eslint-plugin-flowtype": "2.18.1",
+    "mocha": "2.4.5"
   },
   "browser": {
     "ws": "silk-rtc/src/ws_browser"

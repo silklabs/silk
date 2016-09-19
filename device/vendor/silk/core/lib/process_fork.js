@@ -47,7 +47,7 @@ type Log = {
   warn: Function;
   error: Function;
   fatal: Function;
-}
+};
 
 function logName(child: ChildProcess, options: ?Options): string {
   return (options && options.name) ?

@@ -15,7 +15,7 @@ type QueryProps = {
 };
 
 type Query = {
-  $or?: Array<Query>
+  $or?: Array<Query>;
 } | QueryProps;
 
 // Allowed operators used in our queries.
@@ -40,7 +40,7 @@ const PROP_OPERATORS_TO_AZURE = {
   '$ne': 'ne',
 };
 
-function castValue(value: mixed): bool | string | number {
+function castValue(value: mixed): boolean | string | number {
   switch (typeof value) {
   case 'string':
     return `'${value}'`;

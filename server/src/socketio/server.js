@@ -32,7 +32,7 @@ export type RouteContext = {
 };
 
 export type EventHandlers = {
-  [key: string]: (...any: any) => Promise<any>
+  [key: string]: (...any: any) => Promise<any>;
 };
 
 const log = createLog('socketio:server');

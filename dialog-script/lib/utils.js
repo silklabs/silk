@@ -29,13 +29,13 @@ export function encodeNumber(digits: number, format: NumberFormat = 'telephone')
 
 // Reference https://msdn.microsoft.com/en-us/library/hh378462.aspx
 // and https://msdn.microsoft.com/en-us/library/jj127898.aspx#Characteristics
-type Rate = 'x-slow,'| 'slow' | 'medium' | 'fast' | 'x-fast';
+type Rate = 'x-slow,' | 'slow' | 'medium' | 'fast' | 'x-fast';
 export function encodeRate(text: string, rate: Rate = 'medium'): string {
   return `<prosody rate=\"${rate}\">${text}</prosody>`;
 }
 
 // Reference https://msdn.microsoft.com/en-us/library/hh362936.aspx
-type Strength = 'none' | 'x-weak' | 'weak' | 'medium' | 'strong' | 'x-strong'
+type Strength = 'none' | 'x-weak' | 'weak' | 'medium' | 'strong' | 'x-strong';
 export function encodeBreak(text: string, strength: Strength = 'medium'): string {
   return `<break strength=\"${strength}\"/>${text}`;
 }

@@ -68,7 +68,7 @@ ${urlParams}
 }
 
 const DEFAULTS = {
-  baseClassPath: ''
+  baseClassPath: '',
 };
 
 export default function gen(schema, options = {}) {

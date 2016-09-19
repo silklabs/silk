@@ -50,7 +50,7 @@ export default function generate() {
     let absPath = path.join(AUTOGEN_ROOT, api.name + '.js');
     console.log(`generating ${absPath}`);
     fs.writeFileSync(absPath, generateSchema(api.toJSON(), {
-      baseClassPath: CLIENT_MODULE
+      baseClassPath: CLIENT_MODULE,
     }));
   }
 }

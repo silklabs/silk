@@ -28,7 +28,7 @@ export type LuisOptions = {
 };
 
 export type CustomIntentions = {
-  [key: string]: Intention
+  [key: string]: Intention;
 };
 
 export type DialogEngineOptions = {

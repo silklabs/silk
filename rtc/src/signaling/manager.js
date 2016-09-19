@@ -38,7 +38,7 @@ export default class SignalingManager {
 
   _peerConnection: ?RTCPeerConnection;
   _transport: ?TransportEmitter;
-  _hasSignaled: bool = false;
+  _hasSignaled: boolean = false;
 
   constructor() {
     invariant(this.constructor.SIGNALING_DATA_CHANNEL);

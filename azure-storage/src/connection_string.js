@@ -13,7 +13,7 @@ export type ConnectionString = {
   tableEndpoint: string;
   queueEndpoint: string;
   fileEndpoint: string;
-}
+};
 
 export default function (input: string): ConnectionString {
   let parts = input.split(';');

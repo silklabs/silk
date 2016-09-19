@@ -284,10 +284,10 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
  */
 export default class Camera extends EventEmitter {
 
-  _liveDiag: bool;
-  _audioMute: bool;
-  _frameCaptureEnabled: bool = false;
-  _fastFrameCaptureEnabled: bool = false;
+  _liveDiag: boolean;
+  _audioMute: boolean;
+  _frameCaptureEnabled: boolean = false;
+  _fastFrameCaptureEnabled: boolean = false;
   _fastFrameCount: number = 0;
 
   constructor(config) {

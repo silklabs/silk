@@ -69,7 +69,7 @@ export default class SasCompositeTableClient extends CompositeTable {
     return this._pendingSasUpdate;
   }
 
-  _validateClients(): bool {
+  _validateClients(): boolean {
     // If we don't have any clients yet we need to issue a fetch.
     if (!this._table || !this._clients.length || !this._signatures) {
       log.verbose('Fetching initial sas tokens ...');

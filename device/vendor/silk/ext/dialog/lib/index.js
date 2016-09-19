@@ -547,7 +547,7 @@ class Dialog {
   /**
    * Register/deregister for notifications of DIALOGSCRIPT_MODNAME changes
    */
-  _monitor(enable: bool): void {
+  _monitor(enable: boolean): void {
     dialogScriptSearchDirs.forEach(dir => {
       modwatcher.monitor(path.join(dir, DIALOGSCRIPT_MODNAME),
                          enable ? this._onModulePush : null);

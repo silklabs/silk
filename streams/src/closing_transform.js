@@ -38,7 +38,7 @@ export default class ClosingTransform extends Transform {
     this.addListener(EVENT_NAME_ERROR, emitClose);
   }
 
-  emit(eventName: string, ...args:Array<any>): boolean {
+  emit(eventName: string, ...args: Array<any>): boolean {
     switch (eventName) {
     case EVENT_NAME_END:
     case EVENT_NAME_ERROR:

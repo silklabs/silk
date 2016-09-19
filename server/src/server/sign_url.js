@@ -13,7 +13,7 @@ export type BlobConfig = {
   region: string;
   key: string;
   bucket: string;
-}
+};
 
 const SECONDS_IN_HOUR = 60 * 60;
 

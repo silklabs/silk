@@ -83,13 +83,13 @@ type SignInWithTokenOutput = {
 type PasswordResetResult = {
   token: string;
   expires: number;
-  newToken: bool;
+  newToken: boolean;
 };
 
 type UsePasswordResetTokenInput = {
   email: string;
   token: string;
-}
+};
 
 type UsePasswordResetTokenOutput = {
   success: boolean;
@@ -306,7 +306,7 @@ export default class Accounts extends Base {
     return hash.toString('hex');
   }
 
-  async scryptVerify(hash: string, key: string): Promise<bool> {
+  async scryptVerify(hash: string, key: string): Promise<boolean> {
     return await scrypt.verifyKdf(new Buffer(hash, 'hex'), new Buffer(key));
   }
 
@@ -679,7 +679,7 @@ export default class Accounts extends Base {
 
   async usePasswordResetToken(
     payload: UsePasswordResetTokenInput
-  ): Promise<UsePasswordResetTokenOutput|Object> {
+  ): Promise<UsePasswordResetTokenOutput | Object> {
     payload = this.validate(payload, 'usePasswordResetToken');
 
     let account = await this.collection.findOne({

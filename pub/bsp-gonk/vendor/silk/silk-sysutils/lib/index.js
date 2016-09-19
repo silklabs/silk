@@ -123,7 +123,7 @@ export function execRetry(
  * @property {(number|string|boolean)} ScalarPropTypes
  * @private
  */
-type ScalarPropTypes = string | bool | number;
+type ScalarPropTypes = string | boolean | number;
 
 /**
  * Type of system property
@@ -170,7 +170,7 @@ export function getstrprop(prop: string, defaultValue?: string): string {
  * @return {boolean} Value of the property
  * @memberof silk-sysutils
  */
-export function getboolprop(prop: string, defaultValue: bool = false): bool {
+export function getboolprop(prop: string, defaultValue: boolean = false): boolean {
   let value = getprop(prop, defaultValue);
   if ((value === 'true') || (value === true) ||
       (value === '1') || (value === 1)) {

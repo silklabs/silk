@@ -10,7 +10,7 @@ import loadConfig from './server/config';
 
 export type ServerResult = {
   close: () => Promise<void>;
-}
+};
 
 export type ServerFn = () => Promise<ServerResult>;
 

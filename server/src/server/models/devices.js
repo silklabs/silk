@@ -206,7 +206,7 @@ export default class Devices extends Base {
     registrarPublicKey: string,
     devicePublicKey: string,
     token: string
-  ): Promise<bool> {
+  ): Promise<boolean> {
     let accountAccessToken = AccessToken.importPub(registrarPublicKey);
     return accountAccessToken.genVerify(devicePublicKey, token);
   }
@@ -410,7 +410,7 @@ export default class Devices extends Base {
   async belongsToAccount(
     accountId: string,
      ...publicKeys: Array<string>
-   ): Promise<bool> {
+   ): Promise<boolean> {
     // Attempt to find all the public keys filtering on the account id.
     let query = {
       accountId,

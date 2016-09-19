@@ -324,7 +324,7 @@ type ParsedModelType = {
   alpha: Float64Array;
   labels: Float64Array;
   data: Array<Float64Array>;
-}
+};
 
 export type SvmSoundsConfig = {
   enabled: boolean;
@@ -346,7 +346,7 @@ export type SvmSoundsConfig = {
     tol: number;
     alphatol: number;
   };
-}
+};
 
 export type SvmSoundsConfigs = {[key: string]: SvmSoundsConfig};
 export type SvmFFTConfig = typeof svmFFTConfig;

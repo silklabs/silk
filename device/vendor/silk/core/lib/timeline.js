@@ -90,7 +90,7 @@ type DiagJpegFrame = {
   id: string;
   when: number;
   jpeg: any; // jpeg image data
-}
+};
 
 /**
  * Type representing the preview size in width and height
@@ -357,7 +357,7 @@ export default class Timeline extends EventEmitter {
    *
    * @param id  A simple string to associated with this processed frame
    */
-  diagFrameEnabled(id: string): bool {
+  diagFrameEnabled(id: string): boolean {
     if (this.diagFrameFilterSkips.some(regex => regex.test(id))) {
       return false;
     }

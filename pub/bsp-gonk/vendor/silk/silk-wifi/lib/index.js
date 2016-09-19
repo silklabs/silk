@@ -205,7 +205,7 @@ function unescapeSSID(ssid: string): string {
  */
 class WpaMonitor extends EventEmitter {
 
-  _ready: bool = false;
+  _ready: boolean = false;
   _socket: ?Socket;
   _buffer: string = '';
 
@@ -467,10 +467,10 @@ async function wpaCliGetCurrentNetworkRSSI(): Promise<?number> {
 export class Wifi extends EventEmitter {
 
   // Always start as offline until proven otherwise...
-  _online: bool = false;
-  _shutdown: bool = false;
+  _online: boolean = false;
+  _shutdown: boolean = false;
   _dhcpRetryTimer: ?number;
-  _shutdown: bool = false;
+  _shutdown: boolean = false;
 
   /**
    * Current wifi state.
@@ -649,7 +649,7 @@ export class Wifi extends EventEmitter {
    * @memberof silk-wifi
    * @instance
    */
-  isOnline(): bool {
+  isOnline(): boolean {
     return this._online;
   }
 
@@ -887,7 +887,7 @@ export class StubWifi extends EventEmitter {
 
   state: WifiState = 'completed';
 
-  isOnline(): bool {
+  isOnline(): boolean {
     // Fingers crossed that somehow the device is online
     return true;
   }

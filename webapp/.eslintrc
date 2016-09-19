@@ -5,6 +5,6 @@
   },
   "rules": {
     "no-console": 0,
-    "silk/flow": 0
+    "flowtype/require-valid-file-annotation": 0
   }
 }

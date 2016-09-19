@@ -9,7 +9,7 @@ import URL from 'url';
 export default function formatURL(parsed: {
   auth?: string;
   protocol?: string;
-  slashes?: bool;
+  slashes?: boolean;
   host?: string;
   pathname?: string;
   search?: string;

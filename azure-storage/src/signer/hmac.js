@@ -7,7 +7,7 @@ import crypto from 'crypto';
  *
  * The value is signed with a sha256 algorithm and the key is the base64 decoded value of access key.
  */
-export default function hmac(accessKey: string, value: Buffer|string): string {
+export default function hmac(accessKey: string, value: Buffer | string): string {
   // start by decoding the access key
   const decodedKey = new Buffer(accessKey, 'base64');
 

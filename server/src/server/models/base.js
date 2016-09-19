@@ -15,15 +15,6 @@ export type ErrorState = {
   };
 };
 
-// XXX: Sadly we need to re-declare Error to add captureStackTrace.
-declare class Error {
-  static (message?:string):Error;
-  name: string;
-  message: string;
-  stack: string;
-  static captureStackTrace(ctx: any, fn: any): void;
-}
-
 class SchemaError extends Error {
   type: string;
   schema: any;
@@ -116,7 +107,7 @@ export default class Base {
    * @param {String} schema Name of schema (constructor.SCHEMA[name]).
    * @param {Bool} strict when true will disallow unknown properties.
    */
-  validate(object: any, schema: string, strict: bool = true): any {
+  validate(object: any, schema: string, strict: boolean = true): any {
     let schemaObject = this.constructor.SCHEMA[schema];
     if (!schemaObject) {
       throw new Error(`Attempted to use unknown schema: ${schema}`);

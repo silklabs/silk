@@ -24,7 +24,7 @@ const log = createLog('signaling:residents');
 
 type ClientConfig = {
   timeoutMs: number;
-}
+};
 
 type ResidentConfig = {
   checkIntervalMs: number;
@@ -231,7 +231,7 @@ export default class Residents {
     log.info(`Finished registering resident ${id}`);
   }
 
-  has(id: string): bool {
+  has(id: string): boolean {
     return this._residents.has(id);
   }
 

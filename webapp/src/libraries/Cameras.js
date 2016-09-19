@@ -49,7 +49,7 @@ class Camera extends EventEmitter {
   _retryConnectTimeout = null;
 
   _requestedRooms = {};
-  _logging: bool = false;
+  _logging: boolean = false;
   _diagChannel: ?StructuredDataChannel = null;
   _micChannel: ?StructuredDataChannel = null;
   _videoChannel: ?StructuredDataChannel = null;
@@ -158,11 +158,11 @@ class Camera extends EventEmitter {
     this.emit('stateChanged');
   };
 
-  get online(): bool {
+  get online(): boolean {
     return this.state === 'online';
   }
 
-  get diagOnline(): bool {
+  get diagOnline(): boolean {
     return this._diagChannel && this._diagChannel.open;
   }
 
@@ -203,7 +203,7 @@ class Camera extends EventEmitter {
     this._updateObjectStream(requestObjects);
   }
 
-  setMediaStream(label, enabled: bool) {
+  setMediaStream(label, enabled: boolean) {
     invariant(typeof mediaStreamConstraints[label] === 'object', `Invalid ${label}`);
     invariant(typeof this._mediaStreamEnabled[label] === 'object', `Invalid ${label}`);
     this._mediaStreamEnabled[label].enabled = enabled;

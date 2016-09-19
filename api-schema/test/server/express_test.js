@@ -46,9 +46,9 @@ suite('express', () => {
         params: [
           {
             name: 'id',
-            description: 'id'
-          }
-        ]
+            description: 'id',
+          },
+        ],
       });
 
       subject.define(
@@ -59,13 +59,13 @@ suite('express', () => {
         async (req, res) => {
           assert.equal(req.params.id, 'idparam');
           res.respond({
-            yay: true
+            yay: true,
           });
         }
       );
 
       let generated = gen(subject.api.toJSON(), {
-        baseClassPath: `${__dirname}/client`
+        baseClassPath: `${__dirname}/client`,
       });
       await fs.writeFile(clientPath, generated);
       let Client = require(clientPath).default;
@@ -95,7 +95,7 @@ suite('express', () => {
     setup(async () => {
       subject = createApi(app, {
         name: 'test',
-        description: 'Testing app'
+        description: 'Testing app',
       });
 
       subject.define(
@@ -107,7 +107,7 @@ suite('express', () => {
           `,
           method: 'post',
           input: Joi.object().keys({
-            token: Joi.any().description('search token').required()
+            token: Joi.any().description('search token').required(),
           }),
           output: Joi.object().keys({
             token: Joi.string().description('search token').required(),
@@ -118,19 +118,19 @@ suite('express', () => {
           params: [
             {
               name: 'Product ID',
-              description: 'specific id of product'
+              description: 'specific id of product',
             },
             {
               name: 'Desired name',
-              description: 'user specified name'
-            }
-          ]
+              description: 'user specified name',
+            },
+          ],
         },
         async (req, res) => {
           res.respond({
             token: req.body.token,
             name: 'name',
-            id: 1
+            id: 1,
           });
         }
       );
@@ -143,14 +143,14 @@ suite('express', () => {
         },
         async (req, res) => {
           res.respond({
-            yay: true
+            yay: true,
           });
         }
       );
 
 
       let generated = gen(subject.api.toJSON(), {
-        baseClassPath: `${__dirname}/client`
+        baseClassPath: `${__dirname}/client`,
       });
       await fs.writeFile(clientPath, generated);
       let Client = require(clientPath).default;
@@ -166,25 +166,25 @@ suite('express', () => {
       let res = await fetch(`${url}/foo/1/bar`, {
         method: 'post',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           token,
-        })
+        }),
       });
       assert.equal(res.status, 200);
       let json = await res.json();
       assert.deepEqual(json, {
         token,
         id: 1,
-        name: 'name'
+        name: 'name',
       });
     });
 
     test('client usage', async () => {
       let token = 'xfoo';
       let response = await client.doFoo(1, 'name', {
-        token
+        token,
       });
       assert.equal(response.status, 200);
       assert.equal(response.body.token, token);
@@ -206,7 +206,7 @@ suite('express', () => {
 
     test('invalid output', async () => {
       let response = await client.doFoo('foot', 1, {
-        token: []
+        token: [],
       });
       assert.equal(response.status, 500);
       assert.equal(response.body.code, 500);

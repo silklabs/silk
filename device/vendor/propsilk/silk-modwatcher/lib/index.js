@@ -105,7 +105,7 @@ class ModuleWatcher {
   /**
    * Delete the module from cache to force next load from disk
    */
-  flush(modName: string): bool {
+  flush(modName: string): boolean {
     // require.cache alias not present for some reason, let's add it
     if (moduleRequire.cache === undefined) {
       // $FlowFixMe - flow can't resolve 'module'?

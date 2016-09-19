@@ -44,12 +44,12 @@ type SocketioConfig = [string, {
   transports: Array<string>;
   path: string;
   query: StringToStringDict;
-}]
+}];
 
 type AuthConfigOptions = {
   serverUrl: string;
   accessToken: ?AccessToken;
-}
+};
 
 /**
  * We need the ability to "hot reload" the configuration of accessToken and the
@@ -210,7 +210,7 @@ export class SilkApi {
     });
 
     const httpClientOptions = {
-      requestTransformer: authConfig.requestTransformer
+      requestTransformer: authConfig.requestTransformer,
     };
 
     this.vip = new VIP(httpClientOptions);
@@ -296,7 +296,7 @@ export class SilkApi {
     return socket;
   }
 
-  canReachServer(): Promise<bool> {
+  canReachServer(): Promise<boolean> {
     const path = '/v1/account/socketio/url';
     const url = URL.resolve(this.config.serverUrl, path);
     log.verbose('canReachServer() ...', url);
@@ -311,7 +311,7 @@ export class SilkApi {
       });
   }
 
-  canReachServer: () => Promise<bool> = this.canReachServer.bind(this);
+  canReachServer: () => Promise<boolean> = this.canReachServer.bind(this);
 }
 
 export default function (config: Config): SilkApi {

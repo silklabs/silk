@@ -28,6 +28,7 @@
   "author": "Silk Labs Inc.",
   "license": "MIT",
   "symlinkDependencies": {
+    "eslint-config-silk": "../eslint-config",
     "silk-flow-bin": "../flow-bin"
   },
   "devDependencies": {
@@ -35,6 +36,7 @@
     "babel-eslint": "6.1.0",
     "babel-plugin-transform-runtime": "6.4.3",
     "eslint": "2.13.1",
+    "eslint-plugin-flowtype": "2.18.1",
     "mocha": "2.4.5"
   },
   "dependencies": {

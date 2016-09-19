@@ -15,7 +15,7 @@ import type { Sas } from 'silk-azure-storage/src/signer/table';
 type Config = {
   regions: {[key: string]: string},
   tables: {[key: string]: string},
-}
+};
 
 type TableSigOptions = {
   expiration: string | Date;
@@ -24,7 +24,7 @@ type TableSigOptions = {
   startRowKey?: string;
   endPartitionKey?: string;
   endRowKey?: string;
-}
+};
 
 export default class Signer {
 

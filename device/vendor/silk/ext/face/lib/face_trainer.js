@@ -87,7 +87,7 @@ export default class Trainer {
    * @param model Face recognizer to be trained
    * @returns facemap Map of string face names to face Ids.
    */
-  async trainAndLoad(model: any, forceTraining: bool = false) {
+  async trainAndLoad(model: any, forceTraining: boolean = false) {
 
     const existsYml = await fs.exists(TRAIN_FACES_YML);
     const existsFaceMap = await fs.exists(TRAIN_FACES_MAP);
@@ -439,7 +439,7 @@ export default class Trainer {
     return this._numFaces.toString();
   }
 
-  async addNewFace(poses: Array<Matrix>, name: ?string): bool {
+  async addNewFace(poses: Array<Matrix>, name: ?string): boolean {
     if (!name) {
       // Get the new face name
       name = await this._getNewFaceName();

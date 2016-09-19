@@ -35,7 +35,7 @@ export type LuisOptions = {
 };
 
 export type CustomIntentions = {
-  [key: string]: Intention
+  [key: string]: Intention;
 };
 
 type IntentResponse = {

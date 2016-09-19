@@ -13,9 +13,9 @@ import type {PluginArgument} from 'silk-cli/src';
 import type {PackageJSON} from './packages';
 
 type FailConfig = {
-  failSemver: bool;
-  failMissing: bool;
-  failMismatch: bool;
+  failSemver: boolean;
+  failMissing: boolean;
+  failMismatch: boolean;
 };
 
 // ROOT is the "root" of silk-core.
@@ -49,7 +49,7 @@ function logVersionMismatch(
 function pkgArguments() {
   return [
     [['package'], {
-      help: `Package name to upgrade`
+      help: `Package name to upgrade`,
     }],
     [['version'], {
       help: `Version of the package to upgrade to`,
@@ -58,7 +58,7 @@ function pkgArguments() {
           throw new Error(`Version ${value} must not contain semver range`);
         }
         return value;
-      }
+      },
     }],
   ];
 }
@@ -76,11 +76,11 @@ function pathArgument(): PluginArgument {
 
       return pkg;
     },
-    help: `Path to package to check if we have checked in all of it's dependencies.`
+    help: `Path to package to check if we have checked in all of it's dependencies.`,
   }];
 }
 
-function checkSemverValue(value: string): bool {
+function checkSemverValue(value: string): boolean {
   // If it contains a slash it's a git url or similar.
   if (value.indexOf('/') !== -1) {
     return true;
@@ -93,7 +93,7 @@ function checkSemverValue(value: string): bool {
  * Checks if given package has any semver flags... Emits a warning and returns
  * true if any of the packages use non-alpha (+ dot) chars.
  */
-function warnOnSemver(dependencies: Map<string, string>): bool {
+function warnOnSemver(dependencies: Map<string, string>): boolean {
   let result = false;
   for (let [name, version] of dependencies.entries()) {
     if (!checkSemverValue(version)) {
@@ -110,7 +110,7 @@ function warnOnDepsCheck(
   opts: FailConfig,
   deps: Map<string, string>,
   globalPackages: Map<string, PackageJSON>,
-): bool {
+): boolean {
   let failed = false;
   for (let [name, version] of deps.entries()) {
     let pkg = globalPackages.get(name);
@@ -140,7 +140,7 @@ function warnOnDepsCheck(
   return failed;
 }
 
-function validPackageContent(opts: FailConfig, pkg: PackageJSON): bool {
+function validPackageContent(opts: FailConfig, pkg: PackageJSON): boolean {
   // Current module packages ...
   let deps = mergeDependencies(pkg);
 
@@ -254,7 +254,7 @@ export let listPkgs = {
       }
       process.stdout.write(JSON.stringify(result, null, 2));
     }
-  }
+  },
 };
 
 export let searchPkg = {
@@ -281,7 +281,7 @@ export let searchPkg = {
     if (!hasPkg) {
       process.exit(1);
     }
-  }
+  },
 };
 
 export let upgrade = {
@@ -332,7 +332,7 @@ export let upgrade = {
         hasBin: false,
       }]);
     }
-  }
+  },
 };
 
 export let install = {
@@ -366,6 +366,6 @@ export let install = {
     }
 
     console.log(`Installed : ${installed.length} packages`);
-  }
+  },
 
 };

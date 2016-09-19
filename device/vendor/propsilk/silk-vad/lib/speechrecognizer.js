@@ -32,7 +32,7 @@ export default class SpeechRecognizer extends EventEmitter {
   _decoder: any;
   _config: ConfigDeviceMic;
   _listening: boolean = false;
-  _sampleRate:number;
+  _sampleRate: number;
   _bytesPerSample: number;
   _numChannels: number;
   _pcmDataQueue: Array<[number, Buffer]>;

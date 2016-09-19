@@ -52,13 +52,13 @@ type DiagJpegFrame = {
   id: string;
   when: number;
   jpeg: Buffer; // jpeg image data
-}
+};
 
 type DiagImgFrame = {
   id: string;
   when: number;
   img: JpegImgTag;
-}
+};
 
 class DiagImageTable extends React.Component {
   static propTypes = {

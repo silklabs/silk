@@ -52,7 +52,7 @@ export default class FaceTracker {
     return [overlapRatio, areaRatio];
   }
 
-  _probablySameFace(r1: FaceRect, r2: FaceRect): bool {
+  _probablySameFace(r1: FaceRect, r2: FaceRect): boolean {
     const [overlapRatio] = this._faceRectRatio(r1, r2);
 
     // Faces overlapping by more than a given threshold are probably the same face.
@@ -71,7 +71,7 @@ export default class FaceTracker {
     );
   }
 
-  _promiseTrackerUpdate(face: Face, frame: Matrix): Promise<[Face, bool, bool, ?FaceRect]> {
+  _promiseTrackerUpdate(face: Face, frame: Matrix): Promise<[Face, boolean, boolean, ?FaceRect]> {
     invariant(!face.i.tracker.impl.busy());
     return new Promise(resolve => {
       face.i.tracker.impl.update(frame, (err, found, rect) => {

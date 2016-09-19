@@ -23,7 +23,7 @@ function sleep(amount) {
 type RouteContext = {
   test: Array<any>;
   accounts: Accounts;
-}
+};
 
 export default function (ctx: RouteContext): ExpressRoutes {
   let routes = new Router();

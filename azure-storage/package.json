@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "babel-eslint": "6.1.0",
+    "eslint-plugin-flowtype": "2.18.1",
     "eslint": "2.13.1",
     "mocha": "2.4.5",
     "uuid": "2.0.1"

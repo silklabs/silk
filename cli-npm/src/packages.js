@@ -36,7 +36,7 @@ export type MissingPackage = {
   type: 'npm' | 'symlink';
   version: string;
   name: string;
-  hasBin: bool;
+  hasBin: boolean;
 };
 
 /**
@@ -221,7 +221,7 @@ export class Packages {
         name,
         version,
         type: 'symlink',
-        hasBin
+        hasBin,
       });
     }
 

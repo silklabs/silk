@@ -91,7 +91,7 @@ class Motion {
     timeline.on('preview', this._onPreview);
   }
 
-  _onPreview:PreviewType = async (when) => {
+  _onPreview: PreviewType = async (when) => {
     log.debug(`Retrieving frame ${when}`);
     if (this.working) {
       log.error('Still busy, unable to process next preview image');

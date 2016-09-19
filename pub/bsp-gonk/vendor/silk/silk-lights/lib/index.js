@@ -364,7 +364,7 @@ class Lights {
    * @memberof silk-lights
    * @instance
    */
-  exists(lightId: LightId): bool {
+  exists(lightId: LightId): boolean {
     let light = this._get(lightId);
     return !!light;
   }

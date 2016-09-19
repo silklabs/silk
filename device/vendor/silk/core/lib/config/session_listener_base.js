@@ -21,7 +21,7 @@ import type ParentSocketSession from '../btle/parent_socket_session';
 export type ValidMessageData = {
   name: string;
   [key: string]: any;
-}
+};
 
 export const RSSI_THRESHOLD = -60;
 

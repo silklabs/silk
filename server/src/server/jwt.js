@@ -37,7 +37,7 @@ type MiddlewareOptions = {
 };
 
 export type MiddlewareOverrides = {
-  signatureProvider: ?SignatureProvider
+  signatureProvider: ?SignatureProvider;
 };
 
 

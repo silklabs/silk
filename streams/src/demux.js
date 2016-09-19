@@ -41,10 +41,10 @@ type Header = [number, string];
 type TransformCb = (error: ?Error, data?: Buffer | string) => void;
 type VirtualStreamType = 'local' | 'remote';
 type VirtualStreamState = {
-  localFinish: bool;
-  localEnd: bool;
-  remoteFinish: bool;
-  remoteEnd: bool;
+  localFinish: boolean;
+  localEnd: boolean;
+  remoteFinish: boolean;
+  remoteEnd: boolean;
 };
 
 function buildHeader(type: number, id: string): Buffer {
@@ -65,8 +65,8 @@ export class VirtualStream extends Duplex {
   _name: string;
   _body: CreateStreamBody;
   _type: VirtualStreamType;
-  _closed: bool = false;
-  _error: bool = false;
+  _closed: boolean = false;
+  _error: boolean = false;
 
   _virtualState: VirtualStreamState = {
     localFinish: false,
@@ -104,10 +104,10 @@ export class VirtualStream extends Duplex {
   };
 
   _updateVirtualState(update: {
-    localEnd?: bool;
-    remoteEnd?: bool;
-    localFinish?: bool;
-    localEnd?: bool;
+    localEnd?: boolean;
+    remoteEnd?: boolean;
+    localFinish?: boolean;
+    localEnd?: boolean;
   }) {
     Object.assign(this._virtualState, update);
     const state = this._virtualState;
@@ -227,7 +227,7 @@ export class VirtualStream extends Duplex {
     chunk: Buffer | string,
     encoding: string,
     callback: (error: ?Error, data?: Buffer | string) => void
-  ): bool {
+  ): boolean {
     log.verbose(`${this.name} write ${chunk.length} bytes`);
     this._writeDest.write(buildHeader(STREAM_MESSAGE, this._id));
     this._writeDest.write(chunk, encoding, callback);
@@ -308,7 +308,7 @@ export default class DemuxStream extends Transform {
    * Generally test only method to ensure that streams get cleaned up on error
    * or end/close.
    */
-  hasStream(id: string): bool {
+  hasStream(id: string): boolean {
     return this._streams.has(id);
   }
 

@@ -221,7 +221,7 @@ export default class DuplexTransform extends Duplex {
     return super.end(chunk, encodingOrCallback, callback);
   }
 
-  emit(eventName: string, ...args:Array<any>): boolean {
+  emit(eventName: string, ...args: Array<any>): boolean {
     const ret = this.listenerCount(eventName) !== 0;
 
     switch (eventName) {

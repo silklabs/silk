@@ -54,7 +54,7 @@ suite('metrics agent', function() {
 
     let {results} = await account.api.account.queryMetrics({
       // XXX: Remember that we prefix the series with the metric submitter type.
-      query: `SELECT * FROM account_${CpuMetric.NAME}`
+      query: `SELECT * FROM account_${CpuMetric.NAME}`,
     });
 
     let values = results[0].series[0].values;

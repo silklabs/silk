@@ -41,7 +41,7 @@ export default class WebSocketDuplexStream extends Duplex {
 
   _ws: WebSocket | NodeWebSocket;
   _buffers: Array<Buffer | string> = [];
-  _finished: bool = false;
+  _finished: boolean = false;
   _log: Logger = log;
 
   get readyState(): number {

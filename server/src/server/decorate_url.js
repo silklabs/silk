@@ -8,7 +8,7 @@ import signUrl from './sign_url';
 
 type ObjectWithUrl = {
   url: ?string;
-}
+};
 
 // XXX: Hack until we convert over to more robust blobs.
 export default function decorateUrl(obj: ObjectWithUrl): ObjectWithUrl {

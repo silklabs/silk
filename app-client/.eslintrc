@@ -1,0 +1,9 @@
+{
+  "extends": "eslint-config-silk",
+  "globals": {
+    "$Shape": false,
+    "__DEV__": false,
+    "suite": false,
+    "test": false
+  }
+}

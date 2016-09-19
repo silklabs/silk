@@ -2,11 +2,10 @@
  * @flow
  */
 
-import createStore from 'silk-app-sdk/src/store';
-
+import {createStore} from 'silk-app-client';
 import {reducer as wifiConfig} from './wifi_reducers';
 
-import type {Store, State} from 'silk-app-sdk/src/store';
+import type {Store, State} from 'silk-app-client';
 import type {WifiConfigState} from './wifi_reducers';
 
 export type AppState = State & {

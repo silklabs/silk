@@ -3,8 +3,8 @@
  */
 
 import invariant from 'assert';
+import {actions} from 'silk-app-client';
 
-import * as actions from '../store/actions';
 import emitter from './emitter';
 
 import type {SDKStore} from './store';

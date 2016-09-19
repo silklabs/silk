@@ -3,9 +3,7 @@
  */
 
 import assert from 'assert';
-import thunk from 'redux-thunk';
 import {SilkApi, AccessToken} from 'silk-api';
-import version from 'silk-core-version';
 import uuid from 'uuid';
 
 import createContext from '../../server/test/server/context';

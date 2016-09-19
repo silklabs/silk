@@ -2,7 +2,7 @@
  * @flow
  */
 
-import type {DeviceWifiNetwork} from '../ble/device_session';
+import type {DeviceWifiNetwork} from 'silk-app-client/src/ble/device_session';
 import type {
   DownloadProgress,
   UpdateState,

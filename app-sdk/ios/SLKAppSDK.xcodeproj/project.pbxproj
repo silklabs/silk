@@ -826,7 +826,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SLKAppSDK;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SLK_JS_BUNDLE_ENTRY_FILE = "app-sdk/src/sdk/index";
+				SLK_JS_BUNDLE_ENTRY_FILE = "app-sdk/src/index";
 			};
 			name = Debug;
 		};
@@ -858,7 +858,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SLKAppSDK;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SLK_JS_BUNDLE_ENTRY_FILE = "app-sdk/src/sdk/index";
+				SLK_JS_BUNDLE_ENTRY_FILE = "app-sdk/src/index";
 			};
 			name = Release;
 		};

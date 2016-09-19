@@ -2,10 +2,10 @@
  * @flow
  */
 
-import createStore from '../store';
+import {createStore} from 'silk-app-client';
 import {reducer as messages} from './message_reducers';
 
-import type {State, Store} from '../store';
+import type {State, Store} from 'silk-app-client';
 import type {MessagesState} from './message_reducers';
 
 export type SDKState = State & {

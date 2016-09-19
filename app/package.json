@@ -3,7 +3,7 @@
     "eslint-config-silk": "/pub/eslint-config",
     "react-native-webrtc": "/react-native-webrtc",
     "silk-api": "/api",
-    "silk-app-sdk": "/app-sdk",
+    "silk-app-client": "/app-client",
     "silk-app-util": "/app-util",
     "silk-core-version": "/pub/version",
     "silk-crypto": "/crypto",

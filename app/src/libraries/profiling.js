@@ -6,9 +6,8 @@ import { ec as ECDH } from 'elliptic';
 import { Systrace } from 'react-native';
 
 import { RssiSmoother } from 'silk-api';
-import BLEStream from 'silk-app-sdk/src/ble/stream';
-import DeviceSession from 'silk-app-sdk/src/ble/device_session';
-import SocketSession from 'silk-app-sdk/src/ble/socket_session';
+import BLEStream from 'silk-app-client/src/ble/stream';
+import {DeviceSession, SocketSession} from 'silk-app-client/src/ble';
 import {Socket, SocketManager} from 'silk-ble-socket';
 import * as CryptoModule from 'silk-crypto';
 import HttpClient from 'silk-http-client';

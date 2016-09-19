@@ -16,7 +16,7 @@ import createLog from 'silk-log';
 import WebRTCDataChannelReceiver from './abstract/WebRTCDataChannelReceiver';
 import DashSegmentPlayer from './DashSegmentPlayer';
 
-import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {RegisteredDevice} from 'silk-app-client/src/store/device_reducers';
 
 type Props = {
   device: RegisteredDevice;

@@ -3,7 +3,7 @@
  */
 
 import invariant from 'assert';
-import {clients as actions} from '../store/actions';
+import {actions} from 'silk-app-client';
 
 import type {ClientsRemoveMessage} from './incoming';
 import type {SDKStore} from './store';
@@ -18,7 +18,7 @@ function CLIENTS_REMOVE(
   const {clients} = store.getState();
   invariant(clients.has(clientId));
 
-  store.dispatch(actions.removeBegin(clientId));
+  store.dispatch(actions.clients.removeBegin(clientId));
 }
 
 export const messageHandlers = {
@@ -41,8 +41,8 @@ export function init(store: SDKStore) {
         return;
       }
 
-      store.dispatch(actions.removeFromServer(clientId));
-      store.dispatch(actions.removeFromDevices(clientId));
+      store.dispatch(actions.clients.removeFromServer(clientId));
+      store.dispatch(actions.clients.removeFromDevices(clientId));
     });
   });
 }

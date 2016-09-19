@@ -1,11 +1,3 @@
 {
-  "extends": "eslint-config-silk",
-  "globals": {
-    "$Shape": false,
-    "__DEV__": false,
-    "Blob": false,
-    "URL": false,
-    "ErrorUtils": false,
-    "requestAnimationFrame": false
-  }
+  "extends": "eslint-config-silk"
 }

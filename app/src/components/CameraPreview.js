@@ -16,7 +16,7 @@ import {RTCView} from 'react-native-webrtc';
 import AsyncComponent from './abstract/AsyncComponent';
 import * as actions from '../store/actions';
 
-import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {RegisteredDevice} from 'silk-app-client/src/store/device_reducers';
 import type {Dispatch} from 'silk-redux/action';
 
 type Props = {

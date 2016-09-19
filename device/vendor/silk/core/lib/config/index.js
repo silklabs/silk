@@ -84,6 +84,7 @@ const REGISTRATION_RETRY_LIMIT: number = 5;
 
 const NEW_PAIRED_DEVICE_PERMISSIONS = [
   'ble',
+  'revoke',
   'rtc',
   'reset',
 ];

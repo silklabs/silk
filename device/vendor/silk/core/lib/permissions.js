@@ -39,6 +39,9 @@ export const MUTABLE_PERMISSION_TYPES = new Set([
   // Allow webrtc connections.
   'rtc',
 
+  // Allowed to revoke other clients.
+  'revoke',
+
   // Allowed to force a factory reset.
   'reset',
 ]);

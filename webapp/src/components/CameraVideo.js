@@ -977,6 +977,37 @@ export default class CameraVideo extends React.Component {
   }
 
   _renderDebugMenu() {
+    if (!useMSEPlayer) {
+      // TODO: Add more debug controls to WebRTC video
+      return (
+        <div style={styles.debugMenu}>
+          <h4>Debug Options</h4>
+          <form className="form-inline" style={styles.debugMenuForm}>
+            <div className="form-group" style={styles.debugMenuFormGroup}>
+              <Input
+                type="checkbox"
+                label=" Show Motion Events"
+                ref="checkMotion"
+                checked={this.state.showMotionEvents}
+                onChange={this._onMotionEventsCheck}
+                standalone
+              />
+            </div>
+            <div className="form-group" style={styles.debugMenuFormGroup}>
+              <Input
+                type="checkbox"
+                label=" Show Tracked Faces"
+                ref="checkFaces"
+                checked={this.state.showFaces}
+                onChange={this._onFacesCheck}
+                standalone
+              />
+            </div>
+          </form>
+        </div>
+      );
+    }
+
     return (
       <div style={styles.debugMenu}>
         <h4>Debug Options</h4>

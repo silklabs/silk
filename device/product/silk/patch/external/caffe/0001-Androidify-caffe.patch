@@ -1,4 +1,4 @@
-From 3caa3c6c1eb9dc227260c4023b28ea0fe33b9ee8 Mon Sep 17 00:00:00 2001
+From 2b6ce1eb6c7dcbaaf995c0fb635e567d2908c13e Mon Sep 17 00:00:00 2001
 From: Anshul Jain <anshul@silklabs.com>
 Date: Thu, 15 Sep 2016 17:41:50 -0700
 Subject: [PATCH 1/2] Androidify caffe
@@ -10,7 +10,7 @@ Subject: [PATCH 1/2] Androidify caffe
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..70d80a9
+index 0000000..bb772c9
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,104 @@
@@ -56,7 +56,7 @@ index 0000000..70d80a9
 +$(CAFFE_MAKEFILE): GLOG_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libglog,,,$(TARGET_2ND_ARCH)))
 +$(CAFFE_MAKEFILE): PROTOBUF_ROOT := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,$(LIB_PROTOBUF),,,$(TARGET_2ND_ARCH)))
 +$(CAFFE_MAKEFILE): OPENCV_HOME := $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libopencv3_core,,,$(TARGET_2ND_ARCH))/sdk/native/jni)
-+$(CAFFE_MAKEFILE): SML_HOME := $(ANDROID_BUILD_TOP)/external/qualcomm-developer-network/QSML-0.14.0/ilp64/arm-linux-androideabi
++$(CAFFE_MAKEFILE): SML_HOME := $(ANDROID_BUILD_TOP)/external/qualcomm-developer-network/qsml-0.15.0/lp64/arm-linux-androideabi
 +$(CAFFE_MAKEFILE): CAFFE_HOME := $(call intermediates-dir-for, SHARED_LIBRARIES,$(LOCAL_MODULE),,,$(TARGET_2ND_ARCH))
 +$(CAFFE_MAKEFILE): PROTOBUF_HOST := $(abspath $(PROTOC))
 +$(CAFFE_MAKEFILE): | $(PROTOC)
@@ -97,7 +97,7 @@ index 0000000..70d80a9
 +	-DPROTOBUF_INCLUDE_DIR=$(ANDROID_BUILD_TOP)/external/protobuf/src \
 +	-DPROTOBUF_LIBRARY=$(PROTOBUF_ROOT)/$(LIB_PROTOBUF).a \
 +	-DSML_INCLUDE_DIR="${SML_HOME}/include" \
-+	-DSML_LIBRARY="${SML_HOME}/lib/libQSML-0.14.0.so" \
++	-DSML_LIBRARY="${SML_HOME}/lib/libQSML-0.15.0.so" \
 +	-DCMAKE_INSTALL_PREFIX=$(ANDROID_BUILD_TOP)/$(CAFFE_HOME) \
 +	$(LOCAL_PATH)
 +

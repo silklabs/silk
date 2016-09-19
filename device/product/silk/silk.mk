@@ -157,8 +157,6 @@ PRODUCT_PACKAGES += \
   libsodium \
   sodium \
   libglog \
-  libQSML \
-  libsymphony-cpu \
   node-opencl \
 
 ifneq ($(strip $(SILK_FEATURE_TTS_CEREPROC)),false)
@@ -180,8 +178,9 @@ PRODUCT_PACKAGES += \
 ifneq ($(strip $(SILK_FEATURE_QDN)),false)
 # external/qualcomm-developer-network/...
 PRODUCT_PACKAGES += \
-  libQSML-0.14.0 \
-  libsymphony-cpu-1.0.0 \
+  libQSML \
+  libsymphony-cpu \
+  libsymphonypower \
 
 endif
 

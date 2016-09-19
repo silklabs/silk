@@ -10,7 +10,7 @@ import {NativeModules, NetInfo} from 'react-native';
 import getSocketManager from 'silk-ble-socket';
 import createLog from 'silk-log';
 
-import DeviceSession from './ble/device_session';
+import {DeviceSession} from './ble';
 import * as actions from './store/actions';
 
 import type {Socket} from 'silk-ble-socket';

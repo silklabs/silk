@@ -18,6 +18,7 @@ WHITELIST=$(cat <<-EOF
   api
   api-schema
   app
+  app-client
   app-config
   app-sdk
   app-sdk-example

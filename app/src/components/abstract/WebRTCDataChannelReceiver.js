@@ -7,7 +7,7 @@ import createLog from 'silk-log';
 
 import AsyncComponent from './AsyncComponent';
 
-import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {RegisteredDevice} from 'silk-app-client/src/store/device_reducers';
 import type {Peer} from 'silk-rtc';
 
 const log = createLog('WebRTCDataChannelReceiver');

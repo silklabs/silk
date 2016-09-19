@@ -3,7 +3,7 @@ def silkRoot = file("$sdkProjectDir/../..")
 
 project.ext.react = [
   root: "$silkRoot",
-  entryFile: "app-sdk/src/sdk/index.js",
+  entryFile: "app-sdk/src/index.js",
   bundleInDebug: true,
   bundleInRelease: true,
   inputExcludes: [

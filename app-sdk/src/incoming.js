@@ -2,7 +2,7 @@
  * @flow
  */
 
-import type {WifiConfiguration} from '../ble/device_session';
+import type {WifiConfiguration} from 'silk-app-client/src/ble/device_session';
 
 export type DeviceConfigAcceptMessage = {
   type: 'DEVICE_CONFIG_ACCEPT';

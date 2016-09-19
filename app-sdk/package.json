@@ -1,25 +1,18 @@
 {
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
-    "react-native-webrtc": "/react-native-webrtc",
     "silk-api": "/api",
-    "silk-ble-socket": "/ble-socket",
-    "silk-core-version": "/pub/version",
-    "silk-crypto": "/crypto",
+    "silk-app-client": "/app-client",
     "silk-log": "/pub/log",
-    "silk-onion": "/onion",
-    "silk-react-native-blobs": "/pub/react-native-blobs",
     "silk-react-native-transformer": "/react-native-transformer",
     "silk-redux": "/redux",
     "silk-rtc": "/rtc",
-    "silk-streams": "/streams",
-    "silk-utils": "/utils"
+    "silk-update": "/rtc"
   },
   "dependencies": {
-    "joi": "6.10.1",
-    "lodash.merge": "3.3.2",
     "react": "15.3.1",
-    "react-native": "0.34.0-rc.0"
+    "react-native": "0.34.0-rc.0",
+    "redux-actions": "0.10.1"
   },
   "devDependencies": {
     "babel-eslint": "6.1.0",

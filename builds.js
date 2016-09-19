@@ -307,6 +307,7 @@ const builds = {
     files: [
       'app-sdk-example/ios/**',
       'app-sdk/ios/**',
+      'app-util/ios/**',
       'crypto/ios/**',
       'pub/react-native-blobs/ios/**',
       'react-native-webrtc/ios/**',
@@ -318,6 +319,7 @@ const builds = {
     files: [
       'app-sdk-example/android/**',
       'app-sdk/android/**',
+      'app-util/android/**',
       'crypto/android/**',
       'pub/react-native-blobs/android/**',
       'react-native-webrtc/android/**',
@@ -432,7 +434,13 @@ const builds = {
     title: 'Pando app release',
     travis_yml: 'releng/shipit/travis.release-pando-app.yml',
     events: ['nightly', 'push'],
-    files: ['app-sdk/**', 'ble-socket/**', 'app-sdk-example/**'], // TODO: Add more from the release-pando-app WHITELIST here
+    files: [
+      'app-client/**',
+      'app-sdk/**',
+      'ble-socket/**',
+      'app-sdk-example/**',
+       // TODO: Add more from the release-pando-app WHITELIST here
+    ],
     branches: ['master', 'next', 'release'],
   },
   'releng-shipit-pando-dialog-script': {

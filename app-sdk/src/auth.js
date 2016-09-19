@@ -2,7 +2,7 @@
  * @flow
  */
 
-import * as actions from '../store/actions';
+import {actions} from 'silk-app-client';
 
 import type {SDKStore} from './store';
 

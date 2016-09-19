@@ -7,12 +7,12 @@
 import 'silk-react-native-transformer/globals';
 import defaultConfig from './config';
 
+import {actions, client} from 'silk-app-client';
+
 import * as dispatch from './dispatch';
 import * as clients from './clients';
 import * as devices from './devices';
 import createStore from './store';
-import * as client from '../client';
-import * as actions from '../store/actions';
 
 const store = createStore();
 client.init(store);

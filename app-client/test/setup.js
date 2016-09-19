@@ -1,3 +1,4 @@
+/* eslint-disable flowtype/require-valid-file-annotation */
 const mockRequire = require('mock-require');
 const STORAGE = {};
 mockRequire('react-native', {
@@ -22,9 +23,6 @@ mockRequire('react-native', {
       throw new Error('Not implemented');
     },
     clear() {
-      throw new Error('Not implemented');
-    },
-    getAllKeys() {
       throw new Error('Not implemented');
     },
     getAllKeys() {

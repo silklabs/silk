@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import {lockToPortrait} from 'react-native-orientation';
 import {connect, Provider} from 'react-redux';
-import * as client from 'silk-app-sdk/src/client';
+import {client} from 'silk-app-client';
 import version from 'silk-core-version';
 import createLog from 'silk-log';
 

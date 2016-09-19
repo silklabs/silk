@@ -19,7 +19,7 @@ import CameraPreview from './CameraPreview';
 import {Colors} from './CommonStyles';
 import UnconfiguredDevice from './UnconfiguredDevice';
 
-import type {RegisteredDevice} from 'silk-app-sdk/src/store/device_reducers';
+import type {RegisteredDevice} from 'silk-app-client/src/store/device_reducers';
 import type {GlobalProps} from './Root';
 
 // This is mostly a guestimate based on FUT hardware. Absolute values

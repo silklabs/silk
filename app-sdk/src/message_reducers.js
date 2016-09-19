@@ -21,12 +21,14 @@ import type {
   DeviceListMessage,
   DeviceUpdateStatusMessage,
 } from './outgoing';
-import type DeviceSession from '../ble/device_session';
-import type {RemoveClientFromServerResult} from '../store/client_actions';
+import type {DeviceSession} from 'silk-app-client/src/ble';
+import type {
+  RemoveClientFromServerResult,
+} from 'silk-app-client/src/store/client_actions';
 import type {
   UnregisterRegisteredDeviceResult,
   RTCMediaStreamResult,
-} from '../store/device_actions';
+} from 'silk-app-client/src/store/device_actions';
 
 export type MessagesState = {
   CLIENT_STATUS: ClientStatusMessage,

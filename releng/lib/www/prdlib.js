@@ -190,8 +190,8 @@ function _issuePrioritySort(a, b) {
 }
 
 type AllPrdItems = {
-  itemsByMilestone: { [key: string]: Array<GithubIssue>; };
-  milestoneDescriptions: { [key: string]: string; };
+  itemsByMilestone: { [key: string]: Array<GithubIssue> };
+  milestoneDescriptions: { [key: string]: string };
 };
 
 export async function fetchAllPrdItems(octo: any): Promise<AllPrdItems> {

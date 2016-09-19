@@ -389,7 +389,7 @@ export async function handleGitHubPullRequestEvent(
 async function triggerBuildsForPullRequest(
   pr: PullRequestInfo,
   githubUser: {
-    login: string
+    login: string,
   },
 ): Promise<number> {
   let owner_name = pr.base.repo.owner.login;

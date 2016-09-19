@@ -9,7 +9,6 @@
 
 import {AccessToken} from 'silk-api';
 import createLog from 'silk-log/device';
-import fs from 'mz/fs';
 import {handleActions} from 'silk-redux';
 import invariant from 'assert';
 import path from 'path';
@@ -20,11 +19,9 @@ import {
 } from '../permissions';
 import {
   ensureDirectory,
-  ensureUnlink,
   load as loadFromStorage,
   save as saveToStorage,
 } from './storage';
-import wrapNoEntity from '../fs/wrap_no_entity';
 
 import type {SimpleAction} from 'silk-redux/action';
 
@@ -62,10 +59,6 @@ export type PersistState = {
 // Where the persistent data for this device lives.
 const PERSIST_DIR = `data/silk/config`;
 export const PERSIST_PATH = path.join(PERSIST_DIR, `store.mpk`);
-
-// Old data file locations.
-const ID_PATH = path.join(PERSIST_DIR, `id.json`);
-const CONFIG_PATH = path.join(PERSIST_DIR, `config.json`);
 
 const log = createLog(`redux-persist`);
 
@@ -241,89 +234,15 @@ export const reducer = handleActions({
 }, initialState);
 
 async function init(): Promise<PersistState> {
-  // If this fails we're hosed.
   await ensureDirectory(PERSIST_DIR);
 
-  let state: ?PersistState;
-
-  // We can tolerate an upgrade failure.
-  try {
-    state = await maybeUpgrade();
-  } catch (error) {
-    process.nextTick(() => {
-      throw error;
-    });
-  }
-
-  // Guaranteed not to throw.
-  await Promise.all([
-    ensureUnlink(ID_PATH),
-    ensureUnlink(CONFIG_PATH),
-  ]);
-
-  if (!state) {
-    // This must succeed.
-    state = await createNewState();
-  }
-
+  const state = await createNewState();
   invariant(state);
   invariant(state.accessToken);
   invariant(state.accessToken.pub !== `invalid`);
   invariant(state.accessToken.priv !== `invalid`);
 
-  // This must succeed.
   await save(state);
-
-  return state;
-}
-
-async function maybeUpgrade(): Promise<?PersistState> {
-  log.debug(`Attempting to read '${ID_PATH}'`);
-  const jsonId = await wrapNoEntity(fs.readFile(ID_PATH, `utf8`));
-  if (!jsonId) {
-    log.debug(`'${ID_PATH}' does not exist`);
-    return null;
-  }
-
-  const accessToken = AccessToken.import(jsonId);
-  invariant(accessToken);
-
-  log.debug(`Validating access token`);
-  invariant(await accessToken.genIsValid());
-
-  const {pub, priv} = accessToken;
-  invariant(pub);
-  invariant(priv);
-
-  const state: PersistState = {
-    ...initialState,
-    accessToken: {
-      pub,
-      priv,
-    },
-  };
-
-  let config: ?Object = null;
-
-  log.debug(`Attempting to read '${CONFIG_PATH}'`);
-  const jsonConfig = await wrapNoEntity(fs.readFile(CONFIG_PATH, `utf8`));
-  if (jsonConfig) {
-    config = JSON.parse(jsonConfig);
-  } else {
-    log.debug(`'${CONFIG_PATH}' does not exist`);
-  }
-
-  if (config && config.success) {
-    state.config = {
-      accountBeaconUuid: config.beaconUUID,
-      accountDeviceNumber: config.accountDeviceNumber || 0,
-      serverUrl: config.serverUrl || null,
-    };
-    state.permissions = new Map();
-    const permissionsMap = new Map();
-    permissionsMap.set('full', FULL_PERMISSION);
-    state.permissions.set(config.registrarPublicKey, permissionsMap);
-  }
 
   return state;
 }

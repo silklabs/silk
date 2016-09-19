@@ -48,7 +48,7 @@
   <project name="qualcomm-developer-network"
            path="external/qualcomm-developer-network"
            remote="silk"
-           revision="master"
+           revision="refs/tags/v0.14"
            clone-depth="1"/>
 
   <!-- Caffe and its dependent modules -->

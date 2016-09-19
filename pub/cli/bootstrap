@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-/*eslint no-console:0,no-process-exit:0*/
+/*eslint no-console:0, no-process-exit:0, no-var:0, flowtype/require-valid-file-annotation: 0 */
 
 /**
  * This script will be run on postinstall to ensure a minimum version of node is

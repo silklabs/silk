@@ -58,6 +58,10 @@ export default class CameraPreview extends React.Component {
     this._context = this._canvas.getContext('2d');
   }
 
+  componentWillUnmount() {
+    this._onVideoActive(null, false);
+  }
+
   render() {
     const camera = this._camera;
 
@@ -105,7 +109,14 @@ export default class CameraPreview extends React.Component {
 
   _onVideoActive = (label, active) => {
     this._previewActive = active;
-    this._renderCanvas();
+    if (this._renderTimer) {
+      clearInterval(this._renderTimer);
+      this._renderTimer = null;
+    }
+    if (active) {
+      // Update object boxes 4 times a second
+      this._renderTimer = setInterval(this._renderCanvas, 250);
+    }
   };
 
   _renderCanvas = () => {
@@ -149,8 +160,8 @@ export default class CameraPreview extends React.Component {
 
     // Objects.
     if (camera.online && this._previewActive) {
-      const time = Date.now();
-      const objects = camera.objects.collect(time - 1000, time);
+      // Collect objects from the last second (device time)
+      const objects = camera.objects.collect(1000);
       if (objects.size) {
         context.lineWidth = 1;
         context.font = '10px' + defaultFont;
@@ -224,8 +235,14 @@ export default class CameraPreview extends React.Component {
       if (!this._previewActive) {
         text = 'No preview available';
       } else {
-        // TODO: Timestamp?
-        text = '';
+        if (camera.objects) {
+          const now = new Date(camera.objects.deviceTime);
+          const dateString = now.toLocaleDateString();
+          const timeString = now.toLocaleTimeString();
+          text = `${dateString} ${timeString}`;
+        } else {
+          text = '';
+        }
       }
       break;
     case 'offline':

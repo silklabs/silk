@@ -33,6 +33,10 @@ const mediaStreamConstraints = {
   },
 };
 
+// The amount of time to collect objects before sending in a batch.
+// (TODO: should match the same const in timeline.js...)
+const OBJECT_SEND_INTERVAL_MS = 250;
+
 class Camera extends EventEmitter {
   id = '';
   logoImage = null;
@@ -436,7 +440,7 @@ class Camera extends EventEmitter {
         this._objectsChannel = this._peer.createChannel(
           'objects',
           {
-            maxRetransmitTime: 1000,
+            maxRetransmitTime: OBJECT_SEND_INTERVAL_MS * 2,
           }
         );
         this._objectsChannel.on('open', () => {
@@ -459,7 +463,7 @@ class Camera extends EventEmitter {
 
   _onObjectStream = (msg) => {
     log.debug(`_onObjectStream`, msg);
-    if (!msg || !(`objects` in msg) || !Array.isArray(msg.objects)) {
+    if (!msg || !(`objects` in msg) || !(`now` in msg) || !Array.isArray(msg.objects)) {
       log.warn(`Bad objects`, msg);
       return;
     }
@@ -475,8 +479,15 @@ class Camera extends EventEmitter {
       return;
     }
 
+    const lastNow = this.objects.deviceTime;
+    if (lastNow > 0) {
+      const objectDelay = msg.now - lastNow;
+      if (objectDelay > OBJECT_SEND_INTERVAL_MS * 1.5) {
+        log.warn(`Objects delayed by ${objectDelay - OBJECT_SEND_INTERVAL_MS}ms`);
+      }
+    }
     this.objectsSize = maxsize; // TODO: This is terrible
-    this.objects.push(msg.objects, maxsize.width, maxsize.height);
+    this.objects.push(msg.now, msg.objects, maxsize.width, maxsize.height);
   };
 }
 

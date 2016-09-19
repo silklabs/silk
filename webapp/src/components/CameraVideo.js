@@ -510,9 +510,10 @@ export default class CameraVideo extends React.Component {
 
     context.font = defaultFont;
 
-    // Draw objects.
-    const objects =
-      this._collectAndProcessObjects(videoStartTimestamp, videoEndTimestamp);
+    // Draw objects from the last second (device time).
+    const objects = useMSEPlayer
+      ? this._collectAndProcessObjects(videoStartTimestamp, videoEndTimestamp)
+      : this._collectAndProcessObjects(1000);
     if (objects.length) {
       const drawArgs = {
         context,
@@ -574,14 +575,14 @@ export default class CameraVideo extends React.Component {
     }
   }
 
-  _collectAndProcessObjects(timeStart, timeEnd) {
+  _collectAndProcessObjects(durationMs) {
     invariant(this.state.camera);
 
     const objects = [];
 
     // Collect all objects that should be present in this time window.
     const objectMap = this.state.camera.objects === null ? [] :
-      this.state.camera.objects.collect(timeStart, timeEnd);
+      this.state.camera.objects.collect(durationMs);
     const consoleMessageObjects = [];
 
     objectMap.forEach((objectArray, objectId) => {

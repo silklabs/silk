@@ -488,8 +488,7 @@ export default class Timeline extends EventEmitter {
     this._processEvents(objects);
 
     if (this.liveObjects && !this.objectSendTimeout) {
-      this.objectSendTimeout =
-        setTimeout(this._sendObjects, OBJECT_SEND_INTERVAL_MS);
+      this._sendObjects();
     }
   }
 
@@ -498,18 +497,19 @@ export default class Timeline extends EventEmitter {
       clearTimeout(this.objectSendTimeout);
       this.objectSendTimeout = null;
     }
-
     if (!this.liveObjects) {
       return;
     }
 
-    if (this.objects.size) {
-      this.channels.objects.emit('objects', {
-        objects: this.objects.toArray(),
-        maxsize: this.camera.getFrameSize(),
-      });
-      this.objects.empty();
-    }
+    this.channels.objects.emit('objects', {
+      maxsize: this.camera.getFrameSize(),
+      now: Date.now(),
+      objects: this.objects.toArray(),
+    });
+    this.objects.empty();
+
+    this.objectSendTimeout =
+      setTimeout(this._sendObjects, OBJECT_SEND_INTERVAL_MS);
   };
 
   /**

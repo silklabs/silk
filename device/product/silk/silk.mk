@@ -184,6 +184,17 @@ PRODUCT_PACKAGES += \
 
 endif
 
+ifneq ($(strip $(SILK_FEATURE_NNPACK)),false)
+# external/NNPACK and its dependencies
+PRODUCT_PACKAGES += \
+  cpufeatures \
+  pthreadpool \
+  nnpack_ukernels \
+  nnpack \
+  nnpack_reference \
+
+endif
+
 # packages for debug builds
 ifneq ($(filter $(TARGET_BUILD_VARIANT),eng userdebug),)
 PRODUCT_PACKAGES += valgrind

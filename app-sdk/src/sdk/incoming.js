@@ -70,3 +70,8 @@ export type DeviceMediaStreamMessage = {
       | 'DEVICE_RTC_VIDEO_DISABLE';
   deviceId: string;
 };
+
+export type ClientsRemoveMessage = {
+  type: 'CLIENTS_REMOVE',
+  clientId: string;
+};

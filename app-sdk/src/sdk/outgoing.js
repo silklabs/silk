@@ -162,10 +162,23 @@ export type ClientListMessage = {
   clients: Array<ClientInfo>;
 };
 
+export type ClientRemoveSuccessMessage = {
+  type: 'CLIENT_REMOVE_SUCCESS';
+  clientId: string;
+};
+
+export type ClientRemoveErrorMessage = {
+  type: 'CLIENT_REMOVE_ERROR';
+  clientId: string;
+  error: string;
+};
+
 export type OutgoingMessage =
     InitializedMessage
   | MessageErrorMessage
   | ClientStatusMessage
+  | ClientRemoveSuccessMessage
+  | ClientRemoveErrorMessage
   | DeviceStatusMessage
   | DeviceListMessage
   | DeviceConfigWifiScanResultsMessage

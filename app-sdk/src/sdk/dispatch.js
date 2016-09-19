@@ -5,6 +5,7 @@
 import createLog from 'silk-log';
 
 import * as auth from './auth';
+import * as clients from './clients';
 import * as devices from './devices';
 import emitter from './emitter';
 
@@ -14,6 +15,7 @@ const log = createLog('app-sdk-dispatch');
 
 const messageHandlers = {
   ...auth.messageHandlers,
+  ...clients.messageHandlers,
   ...devices.messageHandlers,
 };
 

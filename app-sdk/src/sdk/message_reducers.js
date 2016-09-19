@@ -22,6 +22,7 @@ import type {
   DeviceUpdateStatusMessage,
 } from './outgoing';
 import type DeviceSession from '../ble/device_session';
+import type {RemoveClientFromServerResult} from '../store/client_actions';
 import type {
   UnregisterRegisteredDeviceResult,
   RTCMediaStreamResult,
@@ -855,6 +856,48 @@ function CLIENTS_LIST_FETCH(
   return state;
 }
 
+function CLIENTS_REMOVE_SERVER(
+  state: MessagesState,
+  action: SimpleAction<'CLIENTS_REMOVE_SERVER', RemoveClientFromServerResult>,
+): MessagesState {
+  if (action.requested) {
+    return state;
+  }
+
+  const {clientId, success} = action.payload;
+  let {clients} = state.CLIENTS;
+
+  const index = clients.findIndex((client) => client.id === clientId);
+  if (index === -1) {
+    return state;
+  }
+
+  if (action.error || !success) {
+    emitter.postMessage({
+      type: 'CLIENT_REMOVE_ERROR',
+      clientId,
+      error: 'FAILED', // TODO: probably want to enum this...
+    });
+    return state;
+  }
+
+  emitter.postMessage({
+    type: 'CLIENT_REMOVE_SUCCESS',
+    clientId,
+  });
+
+  clients = clients.slice();
+  clients.splice(index, 1);
+
+  return {
+    ...state,
+    CLIENTS: {
+      ...state.CLIENTS,
+      clients,
+    },
+  };
+}
+
 function DEVICE_RTC_CONNECTIONCLOSED(
   state: MessagesState,
   action: SimpleAction<'DEVICE_RTC_CONNECTIONCLOSED', string>
@@ -918,7 +961,6 @@ function rtcMediaStreamAddedRemoved(
   };
 }
 
-
 export const reducer = handleActions({
   AUTH_RESTORE: handleAuthAction,
   AUTH_SIGNIN_WITH_PASSWORD: handleAuthAction,
@@ -927,6 +969,7 @@ export const reducer = handleActions({
   AUTH_SIGNOUT,
   NETWORK_SERVER_REACHABLE,
   CLIENTS_LIST_FETCH,
+  CLIENTS_REMOVE_SERVER,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER_SERVER,
   DEVICE_BLE_CONNECT,

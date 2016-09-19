@@ -240,9 +240,7 @@ export default class DialogEngine extends EventEmitter {
         };
         for (let intention of intentions) {
           if (intention.intent !== UNKNOWN_INTENT &&
-              intention.intent !== 'None' &&
-              intention.intent !== 'builtin.intent.none' &&
-              (!topMatchIntent || topMatchIntent.score < intention.score)) {
+              topMatchIntent.score < intention.score) {
             topMatchIntent = intention;
           }
         }

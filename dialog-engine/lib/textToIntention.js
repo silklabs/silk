@@ -197,8 +197,6 @@ export default class TextToIntention {
         };
         for (let intention of intentions) {
           if (intention.intent !== UNKNOWN_INTENT &&
-              intention.intent !== 'None' &&
-              intention.intent !== 'builtin.intent.none' &&
               topMatchIntent.score < intention.score) {
             topMatchIntent = intention;
           }

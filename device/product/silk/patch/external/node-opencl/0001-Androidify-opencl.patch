@@ -1,19 +1,21 @@
-From bdb88cdeae3899fe527810617605ec63c7766742 Mon Sep 17 00:00:00 2001
+From 7fcef99ae1e5665f34ace4eca2c38bb7768d9555 Mon Sep 17 00:00:00 2001
 From: Anshul <anshul@silklabs.com>
 Date: Mon, 28 Mar 2016 17:24:42 -0700
 Subject: [PATCH] Androidify opencl
 
 ---
- Android.mk          | 21 ++++++++++++++
- binding.gyp         | 10 ++++++-
- fakeopencl.cpp      |  0
- lib/opencl.js       |  2 +-
- package.json        | 13 +++++----
- test/opencl_demo.js | 84 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 6 files changed, 122 insertions(+), 8 deletions(-)
+ Android.mk           | 21 +++++++++++++
+ binding.gyp          | 10 ++++++-
+ fakeopencl.cpp       |  0
+ lib/opencl.js        |  2 +-
+ package.json         | 13 ++++----
+ tools/opencl_demo.js | 83 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ webpack.config.js    | 10 +++++++
+ 7 files changed, 131 insertions(+), 8 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 fakeopencl.cpp
- create mode 100644 test/opencl_demo.js
+ create mode 100644 tools/opencl_demo.js
+ create mode 100644 webpack.config.js
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
@@ -129,12 +131,12 @@ index 06acefd..3d81d1d 100644
      "chalk": ">=0.5.1",
      "mocha": "*"
    },
-diff --git a/test/opencl_demo.js b/test/opencl_demo.js
+diff --git a/tools/opencl_demo.js b/tools/opencl_demo.js
 new file mode 100644
-index 0000000..4c5a0ac
+index 0000000..762ee08
 --- /dev/null
-+++ b/test/opencl_demo.js
-@@ -0,0 +1,84 @@
++++ b/tools/opencl_demo.js
+@@ -0,0 +1,83 @@
 +/**
 + * Copyright (c) 2016 Silk Labs, Inc.
 + * All Rights Reserved.
@@ -144,8 +146,7 @@ index 0000000..4c5a0ac
 + */
 +
 +/**
-+ * Pre-requisites: Push this file to /system/silk on the device and run
-+ * `adb shell node /system/silk/opencl_demo.js`
++ * `adb shell node system/silk/node_modules/node-opencl/tools/opencl_demo.js`
 + */
 +
 +'use strict';
@@ -219,6 +220,22 @@ index 0000000..4c5a0ac
 +} else {
 +  console.log(`Error loading opencl; skipping demo`);
 +}
+diff --git a/webpack.config.js b/webpack.config.js
+new file mode 100644
+index 0000000..87b30cb
+--- /dev/null
++++ b/webpack.config.js
+@@ -0,0 +1,10 @@
++/* eslint-disable flowtype/require-valid-file-annotation */
++const CopyWebpack = require('copy-webpack-plugin');
++
++module.exports = {
++  plugins: [
++    new CopyWebpack([
++      { from: 'tools', to: 'tools' },
++    ]),
++  ],
++};
 -- 
-2.4.5
+2.8.2
 

@@ -317,7 +317,7 @@ export async function load(persist: 'persist' | 'no-persist'): Promise<void> {
     });
   }
 
-  if (typeof state !== `object` || state !== null) {
+  if (state !== null && typeof state !== `object`) {
     const badState = state;
     log.warn(`Loaded bad state`, badState);
     process.nextTick(() => {

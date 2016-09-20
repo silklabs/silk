@@ -862,6 +862,10 @@ export class DeviceConfig extends EventEmitter {
       listener.sendWifiConnectionInfo(connectionInfo);
     }
   }
+
+  get activeSessionCount(): number {
+    return this._socketSessionListeners.length;
+  }
 }
 
 export default new DeviceConfig();

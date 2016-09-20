@@ -9,7 +9,6 @@
 
 import {AccessToken} from 'silk-api';
 import createLog from 'silk-log/device';
-import fs from 'mz/fs';
 import {handleActions} from 'silk-redux';
 import invariant from 'assert';
 import path from 'path';
@@ -20,11 +19,10 @@ import {
 } from '../permissions';
 import {
   ensureDirectory,
-  ensureUnlink,
   load as loadFromStorage,
   save as saveToStorage,
 } from './storage';
-import wrapNoEntity from '../fs/wrap_no_entity';
+import upgradeTo1 from './upgradeTo1';
 
 import type {SimpleAction} from 'silk-redux/action';
 
@@ -33,6 +31,7 @@ import type {
   PermissionsRemovePayload,
   PermissionsClearPayload,
 } from './persist_actions';
+import type {SerializableObject} from './storage';
 import type {
   Permission,
   PermissionType,
@@ -54,22 +53,22 @@ export type PermissionMap = Map<PermissionType, Permission>;
 export type PermissionsState = Map<string, PermissionMap>;
 
 export type PersistState = {
+  version: number;
   accessToken: SerializableAccessToken;
   config: ?ConfigState;
   permissions: PermissionsState;
 };
 
+const CURRENT_PERSIST_VERSION = 1;
+
 // Where the persistent data for this device lives.
 const PERSIST_DIR = `data/silk/config`;
 export const PERSIST_PATH = path.join(PERSIST_DIR, `store.mpk`);
 
-// Old data file locations.
-const ID_PATH = path.join(PERSIST_DIR, `id.json`);
-const CONFIG_PATH = path.join(PERSIST_DIR, `config.json`);
-
 const log = createLog(`redux-persist`);
 
 const initialState: PersistState = {
+  version: CURRENT_PERSIST_VERSION,
   // This will be replaced with a real token in load() before it's ever used.
   accessToken: {
     pub: `invalid`,
@@ -240,145 +239,146 @@ export const reducer = handleActions({
   PERSIST_PERMISSIONS_CLEAR,
 }, initialState);
 
-async function init(): Promise<PersistState> {
-  // If this fails we're hosed.
-  await ensureDirectory(PERSIST_DIR);
-
-  let state: ?PersistState;
-
-  // We can tolerate an upgrade failure.
-  try {
-    state = await maybeUpgrade();
-  } catch (error) {
-    process.nextTick(() => {
-      throw error;
-    });
-  }
-
-  // Guaranteed not to throw.
-  await Promise.all([
-    ensureUnlink(ID_PATH),
-    ensureUnlink(CONFIG_PATH),
-  ]);
-
-  if (!state) {
-    // This must succeed.
-    state = await createNewState();
-  }
-
-  invariant(state);
-  invariant(state.accessToken);
-  invariant(state.accessToken.pub !== `invalid`);
-  invariant(state.accessToken.priv !== `invalid`);
-
-  // This must succeed.
-  await save(state);
-
-  return state;
-}
-
-async function maybeUpgrade(): Promise<?PersistState> {
-  log.debug(`Attempting to read '${ID_PATH}'`);
-  const jsonId = await wrapNoEntity(fs.readFile(ID_PATH, `utf8`));
-  if (!jsonId) {
-    log.debug(`'${ID_PATH}' does not exist`);
-    return null;
-  }
-
-  const accessToken = AccessToken.import(jsonId);
-  invariant(accessToken);
-
-  log.debug(`Validating access token`);
-  invariant(await accessToken.genIsValid());
-
-  const {pub, priv} = accessToken;
-  invariant(pub);
-  invariant(priv);
-
-  const state: PersistState = {
-    ...initialState,
-    accessToken: {
-      pub,
-      priv,
-    },
-  };
-
-  let config: ?Object = null;
-
-  log.debug(`Attempting to read '${CONFIG_PATH}'`);
-  const jsonConfig = await wrapNoEntity(fs.readFile(CONFIG_PATH, `utf8`));
-  if (jsonConfig) {
-    config = JSON.parse(jsonConfig);
-  } else {
-    log.debug(`'${CONFIG_PATH}' does not exist`);
-  }
-
-  if (config && config.success) {
-    state.config = {
-      accountBeaconUuid: config.beaconUUID,
-      accountDeviceNumber: config.accountDeviceNumber || 0,
-      serverUrl: config.serverUrl || null,
-    };
-    state.permissions = new Map();
-    const permissionsMap = new Map();
-    permissionsMap.set('full', FULL_PERMISSION);
-    state.permissions.set(config.registrarPublicKey, permissionsMap);
-  }
-
-  return state;
-}
-
-async function validate(state: PersistState): Promise<void> {
+async function maybeUpgrade(
+  state: SerializableObject,
+): Promise<SerializableObject> {
   invariant(state);
 
+  if (state.version === CURRENT_PERSIST_VERSION) {
+    log.debug(`Loaded version '${String(state.version)}', no upgrade needed`);
+    return state;
+  }
+
+  // Upgrades must return a new object.
+  Object.freeze(state);
+
+  log.debug(`Upgrading from version '${String(state.version)}' to version ` +
+            `${CURRENT_PERSIST_VERSION}`);
+
+  let upgradedState: SerializableObject;
+
+  switch (CURRENT_PERSIST_VERSION) {
+  case 1:
+    upgradedState = await upgradeTo1(state);
+    break;
+
+  default:
+    throw new Error(`No upgrade function to version ` +
+                    `${CURRENT_PERSIST_VERSION}`);
+  }
+
+  invariant(upgradedState);
+  return upgradedState;
+}
+
+export async function validate(state: SerializableObject): Promise<void> {
+  log.debug(`Attempting to validate`);
+
+  invariant(state);
+
+  invariant(state.version, `No version`);
+  invariant(state.version === CURRENT_PERSIST_VERSION,
+            `Expected version '${CURRENT_PERSIST_VERSION}' but got ` +
+            `'${String(state.version)}' instead`);
+
+  if (state.config) {
+    invariant(state.config.accountBeaconUuid, `No accountBeaconUuid`);
+    invariant(state.config.accountDeviceNumber, `No accountDeviceNumber`);
+  }
+
+  invariant(state.permissions, `No permissions`);
+
+  invariant(state.accessToken, `No accessToken`);
   const {pub, priv} = state.accessToken;
-  invariant(pub);
-  invariant(priv);
+  invariant(pub, `No public key`);
+  invariant(priv, `No private key`);
 
   log.debug(`Validating access token`);
   const accessToken = new AccessToken(pub, priv);
-  invariant(await accessToken.genIsValid());
-
-  // Something else here?
+  invariant(await accessToken.genIsValid(), `Access token invalid`);
 }
 
-export async function load(): Promise<void> {
+export async function load(persist: 'persist' | 'no-persist'): Promise<void> {
   if (loaded) {
     return;
   }
   loaded = true;
 
-  let loadedState: ?PersistState = null;
+  let state: ?SerializableObject;
+
+  log.debug(`Attempting to load from storage`);
 
   // We can tolerate failure loading.
   try {
-    loadedState = await loadFromStorage(PERSIST_PATH);
+    state = await loadFromStorage(PERSIST_PATH);
   } catch (error) {
     process.nextTick(() => {
       throw error;
     });
   }
 
-  if (loadedState) {
-    // We can tolerate failure validating.
+  if (typeof state !== `object` || state !== null) {
+    const badState = state;
+    log.warn(`Loaded bad state`, badState);
+    process.nextTick(() => {
+      throw new Error(`Loaded bad state: ${JSON.stringify(badState)}`);
+    });
+    state = null;
+  }
+
+  let upgraded: boolean = false;
+
+  if (state) {
+    // We can tolerate failure upgrading.
     try {
-      await validate(loadedState);
+      const upgradedState = await maybeUpgrade(state);
+      if (upgradedState !== state) {
+        upgraded = true;
+        state = upgradedState;
+      }
     } catch (error) {
       process.nextTick(() => {
         throw error;
       });
-      loadedState = null;
+      state = null;
     }
   }
 
-  if (!loadedState) {
-    // This must succeed.
-    loadedState = await init();
-    invariant(loadedState);
+  if (state) {
+    // We can tolerate failure validating.
+    try {
+      await validate(state);
+    } catch (error) {
+      process.nextTick(() => {
+        throw error;
+      });
+      state = null;
+    }
+  }
+
+  // From here on out we must either succeed or throw.
+  if (state) {
+    if (upgraded && persist === 'persist') {
+      log.debug(`Saving upgraded state`);
+      await save(state);
+    }
+  } else {
+    log.debug(`Creating initial state`);
+
+    state = await createNewState();
+    invariant(state);
+    invariant(state.accessToken);
+    invariant(state.accessToken.pub !== `invalid`);
+    invariant(state.accessToken.priv !== `invalid`);
+
+    if (persist === 'persist') {
+      await ensureDirectory(PERSIST_DIR);
+      await save(state);
+    }
   }
 
   // Merge into initialState but don't replace it!
-  Object.assign(initialState, loadedState);
+  Object.assign(initialState, state);
 }
 
 export function save(state: PersistState): Promise<void> {

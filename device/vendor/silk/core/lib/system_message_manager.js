@@ -12,6 +12,7 @@ import * as Joi from 'joi';
 import {AccessToken} from 'silk-api';
 import createLog from 'silk-log/device';
 import * as onion from 'silk-onion';
+import {PUBLIC_KEY_SCHEMA} from 'silk-server/src/server/models/base';
 
 import {SYSTEM_CHANNEL_NAME} from './connections';
 import {shutdown} from './main';
@@ -50,6 +51,9 @@ const VALID_SYSTEM_MESSAGE_SCHEMA =
 
 const SYSTEM_MESSAGE_SCHEMAS = {
   reset: makeSystemMessageSchema(`reset`),
+  'revoke-client': makeSystemMessageSchema(`revoke-client`, {
+    clientId: PUBLIC_KEY_SCHEMA,
+  }),
 };
 
 async function verifySystemMessage(base64Message: mixed): Promise<Object> {
@@ -95,11 +99,18 @@ async function verifySystemMessage(base64Message: mixed): Promise<Object> {
     break;
   }
 
+  case `revoke-client`: {
+    invariant(permissions.test(sender, `revoke`),
+              `Sender '${sender}' does not have permission to revoke other ` +
+              `clients`);
+    break;
+  }
+
   default:
     throw new Error(`Untested message '${message.name}'`);
   }
 
-  return message;
+  return {channel, sender, message};
 }
 
 async function systemMessageHandler(base64Message: mixed): Promise<void> {
@@ -107,19 +118,28 @@ async function systemMessageHandler(base64Message: mixed): Promise<void> {
   invariant(accessToken);
   invariant(permissions);
 
-  let message;
+  let channel, sender, message;
   try {
-    message = await verifySystemMessage(base64Message);
+    ({channel, sender, message} = await verifySystemMessage(base64Message));
   } catch (error) {
     log.warn(`Failed to verify system message`, error);
     return;
   }
+
+  invariant(channel);
+  invariant(sender);
+  invariant(message);
 
   log.info(`Received system message`, message);
 
   switch (message.name) {
   case `reset`: {
     await shutdown(`factoryreset`);
+    break;
+  }
+
+  case `revoke-client`: {
+    permissions.clear(sender);
     break;
   }
 

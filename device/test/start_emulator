@@ -75,7 +75,7 @@ runqemu() {
     echo
     echo ==== Retrying runqemu ====
     echo
-    ps aux
+    killqemu
     runqemu $(( $retries - 1 ))
   fi
   set -e

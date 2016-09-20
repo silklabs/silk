@@ -142,7 +142,7 @@ waitforprop()
 }
 
 echo Waiting for device...
-timeout -s KILL 120s adb wait-for-device
+timeout -s KILL 60s adb wait-for-device
 if [[ $? -ne "0" ]] ; then
   echo Timed out waiting for device
   exitstatus=124 # == magic "maybe retry" exit status

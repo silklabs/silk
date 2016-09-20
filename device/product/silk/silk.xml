@@ -17,33 +17,32 @@
   <project name="node-inspector/v8-profiler"
            path="external/v8-profiler"
            remote="github"
-           revision="refs/tags/v5.3.2" clone-depth="1"/>
+           revision="refs/tags/v5.3.2"
+           clone-depth="1"/>
 
   <project name="silk-webrtc"
            path="external/silk-webrtc"
            remote="silk"
-           revision="release-51" clone-depth="1"/>
+           revision="release-51"
+           clone-depth="1"/>
 
-  <project name="cmusphinx/pocketsphinx"
+  <project name="pocketsphinx"
            path="external/pocketsphinx"
-           remote="github"
-           revision="64ee030a8ac1ee1a8198ac54700c8ddc0014b454"
-           upstream="master"
-           clone-depth="42"/>
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
 
-  <project name="cmusphinx/sphinxbase"
+  <project name="sphinxbase"
            path="external/sphinxbase"
-           remote="github"
-           revision="c6e3c0ddf4e8ed5195492b0a7476890dc127967e"
-           upstream="master"
-           clone-depth="42"/>
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
 
-  <project name="cmusphinx/node-pocketsphinx"
+  <project name="node-pocketsphinx"
            path="external/node-pocketsphinx"
-           remote="github"
-           revision="1a469adcec7ff26c6f6968e7e44b1d0ed4ab95ed"
-           upstream="master"
-           clone-depth="42"/>
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
 
   <project name="qualcomm-developer-network"
            path="external/qualcomm-developer-network"
@@ -52,12 +51,11 @@
            clone-depth="1"/>
 
   <!-- Caffe and its dependent modules -->
-  <project name="taka-no-me/android-cmake"
+  <project name="android-cmake"
            path="external/android-cmake"
-           remote="github"
-           revision="556cc14296c226f753a3778d99d8b60778b7df4f"
-           upstream="master"
-           clone-depth="42"/>
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
 
   <project name="gflags/gflags"
            path="external/gflags"
@@ -66,12 +64,11 @@
            upstream="master"
            clone-depth="1"/>
 
-  <project name="google/glog"
+  <project name="glog"
            path="external/glog"
-           remote="github"
-           revision="4d391fe692ae6b9e0105f473945c415a3ce5a401"
-           upstream="master"
-           clone-depth="42"/>
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
 
   <project name="boost"
            path="external/boost"
@@ -87,17 +84,16 @@
   <project name="caffe"
            path="external/caffe"
            remote="silk"
-           revision="be2f081b0a7aedc68d24a9007e5ffdd79e1a494c"
+           revision="refs/tags/tag1"
            upstream="android"
-           clone-depth="42"/>
+           clone-depth="1"/>
 
   <!-- node modules -->
-  <project name="mikeseven/node-opencl"
+  <project name="node-opencl"
            path="external/node-opencl"
-           remote="github"
-           revision="a517a954fb5c6c8c1ef1fe48bc5b3ae8be10c725"
-           upstream="master"
-           clone-depth="42"/>
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
   <project name="websockets/bufferutil"
            path="external/bufferutil"
            remote="github"

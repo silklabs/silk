@@ -93,7 +93,7 @@ PRODUCT_PACKAGES += \
 endif
 
 # Demo extensions.
-ifneq ($(strip $(SILK_FEATURE_DEMOS)),false)
+ifeq ($(strip $(SILK_FEATURE_DEMOS)),true)
 PRODUCT_PACKAGES += \
   silkext-clapper \
   silkext-clapper-sound \
@@ -114,7 +114,7 @@ PRODUCT_PACKAGES += \
 endif
 
 # Extensions for SVM based audio analytics
-ifneq ($(strip $(SILK_FEATURE_SVM_AUDIOANALYTICS)),false)
+ifeq ($(strip $(SILK_FEATURE_SVM_AUDIOANALYTICS)),true)
 PRODUCT_PACKAGES += \
   silkext-svmsounds \
   silkext-svmsounds-babycry \

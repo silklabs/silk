@@ -33,13 +33,10 @@ const log = createLog('diag');
  */
 class JpegImgTag {
   tag: any; // The <img> DOM element
-  constructor(jpeg: Buffer, onload: (() => void)) {
-    const view = new Uint8Array(jpeg);
-    const blob = new Blob([view], { type: 'image/jpg' });
-
+  constructor(jpeg: Blob, onload: (() => void)) {
     this.tag = document.createElement('img');
     this.tag.onload = onload;
-    this.tag.src = URL.createObjectURL(blob);
+    this.tag.src = URL.createObjectURL(jpeg);
   }
 
   deinit() {

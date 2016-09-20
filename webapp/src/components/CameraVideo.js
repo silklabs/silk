@@ -510,9 +510,10 @@ export default class CameraVideo extends React.Component {
 
     context.font = defaultFont;
 
-    // Draw objects.
-    const objects =
-      this._collectAndProcessObjects(videoStartTimestamp, videoEndTimestamp);
+    // Draw objects from the last second (device time).
+    const objects = useMSEPlayer
+      ? this._collectAndProcessObjects(videoStartTimestamp, videoEndTimestamp)
+      : this._collectAndProcessObjects(1000);
     if (objects.length) {
       const drawArgs = {
         context,
@@ -574,14 +575,14 @@ export default class CameraVideo extends React.Component {
     }
   }
 
-  _collectAndProcessObjects(timeStart, timeEnd) {
+  _collectAndProcessObjects(durationMs) {
     invariant(this.state.camera);
 
     const objects = [];
 
     // Collect all objects that should be present in this time window.
     const objectMap = this.state.camera.objects === null ? [] :
-      this.state.camera.objects.collect(timeStart, timeEnd);
+      this.state.camera.objects.collect(durationMs);
     const consoleMessageObjects = [];
 
     objectMap.forEach((objectArray, objectId) => {
@@ -976,6 +977,37 @@ export default class CameraVideo extends React.Component {
   }
 
   _renderDebugMenu() {
+    if (!useMSEPlayer) {
+      // TODO: Add more debug controls to WebRTC video
+      return (
+        <div style={styles.debugMenu}>
+          <h4>Debug Options</h4>
+          <form className="form-inline" style={styles.debugMenuForm}>
+            <div className="form-group" style={styles.debugMenuFormGroup}>
+              <Input
+                type="checkbox"
+                label=" Show Motion Events"
+                ref="checkMotion"
+                checked={this.state.showMotionEvents}
+                onChange={this._onMotionEventsCheck}
+                standalone
+              />
+            </div>
+            <div className="form-group" style={styles.debugMenuFormGroup}>
+              <Input
+                type="checkbox"
+                label=" Show Tracked Faces"
+                ref="checkFaces"
+                checked={this.state.showFaces}
+                onChange={this._onFacesCheck}
+                standalone
+              />
+            </div>
+          </form>
+        </div>
+      );
+    }
+
     return (
       <div style={styles.debugMenu}>
         <h4>Debug Options</h4>

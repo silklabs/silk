@@ -33,6 +33,7 @@ export default class ObjectCollector {
   _interpolationMs: number;
   _maxArea: number;
   _maxSmoothingAmount: number;
+  _latestDeviceTime: number = 0;
 
   constructor(
     interpolationMs?: number = 16,
@@ -164,9 +165,14 @@ export default class ObjectCollector {
     array.push(second);
   }
 
-  push(objects: Array<TimelineEventObject>, maxWidth: number, maxHeight: number): void {
+  get deviceTime(): number {
+    return this._latestDeviceTime;
+  }
+
+  push(deviceTime: number, objects: Array<TimelineEventObject>, maxWidth: number, maxHeight: number): void {
     log.debug(`Pushed ${objects.length} objects`);
-    invariant(objects.length);
+    this._latestDeviceTime = deviceTime;
+
     invariant(maxWidth);
     invariant(maxHeight);
     this._maxArea = maxWidth * maxHeight; // Sorry!
@@ -188,7 +194,11 @@ export default class ObjectCollector {
     });
   }
 
-  collect(start: number, end: number): Map<number, Array<TimelineEventObject>> {
+  collect(durationMs: number): Map<number, Array<TimelineEventObject>> {
+    invariant(durationMs > 0);
+    const start = this._latestDeviceTime - durationMs;
+    const end = this._latestDeviceTime;
+
     log.debug(`Collecting between ${start} and ${end} (${end - start} ms)`);
     invariant(start <= end);
     invariant(end >= this._lastCollectTime);

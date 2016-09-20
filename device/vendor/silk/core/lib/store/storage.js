@@ -42,7 +42,7 @@ type SerializableType =
   null |
   void;
 
-type SerializableObject = {[key: string]: SerializableType};
+export type SerializableObject = {[key: string]: SerializableType};
 
 type ChainableFunction = (() => Promise<?SerializableObject | void>);
 
@@ -56,7 +56,7 @@ export const MSGPACK_CODEC = msgpack.createCodec({preset: true});
 MSGPACK_CODEC.addExtPacker(
   MSGPACK_SET_CODE,
   Set,
-  (set) => msgpack.encode(set.values(), {codec: MSGPACK_CODEC})
+  (set) => msgpack.encode(Array.from(set.values()), {codec: MSGPACK_CODEC})
 );
 MSGPACK_CODEC.addExtUnpacker(
   MSGPACK_SET_CODE,
@@ -159,18 +159,4 @@ export async function ensureDirectory(path: string): Promise<boolean> {
   await mkdirp(path);
 
   return true;
-}
-
-export async function ensureUnlink(path: string): Promise<boolean> {
-  try {
-    if (await wrapNoEntity(fs.unlink(path)) !== null) {
-      log.debug(`Removed '${path}'`);
-      return true;
-    }
-  } catch (error) {
-    process.nextTick(() => {
-      throw error;
-    });
-  }
-  return false;
 }

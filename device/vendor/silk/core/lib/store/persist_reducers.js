@@ -247,7 +247,9 @@ async function init(): Promise<PersistState> {
   return state;
 }
 
-async function validate(state: PersistState): Promise<void> {
+export async function validate(state: SerializableObject): Promise<void> {
+  log.debug(`Attempting to validate`);
+
   invariant(state);
 
   const {pub, priv} = state.accessToken;
@@ -261,7 +263,7 @@ async function validate(state: PersistState): Promise<void> {
   // Something else here?
 }
 
-export async function load(): Promise<void> {
+export async function load(persist: 'persist' | 'no-persist'): Promise<void> {
   if (loaded) {
     return;
   }

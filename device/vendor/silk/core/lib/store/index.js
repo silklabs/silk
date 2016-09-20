@@ -34,7 +34,7 @@ export async function loadStore(): Promise<void> {
   if (loaded) {
     return;
   }
-  await load();
+  await load('persist');
   loaded = true;
 }
 

@@ -1,4 +1,4 @@
-From 7fcef99ae1e5665f34ace4eca2c38bb7768d9555 Mon Sep 17 00:00:00 2001
+From 04373941cd1c01edc23ad40fc179cad172ed9601 Mon Sep 17 00:00:00 2001
 From: Anshul <anshul@silklabs.com>
 Date: Mon, 28 Mar 2016 17:24:42 -0700
 Subject: [PATCH] Androidify opencl
@@ -8,10 +8,10 @@ Subject: [PATCH] Androidify opencl
  binding.gyp          | 10 ++++++-
  fakeopencl.cpp       |  0
  lib/opencl.js        |  2 +-
- package.json         | 13 ++++----
+ package.json         | 15 ++++++----
  tools/opencl_demo.js | 83 ++++++++++++++++++++++++++++++++++++++++++++++++++++
  webpack.config.js    | 10 +++++++
- 7 files changed, 131 insertions(+), 8 deletions(-)
+ 7 files changed, 134 insertions(+), 7 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 fakeopencl.cpp
  create mode 100644 tools/opencl_demo.js
@@ -76,28 +76,22 @@ diff --git a/fakeopencl.cpp b/fakeopencl.cpp
 new file mode 100644
 index 0000000..e69de29
 diff --git a/lib/opencl.js b/lib/opencl.js
-index 4618ad7..cc2447c 100644
+index 4618ad7..08f5a7f 100644
 --- a/lib/opencl.js
 +++ b/lib/opencl.js
 @@ -1,6 +1,6 @@
  "use strict";
  
 -var cl = require('bindings')('opencl.node');
-+var cl = require('build/node-opencl.node');
++var cl = require('../build/Release/node-opencl.node');
  
  module.exports = cl;
  
 diff --git a/package.json b/package.json
-index 06acefd..3d81d1d 100644
+index 06acefd..f75beee 100644
 --- a/package.json
 +++ b/package.json
-@@ -2,11 +2,14 @@
-   "name": "node-opencl",
-   "version": "0.4.5",
-   "description": "A binding to OpenCL for Node.JS",
--  "main": "lib/opencl.js",
-+  "main": "dist/index.js",
-   "author": [
+@@ -7,6 +7,9 @@
      "Mikael Bourges-Sevenier <mikeseven@gmail.com>",
      "Ioweb <context@ioweb.fr>"
    ],
@@ -107,7 +101,7 @@ index 06acefd..3d81d1d 100644
    "keywords": [
      "opencl",
      "gpu",
-@@ -37,12 +40,10 @@
+@@ -37,12 +40,11 @@
      "test": "test"
    },
    "scripts": {
@@ -115,14 +109,15 @@ index 06acefd..3d81d1d 100644
 -    "clean": "rm -rf build node_modules",
 -    "lint": "eslint lib test",
 -    "test": "mocha test"
-+    "postinstall": "mkdir -p dist/ ; browserify lib/opencl.js --node --ignore-missing --standalone __ignored --outfile dist/index.js"
++    "silk-build": "silk-buildjs .",
++    "install": "node-gyp rebuild"
    },
    "dependencies": {
 +    "browserify": "^10.2.1",
      "bindings": "^1.2.1",
      "chai": ">=2.0.0",
      "get-pixels": ">=3.1.1",
-@@ -50,7 +51,7 @@
+@@ -50,10 +52,13 @@
      "nan": "^2.1.0",
      "pngjs2": "*"
    },
@@ -131,6 +126,12 @@ index 06acefd..3d81d1d 100644
      "chalk": ">=0.5.1",
      "mocha": "*"
    },
++  "symlinkDependencies": {
++    "silk-buildjs": "../../../../buildjs/"
++  },
+   "gypfile": true,
+   "engines": {
+     "node": ">=3.0.0",
 diff --git a/tools/opencl_demo.js b/tools/opencl_demo.js
 new file mode 100644
 index 0000000..762ee08

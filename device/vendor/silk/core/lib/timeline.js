@@ -627,8 +627,11 @@ export default class Timeline extends EventEmitter {
     }
 
     if (this.diagJpegFrames.length > 0) {
-      // TODO: Uncomment and debug perf issues
-      //this.channels.diag.emit('timeline:jpegFrames', { jpegFrames: this.diagJpegFrames });
+      // Emit each frame individually as the RTC emitter currently doesn't
+      // support arbitrary binary data
+      this.diagJpegFrames.forEach(frame => {
+        this.channels.diag.emit('timeline:jpegFrame', frame);
+      });
       this.diagJpegFrames = [];
     }
 

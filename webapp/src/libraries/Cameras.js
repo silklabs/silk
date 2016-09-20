@@ -237,8 +237,8 @@ class Camera extends EventEmitter {
         this._diagChannel.on('timeline:state', (data) => {
           this.emit('diagState:timeline', data);
         });
-        this._diagChannel.on('timeline:jpegFrames', (data) => {
-          this.emit('diagJpegFrames', data.jpegFrames);
+        this._diagChannel.on('timeline:jpegFrame', (data) => {
+          this.emit('diagJpegFrames', [data]);
         });
         this._diagChannel.on('cameraClipRecorder:state', (data) => {
           this.emit('diagState:camera', data);

@@ -68,6 +68,7 @@ const externals = [
   'mic',
   'noble',
   'node-hid',
+  'node-opencl',
   'node-webrtc',
   'opencv',
   'segfault-handler',

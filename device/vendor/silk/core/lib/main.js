@@ -98,6 +98,9 @@ let diag;
 // true once the device has a configuration and is ready for normal operation
 let configured = false;
 
+// true if the device has ever been in an unconfigured state since boot.
+let wasUnconfigured = false;
+
 /**
  * In debug builds register an mDNS service for ADB so that the device can be
  * easily found by on the local network.
@@ -341,6 +344,7 @@ ntp.on('time', () => log.info('NTP time acquired'));
 // Config service...
 config.on('unconfigured', () => {
   configured = false;
+  wasUnconfigured = true;
   if (ui.goto('unconfigured')) {
     camera.stopRecording();
     connections.stop();
@@ -519,23 +523,41 @@ update.on('status', (info) => {
 
   // An OTA update is ready to be applied.  Start monitoring for UI idle
   function applyUpdate() {
-    // There's currently no notification when peers connect/disconnect so just
-    // check for any peers right before an update is about to get applied and
-    // maybe try again later
-    if (connections.peerConnected) {
-      log.verbose('1 or more RTC peers connected, simulating ui activity');
-      ui.userActivity();
-      return;
+    // If we just configured then we don't delay reboot, even if someone is
+    // connected.
+    if (!wasUnconfigured) {
+      // There's currently no notification when peers connect/disconnect so just
+      // check for any peers right before an update is about to get applied and
+      // maybe try again later
+      if (connections.peerConnected) {
+        log.verbose('1 or more RTC peers connected, simulating ui activity');
+        ui.userActivity();
+        return;
+      }
+
+      if (config.activeSessionCount) {
+        log.verbose(`${config.activeSessionCount} active bluetooth ` +
+                    `connections, simulating ui activity`);
+        ui.userActivity();
+        return;
+      }
     }
+
+    ui.removeListener('idle', applyUpdate);
+
     log.warn('Applying OTA update');
     shutdown('otaupdate');
   }
 
-  if (ui.isIdle()) {
-    log.verbose('ui is already idle');
+  if (wasUnconfigured) {
     applyUpdate();
+  } else {
+    ui.addListener('idle', applyUpdate);
+    if (ui.isIdle()) {
+      log.verbose('ui is already idle');
+      applyUpdate();
+    }
   }
-  ui.on('idle', applyUpdate);
 });
 
 // UI...

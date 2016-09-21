@@ -1,12 +1,10 @@
 {
-  "name": "silkext-peddetector",
+  "name": "silkext-yolo",
   "version": "0.0.1",
-  "description": "Pedestrian detector using RCNN",
-  "main": "./lib/peddetector.js",
+  "description": "Object classifier using Yolo",
+  "main": "./lib/yolo.js",
   "scripts": {
-    "postinstall": "./bin/postinstall",
     "lint": "eslint .",
-    "posttest": "npm run lint",
     "silk-build": "silk-buildjs .",
     "test": "echo \"\""
   },
@@ -20,10 +18,10 @@
     "silk-exttest": "/device/vendor/silk/exttest",
     "silk-log": "/pub/log"
   },
-  "private": true,
   "devDependencies": {
     "copy-webpack-plugin": "2.1.5",
     "eslint": "2.13.1",
     "babel-eslint": "6.1.0"
-  }
+  },
+  "private": true
 }

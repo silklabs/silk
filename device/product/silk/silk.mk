@@ -82,6 +82,7 @@ PRODUCT_PACKAGES += \
   silkext-detectface-shape_predictor_68_face_landmarks \
   silkext-face \
   silkext-motion \
+  silkext-yolo \
 
 endif
 
@@ -99,7 +100,6 @@ PRODUCT_PACKAGES += \
   silkext-clapper-sound \
   silkext-devicemotion \
   silkext-nightlight \
-  silkext-peddetector \
   silkext-welcome \
   silkext-welcome-config \
 

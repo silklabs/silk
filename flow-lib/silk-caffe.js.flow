@@ -8,4 +8,6 @@
 
 declare module 'silk-caffe' {
   declare var Model: any;
+  declare var Net: any;
+  declare var Blob: any;
 }

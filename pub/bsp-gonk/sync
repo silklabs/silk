@@ -62,7 +62,7 @@ repo_sync_j=-j4
 sync_l=true
 sync_n=true
 
-while getopts "h?nl" opt; do
+while getopts "h?nli" opt; do
   case $opt in
   h|\?)
     usage
@@ -75,6 +75,11 @@ while getopts "h?nl" opt; do
   l)
     sync_n=false
     sync_l=true
+    shift
+    ;;
+  i)
+    sync_n=false
+    sync_l=false
     shift
     ;;
   *)

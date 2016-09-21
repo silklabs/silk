@@ -22,7 +22,7 @@ index 0000000..a4ae451
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_EXECUTABLES)
 +LOCAL_32_BIT_ONLY := true
-+LOCAL_SHARED_LIBRARIES := liblog libdl
++LOCAL_SHARED_LIBRARIES := libc liblog libdl
 +LOCAL_CFLAGS := -DV8_ANDROID_LOG_STDOUT
 +
 +# If the 2nd arch exists assume it's 32bit and select it

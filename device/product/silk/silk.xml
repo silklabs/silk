@@ -107,6 +107,12 @@
            revision="refs/tags/tag1"
            clone-depth="1"/>
 
+  <project name="mmap-io"
+           path="external/mmap-io"
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
+
   <!-- node modules -->
   <project name="node-opencl"
            path="external/node-opencl"

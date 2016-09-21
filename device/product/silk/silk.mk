@@ -194,6 +194,7 @@ PRODUCT_PACKAGES += \
   nnpack_reference \
   node-nnpack \
   node-qsml \
+  mmap-io \
 
 endif
 

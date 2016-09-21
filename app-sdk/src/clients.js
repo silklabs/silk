@@ -5,12 +5,15 @@
 import invariant from 'assert';
 import {actions} from 'silk-app-client';
 
-import type {ClientsRemoveMessage} from './incoming';
+import type {
+  ClientRemoveMessage,
+  ClientUserAgentSetMessage,
+} from './incoming';
 import type {SDKStore} from './store';
 
-function CLIENTS_REMOVE(
+function CLIENT_REMOVE(
   store: SDKStore,
-  message: ClientsRemoveMessage
+  message: ClientRemoveMessage
 ) {
   const {clientId} = message;
   invariant(clientId);
@@ -21,8 +24,22 @@ function CLIENTS_REMOVE(
   store.dispatch(actions.clients.removeBegin(clientId));
 }
 
+function CLIENT_USERAGENT_SET(
+  store: SDKStore,
+  message: ClientUserAgentSetMessage
+) {
+  const {clientId, userAgent} = message;
+  invariant(clientId);
+
+  const {clients} = store.getState();
+  invariant(clients.has(clientId));
+
+  store.dispatch(actions.clients.setUserAgent({clientId, userAgent}));
+}
+
 export const messageHandlers = {
-  CLIENTS_REMOVE,
+  CLIENT_REMOVE,
+  CLIENT_USERAGENT_SET,
 };
 
 export function init(store: SDKStore) {

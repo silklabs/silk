@@ -358,4 +358,124 @@ suite('accounts', () => {
     });
 
   });
+
+  suite('setUserAgent', () => {
+    const defaultUserAgent = 'test user agent';
+    let accountId;
+    let firstKey;
+    let secondKey;
+
+    setup(async () => {
+      firstKey = (await AccessToken.gen()).toString();
+      const input = {
+        publicKey: firstKey,
+        email: 'user@example.com',
+        passwordHash: context.passwordHash('password'),
+        userAgent: defaultUserAgent,
+      };
+
+      const account = await subject.create(input);
+      invariant(!account.error);
+      assert(account.id);
+
+      accountId = new ObjectID(account.id);
+
+      secondKey = (await AccessToken.gen()).toString();
+      const signIn = await subject.signIn({
+        ...input,
+        publicKey: secondKey,
+      });
+      invariant(!signIn.error);
+      assert.equal(signIn.id, account.id);
+
+      const record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      assert.equal(record.accountTokens.length, 2);
+
+      record.accountTokens.forEach((token) => {
+        assert.equal(token.userAgent, input.userAgent);
+      });
+    });
+
+    test('setUserAgent - success', async () => {
+      const userAgent = 'mosaic';
+      let result = await subject.setUserAgent({
+        accountId,
+        publicKey: firstKey,
+        userAgent,
+      });
+      invariant(!result.error);
+
+      let record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      let {accountTokens} = record;
+      assert.equal(accountTokens.length, 2);
+      assert.equal(accountTokens[0].userAgent, userAgent);
+      assert.equal(accountTokens[1].userAgent, defaultUserAgent);
+
+      result = await subject.setUserAgent({
+        accountId,
+        publicKey: secondKey,
+        userAgent,
+      });
+      invariant(!result.error);
+
+      record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      ({accountTokens} = record);
+      assert.equal(accountTokens.length, 2);
+      record.accountTokens.forEach((token) => {
+        assert.equal(token.userAgent, userAgent);
+      });
+
+      result = await subject.setUserAgent({
+        accountId,
+        publicKey: firstKey,
+        userAgent: 'seamonkey',
+      });
+      invariant(!result.error);
+
+      record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      ({accountTokens} = record);
+      assert.equal(accountTokens.length, 2);
+      assert.equal(accountTokens[0].userAgent, 'seamonkey');
+      assert.equal(accountTokens[1].userAgent, userAgent);
+
+      result = await subject.setUserAgent({
+        accountId,
+        publicKey: firstKey,
+        userAgent: 'seamonkey',
+      });
+      invariant(!result.error);
+
+      record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      ({accountTokens} = record);
+      assert.equal(accountTokens.length, 2);
+      assert.equal(accountTokens[0].userAgent, 'seamonkey');
+      assert.equal(accountTokens[1].userAgent, userAgent);
+    });
+
+    test('setUserAgent - bad key', async () => {
+      const result = await subject.setUserAgent({
+        accountId,
+        publicKey: (await AccessToken.gen()).toString(),
+        userAgent: 'foo',
+      });
+      invariant(result.error);
+      invariant(result.error.type);
+      assert.equal(result.error.type, 'UnknownClient');
+
+      const record = await subject.collection.findOne({_id: accountId});
+      invariant(record);
+      const {accountTokens} = record;
+      assert.equal(accountTokens.length, 2);
+      record.accountTokens.forEach((token) => {
+        assert.equal(token.userAgent, defaultUserAgent);
+      });
+    });
+
+  });
+
 });

@@ -24,6 +24,8 @@ import type {
 import type {DeviceSession} from 'silk-app-client/src/ble';
 import type {
   RemoveClientFromServerResult,
+  SetUserAgentInput,
+  SetUserAgentResult,
 } from 'silk-app-client/src/store/client_actions';
 import type {
   UnregisterRegisteredDeviceResult,
@@ -802,9 +804,9 @@ function DEVICE_RTC_SIGNAL(
   };
 }
 
-function CLIENTS_LIST_FETCH(
+function CLIENT_LIST_FETCH(
   state: MessagesState,
-  action: Action<'CLIENTS_LIST_FETCH', void, ListClientsOutput>
+  action: Action<'CLIENT_LIST_FETCH', void, ListClientsOutput>
 ): MessagesState {
   if (action.requested) {
     return state;
@@ -829,7 +831,7 @@ function CLIENTS_LIST_FETCH(
   const clients = [];
 
   newClients.forEach((client) => {
-    const {publicKey: id, userAgent: name} = client;
+    const {publicKey: id, userAgent} = client;
 
     if (oldKeys.has(id)) {
       oldKeys.delete(id);
@@ -839,9 +841,7 @@ function CLIENTS_LIST_FETCH(
 
     clients.push({
       id,
-      name,
-      // TODO: Fix with server support.
-      deviceType: '',
+      userAgent,
     });
   });
 
@@ -858,9 +858,9 @@ function CLIENTS_LIST_FETCH(
   return state;
 }
 
-function CLIENTS_REMOVE_SERVER(
+function CLIENT_REMOVE_SERVER(
   state: MessagesState,
-  action: SimpleAction<'CLIENTS_REMOVE_SERVER', RemoveClientFromServerResult>,
+  action: SimpleAction<'CLIENT_REMOVE_SERVER', RemoveClientFromServerResult>,
 ): MessagesState {
   if (action.requested) {
     return state;
@@ -898,6 +898,31 @@ function CLIENTS_REMOVE_SERVER(
       clients,
     },
   };
+}
+
+function CLIENT_USERAGENT_SET(
+  state: MessagesState,
+  action: Action<'CLIENT_USERAGENT_SET',
+                 SetUserAgentInput,
+                 SetUserAgentResult>,
+): MessagesState {
+  if (!action.requested) {
+    const {clientId} = action.input;
+
+    if (action.error || !action.payload.success) {
+      emitter.postMessage({
+        type: 'CLIENT_USERAGENT_SET_ERROR',
+        clientId,
+        error: 'FAILED', // TODO: probably want to enum this...
+      });
+    } else {
+      emitter.postMessage({
+        type: 'CLIENT_USERAGENT_SET_SUCCESS',
+        clientId,
+      });
+    }
+  }
+  return state;
 }
 
 function DEVICE_RTC_CONNECTIONCLOSED(
@@ -970,8 +995,9 @@ export const reducer = handleActions({
   AUTH_CREATEACCOUNT: handleAuthAction,
   AUTH_SIGNOUT,
   NETWORK_SERVER_REACHABLE,
-  CLIENTS_LIST_FETCH,
-  CLIENTS_REMOVE_SERVER,
+  CLIENT_LIST_FETCH,
+  CLIENT_REMOVE_SERVER,
+  CLIENT_USERAGENT_SET,
   DEVICE_REGISTERED_FETCH,
   DEVICE_REGISTERED_UNREGISTER_SERVER,
   DEVICE_BLE_CONNECT,

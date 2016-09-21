@@ -27,6 +27,7 @@ import type {
   ListClientsOutput,
   PostMessageOutput,
   RevokeClientOutput,
+  SetClientUserAgentOutput,
 } from 'silk-api/src/gen/account';
 
 import type { RouteContext } from '../server';
@@ -452,6 +453,58 @@ export default function (ctx: RouteContext): ExpressRoutes {
     }
 
     const output: RevokeClientOutput = {success: true};
+    res.respond(output);
+  });
+
+  api.define({
+    path: 'set_client_user_agent',
+    method: 'post',
+    params: [],
+    name: 'setClientUserAgent',
+    description: 'Set the userAgent for a client',
+    output: Joi.object().keys({
+      success: Joi.boolean().required(),
+    }).required(),
+    input: Joi.object().keys({
+      clientPublicKey: Accounts.PUBLIC_KEY_SCHEMA,
+      userAgent: Accounts.USER_AGENT_SCHEMA,
+    }).required(),
+  }, async (req, res) => {
+    const accountId = req.account._id;
+    const {
+      clientPublicKey: publicKey,
+      userAgent,
+    } = req.body;
+
+    const clientAccount = await ctx.accounts.findByPublicKey(publicKey);
+    if (!clientAccount) {
+      log.warn(`Account '${accountId}' is attempting to change the userAgent ` +
+               `of an unknown client '${publicKey}'`);
+      res.sendStatus(404);
+      return;
+    }
+
+    if (!accountId.equals(clientAccount._id)) {
+      log.warn(`Account '${accountId}' is attempting to change the userAgent ` +
+               `for client '${publicKey}' that belongs to a different ` +
+               `account '${clientAccount._id}'`);
+      res.sendStatus(403);
+      return;
+    }
+
+    const result = await ctx.accounts.setUserAgent({
+      accountId,
+      publicKey,
+      userAgent,
+    });
+    if (result.error) {
+      log.warn(`setUserAgent failed`, result, publicKey, userAgent);
+      const output: SetClientUserAgentOutput = {success: false};
+      res.respond(output);
+      return;
+    }
+
+    const output: SetClientUserAgentOutput = {success: true};
     res.respond(output);
   });
 

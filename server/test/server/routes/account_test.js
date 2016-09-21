@@ -583,4 +583,133 @@ suite('account auth', () => {
     });
 
   });
+
+  suite('setClientUserAgent', () => {
+    const credentials = {
+      userAgent: 'mosaic',
+      email: 'mars@candy.com',
+      password: 'password',
+    };
+
+    let accountsModel;
+
+    let accessToken1;
+    let accessToken2;
+
+    setup(async function() {
+      this.timeout('30s');
+
+      accountsModel = new Accounts(context.db);
+
+      accessToken1 = await AccessToken.gen();
+      api.accessToken = accessToken1;
+
+      let {success} = await api.vip.createAccountWithPassword(credentials);
+      assert(success);
+
+      const accountRecord =
+        await accountsModel.findByPublicKey(accessToken1.pub);
+      invariant(accountRecord);
+
+      accessToken2 = await AccessToken.gen();
+      api.accessToken = accessToken2;
+      ({success} = await api.vip.signInWithPassword(credentials));
+      assert(success);
+
+      api.accessToken = accessToken1;
+
+      let {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+      clients.forEach((client) => {
+        assert.equal(client.userAgent, credentials.userAgent);
+      });
+
+      // Do not assume a particular account in the below tests...
+      api.accessToken = null;
+    });
+
+    test('POST /setClientUserAgent - success', async () => {
+      api.accessToken = accessToken1;
+
+      const userAgent = '1234567890';
+
+      let {success} = await api.account.setClientUserAgent({
+        clientPublicKey: accessToken1.pub,
+        userAgent,
+      });
+      assert(success);
+
+      let {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+      assert.equal(clients[0].userAgent, userAgent);
+      assert.equal(clients[1].userAgent, credentials.userAgent);
+
+      ({success} = await api.account.setClientUserAgent({
+        clientPublicKey: accessToken2.pub,
+        userAgent,
+      }));
+      assert(success);
+
+      ({clients} = await api.account.listClients({}));
+      assert.equal(clients.length, 2);
+      assert.equal(clients[0].userAgent, userAgent);
+      assert.equal(clients[1].userAgent, userAgent);
+
+      ({success} = await api.account.setClientUserAgent({
+        clientPublicKey: accessToken2.pub,
+        userAgent,
+      }));
+      assert(success);
+
+      ({clients} = await api.account.listClients({}));
+      assert.equal(clients.length, 2);
+      assert.equal(clients[0].userAgent, userAgent);
+      assert.equal(clients[1].userAgent, userAgent);
+
+      ({success} = await api.account.setClientUserAgent({
+        clientPublicKey: accessToken2.pub,
+        userAgent: 'foo',
+      }));
+      assert(success);
+
+      ({clients} = await api.account.listClients({}));
+      assert.equal(clients.length, 2);
+      assert.equal(clients[0].userAgent, userAgent);
+      assert.equal(clients[1].userAgent, 'foo');
+    });
+
+    test('POST /setClientUserAgent - unknown client', async () => {
+      api.accessToken = accessToken1;
+
+      context.httpErrCode(context, 404, api.account.setClientUserAgent({
+        clientPublicKey: (await AccessToken.gen()).pub,
+        userAgent: 'foo',
+      }));
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+      clients.forEach((client) => {
+        assert.equal(client.userAgent, credentials.userAgent);
+      });
+    });
+
+    test('POST /setClientUserAgent - client from another account', async () => {
+      api.accessToken = accountTwo.accessToken;
+
+      context.httpErrCode(context, 403, api.account.setClientUserAgent({
+        clientPublicKey: accessToken1.pub,
+        userAgent: 'foo',
+      }));
+
+      api.accessToken = accessToken1;
+
+      const {clients} = await api.account.listClients({});
+      assert.equal(clients.length, 2);
+      clients.forEach((client) => {
+        assert.equal(client.userAgent, credentials.userAgent);
+      });
+    });
+
+  });
+
 });

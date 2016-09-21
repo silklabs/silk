@@ -1,4 +1,5 @@
 {
+  "name": "silk-cli-plugin-gradle",
   "main": "index.js",
   "scripts": {
     "lint": "eslint src",

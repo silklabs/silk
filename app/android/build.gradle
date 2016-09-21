@@ -2,23 +2,26 @@
 
 buildscript {
     repositories {
-        jcenter()
+        if (System.env.MAVEN_REMOTE_REPO) {
+            maven { url System.env.GRADLE_MAVEN_REPO }
+        } else {
+            maven { url "../../m2-remote" }
+        }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.0-rc1'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        classpath 'com.android.tools.build:gradle:2.2.0'
     }
 }
 
+def silkRootDir = file("../../")
+
 allprojects {
     repositories {
-        mavenLocal()
-        jcenter()
-        maven {
-            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-            url "$projectDir/../../../node_modules/react-native/android"
+        if (System.env.MAVEN_REMOTE_REPO) {
+            maven { url System.env.MAVEN_REMOTE_REPO }
+        } else {
+            maven { url "$silkRootDir/m2-remote" }
         }
+        maven { url "$silkRootDir/node_modules/react-native/android" }
     }
 }

@@ -1,19 +1,19 @@
-From b092c8eb7138f11c4715315c9dca570e75d36eae Mon Sep 17 00:00:00 2001
+From 9a79f8866a8b1864f849b15580f14fa00aec2fb3 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 123 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 123 insertions(+)
+ Android.mk | 120 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 120 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..8c13a59
+index 0000000..a4ae451
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,120 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -22,6 +22,7 @@ index 0000000..8c13a59
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_EXECUTABLES)
 +LOCAL_32_BIT_ONLY := true
++LOCAL_SHARED_LIBRARIES := liblog libdl
 +LOCAL_CFLAGS := -DV8_ANDROID_LOG_STDOUT
 +
 +# If the 2nd arch exists assume it's 32bit and select it
@@ -55,11 +56,7 @@ index 0000000..8c13a59
 +  $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
 +endef
 +
-+$(dir $(LOCAL_BUILT_MODULE))/Release/node: $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk
-+ifeq ($(TARGET_GE_MARSHMALLOW),)
-+$(dir $(LOCAL_BUILT_MODULE))/Release/node: $(addprefix \
-+    $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)/,libc.so libdl.so liblog.so)
-+endif
++$(dir $(LOCAL_BUILT_MODULE))/Release/node: $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk $(all_libraries)
 +$(dir $(LOCAL_BUILT_MODULE))/Release/node:
 +	@echo Building: $@
 +	$(hide) set -e$(if $(SHOW_COMMANDS),x); cd $(<D) && \
@@ -138,5 +135,5 @@ index 0000000..8c13a59
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-2.7.4 (Apple Git-66)
+2.7.0
 

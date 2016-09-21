@@ -754,6 +754,8 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
+  /*
+  // TODO: Re-enable when we have more disk, Travis doesn't have enough
   'repocache-apq8056-la12-silk': {
     title: 'Updating repocache for apq8056-la12 silk',
     travis_yml: 'repocache/travis.yml',
@@ -770,6 +772,7 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
+  */
 };
 
 // Copy over the builds definition from SOS.

@@ -63,7 +63,7 @@ class DiagImageTable extends React.Component {
     paused: React.PropTypes.bool,
   };
 
-  MAX_IMAGE_ROWS = 30 * 4; // = 30 seconds * 4 preview frames/second
+  MAX_IMAGE_ROWS = 3 * 4; // ~= 3 seconds * 4 rows/second
 
   state = {
     images: {},

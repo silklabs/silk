@@ -64,7 +64,7 @@ fetch)
     fi
   fi
   ;;
-build)
+build|buildfull)
   #
   # Example usage:
   #   $ make zest
@@ -72,10 +72,13 @@ build)
   #
   # Upload the resulting repocache-<gonk>.tgz somewhere
   #
+  if [[ $command = "buildfull" ]]; then
+    maybefull="-f"
+  fi
   [[ ! -d .repo ]] || usage Please run from completely clean workspace
   (
     export REPOCACHE_URLPREFIX=
-    $LOCAL_PATH/sync -n $board $product
+    $LOCAL_PATH/sync $maybefull -n $board $product
   )
   if [[ ! -d .repo/project-objects ]] || [[ ! -d .repo/projects ]]; then
     usage "repo projects don't exist, need to sync?"

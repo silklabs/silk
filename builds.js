@@ -746,7 +746,7 @@ const builds = {
     travis_config: {
       env: {
         global: [
-          'BOARD=apq8956-la12',
+          'BOARD=apq8056-la12',
           'PRODUCT=silk',
           'BOARD_REPO=git@github.com:silklabs/gonk-apq8056-la12.git',
         ],

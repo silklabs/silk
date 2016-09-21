@@ -159,6 +159,7 @@ PRODUCT_PACKAGES += \
   libglog \
   libQSML \
   libsymphony-cpu \
+  node-opencl \
 
 ifneq ($(strip $(SILK_FEATURE_TTS_CEREPROC)),false)
 # cereproc is internal-only, we don't have a license to distribute

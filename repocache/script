@@ -45,7 +45,14 @@ function keep_alive {
 
 keep_alive &
 keep_alive_pid=$!
-./repocache build $BOARD $PRODUCT
+if [[ -n "$FULLHISTORY" ]]; then
+  # --depth=1 fails for some CAF manifests.  FULLHISTORY is used as a workaround
+  # to fetch the entire git history.  Don't use this lightly as it causes the
+  # resulting .repo/ to be many gigabytes larger
+  ./repocache buildfull $BOARD $PRODUCT
+else
+  ./repocache build $BOARD $PRODUCT
+fi
 set +e
 kill $keep_alive_pid
 wait $keep_alive_pid 2>/dev/null

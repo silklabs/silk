@@ -763,6 +763,7 @@ const builds = {
           'BOARD=apq8056-la12',
           'PRODUCT=silk',
           'BOARD_REPO=git@github.com:silklabs/gonk-apq8056-la12.git',
+          'FULLHISTORY=true',
         ],
       },
     },

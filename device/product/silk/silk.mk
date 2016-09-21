@@ -193,6 +193,7 @@ PRODUCT_PACKAGES += \
   nnpack \
   nnpack_reference \
   node-nnpack \
+  node-qsml \
 
 endif
 

@@ -7,6 +7,7 @@ export BRANCH
 
 LOCALGOALS += \
   clean \
+  tidyup \
   purell \
   zest \
 
@@ -16,6 +17,16 @@ ifneq (,$(filter $(MAKECMDGOALS),$(LOCALGOALS)))
 .PHONY: clean
 clean:
 	rm -rf out
+
+# Removes repo projects from the working tree.
+# Bring them back any time with |./sync -l|
+# https://youtu.be/Or8iYWRg2w8
+.PHONY: tidyup
+tidyup:
+	@{ \
+    set -x; \
+    rm -rf $$(repo forall -c 'echo $$REPO_PATH'); \
+  }
 
 # Kills "99.99%" of bugs by removing all local modifications while preserving
 # your .repo/.

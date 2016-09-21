@@ -230,6 +230,12 @@ export default class Timeline extends EventEmitter {
     this.channels.diag.on('timeline:cmd', cmd => {
       this.diagCommand(cmd.name, cmd.arg);
     });
+
+    this.channels.objects.on('timeref', msg => {
+      const now = Date.now();
+      const sendDeviceTime = msg.deviceTime;
+      log.info(`Object channel roundtrip: ${now - sendDeviceTime}ms`);
+    });
   }
 
   _onListenerChange: (() => void) = () => {

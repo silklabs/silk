@@ -192,6 +192,7 @@ PRODUCT_PACKAGES += \
   nnpack_ukernels \
   nnpack \
   nnpack_reference \
+  node-nnpack \
 
 endif
 

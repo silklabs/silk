@@ -57,31 +57,39 @@ usage () {
 repo=${REPO:-./repo}
 repo_init_host=$(uname | tr A-Z a-z)
 repo_init_version="--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-stable"
+repo_init_depth="--depth=1"
 repo_sync_j=-j4
 
 sync_l=true
 sync_n=true
 
-while getopts "h?nl" opt; do
+while getopts "h?nlif" opt; do
   case $opt in
   h|\?)
     usage
     ;;
+  f)
+    repo_init_depth=""
+    ;;
   n)
     sync_n=true
     sync_l=false
-    shift
     ;;
   l)
     sync_n=false
     sync_l=true
-    shift
+    ;;
+  i)
+    sync_n=false
+    sync_l=false
     ;;
   *)
     usage Unknown option: $opt
     ;;
   esac
 done
+
+shift $(($OPTIND - 1))
 
 [[ $# -le 2 ]] || usage
 
@@ -174,12 +182,16 @@ git commit -q -m '301 Moved Permanently'
 cd ../..
 pwd
 # Re-init the real manifest
+(
+set -x
 $repo init \
-  --depth=1 \
+  $repo_init_depth \
   --quiet \
   -u $PWD/.repo/manifest_upstream \
   $repo_init_version \
   -g all,-notdefault,-x86,-mips,-linux,-darwin,-flo,-flounder,-fugu,-grouper,-manta,$repo_init_host \
+
+)
 
 function postsync() {
   synctype=$1

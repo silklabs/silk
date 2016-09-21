@@ -12,7 +12,11 @@ import type {
   ListClientsOutputClients,
 } from 'silk-api/src/gen/account';
 import type {Action} from 'silk-redux/action';
-import type {RemoveClientFromServerResult} from './client_actions';
+import type {
+  RemoveClientFromServerResult,
+  SetUserAgentInput,
+  SetUserAgentResult,
+} from './client_actions';
 
 export type ClientInfo = {
   info: ListClientsOutputClients;
@@ -36,9 +40,9 @@ function AUTH_SIGNOUT(
   return createInitialState();
 }
 
-function CLIENTS_LIST_FETCH(
+function CLIENT_LIST_FETCH(
   state: ClientsState,
-  action: Action<'CLIENTS_LIST_FETCH', void, ListClientsOutput>
+  action: Action<'CLIENT_LIST_FETCH', void, ListClientsOutput>
 ): ClientsState {
   if (action.requested) {
     return state;
@@ -75,9 +79,9 @@ function CLIENTS_LIST_FETCH(
   return (newClient || oldKeys.size) ? newState : state;
 }
 
-function CLIENTS_REMOVE_BEGIN(
+function CLIENT_REMOVE_BEGIN(
   state: ClientsState,
-  action: Action<'CLIENTS_REMOVE_BEGIN', string, string>
+  action: Action<'CLIENT_REMOVE_BEGIN', string, string>
 ): ClientsState {
   if (action.error) {
     // XXX How to handle this?
@@ -117,9 +121,9 @@ function CLIENTS_REMOVE_BEGIN(
   return newState;
 }
 
-function CLIENTS_REMOVE_DEVICES(
+function CLIENT_REMOVE_DEVICES(
   state: ClientsState,
-  action: Action<'CLIENTS_REMOVE_DEVICES', string, void>
+  action: Action<'CLIENT_REMOVE_DEVICES', string, void>
 ): ClientsState {
   if (action.error) {
     // XXX How to handle this?
@@ -150,9 +154,9 @@ function CLIENTS_REMOVE_DEVICES(
   return newState;
 }
 
-function CLIENTS_REMOVE_SERVER(
+function CLIENT_REMOVE_SERVER(
   state: ClientsState,
-  action: Action<'CLIENTS_REMOVE_SERVER', string, RemoveClientFromServerResult>
+  action: Action<'CLIENT_REMOVE_SERVER', string, RemoveClientFromServerResult>
 ): ClientsState {
   const {input: clientId} = action;
   invariant(clientId);
@@ -191,10 +195,42 @@ function CLIENTS_REMOVE_SERVER(
   return newState;
 }
 
+
+function CLIENT_USERAGENT_SET(
+  state: ClientsState,
+  action: Action<'CLIENT_USERAGENT_SET', SetUserAgentInput, SetUserAgentResult>
+): ClientsState {
+  if (action.requested) {
+    return state;
+  }
+
+  if (action.error) {
+    // Not much we can do here...
+    return state;
+  }
+
+  const {clientId, userAgent} = action.input;
+  invariant(clientId);
+
+  const oldClient = state.get(clientId);
+  if (!oldClient) {
+    return state;
+  }
+
+  const newState = new Map(state);
+  newState.set(clientId, {
+    ...oldClient,
+    userAgent,
+  });
+
+  return newState;
+}
+
 export const reducer = handleActions({
   AUTH_SIGNOUT,
-  CLIENTS_LIST_FETCH,
-  CLIENTS_REMOVE_BEGIN,
-  CLIENTS_REMOVE_DEVICES,
-  CLIENTS_REMOVE_SERVER,
+  CLIENT_LIST_FETCH,
+  CLIENT_REMOVE_BEGIN,
+  CLIENT_REMOVE_DEVICES,
+  CLIENT_REMOVE_SERVER,
+  CLIENT_USERAGENT_SET,
 }, createInitialState());

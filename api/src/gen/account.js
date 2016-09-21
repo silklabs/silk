@@ -121,6 +121,15 @@ export type RevokeClientOutput = {
  success: bool;
 };
 
+export type SetClientUserAgentInput = {
+ clientPublicKey: string;
+ userAgent: string;
+};
+
+export type SetClientUserAgentOutput = {
+ success: bool;
+};
+
 export default class Account extends BaseClass {
 
   name: string = 'api-account';
@@ -265,6 +274,19 @@ export default class Account extends BaseClass {
   revokeClient(payload: RevokeClientInput): Promise<RevokeClientOutput> {
     let method = 'post';
     let url = '/v1/account/revoke_client';
+    // Perform url subtitutions:
+
+    return this._apiRequestWithBody(method, url, payload);
+  }
+
+  /**
+  Set the userAgent for a client
+
+  @param Object payload of request
+  */
+  setClientUserAgent(payload: SetClientUserAgentInput): Promise<SetClientUserAgentOutput> {
+    let method = 'post';
+    let url = '/v1/account/set_client_user_agent';
     // Perform url subtitutions:
 
     return this._apiRequestWithBody(method, url, payload);

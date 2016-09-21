@@ -153,8 +153,7 @@ export type DeviceUpdateStatusMessage = {
 
 export type ClientInfo = {
   id: string;
-  name: string;
-  deviceType: string;
+  userAgent: string;
 };
 
 export type ClientListMessage = {
@@ -173,12 +172,25 @@ export type ClientRemoveErrorMessage = {
   error: string;
 };
 
+export type ClientUserAgentSetSuccessMessage = {
+  type: 'CLIENT_USERAGENT_SET_SUCCESS';
+  clientId: string;
+};
+
+export type ClientUserAgentSetErrorMessage = {
+  type: 'CLIENT_USERAGENT_SET_ERROR';
+  clientId: string;
+  error: string;
+};
+
 export type OutgoingMessage =
     InitializedMessage
   | MessageErrorMessage
   | ClientStatusMessage
   | ClientRemoveSuccessMessage
   | ClientRemoveErrorMessage
+  | ClientUserAgentSetSuccessMessage
+  | ClientUserAgentSetErrorMessage
   | DeviceStatusMessage
   | DeviceListMessage
   | DeviceConfigWifiScanResultsMessage

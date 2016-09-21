@@ -103,6 +103,14 @@ type RevokeClientInput = {
 type RevokeClientOutput = {
 };
 
+type SetUserAgentInput = {
+  accountId: ObjectID;
+  publicKey: string;
+  userAgent: string;
+};
+
+type SetUserAgentOutput = {};
+
 /**
  * Password reset expires in 4 hours...
  */
@@ -110,7 +118,8 @@ const PASSWORD_RESET_EXPIRES_MS = (1000 * 60 * 60) * 4;
 
 const EMAIL = Joi.string().trim().email().lowercase().required();
 const PASSWORD_HASH = Joi.string().trim().min(64).max(256).required();
-const USER_AGENT = Joi.string().trim().required();
+const USER_AGENT_SCHEMA = Joi.string().trim().required();
+const ACCOUNT_ID_SCHEMA = Joi.object().type(ObjectID).required();
 
 /**
  * Any operation which adds an accessToken will require these details...
@@ -119,13 +128,13 @@ const ACCESS_TOKEN_ADD_BY_PASSWORD_SCHEMA = Joi.object().keys({
   email: EMAIL,
   passwordHash: PASSWORD_HASH,
   publicKey: PUBLIC_KEY_SCHEMA,
-  userAgent: USER_AGENT,
+  userAgent: USER_AGENT_SCHEMA,
 }).required();
 
 const ACCESS_TOKEN_ADD_BY_TOKEN_SCHEMA = Joi.object().keys({
   uniqueAccountId: Joi.string().min(16).required(),
   publicKey: PUBLIC_KEY_SCHEMA,
-  userAgent: USER_AGENT,
+  userAgent: USER_AGENT_SCHEMA,
 }).required();
 
 const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
@@ -142,7 +151,7 @@ const ACCESS_TOKEN_SCHEMA = Joi.object().keys({
   expires: Joi.date().required(),
 
   // Information about who issued the public key
-  userAgent: USER_AGENT,
+  userAgent: USER_AGENT_SCHEMA,
 
   /**
    * When this key was last authenticated against a password.
@@ -182,6 +191,7 @@ const AUTHENTICATED_DURATION = 60 * 1000 * 15;
 export default class Accounts extends Base {
   static AUTHENTICATED_DURATION = AUTHENTICATED_DURATION;
   static PUBLIC_KEY_SCHEMA = PUBLIC_KEY_SCHEMA;
+  static USER_AGENT_SCHEMA = USER_AGENT_SCHEMA;
 
   static ERROR = {
     duplicateEmail: 'DuplicateEmail',
@@ -258,8 +268,14 @@ export default class Accounts extends Base {
     }).required(),
 
     revokeClient: Joi.object().keys({
-      accountId: Joi.object().type(ObjectID).required(),
+      accountId: ACCOUNT_ID_SCHEMA,
       publicKey: PUBLIC_KEY_SCHEMA,
+    }),
+
+    setUserAgent: Joi.object().keys({
+      accountId: ACCOUNT_ID_SCHEMA,
+      publicKey: PUBLIC_KEY_SCHEMA,
+      userAgent: USER_AGENT_SCHEMA,
     }),
 
     /**
@@ -735,10 +751,11 @@ export default class Accounts extends Base {
     const {accountId, publicKey} = payload;
 
     const {
-      modifiedCount,
+      matchedCount,
       result,
     } = await this.collection.updateOne({
       _id: accountId,
+      'accountTokens.publicKey': publicKey,
     }, {
       $pull: {
         accountTokens: {
@@ -752,7 +769,7 @@ export default class Accounts extends Base {
                       `${JSON.stringify(result)}`);
     }
 
-    if (modifiedCount !== 1) {
+    if (matchedCount !== 1) {
       log.warn(`Public key not found`, publicKey);
       return this.error('unknownClient');
     }
@@ -760,4 +777,34 @@ export default class Accounts extends Base {
     return {};
   }
 
+  async setUserAgent(
+    payload: SetUserAgentInput,
+  ): Promise<SetUserAgentOutput | ErrorState> {
+    payload = this.validate(payload, 'setUserAgent');
+    const {accountId, publicKey, userAgent} = payload;
+
+    const {
+      matchedCount,
+      result,
+    } = await this.collection.updateOne({
+      _id: accountId,
+      'accountTokens.publicKey': publicKey,
+    }, {
+      $set: {
+        'accountTokens.$.userAgent': userAgent,
+      },
+    });
+
+    if (!result.ok) {
+      throw new Error(`updateUserAgent operation has failed: ` +
+                      `${JSON.stringify(result)}`);
+    }
+
+    if (matchedCount !== 1) {
+      log.warn(`Public key not found`, publicKey);
+      return this.error('unknownClient');
+    }
+
+    return {};
+  }
 }

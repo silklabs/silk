@@ -21,6 +21,16 @@ export type RemoveClientFromServerResult = {
   success: boolean;
 };
 
+export type SetUserAgentInput = {
+  clientId: string;
+  userAgent: string;
+};
+
+export type SetUserAgentResult = {
+  clientId: string;
+  success: boolean;
+};
+
 // Payload generators
 
 function genFetchList(
@@ -114,9 +124,36 @@ function genRemoveServer(
   }));
 }
 
+function genSetUserAgent(
+  state: State,
+  input: SetUserAgentInput
+): Promise<SetUserAgentResult> {
+  const {clientId, userAgent} = input;
+  invariant(clientId);
+
+  const {api, clients} = state;
+  invariant(api);
+  invariant(clients);
+
+  const {accessToken} = api;
+  invariant(accessToken);
+
+  const clientInfo = clients.get(clientId);
+  invariant(clientInfo);
+
+  return api.account.setClientUserAgent({
+    clientPublicKey: clientId,
+    userAgent,
+  }).then((result) => ({
+    clientId,
+    success: result.success,
+  }));
+}
+
 // ThunkActions
 
-export const fetchList = actionFromAsyncPayloadGen('CLIENTS_LIST_FETCH', genFetchList);
-export const removeBegin = actionFromAsyncPayloadGen('CLIENTS_REMOVE_BEGIN', genRemoveBegin);
-export const removeFromDevices = actionFromPayloadGen('CLIENTS_REMOVE_DEVICES', removeDevices);
-export const removeFromServer = actionFromAsyncPayloadGen('CLIENTS_REMOVE_SERVER', genRemoveServer);
+export const fetchList = actionFromAsyncPayloadGen('CLIENT_LIST_FETCH', genFetchList);
+export const removeBegin = actionFromAsyncPayloadGen('CLIENT_REMOVE_BEGIN', genRemoveBegin);
+export const removeFromDevices = actionFromPayloadGen('CLIENT_REMOVE_DEVICES', removeDevices);
+export const removeFromServer = actionFromAsyncPayloadGen('CLIENT_REMOVE_SERVER', genRemoveServer);
+export const setUserAgent = actionFromAsyncPayloadGen('CLIENT_USERAGENT_SET', genSetUserAgent);

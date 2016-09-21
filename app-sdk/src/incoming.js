@@ -71,7 +71,13 @@ export type DeviceMediaStreamMessage = {
   deviceId: string;
 };
 
-export type ClientsRemoveMessage = {
-  type: 'CLIENTS_REMOVE',
+export type ClientRemoveMessage = {
+  type: 'CLIENT_REMOVE',
   clientId: string;
+};
+
+export type ClientUserAgentSetMessage = {
+  type: 'CLIENT_USERAGENT_SET',
+  clientId: string;
+  userAgent: string;
 };

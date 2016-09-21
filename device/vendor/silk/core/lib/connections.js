@@ -138,7 +138,7 @@ export class ChannelEventEmitter extends EventEmitter {
             channel.emit(event, payload);
             sent = true;
           } else {
-            log.info(`${this._label} channel full.` +
+            log.info(`${this._label} channel full. ` +
                      `${channel.bufferedAmount} > ${this.maxBufferedAmount}`);
           }
         }

@@ -481,6 +481,7 @@ class Camera extends EventEmitter {
 
     const lastNow = this.objects.deviceTime;
     if (lastNow > 0) {
+      this._objectsChannel.emit('timeref', {deviceTime: lastNow});
       const objectDelay = msg.now - lastNow;
       if (objectDelay > OBJECT_SEND_INTERVAL_MS * 1.5) {
         log.warn(`Objects delayed by ${objectDelay - OBJECT_SEND_INTERVAL_MS}ms`);

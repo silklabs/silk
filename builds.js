@@ -740,6 +740,21 @@ const builds = {
     events: ['nightly'],
     branches: ['master'],
   },
+  'repocache-apq8056-la12-silk': {
+    title: 'Updating repocache for kenzo silk',
+    travis_yml: 'repocache/travis.yml',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=apq8956-la12',
+          'PRODUCT=silk',
+          'BOARD_REPO=git@github.com:silklabs/gonk-apq8056-la12.git',
+        ],
+      },
+    },
+    events: ['nightly'],
+    branches: ['master'],
+  },
 };
 
 // Copy over the builds definition from SOS.

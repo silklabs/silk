@@ -137,10 +137,10 @@ suite('bindings', () => {
     test_net.layers[0].enqueue([new caffe.Blob(test_net.blobs[0].shape), new caffe.Blob(test_net.blobs[1].shape)]);
     let net = solver.net;
     net.layers[0].enqueue([new caffe.Blob(net.blobs[0].shape), new caffe.Blob(net.blobs[1].shape)]);
-    solver.step(1, () => {
-      assert.ok(true, 'solver.step works');
-      net.snapshot('/tmp/dummy.caffemodel');
-    });
+//    solver.step(1, () => {
+//      assert.ok(true, 'solver.step works');
+//      net.snapshot('/tmp/dummy.caffemodel');
+//    });
     
   });
 });

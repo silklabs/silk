@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.facebook.fresco</groupId>
+  <artifactId>fresco</artifactId>
+  <version>0.11.0</version>
+  <packaging>aar</packaging>
+  <name>Fresco</name>
+  <description>A system to load and display images and manage their memory on Android</description>
+  <url>https://github.com/facebook/fresco</url>
+  <licenses>
+    <license>
+      <name>BSD License</name>
+      <url>https://github.com/facebook/fresco/blob/master/LICENSE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>facebook</id>
+      <name>Facebook</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/facebook/fresco.git</connection>
+    <developerConnection>scm:git:git@github.com:facebook/fresco.git</developerConnection>
+    <url>https://github.com/facebook/fresco.git</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>com.facebook.fresco</groupId>
+      <artifactId>drawee</artifactId>
+      <version>0.11.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.facebook.fresco</groupId>
+      <artifactId>fbcore</artifactId>
+      <version>0.11.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.facebook.fresco</groupId>
+      <artifactId>imagepipeline</artifactId>
+      <version>0.11.0</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+</project>

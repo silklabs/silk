@@ -2,6 +2,7 @@
 
 buildscript {
     repositories {
+        maven { url "../../m2-local" }
         if (System.env.MAVEN_REMOTE_REPO) {
             maven { url System.env.GRADLE_MAVEN_REPO }
         } else {
@@ -17,6 +18,7 @@ def silkRootDir = file("../../")
 
 allprojects {
     repositories {
+        maven { url "$silkRootDir/m2-local" }
         if (System.env.MAVEN_REMOTE_REPO) {
             maven { url System.env.MAVEN_REMOTE_REPO }
         } else {

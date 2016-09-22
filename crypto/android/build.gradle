@@ -16,9 +16,9 @@ android {
 }
 
 dependencies {
-    compile "com.facebook.react:react-native:+"  // from node_modules
-    compile project(':libsodium-jni')  // prebuilt
+    compile "com.facebook.react:react-native:+"
     compile "com.android.support:appcompat-v7:23.0.1"
+    compile "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:1.0.2-SNAPSHOT"
     compile 'com.madgag.spongycastle:core:1.54.0.0'
     compile 'com.madgag.spongycastle:prov:1.54.0.0'
     compile 'com.madgag.spongycastle:pkix:1.54.0.0'

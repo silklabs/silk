@@ -3,6 +3,7 @@ os:
 
 before_install:
   - source ../pub/travis/common_before_install.sh
+  - ./install.sh
 
 script:
   - npm run test

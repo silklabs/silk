@@ -82,6 +82,9 @@
   SEL selectorD = @selector(onAbortPress:);
   SEL selectorE = @selector(onNullPress:);
   
+  // Nav edit button (only if confugred)
+  UIBarButtonItem *editButton = nil;
+  
   if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
     buttonAText = @"BLE Conn";
     buttonBText = @"Wifi";
@@ -105,6 +108,9 @@
       buttonAText = @"Disconn";
       selectorA = @selector(onBLEDisconnectPress:);
     }
+    
+    // Add edit button to nav bar only if configured
+    editButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemEdit target:self action:@selector(onEditPressed:)];
   }
   
   // Dispatch to main thread for snappy UI updates
@@ -139,6 +145,8 @@
     } else {
       self.buttonE.hidden = false;
     }
+    
+    self.navigationItem.rightBarButtonItem = editButton;
 
     self.statusText.text = status;
     self.deviceDetailsText.text = text;
@@ -160,6 +168,38 @@
   if ([segue.destinationViewController isKindOfClass:[DeviceCommViewController class]]) {
     [(DeviceCommViewController *)segue.destinationViewController setDeviceKey:self.deviceKey];
   }
+}
+
+- (IBAction)onEditPressed:(id)sender {
+  NSLog(@"Edit pressed");
+  
+  UIAlertController* alert = [UIAlertController
+                              alertControllerWithTitle:@"Enter device name"
+                              message:@""
+                              preferredStyle:UIAlertControllerStyleAlert];
+  
+  [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+    textField.placeholder = @"New device name";
+  }];
+  
+  UIAlertAction* cancel = [UIAlertAction
+                           actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault
+                           handler:^(UIAlertAction * action) { NSLog(@"Cancel pressed");}];
+  
+  UIAlertAction* defaultAction = [UIAlertAction
+                                  actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+                                  handler:^(UIAlertAction * action) {
+                                    NSString* name = alert.textFields[0].text;
+                                    
+                                    NSString *msgType = @"DEVICE_NAME_SET";
+                                    NSLog(@"DeviceViewController: send %@ %@ %@", msgType, self.deviceKey, name);
+                                    [silkService postMessage:@{@"type": msgType, @"deviceId": self.deviceKey, @"name": name}];
+                                    [appState updateStatus:@"Sent DEVICE_NAME_SET"];
+                                  }];
+  
+  [alert addAction:cancel];
+  [alert addAction:defaultAction];
+  [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (IBAction)onCommPress:(id)sender {

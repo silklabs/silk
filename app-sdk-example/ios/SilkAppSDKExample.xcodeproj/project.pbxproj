@@ -21,6 +21,7 @@
 		579C79551D46D99300A833E7 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; };
 		579C79561D46D99300A833E7 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		870849BA1D62957C00C17A86 /* AppState.m in Sources */ = {isa = PBXBuildFile; fileRef = 870849B91D62957C00C17A86 /* AppState.m */; };
+		873AE4431D936F790018EAA4 /* ClientViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 873AE4421D936F790018EAA4 /* ClientViewController.m */; };
 		87B7C8721D63E76400B2F3F0 /* DeviceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */; };
 		87B7C8761D665BCE00B2F3F0 /* DeviceCommViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87B7C8751D665BCE00B2F3F0 /* DeviceCommViewController.m */; };
 /* End PBXBuildFile section */
@@ -99,6 +100,8 @@
 		579C794F1D46D88800A833E7 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebRTC.framework; path = "../../react-native-webrtc/ios/WebRTC.framework"; sourceTree = "<group>"; };
 		870849B81D6294EE00C17A86 /* AppState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
 		870849B91D62957C00C17A86 /* AppState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppState.m; sourceTree = "<group>"; };
+		873AE4411D936F790018EAA4 /* ClientViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClientViewController.h; sourceTree = "<group>"; };
+		873AE4421D936F790018EAA4 /* ClientViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ClientViewController.m; sourceTree = "<group>"; };
 		87B7C8701D63E76400B2F3F0 /* DeviceViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceViewController.h; sourceTree = "<group>"; };
 		87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceViewController.m; sourceTree = "<group>"; };
 		87B7C8741D665BCE00B2F3F0 /* DeviceCommViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceCommViewController.h; sourceTree = "<group>"; };
@@ -165,9 +168,11 @@
 				35D700221D298EF700993A9C /* ViewController.m */,
 				87B7C8701D63E76400B2F3F0 /* DeviceViewController.h */,
 				87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */,
-				35D700241D298EF700993A9C /* Main.storyboard */,
+				873AE4411D936F790018EAA4 /* ClientViewController.h */,
+				873AE4421D936F790018EAA4 /* ClientViewController.m */,
 				87B7C8741D665BCE00B2F3F0 /* DeviceCommViewController.h */,
 				87B7C8751D665BCE00B2F3F0 /* DeviceCommViewController.m */,
+				35D700241D298EF700993A9C /* Main.storyboard */,
 				35D700271D298EF700993A9C /* Assets.xcassets */,
 				35D700291D298EF700993A9C /* LaunchScreen.storyboard */,
 				35D7002C1D298EF700993A9C /* Info.plist */,
@@ -386,6 +391,7 @@
 				87B7C8761D665BCE00B2F3F0 /* DeviceCommViewController.m in Sources */,
 				35D7001D1D298EF700993A9C /* main.m in Sources */,
 				870849BA1D62957C00C17A86 /* AppState.m in Sources */,
+				873AE4431D936F790018EAA4 /* ClientViewController.m in Sources */,
 				87B7C8721D63E76400B2F3F0 /* DeviceViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

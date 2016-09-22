@@ -124,9 +124,51 @@
   } else if ([messageType isEqualToString: @"DEVICE_REMOVE_ERROR"]) {
     // Received device removal error
     NSString *deviceId = message[@"deviceId"];
-    NSString *status = [NSString stringWithFormat:@"Device remove failed (%@)", deviceId];
+    NSString *error = message[@"error"];
+    NSString *status = [NSString stringWithFormat:@"Device remove failed (%@) %@", deviceId, error];
     [appState updateStatus:status];
 
+  } else if ([messageType isEqualToString: @"DEVICE_NAME_SET_SUCCESS"]) {
+    NSString *deviceId = message[@"deviceId"];
+    NSString *status = [NSString stringWithFormat:@"Device name set success (%@)", deviceId];
+    [appState updateStatus:status];
+    
+  } else if ([messageType isEqualToString: @"DEVICE_NAME_SET_ERROR"]) {
+    NSString *deviceId = message[@"deviceId"];
+    NSString *error = message[@"error"];
+    NSString *status = [NSString stringWithFormat:@"Device name set failed (%@) %@", deviceId, error];
+    [appState updateStatus:status];
+  
+  } else if ([messageType isEqualToString: @"CLIENT_LIST"]) {
+    // Got a updated list of clients
+    [appState updateClients:message[@"clients"]];
+
+  } else if ([messageType isEqualToString: @"CLIENT_REMOVE_SUCCESS"]) {
+    // Received client removal error
+    NSString *clientId = message[@"clientId"];
+    NSString *status = [NSString stringWithFormat:@"Client remove success (%@)", clientId];
+    [appState updateStatus:status];
+
+  } else if ([messageType isEqualToString: @"CLIENT_REMOVE_ERROR"]) {
+    // Received client removal error
+    NSString *clientId = message[@"clientId"];
+    NSString *error = message[@"error"];
+    NSString *status = [NSString stringWithFormat:@"Client remove failed (%@) %@", clientId, error];
+    [appState updateStatus:status];
+    
+  } else if ([messageType isEqualToString: @"CLIENT_USERAGENT_SET_SUCCESS"]) {
+    // Received client useragent set success
+    NSString *clientId = message[@"clientId"];
+    NSString *status = [NSString stringWithFormat:@"Client set useragent success (%@)", clientId];
+    [appState updateStatus:status];
+    
+  } else if ([messageType isEqualToString: @"CLIENT_USERAGENT_SET_ERROR"]) {
+    // Received client useragent set error
+    NSString *clientId = message[@"clientId"];
+    NSString *error = message[@"error"];
+    NSString *status = [NSString stringWithFormat:@"Client set useragent failed (%@) %@", clientId, error];
+    [appState updateStatus:status];
+    
   } else if ([messageType isEqualToString: @"DEVICE_MESSAGE"]) {
     // SDK received a message from a device
     NSDictionary *payload = message[@"payload"];

@@ -6,13 +6,14 @@
 
 #import "ViewController.h"
 #import "DeviceViewController.h"
+#import "ClientViewController.h"
 #import "AppDelegate.h"
 #import "AppState.h"
 
 @interface ViewController () {
   AppState* appState;
   SLKAppSDKService *silkService;
-  NSString *selectedDeviceKey; // key of selected device from device table
+  NSString *selectedKey; // key of selected device from device table
 }
 @end
 
@@ -91,9 +92,27 @@
 
 // Device table
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-  NSArray *devicesList = [appState getDevicesArray];
+  NSArray *devicesList = [appState getDevicesClientsArray];
   
   return [devicesList count];
+}
+
+- (IBAction)onRefreshDevicesPressed:(id)sender {
+  NSString *msgType = @"DEVICE_LIST_UPDATE";
+  
+  NSLog(@"ViewController: send %@", msgType);
+  [silkService postMessage:@{@"type": msgType}];
+  
+  [appState updateStatus:@"Sent DEVICE_LIST_UPDATE"];
+}
+
+- (IBAction)onRefreshClientsPressed:(id)sender {
+  NSString *msgType = @"CLIENT_LIST_UPDATE";
+  
+  NSLog(@"ViewController: send %@", msgType);
+  [silkService postMessage:@{@"type": msgType}];
+  
+  [appState updateStatus:@"Sent CLIENT_LIST_UPDATE"];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -104,15 +123,22 @@
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:SimpleIdentifier];
   }
 
-  NSArray *devicesList = [appState getDevicesArray];
-  NSString *deviceKey = [devicesList objectAtIndex: indexPath.row];
-  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:deviceKey];
+  NSArray *devicesList = [appState getDevicesClientsArray];
+  NSString *key = [devicesList objectAtIndex: indexPath.row];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:key];
+  NSDictionary *client = [appState getClientFromClientId:key];
   NSString *deviceConfigStatus = deviceInfo[@"deviceConfigStatus"];
-    
-  if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
-    cell.textLabel.text = deviceInfo[@"deviceId"];
+  
+  if (deviceInfo) {
+    // This row is a device
+    if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
+      cell.textLabel.text = [NSString stringWithFormat:@"%@ (%@)", @"Name", deviceInfo[@"deviceId"]];
+    } else {
+      cell.textLabel.text = [NSString stringWithFormat:@"Unconfigured device %@",  deviceInfo[@"deviceConfigId"]];
+    }
   } else {
-    cell.textLabel.text = [NSString stringWithFormat:@"Unconfigured device %@",  deviceInfo[@"deviceConfigId"]];
+    // This row is a client
+    cell.textLabel.text = [NSString stringWithFormat:@"%@ (%@)", client[@"name"], client[@"clientId"]];
   }
   return cell;
 }
@@ -120,18 +146,30 @@
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
   // Before switching to the device details view, tell it which device was selected.
   if ([segue.destinationViewController isKindOfClass:[DeviceViewController class]]) {
-    [(DeviceViewController *)segue.destinationViewController setDeviceKey:selectedDeviceKey];
-    selectedDeviceKey = nil;
+    [(DeviceViewController *)segue.destinationViewController setDeviceKey:selectedKey];
+    selectedKey = nil;
+  } else if ([segue.destinationViewController isKindOfClass:[ClientViewController class]]) {
+    [(ClientViewController *)segue.destinationViewController setClientId:selectedKey];
+    selectedKey = nil;
   }
+
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
-  NSArray *devicesList = [appState getDevicesArray];
-  selectedDeviceKey = [devicesList objectAtIndex: indexPath.row];
+  NSArray *devicesList = [appState getDevicesClientsArray];
+  selectedKey = [devicesList objectAtIndex: indexPath.row];
+  NSDictionary *deviceInfo = [appState getDeviceInfoFromDeviceKey:selectedKey];
 
-  // Deselect device entry and go to details view
+  NSString *viewControllerName;
+  if (deviceInfo) {
+    viewControllerName = @"DeviceViewController";
+  } else {
+    viewControllerName = @"ClientViewController";
+  }
+
+  // Deselect entry and go to details view
   [tableView deselectRowAtIndexPath:indexPath animated:false];
-  [self performSegueWithIdentifier:@"DeviceViewController" sender:self];
+  [self performSegueWithIdentifier:viewControllerName sender:self];
 }
 
 // Needed to dismiss keyboard when Done is pressed

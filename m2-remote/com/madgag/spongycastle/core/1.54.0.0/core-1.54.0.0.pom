@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.madgag.spongycastle</groupId>
+  <artifactId>core</artifactId>
+  <version>1.54.0.0</version>
+  <name>Spongy Castle</name>
+  <description>Spongy Castle is a package-rename (org.bouncycastle.* to org.spongycastle.*) of Bouncy Castle
+intended for the Android platform. Android unfortunately ships with a stripped-down version of
+Bouncy Castle, which prevents easy upgrades - Spongy Castle overcomes this and provides a full,
+up-to-date version of the Bouncy Castle cryptographic libs.</description>
+  <url>http://rtyley.github.io/spongycastle/</url>
+  <licenses>
+    <license>
+      <name>Bouncy Castle Licence</name>
+      <url>http://www.bouncycastle.org/licence.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>rtyley</id>
+      <name>Roberto Tyley</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git@github.com:rtyley/spongycastle.git</connection>
+    <developerConnection>scm:git@github.com:rtyley/spongycastle.git</developerConnection>
+    <url>scm:git@github.com:rtyley/spongycastle.git</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

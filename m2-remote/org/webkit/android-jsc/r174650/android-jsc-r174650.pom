@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.webkit</groupId>
+  <artifactId>android-jsc</artifactId>
+  <version>r174650</version>
+  <packaging>aar</packaging>
+
+  <name>android-jsc</name>
+  <description>JavaScriptCore library for android</description>
+  <url>https://www.webkit.org</url>
+
+  <licenses>
+    <license>
+      <name>BSD License</name>
+      <url>https://raw.githubusercontent.com/facebook/android-jsc/master/LICENSE</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>kmagiera</id>
+      <name>Krzysztof Magiera</name>
+      <url>https://github.com/kmagiera</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>https://github.com/facebook/android-jsc.git</connection>
+    <developerConnection>https://github.com/facebook/android-jsc.git</developerConnection>
+    <url>https://github.com/facebook/android-jsc</url>
+  </scm>
+</project>

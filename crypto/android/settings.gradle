@@ -1,2 +1,0 @@
-include ":libsodium-jni"
-project(":libsodium-jni").projectDir = file("../external/libsodium-jni")

@@ -8,9 +8,6 @@ project(":silk-app-util").projectDir = file("../../app-util/android")
 include ":silk-crypto"
 project(":silk-crypto").projectDir = file("../../crypto/android")
 
-apply from: '../../crypto/android/settings.gradle'
-project(':libsodium-jni').projectDir = file("../../crypto/external/libsodium-jni")
-
 include ":silk-ble-socket"
 project(":silk-ble-socket").projectDir = file("../../ble-socket/android")
 

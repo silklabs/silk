@@ -1,0 +1,53 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.android.tools.external.lombok</groupId>
+    <artifactId>lombok-ast</artifactId>
+    <version>0.2.3</version>
+    <packaging>jar</packaging>
+    <name>Lombok - AST fork</name>
+    <url>http://projectlombok.org/</url>
+    <description>This is a very small fork of lombok.ast as some Android tools needed a few modifications. The normal repository for lombok.ast is here https://github.com/rzwitserloot/lombok.ast and our changes for 0.2.3 are in this pull request: https://github.com/rzwitserloot/lombok.ast/pull/8</description>
+    <licenses>
+        <license>
+            <name>The MIT License</name>
+            <url>http://projectlombok.org/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <connection>git://android.googlesource.com/platform/prebuilts/tools.git</connection>
+        <url>https://android.googlesource.com/platform/prebuilts/tools</url>
+    </scm>
+    <issueManagement>
+        <system>Google Code</system>
+        <url>http://code.google.com/p/projectlombok/issues</url>
+    </issueManagement>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>17.0</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+   <developers>
+        <developer>
+            <id>rzwitserloot</id>
+            <name>Reinier Zwitserloot</name>
+            <email>reinier@projectlombok.org</email>
+            <url>http://zwitserloot.com</url>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>rspilker</id>
+            <name>Roel Spilker</name>
+            <email>roel@projectlombok.org</email>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>rgrootjans</id>
+            <name>Robbert Jan Grootjans</name>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+</project>

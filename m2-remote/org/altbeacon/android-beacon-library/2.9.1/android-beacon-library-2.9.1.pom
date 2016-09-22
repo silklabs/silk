@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.altbeacon</groupId>
+  <artifactId>android-beacon-library</artifactId>
+  <version>2.9.1</version>
+  <packaging>aar</packaging>
+  <name>android-beacon-library</name>
+  <description>Allows Android apps to interact with BLE beacons</description>
+  <url>https://github.com/AltBeacon/android-beacon-library</url>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/AltBeacon/android-beacon-library/issues</url>
+  </issueManagement>
+  <scm>
+    <url>https://github.com/AltBeacon/android-beacon-library</url>
+    <connection>scm:git:https://github.com/AltBeacon/android-beacon-library.git</connection>
+    <developerConnection>scm:git:git@github.com:AltBeacon/android-beacon-library.git</developerConnection>
+  </scm>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>altbeacon</id>
+      <name>altbeacon</name>
+      <organization>AltBeacon</organization>
+      <organizationUrl>altbeacon.org</organizationUrl>
+    </developer>
+  </developers>
+</project>

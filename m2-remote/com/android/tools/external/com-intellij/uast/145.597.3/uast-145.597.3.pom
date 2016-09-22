@@ -1,0 +1,20 @@
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns:xsi="http\
+://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.android.tools.external.com-intellij</groupId>
+    <artifactId>uast</artifactId>
+    <version>145.597.3</version>
+    <packaging>jar</packaging>
+    <name>uast</name>
+    <url>http://www.jetbrains.com/idea</url>
+    <description>A subset of IntelliJ IDEA's AST APIs and implementation,
+    focusing on the read-only aspects, intended for use by Android Lint
+    when running outside of the IDE (typically from Gradle.)
+    </description>
+    <licenses>
+      <license>
+        <name>Apache License, Version 2.0</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      </license>
+    </licenses>
+</project>

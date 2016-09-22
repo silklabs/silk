@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-SHA1=e34ce71aa0ee04e6dcca25a0d99cee083a3135c0
+SHA1=bdd5dc63ad4f6d200b16539bb37ae9b2e2bcd836
 
 if [[ -d silk-dnn ]]; then
   pushd silk-dnn 2>&1 > /dev/null
@@ -17,5 +17,11 @@ if [[ ! -d silk-dnn ]]; then
   git clone git@github.com:silklabs/silk-dnn.git silk-dnn
   pushd silk-dnn 2>&1 > /dev/null
   git checkout $SHA1
-  popd
+
+  # Assemble tiny-yolo model file
+  pushd models/tiny-yolo 2>&1 > /dev/null
+  make
+  popd 2>&1 > /dev/null
+
+  popd 2>&1 > /dev/null
 fi

@@ -172,7 +172,7 @@ function CLIENT_REMOVE_SERVER(
   const newState = new Map(state);
 
   if (action.requested) {
-    invariant(clientInfo.revoke.serverStatus === null);
+    invariant(clientInfo.revoke.serverStatus === 'pending');
     newState.set(clientId, {
       ...clientInfo,
       revoke: {

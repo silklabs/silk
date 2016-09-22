@@ -56,10 +56,17 @@ export default class CameraPreview extends React.Component {
   componentDidMount() {
     this._canvas = ReactDOM.findDOMNode(this.refs.canvas);
     this._context = this._canvas.getContext('2d');
+    this._camera.on('stateChanged', this.onCameraStateChanged);
+    this.onCameraStateChanged();
   }
 
   componentWillUnmount() {
     this._onVideoActive(null, false);
+    this._camera.removeListener('stateChanged', this.onCameraStateChanged);
+  }
+
+  onCameraStateChanged = () => {
+    this._renderCanvas();
   }
 
   render() {

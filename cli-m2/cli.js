@@ -119,13 +119,14 @@ export const remoteUpdate = {
     console.log('Waiting for Nexus container to be ready...')
     await waitForNexus();
 
-    // Kill the container again so we can add the jcenter proxy repo
-    // to the configuration.
+    // Kill the container again so we can add the JCenter proxy repo
+    // to the configuration. The default Nexus configuration only
+    // proxies Maven Central, but we need stuff that's only in JCenter.
     console.log('Configuring Nexus...');
     run(`docker stop ${DOCKER_CONTAINER_NAME}`);
 
-    // Copy the new configuration file with the jcenter proxy repo in
-    // it to the container
+    // Copy the new configuration file with the JCenter proxy repo in
+    // it to the container.
     run([
       'docker', 'cp',
       NEXUS_XML_LOCAL_PATH,

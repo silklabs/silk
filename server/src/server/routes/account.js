@@ -157,6 +157,7 @@ export default function (ctx: RouteContext): ExpressRoutes {
         name: Devices.NAME_SCHEMA,
         type: Devices.TYPE_SCHEMA,
         registered: Joi.boolean().required(),
+        registeredAt: Joi.date().allow(null).required(),
         accountDeviceNumber:
           Devices.ACCOUNT_DEVICE_NUMBER_SCHEMA.allow(0).required(),
         publicKey: Devices.PUBLIC_KEY_SCHEMA,
@@ -176,6 +177,10 @@ export default function (ctx: RouteContext): ExpressRoutes {
         name: device.name,
         type: device.type,
         registered: device.registration.complete,
+        registeredAt:
+          device.registration.completedAt ?
+          device.registration.completedAt.toString() :
+          null,
         accountDeviceNumber: device.registration.accountDeviceNumber || 0,
         publicKey: device.accessToken.publicKey,
         deviceId: device.accessToken.publicKey,

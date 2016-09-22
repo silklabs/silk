@@ -224,16 +224,25 @@ function DEVICE_REGISTERED_FETCH(
     ...state,
     DEVICES: {
       ...state.DEVICES,
-      devices: state.DEVICES.devices.concat(newDevices.map((device) => ({
-        ...deviceStatusTemplate,
-        deviceType: device.type,
-        deviceVersion: null,
-        deviceId: device.deviceId,
-        accountDeviceNumber: device.accountDeviceNumber,
-        deviceConfigStatus: 'CONFIGURED',
-        bleConnectionStatus: 'NOT_CONNECTED',
-        rtcConnectionStatus: 'NOT_CONNECTED',
-      }))),
+      devices: state.DEVICES.devices.concat(newDevices.map((device) => {
+        const configTime =
+          device.registeredAt ?
+          new Date(device.registeredAt).getTime() :
+          null;
+        const lastSeenTime = new Date(device.lastSeenAt).getTime();
+        return {
+          ...deviceStatusTemplate,
+          deviceType: device.type,
+          deviceVersion: null,
+          deviceId: device.deviceId,
+          accountDeviceNumber: device.accountDeviceNumber,
+          configTime,
+          lastSeenTime,
+          deviceConfigStatus: 'CONFIGURED',
+          bleConnectionStatus: 'NOT_CONNECTED',
+          rtcConnectionStatus: 'NOT_CONNECTED',
+        };
+      })),
     },
   };
 }
@@ -387,6 +396,8 @@ function DEVICE_BLE_CONNECTED(
       deviceVersion: session.version,
       deviceConfigId: session.socketId,
       deviceConfigStatus: 'UNCONFIGURED',
+      configTime: null,
+      lastSeenTime: Date.now(),
       bleConnectionStatus: 'CONNECTED',
       rtcConnectionStatus: 'NOT_CONNECTED',
     };
@@ -806,7 +817,7 @@ function DEVICE_RTC_SIGNAL(
 
 function CLIENT_LIST_FETCH(
   state: MessagesState,
-  action: Action<'CLIENT_LIST_FETCH', void, ListClientsOutput>
+  action: Action<'CLIENT_LIST_FETCH', string, ListClientsOutput>
 ): MessagesState {
   if (action.requested) {
     return state;
@@ -822,6 +833,9 @@ function CLIENT_LIST_FETCH(
 
   const oldKeys = new Set(oldClients.map((client) => client.clientId));
 
+  const thisClientId = action.input;
+  invariant(thisClientId);
+
   const {clients: newClients} = action.payload;
   invariant(newClients);
   invariant(Array.isArray(newClients));
@@ -831,7 +845,16 @@ function CLIENT_LIST_FETCH(
   const clients = [];
 
   newClients.forEach((client) => {
-    const {publicKey: clientId, userAgent} = client;
+    const {
+      publicKey: clientId,
+      issued,
+      lastSeenAt,
+      userAgent,
+    } = client;
+
+    if (new Date(client.expires) <= new Date()) {
+      return;
+    }
 
     if (oldKeys.has(clientId)) {
       oldKeys.delete(clientId);
@@ -842,6 +865,9 @@ function CLIENT_LIST_FETCH(
     clients.push({
       clientId,
       userAgent,
+      createdTime: new Date(issued).getTime(),
+      lastSeenTime: new Date(lastSeenAt).getTime(),
+      thisClient: clientId === thisClientId,
     });
   });
 

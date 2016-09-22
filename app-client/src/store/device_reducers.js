@@ -30,6 +30,8 @@ export type RegisteredDevice = {
   accountDeviceNumber: number;
   name: string;
   type: string;
+  lastSeenAt: number;
+  registeredAt: number;
 
   rtc: {
     /**
@@ -220,9 +222,14 @@ function DEVICE_REGISTERED_RESTORE(
   const {devices} = action.payload;
   const registered = new Map();
   devices.forEach((storedRecord) => {
+    const {lastSeenAt, registeredAt, ...deviceProps} = storedRecord;
+    invariant(registeredAt);
+
     const device = {
       ...registeredDeviceTemplate,
-      ...storedRecord,
+      ...deviceProps,
+      lastSeenAt: new Date(lastSeenAt).getTime(),
+      registeredAt: new Date(registeredAt).getTime(),
     };
     registered.set(device.deviceId, device);
   });
@@ -250,21 +257,34 @@ function DEVICE_REGISTERED_FETCH(
     if (!serverRecord.registered) {
       return;
     }
+
     let device = null;
     if (state.registered) {
       device = state.registered.get(serverRecord.deviceId);
     }
+
+    const {lastSeenAt, registeredAt, ...deviceProps} = serverRecord;
+    invariant(registeredAt);
+
+    const dates = {
+      lastSeenAt: new Date(lastSeenAt).getTime(),
+      registeredAt: new Date(registeredAt).getTime(),
+    };
+
     if (device) {
       device = {
         ...device,
-        ...serverRecord,
+        ...deviceProps,
+        ...dates,
       };
     } else {
       device = {
         ...registeredDeviceTemplate,
-        ...serverRecord,
+        ...deviceProps,
+        ...dates,
       };
     }
+
     registered.set(device.deviceId, device);
   });
 
@@ -773,6 +793,8 @@ function DEVICE_CONFIG_FINISH(
   state: DevicesState,
   action: SimpleAction<'DEVICE_CONFIG_FINISH', void>
 ): DevicesState {
+  const now = Date.now();
+
   const {configuring} = state;
   invariant(configuring);
   invariant(configuring.registered || configuring.error);
@@ -811,6 +833,8 @@ function DEVICE_CONFIG_FINISH(
     name,
     type,
     accountDeviceNumber,
+    lastSeenAt: now,
+    registeredAt: now,
     ...registeredDeviceTemplate,
     ble: {
       ...registeredDeviceTemplate.ble,

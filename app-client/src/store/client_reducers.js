@@ -7,10 +7,7 @@
 import invariant from 'assert';
 import {handleActions} from 'redux-actions';
 
-import type {
-  ListClientsOutput,
-  ListClientsOutputClients,
-} from 'silk-api/src/gen/account';
+import type {ListClientsOutput} from 'silk-api/src/gen/account';
 import type {Action} from 'silk-redux/action';
 import type {
   RemoveClientFromServerResult,
@@ -19,7 +16,15 @@ import type {
 } from './client_actions';
 
 export type ClientInfo = {
-  info: ListClientsOutputClients;
+  // Approximately ListClientsOutputClients.
+  info: {
+    publicKey: string;
+    userAgent: string;
+    scopes: Array<string>;
+    issued: number;
+    expires: number;
+    lastSeenAt: number;
+  };
   revoke: ?{
     revokeMessage: ?string;
     serverStatus: 'pending' | 'requesting' | 'error';
@@ -62,7 +67,7 @@ function CLIENT_LIST_FETCH(
   const newState = new Map();
 
   clients.forEach((client) => {
-    const {publicKey} = client;
+    const {publicKey, issued, expires, lastSeenAt, ...clientProps} = client;
 
     if (oldKeys.has(publicKey)) {
       oldKeys.delete(publicKey);
@@ -71,7 +76,13 @@ function CLIENT_LIST_FETCH(
     }
 
     newState.set(publicKey, {
-      info: client,
+      info: {
+        publicKey,
+        issued: new Date(issued).getTime(),
+        expires: new Date(expires).getTime(),
+        lastSeenAt: new Date(lastSeenAt).getTime(),
+        ...clientProps,
+      },
       revoke: null,
     });
   });

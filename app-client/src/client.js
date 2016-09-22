@@ -81,7 +81,7 @@ function initRegisteredDevices(store: Store<*>) {
   const rtcTimers: Map<string, number> = new Map();
 
   function ensureDeviceConnection() {
-    const {auth, network} = store.getState();
+    const {api, auth, network} = store.getState();
     if (!auth.isAuthenticated || !network.canReachServer) {
       rtcTimers.forEach(clearTimeout);
       rtcTimers.clear();
@@ -89,7 +89,7 @@ function initRegisteredDevices(store: Store<*>) {
     }
 
     // See if there are any new clients or devices.
-    store.dispatch(actions.clients.fetchList());
+    store.dispatch(actions.clients.fetchList(api.accessToken.pub));
     store.dispatch(actions.devices.registered.fetchList());
   }
   store.subscribeToPath('auth.isAuthenticated', ensureDeviceConnection);

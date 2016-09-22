@@ -54,7 +54,8 @@ function genRemoveBegin(
 
   const clientInfo = clients.get(input);
   invariant(clientInfo);
-  invariant(!clientInfo.revoke);
+  invariant(clientInfo.revoke);
+  invariant(!clientInfo.revoke.revokeMessage);
 
   return onion.genEncode({
     senderIdentity: accessToken,

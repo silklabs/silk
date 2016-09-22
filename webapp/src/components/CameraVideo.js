@@ -193,6 +193,7 @@ export default class CameraVideo extends React.Component {
     showVideoStats: false,
     stats: null,
     muted: useMSEPlayer,
+    currentResolution: '', // !useMSEPlayer only
   };
 
   get deviceId() {
@@ -802,6 +803,14 @@ export default class CameraVideo extends React.Component {
     }
   };
 
+  _onVideoUpdate = (label, currentTime, videoWidth, videoHeight) => {
+    invariant(!useMSEPlayer);
+    const currentResolution = `${videoWidth}x${videoHeight}`;
+    if (currentResolution !== this.state.currentResolution) {
+      this.setState({currentResolution});
+    }
+  };
+
   _startAnimationLoop = () => {
     if (this.animationToken) {
       return;
@@ -1004,6 +1013,7 @@ export default class CameraVideo extends React.Component {
               />
             </div>
           </form>
+          <small>Resolution: {this.state.currentResolution}</small>
         </div>
       );
     }
@@ -1119,6 +1129,7 @@ export default class CameraVideo extends React.Component {
             height="720"
             deviceId={this.deviceId}
             onVideoActive={this._onVideoActive}
+            onVideoUpdate={this._onVideoUpdate}
             label="video"
           />
         );

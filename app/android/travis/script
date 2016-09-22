@@ -13,4 +13,4 @@ echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo s
 export ANDROID_HOME=$PWD/android-sdk-linux
 
 cd android
-./gradlew assembleRelease --info --console=plain
+../../gradle/gradlew assembleRelease --info --console=plain

@@ -32,8 +32,11 @@ WHITELIST=$(cat <<-EOF
   config
   crypto
   fetch
+  gradle
   http-client
   jsonwebtoken
+  m2-local
+  m2-remote
   mse-player
   node_modules
   npm_postinstall

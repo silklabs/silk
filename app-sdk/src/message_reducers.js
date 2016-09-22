@@ -820,7 +820,7 @@ function CLIENT_LIST_FETCH(
   invariant(oldClients);
   invariant(Array.isArray(oldClients));
 
-  const oldKeys = new Set(oldClients.map((client) => client.id));
+  const oldKeys = new Set(oldClients.map((client) => client.clientId));
 
   const {clients: newClients} = action.payload;
   invariant(newClients);
@@ -831,16 +831,16 @@ function CLIENT_LIST_FETCH(
   const clients = [];
 
   newClients.forEach((client) => {
-    const {publicKey: id, userAgent} = client;
+    const {publicKey: clientId, userAgent} = client;
 
-    if (oldKeys.has(id)) {
-      oldKeys.delete(id);
+    if (oldKeys.has(clientId)) {
+      oldKeys.delete(clientId);
     } else {
       newClient = true;
     }
 
     clients.push({
-      id,
+      clientId,
       userAgent,
     });
   });
@@ -869,7 +869,7 @@ function CLIENT_REMOVE_SERVER(
   const {clientId, success} = action.payload;
   let {clients} = state.CLIENTS;
 
-  const index = clients.findIndex((client) => client.id === clientId);
+  const index = clients.findIndex((client) => client.clientId === clientId);
   if (index === -1) {
     return state;
   }

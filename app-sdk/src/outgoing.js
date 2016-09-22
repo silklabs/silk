@@ -152,7 +152,7 @@ export type DeviceUpdateStatusMessage = {
 };
 
 export type ClientInfo = {
-  id: string;
+  clientId: string;
   userAgent: string;
 };
 

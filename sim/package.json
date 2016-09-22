@@ -3,7 +3,6 @@
   "version": "1.3.0",
   "description": "Silk Device Simulator",
   "scripts": {
-    "preinstall": "test -n \"$SILK_CAFFE_PATCH_TREE\" || { echo Please \"|source ../setup|\" first; false; }",
     "postinstall": "cd system/silk && npm install",
     "start": "./start",
     "test": "./test/boot_test"

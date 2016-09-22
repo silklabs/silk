@@ -26,6 +26,3 @@ export PATH=$ROOT/node_modules/.bin:$PATH
 # So npm init uses our custom init tooling ...
 export npm_config_init_module=$ROOT/npminit.js
 
-# silk-caffe hack the find patches
-export SILK_CAFFE_PATCH_TREE=$ROOT/bsp-gonk/product/silk/patch/external
-

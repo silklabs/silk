@@ -84,7 +84,7 @@
   <project name="caffe"
            path="external/caffe"
            remote="silk"
-           revision="refs/tags/tag1"
+           revision="refs/tags/tag2"
            upstream="android"
            clone-depth="1"/>
 

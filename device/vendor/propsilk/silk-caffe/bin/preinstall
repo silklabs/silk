@@ -5,37 +5,15 @@ if [[ "$NPM_CONFIG_PLATFORM" == "android" ]]; then
   exit 1
 fi
 
-PATCH_TREE=$SILK_CAFFE_PATCH_TREE
-
-if [[ -z $PATCH_TREE ]]; then
-  echo "Error: SILK_CAFFE_PATCH_TREE not defined.  |source ./setup|?"
-  exit 1
-fi
-
-echo "Using patch folder: $PATCH_TREE"
-
-if [[ ! -d $PATCH_TREE ]]; then
-  echo Not a directory: $PATCH_TREE
-  exit 1
-fi
-
 J="-j2"
 if [[ -z $CI ]]; then
   J="-j6"
 fi
 
 # Download caffe
-CAFFE_SHA1=be2f081b0a7aedc68d24a9007e5ffdd79e1a494c
 if [[ ! -d caffe ]]; then
   echo Downloading caffe
-  git clone git@github.com:silklabs/caffe.git
-
-  # Patch caffe
-  echo patching caffe
-  pushd caffe
-  git checkout $CAFFE_SHA1
-  git am --quiet $PATCH_TREE/caffe/0001-Select-correct-version-of-vecLib.patch
-  popd
+  git clone git@github.com:silklabs/caffe.git -b tag2
 fi
 
 # Install caffe

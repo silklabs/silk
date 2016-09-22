@@ -7,69 +7,13 @@
  * @providesModule net
  */
 
-import EventEmitter from 'events';
-import {Duplex, Readable} from 'stream';
-
-type SocketAddress = {
-  address: string;
-  family: string;
-  port: number
-};
-
-declare export class Socket extends Duplex {
-  constructor(options?: Object): void;
-  address(): SocketAddress;
-  bufferSize: number;
-  bytesRead: number;
-  bytesWritten: number;
-  connect(options: Object, connectListener?: function): void;
-  destroy(): void;
-  end(
-    chunk?: string | Buffer,
-    encodingOrCallback?: string | (data: any) => void,
-    callback?: (data: any) => void
-  ): void;
-  localAddress: string;
-  localPort: number;
-  pause(): Readable;
-  ref(): Socket;
-  remoteAddress: string | void;
-  remoteFamily: string;
-  remotePort: number;
-  resume(): Readable;
-  setEncoding(encoding?: string): Readable;
-  setKeepAlive(enable?: boolean, initialDelay?: number): Socket;
-  setNoDelay(noDelay?: boolean): Socket;
-  setTimeout(timeout: number, callback?: function): Socket;
-  unref(): Socket;
-  write(
-    chunk?: string | Buffer,
-    encodingOrCallback?: string | (data: any) => void,
-    callback?: (data: any) => void
-  ): boolean;
-}
-
-declare export class Server extends EventEmitter {
-  listen(
-    port: number,
-    hostname?: string,
-    backlog?: number,
-    callback?: Function
-  ): Server;
-  listen(path: string, callback?: Function): Server;
-  listen(handle: Object, callback?: Function): Server;
-  close(callback?: Function): Server;
-  address(): SocketAddress;
-  connections: number;
-  maxConnections: number;
-  getConnections(callback: Function): void;
-  ref():  Server;
-  unref():  Server;
-}
+declare export class Server extends net$Server {}
+declare export class Socket extends net$Socket {}
 
 declare export function isIP(input: string): number;
 declare export function isIPv4(input: string): boolean;
 declare export function isIPv6(input: string): boolean;
+
 
 declare type connectionListener = (socket: Socket) => any;
 
@@ -81,22 +25,17 @@ declare export function createServer(
   connectionListener?: connectionListener,
 ): Server;
 
+
 declare type connectListener = () => any;
 
 declare export function connect(
-  options?: {
-    port?: number,
-    host?: string,
-    localAddress?: string,
-    localPort?: number,
-    family?: number,
-    lookup?: string,
-    path?: string,
-  } | connectListener,
+  pathOrPortOrOptions:  string | number | net$connectOptions,
+  hostOrConnectListener?: string | connectListener,
   connectListener?: connectListener,
-) : Socket;
+): Socket;
 
 declare export function createConnection(
-  pathOrHost: string|number,
-  handler: () => void,
+  pathOrPortOrOptions:  string | number | net$connectOptions,
+  hostOrConnectListener?: string | connectListener,
+   connectListener?: connectListener,
 ): Socket;

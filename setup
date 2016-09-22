@@ -18,7 +18,7 @@ done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export SILKRC=$ROOT/.silkrc
-export PATH=$ROOT/pub/cli:$PATH
+export PATH=$ROOT/pub/cli:$ROOT/gradle:$PATH
 # WARNING: REPOCACHE_URLPREFIX is duplicated in builds.js
 export REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/
 export FULL_SERVICE=1

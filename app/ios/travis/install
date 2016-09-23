@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 
 brew install npm nvm
 export NVM_DIR="$PWD/.nvm"

@@ -1,4 +1,5 @@
 apply plugin: "com.android.library"
+apply plugin: "maven"
 
 android {
     compileSdkVersion 23
@@ -19,9 +20,22 @@ android {
 dependencies {
     compile "com.android.support:appcompat-v7:23.0.1"
     compile "com.facebook.react:react-native:+"  // from node_modules
-    compile project(":silk-app-util")
-    compile project(":silk-crypto")
-    compile project(":silk-ble-socket")
-    compile project(":silk-react-native-blobs")
-    compile project(":RCTWebRTC")
+    compile fallback(project(':silk-app-util'), 'com.silklabs.react:app-util:+')
+    compile fallback(project(':silk-ble-socket'), 'com.silklabs.react:ble-socket:+')
+    compile fallback(project(':silk-crypto'), 'com.silklabs.react:crypto:+')
+    compile fallback(project(':silk-react-native-blobs'), 'com.silklabs.react:blobs:+')
+    compile fallback(project(':RCTWebRTC'), 'com.oney.react:webrtc:+')
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            def silkRootDir = file("../../")
+            repository(url: "file://$silkRootDir/m2-local")
+            pom.project {
+                groupId = "com.silklabs.react"
+                artifactId "app-sdk"
+            }
+        }
+    }
 }

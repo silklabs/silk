@@ -1,4 +1,5 @@
 apply plugin: "com.android.library"
+apply plugin: "maven"
 
 android {
     compileSdkVersion 23
@@ -21,4 +22,17 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.0.1'
     compile 'org.altbeacon:android-beacon-library:2.9.1'
     compile 'com.facebook.react:react-native:+'  // from node_modules
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            def silkRootDir = file("../../")
+            repository(url: "file://$silkRootDir/m2-local")
+            pom.project {
+                groupId = "com.silklabs.react"
+                artifactId "ble-socket"
+            }
+        }
+    }
 }

@@ -30,6 +30,8 @@ let config = {
   resolve: {
     alias: {
       'fs': path.resolve(__dirname, 'src/shim/fs.js'),
+      'net': path.resolve(__dirname, 'src/shim/net.js'),
+      'dns': path.resolve(__dirname, 'src/shim/dns.js'),
       'kissfft': path.resolve(__dirname, 'src', 'shim', 'kissfft.js'),
       'react-native': path.resolve(__dirname, 'src', 'shim', 'react-native.js'),
     },

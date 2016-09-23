@@ -4,6 +4,8 @@ import { EventEmitter } from 'events';
 import invariant from 'assert';
 import createLog from 'silk-log';
 import { call } from 'silk-rtc';
+import {AccessToken} from 'silk-api';
+import * as onion from 'silk-onion';
 import type { StructuredDataChannel } from 'silk-rtc';
 
 import Api from './Api';
@@ -583,8 +585,19 @@ class Cameras extends EventEmitter {
       return;
     }
     const devicePublicKey = device.publicKey;
+
+    const buffer = await onion.genEncode({
+      senderIdentity: Api.accessToken,
+      recipientIdentity: AccessToken.importPub(devicePublicKey),
+      channel: 'http',
+      payload: {name: `reset`},
+    });
+
     try {
-      const result = await Api.account.unregisterDevice({devicePublicKey});
+      const result = await Api.account.unregisterDevice({
+        devicePublicKey,
+        factoryResetMessage: buffer.toString('base64'),
+      });
       if (result.success !== true) {
         log.error('Unable to unregisterDevice:', result);
       }

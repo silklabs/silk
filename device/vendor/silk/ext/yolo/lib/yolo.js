@@ -10,8 +10,16 @@ import fs from 'mz/fs';
 import path from 'path';
 import createLog from 'silk-log/device';
 import predictionsToBoxes from './utils';
+import ObjectSmoother from './smoother';
 
 import type { Env, Camera, Timeline } from 'silk-exttest';
+
+export type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 const log = createLog('silkext-yolo');
 let camera: Camera;
@@ -30,6 +38,7 @@ const NMS_IOA_THRESH = 0.75;
 const OBJECT_DETECT_INTERVAL = 1000;
 
 const OBJECT_TAG = 'object';
+const RUN_SMOOTHER = true;
 
 class YoloClassifier {
   _labels: Array<string>;
@@ -38,6 +47,7 @@ class YoloClassifier {
   _netHeight: number;
   _onMotion: Function;
   _net: caffe.Net;
+  _smoother: ObjectSmoother;
 
   constructor(env: Env) {
     camera = env.camera;
@@ -57,6 +67,8 @@ class YoloClassifier {
     log.info(`network shape ${shape.join(' ')}`);
     this._netWeight = shape[3];
     this._netHeight = shape[2];
+
+    this._smoother = new ObjectSmoother();
     this._init();
   }
 
@@ -137,12 +149,16 @@ class YoloClassifier {
       }
       await this._forwardAsync(blob);
       let output = this._net.blobs[this._net.blobs.length - 1];
-      log.debug(`yolo output ${JSON.stringify(output.data)}`);
       let boxes = predictionsToBoxes(output.data, this._labels, this._num,
           NUM_SIDES, PROB_THRESH, NMS_IOU_THRESH, NMS_IOA_THRESH, imageWidth,
           imageHeight);
       mat.release();
       log.debug(`yolo ${JSON.stringify(boxes)}`);
+
+      if (RUN_SMOOTHER) {
+        this._smoother.onFrame(when, boxes);
+        boxes = this._smoother.getObjects();
+      }
 
       // Add detected objects to timeline
       boxes.forEach(box => {

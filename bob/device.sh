@@ -33,4 +33,4 @@ travis/after_script
 if [[ $exitcode -eq 0 ]]; then
   travis/after_success
 fi
-exit 0
+exit $exitcode

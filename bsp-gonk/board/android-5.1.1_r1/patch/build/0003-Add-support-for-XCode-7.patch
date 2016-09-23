@@ -16,7 +16,7 @@ index 6defba7..7b37c3a 100644
  build_mac_version := $(shell sw_vers -productVersion)
  
 -mac_sdk_versions_supported :=  10.6 10.7 10.8 10.9
-+mac_sdk_versions_supported :=  10.6 10.7 10.8 10.9 10.11
++mac_sdk_versions_supported :=  10.6 10.7 10.8 10.9 10.11 10.12
  ifneq ($(strip $(MAC_SDK_VERSION)),)
  mac_sdk_version := $(MAC_SDK_VERSION)
  ifeq ($(filter $(mac_sdk_version),$(mac_sdk_versions_supported)),)

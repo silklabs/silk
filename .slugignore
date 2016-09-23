@@ -1,0 +1,7 @@
+# Things we don't want to deploy to Heroku
+/app*
+/device
+/external-*
+/m2-remote
+/m2-local
+/react-native-webrtc

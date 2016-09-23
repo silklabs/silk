@@ -8,14 +8,9 @@
 import createLog from 'silk-log/device';
 import type { Rect } from './yolo';
 import type { ObjectBox } from './utils';
+import * as config from './config';
 
 const log = createLog('silkext-yolo');
-
-const MS_MISSING_TILL_LOST = 700;
-const MS_NEW_TILL_VISIBLE = 150;
-const MS_MAX_EXTRAPOLATE = 1000;
-const IOU_THRESH = .5;
-const IOA_THRESH = .75;
 
 class Box {
   x: number;
@@ -102,7 +97,7 @@ class Obj {
       return false;
     }
     let box = new Box(time, pos);
-    if (this._iou(box) >= IOU_THRESH || this._maxIoa(box) >= IOA_THRESH) {
+    if (this._iou(box) >= config.IOU_THRESH || this._maxIoa(box) >= config.IOA_THRESH) {
       log.debug(`  Box matches this object`);
       return true;
     }
@@ -129,7 +124,7 @@ class Obj {
     // Prune historical boxes
     let idx;
     for (idx = 1; idx < this.dnnBoxes.length; idx++) {
-      if (time - this.dnnBoxes[idx].time >= MS_MAX_EXTRAPOLATE) {
+      if (time - this.dnnBoxes[idx].time >= config.MS_MAX_EXTRAPOLATE) {
         break;
       }
     }
@@ -151,7 +146,7 @@ class Obj {
         let dy = (mid(prevBox).y - mid(box).y) / dt;
         let dw = (prevBox.width - box.width) / dt;
         let dh = (prevBox.height - box.height) / dt;
-        if (dt >= MS_MAX_EXTRAPOLATE) {
+        if (dt >= config.MS_MAX_EXTRAPOLATE) {
           log.debug(`  Too old delta: ${dt / 1000} sec`);
           return;
         }
@@ -202,7 +197,7 @@ class Obj {
         // Haven't seen object consistently, consider this as noise
         log.debug(`  new to gone`);
         this.state = 'gone';
-      } else if ((this.lastSeen - this.firstSeen) >= MS_NEW_TILL_VISIBLE) {
+      } else if ((this.lastSeen - this.firstSeen) >= config.MS_NEW_TILL_VISIBLE) {
         log.debug(`  new to visible`);
         this.state = 'visible';
       }
@@ -214,7 +209,7 @@ class Obj {
       }
       break;
     case 'missing':
-      if ((time - this.lastSeen) >= MS_MISSING_TILL_LOST) {
+      if ((time - this.lastSeen) >= config.MS_MISSING_TILL_LOST) {
         log.debug(`  missing to gone`);
         this.state = 'gone';
       }

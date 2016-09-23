@@ -14,7 +14,7 @@
 export const OBJECT_DETECT_INTERVAL = 1000;
 
 // Flag to turn on/off the smoother functionality
-export const RUN_SMOOTHER = true;
+export const RUN_SMOOTHER = false;
 
 // Duration of each object. If smoother is used then we extrapolate detected
 // objects on every preview frame so this should be the time between each preview

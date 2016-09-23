@@ -21,6 +21,7 @@
 -(void) updateConnectionStatus: (NSString*) connectionStatus andConnectionError:(NSString*) connectionError andAuthStatus:(NSString*) authStatus andAuthError:(NSString*) authError;
 -(void) updateDevices: (NSArray*) devices;
 -(void) updateDeviceStatus: (NSDictionary*) deviceStatus;
+-(void) updateClients: (NSArray*) clients;
 -(void) updateBleRequested: (NSNumber*) bleRequested forDeviceKey:(NSString*) deviceKey;
 -(void) updateUpdateStatus: (NSDictionary*) updateStatus;
 -(void) updateConnectionDetails: (NSDictionary*) connectionDetails;
@@ -34,8 +35,9 @@
 -(NSString*) getConnectionError;
 -(NSString*) getAuthStatus;
 -(NSString*) getAuthError;
--(NSArray*) getDevicesArray;
+-(NSArray*) getDevicesClientsArray;
 -(NSDictionary*) getDeviceInfoFromDeviceKey: (NSString*) deviceKey;
+-(NSDictionary*) getClientFromClientId: (NSString*) clientId;
 -(NSArray*) getWifiNetworksFromDeviceKey:(NSString*) deviceKey;
 -(NSArray*) getMessagesFromDeviceId:(NSString*) deviceId;
 

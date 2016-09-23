@@ -16,7 +16,10 @@
   NSString *_authError;
   
   NSMutableDictionary* _devices;        // Stores deviceStatus for easy access
-  NSArray *_devicesArray;               // Stores deviceStatus for device list table in UI
+  NSMutableDictionary* _clients;        // client details
+  NSMutableArray *_configDevicesArray;  // List of keys into _devices of unconfigured devices
+  NSMutableArray *_devicesArray;        // List of keys into _devices of configure devices
+  NSMutableArray *_clientsArray;        // List of keys into _clients
   NSMutableDictionary* _wifiNetworks;   // Stores wifiNetworks seen by each device
   NSMutableDictionary* _deviceMessages; // Stores devices messages sent and received
   
@@ -44,7 +47,11 @@ static AppState *singletonInstance;
     _authError = @"";
     
     _devices = [[NSMutableDictionary alloc] init];
+    _clients = [[NSMutableDictionary alloc] init];
+    _configDevicesArray = [[NSMutableArray alloc] init];
     _devicesArray = [[NSMutableArray alloc] init];
+    _clientsArray = [[NSMutableArray alloc] init];
+    
     _wifiNetworks = [[NSMutableDictionary alloc] init];
     _deviceMessages = [[NSMutableDictionary alloc] init];
     
@@ -126,27 +133,24 @@ static AppState *singletonInstance;
 }
 
 -(void) updateDevices: (NSArray*) devices {
-  // Temp arrays to store devices based on type
-  NSMutableArray* tempDevicesArray = [[NSMutableArray alloc] init];
-  NSMutableArray* tempConfigDevicesArray = [[NSMutableArray alloc] init];
-
   @synchronized(_lock) {
+    _devicesArray = [[NSMutableArray alloc] init];
+    _configDevicesArray = [[NSMutableArray alloc] init];
+
     for (id deviceStatus in devices) {
       NSString *deviceConfigStatus = deviceStatus[@"deviceConfigStatus"];
       NSNumber *deviceConfigId = deviceStatus[@"deviceConfigId"];
       NSString *deviceId = deviceStatus[@"deviceId"];
       
       if ([deviceConfigStatus isEqualToString: @"CONFIGURED"]) {
-        [tempDevicesArray addObject:deviceId];
+        [_devicesArray addObject:deviceId];
       } else {
-        [tempConfigDevicesArray addObject:[deviceConfigId stringValue]];
+        [_configDevicesArray addObject:[deviceConfigId stringValue]];
       }
 
       [self _updateDeviceStatus:deviceStatus];
     }
   
-    _devicesArray = [tempConfigDevicesArray arrayByAddingObjectsFromArray:tempDevicesArray];
-
     // clean up the wifiNetwork list as devices may have been removed.
     // remove wifiNetworks for keys that aren't in _devices
     NSArray *deviceKeys = [_devices allKeys];
@@ -163,6 +167,20 @@ static AppState *singletonInstance;
 -(void) updateDeviceStatus: (NSDictionary*) deviceStatus {
   @synchronized (_lock) {
     [self _updateDeviceStatus: deviceStatus];
+  }
+  [self updateView];
+}
+
+-(void) updateClients: (NSArray*) clients {
+  @synchronized (_lock) {
+    _clientsArray = [[NSMutableArray alloc] init];
+    for (id client in clients) {
+      NSString *clientId = client[@"clientId"] ? client[@"clientId"] : client[@"id"];
+      NSString *name = client[@"userAgent"];
+      BOOL thisClient = client[@"thisClient"] ? client[@"thisClient"] : false;
+      _clients[clientId] = @{@"clientId": clientId, @"name": name, @"thisClient": [NSNumber numberWithBool:thisClient]};
+      [_clientsArray addObject:clientId];
+    }
   }
   [self updateView];
 }
@@ -262,12 +280,16 @@ static AppState *singletonInstance;
   return _authError;
 }
 
--(NSArray*) getDevicesArray {
-  return _devicesArray;
+-(NSArray*) getDevicesClientsArray {
+  return [_configDevicesArray arrayByAddingObjectsFromArray:[_devicesArray arrayByAddingObjectsFromArray: _clientsArray]];
 }
 
 -(NSDictionary*) getDeviceInfoFromDeviceKey: (NSString*) deviceKey {
   return _devices[deviceKey];
+}
+
+-(NSDictionary*) getClientFromClientId: (NSString*) clientId {
+  return _clients[clientId];
 }
 
 -(NSArray*) getWifiNetworksFromDeviceKey:(NSString*) deviceKey {

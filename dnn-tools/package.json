@@ -1,6 +1,6 @@
 {
   "name": "dnn-tools",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Various tools to help extract datasets for evaluation",
   "author": "Anshul Jain <anshul@silklabs.com>",
   "scripts": {

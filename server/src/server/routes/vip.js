@@ -14,7 +14,7 @@ import { expressApi } from 'silk-api-schema';
 import createLog from 'silk-log';
 import URL from 'url';
 import querystring from 'querystring';
-import fetch from 'silk-fetch';
+import { default as fetch, Headers } from 'silk-fetch';
 
 import jwtMiddleware from '../jwt';
 import Accounts from '../models/accounts';
@@ -29,23 +29,38 @@ async function GoogleIdTokenToUserId(idToken: string): Promise<string> {
   const urlBase = 'https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=';
   const res = await fetch(urlBase + idToken);
   if (res.status !== 200) {
-    log.error('Failed to fetch google tokeninfo:', res.status, res.statusText);
-    throw new Error('Unable to fetch google tokeninfo');
+    throw new Error(`Failed to fetch tokeninfo: ${res.status}: ${res.statusText}`);
   }
   const tokenInfo = await res.json();
-  if (typeof tokenInfo.sub !== 'string') {
+  if (typeof tokenInfo !== 'object' || typeof tokenInfo.sub !== 'string') {
     throw new Error('Google tokeninfo invalid');
   }
   return tokenInfo.sub;
 }
 
-async function PandoOAuth2TokenToUserId(accessToken: string): Promise<string> {
-  throw new Error('Not implemented');
+async function PandoEncryptIdToUserId(encryptId: string): Promise<string> {
+  const urlBase = 'https://id-test.fuhu.org/id/accounts/inspector/encryptid?encryptId=';
+  const options = {
+    method: 'GET',
+    headers: new Headers({
+      'Content-Type': 'application/json',
+      'apikey': '77a7be5a-dddf-4d65-a31f-8de0221c5d85',
+    }),
+  };
+  const res = await fetch(urlBase + encryptId, options);
+  if (res.status !== 200) {
+    throw new Error(`Failed to validate encryptId: ${res.status}: ${res.statusText}`);
+  }
+  const info = await res.json();
+  if (typeof info !== 'object' || info.isValidated !== true) {
+    throw new Error('Invalid encryptId');
+  }
+  return encryptId; // This is also the unique account id
 }
 
 const tokenToUserId = {
   google: GoogleIdTokenToUserId,
-  pando: PandoOAuth2TokenToUserId,
+  pando: PandoEncryptIdToUserId,
 };
 
 export default function (ctx: RouteContext): ExpressRoutes {

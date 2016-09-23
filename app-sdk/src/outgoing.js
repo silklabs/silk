@@ -71,6 +71,8 @@ export type DeviceStatusMessage = {
   deviceConfigId: ?number;
   accountDeviceNumber: ?number;
   deviceConfigStatus: DeviceConfigStatus;
+  configTime: ?number;
+  lastSeenTime: ?number;
   bleConnectionStatus: ?ConnectionStatus;
   bleConnectionError: ?BLEConnectionError;
   rtcConnectionStatus: ?ConnectionStatus;
@@ -152,8 +154,11 @@ export type DeviceUpdateStatusMessage = {
 };
 
 export type ClientInfo = {
-  id: string;
+  clientId: string;
   userAgent: string;
+  createdTime: number;
+  lastSeenTime: number;
+  thisClient: boolean;
 };
 
 export type ClientListMessage = {

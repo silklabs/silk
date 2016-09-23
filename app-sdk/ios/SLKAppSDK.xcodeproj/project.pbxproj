@@ -507,6 +507,7 @@
 				TargetAttributes = {
 					35D7007B1D29957E00993A9C = {
 						CreatedOnToolsVersion = 7.3;
+						LastSwiftMigration = 0800;
 					};
 					35D700851D29957E00993A9C = {
 						CreatedOnToolsVersion = 7.3;
@@ -827,6 +828,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SLK_JS_BUNDLE_ENTRY_FILE = "app-sdk/src/index";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Debug;
 		};
@@ -859,6 +861,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SLK_JS_BUNDLE_ENTRY_FILE = "app-sdk/src/index";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Release;
 		};

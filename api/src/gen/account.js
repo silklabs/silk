@@ -49,6 +49,7 @@ export type ListDevicesOutputDevices = {
  name: string;
  type: string;
  registered: bool;
+ registeredAt: ?string;
  accountDeviceNumber: number;
  publicKey: string;
  deviceId: string;

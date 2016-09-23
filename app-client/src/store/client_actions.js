@@ -34,7 +34,8 @@ export type SetUserAgentResult = {
 // Payload generators
 
 function genFetchList(
-  state: StateWithApi
+  state: StateWithApi,
+  input: string,
 ): Promise<ListClientsOutput> {
   const {api} = state;
   invariant(api);

@@ -290,6 +290,7 @@
 					35D700171D298EF700993A9C = {
 						CreatedOnToolsVersion = 7.3;
 						DevelopmentTeam = V2B5P6TR7E;
+						LastSwiftMigration = 0800;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -547,6 +548,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Debug;
 		};
@@ -565,6 +567,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Release;
 		};

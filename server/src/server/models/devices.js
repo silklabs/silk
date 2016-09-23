@@ -32,6 +32,7 @@ export type Record = {
   };
   registration: {
     complete: boolean;
+    completedAt?: Date;
     accountId: string;
     token: string;
     accountDeviceNumber?: number;
@@ -184,11 +185,11 @@ export default class Devices extends Base {
       registration: Joi.object().keys({
         // We store a duplicate of accountId for the purposes of indexing certain
         // other fields only when the device is fully registered.
-        accountId: Joi.object().type(ObjectID),
+        accountId: Joi.object().type(ObjectID).optional(),
 
         // When the device is broadcasting an ibeacon we need   an id which is not
         // the same as the public key and can also fit in 2 bytes.
-        accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA,
+        accountDeviceNumber: ACCOUNT_DEVICE_NUMBER_SCHEMA.optional(),
 
         // If the registration of this device has been completed
         complete: Joi.boolean().required(),
@@ -196,6 +197,13 @@ export default class Devices extends Base {
         // The registration token for this device (usually the publicKey of this
         // device signed by the private key of an accountToken).
         token: Joi.string().required(),
+
+        // Timestamp when registration was completed. Should be present whenever
+        // 'complete' is true.
+        completedAt: Joi.any().when('complete', {
+          is: true,
+          then: Joi.date().required(),
+        }),
       }).required(),
 
       mailbox: Joi.array().items(ONION_SCHEMA),
@@ -234,7 +242,7 @@ export default class Devices extends Base {
     }
 
     const accountId = new ObjectID(payload.accountId);
-    let record = this.validate({
+    const record = this.validate({
       accountId,
       createdAt: new Date(),
       type: payload.type,
@@ -365,6 +373,7 @@ export default class Devices extends Base {
       {
         $set: {
           'registration.complete': true,
+          'registration.completedAt': new Date(),
           'registration.accountDeviceNumber': accountDeviceNumber,
           'registration.accountId': device.accountId,
         },

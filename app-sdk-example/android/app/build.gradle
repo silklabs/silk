@@ -62,10 +62,6 @@ android {
     }
 }
 
-// Ensure the JS bundle gets included in the app's asset folder.
-def sdkProjectDir = project(":silk-app-sdk").projectDir
-apply from: "$sdkProjectDir/bundle.gradle"
-
 dependencies {
     compile fileTree(dir: "libs", include: ["*.jar"])
     compile "com.android.support:appcompat-v7:23.0.1"

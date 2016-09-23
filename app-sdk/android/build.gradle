@@ -17,6 +17,13 @@ android {
     }
 }
 
+project.ext.silkRootDir = file("../../")
+project.ext.jsBundleEntryFile = "app-sdk/src/index.js"
+project.ext.jsBundleDirRelease = file("$buildDir/intermediates/bundles/release/assets")
+project.ext.jsBundleDirDebug = file("$buildDir/intermediates/bundles/debug/assets")
+apply from: "${silkRootDir}/app-config/android/bundle.gradle"
+
+
 dependencies {
     compile "com.android.support:appcompat-v7:23.0.1"
     compile "com.facebook.react:react-native:+"  // from node_modules
@@ -30,8 +37,7 @@ dependencies {
 uploadArchives {
     repositories {
         mavenDeployer {
-            def silkRootDir = file("../../")
-            repository(url: "file://$silkRootDir/m2-local")
+            repository(url: "file://${project.silkRootDir}/m2-local")
             pom.project {
                 groupId = "com.silklabs.react"
                 artifactId "app-sdk"

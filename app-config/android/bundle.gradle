@@ -1,0 +1,25 @@
+project.ext.react = [
+  root: "${project.silkRootDir}",
+  entryFile: project.jsBundleEntryFile,
+  bundleInDebug: true,
+  bundleInRelease: true,
+  inputExcludes: [
+    "**/node_modules/**",
+    "bsp-gonk/**",
+    "device/**",
+    "pub/bsp-gonk/**",
+    "sim/**",
+    "tools/heroku/**",
+    "webapp/**",
+  ],
+  extraPackagerArgs: ["--verbose"]
+]
+
+if (project.hasProperty("jsBundleDirRelease")) {
+    project.ext.react.jsBundleDirRelease = project.jsBundleDirRelease
+}
+if (project.hasProperty("jsBundleDirDebug")) {
+    project.ext.react.jsBundleDirDebug = project.jsBundleDirDebug
+}
+
+apply from: "${project.silkRootDir}/node_modules/react-native/react.gradle"

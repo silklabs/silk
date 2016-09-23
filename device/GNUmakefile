@@ -3,24 +3,19 @@
 # Confidential and Proprietary - Silk Labs, Inc.
 
 LOCALGOALS += \
-  demo \
   emu \
   qemu \
   time \
+  top10 \
   update \
   update.f \
   update.w \
-  camera \
-  hub \
 
 include ../pub/bsp-gonk/GNUmakefile
 
 ifneq (,$(filter $(MAKECMDGOALS),$(LOCALGOALS)))
 
-# Update the currently attached Mako device with the latest prebuilt dev build
-.PHONY: update
-update:
-	set -xe; \
+define SETUP_ENV
   [[ -n $$SILK_BOARD ]] || SILK_BOARD=$$(readlink .repo/board); \
   [[ -n $$SILK_PRODUCT ]] || SILK_PRODUCT=$$(readlink .repo/product); \
   [[ -n $$TARGET_BUILD_VARIANT ]] || TARGET_BUILD_VARIANT=userdebug; \
@@ -28,7 +23,17 @@ update:
   if [[ $$SILK_BOARD == base.msm8909 ]]; then SILK_BOARD=pandohub; fi; \
   if [[ $$SILK_BOARD == base.kenzo ]]; then SILK_BOARD=kenzo; fi; \
   echo SILK_BOARD=$$SILK_BOARD;\
-  echo SILK_PRODUCT=$$SILK_PRODUCT;\
+  echo SILK_PRODUCT=$$SILK_PRODUCT
+endef
+
+.PHONY: top10
+top10:
+	 @$(call SETUP_ENV); ./list_builds 10
+
+# Update the currently attached Mako device with the latest prebuilt dev build
+.PHONY: update
+update:
+	set -xe; $(call SETUP_ENV); \
   mkdir -p out/prebuilt; \
   BUILD=$$SILK_BOARD-$$SILK_PRODUCT-$$BRANCH-$$TARGET_BUILD_VARIANT; \
   ( \

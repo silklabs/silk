@@ -14,6 +14,7 @@ env:
   global:
     - CONFIGURATION=Debug
     - PROJECT=SilkAppSDKExample
+    - RCT_NO_LAUNCH_PACKAGER=1
 
 script: >
   xcodebuild

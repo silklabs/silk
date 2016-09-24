@@ -115,16 +115,24 @@ fi
 git commit --quiet -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
 
 #
-# Smoke test the release before shipping
+# Smoke test the iOS example app before shipping
 #
-# TODO: Reduce the duplication with app/ios/travis* here...
+# TODO: Reduce the duplication with app-sdk-example/ios/.travis.yml here...
 #
 
-cd app
-ios/travis/install
+app-sdk/install.sh
+app/ios/travis/install
+
+cd app-sdk-example
 export CONFIGURATION=Debug
-source ios/travis/env.sh
-ios/travis/objc-test.sh
+export PROJECT=SilkAppSDKExample
+export RCT_NO_LAUNCH_PACKAGER=1
+xcodebuild \
+  -project ios/$PROJECT.xcodeproj \
+  -scheme $PROJECT \
+  -configuration $CONFIGURATION \
+  -sdk iphonesimulator \
+  build
 cd ..
 
 #

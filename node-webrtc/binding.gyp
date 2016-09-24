@@ -93,6 +93,13 @@
       ],
       'conditions': [
         ['OS=="android"', {
+          'include_dirs': [
+            '<(android_build_top)/system/core/include',
+          ],
+          'sources': [
+            'src/GonkVideoEncoderFactory.cc',
+            'src/GonkVideoEncoder.cc',
+          ],
           'actions': [{
             'action_name': 'buildjs',
             'inputs': [],

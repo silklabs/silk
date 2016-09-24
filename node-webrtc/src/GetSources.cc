@@ -25,6 +25,7 @@
 
 #include "Platform.h"
 #include "GetSources.h"
+#include "VideoEncoderFactory.h"
 
 using namespace v8;
 using namespace WebRTC;
@@ -39,7 +40,7 @@ rtc::scoped_refptr<webrtc::AudioTrackInterface> GetSources::GetAudioSource(const
   LOG(LS_INFO) << __PRETTY_FUNCTION__;
 
   rtc::scoped_refptr<webrtc::AudioTrackInterface> track;  
-  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, 0, 0);
+  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, CreateVideoEncoderFactory(), 0);
   
   if (factory.get()) {
     const std::string uuid = rtc::CreateRandomUuid();

@@ -436,12 +436,13 @@ const builds = {
   'releng-shipit-pando-app': {
     title: 'Pando app release',
     travis_yml: 'releng/shipit/travis.release-pando-app.yml',
-    events: ['nightly', 'push'],
+    events: ['nightly', 'pr', 'push'],
     files: [
       'app-client/**',
       'app-sdk/**',
-      'ble-socket/**',
       'app-sdk-example/**',
+      'ble-socket/**',
+      'releng/shipit/release-pando-app',
        // TODO: Add more from the release-pando-app WHITELIST here
     ],
     branches: ['master', 'next', 'release'],

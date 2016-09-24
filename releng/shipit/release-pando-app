@@ -74,6 +74,11 @@ if [[ $(uname -s) != "Darwin" ]]; then
   exit 1
 fi
 
+MAYBEDRYRUN=
+if [[ $TRAVIS_PULL_REQUEST != false ]]; then
+  MAYBEDRYRUN="--dry-run"
+fi
+
 source pub/version/branch
 COMMIT=$(git rev-parse HEAD)
 echo Shipping $COMMIT from $BRANCH
@@ -110,16 +115,24 @@ fi
 git commit --quiet -m "https://github.com/silklabs/silk-core/commit/$COMMIT"
 
 #
-# Smoke test the release before shipping
+# Smoke test the iOS example app before shipping
 #
-# TODO: Reduce the duplication with app/ios/travis* here...
+# TODO: Reduce the duplication with app-sdk-example/ios/.travis.yml here...
 #
 
-cd app
-ios/travis/install
+app-sdk/install.sh
+app/ios/travis/install
+
+cd app-sdk-example
 export CONFIGURATION=Debug
-source ios/travis/env.sh
-ios/travis/objc-test.sh
+export PROJECT=SilkAppSDKExample
+export RCT_NO_LAUNCH_PACKAGER=1
+xcodebuild \
+  -project ios/$PROJECT.xcodeproj \
+  -scheme $PROJECT \
+  -configuration $CONFIGURATION \
+  -sdk iphonesimulator \
+  build
 cd ..
 
 #
@@ -130,5 +143,5 @@ if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
   exit 1
 fi
 
-git push origin $BRANCH
+git push $MAYBEDRYRUN origin $BRANCH
 exit 0

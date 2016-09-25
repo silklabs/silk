@@ -28,7 +28,11 @@ endef
 
 .PHONY: top10
 top10:
-	 @$(call SETUP_ENV); ./list_builds 10
+	 @$(call SETUP_ENV); \
+   export SILK_BOARD; \
+   export SILK_PRODUCT; \
+   export TARGET_BUILD_VARIANT; \
+   ./list_builds 10
 
 # Update the currently attached Mako device with the latest prebuilt dev build
 .PHONY: update

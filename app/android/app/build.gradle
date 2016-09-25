@@ -3,32 +3,6 @@ apply plugin: "com.android.application"
 import com.android.build.OutputFile
 
 /**
- * The react.gradle file registers two tasks: bundleDebugJsAndAssets and bundleReleaseJsAndAssets.
- * These basically call `react-native bundle` with the correct arguments during the Android build
- * cycle. By default, bundleDebugJsAndAssets is skipped, as in debug/dev mode we prefer to load the
- * bundle directly from the development server.
- */
-project.ext.react = [
-  root: "../../../",
-  entryFile: "app/src/index.js",
-  bundleInDebug: true,
-  bundleInRelease: true,
-  inputExcludes: [
-    "**/node_modules/**",
-    "bsp-gonk/**",
-    "device/**",
-    "pub/bsp-gonk/**",
-    "sim/**",
-    "tools/heroku/**",
-    "webapp/**",
-  ],
-  extraPackagerArgs: ["--verbose"]
-]
-
-apply from: "../../../node_modules/react-native/react.gradle"
-apply from: "mse.gradle"
-
-/**
  * Set this to true to create three separate APKs instead of one:
  *   - A universal APK that works on all devices
  *   - An APK that only works on ARM devices
@@ -89,12 +63,25 @@ android {
     }
 }
 
+/**
+ * Build JS bundle and include in APK.
+ */
+def silkRootDir = file("../../../")
+project.ext.jsBundleEntryFile = "app/src/index.js"
+project.ext.silkRootDir = silkRootDir
+apply from: "${silkRootDir}/app-config/android/bundle.gradle"
+
+/**
+ * Build JS bundle for MSE video player (currently not used.)
+ */
+apply from: "mse.gradle"
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.0.1'
 
-    // From node_modules
     compile 'com.facebook.react:react-native:+'
+
     compile project(':silk-app-util')
     compile project(':silk-crypto')
     releaseCompile project(path: ':silk-ble-socket', configuration: 'release')

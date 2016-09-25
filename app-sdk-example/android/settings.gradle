@@ -2,7 +2,11 @@ rootProject.name = 'SilkAppSDKExample'
 
 include ':app'
 
-include ":silk-app-sdk"
-project(":silk-app-sdk").projectDir = file("../../app-sdk/android")
+def sdkDir = file("../../app-sdk/android")
 
-apply from: '../../app-sdk/android/settings.gradle'
+include ":silk-app-sdk"
+project(":silk-app-sdk").projectDir = sdkDir
+
+if (sdkDir.exists()) {
+  apply from: '../../app-sdk/android/settings.gradle'
+}

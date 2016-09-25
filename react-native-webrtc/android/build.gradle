@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
 
 android {
     compileSdkVersion 23
@@ -19,4 +20,17 @@ dependencies {
     compile 'com.facebook.react:react-native:+'
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':silk-react-native-blobs')
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            def silkRootDir = file("../../")
+            repository(url: "file://$silkRootDir/m2-local")
+            pom.project {
+                groupId = "com.oney.react"
+                artifactId "webrtc"
+            }
+        }
+    }
 }

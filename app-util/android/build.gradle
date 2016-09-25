@@ -1,4 +1,5 @@
 apply plugin: "com.android.library"
+apply plugin: "maven"
 
 android {
     compileSdkVersion 23
@@ -16,5 +17,18 @@ android {
 }
 
 dependencies {
-    compile "com.facebook.react:react-native:+"  // from node_modules
+    compile "com.facebook.react:react-native:+"
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            def silkRootDir = file("../../")
+            repository(url: "file://$silkRootDir/m2-local")
+            pom.project {
+                groupId = "com.silklabs.react"
+                artifactId "app-util"
+            }
+        }
+    }
 }

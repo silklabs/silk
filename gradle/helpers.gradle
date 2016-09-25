@@ -1,0 +1,23 @@
+/**
+ * Wrap a gradle project, but fall back to the artifcat specified in
+ * the 2nd argument if the project directory doesn't exist.
+ *
+ * Example usage:
+ *
+ *   compile fallback(project(':foo'), 'com.foo.bar:foobar:+')
+ *
+ */
+def fallback(proj, artifact) {
+  def p = project(":${proj.name}")
+  if (p.projectDir && p.projectDir.exists()) {
+    println "adding project dependency for ':${proj.name}' at ${p.projectDir}"
+    proj
+  } else {
+    println "adding artifact dependency for ':${proj.name}': $artifact"
+    dependencies.create(artifact)
+  }
+}
+
+ext {
+  fallback = this.&fallback
+}

@@ -47,7 +47,7 @@
   <project name="qualcomm-developer-network"
            path="external/qualcomm-developer-network"
            remote="silk"
-           revision="refs/tags/v0.14"
+           revision="refs/tags/v0.15.2"
            clone-depth="1"/>
 
   <!-- Caffe and its dependent modules -->
@@ -86,6 +86,31 @@
            remote="silk"
            revision="refs/tags/tag1"
            upstream="android"
+           clone-depth="1"/>
+
+ <!-- NNPACK and its dependent modules -->
+  <project name="pthreadpool"
+           path="external/pthreadpool"
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
+
+  <project name="FXdiv"
+           path="external/FXdiv"
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
+
+  <project name="NNPACK"
+           path="external/NNPACK"
+           remote="silk"
+           revision="refs/tags/tag1"
+           clone-depth="1"/>
+
+  <project name="mmap-io"
+           path="external/mmap-io"
+           remote="silk"
+           revision="refs/tags/tag1"
            clone-depth="1"/>
 
   <!-- node modules -->

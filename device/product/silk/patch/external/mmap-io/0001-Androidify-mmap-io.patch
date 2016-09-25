@@ -1,0 +1,123 @@
+From 2dc3228033036f7cf6628066e30f22026c217552 Mon Sep 17 00:00:00 2001
+From: Anshul Jain <anshul@silklabs.com>
+Date: Tue, 20 Sep 2016 21:56:00 -0700
+Subject: [PATCH] Androidify mmap-io
+
+---
+ Android.mk     |  4 ++++
+ binding.gyp    | 19 ++++++++++++-------
+ package.json   | 11 +++++++----
+ src/mmap-io.cc | 15 ++++++++++++++-
+ 4 files changed, 37 insertions(+), 12 deletions(-)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 0000000..4587793
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,4 @@
++LOCAL_PATH:= $(call my-dir)
++
++include $(CLEAR_VARS)
++include $(BUILD_NODE_MODULE)
+diff --git a/binding.gyp b/binding.gyp
+index 46865f0..ab91959 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -9,13 +9,18 @@
+             "-std=c++11"
+         ],
+         "conditions": [
+-            [ 'OS=="mac"',
+-                { "xcode_settings": {
+-                    'OTHER_CPLUSPLUSFLAGS' : ['-std=c++11','-stdlib=libc++'],
+-                    'OTHER_LDFLAGS': ['-stdlib=libc++'],
+-                    'MACOSX_DEPLOYMENT_TARGET': '10.7'
+-                }}
+-            ]
++          [ "OS==\"android\"", {
++            "libraries": [
++              '<!(echo $Android_mk__LIBRARIES)',
++            ],
++          }],
++          [ 'OS=="mac"', {
++            "xcode_settings": {
++              'OTHER_CPLUSPLUSFLAGS' : ['-std=c++11','-stdlib=libc++'],
++              'OTHER_LDFLAGS': ['-stdlib=libc++'],
++              'MACOSX_DEPLOYMENT_TARGET': '10.7'
++            }}
++          ]
+         ]
+     }]
+ }
+diff --git a/package.json b/package.json
+index e7dfcb6..e022201 100644
+--- a/package.json
++++ b/package.json
+@@ -19,9 +19,8 @@
+     },
+ 
+     "scripts": {
+-        "prepublish":   "make ls",
+-        "install":      "node-gyp configure && node-gyp rebuild",
+-        "test":         "node ./test.js"
++      "silk-build": "silk-buildjs .",
++      "install": "node-gyp rebuild"
+     },
+ 
+     "devDependencies": {
+@@ -29,12 +28,16 @@
+         "LiveScript": "1.*.*"
+     },
+ 
++   "symlinkDependencies": {
++     "silk-buildjs": "/pub/buildjs/"
++   },
++
+     "dependencies": {
+         "bindings": "1.*.*",
+         "nan":      "2.*.*"
+     },
+ 
+-    "main":     "mmap-io",
++    "main":     "build/Release/mmap-io.node",
+     "engines": {
+         "node": ">=0.10.0"
+     }
+diff --git a/src/mmap-io.cc b/src/mmap-io.cc
+index df8252d..4b42937 100644
+--- a/src/mmap-io.cc
++++ b/src/mmap-io.cc
+@@ -10,6 +10,7 @@
+ #include <nan.h>
+ #include <errno.h>
+ #include <string>
++#include <sstream>
+ 
+ #ifdef _WIN32
+ #include <windows.h>
+@@ -19,7 +20,19 @@
+ #include <sys/mman.h>
+ #endif
+ 
+-#include <future>
++#if defined(__ANDROID__)
++namespace std
++{
++    template < typename T > std::string to_string( const T& n )
++    {
++        std::ostringstream ss;
++        ss << n ;
++        return ss.str() ;
++    }
++}
++#else
++  #include <future>
++#endif
+ 
+ using namespace v8;
+ 
+-- 
+2.8.2
+

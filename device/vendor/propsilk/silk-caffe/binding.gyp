@@ -39,7 +39,7 @@
             '-Wno-sign-promo',
             '-isystem <!(echo $ANDROID_BUILD_TOP/system/core/include/)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libgflags/include/)',
-            '-isystem <!(echo $ANDROID_BUILD_TOP/external/qualcomm-developer-network/QSML-0.14.0/ilp64/arm-linux-androideabi/include)',
+            '-isystem <!(echo $ANDROID_BUILD_TOP/external/qualcomm-developer-network/qsml-0.15.0/lp64/arm-linux-androideabi/include)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/$TARGET_OUT_HEADERS/libglog/include/)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/external/protobuf/src)',
             '-isystem <!(echo $ANDROID_BUILD_TOP/external/boost/)',

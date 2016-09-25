@@ -78,6 +78,62 @@
 			remoteGlobalIDString = 35A2221F1CB493700015FD5C;
 			remoteInfo = RCTWebRTC;
 		};
+		3568A0331D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700A11D29AB0500993A9C /* React.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 83CBBA2D1A601D0E00E9B192;
+			remoteInfo = React;
+		};
+		3568A0351D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700DB1D29AEBB00993A9C /* RCTNetwork.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 58B511DA1A9E6C8500147676;
+			remoteInfo = RCTNetwork;
+		};
+		3568A0371D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700C21D29ADCF00993A9C /* RCTWebSocket.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 3C86DF451ADF2C930047B81A;
+			remoteInfo = RCTWebSocket;
+		};
+		3568A0391D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 351041951D3D9E6100452CB2 /* SLKBlobs.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 358F4ED61D1E81A9004DF814;
+			remoteInfo = SLKBlobs;
+		};
+		3568A03B1D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 351041871D3D9E0B00452CB2 /* SLKCrypto.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 352DCE8B1D18B7B50056D623;
+			remoteInfo = SLKCrypto;
+		};
+		3568A03D1D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 35D700A11D29AB0500993A9C /* React.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 83CBBA2D1A601D0E00E9B192;
+			remoteInfo = React;
+		};
+		3568A03F1D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 357E9C631D8CBA94006A6D18 /* SLKUtil.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 35835D041D8C991A0096D416;
+			remoteInfo = SLKUtil;
+		};
+		3568A0411D987887000429BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3510419B1D3D9E7500452CB2 /* RCTWebRTC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 35A2221E1CB493700015FD5C;
+			remoteInfo = RCTWebRTC;
+		};
 		357E9C6E1D8CBA94006A6D18 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 357E9C631D8CBA94006A6D18 /* SLKUtil.xcodeproj */;
@@ -472,6 +528,14 @@
 			buildRules = (
 			);
 			dependencies = (
+				3568A0341D987887000429BB /* PBXTargetDependency */,
+				3568A0361D987887000429BB /* PBXTargetDependency */,
+				3568A0381D987887000429BB /* PBXTargetDependency */,
+				3568A03A1D987887000429BB /* PBXTargetDependency */,
+				3568A03C1D987887000429BB /* PBXTargetDependency */,
+				3568A03E1D987887000429BB /* PBXTargetDependency */,
+				3568A0401D987887000429BB /* PBXTargetDependency */,
+				3568A0421D987887000429BB /* PBXTargetDependency */,
 			);
 			name = SLKAppSDK;
 			productName = SLKAppSDK;
@@ -697,6 +761,46 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		3568A0341D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = React;
+			targetProxy = 3568A0331D987887000429BB /* PBXContainerItemProxy */;
+		};
+		3568A0361D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RCTNetwork;
+			targetProxy = 3568A0351D987887000429BB /* PBXContainerItemProxy */;
+		};
+		3568A0381D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RCTWebSocket;
+			targetProxy = 3568A0371D987887000429BB /* PBXContainerItemProxy */;
+		};
+		3568A03A1D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = SLKBlobs;
+			targetProxy = 3568A0391D987887000429BB /* PBXContainerItemProxy */;
+		};
+		3568A03C1D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = SLKCrypto;
+			targetProxy = 3568A03B1D987887000429BB /* PBXContainerItemProxy */;
+		};
+		3568A03E1D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = React;
+			targetProxy = 3568A03D1D987887000429BB /* PBXContainerItemProxy */;
+		};
+		3568A0401D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = SLKUtil;
+			targetProxy = 3568A03F1D987887000429BB /* PBXContainerItemProxy */;
+		};
+		3568A0421D987887000429BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RCTWebRTC;
+			targetProxy = 3568A0411D987887000429BB /* PBXContainerItemProxy */;
+		};
 		35D700891D29957E00993A9C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 35D7007B1D29957E00993A9C /* SLKAppSDK */;

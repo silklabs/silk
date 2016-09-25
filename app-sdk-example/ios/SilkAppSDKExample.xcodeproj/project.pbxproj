@@ -25,6 +25,7 @@
 		35183A381D988AFF00348529 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 35183A361D988AF500348529 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		35183A3A1D988C5600348529 /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35183A391D988C5600348529 /* SLKAppSDK.framework */; };
 		35183A3B1D988C5C00348529 /* SLKAppSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 35183A391D988C5600348529 /* SLKAppSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		35183A471D98923300348529 /* InfoLocal.plist in Resources */ = {isa = PBXBuildFile; fileRef = 35183A461D98923300348529 /* InfoLocal.plist */; };
 		35D7001D1D298EF700993A9C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001C1D298EF700993A9C /* main.m */; };
 		35D700201D298EF700993A9C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001F1D298EF700993A9C /* AppDelegate.m */; };
 		35D700231D298EF700993A9C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700221D298EF700993A9C /* ViewController.m */; };
@@ -106,9 +107,9 @@
 
 /* Begin PBXFileReference section */
 		35183A321D98891B00348529 /* SilkAppSDKExample (local).app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SilkAppSDKExample (local).app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		35183A341D98891B00348529 /* InfoLocal.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = InfoLocal.plist; path = "/Users/philikon/dev/silk-core/app-sdk-example/ios/InfoLocal.plist"; sourceTree = "<absolute>"; };
 		35183A361D988AF500348529 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = WebRTC.framework; sourceTree = "<group>"; };
 		35183A391D988C5600348529 /* SLKAppSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SLKAppSDK.framework; sourceTree = "<group>"; };
+		35183A461D98923300348529 /* InfoLocal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = InfoLocal.plist; sourceTree = "<group>"; };
 		35D700181D298EF700993A9C /* SilkAppSDKExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SilkAppSDKExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		35D7001C1D298EF700993A9C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		35D7001E1D298EF700993A9C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -224,7 +225,7 @@
 				35D700271D298EF700993A9C /* Assets.xcassets */,
 				35D700291D298EF700993A9C /* LaunchScreen.storyboard */,
 				35D7002C1D298EF700993A9C /* Info.plist */,
-				35183A341D98891B00348529 /* InfoLocal.plist */,
+				35183A461D98923300348529 /* InfoLocal.plist */,
 				35D7001B1D298EF700993A9C /* Supporting Files */,
 			);
 			path = SilkAppSDKExample;
@@ -431,6 +432,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				35183A471D98923300348529 /* InfoLocal.plist in Resources */,
 				35183A291D98891B00348529 /* LaunchScreen.storyboard in Resources */,
 				35183A2A1D98891B00348529 /* Assets.xcassets in Resources */,
 				35183A2B1D98891B00348529 /* Main.storyboard in Resources */,
@@ -558,7 +560,7 @@
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
-				INFOPLIST_FILE = "$(SRCROOT)/InfoLocal.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/SilkAppSDKExample/InfoLocal.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -577,7 +579,7 @@
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
-				INFOPLIST_FILE = "$(SRCROOT)/InfoLocal.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/SilkAppSDKExample/InfoLocal.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";

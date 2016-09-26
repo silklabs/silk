@@ -84,8 +84,10 @@ dependencies {
 
     compile project(':silk-app-util')
     compile project(':silk-crypto')
-    releaseCompile project(path: ':silk-ble-socket', configuration: 'release')
-    debugCompile project(path: ':silk-ble-socket', configuration: 'debug')
+    compile project(':silk-ble-socket')
+    // TODO: re-enable this https://github.com/silklabs/silk-core/issues/3022
+    //releaseCompile project(path: ':silk-ble-socket', configuration: 'release')
+    //debugCompile project(path: ':silk-ble-socket', configuration: 'debug')
     compile project(':silk-react-native-blobs')
     compile project(':RCTWebRTC')
     compile project(':react-native-orientation')

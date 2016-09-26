@@ -69,8 +69,10 @@ dependencies {
     def appSDKDir = project(":silk-app-sdk").projectDir
     if (appSDKDir && appSDKDir.exists()) {
         // Local Silk tree
-        releaseCompile project(path: ":silk-app-sdk", configuration: 'release')
-        debugCompile project(path: ":silk-app-sdk", configuration: 'debug')
+        // TODO: re-enable this https://github.com/silklabs/silk-core/issues/3022
+        //releaseCompile project(path: ":silk-app-sdk", configuration: 'release')
+        //debugCompile project(path: ":silk-app-sdk", configuration: 'debug')
+        compile project(":silk-app-sdk")
     } else {
         // Using prebuilt Silk Android SDK
         compile 'com.silklabs.react:app-sdk:+'

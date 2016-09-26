@@ -4,7 +4,8 @@ apply plugin: "maven"
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
-    publishNonDefault true
+    // TODO: re-enable this https://github.com/silklabs/silk-core/issues/3022
+    //publishNonDefault true
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 23

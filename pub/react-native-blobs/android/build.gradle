@@ -25,14 +25,16 @@ dependencies {
 }
 
 
+group = "com.silklabs.react"
+
 uploadArchives {
     repositories {
         mavenDeployer {
             def silkRootDir = file("../../../")
             repository(url: "file://$silkRootDir/m2-local")
             pom.project {
-                groupId = "com.silklabs.react"
                 artifactId "blobs"
+                packaging "aar"
             }
         }
     }

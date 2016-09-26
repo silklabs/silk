@@ -178,9 +178,9 @@ PRODUCT_PACKAGES += \
 ifneq ($(strip $(SILK_FEATURE_QDN)),false)
 # external/qualcomm-developer-network/...
 PRODUCT_PACKAGES += \
-  libQSML \
-  libsymphony-cpu \
-  libsymphonypower \
+  libQSML-0.15.0 \
+  libsymphony-cpu-1.1.0 \
+  libsymphonypower-1.1.0 \
 
 endif
 

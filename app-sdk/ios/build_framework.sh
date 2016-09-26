@@ -3,15 +3,18 @@
 THIS_DIR=$(cd "$(dirname "$0")"; pwd)
 pushd $THIS_DIR
 
+source ../../releng/certs/ios/env.sh
+../../releng/certs/ios/setup.sh
+
 export CONFIGURATION=Release
 export BUILD_DIR="$THIS_DIR/build"
-export BUILD_ROOT=BUILD_DIR
+export BUILD_ROOT=$BUILD_DIR
 export PROJECT_NAME=SLKAppSDK
 export RCT_NO_LAUNCH_PACKAGER=1
 
 UNIVERSAL_OUTPUTFOLDER=${BUILD_DIR}/${CONFIGURATION}-universal
 
-# make sure the output directory exists
+# Make sure the output directory exists.
 mkdir -p "${UNIVERSAL_OUTPUTFOLDER}"
 
 # Step 1. Build Device and Simulator versions
@@ -22,6 +25,8 @@ xcodebuild \
   ONLY_ACTIVE_ARCH=NO \
   BUILD_DIR="${BUILD_DIR}" \
   BUILD_ROOT="${BUILD_ROOT}" \
+  CODE_SIGN_IDENTITY="$DEVELOPER_NAME" \
+  OTHER_CODE_SIGN_FLAGS="--keychain ios-build.keychain" \
   clean build
 
 xcodebuild \
@@ -55,3 +60,6 @@ lipo \
   -output "${UNIVERSAL_OUTPUTFOLDER}/${PROJECT_NAME}.framework/${PROJECT_NAME}" \
   "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/${PROJECT_NAME}.framework/${PROJECT_NAME}" \
   "${BUILD_DIR}/${CONFIGURATION}-iphoneos/${PROJECT_NAME}.framework/${PROJECT_NAME}"
+
+# Step 5. Clean up
+../../releng/certs/ios/teardown.sh

@@ -19,10 +19,14 @@ import type {Track} from 'sonos';
 const log = createLog(`script-generic-music-saga`);
 type MediaState = 'playing' | 'stopped';
 
-const DIR = '/data/media/music';
+const MUSIC_DIRS = [
+  path.join(__dirname, '..', 'media', 'music'),
+  'data/media/music',
+];
 const SHOUTCAST_URL = 'http://kidspublicradio2.got.net:8000/lullaby?lang=en-US%2cen%3bq%3d0.8';
 
-let songs = null;
+let songs = [];
+let songsLoaded = false;
 let mediaState: MediaState = 'stopped';
 const player = new Player();
 let speaker = null;
@@ -43,20 +47,16 @@ const dialogEndListener: (() => void) = () => {
 };
 
 function readMusicDir(dir: string): Promise<Array<string>> {
-  if (!songs) {
-    return fs.readdir(dir)
-    .then(files => {
-      songs = files.filter(filename => ['.wav', '.m4a', '.mp3'].includes(filename.substr(-4)));
-      songs = songs.map(song => path.join(DIR, song));
-      return songs;
-    })
-    .catch(err => {
-      log.warn(`Failed to read music dir`, err);
-      return [];
-    });
-  } else {
-    return Promise.resolve(songs);
-  }
+  return fs.readdir(dir)
+  .then(files => {
+    const songFileNames = files.filter(filename => ['.wav', '.m4a', '.mp3'].includes(filename.substr(-4)));
+    const songFiles = songFileNames.map(filename => path.join(dir, filename));
+    return songFiles;
+  })
+  .catch(err => {
+    log.warn(`Failed to read music dir`, err);
+    return [];
+  });
 }
 
 function shuffle(array) {
@@ -198,9 +198,18 @@ export function* playMusic(
     return;
   }
 
-  // Read list of songs from music directory
-  let songs = yield call(readMusicDir, DIR);
-  if (!songs || !songs.length) {
+  if (!songsLoaded) {
+    // Read list of songs from music directory
+    songs = [];
+    for (let dir of MUSIC_DIRS) {
+      const newSongs = yield call(readMusicDir, dir);
+      invariant(typeof newSongs === 'object');
+      songs = songs.concat(newSongs);
+    }
+    songsLoaded = true;
+  }
+
+  if (!songs.length) {
     yield call(speak, 'Sorry, there are no songs available to play on the device');
     yield call(speak, 'You can say play sonos to play song on sonos instead', `idle`);
     return;

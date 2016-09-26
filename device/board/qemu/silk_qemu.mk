@@ -17,6 +17,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.silk.bt.hw.enabled=false \
   ro.silk.audio.hw.enabled=false \
 
+
+# NNPACK requires NEON to compile but NEON support is
+# not enabled for qemu
+SILK_FEATURE_NNPACK := false
+
 # Use the logo from Mako
 PRODUCT_COPY_FILES += board/mako/media/logo.png:system/silk/media/logo.png
 

@@ -80,26 +80,26 @@ ifneq ($(strip $(SILK_FEATURE_VIDEOANALYTICS)),false)
 PRODUCT_PACKAGES += \
   silkext-detectface-cascade-frontalface \
   silkext-detectface-shape_predictor_68_face_landmarks \
-  silkext-dnn \
-  silkext-dnn-googlenet-model \
-  silkext-dnn-googlenet-proto \
-  silkext-dnn-imagenet-dictionary \
-  silkext-dnn-imagenet-mean \
-  silkext-dnn-pedestrian-dictionary \
-  silkext-dnn-pedestrian-proto \
   silkext-face \
   silkext-motion \
+  silkext-yolo \
 
 endif
 
-# Demo extensions.
+# Dnn extension
+ifeq ($(strip $(SILK_FEATURE_DNN_EXTENSION)),true)
+PRODUCT_PACKAGES += \
+  silkext-dnn \
+
+endif
+
+# Demo extensions
 ifeq ($(strip $(SILK_FEATURE_DEMOS)),true)
 PRODUCT_PACKAGES += \
   silkext-clapper \
   silkext-clapper-sound \
   silkext-devicemotion \
   silkext-nightlight \
-  silkext-peddetector \
   silkext-welcome \
   silkext-welcome-config \
 

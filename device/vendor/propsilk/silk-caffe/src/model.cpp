@@ -31,6 +31,11 @@
 #include "Matrix.h"
 #include "cvutils.h"
 
+using namespace std;
+using namespace caffe;
+using namespace v8;
+using namespace node;
+
 Nan::Persistent<Function> Model::constructor;
 
 /**
@@ -741,8 +746,6 @@ NAN_METHOD(Model::NonMaximaSuppression) {
  * Benchmark model execution time
  */
 NAN_METHOD(Model::Time) {
-  SETUP_FUNCTION(Model)
-
   if (info.Length() < 1) {
     JSTHROW("Invalid number of arguments provided");
   }
@@ -753,11 +756,6 @@ NAN_METHOD(Model::Time) {
   int iterations = 50;
   if (info.Length() >= 2) {
     INT_FROM_ARGS(iterations, 1);
-  }
-
-  int numThreads = -1;
-  if (info.Length() >= 3) {
-    INT_FROM_ARGS(numThreads, 2);
   }
 
   ALOGD("Use CPU");

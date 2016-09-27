@@ -1,0 +1,25 @@
+From c934df39d37ded4252e2cd078d99e22abc2cd013 Mon Sep 17 00:00:00 2001
+From: Andreas Gal <andreas.gal@gmail.com>
+Date: Wed, 7 Sep 2016 16:16:11 -0700
+Subject: [PATCH 3/3] make getData() work if we have more than one channel
+
+---
+ src/Matrix.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/Matrix.cc b/src/Matrix.cc
+index 2564bbf..a9f15a2 100755
+--- a/src/Matrix.cc
++++ b/src/Matrix.cc
+@@ -317,7 +317,7 @@ NAN_METHOD(Matrix::GetData) {
+   Nan::HandleScope scope;
+ 
+   Matrix *self = Nan::ObjectWrap::Unwrap<Matrix>(info.This());
+-  int size = self->mat.rows * self->mat.cols * self->mat.elemSize1();
++  int size = self->mat.rows * self->mat.cols * self->mat.elemSize();
+   Local<Object> buf = Nan::NewBuffer(size).ToLocalChecked();
+   uchar* data = (uchar*) Buffer::Data(buf);
+   // if there is padding after each row, clone first to get rid of it
+-- 
+2.8.2
+

@@ -1,0 +1,7 @@
+{
+  "silk": {},
+  "name": "shoutcast-iot",
+  "dependencies": {
+    "silk": "^1.0.0"
+  }
+}

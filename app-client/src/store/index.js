@@ -49,25 +49,31 @@ function stateTransformer(state: any): any {
     configuring: devices.configuring,
   };
 
-  devices.unconfigured.forEach((session, id) => {
-    transformedDevices.unconfigured.push([id, session.socketId]);
+  devices.unconfigured.forEach((session) => {
+    const {socketId, deviceId, accountDeviceNumber} = session;
+    transformedDevices.unconfigured.push({
+      socketId,
+      deviceId,
+      accountDeviceNumber,
+    });
   });
 
   if (devices.registered) {
-    devices.registered.forEach((device, deviceId) => {
-      const newDevice = {
+    devices.registered.forEach((device) => {
+      transformedDevices.registered.push({
         ...device,
         ble: {
           ...device.ble,
-          session: device.ble.session ? device.ble.session.socketId : null,
+          session: device.ble.session ?
+            {socketId: device.ble.session.socketId} :
+            null,
         },
         rtc: {
           ...device.rtc,
           peer: device.rtc.peer ? '<Peer>' : null,
           error: device.rtc.error ? device.rtc.error.message : null,
         },
-      };
-      transformedDevices.registered.push([deviceId, newDevice]);
+      });
     });
   }
 

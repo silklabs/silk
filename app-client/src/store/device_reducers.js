@@ -807,8 +807,6 @@ function DEVICE_CONFIG_FINISH(
   }
 
   let {unconfigured} = state;
-  invariant(unconfigured.has(configuring.socketId));
-
   const session = unconfigured.get(configuring.socketId);
   invariant(session);
 

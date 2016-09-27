@@ -474,10 +474,15 @@ function initBLE(store: Store<*>) {
       if (type === 'server' &&
           !status.isError &&
           status.message === 'connected') {
+
+        // Ignore the session if we're setting up an unconfigured
+        // device -- the consumer should dismiss it in that case.
         if (sessionIsConfig) {
-          session.dismiss();
           return;
         }
+
+        // Auto-disconnect if we auto-connected to the device because
+        // it beaconed us.
         const {registered} = store.getState().devices;
         const device =
           (session.deviceId && registered) ?

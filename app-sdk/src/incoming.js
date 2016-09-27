@@ -4,6 +4,10 @@
 
 import type {WifiConfiguration} from 'silk-app-client/src/ble/device_session';
 
+export type DeviceListUpdateMessage = {
+  type: 'DEVICE_LIST_UPDATE';
+};
+
 export type DeviceConfigAcceptMessage = {
   type: 'DEVICE_CONFIG_ACCEPT';
   deviceConfigId: number;
@@ -71,8 +75,12 @@ export type DeviceMediaStreamMessage = {
   deviceId: string;
 };
 
+export type ClientListUpdateMessage = {
+  type: 'CLIENT_LIST_UPDATE';
+};
+
 export type ClientRemoveMessage = {
-  type: 'CLIENT_REMOVE',
+  type: 'CLIENT_REMOVE';
   clientId: string;
 };
 

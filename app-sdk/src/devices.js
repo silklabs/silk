@@ -9,6 +9,7 @@ import emitter from './emitter';
 
 import type {SDKStore} from './store';
 import type {
+  DeviceListUpdateMessage,
   DeviceConfigAcceptMessage,
   DeviceConfigDeclineMessage,
   DeviceConfigSetConfigMessage,
@@ -24,6 +25,13 @@ import type {
 } from './incoming';
 
 // Incoming messages:
+
+function DEVICE_LIST_UPDATE(
+  store: SDKStore,
+  message: DeviceListUpdateMessage,
+) {
+  store.dispatch(actions.devices.registered.fetchList());
+}
 
 function DEVICE_CONFIG_ACCEPT(
   store: SDKStore,
@@ -213,6 +221,7 @@ function DEVICE_RTC_VIDEO_DISABLE(
 
 
 export const messageHandlers = {
+  DEVICE_LIST_UPDATE,
   DEVICE_CONFIG_ACCEPT,
   DEVICE_CONFIG_DECLINE,
   DEVICE_CONFIG_SET_CONFIG,

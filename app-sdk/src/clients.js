@@ -6,10 +6,18 @@ import invariant from 'assert';
 import {actions} from 'silk-app-client';
 
 import type {
+  ClientListUpdateMessage,
   ClientRemoveMessage,
   ClientUserAgentSetMessage,
 } from './incoming';
 import type {SDKStore} from './store';
+
+function CLIENT_LIST_UPDATE(
+  store: SDKStore,
+  message: ClientListUpdateMessage,
+) {
+  store.dispatch(actions.clients.fetchList());
+}
 
 function CLIENT_REMOVE(
   store: SDKStore,
@@ -38,6 +46,7 @@ function CLIENT_USERAGENT_SET(
 }
 
 export const messageHandlers = {
+  CLIENT_LIST_UPDATE,
   CLIENT_REMOVE,
   CLIENT_USERAGENT_SET,
 };

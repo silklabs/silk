@@ -60,7 +60,7 @@ bucket.
 
 ## Branching
 
-<img align="right" src="https://github.com/mvines/releng/raw/master/Branching Diagram.png"/>
+<img align="right" src="https://github.com/silklabs/silk-core/raw/master/releng/Branching Diagram.png"/>
 
 All our projects use the same branch names:
 * **master** - always open for new development

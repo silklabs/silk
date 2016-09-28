@@ -1,0 +1,62 @@
+--- node_modules/babel-register/lib/node.js.orig	2016-10-29 00:52:46.000000000 -0700
++++ node_modules/babel-register/lib/node.js	2016-10-29 00:54:37.000000000 -0700
+@@ -6,24 +6,6 @@
+ 
+ var _stringify2 = _interopRequireDefault(_stringify);
+ 
+-exports.default = function () {
+-  var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+-
+-  if (opts.only != null) only = _babelCore.util.arrayify(opts.only, _babelCore.util.regexify);
+-  if (opts.ignore != null) ignore = _babelCore.util.arrayify(opts.ignore, _babelCore.util.regexify);
+-
+-  if (opts.extensions) hookExtensions(_babelCore.util.arrayify(opts.extensions));
+-
+-  if (opts.cache === false) cache = null;
+-
+-  delete opts.extensions;
+-  delete opts.ignore;
+-  delete opts.cache;
+-  delete opts.only;
+-
+-  (0, _extend2.default)(transformOpts, opts);
+-};
+-
+ var _cloneDeep = require("lodash/cloneDeep");
+ 
+ var _cloneDeep2 = _interopRequireDefault(_cloneDeep);
+@@ -60,6 +42,8 @@
+ 
+ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+ 
++module.exports = function(userOpts) {
++
+ _sourceMapSupport2.default.install({
+   handleUncaughtExceptions: false,
+   environment: "node",
+@@ -175,4 +159,23 @@
+ 
+ hookExtensions(_babelCore.util.canCompile.EXTENSIONS);
+ 
+-module.exports = exports["default"];
+\ No newline at end of file
++function main() {
++  var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
++
++  if (opts.only != null) only = _babelCore.util.arrayify(opts.only, _babelCore.util.regexify);
++  if (opts.ignore != null) ignore = _babelCore.util.arrayify(opts.ignore, _babelCore.util.regexify);
++
++  if (opts.extensions) hookExtensions(_babelCore.util.arrayify(opts.extensions));
++
++  if (opts.cache === false) cache = null;
++
++  delete opts.extensions;
++  delete opts.ignore;
++  delete opts.cache;
++  delete opts.only;
++
++  (0, _extend2.default)(transformOpts, opts);
++};
++
++main(userOpts);
++}

@@ -1,4 +1,4 @@
-#! /bin/bash -e
+#! /bin/bash -ex
 
 export PATH=./node_modules/.bin:$PATH
 
@@ -29,7 +29,7 @@ function npm_update {
 #    reusing the preset cache... Ideally this should be upstreamed!
 #
 function patch_modules {
-  patches=( build/patches/*.patch )
+  patches=( patches/*.patch )
   for file in ${patches[@]};
   do
     patch -N -p0 -i $file || echo
@@ -42,5 +42,4 @@ patch_modules
 ./node_modules/.bin/webpack
 
 # Verify it actually works...
-node -e 'require("../babel-run/babel-register/register")'
-node -e 'require("../babel-core")'
+node -e 'require("../babel-register")'

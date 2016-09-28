@@ -32,9 +32,7 @@ const DEFAULT_OPTIONS = {
   only: babeldeps
 };
 
-const REGISTER_PATH = path.join(__dirname, 'babel-register', 'register');
-
 module.exports = (options) => {
   options = options || {};
-  require(REGISTER_PATH)(Object.assign({}, DEFAULT_OPTIONS, options));
+  require('./babel-register')(Object.assign({}, DEFAULT_OPTIONS, options));
 };

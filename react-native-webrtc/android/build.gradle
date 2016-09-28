@@ -22,14 +22,16 @@ dependencies {
     compile project(':silk-react-native-blobs')
 }
 
+group = "com.oney.react"
+
 uploadArchives {
     repositories {
         mavenDeployer {
             def silkRootDir = file("../../")
             repository(url: "file://$silkRootDir/m2-local")
             pom.project {
-                groupId = "com.oney.react"
                 artifactId "webrtc"
+                packaging "aar"
             }
         }
     }

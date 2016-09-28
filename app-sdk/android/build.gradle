@@ -4,7 +4,8 @@ apply plugin: "maven"
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
-    publishNonDefault true
+    // TODO: re-enable this https://github.com/silklabs/silk-core/issues/3022
+    //publishNonDefault true
 
     defaultConfig {
         minSdkVersion 21
@@ -27,20 +28,22 @@ apply from: "${silkRootDir}/app-config/android/bundle.gradle"
 dependencies {
     compile "com.android.support:appcompat-v7:23.0.1"
     compile "com.facebook.react:react-native:+"  // from node_modules
-    compile fallback(project(':silk-app-util'), 'com.silklabs.react:app-util:+')
-    compile fallback(project(':silk-ble-socket'), 'com.silklabs.react:ble-socket:+')
-    compile fallback(project(':silk-crypto'), 'com.silklabs.react:crypto:+')
-    compile fallback(project(':silk-react-native-blobs'), 'com.silklabs.react:blobs:+')
-    compile fallback(project(':RCTWebRTC'), 'com.oney.react:webrtc:+')
+    compile project(':silk-app-util')
+    compile project(':silk-ble-socket')
+    compile project(':silk-crypto')
+    compile project(':silk-react-native-blobs')
+    compile project(':RCTWebRTC')
 }
+
+group "com.silklabs.react"
 
 uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: "file://${project.silkRootDir}/m2-local")
             pom.project {
-                groupId = "com.silklabs.react"
                 artifactId "app-sdk"
+                packaging "aar"
             }
         }
     }

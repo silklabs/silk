@@ -12,19 +12,21 @@ env:
     - TEST_TYPE=objc-test
     - TEST_TYPE=build-dist
   global:
+    - PROJECT=Silk
     - CONFIGURATION=Debug
+    - RCT_NO_LAUNCH_PACKAGER=1
 
 before_script:
   - node --version
   - npm --version
-  - source ios/travis/env.sh
-  - ios/travis/add-key.sh
+  - source ../releng/certs/ios/env.sh
+  - ../releng/certs/ios/setup.sh
 
 script:
   - ios/travis/script
 
 after_script:
-  - ios/travis/remove-key.sh
+  - ../releng/certs/ios/teardown.sh
   - ios/travis/raygun-dsym.sh
 
 after_success: 

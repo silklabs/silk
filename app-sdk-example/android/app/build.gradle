@@ -63,11 +63,20 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: "libs", include: ["*.jar"])
     compile "com.android.support:appcompat-v7:23.0.1"
     compile "com.google.android.gms:play-services-auth:9.4.0"
-    releaseCompile fallback(project(path: ":silk-app-sdk", configuration: 'release'), 'com.silklabs.react:app-sdk:+')
-    debugCompile fallback(project(path: ":silk-app-sdk", configuration: 'debug'), 'com.silklabs.react:app-sdk:+')
+
+    def appSDKDir = project(":silk-app-sdk").projectDir
+    if (appSDKDir && appSDKDir.exists()) {
+        // Local Silk tree
+        // TODO: re-enable this https://github.com/silklabs/silk-core/issues/3022
+        //releaseCompile project(path: ":silk-app-sdk", configuration: 'release')
+        //debugCompile project(path: ":silk-app-sdk", configuration: 'debug')
+        compile project(":silk-app-sdk")
+    } else {
+        // Using prebuilt Silk Android SDK
+        compile 'com.silklabs.react:app-sdk:+'
+    }
 }
 
 apply plugin: 'com.google.gms.google-services'

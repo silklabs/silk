@@ -14,12 +14,13 @@ env:
   global:
     - CONFIGURATION=Debug
     - PROJECT=SilkAppSDKExample
+    - 'SCHEME="SilkAppSDKExample (local)"'
     - RCT_NO_LAUNCH_PACKAGER=1
 
 script: >
   xcodebuild
   -project ios/$PROJECT.xcodeproj
-  -scheme $PROJECT
+  -scheme "$SCHEME"
   -configuration $CONFIGURATION
   -sdk iphonesimulator
   build

@@ -30,14 +30,16 @@ dependencies {
     compile 'com.madgag.spongycastle:pkix:1.54.0.0'
 }
 
+group = "com.silklabs.react"
+
 uploadArchives {
     repositories {
         mavenDeployer {
             def silkRootDir = file("../../")
             repository(url: "file://$silkRootDir/m2-local")
             pom.project {
-                groupId = "com.silklabs.react"
                 artifactId "crypto"
+                packaging "aar"
             }
         }
     }

@@ -7,9 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3504D0611D2B969D00BB24A2 /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */; };
-		35CA7E031D48774C0074615F /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */; };
-		35CA7E041D48774C0074615F /* SLKAppSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		35183A1D1D98891B00348529 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700221D298EF700993A9C /* ViewController.m */; };
+		35183A1E1D98891B00348529 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001F1D298EF700993A9C /* AppDelegate.m */; };
+		35183A1F1D98891B00348529 /* DeviceCommViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87B7C8751D665BCE00B2F3F0 /* DeviceCommViewController.m */; };
+		35183A201D98891B00348529 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001C1D298EF700993A9C /* main.m */; };
+		35183A211D98891B00348529 /* AppState.m in Sources */ = {isa = PBXBuildFile; fileRef = 870849B91D62957C00C17A86 /* AppState.m */; };
+		35183A221D98891B00348529 /* ClientViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 873AE4421D936F790018EAA4 /* ClientViewController.m */; };
+		35183A231D98891B00348529 /* DeviceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */; };
+		35183A251D98891B00348529 /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */; };
+		35183A271D98891B00348529 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; };
+		35183A291D98891B00348529 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35D700291D298EF700993A9C /* LaunchScreen.storyboard */; };
+		35183A2A1D98891B00348529 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 35D700271D298EF700993A9C /* Assets.xcassets */; };
+		35183A2B1D98891B00348529 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35D700241D298EF700993A9C /* Main.storyboard */; };
+		35183A2D1D98891B00348529 /* SLKAppSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 35D7009D1D29AA0800993A9C /* SLKAppSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		35183A2E1D98891B00348529 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		35183A371D988AF500348529 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35183A361D988AF500348529 /* WebRTC.framework */; };
+		35183A381D988AFF00348529 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 35183A361D988AF500348529 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		35183A3A1D988C5600348529 /* SLKAppSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35183A391D988C5600348529 /* SLKAppSDK.framework */; };
+		35183A3B1D988C5C00348529 /* SLKAppSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 35183A391D988C5600348529 /* SLKAppSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		35183A471D98923300348529 /* InfoLocal.plist in Resources */ = {isa = PBXBuildFile; fileRef = 35183A461D98923300348529 /* InfoLocal.plist */; };
 		35D7001D1D298EF700993A9C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001C1D298EF700993A9C /* main.m */; };
 		35D700201D298EF700993A9C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D7001F1D298EF700993A9C /* AppDelegate.m */; };
 		35D700231D298EF700993A9C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700221D298EF700993A9C /* ViewController.m */; };
@@ -18,8 +34,6 @@
 		35D7002B1D298EF700993A9C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35D700291D298EF700993A9C /* LaunchScreen.storyboard */; };
 		35D700361D298EF800993A9C /* SilkAppSDKExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700351D298EF800993A9C /* SilkAppSDKExampleTests.m */; };
 		35D700411D298EF800993A9C /* SilkAppSDKExampleUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D700401D298EF800993A9C /* SilkAppSDKExampleUITests.m */; };
-		579C79551D46D99300A833E7 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; };
-		579C79561D46D99300A833E7 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 579C794F1D46D88800A833E7 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		870849BA1D62957C00C17A86 /* AppState.m in Sources */ = {isa = PBXBuildFile; fileRef = 870849B91D62957C00C17A86 /* AppState.m */; };
 		873AE4431D936F790018EAA4 /* ClientViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 873AE4421D936F790018EAA4 /* ClientViewController.m */; };
 		87B7C8721D63E76400B2F3F0 /* DeviceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87B7C8711D63E76400B2F3F0 /* DeviceViewController.m */; };
@@ -27,7 +41,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		35CA7E051D48774C0074615F /* PBXContainerItemProxy */ = {
+		35183A1B1D98891B00348529 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */;
 			proxyType = 1;
@@ -65,14 +79,26 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		35183A2C1D98891B00348529 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				35183A2D1D98891B00348529 /* SLKAppSDK.framework in Embed Frameworks */,
+				35183A2E1D98891B00348529 /* WebRTC.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		579C79571D46D99300A833E7 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				35CA7E041D48774C0074615F /* SLKAppSDK.framework in Embed Frameworks */,
-				579C79561D46D99300A833E7 /* WebRTC.framework in Embed Frameworks */,
+				35183A3B1D988C5C00348529 /* SLKAppSDK.framework in Embed Frameworks */,
+				35183A381D988AFF00348529 /* WebRTC.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -80,6 +106,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		35183A321D98891B00348529 /* SilkAppSDKExample (local).app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SilkAppSDKExample (local).app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		35183A361D988AF500348529 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = WebRTC.framework; sourceTree = "<group>"; };
+		35183A391D988C5600348529 /* SLKAppSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SLKAppSDK.framework; sourceTree = "<group>"; };
+		35183A461D98923300348529 /* InfoLocal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = InfoLocal.plist; sourceTree = "<group>"; };
 		35D700181D298EF700993A9C /* SilkAppSDKExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SilkAppSDKExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		35D7001C1D298EF700993A9C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		35D7001E1D298EF700993A9C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -109,13 +139,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		35183A241D98891B00348529 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35183A251D98891B00348529 /* SLKAppSDK.framework in Frameworks */,
+				35183A271D98891B00348529 /* WebRTC.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		35D700151D298EF700993A9C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35CA7E031D48774C0074615F /* SLKAppSDK.framework in Frameworks */,
-				3504D0611D2B969D00BB24A2 /* SLKAppSDK.framework in Frameworks */,
-				579C79551D46D99300A833E7 /* WebRTC.framework in Frameworks */,
+				35183A3A1D988C5600348529 /* SLKAppSDK.framework in Frameworks */,
+				35183A371D988AF500348529 /* WebRTC.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,10 +174,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		35183A351D988AA400348529 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				35183A391D988C5600348529 /* SLKAppSDK.framework */,
+				35183A361D988AF500348529 /* WebRTC.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		35D7000F1D298EF700993A9C = {
 			isa = PBXGroup;
 			children = (
-				35D700961D29A9E500993A9C /* Frameworks */,
+				35183A351D988AA400348529 /* Frameworks */,
+				35D700961D29A9E500993A9C /* Local Frameworks */,
 				35D7001A1D298EF700993A9C /* SilkAppSDKExample */,
 				35D700341D298EF800993A9C /* SilkAppSDKExampleTests */,
 				35D7003F1D298EF800993A9C /* SilkAppSDKExampleUITests */,
@@ -153,6 +201,7 @@
 				35D700181D298EF700993A9C /* SilkAppSDKExample.app */,
 				35D700311D298EF800993A9C /* SilkAppSDKExampleTests.xctest */,
 				35D7003C1D298EF800993A9C /* SilkAppSDKExampleUITests.xctest */,
+				35183A321D98891B00348529 /* SilkAppSDKExample (local).app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -176,6 +225,7 @@
 				35D700271D298EF700993A9C /* Assets.xcassets */,
 				35D700291D298EF700993A9C /* LaunchScreen.storyboard */,
 				35D7002C1D298EF700993A9C /* Info.plist */,
+				35183A461D98923300348529 /* InfoLocal.plist */,
 				35D7001B1D298EF700993A9C /* Supporting Files */,
 			);
 			path = SilkAppSDKExample;
@@ -207,13 +257,13 @@
 			path = SilkAppSDKExampleUITests;
 			sourceTree = "<group>";
 		};
-		35D700961D29A9E500993A9C /* Frameworks */ = {
+		35D700961D29A9E500993A9C /* Local Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				579C794F1D46D88800A833E7 /* WebRTC.framework */,
 				35D700971D29AA0800993A9C /* SLKAppSDK.xcodeproj */,
 			);
-			name = Frameworks;
+			name = "Local Frameworks";
 			sourceTree = "<group>";
 		};
 		35D700981D29AA0800993A9C /* Products */ = {
@@ -228,6 +278,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		35183A191D98891B00348529 /* SilkAppSDKExample (local) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 35183A2F1D98891B00348529 /* Build configuration list for PBXNativeTarget "SilkAppSDKExample (local)" */;
+			buildPhases = (
+				35183A1C1D98891B00348529 /* Sources */,
+				35183A241D98891B00348529 /* Frameworks */,
+				35183A281D98891B00348529 /* Resources */,
+				35183A2C1D98891B00348529 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				35183A1A1D98891B00348529 /* PBXTargetDependency */,
+			);
+			name = "SilkAppSDKExample (local)";
+			productName = SilkAppSDKExample;
+			productReference = 35183A321D98891B00348529 /* SilkAppSDKExample (local).app */;
+			productType = "com.apple.product-type.application";
+		};
 		35D700171D298EF700993A9C /* SilkAppSDKExample */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 35D700451D298EF800993A9C /* Build configuration list for PBXNativeTarget "SilkAppSDKExample" */;
@@ -240,7 +309,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				35CA7E061D48774C0074615F /* PBXTargetDependency */,
 			);
 			name = SilkAppSDKExample;
 			productName = SilkAppSDKExample;
@@ -292,6 +360,9 @@
 				LastUpgradeCheck = 0730;
 				ORGANIZATIONNAME = "Silk Labs";
 				TargetAttributes = {
+					35183A191D98891B00348529 = {
+						DevelopmentTeam = V2B5P6TR7E;
+					};
 					35D700171D298EF700993A9C = {
 						CreatedOnToolsVersion = 7.3;
 						DevelopmentTeam = V2B5P6TR7E;
@@ -332,6 +403,7 @@
 			projectRoot = "";
 			targets = (
 				35D700171D298EF700993A9C /* SilkAppSDKExample */,
+				35183A191D98891B00348529 /* SilkAppSDKExample (local) */,
 				35D700301D298EF800993A9C /* SilkAppSDKExampleTests */,
 				35D7003B1D298EF800993A9C /* SilkAppSDKExampleUITests */,
 			);
@@ -356,6 +428,17 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
+		35183A281D98891B00348529 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35183A471D98923300348529 /* InfoLocal.plist in Resources */,
+				35183A291D98891B00348529 /* LaunchScreen.storyboard in Resources */,
+				35183A2A1D98891B00348529 /* Assets.xcassets in Resources */,
+				35183A2B1D98891B00348529 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		35D700161D298EF700993A9C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -383,6 +466,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		35183A1C1D98891B00348529 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35183A1D1D98891B00348529 /* ViewController.m in Sources */,
+				35183A1E1D98891B00348529 /* AppDelegate.m in Sources */,
+				35183A1F1D98891B00348529 /* DeviceCommViewController.m in Sources */,
+				35183A201D98891B00348529 /* main.m in Sources */,
+				35183A211D98891B00348529 /* AppState.m in Sources */,
+				35183A221D98891B00348529 /* ClientViewController.m in Sources */,
+				35183A231D98891B00348529 /* DeviceViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		35D700141D298EF700993A9C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -416,10 +513,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		35CA7E061D48774C0074615F /* PBXTargetDependency */ = {
+		35183A1A1D98891B00348529 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = SLKAppSDK;
-			targetProxy = 35CA7E051D48774C0074615F /* PBXContainerItemProxy */;
+			targetProxy = 35183A1B1D98891B00348529 /* PBXContainerItemProxy */;
 		};
 		35D700331D298EF800993A9C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -453,6 +550,46 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		35183A301D98891B00348529 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
+				INFOPLIST_FILE = "$(SRCROOT)/SilkAppSDKExample/InfoLocal.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 2.3;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		35183A311D98891B00348529 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
+				INFOPLIST_FILE = "$(SRCROOT)/SilkAppSDKExample/InfoLocal.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 2.3;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		35D700431D298EF800993A9C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -548,13 +685,14 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)";
 				INFOPLIST_FILE = SilkAppSDKExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SWIFT_VERSION = 2.3;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -567,13 +705,14 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/../../react-native-webrtc/ios/**";
+				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)";
 				INFOPLIST_FILE = SilkAppSDKExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.silklabs.SilkAppSDKExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SWIFT_VERSION = 2.3;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -626,6 +765,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		35183A2F1D98891B00348529 /* Build configuration list for PBXNativeTarget "SilkAppSDKExample (local)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35183A301D98891B00348529 /* Debug */,
+				35183A311D98891B00348529 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		35D700131D298EF700993A9C /* Build configuration list for PBXProject "SilkAppSDKExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

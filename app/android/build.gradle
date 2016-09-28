@@ -15,7 +15,6 @@ buildscript {
 }
 
 def silkRootDir = file("../../")
-apply from: "$silkRootDir/gradle/helpers.gradle"
 
 allprojects {
     repositories {

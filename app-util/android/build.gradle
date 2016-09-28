@@ -20,14 +20,16 @@ dependencies {
     compile "com.facebook.react:react-native:+"
 }
 
+group = "com.silklabs.react"
+
 uploadArchives {
     repositories {
         mavenDeployer {
             def silkRootDir = file("../../")
             repository(url: "file://$silkRootDir/m2-local")
             pom.project {
-                groupId = "com.silklabs.react"
                 artifactId "app-util"
+                packaging "aar"
             }
         }
     }

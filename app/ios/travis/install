@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-brew install npm nvm xz
+brew install nvm xz
 export NVM_DIR="$PWD/.nvm"
 source $(brew --prefix nvm)/nvm.sh
 nvm install 6.2

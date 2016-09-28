@@ -9,4 +9,4 @@ export DEVELOPER_NAME="iPhone Developer: Silk Stooge (DPVPFYSNHB)"
 # http://stackoverflow.com/questions/21860632/archive-distribute-ios-app-to-app-store-via-command-line
 export PROFILE_NAME="CI Build Profile"
 export PROFILE_FILE_NAME="CI_Build_Profile.mobileprovision"
-export PROFILE_UUID="d6f599df-2a83-40fa-89c3-fd40df2f3bc4"
+export PROFILE_UUID="0207a665-9bc6-4d58-b2ee-f665e13785e7"

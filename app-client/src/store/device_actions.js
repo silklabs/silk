@@ -211,6 +211,16 @@ function configAbort(
   return session;
 }
 
+function configFinish(
+  state: StateWithDevices
+) {
+  const {unconfigured, configuring} = state.devices;
+  invariant(configuring);
+  const session = unconfigured.get(configuring.socketId);
+  invariant(session);
+  session.dismiss();
+}
+
 function sendConfig(
   state: StateWithDevices,
   input: RegistrationInformation
@@ -355,7 +365,7 @@ export const config = {
   setConfig: actionFromPayload('DEVICE_CONFIG_SETCONFIG'),
   registerWithServer: actionFromAsyncPayloadGen('DEVICE_CONFIG_REGISTERSERVER', genRegisterConfiguringDeviceWithServer),
   sendConfig: actionFromPayloadGen('DEVICE_CONFIG_SENDCONFIG', sendConfig),
-  finish: actionFromPayload('DEVICE_CONFIG_FINISH'),
+  finish: actionFromPayloadGen('DEVICE_CONFIG_FINISH', configFinish),
 
   wifiList: actionFromPayloadGen('DEVICE_WIFI_LIST', wifiList),
   wifiSet: actionFromPayloadGen('DEVICE_WIFI_SET', wifiSet),

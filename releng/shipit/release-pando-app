@@ -143,7 +143,6 @@ for dir in $WHITELIST; do
   rsync -ra --exclude "*.internal.*" $dir ../1/2/3/4/5/ship/
 done
 cd ../1/2/3/4/5/ship
-echo '{"name": "release-pando-app"}' > package.json
 git add *
 if [[ -z "$(git status --porcelain | head -n1)" ]]; then
   echo No new changes to push.  Done

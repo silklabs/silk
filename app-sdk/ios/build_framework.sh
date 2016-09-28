@@ -25,8 +25,6 @@ xcodebuild \
   ONLY_ACTIVE_ARCH=NO \
   BUILD_DIR="${BUILD_DIR}" \
   BUILD_ROOT="${BUILD_ROOT}" \
-  CODE_SIGN_IDENTITY="$DEVELOPER_NAME" \
-  OTHER_CODE_SIGN_FLAGS="--keychain ios-build.keychain" \
   clean build
 
 xcodebuild \

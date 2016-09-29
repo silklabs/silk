@@ -20,8 +20,8 @@ def silkRootDir = file("../../")
 allprojects {
     repositories {
         maven { url "$silkRootDir/m2-local" }
-        if (System.env.GRADLE_MAVEN_REPO) {
-            maven { url System.env.GRADLE_MAVEN_REPO }
+        if (System.env.MAVEN_REMOTE_REPO) {
+            maven { url System.env.MAVEN_REMOTE_REPO }
         } else {
             maven { url "$silkRootDir/m2-remote" }
         }

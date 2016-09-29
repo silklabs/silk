@@ -169,7 +169,7 @@ void VideoCaptureModuleGonk::OnFrameCallback(void *userData,
     const auto timeSinceLastFrame = now - that->_lastFrameMs;
     if (timeSinceLastFrame < that->_currentFrameIntervalMs) {
       ALOGI("Not ready for frame yet: %dms remaining",
-        that->_currentFrameIntervalMs - timeSinceLastFrame);
+        (int)(that->_currentFrameIntervalMs - timeSinceLastFrame));
       break;
     }
     that->_lastFrameMs = now;

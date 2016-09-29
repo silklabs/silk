@@ -1,6 +1,6 @@
 #Nexus discovery status
-#Wed Sep 21 23:35:16 UTC 2016
+#Thu Sep 29 08:16:47 UTC 2016
 lastDiscoveryStrategy=scrape
 lastDiscoveryStatus=UNSUCCESSFUL
-lastDiscoveryTimestamp=1474500916617
+lastDiscoveryTimestamp=1475137007341
 lastDiscoveryMessage=No scraper was able to scrape remote (or remote prevents scraping).

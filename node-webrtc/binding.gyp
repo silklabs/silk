@@ -95,10 +95,12 @@
         ['OS=="android"', {
           'include_dirs': [
             '<(android_build_top)/system/core/include',
+            '<(android_build_top)/vendor/opensilk/capture',
           ],
           'sources': [
-            'src/GonkVideoEncoderFactory.cc',
+            'src/GonkVideoDeviceCapturerFactory.cc',
             'src/GonkVideoEncoder.cc',
+            'src/GonkVideoEncoderFactory.cc',
           ],
           'actions': [{
             'action_name': 'buildjs',

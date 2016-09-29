@@ -26,6 +26,9 @@
 #include "Platform.h"
 #include "GetSources.h"
 #include "VideoEncoderFactory.h"
+#ifdef ANDROID
+#include "GonkVideoDeviceCapturerFactory.h"
+#endif
 
 using namespace v8;
 using namespace WebRTC;
@@ -62,7 +65,11 @@ rtc::scoped_refptr<webrtc::VideoTrackInterface> GetSources::GetVideoSource(const
   rtc::scoped_refptr<webrtc::VideoTrackInterface> track;
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, 0, 0);
   std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> video_info(webrtc::VideoCaptureFactory::CreateDeviceInfo(0));
+#ifdef ANDROID
+  GonkVideoDeviceCapturerFactory device_factory;
+#else
   cricket::WebRtcVideoDeviceCapturerFactory device_factory;
+#endif
 
   if (factory.get()) {
     if (video_info) {
@@ -96,7 +103,11 @@ rtc::scoped_refptr<webrtc::VideoTrackInterface> GetSources::GetVideoSource(const
   rtc::scoped_refptr<webrtc::VideoTrackInterface> track;
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, 0, 0);
   std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> video_info(webrtc::VideoCaptureFactory::CreateDeviceInfo(0));
+#ifdef ANDROID
+  GonkVideoDeviceCapturerFactory device_factory;
+#else
   cricket::WebRtcVideoDeviceCapturerFactory device_factory;
+#endif
 
   if (factory.get()) {
     if (video_info) {

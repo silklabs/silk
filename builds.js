@@ -168,6 +168,19 @@ const oss = {
       },
     },
   }),
+
+  'sos-bsp-gonk-aries-nightly': nightlyBuild('pub/bsp-gonk', {
+    'title': 'Aries nightly for silk open source',
+    'travis_yml': 'pub/bsp-gonk/travis/travis_linux.yml',
+    travis_config: {
+      env: {
+        global: [
+          'BOARD=aries',
+          'REPOCACHE_URLPREFIX=https://silk-releng-us-east-1.s3-external-1.amazonaws.com/master/repocache/',
+        ],
+      },
+    },
+  }),
 }
 
 const builds = {

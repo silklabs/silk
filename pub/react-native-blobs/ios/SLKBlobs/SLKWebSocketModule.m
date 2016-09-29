@@ -14,15 +14,24 @@
 #import "SLKWebSocketModule.h"
 #import "SLKBlobManager.h"
 
+#import <objc/runtime.h>
+
 #import "RCTConvert.h"
 #import "RCTUtils.h"
 
+@implementation RCTSRWebSocket (React)
 
-@interface RCTSRWebSocket (React)
-- (nullable NSNumber *)reactTag;
-- (void)setReactTag:(NSNumber *)reactTag;
+- (NSNumber *)reactTag
+{
+  return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setReactTag:(NSNumber *)reactTag
+{
+  objc_setAssociatedObject(self, @selector(reactTag), reactTag, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
 @end
-
 
 @implementation SLKWebSocketModule
 {
@@ -98,6 +107,11 @@ RCT_EXPORT_METHOD(setBinaryType:(NSString *)binaryType socketID:(nonnull NSNumbe
   [_blobsEnabled setObject:@([binaryType isEqualToString:@"blob"]) forKey:socketID];
 }
 
+RCT_EXPORT_METHOD(ping:(nonnull NSNumber *)socketID)
+{
+  [_sockets[socketID] sendPing:NULL];
+}
+
 RCT_EXPORT_METHOD(close:(nonnull NSNumber *)socketID)
 {
   [_sockets[socketID] close];
@@ -129,7 +143,6 @@ RCT_EXPORT_METHOD(close:(nonnull NSNumber *)socketID)
     @"id": webSocket.reactTag
   }];
 }
-
 
 - (void)webSocketDidOpen:(RCTSRWebSocket *)webSocket
 {

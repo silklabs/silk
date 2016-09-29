@@ -169,6 +169,7 @@ static NAN_METHOD(sconv) {
   uint32_t strideX = To<uint32_t>(Arg(info, 11)).FromMaybe(0);
   uint32_t strideY = To<uint32_t>(Arg(info, 12)).FromMaybe(0);
   MaybeLocal<Object> output = To<Object>(Arg(info, 13));
+  bool sconv = To<bool>(Arg(info, 14)).FromMaybe(false);
   if (src.IsEmpty())
     return ThrowTypeError("missing input array");
   if (filters.IsEmpty())
@@ -186,33 +187,66 @@ static NAN_METHOD(sconv) {
   uint32_t out_height = (srcHeight + 2 * padTopBottom - filterY) / strideY + 1;
   if (output_array.length() < numFilters * out_width * out_height)
     return ThrowTypeError("output array too short");
-#if 0
-  uint32_t outputWidth = To<uint32_t>(Arg(info, 14)).FromMaybe(0);
-  uint32_t outputHeight = To<uint32_t>(Arg(info, 15)).FromMaybe(0);
-  sconv_mm(biased, *src_array, srcWidth, srcHeight, srcChannels,
-           *filters_array, numFilters, filterX, filterY, padLeftRight, padTopBottom, strideX, strideY,
-           *output_array, outputWidth, outputHeight);
-#else
-  uint32_t out_channels = srcChannels * filterX * filterY;
-  float *col = new float[out_channels * out_height * out_width];
-  im2col_cpu(*src_array, srcChannels, srcHeight, srcWidth,
-             filterY, filterX,
-             padTopBottom, padLeftRight,
-             strideY, strideX,
-             1, 1, // dilation
-             col);
-  uint32_t M = numFilters;
-  uint32_t N = out_width * out_height;
-  uint32_t K = srcChannels * filterX * filterY;
-  cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-              M, N, K,
-              1,
-              *filters_array, K,
-              col, N,
-              biased ? 1.0f : 0.0f,
-              *output_array, N);
-  delete[] col;
-#endif
+  if (sconv) {
+    float *fd = *filters_array;
+    float *fq = new float[filterX * filterY * srcChannels * numFilters];
+    for (size_t fy = 0; fy < filterY; ++fy) {
+      for (size_t fx = 0; fx < filterX; ++fx) {
+        for (size_t in_ch = 0; in_ch < srcChannels; ++in_ch) {
+          for (size_t f = 0; f < numFilters; ++f) {
+            fq[((fy * filterX + fx) * srcChannels + in_ch) * numFilters + f] =
+              fd[((f * srcChannels + in_ch) * filterY + fy) * filterX + fx];
+          }
+        }
+      }
+    }
+    float *id = *src_array;
+    float *iq = new float[src_array.length()];
+    for (size_t y = 0; y < srcHeight; ++y) {
+      for (size_t x = 0; x < srcWidth; ++x) {
+        for (size_t in_ch = 0; in_ch < srcChannels; ++in_ch) {
+          iq[(y * srcWidth + x) * srcChannels + in_ch] =
+            id[(in_ch * srcHeight + y) * srcWidth + x];
+        }
+      }
+    }
+    float *oq = new float[output_array.length()];
+    sconv_mm(biased, iq, srcWidth, srcHeight, srcChannels,
+             fq, numFilters, filterX, filterY, padLeftRight, padTopBottom, strideX, strideY,
+             oq, out_width, out_height);
+    float *od = *output_array;
+    for (size_t y = 0; y < out_height; ++y) {
+      for (size_t x = 0; x < out_width; ++x) {
+        for (size_t f = 0; f < numFilters; ++f) {
+          od[(f * out_height + y) * out_width + x] =
+            oq[(y * out_width + x) * numFilters + f];
+        }
+      }
+    }
+    delete[] oq;
+    delete[] iq;
+    delete[] fq;
+  } else {
+    uint32_t out_channels = srcChannels * filterX * filterY;
+    float *col = new float[out_channels * out_height * out_width];
+    im2col_cpu(*src_array, srcChannels, srcHeight, srcWidth,
+               filterY, filterX,
+               padTopBottom, padLeftRight,
+               strideY, strideX,
+               1, 1, // dilation
+               col);
+    uint32_t M = numFilters;
+    uint32_t N = out_width * out_height;
+    uint32_t K = srcChannels * filterX * filterY;
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                M, N, K,
+                1,
+                *filters_array, K,
+                col, N,
+                biased ? 1.0f : 0.0f,
+                *output_array, N);
+    delete[] col;
+  }
 }
 
 void Init(Handle<Object> exports) {

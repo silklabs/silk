@@ -14,8 +14,6 @@
 
 package com.silklabs.react.blobs;
 
-import android.content.ContentProviderClient;
-import android.content.ContentResolver;
 import android.util.Base64;
 
 import java.io.IOException;
@@ -34,6 +32,7 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.ReactConstants;
+import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import okhttp3.OkHttpClient;
@@ -54,12 +53,13 @@ import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.ByteString;
 
+@ReactModule(name = "WebSocketModule")
 public class WebSocketModule extends ReactContextBaseJavaModule {
 
-  private Map<Integer, WebSocket> mWebSocketConnections = new HashMap<>();
-  private Map<Integer, Boolean> mBlobsEnabled = new HashMap<>();
+  private final Map<Integer, WebSocket> mWebSocketConnections = new HashMap<>();
+  private final Map<Integer, Boolean> mBlobsEnabled = new HashMap<>();
+
   private ReactContext mReactContext;
-  private BlobProvider mBlobProvider;
 
   public WebSocketModule(ReactApplicationContext context) {
     super(context);
@@ -78,7 +78,11 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void connect(final String url, @Nullable final ReadableArray protocols, @Nullable final ReadableMap headers, final int id) {
+  public void connect(
+    final String url,
+    @Nullable final ReadableArray protocols,
+    @Nullable final ReadableMap headers,
+    final int id) {
     OkHttpClient client = new OkHttpClient.Builder()
       .connectTimeout(10, TimeUnit.SECONDS)
       .writeTimeout(10, TimeUnit.SECONDS)
@@ -213,10 +217,6 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
     if (client == null) {
       // WebSocket is already closed
       // Don't do anything, mirror the behaviour on web
-      FLog.w(
-        ReactConstants.TAG,
-        "Cannot close WebSocket. Unknown WebSocket id " + id);
-
       return;
     }
     try {
@@ -253,7 +253,8 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
     }
     try {
-      client.sendMessage(RequestBody.create(WebSocket.BINARY, ByteString.decodeBase64(base64String)));
+      client.sendMessage(
+        RequestBody.create(WebSocket.BINARY, ByteString.decodeBase64(base64String)));
     } catch (IOException | IllegalStateException e) {
       notifyWebSocketFailed(id, e.getMessage());
     }
@@ -272,6 +273,21 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       blob.getInt("size"));
     try {
       client.sendMessage(RequestBody.create(WebSocket.BINARY, data));
+    } catch (IOException | IllegalStateException e) {
+      notifyWebSocketFailed(id, e.getMessage());
+    }
+  }
+
+  @ReactMethod
+  public void ping(int id) {
+    WebSocket client = mWebSocketConnections.get(id);
+    if (client == null) {
+      // This is a programmer error
+      throw new RuntimeException("Cannot send a message. Unknown WebSocket id " + id);
+    }
+    try {
+      Buffer buffer = new Buffer();
+      client.sendPing(buffer);
     } catch (IOException | IllegalStateException e) {
       notifyWebSocketFailed(id, e.getMessage());
     }
@@ -304,14 +320,17 @@ public class WebSocketModule extends ReactContextBaseJavaModule {
       }
 
       if (requestURI.getPort() != -1) {
-        defaultOrigin = String.format("%s://%s:%s", scheme, requestURI.getHost(), requestURI.getPort());
+        defaultOrigin = String.format(
+          "%s://%s:%s",
+          scheme,
+          requestURI.getHost(),
+          requestURI.getPort());
       } else {
         defaultOrigin = String.format("%s://%s/", scheme, requestURI.getHost());
       }
 
       return defaultOrigin;
-
-    } catch(URISyntaxException e) {
+    } catch (URISyntaxException e) {
         throw new IllegalArgumentException("Unable to set " + uri + " as default origin header.");
     }
   }

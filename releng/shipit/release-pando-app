@@ -41,11 +41,6 @@ if [[ $(uname -s) != "Darwin" ]]; then
   exit 1
 fi
 
-MAYBEDRYRUN=
-if [[ $TRAVIS_PULL_REQUEST != false ]]; then
-  MAYBEDRYRUN="--dry-run"
-fi
-
 source pub/version/branch
 COMMIT=$(git rev-parse HEAD)
 echo Shipping $COMMIT from $BRANCH
@@ -187,5 +182,7 @@ if [[ -z $I_KNOW_WHAT_IM_DOING ]]; then
   exit 1
 fi
 
-git push $MAYBEDRYRUN origin $BRANCH
+if [[ $TRAVIS_PULL_REQUEST == false ]]; then
+  git push origin $BRANCH
+fi
 exit 0

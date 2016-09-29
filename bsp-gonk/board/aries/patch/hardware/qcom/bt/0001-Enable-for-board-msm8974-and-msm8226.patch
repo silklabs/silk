@@ -1,0 +1,22 @@
+From a379c4b93f11424c52d563da31b78145b0bffced Mon Sep 17 00:00:00 2001
+From: Alin Jerpelea <alin.jerpelea@sonymobile.com>
+Date: Tue, 19 Aug 2014 15:11:56 +0200
+Subject: [PATCH] Enable for board msm8974 and msm8226
+
+Change-Id: Iab987f1cde0b38652a0753bb64516e3ba4e9a4b7
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index 73600fa..16a43a6 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -1,3 +1,3 @@
+-ifneq ($(filter msm8960 msm8x27,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8960 msm8x27 msm8974 msm8226,$(TARGET_BOARD_PLATFORM)),)
+ include $(call all-named-subdir-makefiles,libbt-vendor)
+ endif
+-- 
+2.8.4 (Apple Git-73)
+

@@ -1,0 +1,27 @@
+From 74779759cea0a2847b563a738d588dba8ba96083 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 29 Sep 2016 20:36:18 -0700
+Subject: [PATCH] Remove APN list
+
+---
+ common.mk | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/common.mk b/common.mk
+index 4850aaf..599a044 100644
+--- a/common.mk
++++ b/common.mk
+@@ -145,10 +145,6 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PACKAGES += \
+     libemoji
+ 
+-# APN list
+-PRODUCT_COPY_FILES += \
+-    device/sample/etc/apns-full-conf.xml:system/etc/apns-conf.xml
+-
+ # Limit dex2oat threads to improve thermals
+ PRODUCT_PROPERTY_OVERRIDES += \
+     dalvik.vm.dex2oat-threads=2 \
+-- 
+2.8.4 (Apple Git-73)
+

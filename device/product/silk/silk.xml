@@ -117,7 +117,7 @@
   <project name="node-opencl"
            path="external/node-opencl"
            remote="silk"
-           revision="refs/tags/tag1"
+           revision="refs/tags/tag2"
            clone-depth="1"/>
   <project name="websockets/bufferutil"
            path="external/bufferutil"

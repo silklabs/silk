@@ -37,7 +37,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 (0, _index2.default)("ArrowFunctionExpression", {
   builder: ["params", "body", "async"],
-  visitor: ["params", "body", "returnType"],
+  visitor: ["params", "body", "returnType", "typeParameters"],
   aliases: ["Scopable", "Function", "BlockParent", "FunctionParent", "Expression", "Pureish"],
   fields: {
     params: {

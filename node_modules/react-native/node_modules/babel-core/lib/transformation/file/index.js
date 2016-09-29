@@ -97,6 +97,10 @@ var _babelTypes = require("babel-types");
 
 var t = _interopRequireWildcard(_babelTypes);
 
+var _resolve = require("../../helpers/resolve");
+
+var _resolve2 = _interopRequireDefault(_resolve);
+
 var _blockHoist = require("../internal-plugins/block-hoist");
 
 var _blockHoist2 = _interopRequireDefault(_blockHoist);
@@ -141,6 +145,7 @@ var File = function (_Store) {
       nonStandard: _this.opts.nonStandard,
       sourceType: _this.opts.sourceType,
       filename: _this.opts.filename,
+      sourceFileName: _this.opts.filename,
       plugins: []
     };
 
@@ -496,8 +501,35 @@ var File = function (_Store) {
   };
 
   File.prototype.parse = function parse(code) {
+    var parseCode = _babylon.parse;
+    var parserOpts = this.opts.parserOpts;
+
+    if (parserOpts) {
+      parserOpts = (0, _assign2.default)({}, this.parserOpts, parserOpts);
+
+      if (parserOpts.parser) {
+        if (typeof parserOpts.parser === "string") {
+          var dirname = _path2.default.dirname(this.opts.filename) || process.cwd();
+          var parser = (0, _resolve2.default)(parserOpts.parser, dirname);
+          if (parser) {
+            parseCode = require(parser).parse;
+          } else {
+            throw new Error("Couldn't find parser " + parserOpts.parser + " with \"parse\" method relative to directory " + dirname);
+          }
+        } else {
+          parseCode = parserOpts.parser;
+        }
+
+        parserOpts.parser = {
+          parse: function parse(source) {
+            return (0, _babylon.parse)(source, parserOpts);
+          }
+        };
+      }
+    }
+
     this.log.debug("Parse start");
-    var ast = (0, _babylon.parse)(code, this.parserOpts);
+    var ast = parseCode(code, parserOpts || this.parserOpts);
     this.log.debug("Parse stop");
     return ast;
   };
@@ -671,9 +703,24 @@ var File = function (_Store) {
     var result = { ast: ast };
     if (!opts.code) return this.makeResult(result);
 
+    var gen = _babelGenerator2.default;
+    if (opts.generatorOpts.generator) {
+      gen = opts.generatorOpts.generator;
+
+      if (typeof gen === "string") {
+        var dirname = _path2.default.dirname(this.opts.filename) || process.cwd();
+        var generator = (0, _resolve2.default)(gen, dirname);
+        if (generator) {
+          gen = require(generator).print;
+        } else {
+          throw new Error("Couldn't find generator " + gen + " with \"print\" method relative to directory " + dirname);
+        }
+      }
+    }
+
     this.log.debug("Generation start");
 
-    var _result = (0, _babelGenerator2.default)(ast, opts, this.code);
+    var _result = gen(ast, opts.generatorOpts ? (0, _assign2.default)(opts, opts.generatorOpts) : opts, this.code);
     result.code = _result.code;
     result.map = _result.map;
 

@@ -68,14 +68,16 @@ var Renamer = function () {
       specifiers.push(t.exportSpecifier(t.identifier(localName), t.identifier(exportedName)));
     }
 
-    var aliasDeclar = t.exportNamedDeclaration(null, specifiers);
+    if (specifiers.length) {
+      var aliasDeclar = t.exportNamedDeclaration(null, specifiers);
 
-    if (parentDeclar.isFunctionDeclaration()) {
-      aliasDeclar._blockHoist = 3;
+      if (parentDeclar.isFunctionDeclaration()) {
+        aliasDeclar._blockHoist = 3;
+      }
+
+      exportDeclar.insertAfter(aliasDeclar);
+      exportDeclar.replaceWith(parentDeclar.node);
     }
-
-    exportDeclar.insertAfter(aliasDeclar);
-    exportDeclar.replaceWith(parentDeclar.node);
   };
 
   Renamer.prototype.maybeConvertFromClassFunctionDeclaration = function maybeConvertFromClassFunctionDeclaration(path) {

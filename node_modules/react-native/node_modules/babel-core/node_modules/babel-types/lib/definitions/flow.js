@@ -40,8 +40,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 (0, _index2.default)("ClassProperty", {
   visitor: ["key", "value", "typeAnnotation", "decorators"],
-  aliases: ["Flow", "Property"],
-  fields: {}
+  builder: ["key", "value", "typeAnnotation", "decorators", "computed"],
+  aliases: ["Property"],
+  fields: {
+    computed: {
+      validate: (0, _index.assertValueType)("boolean"),
+      default: false
+    }
+  }
 });
 
 (0, _index2.default)("DeclareClass", {

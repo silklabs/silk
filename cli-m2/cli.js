@@ -33,7 +33,7 @@ const DOCKER_IMAGE = 'sonatype/nexus';
 const NEXUS_XML_LOCAL_PATH = path.join(__dirname, 'nexus.xml');
 const NEXUS_XML_CONTAINER_PATH = '/sonatype-work/conf/nexus.xml';
 
-const NEXUS_MAX_TIMEOUT_MS = 30000;
+const NEXUS_MAX_TIMEOUT_MS = 60000;
 
 const JCENTER_STORAGE_PATH = '/sonatype-work/storage/jcenter';
 
@@ -141,9 +141,10 @@ export const remoteUpdate = {
 
     console.log('Kicking off gradle build...');
     run([
-      path.resolve('gradlew'),
+      path.join(ROOT, 'gradle', 'gradlew'),
       'assembleDebug',
       '--refresh-dependencies',
+      '--console=plain',
     ], {
       env: {
         ...process.env,
@@ -171,7 +172,7 @@ export const remoteUpdate = {
       '--exclude', '.index',
       '--exclude', '.nexus',
       path.join(tempDir, 'm2-remote'),
-      path.join(ROOT),
+      ROOT,
     ]);
   },
 };

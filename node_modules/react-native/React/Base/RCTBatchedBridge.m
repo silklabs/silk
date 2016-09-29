@@ -40,8 +40,6 @@ typedef NS_ENUM(NSUInteger, RCTBridgeFields) {
   RCTBridgeFieldCallID,
 };
 
-RCT_EXTERN NSArray<Class> *RCTGetModuleClasses(void);
-
 @implementation RCTBatchedBridge
 {
   BOOL _wasBatchActive;
@@ -111,6 +109,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithDelegate:(id<RCTBridgeDelegate>)dele
   __block NSData *sourceCode;
   [self loadSource:^(NSError *error, NSData *source, __unused int64_t sourceLength) {
     if (error) {
+      RCTLogWarn(@"Failed to load source: %@", error);
       dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf stopLoadingWithError:error];
       });
@@ -155,6 +154,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithDelegate:(id<RCTBridgeDelegate>)dele
       [weakSelf injectJSONConfiguration:config onComplete:^(NSError *error) {
         [performanceLogger markStopForTag:RCTPLNativeModuleInjectConfig];
         if (error) {
+          RCTLogWarn(@"Failed to inject config: %@", error);
           dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf stopLoadingWithError:error];
           });
@@ -265,38 +265,12 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithDelegate:(id<RCTBridgeDelegate>)dele
     extraModules = self.moduleProvider();
   }
 
+#if RCT_DEBUG
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    if (RCT_DEBUG && !RCTRunningInTestEnvironment()) {
-      // Check for unexported modules
-      Class *classes;
-      unsigned int classCount;
-      classes = objc_copyClassList(&classCount);
-
-      NSMutableSet *moduleClasses = [NSMutableSet new];
-      [moduleClasses addObjectsFromArray:RCTGetModuleClasses()];
-      [moduleClasses addObjectsFromArray:[extraModules valueForKeyPath:@"class"]];
-
-      for (unsigned int i = 0; i < classCount; i++)
-      {
-        Class cls = classes[i];
-        Class superclass = cls;
-        while (superclass)
-        {
-          if (class_conformsToProtocol(superclass, @protocol(RCTBridgeModule)))
-          {
-            if (![moduleClasses containsObject:cls] &&
-                ![cls respondsToSelector:@selector(moduleName)]) {
-              RCTLogWarn(@"Class %@ was not exported. Did you forget to use "
-                         "RCT_EXPORT_MODULE()?", cls);
-            }
-            break;
-          }
-          superclass = class_getSuperclass(superclass);
-        }
-      }
-    }
+    RCTVerifyAllModulesExported(extraModules);
   });
+#endif
 
   NSMutableArray<Class> *moduleClassesByID = [NSMutableArray new];
   NSMutableArray<RCTModuleData *> *moduleDataByID = [NSMutableArray new];
@@ -433,7 +407,6 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithDelegate:(id<RCTBridgeDelegate>)dele
   }
 
   // Set up modules that require main thread init or constants export
-  [_performanceLogger setValue:0 forTag:RCTPLNativeModuleMainThread];
   for (RCTModuleData *moduleData in _moduleDataByID) {
     if (whitelistedModules && ![whitelistedModules containsObject:[moduleData moduleClass]]) {
       continue;
@@ -531,6 +504,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithDelegate:(id<RCTBridgeDelegate>)dele
     }
 
     if (loadError) {
+      RCTLogWarn(@"Failed to execute source code: %@", [loadError localizedDescription]);
       dispatch_async(dispatch_get_main_queue(), ^{
         [self stopLoadingWithError:loadError];
       });
@@ -540,6 +514,12 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithDelegate:(id<RCTBridgeDelegate>)dele
     // Register the display link to start sending js calls after everything is setup
     NSRunLoop *targetRunLoop = [self->_javaScriptExecutor isKindOfClass:[RCTJSCExecutor class]] ? [NSRunLoop currentRunLoop] : [NSRunLoop mainRunLoop];
     [self->_displayLink addToRunLoop:targetRunLoop];
+
+    // Log metrics about native requires during the bridge startup.
+    uint64_t nativeRequiresCount = [self->_performanceLogger valueForTag:RCTPLRAMNativeRequiresCount];
+    [self->_performanceLogger setValue:nativeRequiresCount forTag:RCTPLRAMStartupNativeRequiresCount];
+    uint64_t nativeRequires = [self->_performanceLogger valueForTag:RCTPLRAMNativeRequires];
+    [self->_performanceLogger setValue:nativeRequires forTag:RCTPLRAMStartupNativeRequires];
 
     [self->_performanceLogger markStopForTag:RCTPLBridgeStartup];
 

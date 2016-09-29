@@ -112,7 +112,11 @@ function isReferenced(node, parent) {
       return parent.name !== node;
 
     case "ClassProperty":
-      return parent.value === node;
+      if (parent.key === node) {
+        return parent.computed;
+      } else {
+        return parent.value === node;
+      }
 
     case "ImportDefaultSpecifier":
     case "ImportNamespaceSpecifier":

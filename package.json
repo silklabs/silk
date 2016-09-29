@@ -150,7 +150,7 @@
     "react-redux": "4.4.5",
     "stacktrace-parser": "0.1.3",
     "babel-preset-react-native": "1.9.0",
-    "react-native": "0.34.0-rc.0",
+    "react-native": "0.35.0-rc.0",
     "react-native-orientation": "git@github.com:yamill/react-native-orientation.git#278291739e2b7c8ab208fdf404e4b139e24b4a3f",
     "redux-actions": "0.10.1",
     "bonjour": "3.5.0",

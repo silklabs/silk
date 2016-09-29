@@ -140,7 +140,7 @@ var TraversalContext = function () {
 
       if (path.key === null) continue;
 
-      if (testing && queue.length >= 1000) {
+      if (testing && queue.length >= 10000) {
         this.trap = true;
       }
 

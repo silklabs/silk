@@ -5,7 +5,7 @@
   "license": "proprietary",
   "main": "index.js",
   "peerDependencies": {
-    "react-native": "0.34.0-rc.0"
+    "react-native": "0.35.0-rc.0"
   },
   "private": true
 }

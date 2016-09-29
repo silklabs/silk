@@ -44,10 +44,8 @@ async function _genAuthTravis(): Promise<Travis> {
     version: '2.0.0',
     pro: true,
     headers: {
-      // Magic header that makes the Travis auth/github API work.
-      // Yeah, wtfs...
-      //
-      // https://github.com/travis-ci/travis-ci/issues/5649
+      // Magic header that makes the Travis auth/github API work. Yeah, wtfs...
+      // See https://github.com/travis-ci/travis-ci/issues/5649.
       'User-Agent': 'Travis/1.0',
     },
   });

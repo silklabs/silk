@@ -116,7 +116,7 @@ bool AudioDeviceGonk::RecordingIsInitialized() const { return true; }
 
 int32_t AudioDeviceGonk::StartPlayout() { return -1; }
 
-int32_t AudioDeviceGonk::StopPlayout() { return -1; }
+int32_t AudioDeviceGonk::StopPlayout() { return 0; }
 
 bool AudioDeviceGonk::Playing() const { return false; }
 

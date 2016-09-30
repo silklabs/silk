@@ -38,6 +38,15 @@ which bsdiff
 which imgdiff
 
 for BUILD in $BUILDS; do
+
+  if [[ $BUILD == pando* ]]; then
+    echo Using Silk release key
+    MAYBE_PACKAGE_KEY="--package_key $KEYS_DIR/releasekey"
+  else
+    echo Using stock AOSP key 
+    MAYBE_PACKAGE_KEY=
+  fi
+    
   rm -rf \
     manifest.json \
     ota_dist \
@@ -92,7 +101,7 @@ for BUILD in $BUILDS; do
     build/tools/releasetools/ota_from_target_files \
       --block \
       --verify \
-      --package_key $KEYS_DIR/releasekey \
+      $MAYBE_PACKAGE_KEY \
       latest_target_files.zip \
       ota_dist/${BUILD}-full.zip
   )
@@ -115,7 +124,7 @@ for BUILD in $BUILDS; do
       build/tools/releasetools/ota_from_target_files \
         --block \
         --verify \
-        --package_key $KEYS_DIR/releasekey \
+        $MAYBE_PACKAGE_KEY \
         --incremental_from prev_target_files.zip \
         latest_target_files.zip \
         ota_dist/${BUILD}-${PREV_SHA1}-inc.zip
@@ -139,7 +148,7 @@ for BUILD in $BUILDS; do
       build/tools/releasetools/ota_from_target_files \
         --block \
         --verify \
-        --package_key $KEYS_DIR/releasekey \
+        $MAYBE_PACKAGE_KEY \
         --incremental_from prevprev_target_files.zip \
         latest_target_files.zip \
         ota_dist/${BUILD}-${PREVPREV_SHA1}-inc.zip

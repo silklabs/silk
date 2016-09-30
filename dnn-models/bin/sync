@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-SHA1=bdd5dc63ad4f6d200b16539bb37ae9b2e2bcd836
+SHA1=677546d7fbbb492ab130334575bea078b29aae91
 
 if [[ -d silk-dnn ]]; then
   pushd silk-dnn 2>&1 > /dev/null
@@ -23,5 +23,11 @@ if [[ ! -d silk-dnn ]]; then
   make
   popd 2>&1 > /dev/null
 
+  # Assemble tiny-coco model file
+  pushd models/tiny-coco 2>&1 > /dev/null
+  make
+  popd 2>&1 > /dev/null
+
   popd 2>&1 > /dev/null
 fi
+

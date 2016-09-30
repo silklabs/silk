@@ -1,0 +1,34 @@
+From c85ac01dac3dd85525240b53c01798611e861757 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <shade@chemlab.org>
+Date: Mon, 3 Dec 2012 02:34:56 -0800
+Subject: [PATCH] libbt: Add support for board-specific configuration
+
+ * Set with BOARD_BLUEDROID_VENDOR_CONF
+
+Change-Id: Ia657da71d0e3dad670def517fe3246556f8f6d5a
+---
+ vnd_buildcfg.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/vnd_buildcfg.mk b/vnd_buildcfg.mk
+index ad61a4c..e4f1840 100644
+--- a/vnd_buildcfg.mk
++++ b/vnd_buildcfg.mk
+@@ -1,10 +1,14 @@
+ generated_sources := $(local-generated-sources-dir)
+ 
++ifneq ($(BOARD_BLUEDROID_VENDOR_CONF),)
++SRC := $(BOARD_BLUEDROID_VENDOR_CONF)
++else
+ SRC := $(call my-dir)/include/$(addprefix vnd_, $(addsuffix .txt,$(basename $(TARGET_DEVICE))))
+ ifeq (,$(wildcard $(SRC)))
+ # configuration file does not exist. Use default one
+ SRC := $(call my-dir)/include/vnd_generic.txt
+ endif
++endif
+ GEN := $(generated_sources)/vnd_buildcfg.h
+ TOOL := $(TOP_DIR)external/bluetooth/bluedroid/tools/gen-buildcfg.sh
+ 
+-- 
+2.8.4 (Apple Git-73)
+

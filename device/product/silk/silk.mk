@@ -195,6 +195,7 @@ PRODUCT_PACKAGES += \
   node-nnpack \
   node-qsml \
   mmap-io \
+  nn.js \
 
 endif
 

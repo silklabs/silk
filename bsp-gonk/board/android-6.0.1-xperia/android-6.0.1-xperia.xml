@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+<remote name="sony" fetch="git://github.com/sonyxperiadev/" />
+<remove-project name="platform/hardware/qcom/camera" />
+<remove-project name="platform/packages/apps/FMRadio" />
+<project path="device/sony/sepolicy" name="device-sony-sepolicy" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/amami" name="device-sony-amami" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/aries" name="device-sony-aries" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/castor" name="device-sony-castor" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/castor_windy" name="device-sony-castor_windy" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/common" name="device-sony-common" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/common-headers" name="device-sony-common-headers" groups="device" remote="sony" revision="aosp/LA.BR.1.3.3_rb2.14" />
+<project path="device/sony/common-kernel" name="vendor-sony-kernel" groups="device" remote="sony" revision="aosp/LA.BR.1.3.3_rb2.14" />
+<project path="device/sony/common-init" name="device-sony-common-init" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/honami" name="device-sony-honami" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/kanuti" name="device-sony-kanuti" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/ivy" name="device-sony-ivy" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/karin" name="device-sony-karin" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/karin_windy" name="device-sony-karin_windy" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/kitakami" name="device-sony-kitakami" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/kugo" name="device-sony-kugo" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/leo" name="device-sony-leo" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/loire" name="device-sony-loire" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/rhine" name="device-sony-rhine" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/satsuki" name="device-sony-satsuki" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/scorpion" name="device-sony-scorpion" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/scorpion_windy" name="device-sony-scorpion_windy" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/suzu" name="device-sony-suzu" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/shinano" name="device-sony-shinano" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/sirius" name="device-sony-sirius" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/sumire" name="device-sony-sumire" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/suzuran" name="device-sony-suzuran" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/togari" name="device-sony-togari" groups="device" remote="sony" revision="m-mr1" />
+<project path="device/sony/tulip" name="device-sony-tulip" groups="device" remote="sony" revision="m-mr1" />
+<project path="hardware/qcom/camera" name="camera" groups="device" remote="sony" revision="aosp/LA.BR.1.3.3_rb2.14" />
+<project path="kernel/sony/msm" name="kernel" groups="device" remote="sony" revision="aosp/LA.BR.1.3.3_rb2.14" />
+<project path="vendor/qcom/opensource/dataservices" name="vendor-qcom-opensource-dataservices" groups="device" remote="sony" revision="master" />
+<project path="vendor/qcom/opensource/fm" name="vendor-qcom-opensource-fm" groups="device" remote="sony" revision="master" />
+<project path="vendor/sony-oss/thermanager" name="thermanager" groups="device" remote="sony" revision="master" />
+<project path="vendor/sony-oss/macaddrsetup" name="macaddrsetup" groups="device" remote="sony" revision="master" />
+<project path="vendor/sony-oss/timekeep" name="timekeep" groups="device" remote="sony" revision="master" />
+<project path="packages/apps/ExtendedSettings" name="packages_apps_ExtendedSettings" groups="device" remote="sony" revision="master" />
+<project path="packages/apps/FMRadio" name="packages-apps-FMRadio" groups="device" remote="sony" revision="master" />
+</manifest>

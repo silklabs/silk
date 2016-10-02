@@ -1,0 +1,30 @@
+From 72a21500c0e90c0e767c4b57ff9ef1185d12cac5 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 11 Jun 2016 21:05:47 -0700
+Subject: [PATCH] Disable hwui
+
+Change-Id: I2668950150696de5466d20a2d4be9bb4f4c3b16e
+---
+ libs/hwui/Android.mk | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/libs/hwui/Android.mk b/libs/hwui/Android.mk
+index 91e289c..e69de29 100644
+--- a/libs/hwui/Android.mk
++++ b/libs/hwui/Android.mk
+@@ -1,12 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-include $(CLEAR_VARS)
+-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+-
+-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+-LOCAL_MODULE := libhwui
+-
+-include $(LOCAL_PATH)/Android.common.mk
+-
+-include $(BUILD_SHARED_LIBRARY)
+-
+-include $(call all-makefiles-under,$(LOCAL_PATH))
+-- 
+2.7.0
+

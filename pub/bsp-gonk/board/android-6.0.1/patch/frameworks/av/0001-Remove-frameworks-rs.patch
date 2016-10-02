@@ -1,0 +1,88 @@
+From cb15cec0c4b6a72900f0556b0333afd6475114bb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 1 Oct 2016 22:15:53 -0700
+Subject: [PATCH] Remove frameworks/rs
+
+---
+ cmds/stagefright/Android.mk             | 5 +----
+ media/libstagefright/Android.mk         | 2 --
+ media/libstagefright/MediaCodec.cpp     | 2 --
+ media/libstagefright/filters/Android.mk | 2 +-
+ 4 files changed, 2 insertions(+), 9 deletions(-)
+
+diff --git a/cmds/stagefright/Android.mk b/cmds/stagefright/Android.mk
+index 20c0094..3566ad0 100644
+--- a/cmds/stagefright/Android.mk
++++ b/cmds/stagefright/Android.mk
+@@ -192,7 +192,6 @@ LOCAL_SHARED_LIBRARIES := \
+ 	libgui \
+ 	libcutils \
+ 	libui \
+-	libRScpp \
+ 
+ LOCAL_C_INCLUDES:= \
+ 	$(TOP)/frameworks/av/media/libstagefright \
+@@ -203,8 +202,6 @@ LOCAL_C_INCLUDES:= \
+ intermediates := $(call intermediates-dir-for,STATIC_LIBRARIES,libRS,TARGET,)
+ LOCAL_C_INCLUDES += $(intermediates)
+ 
+-LOCAL_STATIC_LIBRARIES:= \
+-	libstagefright_mediafilter
+ 
+ LOCAL_CFLAGS += -Wno-multichar -Werror -Wall
+ LOCAL_CLANG := true
+@@ -213,7 +210,7 @@ LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_MODULE:= mediafilter
+ 
+-include $(BUILD_EXECUTABLE)
++#include $(BUILD_EXECUTABLE)
+ 
+ ################################################################################
+ 
+diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
+index 2529aa7..afbb520 100644
+--- a/media/libstagefright/Android.mk
++++ b/media/libstagefright/Android.mk
+@@ -110,7 +110,6 @@ LOCAL_STATIC_LIBRARIES := \
+         libstagefright_color_conversion \
+         libstagefright_aacenc \
+         libstagefright_matroska \
+-        libstagefright_mediafilter \
+         libstagefright_webm \
+         libstagefright_timedtext \
+         libvpx \
+@@ -125,7 +124,6 @@ LOCAL_SHARED_LIBRARIES += \
+         libstagefright_avc_common \
+         libstagefright_foundation \
+         libdl \
+-        libRScpp \
+ 
+ LOCAL_CFLAGS += -Wno-multichar -Werror -Wno-error=deprecated-declarations -Wall
+ 
+diff --git a/media/libstagefright/MediaCodec.cpp b/media/libstagefright/MediaCodec.cpp
+index c2ffdf2..fb1b99d 100644
+--- a/media/libstagefright/MediaCodec.cpp
++++ b/media/libstagefright/MediaCodec.cpp
+@@ -316,8 +316,6 @@ status_t MediaCodec::init(const AString &name, bool nameIsType, bool encoder) {
+         mCodec = new ACodec;
+     } else if (!nameIsType
+             && !strncasecmp(name.c_str(), "android.filter.", 15)) {
+-        mCodec = new MediaFilter;
+-    } else {
+         return NAME_NOT_FOUND;
+     }
+ 
+diff --git a/media/libstagefright/filters/Android.mk b/media/libstagefright/filters/Android.mk
+index 179f054..9bc4458 100644
+--- a/media/libstagefright/filters/Android.mk
++++ b/media/libstagefright/filters/Android.mk
+@@ -25,4 +25,4 @@ LOCAL_CLANG := true
+ 
+ LOCAL_MODULE:= libstagefright_mediafilter
+ 
+-include $(BUILD_STATIC_LIBRARY)
++#include $(BUILD_STATIC_LIBRARY)
+-- 
+2.8.4 (Apple Git-73)
+

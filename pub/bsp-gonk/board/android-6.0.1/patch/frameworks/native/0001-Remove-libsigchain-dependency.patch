@@ -1,0 +1,34 @@
+From b315c14e0d1b295cf55fbecc3b8198d36529a22f Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 11 Feb 2016 18:06:46 -0800
+Subject: [PATCH] Remove libsigchain dependency
+
+Change-Id: I852945bdffbea916aa896270c3db0e6f0eaa899a
+---
+ services/surfaceflinger/Android.mk | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
+index e097540..a01f351 100644
+--- a/services/surfaceflinger/Android.mk
++++ b/services/surfaceflinger/Android.mk
+@@ -130,7 +130,7 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_CLANG := true
+ 
+-LOCAL_LDFLAGS := -Wl,--version-script,art/sigchainlib/version-script.txt -Wl,--export-dynamic
++LOCAL_LDFLAGS := -Wl,--export-dynamic
+ LOCAL_CFLAGS := -DLOG_TAG=\"SurfaceFlinger\"
+ LOCAL_CPPFLAGS := -std=c++11
+ 
+@@ -145,7 +145,6 @@ LOCAL_SHARED_LIBRARIES := \
+     libutils \
+     libdl
+ 
+-LOCAL_WHOLE_STATIC_LIBRARIES := libsigchain
+ 
+ LOCAL_MODULE := surfaceflinger
+ 
+-- 
+2.7.0
+

@@ -1,0 +1,34 @@
+From e2487354e30ecdf219daca2df156c23212b86fe5 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 11 Jun 2016 22:35:17 -0700
+Subject: [PATCH] No tests
+
+Change-Id: I79f2f12c77d75a06481f925f4ce99846ecb04949
+---
+ tests/Android.mk | 15 ---------------
+ 1 file changed, 15 deletions(-)
+
+diff --git a/tests/Android.mk b/tests/Android.mk
+index 919a8fe..8b13789 100644
+--- a/tests/Android.mk
++++ b/tests/Android.mk
+@@ -1,16 +1 @@
+-# Build the unit tests.
+-LOCAL_PATH:= $(call my-dir)
+ 
+-include $(CLEAR_VARS)
+-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+-LOCAL_SHARED_LIBRARIES := \
+-    libOpenSLES \
+-
+-LOCAL_C_INCLUDES := $(call include-path-for, wilhelm)
+-LOCAL_SRC_FILES := mimeUri_test.cpp
+-LOCAL_MODULE := libopenslestests
+-LOCAL_MODULE_TAGS := tests
+-include $(BUILD_NATIVE_TEST)
+-
+-# Build the manual test programs.
+-include $(call all-makefiles-under,$(LOCAL_PATH))
+-- 
+2.7.0
+

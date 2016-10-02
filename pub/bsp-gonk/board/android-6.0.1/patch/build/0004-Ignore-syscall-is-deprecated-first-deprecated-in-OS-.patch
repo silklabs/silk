@@ -1,0 +1,42 @@
+From 5fccaba367643f18a44deef7bb943a825b77bbce Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 2 Oct 2016 00:35:26 -0700
+Subject: [PATCH] Ignore "'syscall' is deprecated: first deprecated in OS X
+ 10.12" warning
+
+---
+ core/combo/HOST_darwin-x86.mk    | 3 +++
+ core/combo/HOST_darwin-x86_64.mk | 3 +++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/core/combo/HOST_darwin-x86.mk b/core/combo/HOST_darwin-x86.mk
+index b5452e8..a2b8efe 100644
+--- a/core/combo/HOST_darwin-x86.mk
++++ b/core/combo/HOST_darwin-x86.mk
+@@ -49,6 +49,9 @@ $(combo_2nd_arch_prefix)HOST_GLOBAL_LDFLAGS += -isysroot $(mac_sdk_root) -Wl,-sy
+ $(combo_2nd_arch_prefix)HOST_GLOBAL_CFLAGS += -fPIC -funwind-tables
+ $(combo_2nd_arch_prefix)HOST_NO_UNDEFINED_LDFLAGS := -Wl,-undefined,error
+ 
++# Ignore "'syscall' is deprecated: first deprecated in OS X 10.12" warning 
++$(combo_2nd_arch_prefix)HOST_GLOBAL_CFLAGS += -Wno-deprecated-declarations
++
+ $(combo_2nd_arch_prefix)HOST_SHLIB_SUFFIX := .dylib
+ $(combo_2nd_arch_prefix)HOST_JNILIB_SUFFIX := .jnilib
+ 
+diff --git a/core/combo/HOST_darwin-x86_64.mk b/core/combo/HOST_darwin-x86_64.mk
+index 0efa78f..5549ec0 100644
+--- a/core/combo/HOST_darwin-x86_64.mk
++++ b/core/combo/HOST_darwin-x86_64.mk
+@@ -49,6 +49,9 @@ HOST_GLOBAL_LDFLAGS += -isysroot $(mac_sdk_root) -Wl,-syslibroot,$(mac_sdk_root)
+ HOST_GLOBAL_CFLAGS += -fPIC -funwind-tables
+ HOST_NO_UNDEFINED_LDFLAGS := -Wl,-undefined,error
+ 
++# Ignore "'syscall' is deprecated: first deprecated in OS X 10.12" warning 
++HOST_GLOBAL_CFLAGS += -Wno-deprecated-declarations
++
+ HOST_SHLIB_SUFFIX := .dylib
+ HOST_JNILIB_SUFFIX := .jnilib
+ 
+-- 
+2.8.4 (Apple Git-73)
+

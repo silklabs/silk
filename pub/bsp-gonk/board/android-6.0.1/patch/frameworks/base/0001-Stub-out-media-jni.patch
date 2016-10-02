@@ -1,0 +1,93 @@
+From 031ae31c51bc662940bcdc786177f6156d3dc519 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 1 Oct 2016 22:13:36 -0700
+Subject: [PATCH] Stub out media/jni/
+
+---
+ media/jni/Android.mk | 76 ----------------------------------------------------
+ 1 file changed, 76 deletions(-)
+
+diff --git a/media/jni/Android.mk b/media/jni/Android.mk
+index 241df15..e69de29 100644
+--- a/media/jni/Android.mk
++++ b/media/jni/Android.mk
+@@ -1,76 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-    android_media_AmrInputStream.cpp \
+-    android_media_ImageWriter.cpp \
+-    android_media_ImageReader.cpp \
+-    android_media_MediaCrypto.cpp \
+-    android_media_MediaCodec.cpp \
+-    android_media_MediaCodecList.cpp \
+-    android_media_MediaDataSource.cpp \
+-    android_media_MediaDrm.cpp \
+-    android_media_MediaExtractor.cpp \
+-    android_media_MediaHTTPConnection.cpp \
+-    android_media_MediaMetadataRetriever.cpp \
+-    android_media_MediaMuxer.cpp \
+-    android_media_MediaPlayer.cpp \
+-    android_media_MediaProfiles.cpp \
+-    android_media_MediaRecorder.cpp \
+-    android_media_MediaScanner.cpp \
+-    android_media_MediaSync.cpp \
+-    android_media_ResampleInputStream.cpp \
+-    android_media_SyncParams.cpp \
+-    android_media_Utils.cpp \
+-    android_mtp_MtpDatabase.cpp \
+-    android_mtp_MtpDevice.cpp \
+-    android_mtp_MtpServer.cpp \
+-
+-LOCAL_SHARED_LIBRARIES := \
+-    libandroid_runtime \
+-    libnativehelper \
+-    libutils \
+-    libbinder \
+-    libmedia \
+-    libskia \
+-    libui \
+-    liblog \
+-    libcutils \
+-    libgui \
+-    libstagefright \
+-    libstagefright_foundation \
+-    libcamera_client \
+-    libmtp \
+-    libusbhost \
+-    libexif \
+-    libstagefright_amrnb_common
+-
+-LOCAL_STATIC_LIBRARIES := \
+-    libstagefright_amrnbenc
+-
+-LOCAL_C_INCLUDES += \
+-    external/libexif/ \
+-    external/tremor/Tremor \
+-    frameworks/base/core/jni \
+-    frameworks/base/libs/hwui \
+-    frameworks/av/media/libmedia \
+-    frameworks/av/media/libstagefright \
+-    frameworks/av/media/libstagefright/codecs/amrnb/enc/src \
+-    frameworks/av/media/libstagefright/codecs/amrnb/common \
+-    frameworks/av/media/libstagefright/codecs/amrnb/common/include \
+-    frameworks/av/media/mtp \
+-    frameworks/native/include/media/openmax \
+-    $(call include-path-for, libhardware)/hardware \
+-    system/media/camera/include \
+-    $(PV_INCLUDES) \
+-    $(JNI_H_INCLUDE)
+-
+-LOCAL_CFLAGS += -Wall -Werror -Wno-error=deprecated-declarations -Wunused -Wunreachable-code
+-
+-LOCAL_MODULE:= libmedia_jni
+-
+-include $(BUILD_SHARED_LIBRARY)
+-
+-# build libsoundpool.so
+-# build libaudioeffect_jni.so
+-include $(call all-makefiles-under,$(LOCAL_PATH))
+-- 
+2.8.4 (Apple Git-73)
+

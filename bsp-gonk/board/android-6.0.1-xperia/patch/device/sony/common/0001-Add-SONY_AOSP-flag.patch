@@ -1,0 +1,22 @@
+From 07f5ef8e5da0bcb4eba9cf50756fe02d84ea33c3 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 2 Oct 2016 08:45:03 -0700
+Subject: [PATCH] Add SONY_AOSP flag
+
+---
+ CommonConfig.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CommonConfig.mk b/CommonConfig.mk
+index 2026d2d..10a252d 100644
+--- a/CommonConfig.mk
++++ b/CommonConfig.mk
+@@ -74,3 +74,5 @@ BUILD_KERNEL := true
+ 
+ # SELinux
+ include device/sony/sepolicy/sepolicy.mk
++
++SONY_AOSP := true
+-- 
+2.8.4 (Apple Git-73)
+

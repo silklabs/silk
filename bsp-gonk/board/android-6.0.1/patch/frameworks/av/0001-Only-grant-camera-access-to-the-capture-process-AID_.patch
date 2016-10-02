@@ -1,0 +1,30 @@
+From 20f178434f921a7c46daf074c6910eae45a0faaa Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 15 Feb 2016 09:30:28 -0800
+Subject: [PATCH] Only grant camera access to the capture process
+ (AID_CAMERA
+
+---
+ services/camera/libcameraservice/CameraService.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/services/camera/libcameraservice/CameraService.cpp b/services/camera/libcameraservice/CameraService.cpp
+index 3d706c1..94fc4a2 100644
+--- a/services/camera/libcameraservice/CameraService.cpp
++++ b/services/camera/libcameraservice/CameraService.cpp
+@@ -880,6 +880,12 @@ status_t CameraService::validateConnectLocked(const String8& cameraId, /*inout*/
+         return -EACCES;
+     }
+ 
++    if (clientUid == 1006 /*AID_CAMERA*/) {
++      return checkIfDeviceIsUsable(cameraId);
++    }
++    ALOGE("CameraService::connect X (PID %d, UID%d) rejected", callingPid, clientUid);
++    return PERMISSION_DENIED;
++
+     // Only allow clients who are being used by the current foreground device user, unless calling
+     // from our own process.
+     if (callingPid != getpid() && (mAllowedUsers.find(clientUserId) == mAllowedUsers.end())) {
+-- 
+1.9.1
+

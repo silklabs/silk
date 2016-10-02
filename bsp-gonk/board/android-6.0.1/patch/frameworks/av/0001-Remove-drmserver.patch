@@ -1,0 +1,23 @@
+From 375d778bb2b6b0518332003b23192e6ce5fd6d58 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 19 Aug 2016 16:18:05 -0700
+Subject: [PATCH] Remove drmserver
+
+Change-Id: I1047442fd7081ca95afb2f3328c17cdca1a39d69
+---
+ drm/drmserver/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drm/drmserver/Android.mk b/drm/drmserver/Android.mk
+index 48ea385..4510116 100644
+--- a/drm/drmserver/Android.mk
++++ b/drm/drmserver/Android.mk
+@@ -42,4 +42,4 @@ LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_32_BIT_ONLY := true
+ 
+-include $(BUILD_EXECUTABLE)
++#include $(BUILD_EXECUTABLE)
+-- 
+2.9.2
+

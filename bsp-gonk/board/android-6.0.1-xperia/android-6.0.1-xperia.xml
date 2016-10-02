@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
+<include name="android-6.0.1.xml" />
+
 <remote name="sony" fetch="git://github.com/sonyxperiadev/" />
 <remove-project name="platform/hardware/qcom/camera" />
 <remove-project name="platform/packages/apps/FMRadio" />

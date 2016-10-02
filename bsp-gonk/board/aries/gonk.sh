@@ -1,1 +1,2 @@
 export TARGET_PRODUCT=aosp_d5803
+export TARGET_BUILD_VARIANT=eng

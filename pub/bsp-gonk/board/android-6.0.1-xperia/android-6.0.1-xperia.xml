@@ -41,4 +41,12 @@
 <project path="vendor/sony-oss/timekeep" name="timekeep" groups="device" remote="sony" revision="master" />
 <project path="packages/apps/ExtendedSettings" name="packages_apps_ExtendedSettings" groups="device" remote="sony" revision="master" />
 <project path="packages/apps/FMRadio" name="packages-apps-FMRadio" groups="device" remote="sony" revision="master" />
+
+<remote fetch="git://github.com/DonkeyCoyote" name="DonkeyCoyote"/>
+<project name="proprietary_vendor_sony"
+         path="vendor/sony"
+         groups="device"
+         clone-depth="1"
+         remote="DonkeyCoyote"
+         revision="android-6.0"/>
 </manifest>

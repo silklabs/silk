@@ -1,0 +1,96 @@
+From 29d1a6e8740af434b668e56562128a300158f6c7 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 11 Feb 2016 10:11:13 -0800
+Subject: [PATCH] Disable app_process
+
+Change-Id: Iebb58fe2e824fbd9c948ae23eb5e1f591486447b
+---
+ cmds/app_process/Android.mk | 76 ---------------------------------------------
+ 1 file changed, 76 deletions(-)
+ delete mode 100644 cmds/app_process/Android.mk
+
+diff --git a/cmds/app_process/Android.mk b/cmds/app_process/Android.mk
+deleted file mode 100644
+index 7ce0846..0000000
+--- a/cmds/app_process/Android.mk
++++ /dev/null
+@@ -1,76 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-
+-# This is a list of libraries that need to be included in order to avoid
+-# bad apps. This prevents a library from having a mismatch when resolving
+-# new/delete from an app shared library.
+-# See b/21032018 for more details.
+-app_process_common_shared_libs := \
+-    libwilhelm \
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-    app_main.cpp
+-
+-LOCAL_LDFLAGS := -Wl,--version-script,art/sigchainlib/version-script.txt -Wl,--export-dynamic
+-
+-LOCAL_SHARED_LIBRARIES := \
+-    libdl \
+-    libcutils \
+-    libutils \
+-    liblog \
+-    libbinder \
+-    libandroid_runtime \
+-    $(app_process_common_shared_libs) \
+-
+-LOCAL_WHOLE_STATIC_LIBRARIES := libsigchain
+-
+-LOCAL_MODULE:= app_process
+-LOCAL_MULTILIB := both
+-LOCAL_MODULE_STEM_32 := app_process32
+-LOCAL_MODULE_STEM_64 := app_process64
+-
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
+-
+-include $(BUILD_EXECUTABLE)
+-
+-# Create a symlink from app_process to app_process32 or 64
+-# depending on the target configuration.
+-include  $(BUILD_SYSTEM)/executable_prefer_symlink.mk
+-
+-# Build a variant of app_process binary linked with ASan runtime.
+-# ARM-only at the moment.
+-ifeq ($(TARGET_ARCH),arm)
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-    app_main.cpp
+-
+-LOCAL_SHARED_LIBRARIES := \
+-    libcutils \
+-    libutils \
+-    liblog \
+-    libbinder \
+-    libandroid_runtime \
+-    $(app_process_common_shared_libs) \
+-
+-LOCAL_WHOLE_STATIC_LIBRARIES := libsigchain
+-
+-LOCAL_LDFLAGS := -ldl -Wl,--version-script,art/sigchainlib/version-script.txt -Wl,--export-dynamic
+-LOCAL_CPPFLAGS := -std=c++11
+-
+-LOCAL_MODULE := app_process__asan
+-LOCAL_MULTILIB := both
+-LOCAL_MODULE_STEM_32 := app_process32
+-LOCAL_MODULE_STEM_64 := app_process64
+-
+-LOCAL_ADDRESS_SANITIZER := true
+-LOCAL_CLANG := true
+-LOCAL_MODULE_PATH := $(TARGET_OUT_EXECUTABLES)/asan
+-
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
+-
+-include $(BUILD_EXECUTABLE)
+-
+-endif # ifeq($(TARGET_ARCH),arm)
+-- 
+2.7.0
+

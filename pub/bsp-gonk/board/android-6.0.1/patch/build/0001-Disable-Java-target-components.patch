@@ -1,0 +1,306 @@
+From 6e5705dba9d1fb53c5678809305ca5d63234c608 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 11 Feb 2016 11:25:25 -0800
+Subject: [PATCH] Disable Java target components
+
+Change-Id: I4d256974df34b8d4400081e2ce09e40baca9d446
+---
+ core/config.mk                        |  16 ++---
+ core/empty.mk                         |   0
+ core/tasks/apicheck.mk                | 132 ----------------------------------
+ core/tasks/boot_jars_package_check.mk |  46 ------------
+ tools/apicheck/Android.mk             |  40 -----------
+ 5 files changed, 8 insertions(+), 226 deletions(-)
+ create mode 100644 core/empty.mk
+ delete mode 100644 core/tasks/apicheck.mk
+ delete mode 100644 core/tasks/boot_jars_package_check.mk
+ delete mode 100644 tools/apicheck/Android.mk
+
+diff --git a/core/config.mk b/core/config.mk
+index 98ce6e7..d68dedd 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -73,17 +73,17 @@ BUILD_STATIC_LIBRARY:= $(BUILD_SYSTEM)/static_library.mk
+ BUILD_SHARED_LIBRARY:= $(BUILD_SYSTEM)/shared_library.mk
+ BUILD_EXECUTABLE:= $(BUILD_SYSTEM)/executable.mk
+ BUILD_HOST_EXECUTABLE:= $(BUILD_SYSTEM)/host_executable.mk
+-BUILD_PACKAGE:= $(BUILD_SYSTEM)/package.mk
+-BUILD_PHONY_PACKAGE:= $(BUILD_SYSTEM)/phony_package.mk
++BUILD_PACKAGE:= $(BUILD_SYSTEM)/empty.mk
++BUILD_PHONY_PACKAGE:= $(BUILD_SYSTEM)/empty.mk
+ BUILD_HOST_PREBUILT:= $(BUILD_SYSTEM)/host_prebuilt.mk
+ BUILD_PREBUILT:= $(BUILD_SYSTEM)/prebuilt.mk
+ BUILD_MULTI_PREBUILT:= $(BUILD_SYSTEM)/multi_prebuilt.mk
+-BUILD_JAVA_LIBRARY:= $(BUILD_SYSTEM)/java_library.mk
+-BUILD_STATIC_JAVA_LIBRARY:= $(BUILD_SYSTEM)/static_java_library.mk
++BUILD_JAVA_LIBRARY:= $(BUILD_SYSTEM)/empty.mk
++BUILD_STATIC_JAVA_LIBRARY:= $(BUILD_SYSTEM)/empty.mk
+ BUILD_HOST_JAVA_LIBRARY:= $(BUILD_SYSTEM)/host_java_library.mk
+-BUILD_DROIDDOC:= $(BUILD_SYSTEM)/droiddoc.mk
++BUILD_DROIDDOC:= $(BUILD_SYSTEM)/empty.mk
+ BUILD_COPY_HEADERS := $(BUILD_SYSTEM)/copy_headers.mk
+-BUILD_NATIVE_TEST := $(BUILD_SYSTEM)/native_test.mk
++BUILD_NATIVE_TEST := $(BUILD_SYSTEM)/empty.mk
+ BUILD_NATIVE_BENCHMARK := $(BUILD_SYSTEM)/native_benchmark.mk
+ BUILD_HOST_NATIVE_TEST := $(BUILD_SYSTEM)/host_native_test.mk
+ 
+@@ -407,7 +407,7 @@ MKBOOTIMG := $(HOST_OUT_EXECUTABLES)/mkbootimg$(HOST_EXECUTABLE_SUFFIX)
+ else
+ MKBOOTIMG := $(BOARD_CUSTOM_MKBOOTIMG)
+ endif
+-APICHECK := $(HOST_OUT_EXECUTABLES)/apicheck$(HOST_EXECUTABLE_SUFFIX)
++APICHECK :=
+ FS_GET_STATS := $(HOST_OUT_EXECUTABLES)/fs_get_stats$(HOST_EXECUTABLE_SUFFIX)
+ MAKE_EXT4FS := $(HOST_OUT_EXECUTABLES)/make_ext4fs$(HOST_EXECUTABLE_SUFFIX)
+ MKEXTUSERIMG := $(HOST_OUT_EXECUTABLES)/mkuserimg.sh
+@@ -526,7 +526,7 @@ endif
+ APICHECK_CLASSPATH := $(HOST_JDK_TOOLS_JAR)
+ APICHECK_CLASSPATH := $(APICHECK_CLASSPATH):$(HOST_OUT_JAVA_LIBRARIES)/doclava$(COMMON_JAVA_PACKAGE_SUFFIX)
+ APICHECK_CLASSPATH := $(APICHECK_CLASSPATH):$(HOST_OUT_JAVA_LIBRARIES)/jsilver$(COMMON_JAVA_PACKAGE_SUFFIX)
+-APICHECK_COMMAND := $(APICHECK) -JXmx1024m -J"classpath $(APICHECK_CLASSPATH)"
++APICHECK_COMMAND := true
+ 
+ # The default key if not set as LOCAL_CERTIFICATE
+ ifdef PRODUCT_DEFAULT_DEV_CERTIFICATE
+diff --git a/core/empty.mk b/core/empty.mk
+new file mode 100644
+index 0000000..e69de29
+diff --git a/core/tasks/apicheck.mk b/core/tasks/apicheck.mk
+deleted file mode 100644
+index 683a075..0000000
+--- a/core/tasks/apicheck.mk
++++ /dev/null
+@@ -1,132 +0,0 @@
+-# Copyright (C) 2008 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-#
+-# Rules for running apicheck to confirm that you haven't broken
+-# api compatibility or added apis illegally.
+-#
+-
+-# skip api check for PDK buid
+-ifeq (,$(filter true, $(WITHOUT_CHECK_API) $(TARGET_BUILD_PDK)))
+-
+-.PHONY: checkapi
+-
+-# Run the checkapi rules by default.
+-droidcore: checkapi
+-
+-last_released_sdk_version := $(lastword $(call numerically_sort, \
+-            $(filter-out current, \
+-                $(patsubst $(SRC_API_DIR)/%.txt,%, $(wildcard $(SRC_API_DIR)/*.txt)) \
+-             )\
+-        ))
+-
+-.PHONY: check-public-api
+-checkapi : check-public-api
+-
+-.PHONY: update-api
+-
+-# INTERNAL_PLATFORM_API_FILE is the one build by droiddoc.
+-# Note that since INTERNAL_PLATFORM_API_FILE is the byproduct of api-stubs module,
+-# (See frameworks/base/Android.mk)
+-# we need to add api-stubs as additional dependency of the api check.
+-
+-# Check that the API we're building hasn't broken the last-released
+-# SDK version.
+-$(eval $(call check-api, \
+-    checkpublicapi-last, \
+-    $(SRC_API_DIR)/$(last_released_sdk_version).txt, \
+-    $(INTERNAL_PLATFORM_API_FILE), \
+-    frameworks/base/api/removed.txt, \
+-    $(INTERNAL_PLATFORM_REMOVED_API_FILE), \
+-    -hide 2 -hide 3 -hide 4 -hide 5 -hide 6 -hide 24 -hide 25 -hide 26 -hide 27 \
+-    -error 7 -error 8 -error 9 -error 10 -error 11 -error 12 -error 13 -error 14 -error 15 \
+-    -error 16 -error 17 -error 18 , \
+-    cat $(BUILD_SYSTEM)/apicheck_msg_last.txt, \
+-    check-public-api, \
+-    $(call doc-timestamp-for,api-stubs) \
+-    ))
+-
+-# Check that the API we're building hasn't changed from the not-yet-released
+-# SDK version.
+-$(eval $(call check-api, \
+-    checkpublicapi-current, \
+-    frameworks/base/api/current.txt, \
+-    $(INTERNAL_PLATFORM_API_FILE), \
+-    frameworks/base/api/removed.txt, \
+-    $(INTERNAL_PLATFORM_REMOVED_API_FILE), \
+-    -error 2 -error 3 -error 4 -error 5 -error 6 \
+-    -error 7 -error 8 -error 9 -error 10 -error 11 -error 12 -error 13 -error 14 -error 15 \
+-    -error 16 -error 17 -error 18 -error 19 -error 20 -error 21 -error 23 -error 24 \
+-    -error 25 -error 26 -error 27, \
+-    cat $(BUILD_SYSTEM)/apicheck_msg_current.txt, \
+-    check-public-api, \
+-    $(call doc-timestamp-for,api-stubs) \
+-    ))
+-
+-.PHONY: update-public-api
+-update-public-api: $(INTERNAL_PLATFORM_API_FILE) | $(ACP)
+-	@echo Copying current.txt
+-	$(hide) $(ACP) $(INTERNAL_PLATFORM_API_FILE) frameworks/base/api/current.txt
+-	@echo Copying removed.txt
+-	$(hide) $(ACP) $(INTERNAL_PLATFORM_REMOVED_API_FILE) frameworks/base/api/removed.txt
+-
+-update-api : update-public-api
+-
+-#####################Check System API#####################
+-.PHONY: check-system-api
+-checkapi : check-system-api
+-
+-# Check that the System API we're building hasn't broken the last-released
+-# SDK version.
+-$(eval $(call check-api, \
+-    checksystemapi-last, \
+-    $(SRC_SYSTEM_API_DIR)/$(last_released_sdk_version).txt, \
+-    $(INTERNAL_PLATFORM_SYSTEM_API_FILE), \
+-    frameworks/base/api/system-removed.txt, \
+-    $(INTERNAL_PLATFORM_SYSTEM_REMOVED_API_FILE), \
+-    -hide 2 -hide 3 -hide 4 -hide 5 -hide 6 -hide 24 -hide 25 -hide 26 -hide 27 \
+-    -error 7 -error 8 -error 9 -error 10 -error 11 -error 12 -error 13 -error 14 -error 15 \
+-    -error 16 -error 17 -error 18 , \
+-    cat $(BUILD_SYSTEM)/apicheck_msg_last.txt, \
+-    check-system-api, \
+-    $(call doc-timestamp-for,system-api-stubs) \
+-    ))
+-
+-# Check that the System API we're building hasn't changed from the not-yet-released
+-# SDK version.
+-$(eval $(call check-api, \
+-    checksystemapi-current, \
+-    frameworks/base/api/system-current.txt, \
+-    $(INTERNAL_PLATFORM_SYSTEM_API_FILE), \
+-    frameworks/base/api/system-removed.txt, \
+-    $(INTERNAL_PLATFORM_SYSTEM_REMOVED_API_FILE), \
+-    -error 2 -error 3 -error 4 -error 5 -error 6 \
+-    -error 7 -error 8 -error 9 -error 10 -error 11 -error 12 -error 13 -error 14 -error 15 \
+-    -error 16 -error 17 -error 18 -error 19 -error 20 -error 21 -error 23 -error 24 \
+-    -error 25 -error 26 -error 27, \
+-    cat $(BUILD_SYSTEM)/apicheck_msg_current.txt, \
+-    check-system-api, \
+-    $(call doc-timestamp-for,system-api-stubs) \
+-    ))
+-
+-.PHONY: update-system-api
+-update-api : update-system-api
+-
+-update-system-api: $(INTERNAL_PLATFORM_SYSTEM_API_FILE) | $(ACP)
+-	@echo Copying system-current.txt
+-	$(hide) $(ACP) $(INTERNAL_PLATFORM_SYSTEM_API_FILE) frameworks/base/api/system-current.txt
+-	@echo Copying system-removed.txt
+-	$(hide) $(ACP) $(INTERNAL_PLATFORM_SYSTEM_REMOVED_API_FILE) frameworks/base/api/system-removed.txt
+-
+-endif
+diff --git a/core/tasks/boot_jars_package_check.mk b/core/tasks/boot_jars_package_check.mk
+deleted file mode 100644
+index 188c267..0000000
+--- a/core/tasks/boot_jars_package_check.mk
++++ /dev/null
+@@ -1,46 +0,0 @@
+-# Copyright (C) 2014 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-#
+-# Rules to check if classes in the boot jars are from the whitelisted packages.
+-#
+-
+-ifneq ($(SKIP_BOOT_JARS_CHECK),true)
+-ifneq ($(TARGET_BUILD_PDK),true)
+-ifdef PRODUCT_BOOT_JARS
+-
+-intermediates := $(call intermediates-dir-for, PACKAGING, boot-jars-package-check,,COMMON)
+-stamp := $(intermediates)/stamp
+-built_boot_jars := $(foreach j, $(PRODUCT_BOOT_JARS), \
+-  $(call intermediates-dir-for, JAVA_LIBRARIES, $(j),,COMMON)/classes.jar)
+-script := build/core/tasks/check_boot_jars/check_boot_jars.py
+-whitelist_file := build/core/tasks/check_boot_jars/package_whitelist.txt
+-
+-$(stamp): PRIVATE_BOOT_JARS := $(built_boot_jars)
+-$(stamp): PRIVATE_SCRIPT := $(script)
+-$(stamp): PRIVATE_WHITELIST := $(whitelist_file)
+-$(stamp) : $(built_boot_jars) $(script) $(whitelist_file)
+-	@echo "Check package name for $(PRIVATE_BOOT_JARS)"
+-	$(hide) $(PRIVATE_SCRIPT) $(PRIVATE_WHITELIST) $(PRIVATE_BOOT_JARS)
+-	$(hide) mkdir -p $(dir $@) && touch $@
+-
+-.PHONY: check-boot-jars
+-check-boot-jars : $(stamp)
+-
+-# Run check-boot-jars by default
+-droidcore : check-boot-jars
+-
+-endif  # PRODUCT_BOOT_JARS
+-endif  # TARGET_BUILD_PDK not true
+-endif  # SKIP_BOOT_JARS_CHECK not true
+diff --git a/tools/apicheck/Android.mk b/tools/apicheck/Android.mk
+deleted file mode 100644
+index 1674a17..0000000
+--- a/tools/apicheck/Android.mk
++++ /dev/null
+@@ -1,40 +0,0 @@
+-# Copyright (C) 2007-2008 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-ifneq ($(TARGET_BUILD_PDK),true)
+-LOCAL_PATH := $(call my-dir)
+-
+-# We use copy-file-to-new-target so that the installed
+-# script file's timestamp is at least as new as the
+-# .jar file it wraps.
+-
+-#TODO(dbort): add a template to do this stuff; share with jx
+-
+-# the hat script
+-# ============================================================
+-include $(CLEAR_VARS)
+-LOCAL_IS_HOST_MODULE := true
+-LOCAL_MODULE_CLASS := EXECUTABLES
+-LOCAL_MODULE := apicheck
+-
+-include $(BUILD_SYSTEM)/base_rules.mk
+-
+-$(LOCAL_BUILT_MODULE): $(HOST_OUT_JAVA_LIBRARIES)/doclava$(COMMON_JAVA_PACKAGE_SUFFIX)
+-$(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/etc/apicheck | $(ACP)
+-	@echo "Copy: $(PRIVATE_MODULE) ($@)"
+-	$(copy-file-to-new-target)
+-	$(hide) chmod 755 $@
+-
+-# Apicheck is now part of Doclava -- See external/doclava.
+-endif
+-- 
+2.7.0
+

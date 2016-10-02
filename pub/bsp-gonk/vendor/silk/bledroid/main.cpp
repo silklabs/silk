@@ -2554,7 +2554,11 @@ int bt_init() {
   LOG_ERROR(err, "bt set_os_callouts() failed: %d", err);
 
   ALOGV("bt enable");
+#ifdef AOSPBLUETOOTH_SUPPORTS_GUEST_MODE
+  CALL_AND_WAIT(bt->enable(/*guest_mode=*/false), WaitEnableDisable);
+#else
   CALL_AND_WAIT(bt->enable(), WaitEnableDisable);
+#endif
   LOG_ERROR((adapter_state != BT_STATE_ON), "failed to turn on BT");
 
   char name[PROPERTY_VALUE_MAX] = {0};

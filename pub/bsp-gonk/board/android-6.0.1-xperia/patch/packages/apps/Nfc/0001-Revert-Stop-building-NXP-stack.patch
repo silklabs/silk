@@ -1,0 +1,82 @@
+From cbbadb5b50ba6cc3c4c18d1ee8a9b020cef9f9f8 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 1 Oct 2016 21:47:32 -0700
+Subject: [PATCH] Revert "Stop building NXP stack."
+
+This reverts commit 988c3fff5470a1de3a880bd07fa438cc47e283c8.
+---
+ Android.mk         | 23 +++++++++++++++++++++++
+ nxp/jni/Android.mk |  6 +-----
+ tests/Android.mk   |  2 +-
+ 3 files changed, 25 insertions(+), 6 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 0ae2461..286b73f 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -1,6 +1,28 @@
+ LOCAL_PATH:= $(call my-dir)
+ 
+ ########################################
++# NXP Configuration
++########################################
++include $(CLEAR_VARS)
++
++LOCAL_MODULE_TAGS := optional
++
++LOCAL_SRC_FILES := \
++        $(call all-java-files-under, src)
++
++LOCAL_SRC_FILES += \
++        $(call all-java-files-under, nxp)
++
++LOCAL_PACKAGE_NAME := Nfc
++LOCAL_CERTIFICATE := platform
++
++LOCAL_JNI_SHARED_LIBRARIES  := libnfc_jni
++
++LOCAL_PROGUARD_ENABLED := disabled
++
++include $(BUILD_PACKAGE)
++
++########################################
+ # NCI Configuration
+ ########################################
+ include $(CLEAR_VARS)
+@@ -14,6 +36,7 @@ LOCAL_SRC_FILES += \
+         $(call all-java-files-under, nci)
+ 
+ LOCAL_PACKAGE_NAME := NfcNci
++LOCAL_OVERRIDES_PACKAGES := Nfc
+ LOCAL_CERTIFICATE := platform
+ 
+ LOCAL_JNI_SHARED_LIBRARIES := libnfc_nci_jni
+diff --git a/nxp/jni/Android.mk b/nxp/jni/Android.mk
+index c0e23db..607c664 100644
+--- a/nxp/jni/Android.mk
++++ b/nxp/jni/Android.mk
+@@ -33,8 +33,4 @@ LOCAL_SHARED_LIBRARIES := \
+ LOCAL_MODULE := libnfc_jni
+ LOCAL_MODULE_TAGS := optional
+ 
+-# !!! Intentionally commented out, we'll stop building
+-# the NXP stack in M, code will be removed in the
+-# next release.
+-# include $(BUILD_SHARED_LIBRARY)
+-# !!!
++include $(BUILD_SHARED_LIBRARY)
+diff --git a/tests/Android.mk b/tests/Android.mk
+index ae91373..be8dff1 100644
+--- a/tests/Android.mk
++++ b/tests/Android.mk
+@@ -26,6 +26,6 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
+ LOCAL_PACKAGE_NAME := NfcTests
+ LOCAL_CERTIFICATE := platform
+ 
+-LOCAL_INSTRUMENTATION_FOR := NfcNci
++LOCAL_INSTRUMENTATION_FOR := Nfc
+ 
+ include $(BUILD_PACKAGE)
+-- 
+2.8.4 (Apple Git-73)
+

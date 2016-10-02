@@ -1,0 +1,32 @@
+From 8a882d8b2d8587772138d4f65d47bf15e5b83004 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 3 May 2016 16:21:05 -0700
+Subject: [PATCH] Allow .node modules to override LOCAL_INSTALLED_MODULE_STEM
+
+Change-Id: Ic4ce75a0bd7fd3546d62ad79edee84ab85012e9a
+---
+ core/shared_library.mk | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/core/shared_library.mk b/core/shared_library.mk
+index 71a3bb2..00764c0 100644
+--- a/core/shared_library.mk
++++ b/core/shared_library.mk
+@@ -40,8 +40,13 @@ LOCAL_BUILT_MODULE :=
+ LOCAL_INSTALLED_MODULE :=
+ LOCAL_MODULE_STEM :=
+ LOCAL_BUILT_MODULE_STEM :=
++ifeq ($(LOCAL_MODULE_SUFFIX),.node)
++# Gyp-generated .node modules can have very unfriendly LOCAL_MODULE names and
++# want to use LOCAL_INSTALLED_MODULE_STEM to fix them for installing on device.
++$(info Keeping LOCAL_INSTALLED_MODULE_STEM for $(LOCAL_MODULE): $(LOCAL_INSTALLED_MODULE_STEM))
++else
+ LOCAL_INSTALLED_MODULE_STEM :=
+-LOCAL_INTERMEDIATE_TARGETS :=
++endif
+ 
+ include $(BUILD_SYSTEM)/shared_library_internal.mk
+ 
+-- 
+1.9.1
+

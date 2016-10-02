@@ -1,0 +1,23 @@
+From d1ca557da5517dcb850b1e4a4318ebecd03133b0 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 18 Jul 2016 15:26:00 -0700
+Subject: [PATCH] Disable libttscompat
+
+Change-Id: I60b78cab3af5eea50ac0e7ea2416472175f36c1c
+---
+ pico/compat/jni/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pico/compat/jni/Android.mk b/pico/compat/jni/Android.mk
+index 5a7180c..bd15361 100755
+--- a/pico/compat/jni/Android.mk
++++ b/pico/compat/jni/Android.mk
+@@ -19,4 +19,4 @@ LOCAL_SHARED_LIBRARIES := \
+ 	liblog \
+ 	libdl
+ 
+-include $(BUILD_SHARED_LIBRARY)
++#include $(BUILD_SHARED_LIBRARY)
+-- 
+1.9.1
+

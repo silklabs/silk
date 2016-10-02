@@ -1,0 +1,1328 @@
+From ba7ed0ad23c2cbc5df70045f0fbeaa20e6505ef0 Mon Sep 17 00:00:00 2001
+From: David <Davidteri91@gmail.com>
+Date: Fri, 19 Aug 2016 12:11:33 +0200
+Subject: [PATCH] media: add 8952 platform from caf
+
+Change-Id: I3a15984d0850b1166c807aea807c3ba92500ca34
+Signed-off-by: David Viteri <davidteri91@gmail.com>
+---
+ Android.mk                                |   6 +-
+ mm-core/Android.mk                        |   6 +-
+ mm-core/src/8952/registry_table.c         | 557 ++++++++++++++++++++++++++
+ mm-core/src/8952/registry_table_android.c | 622 ++++++++++++++++++++++++++++++
+ mm-video-v4l2/vidc/vdec.mk                |  10 +-
+ mm-video-v4l2/vidc/venc.mk                |   8 +-
+ 6 files changed, 1201 insertions(+), 8 deletions(-)
+ create mode 100644 mm-core/src/8952/registry_table.c
+ create mode 100644 mm-core/src/8952/registry_table_android.c
+
+diff --git a/Android.mk b/Android.mk
+index 64f9fac..1304477 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -1,5 +1,5 @@
+ QCOM_MEDIA_ROOT := $(call my-dir)
+-ifneq ($(filter msm8610 msm8226 msm8974 msm8960 msm8660 msm7627a msm7630_surf msm8084 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8610 msm8226 msm8974 msm8960 msm8660 msm7627a msm7630_surf msm8084 msm8952 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
+ include $(QCOM_MEDIA_ROOT)/mm-core/Android.mk
+ include $(QCOM_MEDIA_ROOT)/libstagefrighthw/Android.mk
+ endif
+@@ -8,10 +8,10 @@ ifneq ($(filter msm8960 msm8660,$(TARGET_BOARD_PLATFORM)),)
+ include $(QCOM_MEDIA_ROOT)/mm-video-legacy/Android.mk
+ endif
+ 
+-ifneq ($(filter msm8610 msm8226 msm8974 msm8084 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8610 msm8226 msm8974 msm8084 msm8952 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
+ include $(QCOM_MEDIA_ROOT)/mm-video-v4l2/Android.mk
+ endif
+ 
+-ifneq ($(filter msm8610 msm8226 msm8974 msm8960 msm8084 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8610 msm8226 msm8974 msm8960 msm8952 msm8084 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
+ include $(QCOM_MEDIA_ROOT)/libc2dcolorconvert/Android.mk
+ endif
+diff --git a/mm-core/Android.mk b/mm-core/Android.mk
+index bdee813..559748d 100644
+--- a/mm-core/Android.mk
++++ b/mm-core/Android.mk
+@@ -38,6 +38,8 @@ else ifeq ($(TARGET_BOARD_PLATFORM),msm8992)
+ MM_CORE_TARGET = msm8992
+ else ifeq ($(TARGET_BOARD_PLATFORM),msm8994)
+ MM_CORE_TARGET = msm8994
++else ifeq ($(TARGET_BOARD_PLATFORM),msm8952)
++MM_CORE_TARGET = 8952
+ else ifeq ($(TARGET_BOARD_PLATFORM),thulium)
+ MM_CORE_TARGET = thulium
+ else
+@@ -90,7 +92,7 @@ LOCAL_CFLAGS            := $(OMXCORE_CFLAGS)
+ 
+ LOCAL_SRC_FILES         := src/common/omx_core_cmp.cpp
+ LOCAL_SRC_FILES         += src/common/qc_omx_core.c
+-ifneq (,$(filter msm8916 msm8994 msm8909 thulium msm8992,$(TARGET_BOARD_PLATFORM)))
++ifneq (,$(filter msm8916 msm8994 msm8952 msm8909 thulium msm8992,$(TARGET_BOARD_PLATFORM)))
+ LOCAL_SRC_FILES         += src/$(MM_CORE_TARGET)/registry_table_android.c
+ else
+ LOCAL_SRC_FILES         += src/$(MM_CORE_TARGET)/qc_registry_table_android.c
+@@ -113,7 +115,7 @@ LOCAL_CFLAGS            := $(OMXCORE_CFLAGS)
+ 
+ LOCAL_SRC_FILES         := src/common/omx_core_cmp.cpp
+ LOCAL_SRC_FILES         += src/common/qc_omx_core.c
+-ifneq (,$(filter msm8916 msm8994 msm8909 thulium msm8992,$(TARGET_BOARD_PLATFORM)))
++ifneq (,$(filter msm8916 msm8994 msm8952 msm8909 thulium msm8992,$(TARGET_BOARD_PLATFORM)))
+ LOCAL_SRC_FILES         += src/$(MM_CORE_TARGET)/registry_table.c
+ else
+ LOCAL_SRC_FILES         += src/$(MM_CORE_TARGET)/qc_registry_table.c
+diff --git a/mm-core/src/8952/registry_table.c b/mm-core/src/8952/registry_table.c
+new file mode 100644
+index 0000000..d3074f3
+--- /dev/null
++++ b/mm-core/src/8952/registry_table.c
+@@ -0,0 +1,557 @@
++/*--------------------------------------------------------------------------
++Copyright (c) 2015, The Linux Foundation. All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are
++met:
++    * Redistributions of source code must retain the above copyright
++      notice, this list of conditions and the following disclaimer.
++    * Redistributions in binary form must reproduce the above
++      copyright notice, this list of conditions and the following
++      disclaimer in the documentation and/or other materials provided
++      with the distribution.
++    * Neither the name of The Linux Foundation nor the names of its
++      contributors may be used to endorse or promote products derived
++      from this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++--------------------------------------------------------------------------*/
++/*============================================================================
++                            O p e n M A X   w r a p p e r s
++                             O p e n  M A X   C o r e
++
++ This module contains the registry table for the QTI's OpenMAX core.
++
++*//*========================================================================*/
++
++#include "qc_omx_core.h"
++
++omx_core_cb_type core[] =
++{
++  {
++    "OMX.qcom.video.decoder.avc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.avc"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg4",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg4"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg4.secure",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg4"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg2",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg2"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg2.secure",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg2"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vc1",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vc1.secure",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.wmv",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.wmv.secure",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.file.muxer",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++
++    "libOmxMux.so",
++    {
++      "container_muxer.mp2"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.divx4",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.divx"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.divx",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.divx"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.divx311",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.divx"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.h263",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.h263"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.hevc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vp8",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vp8"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vp9",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vp9"
++    }
++  },
++   {
++    "OMX.qcom.video.encoder.mpeg4",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.mpeg4"
++    }
++  },
++   {
++    "OMX.qcom.video.encoder.h263",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.h263",
++    }
++  },
++   {
++    "OMX.qcom.video.encoder.avc",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.avc"
++    }
++  },
++  {
++    "OMX.qcom.video.encoder.vp8",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.vp8",
++    }
++  },
++  {
++    "OMX.qti.video.encoder.hevc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxSwVencHevc.so",
++    {
++      "video_encoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.video.encoder.hevc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.video.encoder.hevc.secure",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.Qcelp13",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxQcelp13Dec.so",
++    {
++      "audio_decoder.Qcelp13"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.evrc",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxEvrcDec.so",
++    {
++      "audio_decoder.evrc"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.wma",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++     NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxWmaDec.so",
++    {
++     "audio_decoder.wma"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.wma10Pro",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++     NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxWmaDec.so",
++    {
++     "audio_decoder.wma"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.aac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAacDec.so",
++    {
++      "audio_decoder.aac"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.amrwbplus",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++     NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAmrwbplusDec.so",
++    {
++     "audio_decoder.awbplus"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.alac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAlacDec.so",
++    {
++      "audio_decoder.alac"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.ape",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxApeDec.so",
++    {
++      "audio_decoder.ape"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.aac",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,  // Shared object library handle
++    "libOmxAacEnc.so",
++    {
++      "audio_encoder.aac"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.qcelp13",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxQcelp13Enc.so",
++    {
++      "audio_encoder.qcelp13"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.evrc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxEvrcEnc.so",
++    {
++      "audio_encoder.evrc"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.amrnb",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAmrEnc.so",
++    {
++      "audio_encoder.amrnb"
++    }
++  },
++ {
++    "OMX.qcom.audio.decoder.aac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAacDec.so",
++    {
++      "audio_decoder.aac"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.multiaac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAacDec.so",
++    {
++      "audio_decoder.aac"
++    }
++  },
++  {
++    "OMX.qcom.vdec.vpp",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL,
++      NULL,
++      NULL,
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVpp.so",
++    {
++      "video_decoder.vpp"
++    }
++  }
++};
++
++const unsigned int SIZE_OF_CORE = sizeof(core) / sizeof(omx_core_cb_type);
++
++
+diff --git a/mm-core/src/8952/registry_table_android.c b/mm-core/src/8952/registry_table_android.c
+new file mode 100644
+index 0000000..7984d37
+--- /dev/null
++++ b/mm-core/src/8952/registry_table_android.c
+@@ -0,0 +1,622 @@
++/*--------------------------------------------------------------------------
++Copyright (c) 2015, The Linux Foundation. All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are
++met:
++    * Redistributions of source code must retain the above copyright
++      notice, this list of conditions and the following disclaimer.
++    * Redistributions in binary form must reproduce the above
++      copyright notice, this list of conditions and the following
++      disclaimer in the documentation and/or other materials provided
++      with the distribution.
++    * Neither the name of The Linux Foundation nor the names of its
++      contributors may be used to endorse or promote products derived
++      from this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++--------------------------------------------------------------------------*/
++/*============================================================================
++                            O p e n M A X   w r a p p e r s
++                             O p e n  M A X   C o r e
++
++  This module contains the registry table for the QTI's OpenMAX core.
++
++*//*========================================================================*/
++
++
++#include "qc_omx_core.h"
++
++omx_core_cb_type core[] =
++{
++  {
++    "OMX.qcom.video.decoder.avc",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.avc"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.avc.secure",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.avc"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.divx4",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.divx"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.divx",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.divx"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.divx311",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.divx"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg4",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg4"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg4.secure",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg4"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg2",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg2"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.mpeg2.secure",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.mpeg2"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vc1",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vc1.secure",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.wmv",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.wmv.secure",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vc1"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.h263",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.h263"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.hevc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.hevc.secure",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vp8",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vp8"
++    }
++  },
++  {
++    "OMX.qcom.video.decoder.vp9",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVdec.so",
++    {
++      "video_decoder.vp9"
++    }
++  },
++  {
++    "OMX.qcom.video.encoder.mpeg4",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.mpeg4"
++    }
++  },
++   {
++    "OMX.qcom.video.encoder.h263",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.h263"
++    }
++  },
++   {
++    "OMX.qcom.video.encoder.avc",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.avc"
++    }
++  },
++   {
++    "OMX.qcom.video.encoder.avc.secure",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.avc"
++    }
++  },
++{
++    "OMX.qcom.video.encoder.vp8",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.vp8"
++    }
++  },
++  {
++    "OMX.qti.video.encoder.hevc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxSwVencHevc.so",
++    {
++      "video_encoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.video.encoder.hevc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.video.encoder.hevc.secure",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVenc.so",
++    {
++      "video_encoder.hevc"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.Qcelp13",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxQcelp13Dec.so",
++    {
++      "audio_decoder.Qcelp13"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.evrc",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxEvrcDec.so",
++    {
++      "audio_decoder.evrc"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.wma",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++     NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxWmaDec.so",
++    {
++     "audio_decoder.wma"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.amrwbplus",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++     NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAmrwbplusDec.so",
++    {
++     "audio_decoder.awbplus"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.wma10Pro",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++     NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxWmaDec.so",
++    {
++     "audio_decoder.wma"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.wmaLossLess",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++     NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxWmaDec.so",
++    {
++     "audio_decoder.wma"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.aac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAacDec.so",
++    {
++      "audio_decoder.aac"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.alac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAlacDec.so",
++    {
++      "audio_decoder.alac"
++    }
++  },
++  {
++    "OMX.qcom.audio.decoder.ape",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxApeDec.so",
++    {
++      "audio_decoder.ape"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.aac",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,  // Shared object library handle
++    "libOmxAacEnc.so",
++    {
++      "audio_encoder.aac"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.qcelp13",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxQcelp13Enc.so",
++    {
++      "audio_encoder.qcelp13"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.evrc",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxEvrcEnc.so",
++    {
++      "audio_encoder.evrc"
++    }
++  },
++  {
++    "OMX.qcom.audio.encoder.amrnb",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAmrEnc.so",
++    {
++      "audio_encoder.amrnb"
++    }
++  },
++ {
++    "OMX.qcom.audio.decoder.aac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAacDec.so",
++    {
++      "audio_decoder.aac"
++    }
++  },
++ {
++    "OMX.qcom.audio.decoder.multiaac",
++    NULL,   // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxAacDec.so",
++    {
++      "audio_decoder.aac"
++    }
++  },
++  {
++    "AIV.play",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,  // Shared object library handle
++    "libAivPlay.so",
++    {
++      "AIV.play.101"
++    }
++  },
++  {
++    "OMX.qcom.file.muxer",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxMux.so",
++    {
++      "container_muxer.mp2"
++    }
++  },
++  {
++    "OMX.qcom.vdec.vpp",
++    NULL, // Create instance function
++    // Unique instance handle
++    {
++      NULL,
++      NULL,
++      NULL,
++      NULL
++    },
++    NULL,   // Shared object library handle
++    "libOmxVpp.so",
++    {
++      "video_decoder.vpp"
++    }
++  }
++};
++
++const unsigned int SIZE_OF_CORE = sizeof(core) / sizeof(omx_core_cb_type);
++
++
+diff --git a/mm-video-v4l2/vidc/vdec.mk b/mm-video-v4l2/vidc/vdec.mk
+index 0ccefd6..6d7a7cc 100644
+--- a/mm-video-v4l2/vidc/vdec.mk
++++ b/mm-video-v4l2/vidc/vdec.mk
+@@ -78,6 +78,12 @@ libOmxVdec-def += -DMAX_RES_1080P_EBI
+ libOmxVdec-def += -DPROCESS_EXTRADATA_IN_OUTPUT_PORT
+ libOmxVdec-def += -D_MSM8974_
+ endif
++ifneq ($(filter msm8952 ,$(TARGET_BOARD_PLATFORM)),)
++libOmxVdec-def += -DMAX_RES_1080P
++libOmxVdec-def += -DMAX_RES_1080P_EBI
++libOmxVdec-def += -DPROCESS_EXTRADATA_IN_OUTPUT_PORT
++libOmxVdec-def += -D_MSM8974_
++endif
+ libOmxVdec-def += -D_ANDROID_ICS_
+ 
+ ifeq ($(TARGET_USES_ION),true)
+@@ -123,7 +129,7 @@ LOCAL_SRC_FILES         += vdec/src/h264_utils.cpp
+ LOCAL_SRC_FILES         += vdec/src/ts_parser.cpp
+ LOCAL_SRC_FILES         += vdec/src/mp4_utils.cpp
+ LOCAL_SRC_FILES         += vdec/src/hevc_utils.cpp
+-ifneq ($(filter msm8974 msm8610 msm8226 msm8084 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8974 msm8610 msm8226 msm8084 msm8952 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
+ LOCAL_SRC_FILES         += vdec/src/omx_vdec_msm8974.cpp
+ else
+ LOCAL_SHARED_LIBRARIES  += libhardware
+@@ -148,7 +154,7 @@ include $(BUILD_SHARED_LIBRARY)
+ include $(CLEAR_VARS)
+ LOCAL_PATH:= $(ROOT_DIR)
+ 
+-ifneq ($(filter msm8974 msm8610 msm8084 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8974 msm8610 msm8084 msm8952 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
+ 
+ LOCAL_MODULE                    := libOmxVdecHevc
+ LOCAL_MODULE_TAGS               := optional
+diff --git a/mm-video-v4l2/vidc/venc.mk b/mm-video-v4l2/vidc/venc.mk
+index 9f799cc..330ef9f 100644
+--- a/mm-video-v4l2/vidc/venc.mk
++++ b/mm-video-v4l2/vidc/venc.mk
+@@ -63,6 +63,12 @@ libmm-venc-def += -DMAX_RES_1080P_EBI
+ libOmxVdec-def += -DPROCESS_EXTRADATA_IN_OUTPUT_PORT
+ libmm-venc-def += -D_MSM8974_
+ endif
++ifneq ($(filter msm8952,$(TARGET_BOARD_PLATFORM)),)
++libmm-venc-def += -DMAX_RES_1080P
++libmm-venc-def += -DMAX_RES_1080P_EBI
++libOmxVdec-def += -DPROCESS_EXTRADATA_IN_OUTPUT_PORT
++libmm-venc-def += -D_MSM8974_
++endif
+ 
+ ifeq ($(TARGET_USES_ION),true)
+ libmm-venc-def += -DUSE_ION
+@@ -98,7 +104,7 @@ LOCAL_SHARED_LIBRARIES    := liblog libutils libbinder libcutils \
+ 
+ LOCAL_SRC_FILES   := venc/src/omx_video_base.cpp
+ LOCAL_SRC_FILES   += venc/src/omx_video_encoder.cpp
+-ifneq ($(filter msm8974 msm8610 msm8226 msm8084 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
++ifneq ($(filter msm8974 msm8610 msm8226 msm8084 msm8952 msm8992 msm8994,$(TARGET_BOARD_PLATFORM)),)
+ LOCAL_SRC_FILES   += venc/src/video_encoder_device_v4l2.cpp
+ else
+ LOCAL_SRC_FILES   += venc/src/video_encoder_device.cpp
+-- 
+2.8.4 (Apple Git-73)
+

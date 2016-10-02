@@ -1,0 +1,26 @@
+From 1b602e6e20835f7b2ccedd0a72354ad5d79388b5 Mon Sep 17 00:00:00 2001
+From: Dimitry Ivanov <dimitry@google.com>
+Date: Tue, 16 Feb 2016 10:30:18 -0800
+Subject: [PATCH 2/5] Add missing liblog dependency
+
+Bug: http://b/27171986
+Change-Id: I7e68821849bdd7ea69b8fd517c1c29da48b6e571
+---
+ voice_processing/Android.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/voice_processing/Android.mk b/voice_processing/Android.mk
+index 9b86eaf..73619c6 100644
+--- a/voice_processing/Android.mk
++++ b/voice_processing/Android.mk
+@@ -14,6 +14,7 @@ LOCAL_C_INCLUDES += \
+     $(call include-path-for, audio-effects)
+ 
+ LOCAL_SHARED_LIBRARIES := \
++    liblog \
+     libcutils
+ 
+ LOCAL_SHARED_LIBRARIES += libdl
+-- 
+2.8.4 (Apple Git-73)
+

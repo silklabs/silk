@@ -1,0 +1,179 @@
+From a37d7130343f6abdc6da6daae0df0b746b6f7d86 Mon Sep 17 00:00:00 2001
+From: Nickolay Semendyaev <agent00791@gmail.com>
+Date: Sun, 18 Sep 2016 23:55:17 +0600
+Subject: [PATCH 5/5] Add capture-fm support
+
+Android already support AUDIO_DEVICE_IN_FM_TUNER in framework, but audio hal not support this case.
+Also remove incorrect debug flag
+
+Change-Id: Ia03df847f4ec55e57c98a5bca5e0ace0c67fa84f
+---
+ hal/audio_hw.c         | 16 +++++++++++++++-
+ hal/audio_hw.h         |  2 +-
+ hal/msm8974/platform.c | 29 +++++++++++++++++++++++++++++
+ hal/msm8974/platform.h |  2 ++
+ hal/platform_api.h     |  1 +
+ 5 files changed, 48 insertions(+), 2 deletions(-)
+
+diff --git a/hal/audio_hw.c b/hal/audio_hw.c
+index 2e954d6..c3fcaee 100644
+--- a/hal/audio_hw.c
++++ b/hal/audio_hw.c
+@@ -178,6 +178,8 @@ const char * const use_case_table[AUDIO_USECASE_MAX] = {
+ 
+     [USECASE_AUDIO_PLAYBACK_AFE_PROXY] = "afe-proxy-playback",
+     [USECASE_AUDIO_RECORD_AFE_PROXY] = "afe-proxy-record",
++
++    [USECASE_AUDIO_RECORD_FM_VIRTUAL] = "fm-virtual-record",
+ };
+ 
+ 
+@@ -790,7 +792,19 @@ int start_input_stream(struct stream_in *in)
+     struct audio_usecase *uc_info;
+     struct audio_device *adev = in->dev;
+ 
+-    ALOGV("%s: enter: usecase(%d)", __func__, in->usecase);
++    int usecase = platform_update_usecase_from_source(in->source,in->usecase);
++    if (get_usecase_from_list(adev, usecase) == NULL)
++        in->usecase = usecase;
++
++    ALOGD("%s: enter: stream(%p)usecase(%d: %s)",
++          __func__, &in->stream, in->usecase, use_case_table[in->usecase]);
++
++    if (get_usecase_from_list(adev, in->usecase) != NULL) {
++        ALOGE("%s: use case assigned already in use, stream(%p)usecase(%d: %s)",
++            __func__, &in->stream, in->usecase, use_case_table[in->usecase]);
++        goto error_config;
++    }
++
+     in->pcm_device_id = platform_get_pcm_device_id(in->usecase, PCM_CAPTURE);
+     if (in->pcm_device_id < 0) {
+         ALOGE("%s: Could not find PCM device id for the usecase(%d)",
+diff --git a/hal/audio_hw.h b/hal/audio_hw.h
+index b82ee8b..427401a 100644
+--- a/hal/audio_hw.h
++++ b/hal/audio_hw.h
+@@ -68,7 +68,7 @@ enum {
+     /* Capture usecases */
+     USECASE_AUDIO_RECORD,
+     USECASE_AUDIO_RECORD_LOW_LATENCY,
+-
++    USECASE_AUDIO_RECORD_FM_VIRTUAL,
+     USECASE_VOICE_CALL,
+ 
+     /* Voice extension usecases */
+diff --git a/hal/msm8974/platform.c b/hal/msm8974/platform.c
+index c856bb0..55353f5 100644
+--- a/hal/msm8974/platform.c
++++ b/hal/msm8974/platform.c
+@@ -145,6 +145,8 @@ static int pcm_device_table[AUDIO_USECASE_MAX][2] = {
+                               AUDIO_RECORD_PCM_DEVICE},
+     [USECASE_AUDIO_RECORD_LOW_LATENCY] = {LOWLATENCY_PCM_DEVICE,
+                                           LOWLATENCY_PCM_DEVICE},
++    [USECASE_AUDIO_RECORD_FM_VIRTUAL] = {MULTIMEDIA2_PCM_DEVICE,
++                                  MULTIMEDIA2_PCM_DEVICE},
+ 
+     [USECASE_VOICE_CALL] = {VOICE_CALL_PCM_DEVICE,
+                             VOICE_CALL_PCM_DEVICE},
+@@ -255,6 +257,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
+     [SND_DEVICE_IN_CAPTURE_VI_FEEDBACK] = "vi-feedback",
+     [SND_DEVICE_IN_HANDSET_TMIC] = "three-mic",
+     [SND_DEVICE_IN_HANDSET_QMIC] = "quad-mic",
++    [SND_DEVICE_IN_CAPTURE_FM] = "capture-fm",
+ };
+ 
+ /* ACDB IDs (audio DSP path configuration IDs) for each sound device */
+@@ -339,6 +342,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
+     [SND_DEVICE_IN_CAPTURE_VI_FEEDBACK] = 102,
+     [SND_DEVICE_IN_HANDSET_TMIC] = 125,
+     [SND_DEVICE_IN_HANDSET_QMIC] = 125,
++    [SND_DEVICE_IN_CAPTURE_FM] = 0,
+ };
+ 
+ struct name_to_index {
+@@ -428,6 +432,7 @@ static const struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
+     {TO_NAME_INDEX(SND_DEVICE_IN_CAPTURE_VI_FEEDBACK)},
+     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_TMIC)},
+     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_QMIC)},
++    {TO_NAME_INDEX(SND_DEVICE_IN_CAPTURE_FM)},
+ };
+ 
+ static char * backend_tag_table[SND_DEVICE_MAX] = {0};
+@@ -839,6 +844,7 @@ static void set_platform_defaults(struct platform_data * my_data)
+     backend_tag_table[SND_DEVICE_IN_BT_SCO_MIC_WB_NREC] = strdup("bt-sco-wb");
+     backend_tag_table[SND_DEVICE_OUT_VOICE_TX] = strdup("afe-proxy");
+     backend_tag_table[SND_DEVICE_IN_VOICE_RX] = strdup("afe-proxy");
++    backend_tag_table[SND_DEVICE_IN_CAPTURE_FM] = strdup("capture-fm");
+ 
+     hw_interface_table[SND_DEVICE_OUT_HANDSET] = strdup("SLIMBUS_0_RX");
+     hw_interface_table[SND_DEVICE_OUT_SPEAKER] = strdup("SLIMBUS_0_RX");
+@@ -2005,6 +2011,8 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
+                 }
+             }
+         }
++    } else if (source == AUDIO_SOURCE_FM_TUNER) {
++        snd_device = SND_DEVICE_IN_CAPTURE_FM;
+     } else if (source == AUDIO_SOURCE_DEFAULT) {
+         goto exit;
+     }
+@@ -2065,6 +2073,8 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
+             }
+         } else if (in_device & AUDIO_DEVICE_IN_AUX_DIGITAL) {
+             snd_device = SND_DEVICE_IN_HDMI_MIC;
++        } else if (in_device & AUDIO_DEVICE_IN_FM_TUNER) {
++            snd_device = SND_DEVICE_IN_CAPTURE_FM;
+         } else {
+             ALOGE("%s: Unknown input device(s) %#x", __func__, in_device);
+             ALOGW("%s: Using default handset-mic", __func__);
+@@ -2361,6 +2371,25 @@ int64_t platform_render_latency(audio_usecase_t usecase)
+     }
+ }
+ 
++
++int platform_update_usecase_from_source(int source, int usecase)
++{
++    ALOGV("%s: input source :%d", __func__, source);
++
++    switch(source) {
++        case AUDIO_SOURCE_FM_TUNER:
++            return USECASE_AUDIO_RECORD_FM_VIRTUAL;
++        case AUDIO_SOURCE_VOICE_UPLINK:
++            return USECASE_INCALL_REC_UPLINK;
++        case AUDIO_SOURCE_VOICE_DOWNLINK:
++            return USECASE_INCALL_REC_DOWNLINK;
++        case AUDIO_SOURCE_VOICE_CALL:
++            return USECASE_INCALL_REC_UPLINK_AND_DOWNLINK;
++        default:
++            return usecase;
++    }
++}
++
+ int platform_set_snd_device_backend(snd_device_t device, const char *backend_tag,
+                                     const char * hw_interface)
+ {
+diff --git a/hal/msm8974/platform.h b/hal/msm8974/platform.h
+index 4b4332e..abb090e 100644
+--- a/hal/msm8974/platform.h
++++ b/hal/msm8974/platform.h
+@@ -132,6 +132,8 @@ enum {
+ 
+     SND_DEVICE_IN_VOICE_RX,
+ 
++    SND_DEVICE_IN_CAPTURE_FM,
++
+     SND_DEVICE_IN_THREE_MIC,
+     SND_DEVICE_IN_QUAD_MIC,
+     SND_DEVICE_IN_CAPTURE_VI_FEEDBACK,
+diff --git a/hal/platform_api.h b/hal/platform_api.h
+index 1e41358..9c9001e 100644
+--- a/hal/platform_api.h
++++ b/hal/platform_api.h
+@@ -84,4 +84,5 @@ bool platform_check_backends_match(snd_device_t snd_device1, snd_device_t snd_de
+ 
+ int platform_set_parameters(void *platform, struct str_parms *parms);
+ 
++int platform_update_usecase_from_source(int source, audio_usecase_t usecase);
+ #endif // AUDIO_PLATFORM_API_H
+-- 
+2.8.4 (Apple Git-73)
+

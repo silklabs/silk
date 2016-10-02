@@ -1,0 +1,207 @@
+From 4dbd7586962343ba128c474b32ecb72b57cdfdb6 Mon Sep 17 00:00:00 2001
+From: Jyoti Wadhwani <jyotiw@codeaurora.org>
+Date: Fri, 17 Oct 2014 11:57:10 -0700
+Subject: [PATCH 2/5] Keymaster: Support for 64bit userspace and 32bit TZ
+
+HW keymaster is not supported for 64bit userspace. This patch
+updates variable types to support the architecture.
+It also makes change in Android.mk file to support all qcom
+platforms.
+
+P.S.2 rework logic to match AOSP and add msm8994
+P.S.3 remove KERNEL_OBJ include
+P.S.4 enable msm8994 in sperate patch
+P.S.5 use LOCAL_MODULE_RELATIVE_PATH
+
+Change-Id: I25633d707b425388bcc116196c0e0022c5c4f9a5
+---
+ Android.mk         |  2 +-
+ keymaster_qcom.cpp | 27 +++++++++++++++++----------
+ keymaster_qcom.h   | 14 +++++++-------
+ 3 files changed, 25 insertions(+), 18 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 04f6e74..0010581 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -11,7 +11,7 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_MODULE := keystore.$(TARGET_BOARD_PLATFORM)
+ 
+-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
++LOCAL_MODULE_RELATIVE_PATH := hw
+ 
+ LOCAL_SRC_FILES := keymaster_qcom.cpp
+ 
+diff --git a/keymaster_qcom.cpp b/keymaster_qcom.cpp
+index ff61319..d133401 100644
+--- a/keymaster_qcom.cpp
++++ b/keymaster_qcom.cpp
+@@ -51,6 +51,9 @@
+ //#define LOG_NDEBUG 0
+ 
+ #define LOG_TAG "QCOMKeyMaster"
++#define UNUSED(x) (void)(x)
++#define KM_SB_LENGTH (4096 * 2)
++
+ #include <cutils/log.h>
+ struct qcom_km_ion_info_t {
+     int32_t ion_fd;
+@@ -63,8 +66,8 @@ struct qcom_km_ion_info_t {
+ struct qcom_keymaster_handle {
+     struct QSEECom_handle *qseecom;
+     void *libhandle;
+-    int (*QSEECom_start_app)(struct QSEECom_handle ** handle, char* path,
+-                          char* appname, uint32_t size);
++    int (*QSEECom_start_app)(struct QSEECom_handle ** handle, const char* path,
++                          const char* appname, uint32_t size);
+     int (*QSEECom_shutdown_app)(struct QSEECom_handle **handle);
+     int (*QSEECom_send_cmd)(struct QSEECom_handle* handle, void *cbuf,
+                           uint32_t clen, void *rbuf, uint32_t rlen);
+@@ -105,6 +108,7 @@ static int qcom_km_get_keypair_public(const keymaster0_device_t* dev,
+ 
+     struct qcom_km_key_blob * keyblob_ptr = (struct qcom_km_key_blob *)keyBlob;
+ 
++    UNUSED(dev);
+     if (x509_data == NULL || x509_data_length == NULL) {
+         ALOGE("Output public key buffer == NULL");
+         return -1;
+@@ -236,7 +240,7 @@ static int32_t qcom_km_ION_memalloc(struct qcom_km_ion_info_t *handle,
+        goto alloc_fail;
+     }
+ 
+-    if (ion_alloc_data.handle != NULL) {
++    if (ion_alloc_data.handle) {
+        ifd_data.handle = ion_alloc_data.handle;
+     } else {
+        ret = -1;
+@@ -403,7 +407,7 @@ static int qcom_km_import_keypair(const keymaster0_device_t* dev,
+     int ret = 0;
+ 
+     ihandle.ion_fd = 0;
+-    ihandle.ion_alloc_handle.handle = NULL;
++    ihandle.ion_alloc_handle.handle = 0;
+     if (qcom_km_ION_memalloc(&ihandle, QSEECOM_ALIGN(key_length)) < 0) {
+         ALOGE("ION allocation  failed");
+         return -1;
+@@ -425,7 +429,7 @@ static int qcom_km_import_keypair(const keymaster0_device_t* dev,
+     resp = (keymaster_import_keypair_resp_t *)(handle->ion_sbuffer +
+                                         QSEECOM_ALIGN(sizeof(keymaster_import_keypair_cmd_t)));
+     send_cmd->cmd_id = KEYMASTER_IMPORT_KEYPAIR;
+-    send_cmd->pkcs8_key = (uint32_t)ihandle.ion_sbuffer;
++    send_cmd->pkcs8_key = (uint32_t)(uintptr_t)ihandle.ion_sbuffer;
+ 
+     memcpy((unsigned char *)ihandle.ion_sbuffer, key, key_length);
+ 
+@@ -506,7 +510,7 @@ static int qcom_km_sign_data(const keymaster0_device_t* dev,
+ 
+     handle = (struct QSEECom_handle *)(km_handle->qseecom);
+     ihandle.ion_fd = 0;
+-    ihandle.ion_alloc_handle.handle = NULL;
++    ihandle.ion_alloc_handle.handle = 0;
+     if (qcom_km_ION_memalloc(&ihandle, dataLength) < 0) {
+         ALOGE("ION allocation  failed");
+         return -1;
+@@ -527,7 +531,7 @@ static int qcom_km_sign_data(const keymaster0_device_t* dev,
+     memcpy((unsigned char *)(&send_cmd->key_blob), keyBlob, keyBlobLength);
+     memcpy((unsigned char *)ihandle.ion_sbuffer, data, dataLength);
+ 
+-    send_cmd->data = (uint32_t)ihandle.ion_sbuffer;
++    send_cmd->data = (uint32_t)(uintptr_t)ihandle.ion_sbuffer;
+     send_cmd->dlen = dataLength;
+     resp->sig_len = KM_KEY_SIZE_MAX;
+     resp->status = KEYMASTER_FAILURE;
+@@ -606,7 +610,7 @@ static int qcom_km_verify_data(const keymaster0_device_t* dev,
+ 
+     handle = (struct QSEECom_handle *)(km_handle->qseecom);
+     ihandle.ion_fd = 0;
+-    ihandle.ion_alloc_handle.handle = NULL;
++    ihandle.ion_alloc_handle.handle = 0;
+     if (qcom_km_ION_memalloc(&ihandle, signedDataLength + signatureLength) <0) {
+         ALOGE("ION allocation  failed");
+         return -1;
+@@ -626,7 +630,7 @@ static int qcom_km_verify_data(const keymaster0_device_t* dev,
+     send_cmd->sign_param.padding_type = sign_params->padding_type;
+     memcpy((unsigned char *)(&send_cmd->key_blob), keyBlob, keyBlobLength);
+ 
+-    send_cmd->signed_data = (uint32_t)ihandle.ion_sbuffer;
++    send_cmd->signed_data = (uint32_t)(uintptr_t)ihandle.ion_sbuffer;
+     send_cmd->signed_dlen = signedDataLength;
+     memcpy((unsigned char *)ihandle.ion_sbuffer, signedData, signedDataLength);
+ 
+@@ -757,7 +761,10 @@ static int qcom_km_open(const hw_module_t* module, const char* name,
+     }
+     dev->context = (void *)km_handle;
+     ret = (*km_handle->QSEECom_start_app)((struct QSEECom_handle **)&km_handle->qseecom,
+-                         "/vendor/firmware/keymaster", "keymaster", 4096*2);
++                        "/vendor/firmware/keymaster", "keymaster", KM_SB_LENGTH);
++    if(ret)
++        ret = (*km_handle->QSEECom_start_app)((struct QSEECom_handle **)&km_handle->qseecom,
++                        "/firmware/image", "keymaste", KM_SB_LENGTH);
+     if (ret) {
+         ALOGE("Loading keymaster app failed");
+         free(km_handle);
+diff --git a/keymaster_qcom.h b/keymaster_qcom.h
+index ec481dd..c6dd4e5 100644
+--- a/keymaster_qcom.h
++++ b/keymaster_qcom.h
+@@ -105,7 +105,7 @@ typedef struct keymaster_gen_keypair_cmd keymaster_gen_keypair_cmd_t;
+ struct keymaster_gen_keypair_resp {
+       keymaster_cmd_t     cmd_id;
+       qcom_km_key_blob_t  key_blob;
+-      size_t              key_blob_len;
++      uint32_t            key_blob_len;
+       int32_t             status;
+ };
+ typedef struct keymaster_gen_keypair_resp keymaster_gen_keypair_resp_t;
+@@ -124,7 +124,7 @@ typedef struct keymaster_gen_keypair_resp keymaster_gen_keypair_resp_t;
+ struct keymaster_import_keypair_cmd {
+       keymaster_cmd_t cmd_id;
+       uint32_t        pkcs8_key;
+-      size_t          pkcs8_key_len;
++      uint32_t        pkcs8_key_len;
+ };
+ typedef struct keymaster_import_keypair_cmd keymaster_import_keypair_cmd_t;
+ 
+@@ -140,7 +140,7 @@ typedef struct keymaster_import_keypair_cmd keymaster_import_keypair_cmd_t;
+ struct keymaster_import_keypair_resp {
+       keymaster_cmd_t     cmd_id;
+       qcom_km_key_blob_t  key_blob;
+-      size_t              key_blob_len;
++      uint32_t            key_blob_len;
+       int32_t             status;
+ };
+ typedef struct keymaster_import_keypair_resp keymaster_import_keypair_resp_t;
+@@ -161,7 +161,7 @@ struct keymaster_sign_data_cmd {
+       keymaster_rsa_sign_params_t   sign_param;
+       qcom_km_key_blob_t            key_blob;
+       uint32_t                      data;
+-      size_t                        dlen;
++      uint32_t                      dlen;
+ };
+ typedef struct keymaster_sign_data_cmd keymaster_sign_data_cmd_t;
+ 
+@@ -176,7 +176,7 @@ typedef struct keymaster_sign_data_cmd keymaster_sign_data_cmd_t;
+ struct keymaster_sign_data_resp {
+       keymaster_cmd_t     cmd_id;
+       uint8_t             signed_data[KM_KEY_SIZE_MAX];
+-      size_t              sig_len;
++      uint32_t            sig_len;
+       int32_t             status;
+ };
+ 
+@@ -200,9 +200,9 @@ struct keymaster_verify_data_cmd {
+       keymaster_rsa_sign_params_t   sign_param;
+       qcom_km_key_blob_t            key_blob;
+       uint32_t                      signed_data;
+-      size_t                        signed_dlen;
++      uint32_t                      signed_dlen;
+       uint32_t                      signature;
+-      size_t                        slen;
++      uint32_t                      slen;
+ };
+ typedef struct keymaster_verify_data_cmd keymaster_verify_data_cmd_t;
+ /**
+-- 
+2.8.4 (Apple Git-73)
+

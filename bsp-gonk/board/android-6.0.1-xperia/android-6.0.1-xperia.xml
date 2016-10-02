@@ -4,7 +4,7 @@
 
 <remote name="sony" fetch="git://github.com/sonyxperiadev/" />
 <remove-project name="platform/hardware/qcom/camera" />
-<remove-project name="platform/packages/apps/FMRadio" />
+<!--remove-project name="platform/packages/apps/FMRadio" /-->
 <project path="device/sony/sepolicy" name="device-sony-sepolicy" groups="device" remote="sony" revision="m-mr1" />
 <project path="device/sony/amami" name="device-sony-amami" groups="device" remote="sony" revision="m-mr1" />
 <project path="device/sony/aries" name="device-sony-aries" groups="device" remote="sony" revision="m-mr1" />
@@ -51,4 +51,9 @@
          clone-depth="1"
          remote="DonkeyCoyote"
          revision="android-6.0"/>
+  
+  <!-- Remove unwanted things -->
+  <remove-project name="macaddrsetup" />
+  <remove-project name="packages_apps_ExtendedSettings" />
+  <remove-project name="packages-apps-FMRadio" />
 </manifest>

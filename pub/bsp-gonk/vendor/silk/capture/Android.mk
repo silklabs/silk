@@ -40,7 +40,10 @@ LOCAL_C_INCLUDES := \
 
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/6.x
+ifneq (,$(wildcard frameworks/av/media/libavextensions))
 LOCAL_C_INCLUDES += frameworks/av/media/libavextensions
+LOCAL_CFLAGS += -DTARGET_USE_AVEXTENSIONS
+endif
 else
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/5.1.1_r6
 endif

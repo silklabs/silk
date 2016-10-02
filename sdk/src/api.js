@@ -173,6 +173,7 @@ export default class API {
       try {
         let data = `#!/system/bin/sh
         run() {
+          echo "$ wpa_cli -i${iface} IFNAME=${iface} $@"
           result=$(wpa_cli -i${iface} IFNAME=${iface} $@)
           if [[ ! $result = @(OK) ]] && [[ ! $result = @([0-9]) ]]; then
             echo "Error: '$result' received for '$@'"
@@ -193,20 +194,19 @@ export default class API {
         data += `run enable_network $id\n`;
         data += `run save_config\n`;
         data += `run reconnect\n`;
+        data += `exit 0\n`;
         await fs.writeFile(WIFI_SETUP_SCRIPT, data);
         await fs.chmod(WIFI_SETUP_SCRIPT, '400');
 
         // Push the script on the device
+        await this.adb('root');
+        await this.adb('wait-for-device');
         await this.adb(`push ${WIFI_SETUP_SCRIPT} /data/`);
 
         // Run the script on the device or simulator
-        let [error] = await this.adb(`shell source /data/${WIFI_SETUP_SCRIPT}`);
-        if (error) {
-          console.log(`error: ${stdout}`);
-        } else {
-          console.log('Wifi setup successful');
-          result = true;
-        }
+        let [stdout] = await this.adb(`shell system/bin/sh /data/${WIFI_SETUP_SCRIPT}`);
+        console.log(stdout);
+        result = true;
       } catch (err) {
         console.log(`Failed to configure wifi ${err}`);
       }

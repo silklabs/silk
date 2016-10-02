@@ -37,7 +37,9 @@
 #include <media/stagefright/PersistentSurface.h>
 #include <media/stagefright/Utils.h>
 #include <OMX_Core.h>
+#ifdef TARGET_HAS_AVEXTENSIONS
 #include <stagefright/AVExtensions.h>
+#endif
 
 namespace android {
 
@@ -403,9 +405,12 @@ status_t MediaCodecSource::initEncoder() {
     AString outputMIME;
     AString role;
     CHECK(mOutputFormat->findString("mime", &outputMIME));
+#ifdef TARGET_HAS_AVEXTENSIONS
     if (AVUtils::get()->useQCHWEncoder(mOutputFormat, role)) {
         mEncoder = MediaCodec::CreateByComponentName(mCodecLooper, role.c_str());
-    } else {
+    } else 
+#endif
+    {
         mEncoder = MediaCodec::CreateByType(
             mCodecLooper, outputMIME.c_str(), true /* encoder */);
     }
@@ -581,9 +586,11 @@ status_t MediaCodecSource::feedEncoderInputBuffers() {
             // push decoding time for video, or drift time for audio
             if (mIsVideo) {
                 mDecodingTimeQueue.push_back(timeUs);
+#ifdef TARGET_HAS_AVEXTENSIONS
                 if (mFlags & FLAG_USE_METADATA_INPUT) {
                     AVUtils::get()->addDecodingTimesFromBatch(mbuf, mDecodingTimeQueue);
                 }
+#endif
             } else {
 #if DEBUG_DRIFT_TIME
                 if (mFirstSampleTimeUs < 0ll) {
@@ -760,7 +767,9 @@ void MediaCodecSource::onMessageReceived(const sp<AMessage> &msg) {
             MediaBuffer *mbuf = new MediaBuffer(outbuf->size());
             memcpy(mbuf->data(), outbuf->data(), outbuf->size());
             sp<MetaData> meta = mbuf->meta_data();
+#ifdef TARGET_HAS_AVEXTENSIONS
             AVUtils::get()->setDeferRelease(meta);
+#endif
 
             if (!(flags & MediaCodec::BUFFER_FLAG_CODECCONFIG)) {
                 if (mIsVideo) {

@@ -27,7 +27,7 @@ export default function (ctx: AuthorizeAccountConfig, overrides: ?MiddlewareOver
 
     if (account.error) {
       log.error(`${req.url}: Account '${publicKey}' has an error: ` +
-                `${account.error}`);
+                String(account.error));
       return null;
     }
 

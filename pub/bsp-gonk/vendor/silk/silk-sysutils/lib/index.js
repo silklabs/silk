@@ -84,7 +84,6 @@ export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
         code = err.code;
       }
       return resolve(
-        // $FlowFixMe: https://github.com/facebook/flow/pull/2407
         {code, stdout: stdout.toString(), stderr: stderr.toString()}
       );
     });

@@ -77,7 +77,7 @@ function normalizeOperatorCall(
 
   if (operator in PROP_OPERATORS_TO_AZURE) {
     let azureOp = PROP_OPERATORS_TO_AZURE[operator];
-    return [`${property} ${azureOp} ${castValue(value)}`];
+    return [`${property} ${azureOp} ${String(castValue(value))}`];
   }
 
   if (operator === '$in') {

@@ -26,7 +26,7 @@ export default function (ctx: AuthorizeDeviceConfig, options: ?MiddlewareOverrid
 
     if (device.error) {
       log.error(`${req.url}: Device '${publicKey}' has an error: ` +
-                `${device.error}`);
+                String(device.error));
       return null;
     }
 

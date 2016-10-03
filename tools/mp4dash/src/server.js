@@ -34,7 +34,10 @@ function parseRange(request): [?number, ?number] {
   if (end === PRETEND_CONTENT_LENGTH - 1) {
     end = null;
   }
-  log.info(`  parseRange(${request.headers.range}) -> [${start}, ${end}]`);
+  log.info(
+    `  parseRange(${request.headers.range}) -> ` +
+    `[${String(start)}, ${String(end)}]`
+  );
   return [start, end];
 }
 

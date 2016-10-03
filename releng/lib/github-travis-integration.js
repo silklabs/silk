@@ -320,7 +320,10 @@ export async function handleGitHubPullRequestEvent(
 
   log.info(`Action '${event.action}'`);
   if (PR_ACTIONS_THAT_KICK_OFF_BUILDS.indexOf(event.action) === -1) {
-    log.info(`'${event.action}' not in ${PR_ACTIONS_THAT_KICK_OFF_BUILDS}), ignoring event.`);
+    log.info(
+      `'${event.action}' not in ` +
+      PR_ACTIONS_THAT_KICK_OFF_BUILDS.join(', ') +
+      `, ignoring event.`);
     return;
   }
 

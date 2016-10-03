@@ -35,7 +35,6 @@ export default class DataChannelDuplex extends Duplex {
       }
 
       this.push(null);
-      // $FlowFixMe: https://github.com/facebook/flow/pull/2330
       this.end(() => {
         this.emit('close');
       });

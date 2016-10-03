@@ -7,7 +7,6 @@ import {configureLog} from 'silk-log';
 
 const defaultConfig = {
   'debug': 'silk-*',
-  'react-native': {},
   'server': {
     choices: [
       {name: 'US East', value: '' /* use API default server */ },

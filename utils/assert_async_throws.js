@@ -16,11 +16,13 @@ export default async function assertAyncThrows(
       return;
     }
 
-    let { message } = err;
+    const {message} = err;
 
     if (contains instanceof RegExp) {
       if (!contains.test(message)) {
-        throw new Error(`Expected '${message}' to match regexp: ${contains}`);
+        throw new Error(
+          `Expected '${message}' to match regexp: ${String(contains)}`
+        );
       }
       return;
     }

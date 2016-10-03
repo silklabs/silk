@@ -9,7 +9,6 @@ device/vendor/silk/ext/
 [libs]
 flow-lib/
 node_modules/react-native/Libraries/react-native/react-native-interface.js
-node_modules/fbjs/flow/lib/
 
 [ignore]
 # Ignore test files in dependencies that trip up the Flow parser
@@ -84,4 +83,4 @@ suppress_type=$FlowFixMe
 suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
 
 [version]
-0.32.0
+0.33.0

@@ -111,6 +111,6 @@ declare export class RTCDataChannel extends WebrtcEventTarget {
 
 declare export function getUserMedia(
   constraints: UserMediaConstraints,
-  successCallback: () => void,
+  successCallback: (stream: MediaStream) => void,
   errorCallback: (error: Error) => void,
 ): void;

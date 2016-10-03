@@ -52,7 +52,6 @@ fi
 ./sync $BOARD $PRODUCT
 df -h
 
-
 $PREBUILT_CCACHE -M 1G
 
 # Clear the stats before this build...

@@ -18,7 +18,7 @@ import {getboolprop, getintprop, getstrprop} from 'silk-sysutils';
 
 import api from 'silk-device-api';
 import createLog from 'silk-log/device';
-import fork from '../process_fork';
+import {fork} from 'silk-process';
 import getDeviceId from '../deviceid';
 import * as Metrics from '../metrics/btle';
 import ParentSocketSession from './parent_socket_session';

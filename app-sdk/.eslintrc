@@ -1,3 +1,6 @@
 {
-  "extends": "eslint-config-silk"
+  "extends": "eslint-config-silk",
+  "globals": {
+    "__DEV__": false
+  }
 }

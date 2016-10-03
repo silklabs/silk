@@ -3,10 +3,11 @@
  */
 
 import createStore from 'silk-redux';
+import createLogMiddleware from 'silk-redux/log';
 
 import * as builtinReducers from './reducers';
 
-import type {ReducersMapObject} from 'redux';
+import type {Middleware, ReducersMapObject} from 'redux';
 import type {Store} from 'silk-redux';
 
 export type {
@@ -19,6 +20,10 @@ export type {
 } from './reducers';
 
 export type {Store} from 'silk-redux';
+
+export type StoreOptions = {
+  enableLogging?: boolean;
+};
 
 function actionTransformer(action: any): any {
   const {type, requested, error} = action;
@@ -85,14 +90,20 @@ function stateTransformer(state: any): any {
 }
 
 export default function makeStore(
-  additionalReducers: ReducersMapObject = {}
+  additionalReducers: ReducersMapObject = {},
+  additionalMiddlewares?: Array<Middleware> = [],
+  options?: StoreOptions,
 ): Store<*> {
-  const options = {
-    logOptions: {
+  if (options && options.enableLogging) {
+    additionalMiddlewares = additionalMiddlewares.slice();
+    additionalMiddlewares.push(createLogMiddleware({
       actionTransformer,
       stateTransformer,
-    },
-  };
+    }));
+  }
 
-  return createStore({...builtinReducers, ...additionalReducers}, options);
+  return createStore(
+    {...builtinReducers, ...additionalReducers},
+    additionalMiddlewares,
+  );
 }

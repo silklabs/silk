@@ -3,10 +3,9 @@
  */
 
 import assert from 'assert';
-import createStore from 'silk-redux';
-
 // $FlowFixMe: No idea why but Flow can't see this module.
-import immutableStateInvariantMiddleware from 'redux-immutable-state-invariant';
+import createImmutableStateMiddleware from 'redux-immutable-state-invariant';
+import createStore from 'silk-redux';
 
 import reducers from '../../lib/store/reducers';
 import {
@@ -22,8 +21,8 @@ suite('persist', () => {
   let store: Store;
   setup(async () => {
     await load('no-persist');
-    const additionalMiddleware = immutableStateInvariantMiddleware();
-    store = createStore(reducers, {additionalMiddleware});
+    const middlewares = [createImmutableStateMiddleware()];
+    store = createStore(reducers, middlewares, {enableLogging: true});
   });
 
   test('createNewState validates', async () => {

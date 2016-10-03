@@ -7,6 +7,42 @@
  * @flow
  */
 
+import path from 'path';
+
+export type ModelType = 'yolo_caffe' | 'yolo_nnjs' | 'coco_nnjs';
+export type BackendType = 'qconv' | 'opencl';
+
+/********* Model type related constants */
+export const MODEL_TYPE: ModelType = 'yolo_caffe';
+export const BACKEND: BackendType = 'opencl';
+export const USE_FP16: boolean = false;
+
+let modelProto = path.join(__dirname, '../model', 'tiny-yolo.prototxt');
+
+let modelWeights = path.join(__dirname, '../model', 'tiny-yolo.caffemodel');
+if (MODEL_TYPE === 'yolo_nnjs') {
+  modelWeights = path.join(__dirname, '../model', 'tiny-yolo.weights');
+} else if (MODEL_TYPE === 'coco_nnjs') {
+  modelWeights = path.join(__dirname, '../model', 'tiny-coco.weights');
+}
+
+let labels = path.join(__dirname, '../model', 'tiny-yolo.labels');
+if (MODEL_TYPE === 'coco_nnjs') {
+  labels = path.join(__dirname, '../model', 'tiny-coco.labels');
+}
+
+let modelcfg = '';
+if (MODEL_TYPE === 'yolo_nnjs') {
+  modelcfg = path.join(__dirname, '../model', 'tiny-yolo.cfg');
+} else if (MODEL_TYPE === 'coco_nnjs') {
+  modelcfg = path.join(__dirname, '../model', 'tiny-coco.cfg');
+}
+
+export const MODEL_PROTO = modelProto;
+export const MODEL_WEIGHTS = modelWeights;
+export const LABELS = labels;
+export const MODEL_CFG = modelcfg;
+
 /********* Object display related constants */
 // Time in milliseconds between successive attempts to classify objects in
 // preview stream based on the time it generally takes on the device to classify
@@ -27,29 +63,6 @@ export const NUM_SIDES = 7;
 export const PROB_THRESH = 0.2;
 export const NMS_IOU_THRESH = 0.35;
 export const NMS_IOA_THRESH = 0.75;
-
-export const YOLO_LABELS = [
-  'aeroplane',
-  'bicycle',
-  'bird',
-  'boat',
-  'bottle',
-  'bus',
-  'car',
-  'cat',
-  'chair',
-  'cow',
-  'diningtable',
-  'dog',
-  'horse',
-  'motorbike',
-  'person',
-  'pottedplant',
-  'sheep',
-  'sofa',
-  'train',
-  'tvmonitor',
-];
 
 /********* Smoother related constants */
 // Wait for this long before declaring that the object is gone

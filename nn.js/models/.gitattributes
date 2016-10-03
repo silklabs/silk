@@ -1,0 +1,2 @@
+tiny-coco.weights filter=lfs diff=lfs merge=lfs -text
+tiny-yolo.weights filter=lfs diff=lfs merge=lfs -text

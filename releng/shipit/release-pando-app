@@ -64,6 +64,10 @@ app-sdk/install.sh
 # generating artifacts for iOS and Android is easily parallelizable.
 #
 
+# For now we're building the Debug variant of the SDK (or at least the
+# Debug variant of the bundle) to get better logs.
+export SLK_SDK_BUILD_CONFIGURATION=Debug
+
 # "Install" Android SDK so we can build Android binaries. This
 # tarball was created by doing the following:
 # 1. Download and extract https://dl.google.com/android/android-sdk_r24.4.1-macosx.zip
@@ -105,7 +109,7 @@ app-sdk/ios/build_framework.sh
 
 # Commit the resulting binary, as well as WebRTC.framework, in the
 # iOS SDK example app project.
-mv app-sdk/ios/build/Release-universal/SLKAppSDK.framework app-sdk-example/ios/
+mv app-sdk/ios/build/$SLK_SDK_BUILD_CONFIGURATION-universal/SLKAppSDK.framework app-sdk-example/ios/
 git add app-sdk-example/ios
 git mv react-native-webrtc/ios/WebRTC.framework app-sdk-example/ios/
 git commit --quiet -m "iOS artifacts"

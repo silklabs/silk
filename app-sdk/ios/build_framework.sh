@@ -6,7 +6,7 @@ pushd $THIS_DIR
 source ../../releng/certs/ios/env.sh
 ../../releng/certs/ios/setup.sh
 
-export CONFIGURATION=Release
+export CONFIGURATION="${SLK_SDK_BUILD_CONFIGURATION:-Release}"
 export BUILD_DIR="$THIS_DIR/build"
 export BUILD_ROOT=$BUILD_DIR
 export PROJECT_NAME=SLKAppSDK

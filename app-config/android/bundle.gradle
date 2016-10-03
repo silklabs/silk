@@ -15,6 +15,10 @@ project.ext.react = [
   extraPackagerArgs: ["--verbose"]
 ]
 
+if (System.env.SLK_SDK_BUILD_CONFIGURATION == 'Debug') {
+  project.ext.react.extraPackagerArgs << '--dev' << 'true'
+}
+
 if (project.hasProperty("jsBundleDirRelease")) {
     project.ext.react.jsBundleDirRelease = project.jsBundleDirRelease
 }

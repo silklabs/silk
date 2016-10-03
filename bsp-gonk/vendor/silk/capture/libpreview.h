@@ -6,7 +6,7 @@
 namespace libpreview {
 
 // Max number of locked frame without stalling the preview pipeline.
-#define MAX_UNLOCKED_FRAMES 1
+#define MAX_UNLOCKED_FRAMES 2
 
 typedef enum {
   FRAMEFORMAT_INVALID,

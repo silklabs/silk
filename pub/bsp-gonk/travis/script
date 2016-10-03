@@ -1,11 +1,54 @@
 #!/bin/bash -e
 
 source build/envsetup.sh force
+
+(
+  # Reduce the disk space usage to avoid ENOSPC on Travis
+  set -x
+  rm -rf \
+    .repo/project-objects \
+    .repo/projects \
+
+  rm -rf \
+    frameworks/base/core/{java,res,tests} \
+    frameworks/base/data/fonts \
+    frameworks/base/data/sounds \
+    frameworks/base/data/videos \
+    frameworks/base/docs \
+    frameworks/base/media/java \
+    frameworks/base/media/mca \
+    frameworks/base/media/tests \
+    frameworks/base/packages \
+    frameworks/base/tests \
+    prebuilts/android-emulator/windows \
+    prebuilts/qemu-kernel/{mips,x86,x86_64} \
+    prebuilts/misc/{android-mips,android-mips64,android-x86,android-x86_64,darwin-x86,windows} \
+    prebuilts/ndk/{4,5,6,7} \
+
+  find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf
+
+  if [[ $BOARD != qemu ]]; then
+    rm -rf \
+      prebuilts/android-emulator/* \
+      prebuilts/qemu-kernel/* \
+
+      mkdir -p prebuilts/qemu-kernel/arm
+      touch prebuilts/qemu-kernel/arm/LINUX_KERNEL_COPYING
+  fi
+
+  df -h
+  du -hs * .repo
+  du -hs .
+)
+
 make -j2
 
 (
   set -x
   $PREBUILT_CCACHE -s
+  df -h
+  du -hs * .repo
+  du -hs .
 )
 
 if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then

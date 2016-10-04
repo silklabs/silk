@@ -48,4 +48,5 @@ export type {
   ReadableStreamOptions,
   WritableStreamOptions,
   DuplexStreamOptions,
+  TransformCallback,
 } from './src/types';

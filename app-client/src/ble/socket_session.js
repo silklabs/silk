@@ -49,10 +49,8 @@ export default class SocketSession extends AuthenticateDuplexStream {
     invariant(metrics);
 
     const socketStream = new Stream(socket);
-    const cryptoStream = new CryptoDuplexStream(
-      socketStream,
-      metrics
-    );
+    const cryptoStream = new CryptoDuplexStream(socketStream);
+    cryptoStream.on(`metrics`, (metric) => metrics.add(metric));
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {

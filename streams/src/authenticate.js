@@ -17,9 +17,10 @@ import DuplexTransform from './duplex_transform';
 
 import type {Duplex} from 'stream';
 import type {Deferred} from 'silk-async-utils';
-import type {DuplexStreamOptions} from 'silk-streams';
-
-type TransformCallback = (error: ?Error, data?: Buffer | string) => void;
+import type {
+  DuplexStreamOptions,
+  TransformCallback,
+} from './types';
 
 export type AuthenticateStatus =
   'unknown' |
@@ -102,6 +103,7 @@ export class AuthenticateStreamBase extends ClosingTransform {
     this._transformCallback = null;
 
     if (callback) {
+      invariant(data);
       callback(this._error, data);
     }
   }

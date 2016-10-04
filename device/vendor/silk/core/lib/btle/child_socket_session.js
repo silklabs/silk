@@ -64,7 +64,8 @@ export default class ChildSocketSession extends AuthenticateDuplexStream {
   ) {
     log.debug(`constructor`);
 
-    const cryptoStream = new CryptoDuplexStream(stream, api.metrics);
+    const cryptoStream = new CryptoDuplexStream(stream);
+    cryptoStream.on(`metrics`, (metric) => api.metrics.add(metric));
 
     const msgpackStream = new MessagePackDuplexStream(cryptoStream);
     msgpackStream.on(`data`, (data) => {

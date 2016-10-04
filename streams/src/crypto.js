@@ -3,10 +3,10 @@
  * All Rights Reserved.
  * Confidential and Proprietary - Silk Labs, Inc.
  *
- * @noflow
+ * @flow
  */
 
-import assert from 'assert';
+import invariant from 'invariant';
 import crypto from 'crypto';
 import * as silkCrypto from 'silk-crypto';
 import makeLog from 'silk-log';
@@ -15,6 +15,20 @@ import ClosingTransform from './closing_transform';
 import DuplexTransform from './duplex_transform';
 import * as Metrics from './metrics';
 
+import type {Duplex} from 'stream';
+import type {
+  DuplexStreamOptions,
+  TransformCallback,
+} from './types';
+
+type QueuedData = {
+  chunk: Buffer;
+  encoding: string;
+  callback: TransformCallback;
+};
+
+type KeyPair = [string, string];
+
 const log = makeLog(`streams:crypto`);
 
 class CryptoStreamBase extends ClosingTransform {
@@ -22,20 +36,16 @@ class CryptoStreamBase extends ClosingTransform {
   static CIPHER_NAME = `aes-256-cbc`;
   static IV_LENGTH = 16;
 
-  _ec = null;
-  _metrics = null;
-  _sharedSecret = null;
-  _error = null;
+  _sharedSecret: ?Buffer = null;
+  _error: ?Error = null;
 
-  constructor(metrics, options) {
+  constructor(options?: DuplexStreamOptions) {
     log.debug(`CryptoStreamBase()`);
 
     super(options);
-
-    this._metrics = metrics;
   }
 
-  _endWithError(error) {
+  _endWithError(error: Error): void {
     log.debug(`CryptoStreamBase._endWithError('${error.toString()}')`);
 
     if (this._error) {
@@ -65,15 +75,15 @@ class CryptoStreamBase extends ClosingTransform {
 // DecodeStream to ensure that no messages arrive out of order.
 export class EncryptStream extends CryptoStreamBase {
 
-  _bufferedWrites = [ ];
-  _sequenceBuffer = null;
-  _randomBytes = [ ];
-  _pushedPublicKey = false;
+  _bufferedWrites: Array<QueuedData> = [];
+  _sequenceBuffer: Buffer;
+  _randomBytes: Array<Buffer> = [];
+  _pushedPublicKey: boolean = false;
 
-  constructor(metrics, options) {
+  constructor(options?: DuplexStreamOptions) {
     log.debug(`EncryptStream()`);
 
-    super(metrics, options);
+    super(options);
 
     // Our sequence counter is just a single byte.
     this._sequenceBuffer = new Buffer([this._insecureRandomInt(0, 0xff)]);
@@ -85,26 +95,26 @@ export class EncryptStream extends CryptoStreamBase {
     }
   }
 
-  _insecureRandomInt(min, max) {
+  _insecureRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  _feedRandomBytes() {
+  _feedRandomBytes(): void {
     silkCrypto.genRandomBytes(CryptoStreamBase.IV_LENGTH).then((random) => {
       this._randomBytes.push(random);
 
       if (this._pushedPublicKey &&
           this._sharedSecret &&
           this._bufferedWrites.length) {
-        const { data, encoding, callback } = this._bufferedWrites.shift();
-        this._processChunk(data, encoding, callback);
+        const {chunk, encoding, callback} = this._bufferedWrites.shift();
+        this._processChunk(chunk, encoding, callback);
       }
     }).catch((error) => {
       this._endWithError(error);
     });
   }
 
-  _encodeInteger(int) {
+  _encodeInteger(int: number): Buffer {
     // Each byte can hold 7 bits, and the high bit is used to indicate that the
     // value continues in the next byte.
     // E.g.:
@@ -113,7 +123,7 @@ export class EncryptStream extends CryptoStreamBase {
     //   [ 0x81, 0x3fff ] -> <Buffer nn nn>
     //   0x4000           -> <Buffer 80 80 01>
     //   ...
-    let array = [ ];
+    let array = [];
     for (;;) {
       let shifted = int >> 7;
       if (shifted) {
@@ -127,9 +137,13 @@ export class EncryptStream extends CryptoStreamBase {
     return new Buffer(array);
   }
 
-  _processChunk(chunk, encoding, callback) {
-    assert(this._pushedPublicKey);
-    assert(this._sharedSecret);
+  _processChunk(
+    chunk: Buffer,
+    encoding: string,
+    callback: TransformCallback,
+  ): void {
+    invariant(this._pushedPublicKey);
+    invariant(this._sharedSecret);
 
     if (!this._randomBytes.length) {
       log.warn(`No random bytes available, waiting`);
@@ -137,13 +151,14 @@ export class EncryptStream extends CryptoStreamBase {
       return;
     }
 
-    assert(this._randomBytes.length);
+    invariant(this._randomBytes.length);
 
     // Grab random bytes out of our cache, and refill it asynchronously.
     const iv = this._randomBytes.pop();
     this._feedRandomBytes();
 
-    assert(iv.length === CryptoStreamBase.IV_LENGTH);
+    invariant(iv.length === CryptoStreamBase.IV_LENGTH);
+    invariant(this._sharedSecret);
 
     const cipher =
       crypto.createCipheriv(CryptoStreamBase.CIPHER_NAME,
@@ -158,7 +173,7 @@ export class EncryptStream extends CryptoStreamBase {
     cipher.write(this._sequenceBuffer);
     this._sequenceBuffer[0]++;
 
-    cipher.end(chunk, encoding, error => {
+    cipher.end(chunk, encoding, (error: ?Error) => {
       if (error) {
         this._endWithError(error);
         callback(error);
@@ -172,6 +187,7 @@ export class EncryptStream extends CryptoStreamBase {
       let encrypted = null;
 
       while ((encrypted = cipher.read())) {
+        invariant(typeof encrypted === `object`);
         encryptedData.push(encrypted);
         messageSize += encrypted.length;
       }
@@ -196,19 +212,19 @@ export class EncryptStream extends CryptoStreamBase {
       callback(this._error);
 
       const plaintextSize = chunk.length + this._sequenceBuffer.length;
-      this._metrics.add(new Metrics.Encrypt(plaintextSize, duration));
+      this.emit(`metrics`, new Metrics.Encrypt(plaintextSize, duration));
     });
   }
 
-  _processBufferedChunks() {
-    assert(this._pushedPublicKey);
-    assert(this._sharedSecret);
+  _processBufferedChunks(): void {
+    invariant(this._pushedPublicKey);
+    invariant(this._sharedSecret);
 
     if (this._bufferedWrites.length) {
       log.debug(`Processing all buffered writes`);
 
       let bufferedWrites = this._bufferedWrites;
-      this._bufferedWrites = [ ];
+      this._bufferedWrites = [];
 
       while (bufferedWrites.length) {
         let { chunk, encoding, callback } = bufferedWrites.shift();
@@ -217,9 +233,14 @@ export class EncryptStream extends CryptoStreamBase {
     }
   }
 
-  _transform(chunk, encoding, callback) {
-    assert(chunk.length);
-    assert(encoding === `buffer`);
+  _transform(
+    chunk: Buffer | string,
+    encoding: string,
+    callback: TransformCallback,
+  ): void {
+    invariant(typeof chunk === `object`);
+    invariant(chunk.length);
+    invariant(encoding === `buffer`);
 
     if (this._error) {
       callback(this._error);
@@ -239,10 +260,10 @@ export class EncryptStream extends CryptoStreamBase {
     this._processChunk(chunk, encoding, callback);
   }
 
-  setKeyPair(keyPair: [string, string]) {
-    assert(!this._pushedPublicKey);
-    assert(!this._sharedSecret);
-    assert(this._bufferedWrites);
+  setKeyPair(keyPair: KeyPair): void {
+    invariant(!this._pushedPublicKey);
+    invariant(!this._sharedSecret);
+    invariant(this._bufferedWrites);
 
     const publicKeyHex = keyPair[1];
     log.debug(`This public key: '${publicKeyHex}'`);
@@ -251,7 +272,7 @@ export class EncryptStream extends CryptoStreamBase {
     // ever need more than 255 bytes for the key we will need to change this to
     // take a multi-byte encoded length.
     const publicKey = new Buffer(publicKeyHex, 'hex');
-    assert(publicKey.length <= 0xff);
+    invariant(publicKey.length <= 0xff);
     const publicKeyLength = new Buffer([publicKey.length]);
     const outgoing = Buffer.concat([publicKeyLength, publicKey]);
     this.push(outgoing);
@@ -259,14 +280,15 @@ export class EncryptStream extends CryptoStreamBase {
     this._pushedPublicKey = true;
   }
 
-  get sharedSecret() {
+  get sharedSecret(): ?Buffer {
     return this._sharedSecret;
   }
 
-  set sharedSecret(val) {
-    assert(Buffer.isBuffer(val));
-    assert(!this._sharedSecret);
-    assert(this._bufferedWrites);
+  set sharedSecret(val: ?Buffer) {
+    invariant(val);
+    invariant(Buffer.isBuffer(val));
+    invariant(!this._sharedSecret);
+    invariant(this._bufferedWrites);
 
     log.debug(`Setting shared secret '${val.toString('hex')}'`);
     this._sharedSecret = val;
@@ -285,33 +307,34 @@ export class EncryptStream extends CryptoStreamBase {
 // be uncorked and data will be decrypted as it is written.
 export class DecryptStream extends CryptoStreamBase {
 
-  _bufferedWrites = [ ];
+  _bufferedWrites: ?Array<QueuedData> = [];
 
-  _data = [ ];
-  _dataLength = 0;
+  _data: Array<Buffer> = [];
+  _dataLength: number = 0;
 
-  _encryptedChunkSize = 0;
-  _decipher = null;
+  _encryptedChunkSize: number = 0;
+  _decipher: ?crypto$Decipher = null;
 
-  _plaintextSize = 0;
-  _decryptDuration = 0;
+  _plaintextSize: number = 0;
+  _decryptDuration: number = 0;
 
-  _otherSequenceNumber = undefined;
+  _otherSequenceNumber: ?number = null;
 
-  _keyPair = null;
-  _otherPublicKeyBuffer = null;
-  _otherPublicKeyBufferIndex = 0;
+  _keyPair: ?KeyPair = null;
+  _otherPublicKeyBuffer: ?Buffer = null;
+  _otherPublicKeyBufferIndex: number = 0;
 
-  constructor(metrics, options) {
+  constructor(options?: DuplexStreamOptions) {
     log.debug(`DecryptStream()`);
 
-    super(metrics, options);
+    super(options);
   }
 
-  _deriveKey(chunk) {
-    assert(this._keyPair);
-    assert(!this._sharedSecret);
-    assert(Buffer.isBuffer(chunk));
+  _deriveKey(chunk: Buffer): ?Buffer {
+    invariant(!this._sharedSecret);
+
+    const keyPair = this._keyPair;
+    invariant(keyPair);
 
     // If we don't yet have |_otherPublicKeyBuffer| then this is our first chunk
     // of data. The length of the public key will be the first byte.
@@ -337,10 +360,13 @@ export class DecryptStream extends CryptoStreamBase {
       }
     }
 
-    assert(this._otherPublicKeyBufferIndex < this._otherPublicKeyBuffer.length);
+    const otherPublicKeyBuffer = this._otherPublicKeyBuffer;
+    invariant(otherPublicKeyBuffer);
+
+    invariant(this._otherPublicKeyBufferIndex < otherPublicKeyBuffer.length);
 
     const missingPublicKeyLength =
-      this._otherPublicKeyBuffer.length - this._otherPublicKeyBufferIndex;
+      otherPublicKeyBuffer.length - this._otherPublicKeyBufferIndex;
     const chunkPublicKeyLength =
       Math.min(missingPublicKeyLength, chunk.length);
 
@@ -348,28 +374,30 @@ export class DecryptStream extends CryptoStreamBase {
               `received ${chunkPublicKeyLength} bytes for the public key and ` +
               `${chunk.length - chunkPublicKeyLength} bytes left over`);
 
+    let remainingChunk: ?Buffer;
+
     // Slice out the data that we need for the public key and leave the rest to
     // get processed in |_transform|.
     let publicKeyChunk;
     if (chunkPublicKeyLength === chunk.length) {
       publicKeyChunk = chunk;
-      chunk = null;
+      remainingChunk = null;
     } else {
       publicKeyChunk = chunk.slice(0, chunkPublicKeyLength);
-      chunk = chunk.slice(chunkPublicKeyLength);
+      remainingChunk = chunk.slice(chunkPublicKeyLength);
     }
 
     // Copy all the data that we have received into the public key buffer.
-    publicKeyChunk.copy(this._otherPublicKeyBuffer,
+    publicKeyChunk.copy(otherPublicKeyBuffer,
                         this._otherPublicKeyBufferIndex);
     this._otherPublicKeyBufferIndex += publicKeyChunk.length;
 
-    if (this._otherPublicKeyBufferIndex === this._otherPublicKeyBuffer.length) {
-      const theirPublicKeyHex = this._otherPublicKeyBuffer.toString('hex');
-      log.debug(`Received all ${this._otherPublicKeyBuffer.length} bytes ` +
-                `for the public key: '${theirPublicKeyHex}'`);
+    if (this._otherPublicKeyBufferIndex === otherPublicKeyBuffer.length) {
+      const theirPublicKeyHex = otherPublicKeyBuffer.toString('hex');
+      log.debug(`Received all ${otherPublicKeyBuffer.length} bytes for the ` +
+                `public key: '${theirPublicKeyHex}'`);
 
-      const ourSecretKeyHex = this._keyPair[0];
+      const ourSecretKeyHex = keyPair[0];
       silkCrypto.genX25519SharedSecret(ourSecretKeyHex, theirPublicKeyHex)
         .catch((error) => {
           process.nextTick(() => this.emit(`error`, error));
@@ -379,7 +407,7 @@ export class DecryptStream extends CryptoStreamBase {
           // X25519 group size is limited and key distribution is not uniform.
           // To remedy, we hash the resulting shared secret before using it.
           const hasher = crypto.createHash('sha256');
-          hasher.update(new Buffer(sharedSecretHex), 'hex');
+          hasher.update(new Buffer(sharedSecretHex, 'hex'));
           const sharedSecret = this._sharedSecret = hasher.digest();
 
           // We don't need this any more.
@@ -393,13 +421,13 @@ export class DecryptStream extends CryptoStreamBase {
         });
     }
 
-    return chunk;
+    return remainingChunk;
   }
 
-  _decodeEncryptedChunkSize() {
+  _decodeEncryptedChunkSize(): boolean {
     // See encoding details above on |_encodeInteger|.
-    assert(this._sharedSecret);
-    assert(!this._encryptedChunkSize);
+    invariant(this._sharedSecret);
+    invariant(!this._encryptedChunkSize);
 
     if (!this._dataLength) {
       return false;
@@ -464,11 +492,13 @@ export class DecryptStream extends CryptoStreamBase {
     return true;
   }
 
-  _createDecipher() {
-    assert(this._sharedSecret);
-    assert(!this._decipher);
-    assert(!this._plaintextSize);
-    assert(!this._decryptDuration);
+  _createDecipher(): boolean {
+    invariant(!this._decipher);
+    invariant(!this._plaintextSize);
+    invariant(!this._decryptDuration);
+
+    const sharedSecret = this._sharedSecret;
+    invariant(sharedSecret);
 
     if (this._dataLength < CryptoStreamBase.IV_LENGTH) {
       return false;
@@ -507,9 +537,7 @@ export class DecryptStream extends CryptoStreamBase {
     log.debug(`Creating decipher`);
 
     const decipher =
-      crypto.createDecipheriv(CryptoStreamBase.CIPHER_NAME,
-                              this._sharedSecret,
-                              iv);
+      crypto.createDecipheriv(CryptoStreamBase.CIPHER_NAME, sharedSecret, iv);
 
     let firstData = true;
 
@@ -519,7 +547,7 @@ export class DecryptStream extends CryptoStreamBase {
       if (firstData) {
         firstData = false;
 
-        if (this._otherSequenceNumber !== undefined) {
+        if (this._otherSequenceNumber !== null) {
           const expectedSequenceNumber =
             (this._otherSequenceNumber + 1) % 0x100;
           if (expectedSequenceNumber !== data[0]) {
@@ -555,9 +583,11 @@ export class DecryptStream extends CryptoStreamBase {
     return true;
   }
 
-  _pushEncryptedData() {
-    assert(this._sharedSecret);
-    assert(this._decipher);
+  _pushEncryptedData(): boolean {
+    invariant(this._sharedSecret);
+
+    const decipher = this._decipher;
+    invariant(decipher);
 
     const sizeToPush = Math.min(this._dataLength, this._encryptedChunkSize);
     if (!sizeToPush) {
@@ -571,14 +601,14 @@ export class DecryptStream extends CryptoStreamBase {
     while (remaining) {
       let buffer = this._data[0];
       if (buffer.length < remaining) {
-        this._decipher.write(this._data.shift());
+        decipher.write(this._data.shift());
         remaining -= buffer.length;
       } else {
         if (buffer.length > remaining) {
-          this._decipher.write(buffer.slice(0, remaining));
+          decipher.write(buffer.slice(0, remaining));
           this._data[0] = buffer.slice(remaining);
         } else {
-          this._decipher.write(this._data.shift());
+          decipher.write(this._data.shift());
         }
         break;
       }
@@ -592,7 +622,7 @@ export class DecryptStream extends CryptoStreamBase {
     return true;
   }
 
-  _pushNextMessage() {
+  _pushNextMessage(): boolean {
     if (!this._dataLength) {
       return false;
     }
@@ -602,14 +632,12 @@ export class DecryptStream extends CryptoStreamBase {
       return false;
     }
 
-    assert(this._encryptedChunkSize);
+    invariant(this._encryptedChunkSize);
 
     if (!this._decipher && !this._createDecipher()) {
       // Not enough data to create the decipher.
       return false;
     }
-
-    assert(this._decipher);
 
     this._pushEncryptedData();
 
@@ -619,6 +647,7 @@ export class DecryptStream extends CryptoStreamBase {
 
     const start = Date.now();
 
+    invariant(this._decipher);
     this._decipher.end();
 
     const duration = Date.now() - start + this._decryptDuration;
@@ -631,33 +660,42 @@ export class DecryptStream extends CryptoStreamBase {
     // This method can be called in a loop and the metrics aren't perf-critical
     // so just do this on the next tick.
     process.nextTick(() => {
-      this._metrics.add(new Metrics.Decrypt(plaintextSize, duration));
+      this.emit(`metrics`, new Metrics.Decrypt(plaintextSize, duration));
     });
 
     return true;
   }
 
-  _processChunk(chunk, encoding, callback) {
-    assert(chunk.length);
-    assert(encoding === `buffer`);
+  _processChunk(
+    chunk: Buffer,
+    encoding: string,
+    callback: TransformCallback,
+  ): void {
+    invariant(chunk);
+    invariant(chunk.length);
+    invariant(encoding === `buffer`);
 
     if (this._error) {
       callback(this._error);
       return;
     }
 
+    let remainingChunk: ?Buffer = chunk;
+
     if (!this._sharedSecret) {
-      chunk = this._deriveKey(chunk);
-      if (!chunk) {
+      remainingChunk = this._deriveKey(chunk);
+      if (!remainingChunk) {
         callback(this._error);
         return;
       }
 
-      assert(this._sharedSecret);
+      invariant(this._sharedSecret);
     }
 
-    this._data.push(chunk);
-    this._dataLength += chunk.length;
+    invariant(remainingChunk);
+
+    this._data.push(remainingChunk);
+    this._dataLength += remainingChunk.length;
 
     while (this._pushNextMessage()) {            // eslint-disable-line no-empty
       // Push as many messages as possible.
@@ -666,9 +704,14 @@ export class DecryptStream extends CryptoStreamBase {
     callback(this._error);
   }
 
-  _transform(chunk, encoding, callback) {
-    assert(chunk.length);
-    assert(encoding === `buffer`);
+  _transform(
+    chunk: Buffer | string,
+    encoding: string,
+    callback: TransformCallback,
+  ): void {
+    invariant(typeof chunk === `object`);
+    invariant(chunk.length);
+    invariant(encoding === `buffer`);
 
     if (this._error) {
       callback(this._error);
@@ -677,6 +720,7 @@ export class DecryptStream extends CryptoStreamBase {
 
     if (!this._sharedSecret && !this._keyPair) {
       log.debug(`Buffering writes until key pair is set`);
+      invariant(this._bufferedWrites);
       this._bufferedWrites.push({ chunk, encoding, callback });
       return;
     }
@@ -684,20 +728,22 @@ export class DecryptStream extends CryptoStreamBase {
     this._processChunk(chunk, encoding, callback);
   }
 
-  setKeyPair(keyPair: [string, string]) {
-    assert(keyPair);
-    assert(!this._keyPair);
-    assert(this._bufferedWrites);
+  setKeyPair(keyPair: KeyPair): void {
+    invariant(keyPair);
+    invariant(!this._keyPair);
+
+    const bufferedWrites = this._bufferedWrites;
+    invariant(bufferedWrites);
 
     log.debug(`Setting key pair`);
 
     this._keyPair = keyPair;
 
-    if (this._bufferedWrites.length) {
+    if (bufferedWrites.length) {
       log.debug(`Processing buffered writes`);
 
-      while (this._bufferedWrites.length) {
-        let { chunk, encoding, callback } = this._bufferedWrites.shift();
+      while (bufferedWrites.length) {
+        let { chunk, encoding, callback } = bufferedWrites.shift();
         this._processChunk(chunk, encoding, callback);
       }
     }
@@ -705,25 +751,39 @@ export class DecryptStream extends CryptoStreamBase {
     this._bufferedWrites = null;
   }
 
-  get sharedSecret() {
+  get sharedSecret(): ?Buffer {
     return this._sharedSecret;
   }
 }
-
 
 export class CryptoDuplexStream extends DuplexTransform {
 
   _sharedSecret = null;
 
   constructor(
-    stream,
-    metrics,
-    options = {}
+    stream: Duplex,
+    options?: {autoClose?: boolean} = {},
   ) {
     log.debug(`CryptoDuplexStream()`);
 
-    const decrypt = new DecryptStream(metrics);
-    const encrypt = new EncryptStream(metrics);
+    const decrypt = new DecryptStream();
+    const encrypt = new EncryptStream();
+
+    options = {...options};
+    if (!(`autoClose` in options)) {
+      options.autoClose = true;
+    }
+
+    super(stream, stream, decrypt, encrypt, options);
+
+    decrypt.once(`sharedSecret`, (sharedSecret) => {
+      encrypt.sharedSecret = sharedSecret;
+    });
+
+    encrypt.once(`sharedSecret`, sharedSecret => {
+      this._sharedSecret = sharedSecret;
+      this.emit(`sharedSecret`, sharedSecret);
+    });
 
     silkCrypto.genX25519KeyPair().then((keyPair) => {
       encrypt.setKeyPair(keyPair);
@@ -732,28 +792,12 @@ export class CryptoDuplexStream extends DuplexTransform {
       log.error(`Could not generate key pair`, error);
       process.nextTick(() => {
         this.emit(`error`, error);
-        this.push(null);
       });
     });
-
-    decrypt.once(`sharedSecret`, sharedSecret => {
-      encrypt.sharedSecret = sharedSecret;
-    });
-
-    options = Object.assign({ }, options);
-    if (!(`autoClose` in options)) {
-      options.autoClose = true;
-    }
-
-    super(stream, stream, decrypt, encrypt, options);
-
-    encrypt.once(`sharedSecret`, sharedSecret => {
-      this._sharedSecret = sharedSecret;
-      this.emit(`sharedSecret`, sharedSecret);
-    });
   }
 
-  get sharedSecret() {
+  get sharedSecret(): ?Buffer {
     return this._sharedSecret;
   }
+
 }

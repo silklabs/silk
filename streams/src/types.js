@@ -28,3 +28,5 @@ export type DuplexStreamOptions =
     readableObjectMode?: boolean,
     writableObjectMode?: boolean,
   };
+
+export type TransformCallback = (error: ?Error, data?: Buffer | string) => void;

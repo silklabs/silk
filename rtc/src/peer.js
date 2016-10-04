@@ -154,23 +154,21 @@ export default class Peer extends EventEmitter {
     }
   }
 
-  _onMediaRequest: (media: MediaRequestEvent) => void =
-  (media: MediaRequestEvent) => {
+  _onMediaRequest(media: MediaRequestEvent) {
     this._mediaStreamRequestQueue.push(media);
     this._runMediaRequestQueue();
-  };
+  }
 
-  _onMediaRemoveStream: (event: MediaRemoveStreamEvent) => void =
-  (event: MediaRemoveStreamEvent) => {
+  _onMediaRemoveStream(event: MediaRemoveStreamEvent) {
     this.removeStream(event.label);
-  };
+  }
 
   _observeControl(control: TransportEmitter): void {
     control.on('mediaRequest', this._onMediaRequest);
     control.on('mediaRemoveStream', this._onMediaRemoveStream);
   }
 
-  _onIceConnectionState: () => void = () => {
+  _onIceConnectionState() {
     const state = this._peerConnection.iceConnectionState;
 
     if (ICE_ERROR.has(state)) {
@@ -184,9 +182,9 @@ export default class Peer extends EventEmitter {
       this.destroy();
       this.emit('close', { reason: state });
     }
-  };
+  }
 
-  _onDataChannel: (event: RTCDataChannelEvent) => void = (event: RTCDataChannelEvent) => {
+  _onDataChannel(event: RTCDataChannelEvent) {
     const { channel } = event;
 
     // Some data channels may have special functions outside of the norm.
@@ -200,10 +198,9 @@ export default class Peer extends EventEmitter {
       channel: structuredChannel,
     });
     this.emit('datachannel', structuredChannel);
-  };
+  }
 
-  _onRemoveStream: (event: RTCStreamEvent) => void =
-  (event: RTCStreamEvent) => {
+  _onRemoveStream(event: RTCStreamEvent) {
     const state = Array.from(this._mediaStreams.values()).find((state) => {
       return state.stream && state.stream.id === event.stream.id;
     });
@@ -216,7 +213,14 @@ export default class Peer extends EventEmitter {
     const { label } = state;
     this._mediaStreams.delete(label);
     this.emit('removestream', { label, stream: event.stream });
-  };
+  }
+
+  // Pre-bind event listeners.
+  _onMediaRequest: ((media: MediaRequestEvent) => void) = this._onMediaRequest.bind(this);
+  _onMediaRemoveStream: ((event: MediaRemoveStreamEvent) => void) = this._onMediaRemoveStream.bind(this);
+  _onIceConnectionState: (() => void) = this._onIceConnectionState.bind(this);
+  _onDataChannel: ((event: RTCDataChannelEvent) => void) = this._onDataChannel.bind(this);
+  _onRemoveStream: ((event: RTCStreamEvent) => void) = this._onRemoveStream.bind(this);
 
   constructor(
     pc: RTCPeerConnection,
@@ -388,7 +392,10 @@ export default class Peer extends EventEmitter {
    * channel with a given name. If both sides are attempting to create a single
    * channel with the same name will result in _two_ independent data channels.
    */
-  createChannel(label: string, config: RTCDataChannelInit = {}): StructuredDataChannel {
+  createChannel(
+    label: string,
+    config: RTCDataChannelInit = {}
+  ): StructuredDataChannel {
     let state = this._dataChannels.get(label);
     if (!state) {
       state = {};

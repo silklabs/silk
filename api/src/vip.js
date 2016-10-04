@@ -6,7 +6,7 @@
  */
 
 import VIPBase from './gen/vip';
-import { genPBKDF2KeyDerivation } from 'silk-crypto';
+import {pbkdf2} from 'silk-crypto';
 
 import type {
   CreateAccountInput,
@@ -49,13 +49,11 @@ function genFromPassword(
   // Domain names are case insensitive!
   const email = payload.email.toLowerCase().trim();
   const {password, ...rest} = payload;
-  return genPBKDF2KeyDerivation(
+  return pbkdf2.genKeyDerivationHex(
     password, /* input */
     email, /* salt */
     PBKDF2_ROUNDS
-  ).then((passwordHash) => {
-    return {passwordHash, ...rest};
-  });
+  ).then((passwordHash) => ({passwordHash, ...rest}));
 }
 
 /**

@@ -8,7 +8,7 @@ import invariant from 'assert';
 import * as Joi from 'joi';
 import msgpack from 'msgpack-lite';
 import {AccessToken} from 'silk-api';
-import * as silkCrypto from 'silk-crypto';
+import {ed25519} from 'silk-crypto';
 
 import type {
   EncodeArgsInternal,
@@ -40,7 +40,7 @@ type SignedMessage<T> = {
 };
 
 const SignedMessageSchema = Joi.object().keys({
-  r: Joi.binary().length(silkCrypto.ED25519_KEY_BYTES).optional(),
+  r: Joi.binary().length(ed25519.KEY_BYTES).optional(),
   c: Joi.string().required(),
   p: Joi.any().required(),
 }).unknown(false).required();
@@ -66,8 +66,8 @@ type Onion = {
 };
 
 const OnionSchema = Joi.object().keys({
-  i: Joi.binary().length(silkCrypto.ED25519_KEY_BYTES).required(),
-  s: Joi.binary().length(silkCrypto.ED25519_SIG_BYTES).required(),
+  i: Joi.binary().length(ed25519.KEY_BYTES).required(),
+  s: Joi.binary().length(ed25519.SIG_BYTES).required(),
   m: Joi.binary().required(),
 }).unknown(false).required();
 

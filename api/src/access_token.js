@@ -6,7 +6,7 @@
 import invariant from 'assert';
 import base64url from 'base64url';
 import crypto from 'crypto';
-import * as silkCrypto from 'silk-crypto';
+import {ed25519} from 'silk-crypto';
 import uuid from 'uuid';
 
 export default class AccessToken {
@@ -15,7 +15,7 @@ export default class AccessToken {
   priv: ?string;
 
   static gen(): Promise<AccessToken> {
-    return silkCrypto.genEd25519KeyPair()
+    return ed25519.genKeyPairHex()
       .then(([priv, pub]) => new AccessToken(pub, priv));
   }
 
@@ -47,24 +47,25 @@ export default class AccessToken {
 
   async genIsValid(): Promise<boolean> {
     if (this.priv) {
-      const pubKey = await silkCrypto.genEd25519PubKeyFromSecret(this.priv);
-      if (pubKey !== this.pub) {
-        return false;
-      }
+      const pubKey = await ed25519.genVerifyingKeyFromSigningKeyHex(this.priv);
+      return pubKey === this.pub;
     }
-    return !!this.pub && this.pub.length === 2 * silkCrypto.ED25519_KEY_BYTES;
+    return !!this.pub && this.pub.length === 2 * ed25519.KEY_BYTES;
   }
 
   genSign(message: string | Buffer): Promise<string> {
-    const hash = crypto.createHash('sha256').update(message).digest('hex');
+    const hash = crypto.createHash('sha256').update(message).digest();
     invariant(this.priv, 'no private key');
-    return silkCrypto.genEd25519Sign(hash, this.priv);
+    return ed25519.genSignHex(hash, this.priv);
   }
 
-  genVerify(message: string | Buffer, signatureHex: string): Promise<boolean> {
-    return silkCrypto.genEd25519Verify(
-      crypto.createHash('sha256').update(message).digest('hex'),
-      signatureHex,
+  genVerify(
+    message: string | Buffer,
+    signature: string | Buffer,
+  ): Promise<boolean> {
+    return ed25519.genVerify(
+      crypto.createHash('sha256').update(message).digest(),
+      signature,
       this.pub
     );
   }

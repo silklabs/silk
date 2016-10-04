@@ -8,7 +8,7 @@
 
 import invariant from 'assert';
 import crypto from 'crypto';
-import * as silkCrypto from 'silk-crypto';
+import {genRandomBytes, x25519} from 'silk-crypto';
 import makeLog from 'silk-log';
 
 import ClosingTransform from './closing_transform';
@@ -27,7 +27,7 @@ type QueuedData = {
   callback: TransformCallback;
 };
 
-type KeyPair = [string, string];
+type KeyPair = [Buffer, Buffer];
 
 const log = makeLog(`streams:crypto`);
 
@@ -100,7 +100,7 @@ export class EncryptStream extends CryptoStreamBase {
   }
 
   _feedRandomBytes(): void {
-    silkCrypto.genRandomBytes(CryptoStreamBase.IV_LENGTH).then((random) => {
+    genRandomBytes(CryptoStreamBase.IV_LENGTH).then((random) => {
       this._randomBytes.push(random);
 
       if (this._pushedPublicKey &&
@@ -265,13 +265,12 @@ export class EncryptStream extends CryptoStreamBase {
     invariant(!this._sharedSecret);
     invariant(this._bufferedWrites);
 
-    const publicKeyHex = keyPair[1];
-    log.debug(`This public key: '${publicKeyHex}'`);
+    const publicKey = keyPair[1];
+    log.debug(`This public key: '${publicKey.toString('hex')}'`);
 
     // We currently only send one byte for the length of the public key. If we
     // ever need more than 255 bytes for the key we will need to change this to
     // take a multi-byte encoded length.
-    const publicKey = new Buffer(publicKeyHex, 'hex');
     invariant(publicKey.length <= 0xff);
     const publicKeyLength = new Buffer([publicKey.length]);
     const outgoing = Buffer.concat([publicKeyLength, publicKey]);
@@ -342,7 +341,7 @@ export class DecryptStream extends CryptoStreamBase {
       log.debug(`Other public key length is ${chunk[0]}`);
 
       // This should always be true for now...
-      if (chunk[0] !== silkCrypto.X25519_KEY_BYTES) {
+      if (chunk[0] !== x25519.KEY_BYTES) {
         const error = new Error(`Invalid public key length (${chunk[0]})`);
         this._endWithError(error);
         return null;
@@ -388,27 +387,25 @@ export class DecryptStream extends CryptoStreamBase {
     }
 
     // Copy all the data that we have received into the public key buffer.
-    publicKeyChunk.copy(otherPublicKeyBuffer,
-                        this._otherPublicKeyBufferIndex);
+    publicKeyChunk.copy(otherPublicKeyBuffer, this._otherPublicKeyBufferIndex);
     this._otherPublicKeyBufferIndex += publicKeyChunk.length;
 
     if (this._otherPublicKeyBufferIndex === otherPublicKeyBuffer.length) {
-      const theirPublicKeyHex = otherPublicKeyBuffer.toString('hex');
-      log.debug(`Received all ${otherPublicKeyBuffer.length} bytes for the ` +
-                `public key: '${theirPublicKeyHex}'`);
-
-      const ourSecretKeyHex = keyPair[0];
-      silkCrypto.genX25519SharedSecret(ourSecretKeyHex, theirPublicKeyHex)
+      log.debug(
+        `Received all ${otherPublicKeyBuffer.length} bytes ` +
+        `for the public key: '${otherPublicKeyBuffer.toString('hex')}'`
+      );
+      const ourPrivateKey = keyPair[0];
+      x25519.genSharedSecret(ourPrivateKey, otherPublicKeyBuffer)
         .catch((error) => {
           process.nextTick(() => this.emit(`error`, error));
           throw error;
         })
-        .then((sharedSecretHex) => {
+        .then((x25519Secret) => {
           // X25519 group size is limited and key distribution is not uniform.
           // To remedy, we hash the resulting shared secret before using it.
-          const hasher = crypto.createHash('sha256');
-          hasher.update(new Buffer(sharedSecretHex, 'hex'));
-          const sharedSecret = this._sharedSecret = hasher.digest();
+          const sharedSecret = this._sharedSecret =
+            crypto.createHash('sha256').update(x25519Secret).digest();
 
           // We don't need this any more.
           this._keyPair = null;
@@ -785,7 +782,7 @@ export class CryptoDuplexStream extends DuplexTransform {
       this.emit(`sharedSecret`, sharedSecret);
     });
 
-    silkCrypto.genX25519KeyPair().then((keyPair) => {
+    x25519.genKeyPair().then((keyPair) => {
       encrypt.setKeyPair(keyPair);
       decrypt.setKeyPair(keyPair);
     }).catch((error) => {

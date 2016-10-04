@@ -3,7 +3,7 @@
  */
 
 import assert from 'assert';
-import * as silkCrypto from '..';
+import {ed25519} from '..';
 
 /* eslint-disable indent */
 
@@ -155,13 +155,13 @@ const TEST_VECTORS = [/*{
 suite('Ed25519 test vectors', () => {
   TEST_VECTORS.forEach((vector, index) => {
     test(`Test vector ${vector.name}`, async () => {
-      const publicKey = await silkCrypto.genEd25519PubKeyFromSecret(vector.secretKey);
+      const publicKey = await ed25519.genVerifyingKeyFromSigningKeyHex(vector.secretKey);
       assert.equal(publicKey, vector.publicKey, 'public key');
 
-      const signature = await silkCrypto.genEd25519Sign(vector.message, vector.secretKey);
+      const signature = await ed25519.genSignHex(vector.message, vector.secretKey);
       assert.equal(signature, vector.signature, 'signature');
 
-      const verify = await silkCrypto.genEd25519Verify(
+      const verify = await ed25519.genVerify(
         vector.message,
         vector.signature,
         vector.publicKey

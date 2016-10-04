@@ -3,7 +3,7 @@
  */
 
 import assert from 'assert';
-import * as silkCrypto from '..';
+import {x25519} from '..';
 
 suite('X25519 tests', () => {
   test('RFC test vectors', async () => {
@@ -14,19 +14,19 @@ suite('X25519 tests', () => {
     const bobPublicKey = 'de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f';
     const sharedSecret = '4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742';
 
-    let pubKey = await silkCrypto.genX25519PubKeyFromSecret(alicePrivateKey);
+    let pubKey = await x25519.genPublicKeyFromPrivateKeyHex(alicePrivateKey);
     assert.equal(pubKey, alicePublicKey);
 
-    pubKey = await silkCrypto.genX25519PubKeyFromSecret(bobPrivateKey);
+    pubKey = await x25519.genPublicKeyFromPrivateKeyHex(bobPrivateKey);
     assert.equal(pubKey, bobPublicKey);
 
-    let secret = await silkCrypto.genX25519SharedSecret(
+    let secret = await x25519.genSharedSecretHex(
       alicePrivateKey,
       bobPublicKey
     );
     assert.equal(secret, sharedSecret);
 
-    secret = await silkCrypto.genX25519SharedSecret(
+    secret = await x25519.genSharedSecretHex(
       bobPrivateKey,
       alicePublicKey
     );

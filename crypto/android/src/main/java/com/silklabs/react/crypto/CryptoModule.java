@@ -89,7 +89,7 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Requests a number of random bytes.
    */
   @ReactMethod
-  public void genRandomBytes(int length, Promise promise) {
+  public void genRandomBytesHex(int length, Promise promise) {
     SecureRandom random = new SecureRandom();
     byte[] bytes = new byte[length];
     random.nextBytes(bytes);
@@ -100,7 +100,7 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Derive a 256 bit key from a password using PBKDF2 and HMAC-SHA256.
    */
   @ReactMethod
-  public void genPBKDF2KeyDerivation(
+  public void genPBKDF2KeyDerivationHex(
     String input,
     String salt,
     int rounds,
@@ -122,7 +122,7 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Generate a new Ed25519 key pair.
    */
   @ReactMethod
-  public void genEd25519KeyPair(Promise promise) {
+  public void genEd25519KeyPairHex(Promise promise) {
     byte[] publicKeyBytes = new byte[crypto_sign_ed25519_PUBLICKEYBYTES];
     byte[] secretKeyBytes = new byte[crypto_sign_ed25519_SECRETKEYBYTES];
     int ret = sodium.crypto_sign_ed25519_keypair(publicKeyBytes, secretKeyBytes);
@@ -142,7 +142,7 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Generate the public key for a given Ed25519 secret key.
    */
   @ReactMethod
-  public void genEd25519PubKeyFromSecret(
+  public void genEd25519VerifyingKeyFromSigningKeyHex(
     String seedHex,
     Promise promise) {
     if (seedHex.length() != 2 * crypto_sign_ed25519_SEEDBYTES) {
@@ -175,7 +175,7 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Generate Ed25519 signature
    */
   @ReactMethod
-  public void genEd25519Sign(
+  public void genEd25519SignHex(
     String msgHex,
     String seedHex,
     Promise promise) {
@@ -287,7 +287,7 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Generate a new X25519 key pair.
    */
   @ReactMethod
-  public void genX25519KeyPair(Promise promise) {
+  public void genX25519KeyPairHex(Promise promise) {
     byte[] secretKeyBytes = new byte[crypto_scalarmult_BYTES];
     byte[] publicKeyBytes = new byte[crypto_scalarmult_BYTES];
 
@@ -311,7 +311,9 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Generate the public key for a given X25519 secret key.
    */
   @ReactMethod
-  public void genX25519PubKeyFromSecret(String secretKeyHex, Promise promise) {
+  public void genX25519PublicKeyFromPrivateKeyHex(
+    String secretKeyHex,
+    Promise promise) {
     if (secretKeyHex.length() != 2 * crypto_scalarmult_BYTES) {
       promise.reject("E_X25519_INVALID_KEY_LENGTH", "Failed to generate public key");
       return;
@@ -342,7 +344,7 @@ public class CryptoModule extends ReactContextBaseJavaModule {
    * Generate an X25519 secret.
    */
   @ReactMethod
-  public void genX25519SharedSecret(
+  public void genX25519SharedSecretHex(
     String ourSecretKeyHex,
     String theirPublicKeyHex,
     Promise promise) {

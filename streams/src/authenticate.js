@@ -293,8 +293,9 @@ export class AuthenticateReadStream extends AuthenticateStreamBase {
   }
 
   _onSharedSecret(sharedSecret: Buffer): void {
-    AuthenticateReadStream.log.debug(`_onSharedSecret ` +
-                                     `<Buffer ${sharedSecret.length}>`);
+    AuthenticateReadStream.log.debug(
+      `_onSharedSecret(<Buffer(${sharedSecret.length})>)`
+    );
 
     invariant(!this._sharedSecret);
     this._sharedSecret = sharedSecret.toString('hex');

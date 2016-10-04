@@ -15,7 +15,7 @@
   RCTPromiseRejectBlock reject = ^(NSString *code, NSString *message, NSError *error) {
     XCTAssert(NO, @"Should not get here.");
   };
-  [crypto genRandomBytes:@(42) resolver:resolve rejecter:reject];
+  [crypto genRandomBytesHex:@(42) resolver:resolve rejecter:reject];
 
   XCTAssert(randomBytes != nil, @"Expected a result");
   XCTAssert(randomBytes.length == 84, @"Hex string length");
@@ -33,7 +33,7 @@
   RCTPromiseRejectBlock reject = ^(NSString *code, NSString *message, NSError *error) {
     XCTAssert(NO, @"Should not get here.");
   };
-  [crypto genPBKDF2KeyDerivation:password salt:salt rounds:rounds resolver:resolve rejecter:reject];
+  [crypto genPBKDF2KeyDerivationHex:password salt:salt rounds:rounds resolver:resolve rejecter:reject];
 
   XCTAssert(
     [key isEqualToString:@"fed892d4c48cb16af5f1fb33754a81be59809518046a7990208c6a61e4b731b8"],
@@ -166,7 +166,9 @@
   RCTPromiseRejectBlock reject = ^(NSString *code, NSString *message, NSError *error) {
     XCTAssert(NO, @"Should not get here.");
   };
-  [crypto genEd25519PubKeyFromSecret:testVector[@"secretKey"] resolver:resolve rejecter:reject];
+  [crypto genEd25519VerifyingKeyFromSigningKeyHex:testVector[@"secretKey"]
+                                         resolver:resolve
+                                         rejecter:reject];
 
   XCTAssert([key isEqualToString:testVector[@"publicKey"]]);
 }
@@ -179,10 +181,10 @@
   RCTPromiseRejectBlock reject = ^(NSString *code, NSString *message, NSError *error) {
     XCTAssert(NO, @"Should not get here.");
   };
-  [crypto genEd25519Sign:testVector[@"message"]
-                    seed:testVector[@"secretKey"]
-                resolver:resolve
-                rejecter:reject];
+  [crypto genEd25519SignHex:testVector[@"message"]
+                       seed:testVector[@"secretKey"]
+                   resolver:resolve
+                   rejecter:reject];
 
   XCTAssert([signature isEqualToString:testVector[@"signature"]]);
 }
@@ -221,25 +223,29 @@
     XCTAssert(NO, @"Should not get here.");
   };
 
-  [crypto genX25519PubKeyFromSecret:alicePrivateKey resolver:resolve rejecter:reject];
+  [crypto genX25519PublicKeyFromPrivateKeyHex:alicePrivateKey
+                                     resolver:resolve
+                                     rejecter:reject];
   XCTAssert([key isEqualToString:alicePublicKey]);
   key = nil;
 
-  [crypto genX25519PubKeyFromSecret:bobPrivateKey resolver:resolve rejecter:reject];
+  [crypto genX25519PublicKeyFromPrivateKeyHex:bobPrivateKey
+                                     resolver:resolve
+                                     rejecter:reject];
   XCTAssert([key isEqualToString:bobPublicKey]);
   key = nil;
 
-  [crypto genX25519SharedSecret:alicePrivateKey
-              theirPublicKeyHex:bobPublicKey
-                       resolver:resolve
-                       rejecter:reject];
+  [crypto genX25519SharedSecretHex:alicePrivateKey
+                 theirPublicKeyHex:bobPublicKey
+                          resolver:resolve
+                          rejecter:reject];
   XCTAssert([key isEqualToString:sharedSecret]);
   key = nil;
 
-  [crypto genX25519SharedSecret:bobPrivateKey
-              theirPublicKeyHex:alicePublicKey
-                       resolver:resolve
-                       rejecter:reject];
+  [crypto genX25519SharedSecretHex:bobPrivateKey
+                 theirPublicKeyHex:alicePublicKey
+                          resolver:resolve
+                          rejecter:reject];
   XCTAssert([key isEqualToString:sharedSecret]);
   key = nil;
 }

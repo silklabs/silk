@@ -72,7 +72,7 @@ RCT_EXPORT_MODULE()
 /**
  * Requests a number of random bytes.
  */
-RCT_EXPORT_METHOD(genRandomBytes:(nonnull NSNumber *)length
+RCT_EXPORT_METHOD(genRandomBytesHex:(nonnull NSNumber *)length
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -96,7 +96,7 @@ RCT_EXPORT_METHOD(genRandomBytes:(nonnull NSNumber *)length
 /**
  * Derive a 256 bit key from a password using PBKDF2 and HMAC-SHA256.
  */
-RCT_EXPORT_METHOD(genPBKDF2KeyDerivation:(NSString *)input
+RCT_EXPORT_METHOD(genPBKDF2KeyDerivationHex:(NSString *)input
                   salt:(NSString *)salt
                   rounds:(nonnull NSNumber *)rounds
                   resolver:(RCTPromiseResolveBlock)resolve
@@ -132,7 +132,7 @@ RCT_EXPORT_METHOD(genPBKDF2KeyDerivation:(NSString *)input
 /**
  * Generate a new Ed25519 key pair.
  */
-RCT_EXPORT_METHOD(genEd25519KeyPair:(RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(genEd25519KeyPairHex:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
   unsigned char publicKeyBytes[crypto_sign_ed25519_PUBLICKEYBYTES];
@@ -156,7 +156,7 @@ RCT_EXPORT_METHOD(genEd25519KeyPair:(RCTPromiseResolveBlock)resolve
 /**
  * Generate the public key for a given Ed25519 secret key.
  */
-RCT_EXPORT_METHOD(genEd25519PubKeyFromSecret:(NSString *)seedHex
+RCT_EXPORT_METHOD(genEd25519VerifyingKeyFromSigningKeyHex:(NSString *)seedHex
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -199,7 +199,7 @@ RCT_EXPORT_METHOD(genEd25519PubKeyFromSecret:(NSString *)seedHex
 /**
  * Generate Ed25519 signature
  */
-RCT_EXPORT_METHOD(genEd25519Sign:(NSString *)msgHex
+RCT_EXPORT_METHOD(genEd25519SignHex:(NSString *)msgHex
                   seed:(NSString *)seedHex
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -361,7 +361,7 @@ RCT_EXPORT_METHOD(genEd25519Verify:(NSString *)msgHex
 /**
  * Generate a new X25519 key pair.
  */
-RCT_EXPORT_METHOD(genX25519KeyPair:(RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(genX25519KeyPairHex:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
   unsigned char secretKeyBytes[crypto_scalarmult_BYTES];
@@ -399,7 +399,7 @@ RCT_EXPORT_METHOD(genX25519KeyPair:(RCTPromiseResolveBlock)resolve
 /**
  * Generate the public key for a given X25519 secret key.
  */
-RCT_EXPORT_METHOD(genX25519PubKeyFromSecret:(NSString *)secretKeyHex
+RCT_EXPORT_METHOD(genX25519PublicKeyFromPrivateKeyHex:(NSString *)secretKeyHex
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -444,7 +444,7 @@ RCT_EXPORT_METHOD(genX25519PubKeyFromSecret:(NSString *)secretKeyHex
 /**
  * Generate an X25519 secret.
  */
-RCT_EXPORT_METHOD(genX25519SharedSecret:(NSString *)ourSecretKeyHex
+RCT_EXPORT_METHOD(genX25519SharedSecretHex:(NSString *)ourSecretKeyHex
                   theirPublicKeyHex:(NSString *)theirPublicKeyHex
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)

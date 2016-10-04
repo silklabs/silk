@@ -192,7 +192,7 @@ export class SocketManager extends RobustEventEmitter {
 
   onUnconfiguredDevicesInRange: ((args: InRangeMessage) => void) = (args) => {
     const {inRange} = args;
-    log.debug(`SocketManager.onUnconfiguredDevicesInRange(${inRange})`);
+    log.debug(`SocketManager.onUnconfiguredDevicesInRange(${String(inRange)})`);
 
     // TODO: Something smarter here.
     process.nextTick(() =>
@@ -205,8 +205,10 @@ export class SocketManager extends RobustEventEmitter {
       deviceNumber,
       beaconing,
     } = args;
-    log.debug(`SocketManager.onDevicesBeaconing('${serviceUuid}', ` +
-              `${deviceNumber}, ${beaconing})`);
+    log.debug(
+      `SocketManager.onDevicesBeaconing('${serviceUuid}', ` +
+      `${deviceNumber}, ${String(beaconing)})`
+    );
 
     const eventName = beaconing ? `beacon-started` : `beacon-stopped`;
     this.emit(eventName, serviceUuid, deviceNumber);

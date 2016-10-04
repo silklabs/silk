@@ -153,17 +153,22 @@ export default class SocketSession extends AuthenticateDuplexStream {
   _onClose: (() => void) = () => {
     log.debug(`_onClose`);
 
-    const commonArgs = [
-      Date.now() - this._startTime,
-      this._receivedBytes,
-      this._sentBytes,
-      this.status,
-    ];
-
-    const metric = this._errorMessage ?
-                   new Metrics.SocketSessionError(...commonArgs,
-                                                  this._errorMessage) :
-                   new Metrics.SocketSession(...commonArgs);
+    const durationMs = Date.now() - this._startTime;
+    const metric =
+      this._errorMessage ?
+      new Metrics.SocketSessionError(
+        durationMs,
+        this._receivedBytes,
+        this._sentBytes,
+        this.status,
+        this._errorMessage
+      ) :
+      new Metrics.SocketSession(
+        durationMs,
+        this._receivedBytes,
+        this._sentBytes,
+        this.status
+      );
     this.emit(`metrics`, metric);
 
     this._socket.disconnect();

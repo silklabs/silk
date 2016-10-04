@@ -26,6 +26,13 @@ import NetworkWarning from '../NetworkWarning';
 import type {GlobalProps} from '../Root';
 import type {Credentials} from './AuthForm';
 
+type KeyboardShowEvent = {
+  endCoordinates: {
+    height: number;
+    width: number;
+  };
+};
+
 export default class NotLoggedIn extends AsyncComponent {
 
   props: GlobalProps;
@@ -53,7 +60,7 @@ export default class NotLoggedIn extends AsyncComponent {
   // TODO: we can do better here and only compare the sub-state we care about
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
-  _onAuthError = (error, previousError) => {
+  _onAuthError = (error: ?Error, previousError: ?Error) => {
     if (!error || previousError) {
       return;
     }
@@ -82,7 +89,7 @@ export default class NotLoggedIn extends AsyncComponent {
     this._animateKeyboard = false;
   };
 
-  onKeyboardShow = (event) => {
+  onKeyboardShow = (event: KeyboardShowEvent) => {
     LayoutAnimation.easeInEaseOut();
     this.setState({
       keyboardShown: true,
@@ -90,7 +97,7 @@ export default class NotLoggedIn extends AsyncComponent {
     });
   };
 
-  onKeyboardHide = (event) => {
+  onKeyboardHide = () => {
     if (!this._animateKeyboard) {
       this._animateKeyboard = true;
       return;

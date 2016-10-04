@@ -23,6 +23,7 @@ import SetupScreen from './SetupScreen';
 
 import * as actions from '../../store/actions';
 
+import type {DeviceWifiNetwork} from 'silk-app-client/src/ble/device_session';
 import type {GlobalProps} from '../Root';
 
 const log = createLog('WifiConfig');
@@ -174,7 +175,7 @@ export default class WifiConfig extends React.Component {
     this.setState({wifiModalShown: false});
   };
 
-  _selectNetwork = (network) => {
+  _selectNetwork = (network: DeviceWifiNetwork) => {
     this.props.dispatch(actions.wifiConfig.selectFromList(network));
     this._dismissWifiModal();
   };
@@ -195,11 +196,11 @@ export default class WifiConfig extends React.Component {
     this._showWifiModal();
   };
 
-  _onManualNetworkSSIDChange = (ssid) => {
+  _onManualNetworkSSIDChange = (ssid: string) => {
     this.props.dispatch(actions.wifiConfig.setManualSSID(ssid));
   };
 
-  _onPasswordChange = (password) => {
+  _onPasswordChange = (password: string) => {
     this.props.dispatch(actions.wifiConfig.setPassword(password));
   };
 
@@ -238,7 +239,7 @@ export default class WifiConfig extends React.Component {
     this.setState({authTypeModalShown: false});
   };
 
-  _onSelectAuthType = (psk) => {
+  _onSelectAuthType = (psk: boolean) => {
     this.props.dispatch(actions.wifiConfig.setManualPSK(psk));
     this._dismissAuthTypeModal();
   };

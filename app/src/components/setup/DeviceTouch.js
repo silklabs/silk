@@ -33,7 +33,7 @@ export default class DeviceTouch extends AsyncComponent {
     }
   }
 
-  _onRSSI = (rssi) => {
+  _onRSSI = (rssi: number) => {
     this.setStateAsync({rssi});
   };
 

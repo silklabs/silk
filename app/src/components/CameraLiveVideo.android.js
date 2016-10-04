@@ -13,7 +13,7 @@ import {
 
 export default class CameraLiveVideo extends React.Component {
 
-  onMessage = (message) => {
+  onMessage = (message: Object) => {
     this.refs.video.enqueue(message.frame).then(() => message.frame.close());
   };
 

@@ -21,6 +21,7 @@ import type { Segment } from 'silk-cam';
 type Props = {
   onSegmentEnqueued?: (segment: Segment) => any;
   onReload?: () => any;
+  onError?: (event: Event) => any;
 };
 
 type State = {
@@ -109,48 +110,55 @@ export default class MSEPlayer extends React.Component {
   }
 
   _feedPlayer: ((event?: Event) => void) = (event = null) => {
-    invariant(this.videoElement);
-    invariant(!this.videoElement.error);
-    invariant(this.mediaSource);
+    const {mediaSource, videoElement, segmentQueue} = this;
+    let {sourceBuffer} = this;
+    invariant(videoElement);
+    invariant(!videoElement.error);
+    invariant(mediaSource);
 
     if (event) {
       log.debug(`Feeding player after '${event.type}' event.`);
     }
 
-    if (!this.sourceBuffer) {
-      if (this.mediaSource.readyState !== 'open') {
+    if (!sourceBuffer) {
+      if (mediaSource.readyState !== 'open') {
         log.debug('MediaSource is still closed.');
-        this.mediaSource.addEventListener('sourceopen', this._feedPlayer);
+        mediaSource.addEventListener('sourceopen', this._feedPlayer);
         return;
       }
 
       log.debug('MediaSource is open.');
-      this.mediaSource.removeEventListener('sourceopen', this._feedPlayer);
+      mediaSource.removeEventListener('sourceopen', this._feedPlayer);
+      invariant(this.playback);
+
       const {videoCodec, audioCodec} = this.playback;
       invariant(videoCodec);
       invariant(audioCodec);
       const contentType = `video/mp4;codecs=${videoCodec},${audioCodec}`;
+
       log.debug(`Creating SourceBuffer for content type '${contentType}'`);
-      this.sourceBuffer = this.mediaSource.addSourceBuffer(contentType);
-      this.sourceBuffer.addEventListener('updateend', this._feedPlayer);
-      this.sourceBuffer.addEventListener('error', this._onError);
+      sourceBuffer = mediaSource.addSourceBuffer(contentType);
+      sourceBuffer.addEventListener('updateend', this._feedPlayer);
+      sourceBuffer.addEventListener('error', this._onError);
+      this.sourceBuffer = sourceBuffer;
     }
 
-    if (!this.segmentQueue.length) {
+    invariant(segmentQueue);
+    if (!segmentQueue.length) {
       log.debug('Queue is empty.');
       return;
     }
 
-    if (this.sourceBuffer.updating) {
+    if (sourceBuffer.updating) {
       log.debug('SourceBuffer is still updating, must wait.');
       return;
     }
 
     log.debug('Appending segment.');
-    const segment = this.segmentQueue[0];
+    const segment = segmentQueue[0];
 
     try {
-      this.sourceBuffer.appendBuffer(segment.byteArray);
+      sourceBuffer.appendBuffer(segment.byteArray);
     } catch (err) {
       if (err.name === 'QuotaExceededError' ||
           err.name === 'InvalidStateError') {
@@ -162,7 +170,7 @@ export default class MSEPlayer extends React.Component {
       throw err;
     }
 
-    this.segmentQueue.shift();
+    segmentQueue.shift();
 
     if (this.props.onSegmentEnqueued) {
       this.props.onSegmentEnqueued(segment);
@@ -198,13 +206,17 @@ export default class MSEPlayer extends React.Component {
   }
 
   _onError: ((event: Event) => void) = (event) => {
+    const {videoElement} = this;
+    if (!videoElement) {
+      return;
+    }
     log.error(`'${event.target.constructor.name}' received an ` +
               `'${event.type}' event`,
               event,
-              this.videoElement.error);
+              videoElement.error);
 
     // Throw the video element away and re-render it.
-    if (this.videoElement.error) {
+    if (videoElement.error) {
       this.forceReload();
     }
     if (this.props.onError) {

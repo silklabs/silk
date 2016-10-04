@@ -9,7 +9,7 @@
 // Set up error handling before doing anything else.
 let parentConnected = true;
 
-import jsErrors from '../js_errors';
+import { jsErrors } from 'silk-crashreporter';
 jsErrors(null);
 process.on('exit', (code) => {
   if (process.send && parentConnected) {
@@ -30,7 +30,7 @@ process.once(`disconnect`, () => {
 });
 
 // Activate source map support to exception stack traces as early as possible.
-import {install as installSourceMapSupport} from '../sourcemaps.js';
+import {install as installSourceMapSupport} from 'silk-crashreporter';
 installSourceMapSupport();
 
 import bleno from 'bleno';

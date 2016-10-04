@@ -4,6 +4,7 @@
  * Confidential and Proprietary - Silk Laboratories, Inc.
  *
  * @private
+ * @noflow
  */
 
 import assert from 'assert';
@@ -15,7 +16,6 @@ import createLog from 'silk-log/device';
 import eventToPromise from 'event-to-promise';
 import mkdirp from 'mkdirp-promise';
 import net from 'net';
-import wrapNoEntity from './fs/wrap_no_entity';
 import version from 'silk-core-version';
 import {CrashReporterOperation} from 'silk-outbox';
 import raygun from 'silk-raygun/node';
@@ -34,6 +34,23 @@ if (CRASHREPORT_ENABLED) {
 const TOMBSTONE_PATH = 'data/tombstones/';
 const DEBUGGERD_SOCKET_PATH = 'data/system/ndebugsocket';
 const TOMBSTONE_FILE_REGEXP = new RegExp(/^tombstone_\d+$/); // 'tombstone_03'
+
+/**
+ * Helper for wrapping ENOENT file system errors
+ */
+async function wrapNoEntity<T>(
+  promise: Promise<T>,
+  value: ?T = null
+): Promise<?T> {
+  try {
+    return await promise;
+  } catch (err) {
+    if (err && err.code === 'ENOENT') {
+      return value;
+    }
+    throw err;
+  }
+}
 
 /**
  * This class represents tombstones on disk and manages races around them

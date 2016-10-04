@@ -241,7 +241,7 @@ export function wrap(child: ChildProcess, options?: Options, log?: Log): void {
   child.send = wrapSend(child, realLog);
 }
 
-export default function fork(
+export function fork(
   modulePath: string,
   argsOrOptions?: Array<string> | Options,
   maybeOptions?: Options

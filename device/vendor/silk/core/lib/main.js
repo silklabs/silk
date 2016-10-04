@@ -7,7 +7,7 @@
  */
 
 import gc1 from 'silk-gc1';
-import {install as installSourceMapSupport} from './sourcemaps.js';
+import {install as installSourceMapSupport} from 'silk-crashreporter';
 import version from 'silk-core-version';
 
 import ui from 'silk-device-ui';
@@ -46,10 +46,9 @@ import say from 'silk-say';
 
 import getBTLE from './btle/parent';
 import getDeviceId from './deviceid';
-import makeCrashReporter from './crash_reporter';
+import { makeCrashReporter, jsErrors } from 'silk-crashreporter';
 import Diag from './diag';
 import type {DiagRebootEventData} from './diag';
-import jsErrors from './js_errors';
 import initOutbox from './outbox';
 import initProfiler from './profiler/server';
 import netstatus from 'silk-netstatus';

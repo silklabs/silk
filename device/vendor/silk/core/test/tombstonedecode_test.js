@@ -3,8 +3,7 @@ import mkdirp from 'mkdirp-promise';
 import fs from 'mz/fs';
 import { exec } from 'mz/child_process';
 import path from 'path';
-import { CrashReporter } from '../lib/crash_reporter';
-import { buildJSTombstone } from '../lib/js_errors.js';
+import { CrashReporter, buildJSTombstone } from 'silk-crashreporter';
 
 const TOMBSTONE_PATH = path.join(__dirname, 'tombstones');
 

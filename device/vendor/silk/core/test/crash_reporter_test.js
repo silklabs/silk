@@ -13,8 +13,8 @@ import skipOnTravis from './skip-on-travis.js';
 import {
   Debuggerd,
   Tombstones,
-  default as createCrashReporter,
-} from '../lib/crash_reporter';
+  makeCrashReporter,
+} from 'silk-crashreporter';
 
 const FIXTURES = path.join(__dirname, '.crash_reporter');
 
@@ -136,7 +136,7 @@ suite('crash report', () => {
       outbox.online = false;
       outbox.registerOperation(CrashReporterOperation);
 
-      let crash = createCrashReporter(outbox, {
+      let crash = makeCrashReporter(outbox, {
         crashReporterEnabled: enabled,
         debuggerdSocketPath,
         tombstonePath: tombstonesDir,

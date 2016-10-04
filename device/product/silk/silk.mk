@@ -40,6 +40,7 @@ PRODUCT_PACKAGES += \
 # vendor/propsilk/...
 PRODUCT_PACKAGES += \
   silk-ab-updater \
+  silk-audio-dnn \
   silk-caffe \
   silk-cv \
   silk-device-api \
@@ -47,11 +48,12 @@ PRODUCT_PACKAGES += \
   silk-factory-reset \
   silk-gc1 \
   silk-gonk-version \
-  silk-audio-dnn \
+  silk-crashreporter \
   silk-lifx \
   silk-modwatcher \
   silk-netstatus \
   silk-outbox \
+  silk-process \
   silk-say \
   silk-sonos \
   silk-stt \

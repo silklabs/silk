@@ -14,5 +14,5 @@ export type SDKState = State & {
 export type SDKStore = Store<SDKState>;
 
 export default function createSDKStore(): SDKStore {
-  return createStore({messages});
+  return createStore({messages}, [], {enableLogging: __DEV__});
 }

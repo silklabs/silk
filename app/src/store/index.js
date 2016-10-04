@@ -14,7 +14,5 @@ export type AppState = State & {
 export type AppStore = Store<AppState>;
 
 export default function createAppStore(): AppStore {
-  return createStore({
-    wifiConfig,
-  });
+  return createStore({wifiConfig}, [], {enableLogging: __DEV__});
 }

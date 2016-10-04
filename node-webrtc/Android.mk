@@ -47,6 +47,7 @@ $(webrtc_makefile): $(nodewebrtc)
 	--depth $(webrtc) \
 	-Dvisibility=default \
 	-Dnode_root_dir=$(ANDROID_BUILD_TOP)/external/node \
+	-Dandroid_build_top=$(ANDROID_BUILD_TOP) \
 	-Dnodewebrtc_gyp_webrtc_root='../../webrtc' \
 	-Dnodewebrtc_webrtc_root='$(webrtc)' \
 	-Dnode_webrtc_root_dir=$(LOCAL_PATH) \

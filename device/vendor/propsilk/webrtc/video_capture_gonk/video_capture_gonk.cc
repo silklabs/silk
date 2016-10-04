@@ -18,9 +18,9 @@
 #include "webrtc/base/refcount.h"
 #include "webrtc/base/scoped_ref_ptr.h"
 #include "webrtc/modules/video_capture/gonk/video_capture_gonk.h"
+#include "webrtc/modules/video_capture/gonk/libpreview_buffer.h"
 #include "webrtc/system_wrappers/include/critical_section_wrapper.h"
 #include "webrtc/system_wrappers/include/trace.h"
-#include "libyuv.h"
 
 static int64_t uptimeMs() {
   struct timespec t;
@@ -121,6 +121,7 @@ int32_t VideoCaptureModuleGonk::StopCapture()
 
   if (_captureStarted) {
     _captureStarted = false;
+    // TODO: Could there be any live LibPreviewBuffer objects here?
     delete _client;
   }
   return 0;
@@ -145,6 +146,7 @@ void VideoCaptureModuleGonk::OnAbandonedCallback(void *userData) {
   ALOGE("Welp, now what?");
 }
 
+
 void VideoCaptureModuleGonk::OnFrameCallback(void *userData,
                                              void* buffer,
                                              libpreview::FrameFormat format,
@@ -156,6 +158,7 @@ void VideoCaptureModuleGonk::OnFrameCallback(void *userData,
 
   do {
     if (!that->_captureStarted) {
+      ALOGW("capture not started");
       break;
     }
 
@@ -163,96 +166,35 @@ void VideoCaptureModuleGonk::OnFrameCallback(void *userData,
       ALOGW("Unsupported frame format: %d", format);
       break;
     }
-    size_t bufferSize = width * height * 3 / 2; // Size of a NV21 frame
 
     const auto now = uptimeMs();
     const auto timeSinceLastFrame = now - that->_lastFrameMs;
     if (timeSinceLastFrame < that->_currentFrameIntervalMs) {
       ALOGI("Not ready for frame yet: %dms remaining",
-        that->_currentFrameIntervalMs - timeSinceLastFrame);
+        (int)(that->_currentFrameIntervalMs - timeSinceLastFrame));
       break;
     }
     that->_lastFrameMs = now;
 
-    VideoCaptureCapability frameInfo;
-    frameInfo.width = that->_currentWidth;
-    frameInfo.height = that->_currentHeight;
-    frameInfo.rawType = that->_captureVideoType;
-
-    int ret = -1;
-
-    // Need to resize?
-    if ((int32_t) width != frameInfo.width ||
-        (int32_t) height != frameInfo.height) {
-
-      if (kVideoI420 != that->_captureVideoType) {
-        ALOGW("Unexpected capture frame format");
-        break;
-      }
-
-      // TODO: Resizing is very slow, and doesn't take into account multiple
-      //       active peers (we resize for each peer!)
-      ALOGI("Slow scaling from %dx%d to %dx%d",
-        width, height, frameInfo.width, frameInfo.height);
-
-      // Convert from NV21 to I420
-      size_t buffer420Size = bufferSize; // I420 frame size == NV21 frame size
-      unsigned char *buffer420 = (unsigned char *) malloc(buffer420Size);
-      int src_stride_y = width;
-      int src_stride_v = width / 2;
-      int src_stride_u = src_stride_v;
-      uint8* src_y = buffer420;
-      uint8* src_u = src_y + height * src_stride_y;
-      uint8* src_v = src_u + height / 2 * src_stride_u;
-
-      libyuv::ConvertToI420(
-        (unsigned char *) buffer,
-        bufferSize,
-        src_y, src_stride_y,
-        src_u, src_stride_u,
-        src_v, src_stride_v,
-        0, 0,
-        width, height,
-        width, height,
-        libyuv::kRotate0,
-        libyuv::FOURCC_NV21
+    rtc::scoped_refptr<webrtc::VideoFrameBuffer> videoFrameBuffer =
+      new rtc::RefCountedObject<webrtc::gonk::LibPreviewBuffer>(
+        that->_client,
+        buffer,
+        width,
+        height,
+        frameOwner,
+        that->_currentWidth,
+        that->_currentHeight
       );
 
-      // Resize I420 frame to desired dimensions
-      size_t destBuffer420Size = frameInfo.width * frameInfo.height * 3 / 2;
-      unsigned char *destBuffer420 = (unsigned char *) malloc(destBuffer420Size);
-      int dst_stride_y = frameInfo.width;
-      int dst_stride_u = frameInfo.width / 2;
-      int dst_stride_v = dst_stride_u;
-      uint8* dst_y = destBuffer420;
-      uint8* dst_u = dst_y + frameInfo.height * dst_stride_y;
-      uint8* dst_v = dst_u + frameInfo.height / 2 * dst_stride_v;
-
-      libyuv::I420Scale(
-        src_y, src_stride_y,
-        src_u, src_stride_u,
-        src_v, src_stride_v,
-        width, height,
-        dst_y, dst_stride_y,
-        dst_u, dst_stride_u,
-        dst_v, dst_stride_v,
-        frameInfo.width, frameInfo.height,
-        libyuv::kFilterNone
-      );
-
-      free(buffer420);
-      ret = that->IncomingFrame(destBuffer420, destBuffer420Size, frameInfo);
-      free(destBuffer420);
-    } else {
-      if (kVideoNV21 != that->_captureVideoType) {
-        ALOGW("Unexpected capture frame format");
-        break;
-      }
-      ret = that->IncomingFrame((unsigned char*) buffer, bufferSize, frameInfo);
-    }
-    if (ret != 0) {
-      ALOGW("IncomingFrame rejected! %d", ret);
-    }
+    webrtc::VideoFrame videoframe(
+      videoFrameBuffer,
+      0 /* TODO: Add frame timestamp? */,
+      TickTime::MillisecondTimestamp(),
+      kVideoRotation_0
+    );
+    that->DeliverCapturedFrame(videoframe);
+    return; // No release, ownership of |buffer| transfered to LibPreviewBuffer instance
   } while (0);
 
   that->_client->releaseFrame(frameOwner);

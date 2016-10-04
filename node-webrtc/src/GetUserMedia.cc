@@ -28,6 +28,7 @@
 #include "GetSources.h"
 #include "MediaStream.h"
 #include "MediaConstraints.h"
+#include "VideoEncoderFactory.h"
 
 using namespace v8;
 using namespace WebRTC;
@@ -50,7 +51,7 @@ void GetUserMedia::GetMediaStream(const Nan::FunctionCallbackInfo<Value> &info) 
   std::string videoId = constraints->VideoId();
 
   if (constraints->UseAudio() || constraints->UseVideo()) {
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, 0, 0);
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory = webrtc::CreatePeerConnectionFactory(rtc::Thread::Current(), Platform::GetWorker(), 0, CreateVideoEncoderFactory(), 0);
     
     if (factory.get()) {
       const std::string uuid = rtc::CreateRandomUuid();

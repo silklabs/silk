@@ -6,7 +6,7 @@
 namespace libpreview {
 
 // Max number of locked frame without stalling the preview pipeline.
-#define MAX_UNLOCKED_FRAMES 1
+#define MAX_UNLOCKED_FRAMES 2
 
 typedef enum {
   FRAMEFORMAT_INVALID,
@@ -42,14 +42,14 @@ static __inline Client *open(FrameCallback frameCallback,
   if (handle == NULL) {
     handle = dlopen("/system/silk/lib/libpreview.so", RTLD_NOW);
     if (handle == NULL) {
-      ALOGE("libpreview.so open failed: %s\n", dlerror());
+      printf("libpreview.so open failed: %s\n", dlerror());
       return NULL;
     }
   }
 
   OpenFunc libpreview_open = (OpenFunc) dlsym(handle, "libpreview_open");
   if (libpreview_open == NULL) {
-    ALOGE("libpreview.so dlsym failed: %s\n", dlerror());
+    printf("libpreview.so dlsym failed: %s\n", dlerror());
     dlclose(handle);
     handle = NULL;
     return NULL;

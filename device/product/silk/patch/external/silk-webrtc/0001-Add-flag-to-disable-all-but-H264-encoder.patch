@@ -1,0 +1,47 @@
+From eb5be97df0c899dd0f32d9c66fc2de7da138addb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 24 Sep 2016 09:58:45 -0700
+Subject: [PATCH] Add flag to disable all but H264 encoder
+
+---
+ webrtc/media/engine/webrtcvideoengine2.cc | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/webrtc/media/engine/webrtcvideoengine2.cc b/webrtc/media/engine/webrtcvideoengine2.cc
+index b90950f..09e18ce 100644
+--- a/webrtc/media/engine/webrtcvideoengine2.cc
++++ b/webrtc/media/engine/webrtcvideoengine2.cc
+@@ -376,6 +376,8 @@ static const int kMaxCpuDowngrades = 2;
+ 
+ std::vector<VideoCodec> DefaultVideoCodecList() {
+   std::vector<VideoCodec> codecs;
++
++#ifndef NOTHING_BUT_H246
+   codecs.push_back(MakeVideoCodecWithDefaultFeedbackParams(kDefaultVp8PlType,
+                                                            kVp8CodecName));
+   codecs.push_back(
+@@ -386,6 +388,8 @@ std::vector<VideoCodec> DefaultVideoCodecList() {
+     codecs.push_back(
+         VideoCodec::CreateRtxCodec(kDefaultRtxVp9PlType, kDefaultVp9PlType));
+   }
++#endif
++
+   if (CodecIsInternallySupported(kH264CodecName)) {
+     VideoCodec codec = MakeVideoCodecWithDefaultFeedbackParams(
+         kDefaultH264PlType, kH264CodecName);
+@@ -402,10 +406,12 @@ std::vector<VideoCodec> DefaultVideoCodecList() {
+     codecs.push_back(
+         VideoCodec::CreateRtxCodec(kDefaultRtxH264PlType, kDefaultH264PlType));
+   }
++#ifndef NOTHING_BUT_H246
+   codecs.push_back(VideoCodec(kDefaultRedPlType, kRedCodecName));
+   codecs.push_back(
+       VideoCodec::CreateRtxCodec(kDefaultRtxRedPlType, kDefaultRedPlType));
+   codecs.push_back(VideoCodec(kDefaultUlpfecType, kUlpfecCodecName));
++#endif
+   return codecs;
+ }
+ 
+-- 
+2.9.2
+

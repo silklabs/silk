@@ -1,0 +1,46 @@
+From 0d11116aa07442ac509d165d4c7fe7c630490bd8 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 28 Sep 2016 19:55:47 -0700
+Subject: [PATCH] WebRtcVideoCapturer: make SignalFrameCapturedOnStartThread
+ protected
+
+---
+ webrtc/media/engine/webrtcvideocapturer.h | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/webrtc/media/engine/webrtcvideocapturer.h b/webrtc/media/engine/webrtcvideocapturer.h
+index b6b3938..987b4fe 100644
+--- a/webrtc/media/engine/webrtcvideocapturer.h
++++ b/webrtc/media/engine/webrtcvideocapturer.h
+@@ -63,20 +63,20 @@ class WebRtcVideoCapturer : public VideoCapturer,
+   // Override virtual methods of the parent class VideoCapturer.
+   virtual bool GetPreferredFourccs(std::vector<uint32_t>* fourccs);
+ 
+- private:
+-  // Callback when a frame is captured by camera.
+-  virtual void OnIncomingCapturedFrame(const int32_t id,
+-                                       const webrtc::VideoFrame& frame);
+-  virtual void OnCaptureDelayChanged(const int32_t id,
+-                                     const int32_t delay);
+-
+   // Used to signal captured frames on the same thread as invoked Start().
+   // With WebRTC's current VideoCapturer implementations, this will mean a
+   // thread hop, but in other implementations (e.g. Chrome) it will be called
+   // directly from OnIncomingCapturedFrame.
+   // TODO(tommi): Remove this workaround when we've updated the WebRTC capturers
+   // to follow the same contract.
+-  void SignalFrameCapturedOnStartThread(const webrtc::VideoFrame& frame);
++  virtual void SignalFrameCapturedOnStartThread(const webrtc::VideoFrame& frame);
++
++ private:
++  // Callback when a frame is captured by camera.
++  virtual void OnIncomingCapturedFrame(const int32_t id,
++                                       const webrtc::VideoFrame& frame);
++  virtual void OnCaptureDelayChanged(const int32_t id,
++                                     const int32_t delay);
+ 
+   std::unique_ptr<WebRtcVcmFactoryInterface> factory_;
+   rtc::scoped_refptr<webrtc::VideoCaptureModule> module_;
+-- 
+2.9.2
+

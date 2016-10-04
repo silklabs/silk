@@ -113,7 +113,9 @@ void WebrtcModuleInit(Handle<Object> exports) {
   WebRTC::GetUserMedia::Init(exports);
   WebRTC::MediaStream::Init();
   WebRTC::MediaStreamTrack::Init();
-  
+
+  //rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
+
   exports->Set(Nan::New("RTCGarbageCollect").ToLocalChecked(), Nan::New<FunctionTemplate>(RTCGarbageCollect)->GetFunction()); 
   exports->Set(Nan::New("RTCIceCandidate").ToLocalChecked(), Nan::New<FunctionTemplate>(RTCIceCandidate)->GetFunction());
   exports->Set(Nan::New("RTCSessionDescription").ToLocalChecked(), Nan::New<FunctionTemplate>(RTCSessionDescription)->GetFunction());

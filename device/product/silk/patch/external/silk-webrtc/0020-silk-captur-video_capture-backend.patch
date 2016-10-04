@@ -1,13 +1,13 @@
-From fcb78b3fd6591482a5ad813c4ea964370e3ab094 Mon Sep 17 00:00:00 2001
+From addfc4869eb6f414ba023a4087c66a760bb03a99 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 13 Jun 2016 14:41:17 -0700
 Subject: [PATCH] silk-capture video_capture backend
 
 ---
  webrtc/modules/video_capture/gonk                  |  1 +
- webrtc/modules/video_capture/video_capture.gypi    | 22 ++++++++++++++++++----
+ webrtc/modules/video_capture/video_capture.gypi    | 24 ++++++++++++++++++----
  .../modules/video_capture/video_capture_factory.cc |  4 ++--
- 3 files changed, 21 insertions(+), 6 deletions(-)
+ 3 files changed, 23 insertions(+), 6 deletions(-)
  create mode 120000 webrtc/modules/video_capture/gonk
 
 diff --git a/webrtc/modules/video_capture/gonk b/webrtc/modules/video_capture/gonk
@@ -19,10 +19,10 @@ index 0000000..dd7cf56
 +../../../../../vendor/propsilk/webrtc/video_capture_gonk
 \ No newline at end of file
 diff --git a/webrtc/modules/video_capture/video_capture.gypi b/webrtc/modules/video_capture/video_capture.gypi
-index c80f2bf..03236a5 100644
+index c80f2bf..bf7e11c 100644
 --- a/webrtc/modules/video_capture/video_capture.gypi
 +++ b/webrtc/modules/video_capture/video_capture.gypi
-@@ -53,12 +53,26 @@
+@@ -53,12 +53,28 @@
          {
            'target_name': 'video_capture_module_internal_impl',
            'type': 'static_library',
@@ -39,6 +39,8 @@ index c80f2bf..03236a5 100644
 +              'sources': [
 +                'gonk/device_info_gonk.cc',
 +                'gonk/device_info_gonk.h',
++                'gonk/libpreview_buffer.cc',
++                'gonk/libpreview_buffer.h',
 +                'gonk/video_capture_gonk.cc',
 +                'gonk/video_capture_gonk.h',
 +              ],
@@ -76,5 +78,5 @@ index 927beba..ccb7678 100644
  #else
    return videocapturemodule::VideoCaptureImpl::CreateDeviceInfo(id);
 -- 
-2.9.2
+2.8.4 (Apple Git-73)
 

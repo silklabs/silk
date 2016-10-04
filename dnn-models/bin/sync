@@ -1,33 +1,30 @@
 #!/bin/bash -e
 
-SHA1=677546d7fbbb492ab130334575bea078b29aae91
+TAG=tag1
 
 if [[ -d silk-dnn ]]; then
-  pushd silk-dnn 2>&1 > /dev/null
-  LATEST=$(git rev-parse HEAD)
-  popd 2>&1 > /dev/null
+  LATEST=$(cat silk-dnn/.gittag || echo unknown)
 
-  if [[ $LATEST != $SHA1 ]]; then
+  if [[ "$LATEST" != "$TAG" ]]; then
     echo updating dnn model
     rm -rf silk-dnn
   fi
 fi
 
 if [[ ! -d silk-dnn ]]; then
-  git clone git@github.com:silklabs/silk-dnn.git silk-dnn
-  pushd silk-dnn 2>&1 > /dev/null
-  git checkout $SHA1
+  git clone --depth 1 git@github.com:silklabs/silk-dnn.git silk-dnn -b $TAG
 
   # Assemble tiny-yolo model file
-  pushd models/tiny-yolo 2>&1 > /dev/null
-  make
-  popd 2>&1 > /dev/null
+  for model in tiny-{coco,yolo}; do
+    make -C silk-dnn/models/$model
+  done
+ # 2>&1 > /dev/null
 
-  # Assemble tiny-coco model file
-  pushd models/tiny-coco 2>&1 > /dev/null
-  make
-  popd 2>&1 > /dev/null
+  # Remove split files/.git to reduce disk space (Travis!)
+  rm -rf silk-dnn/.git
+  find . -name \*.gz_* | xargs rm -rvf
 
-  popd 2>&1 > /dev/null
+  echo $TAG > silk-dnn/.gittag
+  du -hs silk-dnn/
 fi
 

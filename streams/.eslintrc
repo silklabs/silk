@@ -3,5 +3,8 @@
   "env": {
     "mocha": true,
     "browser": true
+  },
+  "globals": {
+    "crypto$Decipher": false
   }
 }

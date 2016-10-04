@@ -1,3 +1,5 @@
+# Checks for the required GNU tools on OS X
+
 if [ $(uname) = "Darwin" ]; then
   # Ensure the host system has the right tools pre-installed
   PACKAGES="gnu-sed coreutils gnu-tar"

@@ -7,7 +7,11 @@
   "bugs": {
     "url": "https://github.com/silklabs/silk/issues"
   },
+  "bin": {
+    "silk-tools-version-check": "./bin/tools_version_check.sh"
+  },
   "scripts": {
+    "postinstall": "silk-tools-version-check",
     "prepublish": "babel --presets $(./babelconfig.js preset) -d build src"
   },
   "author": "Silk Labs Inc.",

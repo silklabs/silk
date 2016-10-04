@@ -26,3 +26,4 @@ export PATH=$ROOT/node_modules/.bin:$PATH
 # So npm init uses our custom init tooling ...
 export npm_config_init_module=$ROOT/npminit.js
 
+$ROOT/tools/version_checks.sh

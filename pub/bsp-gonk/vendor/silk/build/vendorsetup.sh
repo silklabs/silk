@@ -37,60 +37,11 @@ if [[ "$(pwd)" != "$path" ]]; then
   return
 fi
 
-node_version_check()
-{
-  local v=$(node --version)
-
-  if [[ $v =~ ^v([0-9*])\.([0-9]*).([0-9]*)$ ]]; then
-    local major=${BASH_REMATCH[1]}
-    local minor=${BASH_REMATCH[2]}
-    local patch=${BASH_REMATCH[3]}
-
-    [[ $major -eq 6 ]] && return
-  fi
-  poison_their_lunch Bad node version: $v
-}
-
-npm_version_check()
-{
-  local v=$(npm --version)
-
-  if [[ $v =~ ^([0-9]*)\.([0-9]*).([0-9]*)$ ]]; then
-    local major=${BASH_REMATCH[1]}
-    local minor=${BASH_REMATCH[2]}
-    local patch=${BASH_REMATCH[3]}
-
-    [[ $major -ge 3 ]] && return
-  fi
-  poison_their_lunch Bad npm version: $v
-}
-
-cmake_version_check()
-{
-  if ! which cmake > /dev/null; then
-    poison_their_lunch cmake not installed
-    return
-  fi
-
-  local v=$(cmake --version | head -n1)
-
-  if [[ $v =~ ^cmake\ version\ ([0-9]*)\.([0-9]*).([0-9]*) ]]; then
-    local major=${BASH_REMATCH[1]}
-    local minor=${BASH_REMATCH[2]}
-    local patch=${BASH_REMATCH[3]}
-
-    [[ $major -eq 3 ]] && [[ $minor -ge 2 ]] && return
-  fi
-  poison_their_lunch Unsupported cmake version: $v
-}
-
-
-node_version_check
-[[ $? -eq 0 ]] || return
-npm_version_check
-[[ $? -eq 0 ]] || return
-cmake_version_check
-[[ $? -eq 0 ]] || return
+../tools/version_checks.sh
+if [[ $? -ne 0 ]]; then
+  poison_their_lunch Host tools are incorrect.
+  return
+fi
 
 # npm should not be making many (and ideally no) http requests during the build
 # process, so enable http logging so that any unexpected network requests may be

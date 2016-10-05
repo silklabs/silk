@@ -131,7 +131,7 @@ function nn() {
     }
     console.log('measuring ...');
     let start = Date.now();
-    let N = 10;
+    let N = 20;
     for (let i = 0; i < N; ++i) {
       out_data = net.forward(image);
     }

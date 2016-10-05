@@ -38,6 +38,7 @@
     "event-to-promise": "0.7.0",
     "express": "4.13.3",
     "github-webhook-middleware": "mvines/github-webhook-middleware#e13af62f0898df054a5cfec8b2274a29c4ace61f",
+    "gitlab": "node-gitlab/node-gitlab.git#92a4bc32124308ee63376d03c7397e115506f34f",
     "json-loader": "0.5.4",
     "lodash.merge": "3.3.2",
     "minimatch": "3.0.0",

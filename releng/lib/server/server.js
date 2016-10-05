@@ -5,9 +5,15 @@
 import createLog from 'silk-log';
 import eventToPromise from 'event-to-promise';
 import makeGithubMiddleware from 'github-webhook-middleware';
+import bodyParser from 'body-parser';
+
+import * as githubTravisIntegration from '../github-travis-integration.js';
 import makeTravisMiddleware from './travis-webhook-middleware';
 import * as githubEvent from './github-event';
-import * as githubTravisIntegration from '../github-travis-integration.js';
+import {
+  getContext as getGitlabContext,
+  triggerBuild as triggerGitlabBuild,
+} from './gitlab-event';
 
 export default async function main(config: Object) {
   const log = createLog('server');
@@ -61,6 +67,12 @@ export default async function main(config: Object) {
     let json = JSON.parse(payload);
     githubTravisIntegration.handleTravisWebhook(json)
       .catch(err => log.error('Error', err.stack));
+    res.status(200).end();
+  });
+
+  const gitlabContext = await getGitlabContext();
+  app.post('/hooks/gitlab', bodyParser.json(), (req, res) => {
+    triggerGitlabBuild(req.body, gitlabContext);
     res.status(200).end();
   });
 

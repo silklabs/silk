@@ -53,6 +53,7 @@ RUN ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key
 
 RUN addgroup silk
 RUN adduser -ingroup silk --gecos "" --disabled-password silk
+COPY sudoers_silk /etc/sudoers.d/silk
 
 USER silk
 RUN ccache -M 6GB
@@ -62,6 +63,9 @@ RUN cp /home/silk/.ssh/id_rsa.pub /home/silk/.ssh/authorized_keys
 # add localhost to silk's list of known_hosts files without need ssh login
 RUN ssh-keyscan -H localhost >> ~/.ssh/known_hosts
 
+# add github to the list of know hosts
+RUN ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
 # Setup git
 RUN git config --global user.email "silkysmooth@example.com"
 RUN git config --global user.name "Silky Smooth"
@@ -70,4 +74,4 @@ RUN git config --global color.ui true
 # Install node 6
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
 RUN bash -i -c 'nvm install 6'
-
+ENV NVM_DIR /home/silk/.nvm

@@ -8,7 +8,6 @@
 
 'use strict';
 
-const path = require('path');
 const cl = require('node-opencl');
 
 const Shape = require('../../shape');
@@ -31,12 +30,10 @@ function Ceil(x, y) {
   return CeilDiv(x, y) * y;
 }
 
-const PadCopyTranspose_src = ['common', 'copy_fast', 'copy_pad', 'transpose_fast', 'transpose_pad'].map(name => path.join(__dirname, name + '.cl'));
-const Xgemm_src = ['common', 'xgemm'].map(name => path.join(__dirname, name + '.cl'));
-
 // Copies or transposes a matrix and optionally pads/unpads it with zeros. This method is also able
 // to write to symmetric and triangular matrices through optional arguments.
 function PadCopyTransposeMatrix(runtime,
+                                config,
                                 src_one, src_two,
                                 src_ld, src_offset,
                                 src,
@@ -45,8 +42,6 @@ function PadCopyTransposeMatrix(runtime,
                                 dest,
                                 alpha,
                                 do_pad, do_transpose) {
-  const config = runtime.config;
-
   // Determines whether or not the fast-version could potentially be used
   let use_fast_kernel = (src_offset === 0) && (dest_offset === 0) &&
       (src_one === dest_one) && (src_two === dest_two) && (src_ld === dest_ld);
@@ -75,7 +70,7 @@ function PadCopyTransposeMatrix(runtime,
     }
   }
 
-  let kernel = runtime.kernel(kernel_name, PadCopyTranspose_src, config);
+  let kernel = runtime.kernel(kernel_name, config);
   // Sets the kernel arguments
   if (use_fast_kernel) {
     cl.setKernelArg(kernel, 0, 'int', src_ld);
@@ -131,19 +126,18 @@ function TestMatrix(one, two, buffer, offset, ld) {
 }
 
 function gemm(runtime,
+              config,
               a_transpose, b_transpose, c_transpose,
               m, n, k,
               alpha,
-              a_buffer, a_offset, a_ld,
-              b_buffer, b_offset, b_ld,
+              a_buffer, a_offset, a_padded_one, a_padded_two,
+              b_buffer, b_offset, b_padded_one, b_padded_two,
               beta,
-              c_buffer, c_offset, c_ld) {
+              c_buffer, c_offset, c_padded_one) {
   // Makes sure all dimensions are larger than zero
   if ((m === 0) || (n === 0) || (k === 0)) {
     throw new Error('invalid dimension');
   }
-
-  const config = runtime.config;
 
   // Computes whether or not the matrices are transposed in memory. This is based on their layout
   // (row or column-major) and whether or not they are requested to be pre-transposed. Note
@@ -170,9 +164,9 @@ function gemm(runtime,
   const c_one = (c_rotated) ? n : m;
   const c_two = (c_rotated) ? m : n;
 
-  TestMatrix(a_one, a_two, a_buffer, a_offset, a_ld);
-  TestMatrix(b_one, b_two, b_buffer, b_offset, b_ld);
-  TestMatrix(c_one, c_two, c_buffer, c_offset, c_ld);
+  TestMatrix(a_one, a_two, a_buffer, a_offset, a_padded_one);
+  TestMatrix(b_one, b_two, b_buffer, b_offset, b_padded_one);
+  TestMatrix(c_one, c_two, c_buffer, c_offset, c_padded_one);
 
   // Calculates the ceiled versions of m, n, and k
   const m_ceiled = Ceil(m, config.MWG);
@@ -189,11 +183,11 @@ function gemm(runtime,
   const c_two_i = (c_want_rotated) ? m_ceiled : n_ceiled;
 
   // Determines whether or not temporary matrices are needed
-  const a_no_temp = a_one === a_one_i && a_two === a_two_i && a_ld === a_one && a_offset === 0 &&
+  const a_no_temp = a_one === a_one_i && a_two === a_two_i && a_padded_one === a_one && a_offset === 0 &&
           a_do_transpose === false;
-  const b_no_temp = b_one === b_one_i && b_two === b_two_i && b_ld === b_one && b_offset === 0 &&
+  const b_no_temp = b_one === b_one_i && b_padded_two === b_two_i && b_padded_one === b_one && b_offset === 0 &&
           b_do_transpose === false;
-  const c_no_temp = c_one === c_one_i && c_two === c_two_i && c_ld === c_one && c_offset === 0 &&
+  const c_no_temp = c_one === c_one_i && c_two === c_two_i && c_padded_one === c_one && c_offset === 0 &&
           c_do_transpose === false;
 
   let temps = [];
@@ -220,7 +214,8 @@ function gemm(runtime,
   // case nothing has to be done, these kernels can be skipped.
   if (!a_no_temp) {
     PadCopyTransposeMatrix(runtime,
-                           a_one, a_two, a_ld, a_offset, a_buffer,
+                           config,
+                           a_one, a_two, a_padded_one, a_offset, a_buffer,
                            a_one_i, a_two_i, a_one_i, 0, a_temp,
                            1,
                            true, a_do_transpose);
@@ -229,7 +224,8 @@ function gemm(runtime,
   // As above, but now for matrix B
   if (!b_no_temp) {
     PadCopyTransposeMatrix(runtime,
-                           b_one, b_two, b_ld, b_offset, b_buffer,
+                           config,
+                           b_one, b_two, b_padded_one, b_offset, b_buffer,
                            b_one_i, b_two_i, b_one_i, 0, b_temp,
                            1,
                            true, b_do_transpose);
@@ -238,13 +234,14 @@ function gemm(runtime,
   // As above, but now for matrix C. This is only necessary if C is used both as input and output.
   if (!c_no_temp && beta !== 0) {
     PadCopyTransposeMatrix(runtime,
-                           c_one, c_two, c_ld, c_offset, c_buffer,
+                           config,
+                           c_one, c_two, c_padded_one, c_offset, c_buffer,
                            c_one_i, c_two_i, c_one_i, 0, c_temp,
                            1,
                            true, c_do_transpose);
   }
 
-  let kernel = runtime.kernel('Xgemm', Xgemm_src, config);
+  let kernel = runtime.kernel('Xgemm', config);
   cl.setKernelArg(kernel, 0, 'int', m_ceiled);
   cl.setKernelArg(kernel, 1, 'int', n_ceiled);
   cl.setKernelArg(kernel, 2, 'int', k_ceiled);
@@ -266,8 +263,9 @@ function gemm(runtime,
   // Runs the post-processing kernel if needed
   if (!c_no_temp) {
     PadCopyTransposeMatrix(runtime,
+                           config,
                            c_one_i, c_two_i, c_one_i, 0, c_temp,
-                           c_one, c_two, c_ld, c_offset, c_buffer,
+                           c_one, c_two, c_padded_one, c_offset, c_buffer,
                            1,
                            false, c_do_transpose);
   }

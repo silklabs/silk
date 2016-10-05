@@ -120,15 +120,15 @@ __kernel void gemv(const int m, const int n, __global const Dtype *a, __global c
   }
 }
 
-__kernel void im2col(int n,
-                     __global const Dtype *in_data, const int in_data_offset, const int in_channels, const int in_height, const int in_width,
+__kernel void im2col(__global const Dtype *in_data, const int in_data_offset, const int in_channels, const int in_height, const int in_width,
                      const int filter_size, const int filter_stride, const int filter_pad,
                      __global Dtype *out_data, const int out_channels, const int out_height, const int out_width) {
   in_data += in_data_offset;
-  int out_x = get_global_id(0);
-  int out_y = get_global_id(1);
-  int in_c = get_global_id(2);
-  if (out_x < out_width && out_y < out_height && in_c < in_channels) {
+  int out_spatial = get_global_id(0);
+  int in_c = get_global_id(1);
+  if (out_spatial < out_width * out_height && in_c < in_channels) {
+    int out_x = out_spatial % out_width;
+    int out_y = out_spatial / out_width;
     for (int fy = 0; fy < filter_size; ++fy) {
       for (int fx = 0; fx < filter_size; ++fx) {
         int out_c = (in_c * filter_size + fy) * filter_size + fx;
@@ -137,7 +137,7 @@ __kernel void im2col(int n,
         Dtype val = 0.f;
         if (valid_spatial_coordinates(in_x, in_y, in_width, in_height))
           val = in_data[(in_c * in_height + in_y) * in_width + in_x];
-        out_data[bchw_to_index(0, out_c, out_y, out_x, out_channels, out_height, out_width)] = val;
+        out_data[out_c * (out_width * out_height) + (out_y * out_width + out_x)] = val;
       }
     }
   }

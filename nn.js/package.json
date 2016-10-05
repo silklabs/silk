@@ -14,7 +14,7 @@
     "node-gemmlowp": "git+ssh://git@github.com/silklabs/node-gemmlowp.git",
     "node-nnpack": "git@github.com:silklabs/node-nnpack.git",
     "node-qsml": "git@github.com:silklabs/node-qsml.git",
-    "node-opencl": "git@github.com:andreasgal/node-opencl.git#retain-fix",
+    "node-opencl": "git@github.com:mikeseven/node-opencl.git",
     "protobuf-textformat": "^1.0.0",
     "protobufjs": "^5.0.1"
   },

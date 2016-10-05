@@ -97,14 +97,17 @@ class YoloClassifier {
         backend = nnjs.Net.backends.qconv;
       } else if (config.BACKEND === 'opencl') {
         backend = nnjs.Net.backends.opencl;
-        backend.clruntime.precision = (config.USE_FP16) ? 16 : 32;
+        if (backend) {
+          backend.clruntime.precision = (config.USE_FP16) ? 16 : 32;
+        }
       }
       this._net = nnjs.darknet.load(config.MODEL_CFG, config.MODEL_WEIGHTS, backend);
       this._netWeight = this._net.in_shape.width;
       this._netHeight = this._net.in_shape.height;
 
       log.info(`backend: ${this._net.backend.name}`);
-      log.info(`network shape ${this._net.in_shape.toString()}`);
+      log.info(`network shape: ${this._net.in_shape.toString()}`);
+      log.info(`FP16: ${String(config.USE_FP16)}`);
     } else {
       this._net = new caffe.Net(config.MODEL_PROTO, 'test');
       this._net.copyTrainedLayersFrom(config.MODEL_WEIGHTS);

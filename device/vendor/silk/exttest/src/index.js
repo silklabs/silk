@@ -16,7 +16,6 @@ import fs from 'fs';
 import path from 'path';
 
 import type { Outbox } from 'silk-outbox';
-import type { Ui } from 'silk-device-ui';
 import type Sensors from 'silk-sensors';
 import type { TimelineEventCallback } from 'silk-core/lib/timeline';
 
@@ -48,7 +47,6 @@ export default class Env {
   _name: string;
   camera: Camera;
   outbox: Outbox;
-  ui: Ui;
   timeline: Timeline;
   sensors: Sensors;
   say: Say;

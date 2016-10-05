@@ -375,30 +375,6 @@ class Env extends EventEmitter {
     }
 
     /**
-     * Class that provides functionlity to receive events from the ui
-     * @memberof Env
-     */
-    let ui = deviceObjects.ui;
-    if (ui) {
-      this.ui = new EventEmitter();
-
-      /**
-       * Key event. This event is emitted when a key is pressed or released.
-       * TODO: REMOVE THIS EVENT.  USE 'silk-input` INSTEAD
-       *
-       * @event key
-       * @memberof Env.ui
-       * @type {Object}
-       * @property {string} key Specific key that is generating the event
-       * @property {string} type Type of key event: ['up', 'down']
-       */
-      this.ui.getState = function() {
-        return deviceObjects.ui.getState();
-      };
-      this._addEvents('ui', ui, this.ui, ['key', 'state']);
-    }
-
-    /**
      * Class that provides functionlity to control Hue lights
      * @memberof Env
      */

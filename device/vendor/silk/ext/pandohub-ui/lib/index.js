@@ -20,6 +20,7 @@ import type { DialogEngine, DialogUiModeEventCallback } from 'silk-dialog-engine
 import { Nightlight, Ring } from './leds';
 import { FactoryResetUi } from './factoryReset';
 import * as sysutil from 'silk-sysutils';
+import deviceUi from 'silk-device-ui';
 
 const log = createLog('silkext-pandohubui');
 
@@ -80,9 +81,9 @@ class PandoHubUi {
     });
     this.input.on('down', this.onKeyPress);
     this.input.on('up', this.onKeyRelease);
-    this.onDeviceUiState(env.ui.getState());
+    this.onDeviceUiState(deviceUi.getState());
 
-    env.ui.on('state', this.onDeviceUiState);
+    deviceUi.on('state', this.onDeviceUiState);
     env.timeline.on('listening', this.onDialogListening);
     env.timeline.on('processing_speech', this.onDialogProcessingSpeech);
     env.timeline.on('speaking', this.onDialogSpeaking);

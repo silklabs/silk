@@ -69,6 +69,7 @@ class CLBuffer {
 
   // Mark the gpu as busy pending the completion of the given event
   busy(event) {
+    assert(!this.gpu_event);
     this.gpu_event = event;
   }
 
@@ -82,6 +83,7 @@ class CLBuffer {
                                      null);
     }
     if (this.cpu_mem) {
+      assert(!this.gpu_event);
       this.busy(cl.enqueueUnmapMemObject(this.q,
                                          this.gpu_mem,
                                          this.cpu_mem.buffer,
@@ -145,8 +147,8 @@ class CLBuffer {
 
   release() {
     if (this.gpu_mem) {
-      this.wait();
       this.to_gpu();
+      this.wait();
       cl.releaseMemObject(this.gpu_mem);
       this.gpu_mem = null;
       this.ctx = null;
@@ -154,17 +156,19 @@ class CLBuffer {
   }
 }
 
-// Compile the source file with the given configuration and register the resulting
-// kernels in rt.
+// Compile the source file with the given configuration, which consists of defines
+// and a suffix we append to the kernel name so we can compile and cache multiple
+// kernels with a different configuration in the same lookup table.
 function compile(srcfiles, config) {
-  let src = srcfiles.map(filename => fs.readFileSync(filename, 'utf8')).join('\n');
+  let src = srcfiles.map(filename => fs.readFileSync(path.join(__dirname, 'cl', filename + '.cl'), 'utf8')).join('\n');
+  let suffix = config.ID || '';
   let opts = Object.keys(config).map(name => '#define ' + name + ' ' + config[name]);
   opts.push('#define PRECISION ' + precision);
   let prog = cl.createProgramWithSource(rt.ctx, opts.join('\n') + src);
   try {
     cl.buildProgram(prog, null, '-cl-fast-relaxed-math');
     cl.createKernelsInProgram(prog).forEach(kernel => {
-      rt.kernels[cl.getKernelInfo(kernel, cl.KERNEL_FUNCTION_NAME)] = kernel;
+      rt.kernels[cl.getKernelInfo(kernel, cl.KERNEL_FUNCTION_NAME) + suffix] = kernel;
     });
     cl.releaseProgram(prog);
   } catch (e) {
@@ -176,34 +180,32 @@ function compile(srcfiles, config) {
   }
 }
 
+// Sources for the GEMM kernel
+const gemm_srcs = ['common', 'copy_fast', 'copy_pad', 'transpose_fast', 'transpose_pad', 'xgemm'];
+
 // We expose some limited functionality to clblas so it can use our kernel
 // cache and allocate memory (via allocating and releasing blobs)
 const clruntime = {
   allocate: allocate,
   release: release,
   run: run,
-  kernel: (kernelName, srcfiles, config) => {
-    let kernel = rt.kernels[kernelName];
-    if (kernel) {
-      return kernel;
+  kernel: (kernelName, config) => {
+    let name = kernelName + (config.ID || '');
+    let kernel = rt.kernels[name];
+    if (!kernel) {
+      compile(gemm_srcs, config);
     }
-    compile(srcfiles, config);
-    return rt.kernels[kernelName];
+    return rt.kernels[name];
   },
   get deviceInfo() {
     return rt.q.deviceInfo;
   },
-  get config() {
-    return rt.q.config;
+  get machineName() {
+    return rt.q.machineName;
   },
   set precision(p) {
     precision = p;
   },
-};
-
-const machineNameMap = {
-  'Iris Pro': 'irispro',
-  'QUALCOMM Adreno(TM)': 'adreno',
 };
 
 function start() {
@@ -227,13 +229,16 @@ function start() {
   rt.q = q;
   let deviceInfo = rt.deviceInfo[selected];
   rt.q.deviceInfo = deviceInfo;
-  rt.q.machine = machineNameMap[deviceInfo.DEVICE_NAME];
-  rt.q.config = require(path.join(__dirname, 'cl', rt.q.machine));
+  rt.q.machineName = deviceInfo.DEVICE_NAME;
   rt.copy = deviceInfo.DEVICE_HOST_UNIFIED_MEMORY;
   rt.maxWorkGroupSize = Math.min(512, deviceInfo.DEVICE_MAX_WORK_GROUP_SIZE);
+  rt.configs = require('./cl/configs')(rt.q.machineName + '-' + precision);
   // Compile our kernels
   rt.kernels = {};
-  compile([path.join(__dirname, 'cl', 'kernels.cl')], {});
+  compile(['kernels'], {});
+  rt.configs.forEach(config => {
+    compile(['common', 'copy_fast', 'copy_pad', 'transpose_fast', 'transpose_pad', 'xgemm'], config);
+  });
 }
 
 function stop() {
@@ -323,50 +328,44 @@ function run(kernel, global_work, local_work, in_buffers, out_buffer) {
   Profiler.emit('clrun', { kernel: cl.getKernelInfo(kernel, cl.KERNEL_FUNCTION_NAME), global: global_work, local: local_work, out_buffer: out_buffer });
 }
 
-function im2col(in_blob, in_data_offset, filter_size, filter_stride, filter_pad) {
+function im2col(config, in_blob, in_data_offset, filter_size, filter_stride, filter_pad) {
   let in_shape = in_blob.shape;
   let out_height = Math.floor((in_shape.height + 2 * filter_pad - filter_size) / filter_stride + 1);
   let out_width = Math.floor((in_shape.width + 2 * filter_pad - filter_size) / filter_stride + 1);
-  let out_channels = in_shape.channels * filter_size * filter_size;
+  let out_channels = roundUp(in_shape.channels * filter_size * filter_size, config.KWG);
   let out_shape = new Shape(1, out_channels, out_height, out_width);
   let out_blob = new Blob(out_shape);
   allocate(out_blob);
   let in_buffer = in_blob.buffer;
   let out_buffer = out_blob.buffer;
   let kernel = rt.kernels.im2col;
-  cl.setKernelArg(kernel, 0, 'int', out_shape.size);
-  cl.setKernelArg(kernel, 1, 'float*', in_buffer.to_gpu());
-  cl.setKernelArg(kernel, 2, 'int', in_data_offset);
-  cl.setKernelArg(kernel, 3, 'int', in_shape.channels);
-  cl.setKernelArg(kernel, 4, 'int', in_shape.height);
-  cl.setKernelArg(kernel, 5, 'int', in_shape.width);
-  cl.setKernelArg(kernel, 6, 'int', filter_size);
-  cl.setKernelArg(kernel, 7, 'int', filter_stride);
-  cl.setKernelArg(kernel, 8, 'int', filter_pad);
-  cl.setKernelArg(kernel, 9, 'float*', out_buffer.to_gpu());
-  cl.setKernelArg(kernel, 10, 'int', out_channels);
-  cl.setKernelArg(kernel, 11, 'int', out_height);
-  cl.setKernelArg(kernel, 12, 'int', out_width);
-  run(kernel, [out_shape.width, out_shape.height, in_shape.channels], null, [in_buffer], out_buffer);
+  cl.setKernelArg(kernel, 0, 'float*', in_buffer.to_gpu());
+  cl.setKernelArg(kernel, 1, 'int', in_data_offset);
+  cl.setKernelArg(kernel, 2, 'int', in_shape.channels);
+  cl.setKernelArg(kernel, 3, 'int', in_shape.height);
+  cl.setKernelArg(kernel, 4, 'int', in_shape.width);
+  cl.setKernelArg(kernel, 5, 'int', filter_size);
+  cl.setKernelArg(kernel, 6, 'int', filter_stride);
+  cl.setKernelArg(kernel, 7, 'int', filter_pad);
+  cl.setKernelArg(kernel, 8, 'float*', out_buffer.to_gpu());
+  cl.setKernelArg(kernel, 9, 'int', out_channels);
+  cl.setKernelArg(kernel, 10, 'int', out_height);
+  cl.setKernelArg(kernel, 11, 'int', out_width);
+  run(kernel, [out_shape.spatial, in_shape.channels], null, [in_buffer], out_buffer);
   return out_blob;
 }
 
-function gemm(transpose_a, transpose_b,
-              M, N, K,
-              a, b, c, c_offset) {
-  const lda = transpose_a ? M : K;
-  const ldb = transpose_b ? K : N;
-  const ldc = N;
-  clblas.gemm(clruntime,
-              transpose_a ? clblas.Trans : clblas.NoTrans,
-              transpose_b ? clblas.Trans : clblas.NoTrans,
-              clblas.NoTrans,
-              M, N, K,
-              1,
-              a.buffer, 0, lda,
-              b.buffer, 0, ldb,
-              0,
-              c.buffer, c_offset, ldc);
+// Select the best configuration to use for the given GEMM dimensions
+function gemm_config(M, N, K) {
+  let configs = rt.configs;
+  let config = configs[0];
+  for (let i = 1; i < configs.length; ++i) {
+    if (M < configs[i].MWG) {
+      break;
+    }
+    config = configs[i];
+  }
+  return config;
 }
 
 function convolution(in_blob, out_blob,
@@ -377,14 +376,22 @@ function convolution(in_blob, out_blob,
   let M = filter_num;
   let N = out_blob.shape.spatial;
   let K = in_blob.shape.channels * filter_size * filter_size;
+
+  const config = gemm_config(M, N, K);
+
   for (let b = 0; b < in_shape.batch_size; ++b) {
-    let col_blob = im2col(in_blob, b * in_shape.channels * in_shape.spatial,
+    let col_blob = im2col(config,
+                          in_blob, b * in_shape.channels * in_shape.spatial,
                           filter_size, filter_stride, filter_pad);
-    gemm(false, false,
-         M, N, K,
-         filters,
-         col_blob,
-         out_blob, b * out_shape.channels * out_shape.spatial);
+    clblas.gemm(clruntime,
+                config,
+                clblas.NoTrans, clblas.NoTrans, clblas.NoTrans,
+                M, N, K,
+                1,
+                filters.buffer, 0, K, M,
+                col_blob.buffer, 0, N, roundUp(K, config.KWG),
+                0,
+                out_blob.buffer, b * out_shape.channels * out_shape.spatial, N);
     release(col_blob);
   }
 }
@@ -419,11 +426,16 @@ function fullyConnected(in_blob, out_blob, weights) {
     run(kernel, [roundUp(N, VWI), KPT], [VWI, KPT], [in_buffer], out_buffer);
     return;
   }
-  gemm(false, true,
-       M, N, K,
-       in_blob,
-       weights,
-       out_blob, 0);
+
+  clblas.gemm(clruntime,
+              gemm_config(M, N, K),
+              clblas.NoTrans, clblas.Trans, clblas.NoTrans,
+              M, N, K,
+              1,
+              in_blob.buffer, 0, K, M,
+              weights.buffer, 0, K, N,
+              0,
+              out_blob.buffer, 0, N);
 }
 
 function normalize(out_blob, means_blob, scales_blob, negative_slope) {

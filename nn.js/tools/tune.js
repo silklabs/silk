@@ -23,148 +23,151 @@ function IsMultiple(a, b) {
   return (Math.floor(a / b) * b) === a;
 }
 
-const src_dir = path.join(__dirname, '..', 'src', 'backends', 'cl');
-const PadCopyTranspose_src = ['common', 'copy_fast', 'copy_pad', 'transpose_fast', 'transpose_pad'].map(name => path.join(src_dir, name + '.cl'));
-const Xgemm_src = ['common', 'xgemm'].map(name => path.join(src_dir, name + '.cl'));
-
-let work_size = new Shape(1, 1, 2048, 2048);
+let M = 2048, N = 2048, K = 2048;
 let float_size = 32;
 let machine_name = queryMachineName();
 
 const programs = {
   CopyMatrixFast: {
-    src: PadCopyTranspose_src,
     params: [
       ['COPY_DIMX', [8, 16, 32]],
       ['COPY_DIMY', [8, 16, 32]],
       ['COPY_WPT', [1, 2, 4, 8]],
       ['COPY_VW', [1, 2, 4, 8]],
     ],
-    validate: config => true,
+    validate: config => {
+      return config.COPY_DIMX <= M &&
+        config.COPY_DIMY <= N;
+    },
     local: (config) => [config.COPY_DIMX, config.COPY_DIMY],
     global: (config, work) => [work[0] / config.COPY_VW, work[1] / config.COPY_WPT],
-    state: {
-      src_ld: 2048, // guaranteed alignment for this kernel
+    state: (M, N, K) => ({
+      src_ld: M, // guaranteed alignment for this kernel
       alpha: 1, // we don't really care about different values for alpha for now
-    },
-    mem: {
-      src: work_size,
-      dst: work_size,
-    },
-    setArgs: (kernel, state) => {
+    }),
+    mem: (M, N, K) => ({
+      src: new Shape(1, 1, M, N),
+      dst: new Shape(1, 1, M, N),
+    }),
+    setArgs: (kernel, state, blobs) => {
       cl.setKernelArg(kernel, 0, 'int', state.src_ld);
-      cl.setKernelArg(kernel, 1, 'float*', state.src.buffer.to_gpu());
-      cl.setKernelArg(kernel, 2, 'float*', state.dst.buffer.to_gpu());
+      cl.setKernelArg(kernel, 1, 'float*', blobs.src.buffer.to_gpu());
+      cl.setKernelArg(kernel, 2, 'float*', blobs.dst.buffer.to_gpu());
       cl.setKernelArg(kernel, 3, 'float', state.alpha);
     },
   },
   CopyPadMatrix: {
-    src: PadCopyTranspose_src,
     params: [
       ['PAD_DIMX', [8, 16, 32]],
       ['PAD_DIMY', [8, 16, 32]],
       ['PAD_WPTX', [1, 2, 4]],
       ['PAD_WPTY', [1, 2, 4]],
     ],
-    validate: config => true,
+    validate: config => {
+      return config.PAD_DIMX <= M &&
+        config.PAD_DIMY <= N;
+    },
     local: (config) => [config.PAD_DIMX, config.PAD_DIMY],
     global: (config, work) => [work[0] / config.PAD_WPTX, work[1] / config.PAD_WPTY],
-    state: {
-      src_one: 2048,
-      src_two: 2048,
-      src_ld: 2048,
+    state: (M, N, K) => ({
+      src_one: M,
+      src_two: N,
+      src_ld: M,
       src_offset: 0,
-      dst_one: 2048,
-      dst_two: 2048,
-      dst_ld: 2048,
+      dst_one: M,
+      dst_two: N,
+      dst_ld: M,
       dst_offset: 0,
       alpha: 1,
-    },
-    mem: {
-      src: work_size,
-      dst: work_size,
-    },
-    setArgs: (kernel, state) => {
+    }),
+    mem: (M, N, K) => ({
+      src: new Shape(1, 1, M, N),
+      dst: new Shape(1, 1, M, N),
+    }),
+    setArgs: (kernel, state, blobs) => {
       cl.setKernelArg(kernel, 0, 'int', state.src_one);
       cl.setKernelArg(kernel, 1, 'int', state.src_two);
       cl.setKernelArg(kernel, 2, 'int', state.src_ld);
       cl.setKernelArg(kernel, 3, 'int', state.src_offset);
-      cl.setKernelArg(kernel, 4, 'float*', state.src.buffer.to_gpu());
+      cl.setKernelArg(kernel, 4, 'float*', blobs.src.buffer.to_gpu());
       cl.setKernelArg(kernel, 5, 'int', state.dst_one);
       cl.setKernelArg(kernel, 6, 'int', state.dst_two);
       cl.setKernelArg(kernel, 7, 'int', state.dst_ld);
       cl.setKernelArg(kernel, 8, 'int', state.dst_offset);
-      cl.setKernelArg(kernel, 9, 'float*', state.dst.buffer.to_gpu());
+      cl.setKernelArg(kernel, 9, 'float*', blobs.dst.buffer.to_gpu());
       cl.setKernelArg(kernel, 10, 'float', state.alpha);
     },
   },
   TransposeMatrixFast: {
-    src: PadCopyTranspose_src,
     params: [
       ['TRA_DIM', [4, 8, 16, 32, 64]],
       ['TRA_WPT', [1, 2, 4, 8, 16]],
       ['TRA_PAD', [0, 1]],
       ['TRA_SHUFFLE', [0, 1]],
     ],
-    validate: config => true,
+    validate: config => {
+      return config.TRA_DIM <= M &&
+        config.TRA_DIM <= N;
+    },
     local: (config) => [config.TRA_DIM, config.TRA_DIM],
     global: (config, work) => [work[0] / config.TRA_WPT, work[1] / config.TRA_WPT],
-    state: {
-      ld: 2048,
+    state: (M, N, K) => ({
+      ld: M,
       alpha: 1,
-    },
-    mem: {
-      src: work_size,
-      dst: work_size,
-    },
-    setArgs: (kernel, state) => {
+    }),
+    mem: (M, N, K) => ({
+      src: new Shape(1, 1, M, N),
+      dst: new Shape(1, 1, M, N),
+    }),
+    setArgs: (kernel, state, blobs) => {
       cl.setKernelArg(kernel, 0, 'int', state.ld);
-      cl.setKernelArg(kernel, 1, 'float*', state.src.buffer.to_gpu());
-      cl.setKernelArg(kernel, 2, 'float*', state.dst.buffer.to_gpu());
+      cl.setKernelArg(kernel, 1, 'float*', blobs.src.buffer.to_gpu());
+      cl.setKernelArg(kernel, 2, 'float*', blobs.dst.buffer.to_gpu());
       cl.setKernelArg(kernel, 3, 'float', state.alpha);
     },
   },
   TransposePadMatrix: {
-    src: PadCopyTranspose_src,
     params: [
       ['PADTRA_TILE', [8, 16, 32, 64]],
       ['PADTRA_WPT', [1, 2, 4, 8, 16]],
       ['PADTRA_PAD', [0, 1]],
     ],
-    validate: config => true,
+    validate: config => {
+      return config.PADTRA_TILE <= M &&
+        config.PADTRA_TILE <= N;
+    },
     local: (config) => [config.PADTRA_TILE, config.PADTRA_TILE],
     global: (config, work) => [work[0] / config.PADTRA_WPT, work[1] / config.PADTRA_WPT],
-    state: {
-      src_one: 2048,
-      src_two: 2048,
-      src_ld: 2048,
+    state: (M, N, K) => ({
+      src_one: M,
+      src_two: N,
+      src_ld: M,
       src_offset: 0,
-      dst_one: 2048,
-      dst_two: 2048,
-      dst_ld: 2048,
+      dst_one: M,
+      dst_two: N,
+      dst_ld: M,
       dst_offset: 0,
       alpha: 1,
-    },
-    mem: {
-      src: work_size,
-      dst: work_size,
-    },
-    setArgs: (kernel, state) => {
+    }),
+    mem: (M, N, K) => ({
+      src: new Shape(1, 1, M, N),
+      dst: new Shape(1, 1, M, N),
+    }),
+    setArgs: (kernel, state, blobs) => {
       cl.setKernelArg(kernel, 0, 'int', state.src_one);
       cl.setKernelArg(kernel, 1, 'int', state.src_two);
       cl.setKernelArg(kernel, 2, 'int', state.src_ld);
       cl.setKernelArg(kernel, 3, 'int', state.src_offset);
-      cl.setKernelArg(kernel, 4, 'float*', state.src.buffer.to_gpu());
+      cl.setKernelArg(kernel, 4, 'float*', blobs.src.buffer.to_gpu());
       cl.setKernelArg(kernel, 5, 'int', state.dst_one);
       cl.setKernelArg(kernel, 6, 'int', state.dst_two);
       cl.setKernelArg(kernel, 7, 'int', state.dst_ld);
       cl.setKernelArg(kernel, 8, 'int', state.dst_offset);
-      cl.setKernelArg(kernel, 9, 'float*', state.dst.buffer.to_gpu());
+      cl.setKernelArg(kernel, 9, 'float*', blobs.dst.buffer.to_gpu());
       cl.setKernelArg(kernel, 10, 'float', state.alpha);
     },
   },
   Xgemm: {
-    src: Xgemm_src,
     params: [
       ['MWG', [16, 32, 64, 128]],
       ['NWG', [16, 32, 64, 128]],
@@ -196,31 +199,35 @@ const programs = {
         // Significantly limits configuration space with likely little performance impact
         config.MDIMC === config.MDIMA &&
         config.NDIMC === config.NDIMB &&
-        config.SA === config.SB;
+        config.SA === config.SB &&
+        // Additionally check against M, N, K
+        config.MWG <= M &&
+        config.NWG <= N &&
+        config.KWG <= K;
     },
     local: (config) => [config.MDIMC, config.NDIMC],
     global: (config, work) => [work[0] * config.MDIMC / config.MWG, work[1] * config.NDIMC / config.NWG],
-    state: {
-      M: 2048,
-      N: 2048,
-      K: 2048,
+    state: (M, N, K) => ({
+      M: M,
+      N: N,
+      K: K,
       alpha: 1,
       beta: 0,
-    },
-    mem: {
-      a: work_size,
-      b: work_size,
-      dst: work_size,
-    },
-    setArgs: (kernel, state) => {
+    }),
+    mem: (M, N, K) => ({
+      a: new Shape(1, 1, M, K),
+      b: new Shape(1, 1, N, K),
+      dst: new Shape(1, 1, M, N),
+    }),
+    setArgs: (kernel, state, blobs) => {
       cl.setKernelArg(kernel, 0, 'int', state.M);
       cl.setKernelArg(kernel, 1, 'int', state.N);
       cl.setKernelArg(kernel, 2, 'int', state.K);
       cl.setKernelArg(kernel, 3, 'int', state.alpha);
       cl.setKernelArg(kernel, 4, 'int', state.beta);
-      cl.setKernelArg(kernel, 5, 'float*', state.a.buffer.to_gpu());
-      cl.setKernelArg(kernel, 6, 'float*', state.b.buffer.to_gpu());
-      cl.setKernelArg(kernel, 7, 'float*', state.dst.buffer.to_gpu());
+      cl.setKernelArg(kernel, 5, 'float*', blobs.a.buffer.to_gpu());
+      cl.setKernelArg(kernel, 6, 'float*', blobs.b.buffer.to_gpu());
+      cl.setKernelArg(kernel, 7, 'float*', blobs.dst.buffer.to_gpu());
     },
   },
 };
@@ -264,11 +271,11 @@ function generateConfigs(program) {
 
 // Allocate buffers, run a closure, and then de-allocate them.
 let rand;
-function withBuffers(program, closure) {
+function withBlobs(program, closure) {
+  let blobs = {};
   // restart random number generator
   rand = 0;
-  let mem = program.mem;
-  let state = program.state;
+  let mem = program.mem(M, N, K);
   Object.keys(mem).forEach(name => {
     let blob = new Blob(mem[name]);
     let size = blob.shape.size;
@@ -278,14 +285,14 @@ function withBuffers(program, closure) {
       data[i] = rand++;
     }
     backend.upload(blob, data);
-    state[name] = blob;
+    blobs[name] = blob;
   });
-  closure();
+  closure(blobs);
   // delete the reference to the buffers in state
   Object.keys(mem).forEach(name => {
-    let blob = state[name];
+    let blob = blobs[name];
     backend.release(blob);
-    delete state[name];
+    delete blobs[name];
   });
 }
 
@@ -309,24 +316,23 @@ function measure(program, programConfig) {
   });
   let time;
   let data;
-  withBuffers(program, () => {
-    let kernel = backend.clruntime.kernel(program.name, program.src, config);
+  withBlobs(program, blobs => {
     try {
-      let state = program.state;
-      program.setArgs(kernel, state);
-      let mem = program.mem;
-      let work = work_size;
+      let kernel = backend.clruntime.kernel(program.name, config);
+      let state = program.state(M, N, K);
+      program.setArgs(kernel, state, blobs);
       let start = Date.now();
       let iter = 0;
       do {
         ++iter;
-        backend.clruntime.run(kernel, program.global(config, [work.height, work.width]), program.local(config),
-                              Object.keys(mem).map(name => state[name].buffer), state.dst.buffer);
-        state.dst.buffer.wait();
+        backend.clruntime.run(kernel, program.global(config, [M, N]), program.local(config),
+                              Object.keys(blobs).map(name => blobs[name].buffer), blobs.dst.buffer);
+        blobs.dst.buffer.wait();
       } while ((Date.now() - start) < 100);
       time = (Date.now() - start) / iter;
-      data = backend.download(state.dst);
+      data = backend.download(blobs.dst);
     } catch (e) {
+      console.log(e);
       // mark as error
       time = -1;
       data = [];
@@ -352,7 +358,7 @@ let db = new MicroDB(path.join(__dirname, 'measurements.txt'));
 
 // Return a string that identifies the result for this program and configuration
 function resultKey(programName, config) {
-  return [machine_name, work_size.width, work_size.height, float_size, programName].concat(Object.keys(config).map(key => key + '$' + config[key])).join('-');
+  return [machine_name, M, N, K, float_size, programName].concat(Object.keys(config).map(key => key + '$' + config[key])).join('-');
 }
 
 // Get the current system temperature
@@ -377,15 +383,15 @@ function temperature() {
 // Print out a report
 function report(program) {
   console.log(`machine: ${machine_name}`);
-  console.log(`work size: ${work_size.width} ${work_size.height}`);
+  console.log(`M N K: ${M} ${N} ${K}`);
   console.log(`float size: ${float_size}`);
   let results = [];
   db.keys().forEach(key => {
     let time = db.get(key);
     let parts = key.split('-');
-    if (parts[0] !== machine_name || (parts[1] | 0) !== work_size.width ||
-	(parts[2] | 0) !== work_size.height || (parts[3] | 0) !== float_size ||
-	parts[4] !== program.name) {
+    if (parts[0] !== machine_name || (parts[1] | 0) !== M ||
+	(parts[2] | 0) !== N || (parts[3] | 0) !== K || (parts[4] | 0) !== float_size ||
+	parts[5] !== program.name) {
       return;
     }
     results.push([(time !== 'error' && time !== 'incorrect') ? (time * 1) : time, parts.slice(5).join(' ').replace(/\$/g, ': ')]);
@@ -400,8 +406,14 @@ function report(program) {
   results.forEach(result => console.log(result[0] + 'ms ' + result[1]));
 }
 
+let tick = (bar, total, n, count, last, best, temp, status) => {
+  bar.tick(count, { last: last, best: best, temp: temp, status: status });
+};
+
 // Maximum temparature, above this we'll pause
 let maxTemp = 70;
+
+let stop = 0;
 
 function tune(program) {
   backend.clruntime.precision = float_size;
@@ -429,15 +441,13 @@ function tune(program) {
   let last = 0;
   let bar = new ProgressBar(':bar :current/:total :percent :etas (last: :last, best: :bestms, :tempC, :status)', { total: configs.length, width: 60 });
   // Account for what we found in the database
-  bar.tick(configs.length - todo.length, { last: '-', best: '0', temp: '-', status: 'start' });
-
-  let num = 0; // HACK, REMOVE WHEN WE NO LONGER LEAK
+  tick(bar, configs.length, todo.length, configs.length - todo.length, '-', '0', '-', 'start');
 
   function next() {
-    if (num++ > 10) {
-      // HACK, REMOVE WHEN WE NO LONGER LEAK
-      throw new Error('time to abort, we are still leaking memory');
+    if (stop++ > 100) {
+      throw new Error('STOP');
     }
+
     let temp = temperature();
     let status = (temp > maxTemp) ? 'pause' : 'run';
     if (status === 'run') {
@@ -456,7 +466,7 @@ function tune(program) {
       }
       db.put(resultKey(program.name, config), result);
     }
-    bar.tick((status === 'run') ? 1 : 0, { last: last, best: best, temp: temp, status: status });
+    tick(bar, configs.length, todo.length, (status === 'run') ? 1 : 0, last, best, temp, status);
     if (bar.complete) {
       report(program);
     } else {
@@ -473,9 +483,11 @@ const optionDefinitions = [
   { name: 'kernel', alias: 'k', type: String, defaultOptions: true },
   { name: 'machine', alias: 'm', type: String },
   { name: 'float', alias: 'f', type: String },
-  { name: 'width', alias: 'w', type: String },
-  { name: 'height', alias: 'h', type: String },
+  { name: 'M', alias: 'M', type: String },
+  { name: 'N', alias: 'N', type: String },
+  { name: 'K', alias: 'K', type: String },
   { name: 'tune', alias: 't', type: Boolean },
+  { name: 'logcat', alias: 'l', type: Boolean },
 ];
 const options = commandLineArgs(optionDefinitions);
 if (!options.kernel) {
@@ -483,7 +495,8 @@ if (!options.kernel) {
   console.log('-t: run tuning');
   console.log('-m adreno or irispro');
   console.log('-f 32 or 16');
-  console.log('-w N and -h N for work width and height');
+  console.log('-M m and -N n and -K k to change input sizes');
+  console.log('-l set output to logcat instead of the console');
   console.log('available kernels:');
   Object.keys(programs).forEach(name => console.log(`  ${name}`));
   return -1;
@@ -492,11 +505,14 @@ if (!(options.kernel in programs)) {
   console.log(`${options.kernel} is not a supported kernel`);
   return -1;
 }
-if (options.width) {
-  work_size = new Shape(work_size.batch_size, work_size.channels, work_size.height, options.width | 0);
+if (options.M) {
+  M = options.M | 0;
 }
-if (options.height) {
-  work_size = new Shape(work_size.batch_size, work_size.channels, options.height | 0, work_size.width);
+if (options.N) {
+  N = options.N | 0;
+}
+if (options.K) {
+  K = options.K | 0;
 }
 if (options.machine && options.machine === 'adreno') {
   machine_name = 'QUALCOMM Adreno(TM)';
@@ -506,6 +522,19 @@ if (options.machine && options.machine === 'irispro') {
 }
 if ((options.float | 0) === 16) {
   float_size = 16;
+}
+if (options.logcat) {
+  // redirect console.log
+  console.log = msg => {
+    msg = '' + msg;
+    try {
+      child_process.execSync(`/system/bin/log "tune ${msg}"`);
+    } catch (e) { }
+  };
+  // and redirect the result ticks
+  tick = (bar, total, n, count, last, best, temp, status) => {
+    console.log([total, n, count, last, best, temp, status].join(' '));
+  };
 }
 
 let program = programs[options.kernel];

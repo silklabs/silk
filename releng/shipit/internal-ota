@@ -33,6 +33,10 @@ fi
 cd bsp-gonk/
 ./sync kenzo gonkjs
 source build/envsetup.sh
+(
+  cd build/
+  git am $SILK_CORE/releng/gonk-signing/0001-Skip-fingerprint-check-when-AB-updates-are-enabled.patch
+)
 make -j4 otatools
 which bsdiff
 which imgdiff

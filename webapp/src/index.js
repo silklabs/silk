@@ -38,6 +38,7 @@ import Login from './components/Login';
 import ForgotPassword from './components/ForgotPassword';
 import { OnlineCamera, OnlineCameras } from './components/OnlineCameras';
 import MissingChunks from './components/MissingChunks';
+import EventViewer from './components/EventViewer';
 import WebRTCVideoList from './components/WebRTCVideoList';
 import DataChannel from './components/DataChannel';
 
@@ -64,6 +65,7 @@ function loginCheck(nextState, replaceState) {
         <Route onEnter={loginCheck} path="/" component={OnlineCameras} />
         <Route onEnter={loginCheck} path="/avpipeline/:deviceId" component={AVPipeline} />
         <Route onEnter={loginCheck} path="/chunks/:deviceId" component={MissingChunks} />
+        <Route onEnter={loginCheck} path="/eventviewer/:deviceId" component={EventViewer} />
         <Route onEnter={loginCheck} path="/crashById/:crashId" component={FindCrashById} />
         <Route onEnter={loginCheck} path="/diag/:deviceId" component={Diag} />
         <Route onEnter={loginCheck} path="/preview/:deviceId" component={OnlineCamera} />

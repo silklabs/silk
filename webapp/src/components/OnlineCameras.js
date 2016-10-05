@@ -157,6 +157,11 @@ export class OnlineCamera extends React.Component {
               <Glyphicon glyph="list" style={styles.glyphicon} />
             </Button>
           </Link>
+          <Link to={`/eventviewer/${this.deviceId}`}>
+            <Button bsSize="xsmall">
+              <Glyphicon glyph="screenshot" style={styles.glyphicon} />
+            </Button>
+          </Link>
           <Link to={`/audiostudio/${this.deviceId}`}>
             <Button bsSize="xsmall">
               <Glyphicon glyph="headphones" style={styles.glyphicon} />

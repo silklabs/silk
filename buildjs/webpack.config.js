@@ -72,6 +72,7 @@ const externals = [
   'node-nnpack',
   'node-opencl',
   'node-qsml',
+  'node-shm',
   'node-webrtc',
   'opencv',
   'segfault-handler',

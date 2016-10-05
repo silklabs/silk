@@ -130,10 +130,6 @@ class EventVideoPlayer extends React.Component {
 
   componentWillUnmount() {
     this.abortFetching = true;
-    if (this.segmentTimer) {
-      clearInterval(this.segmentTimer);
-      this.segmentTimer = null;
-    }
   }
 
   async loadSegments() {

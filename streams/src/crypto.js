@@ -6,7 +6,7 @@
  * @flow
  */
 
-import invariant from 'invariant';
+import invariant from 'assert';
 import crypto from 'crypto';
 import * as silkCrypto from 'silk-crypto';
 import makeLog from 'silk-log';

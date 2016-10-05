@@ -70,11 +70,15 @@ export default async function main(config: Object) {
     res.status(200).end();
   });
 
-  const gitlabContext = await getGitlabContext();
-  app.post('/hooks/gitlab', bodyParser.json(), (req, res) => {
-    triggerGitlabBuild(req.body, gitlabContext);
-    res.status(200).end();
-  });
+  try {
+    const gitlabContext = await getGitlabContext();
+    app.post('/hooks/gitlab', bodyParser.json(), (req, res) => {
+      triggerGitlabBuild(req.body, gitlabContext);
+      res.status(200).end();
+    });
+  } catch (err) {
+    log.warn('/hooks/gitlab setup failed', err);
+  }
 
   http.listen(config.server.port);
   let errorEvent = eventToPromise(http, 'error').then(err => {

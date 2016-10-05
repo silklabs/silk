@@ -31,12 +31,21 @@ AWS.config.update({
 
 const ec2 = new AWS.EC2();
 
-const gitlab = new Gitlab({
-  url: 'https://gitlab.com',
-  token: process.env.GITLAB_TOKEN,
-});
+let gitlab;
+if (process.env.GITLAB_TOKEN) {
+  gitlab = new Gitlab({
+    url: 'https://gitlab.com',
+    token: process.env.GITLAB_TOKEN,
+  });
+} else {
+  log.warn('GITLAB_TOKEN environment variable not defined.  Disabling gitlab integration');
+}
 
 function findProject(name: string): Promise<Project> {
+  if (!gitlab) {
+    return Promise.reject('No gitlab');
+  }
+
   return new Promise((accept, reject) => {
     gitlab.projects.all(projects => {
       const project = projects.find(proj => proj.name === name);
@@ -90,6 +99,10 @@ async function stopInstances(): Promise<void> {
 }
 
 function listPipelines(project: Project): Promise<Array<Pipeline>> {
+  if (!gitlab) {
+    return Promise.reject('No gitlab');
+  }
+
   return new Promise(accept => {
     gitlab.projects.pipelines.all(project.id, pipelines => {
       accept(pipelines);
@@ -98,6 +111,10 @@ function listPipelines(project: Project): Promise<Array<Pipeline>> {
 }
 
 function listRunners(project: Project): Promise<Array<Runner>> {
+  if (!gitlab) {
+    return Promise.reject('No gitlab');
+  }
+
   return new Promise(accept => {
     gitlab.projects.runners.all(project.id, runners => {
       // we are only interested on active runners
@@ -120,6 +137,11 @@ export async function triggerBuild(
   json: Object,
   context: Context
 ): Promise<void> {
+  if (!gitlab) {
+    log.warn('Gitlab triggerBuild not available');
+    return;
+  }
+
   try {
     if (json.object_kind !== 'build') {
       return;

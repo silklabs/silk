@@ -5,6 +5,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import React from 'react';
 import createLog from 'silk-log';
 
@@ -96,8 +97,9 @@ export default class MSEPlayerWithStats extends React.Component {
       );
     }
 
-    if (this.videoStartTimestamp) {
-      this.stats.elapsedMs = Date.now() - this.videoStartTimestamp;
+    const {videoStartTimestamp} = this;
+    if (videoStartTimestamp) {
+      this.stats.elapsedMs = Date.now() - videoStartTimestamp;
     }
     if (this.videoElement) {
       this.stats.playbackMs = this.videoElement.currentTime * 1000;
@@ -183,13 +185,17 @@ export default class MSEPlayerWithStats extends React.Component {
     // Are we getting a segment having been out of buffered data? If
     // so, record the time we presumably spent without having any
     // buffered data.
-    const timeSinceLastOutOfBuffer = Date.now() - this.emptyBufferTimestamp;
+    const timeSinceLastOutOfBuffer =
+      Date.now() - (this.emptyBufferTimestamp || 0);
     let timeOutOfBuffer = 0;
     if (this.outOfBuffer) {
       const timePreviouslyBuffered =
-        this.previousSegmentEndTimeMs - this.emptyBufferVideoStartTimeOffsetMs;
+        (this.previousSegmentEndTimeMs || 0) -
+        this.emptyBufferVideoStartTimeOffsetMs;
       timeOutOfBuffer = timeSinceLastOutOfBuffer - timePreviouslyBuffered;
-      log.debug(`We were apparently out of buffered data for ${timeOutOfBuffer} ms.`);
+      log.debug(
+        `We were apparently out of buffered data for ${timeOutOfBuffer} ms.`
+      );
     }
 
     if (this.outOfBuffer || this.emptyBufferTimestamp === null) {
@@ -201,6 +207,7 @@ export default class MSEPlayerWithStats extends React.Component {
 
     // Calculate the time when we'd expect the <video> element to be
     // out of buffered data.
+    invariant(this.videoElement);
     const currentVideoTimeMs = this.videoElement.currentTime * 1000;
     const outOfBufferMs = this.previousSegmentEndTimeMs - currentVideoTimeMs;
     log.debug(`Expecting <video> element to run out of buffered data in ${outOfBufferMs} ms`);
@@ -253,9 +260,13 @@ export default class MSEPlayerWithStats extends React.Component {
       log.warn(`No video element found.`);
       return;
     }
+    const {ketchupStartTimestamp} = this;
+    if (typeof ketchupStartTimestamp !== 'number') {
+      return;
+    }
 
     videoElement.playbackRate = 1.0;
-    const actualKetchupDurationMs = Date.now() - this.ketchupStartTimestamp;
+    const actualKetchupDurationMs = Date.now() - ketchupStartTimestamp;
     this.ketchupStartTimestamp = null;
     log.debug(`Managed to catch up ${actualKetchupDurationMs}ms`);
 

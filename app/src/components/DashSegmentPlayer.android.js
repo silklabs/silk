@@ -19,6 +19,11 @@ const log = createLog('DashSegmentPlayer');
 const NATIVE_REF = 'player';
 const DEFAULT_WEBVIEW_URL = 'file:///android_asset/mse.html';
 
+type WebviewErrorEvent = {
+  code: number;
+  description: string;
+};
+
 export default class DashSegmentPlayer extends React.Component {
 
   render() {
@@ -66,14 +71,14 @@ export default class DashSegmentPlayer extends React.Component {
     );
   }
 
-  onLoadingStart = (event) => {
+  onLoadingStart = (event: WebviewErrorEvent) => {
     log.debug('onLoadingStart', event);
   };
-  onLoadingFinish = (event) => {
-    log.debug('onLoadingFinish', event);
+  onLoadingFinish = () => {
+    log.debug('onLoadingFinish');
   };
-  onLoadingError = (event) => {
-    log.debug('onLoadingError', event);
+  onLoadingError = () => {
+    log.debug('onLoadingError');
   };
 
 }

@@ -15,6 +15,11 @@ const { DashSegmentPlayerManager } = NativeModules;
 // Reference to the native component we are wrapping.
 const RCT_NATIVE_REF = 'player';
 
+type TimeUpdateEvent = {
+  currentTime: number;
+  buffered: number;
+};
+
 /**
  * Native video player that can be fed mp4 DASH segments.
  *
@@ -83,7 +88,7 @@ export default class DashSegmentPlayer extends React.Component {
     this.props.onPause && this.props.onPause();
   };
 
-  _onTimeUpdate = (event) => {
+  _onTimeUpdate = (event: {nativeEvent: TimeUpdateEvent}) => {
     const {nativeEvent} = event;
     this._buffered = nativeEvent.buffered;
     this._currentTime = nativeEvent.currentTime;

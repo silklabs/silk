@@ -10,10 +10,13 @@ import * as actions from '../store/actions';
 import Button from './Button';
 import {Colors} from './CommonStyles';
 
+import type {Dispatch} from 'silk-redux/action';
+
 export default class UnconfiguredDevice extends React.Component {
 
   props: {
     configDeviceId: number;
+    dispatch: Dispatch<*>;
     style: any;
   };
 

@@ -93,9 +93,9 @@ export default class AuthForm extends AsyncComponent {
   // TODO: we can do better here and only compare the sub-state we care about
   shouldComponentUpdate = PureRenderMixin.shouldComponentUpdate;
 
-  onEmailChange = (email) => this.setState({email});
-  onPasswordChange = (password) => this.setState({password});
-  onPasswordVerificationChange = (passwordVerification) => {
+  onEmailChange = (email: string) => this.setState({email});
+  onPasswordChange = (password: string) => this.setState({password});
+  onPasswordVerificationChange = (passwordVerification: string) => {
     this.setState({passwordVerification});
   };
 

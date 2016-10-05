@@ -10,6 +10,7 @@
  */
 
 import createLog from 'silk-log';
+
 const log = createLog('PreviewQueue');
 
 // How long to delay the live preview image to allow for new frames to arrive
@@ -43,6 +44,7 @@ export default class PreviewQueue {
     now: number;
     when: number;
   };
+  _lastNow: ?number = null;
 
   // The current device time that the app is attempting to best represent in
   // the preview.  This is usually in the past around -PREVIEW_LAG_MS
@@ -112,7 +114,7 @@ export default class PreviewQueue {
       this._previewTimeoutId = null;
     }
 
-    if (this._lastDevicePreviewTime !== null) {
+    if (typeof this._lastDevicePreviewTime === 'number') {
       // The preview frames are guaranteed to arrive in chronological order
       // over the channel.  However the device time could change at any time,
       // at which point the relative time between frames becomes meaningless.
@@ -129,12 +131,12 @@ export default class PreviewQueue {
     }
 
     const now = Date.now();
-    if (this._deviceTime === null) {
+    if (typeof this._deviceTime !== 'number') {
       // First frame.  Set device time reference to -PREVIEW_LAG_MS
       this._deviceTime = this._previewQueue[0].when - PREVIEW_LAG_MS;
     } else {
       // Advance device time by the time elapsed since this method last executed
-      this._deviceTime += now - this._lastNow;
+      this._deviceTime += now - (this._lastNow || 0);
     }
     this._lastNow = now;
 
@@ -151,12 +153,12 @@ export default class PreviewQueue {
     let skip = 0;
     let preview = this._previewQueue.shift();
     while (this._previewQueue.length > 0 &&
-          this._previewQueue[0].when < this._deviceTime) {
+           this._previewQueue[0].when < (this._deviceTime || 0)) {
       preview = this._previewQueue.shift();
       skip += 1;
     }
     if (skip > 0) {
-      let skipMs = preview.when - this._lastDevicePreviewTime;
+      let skipMs = preview.when - (this._lastDevicePreviewTime || 0);
       log.error(`Skipped ahead ${skipMs}ms, ${skip} frame(s)`);
     }
 

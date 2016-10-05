@@ -30,19 +30,19 @@ type Consistency = 'first' | 'all';
  * NOTE: That this function more or less breaks flow checks so the composite
  * class needs to be careful to advertise what it does correctly.
  */
-function runTableMutation(
+function runTableMutation<T>(
   method: string,
   cons: Consistency,
   clients: Array<TableClient>,
   args: Array<mixed>,
-): Promise<any> {
+): Promise<T> | Promise<Array<T>> {
   invariant(clients.length > 0);
 
   // Clone clients so they can safely be replaced during runtime ...
   clients = clients.concat();
 
   // List of promises for _all_ operations ...
-  let operations = clients.map((client) => {
+  const operations: Array<Promise<T>> = clients.map((client) => {
     // $FlowFixMe: Cannot dynamically call functions so ignore flow error...
     return client[method].apply(client, args);
   });
@@ -71,8 +71,10 @@ function runTableMutation(
  * NOTE: ES7 decorators would have make this way nicer but are unavailable in
  * babel6 by default ...
  */
-function ensureClients(fn) {
-  return async function(...args) {
+function ensureClients<T>(
+  fn: (...args: Array<any>) => T | Promise<T>
+): (...args: Array<any>) => Promise<T> {
+  return async function(...args: Array<any>) {
     if (!this._validateClients()) {
       await this._updateClients();
     }
@@ -110,7 +112,7 @@ export default class CompositeTableClient {
   async _updateClients(): Promise<void> {}
 
   setCorsRules: (rules: Array<CorsRule>) => Promise<void> =
-    ensureClients((rules: Array<CorsRule>) : Promise<void> => {
+    ensureClients((rules: Array<CorsRule>) => {
       return runTableMutation('setCorsRules', 'all', this._clients, [rules]);
     }
   );
@@ -121,7 +123,7 @@ export default class CompositeTableClient {
    *
    * NOTE: Will block until tables have been created on _all_ clients.
    */
-  ensureTables: () => Promise<void> = ensureClients((): Promise<void> => {
+  ensureTables: () => Promise<void> = ensureClients(() => {
     return runTableMutation('createTable', 'all', this._clients, [this._table]);
   });
 
@@ -131,7 +133,7 @@ export default class CompositeTableClient {
    *
    * NOTE: Will block until tables have been created on _all_ clients.
    */
-  destroyTables: () => Promise<void> = ensureClients((): Promise<void> => {
+  destroyTables: () => Promise<void> = ensureClients(() => {
     return runTableMutation('deleteTable', 'all', this._clients, [this._table]);
   });
 
@@ -143,7 +145,7 @@ export default class CompositeTableClient {
    * will simply continue to exist with their previous state.
    */
   mergeOrInsertEntity: (entity: Entity) => Promise<Entity> =
-    ensureClients((entity: Entity): Promise<Entity> => {
+    ensureClients((entity: Entity) => {
       return runTableMutation(
         'mergeOrInsertEntity',
         'first',
@@ -157,7 +159,7 @@ export default class CompositeTableClient {
    * the entity regardless of what state it is in.
    */
   deleteEntity: (entity: Entity) => Promise<void> =
-    ensureClients((entity: Entity): Promise<void> => {
+    ensureClients((entity: Entity) => {
       return runTableMutation(
         'deleteEntity',
         'first',

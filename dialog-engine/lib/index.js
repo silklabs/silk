@@ -205,12 +205,10 @@ export class DialogEngine extends EventEmitter {
   configure(scriptOptions: DialogScriptOptions) {
     this._scriptOptions = scriptOptions;
 
-    if (this._scriptOptions.speechOptions) {
-      configureSpeechToText(this._scriptOptions.speechOptions);
-    }
-
-    if (this._scriptOptions.speechOptions) {
-      configureTextToSpeech(this._scriptOptions.speechOptions);
+    const {speechOptions} = scriptOptions;
+    if (speechOptions) {
+      configureSpeechToText(speechOptions);
+      configureTextToSpeech(speechOptions);
     }
 
     netstatus.on('online', this._onOnline);
@@ -221,6 +219,9 @@ export class DialogEngine extends EventEmitter {
 
   _onOnline: (() => void) = () => {
     // Opportunistically try acquire the access token once online
+    if (!this._scriptOptions.speechOptions) {
+      return;
+    }
     this._scriptOptions.speechOptions.getAccessToken().catch((error) => {
       log.warn(`Failed to get access token`, error);
     });

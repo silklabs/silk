@@ -7,6 +7,8 @@ import { View } from 'react-native';
 import Selector from './Selector';
 import WifiNetworkIcon from './WifiNetworkIcon';
 
+import type {DeviceWifiNetwork} from 'silk-app-client/src/ble/device_session';
+
 const deviceNetworkPropType = React.PropTypes.shape({
   ssid: React.PropTypes.string.isRequired,
   psk: React.PropTypes.bool.isRequired,
@@ -23,13 +25,21 @@ export default class WifiNetworkSelector extends React.Component {
     onSelectManually: React.PropTypes.func.isRequired,
   };
 
+  props: {
+    deviceNetworks: ?Array<DeviceWifiNetwork>;
+    selectedNetwork: ?DeviceWifiNetwork;
+    onSelectNetwork: (network: DeviceWifiNetwork) => void;
+    onSelectManually: () => void;
+    style: any;
+  };
+
   scrollToSelectedRow() {
     this.refs.selector.scrollToSelectedRow();
   }
 
-  _renderRow = (network) => {
+  _renderRow = (network: DeviceWifiNetwork) => {
     const { selectedNetwork } = this.props;
-    const key = `${network.ssid}\0${network.psk}`;
+    const key = `${network.ssid}\0${String(network.psk)}`;
     const selected =
       !!selectedNetwork &&
       network.ssid === selectedNetwork.ssid &&

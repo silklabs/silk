@@ -2,6 +2,7 @@
  * @flow
  */
 
+import invariant from 'assert';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -39,7 +40,7 @@ export default class CameraLiveVideo extends WebRTCDataChannelReceiver {
 
   firstSegmentDurationMs: ?number = null;
 
-  onMessage = (message) => {
+  onMessage = (message: Object) => {
     if (this.firstSegmentDurationMs === null) {
       this.firstSegmentDurationMs = message.durationMs;
     }
@@ -61,9 +62,10 @@ export default class CameraLiveVideo extends WebRTCDataChannelReceiver {
     );
   }
 
-  _onCanPlay = (event) => {
+  _onCanPlay = () => {
     // Delay playback by half a segment duration so that Viblast's
     // playhead isn't constantly at the edge of the buffer.
+    invariant(this.firstSegmentDurationMs);
     const waitMs = this.firstSegmentDurationMs / 2;
     log.debug(`canPlay now, playing in ${waitMs}ms`);
     setTimeout(() => {

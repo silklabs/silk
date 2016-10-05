@@ -40,10 +40,11 @@ export type CorsRule = {
  * Azure table entities are very flexible but require RowKey and PartitionKey
  * for scalability reasons.. Every entity must have them.
  */
-export type Entity = {[key: string]: any} | {
+export type Entity = {
   RowKey: string;
   PartitionKey: string;
   ETag?: string;
+  [key: string]: mixed;
 };
 
 const SHARED_AUTH_SIGNED_HEADERS = new Set([
@@ -386,12 +387,7 @@ export class TableClient extends HttpClient {
     filter?: string | Object,
     limit?: number,
     select?: Array<string>,
-    // XXX: Could not get this to work with Array<Entity> flow shows:
-    //
-    // Promise. This type is incompatible with
-    // <...>: declare function $await<T>(p: Promise<T> | T): T;
-    //
-  ): Promise<Array<any>> {
+  ): Promise<Array<Entity>> {
     let uri = `${table}()`;
     let query = {};
 

@@ -636,6 +636,7 @@ export default class DeviceSession extends RobustEventEmitter {
     log.info(`Passed proximity gate`);
 
     this._socketSession.rssiUpdatesEnabled = false;
+    invariant(typeof this._deviceId === 'string');
     this._socketSession.setPaired(this._deviceId);
     this._state = DeviceSession.STATE_REGISTERING_PROXIMITY;
 

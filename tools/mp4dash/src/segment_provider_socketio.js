@@ -12,7 +12,7 @@ type FrameMessage = {
   frame: Buffer;
 };
 
-type Listener = () => void;
+type Listener = (message: FrameMessage, ack: ?Function) => void;
 
 const log = createLog('segment-provider-socketio');
 
@@ -48,7 +48,7 @@ export default class SegmentProviderSocketIO extends SegmentProvider {
     super.close();
   }
 
-  _onDeviceVideoSegment: Listener = (message: FrameMessage, ack: ?Function) => {
+  _onDeviceVideoSegment: Listener = (message, ack) => {
     log.debug(`['${this._id}']: onDeviceVideoSegment(${message.frame.length})`);
 
     if (ack) {

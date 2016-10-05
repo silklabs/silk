@@ -176,13 +176,17 @@ export class SilkApi {
   config: AuthConfig;
 
   genSocketioDeviceConfig: (() => Promise<SocketioConfig>) = async () => {
-    let {url} = await this.device.socketioURL();
-    return await genSocketioConfig(this.config.accessToken, url);
+    const {url} = await this.device.socketioURL({});
+    const {accessToken} = this.config;
+    invariant(accessToken);
+    return await genSocketioConfig(accessToken, url);
   };
 
   genSocketioAccountConfig: (() => Promise<SocketioConfig>) = async () => {
-    let {url} = await this.account.socketioURL();
-    return await genSocketioConfig(this.config.accessToken, url);
+    const {url} = await this.account.socketioURL({});
+    const {accessToken} = this.config;
+    invariant(accessToken);
+    return await genSocketioConfig(accessToken, url);
   };
 
   /** Deprecated exports */

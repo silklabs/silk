@@ -35,6 +35,7 @@ class DeviceMotion {
       timeline.addObjects([{
         source: 'devicemotion',
         tag: 'device moved',
+        persist: true,
         when: Date.now(),
         durationMs: 250,
       }]);

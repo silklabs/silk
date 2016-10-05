@@ -570,7 +570,6 @@ class Dialog {
       source: 'dialog',
       tag: event,
       when: Date.now(),
-      durationMs: 250,
     }]);
   }
 

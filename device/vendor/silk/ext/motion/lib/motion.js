@@ -192,6 +192,7 @@ class Motion {
           timeline.addObjects([{
             source: 'motion',
             tag: 'motion',
+            persist: true,
             when,
             rects: normalRects,
             durationMs: MOTION_DURATION_MS,

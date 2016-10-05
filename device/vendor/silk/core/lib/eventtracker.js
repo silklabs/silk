@@ -84,6 +84,11 @@ export default class EventTracker extends EventEmitter {
   }
 
   record(event: TimelineEventObject) {
+    if (!event.persist) {
+      log.verbose(`Ignoring non-persistent event: ${event.tag}`);
+      return;
+    }
+
     let discriminator = this._eventDiscriminator(event);
     let record = this._eventRecords[discriminator];
     if (record) {

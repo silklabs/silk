@@ -140,6 +140,7 @@ class Main {
         [{
           id: face.id,
           tag: 'face',
+          persist: true,
           when: face.rectWhen,
           rects: [face.rect],
           source: 'face',

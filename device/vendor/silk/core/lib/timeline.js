@@ -70,6 +70,8 @@ type Rect = {
  *
  * @property {string} tag Name of the object
  * @property {number} when Timestamp the object(s) manifested in the stream
+ * @property {string} source Component that emitted the event
+ * @property {bool} persist true if the event should be persisted to storage (default is false).
  * @property {Array<Rect>} rects one or more bounding rectangles for where the
  *           object appeared. The video preview image dimensions are used as
  *           the scale for these rectangles (PREVIEW_WIDTH x PREVIEW_HEIGHT).
@@ -78,6 +80,7 @@ export type TimelineEventObject = {
   tag: string;
   when: number;
   source: string;
+  persist?: boolean;
   id?: number;
   name?: string;
   durationMs?: number;

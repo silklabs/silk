@@ -238,6 +238,7 @@ class YoloClassifier {
         source: 'yolo',
         tag: OBJECT_TAG,
         name: box.label,
+        persist: true,
         when,
         durationMs: config.OBJECT_DURATION,
         rects: [box],

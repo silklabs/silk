@@ -99,6 +99,7 @@ class SoundRecognizer {
           source: 'svmsounds',
           id: event.eventId,
           tag: 'sound',
+          persist: true,
           name: e.soundClass,
           when: Math.round(1000 * e.startTime) || 0,
         }]);

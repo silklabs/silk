@@ -107,6 +107,7 @@ class Clapper {
         this._env.timeline.addObjects([{
           source: 'clapper',
           tag,
+          persist: true,
           when: Date.now(),
           durationMs: 1000,
         }]);

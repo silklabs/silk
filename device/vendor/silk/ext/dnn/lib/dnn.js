@@ -201,6 +201,7 @@ class Dnn extends EventEmitter {
           timeline.addObjects([{
             source: 'dnn',
             tag: OBJECT_TAG,
+            persist: true,
             name: this._lastObjectLabel,
             when,
             durationMs: 1,

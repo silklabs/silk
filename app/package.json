@@ -33,9 +33,6 @@
     "eslint-plugin-flowtype": "2.18.1",
     "eslint-plugin-react": "5.2.2"
   },
-  "optionalDependencies": {
-    "ios-deploy": "1.7.0"
-  },
   "engines": {
     "node": ">= 4.0.0"
   },

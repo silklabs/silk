@@ -36,7 +36,7 @@ source build/envsetup.sh force
       touch prebuilts/qemu-kernel/arm/LINUX_KERNEL_COPYING
   fi
 
-  df -h
+  df -h || true
   du -hs * .repo
   du -hs .
 )
@@ -46,7 +46,7 @@ make -j2
 (
   set -x
   $PREBUILT_CCACHE -s
-  df -h
+  df -h || true
   du -hs * .repo
   du -hs .
 )

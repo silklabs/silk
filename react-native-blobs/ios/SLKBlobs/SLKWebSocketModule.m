@@ -36,7 +36,7 @@
 @implementation SLKWebSocketModule
 {
   NSMutableDictionary<NSNumber *, RCTSRWebSocket *> *_sockets;
-  NSMutableDictionary<NSNumber *, NSNumber *> *_blobsEnabled;
+  NSMutableSet<NSNumber *> *_blobsEnabled;
 }
 
 // Don't rely on the RCT_EXPORT_MODULE macro for this because we want to replace
@@ -102,9 +102,13 @@ RCT_EXPORT_METHOD(sendBlob:(NSDictionary *)blob socketID:(nonnull NSNumber *)soc
 RCT_EXPORT_METHOD(setBinaryType:(NSString *)binaryType socketID:(nonnull NSNumber *)socketID)
 {
   if (!_blobsEnabled) {
-    _blobsEnabled = [NSMutableDictionary new];
+    _blobsEnabled = [NSMutableSet new];
   }
-  [_blobsEnabled setObject:@([binaryType isEqualToString:@"blob"]) forKey:socketID];
+  if ([binaryType isEqualToString:@"blob"]) {
+    [_blobsEnabled addObject:socketID];
+  } else {
+    [_blobsEnabled removeObject:socketID];
+  }
 }
 
 RCT_EXPORT_METHOD(ping:(nonnull NSNumber *)socketID)
@@ -124,7 +128,7 @@ RCT_EXPORT_METHOD(close:(nonnull NSNumber *)socketID)
 {
   NSString *type = @"text";
   if ([message isKindOfClass:[NSData class]]) {
-    if (_blobsEnabled && [_blobsEnabled objectForKey:webSocket.reactTag]) {
+    if (_blobsEnabled && [_blobsEnabled containsObject:webSocket.reactTag]) {
       SLKBlobManager *blobManager = [[self bridge] moduleForClass:[SLKBlobManager class]];
       message = @{
         @"blobId": [blobManager store:message],

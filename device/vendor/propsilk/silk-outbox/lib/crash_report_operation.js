@@ -13,8 +13,7 @@ import api from 'silk-device-api';
 import fs from 'mz/fs';
 import createLog from 'silk-log/device';
 import {httpStream} from 'silk-streams';
-import assert from 'assert';
-import raygun from 'silk-raygun/node';
+import invariant from 'assert';
 
 const CONTENT_TYPE = 'text/plain';
 const log = createLog('operation:crash_report_operation');
@@ -30,8 +29,8 @@ export default class CrashReportOperation extends StreamOperation {
     super();
     Object.assign(this, options);
 
-    assert(typeof this.size === 'number', 'must pass numeric size');
-    assert(typeof this.metadata === 'object', 'must pass metadata');
+    invariant(typeof this.size === 'number', 'must pass numeric size');
+    invariant(typeof this.metadata === 'object', 'must pass metadata');
   }
 
   async _getDestination() {
@@ -77,6 +76,7 @@ export default class CrashReportOperation extends StreamOperation {
     // Forward the crash to raygun on success.
     // TODO: Retry on failure
     if (this.raygunMessage) {
+      invariant(this.raygun);
       if (!this.raygunMessage.details.userCustomData) {
         this.raygunMessage.details.userCustomData = {};
       }
@@ -84,7 +84,7 @@ export default class CrashReportOperation extends StreamOperation {
       this.raygunMessage.details.userCustomData.crashUrl =
         `https://silk-webapp-master.herokuapp.com/#/crashById/${crashId}?`;
       try {
-        await raygun.postMessage(this.raygunMessage);
+        await this.raygun.postMessage(this.raygunMessage);
       } catch (err) {
         log.error(`Failed to post to raygun: ${err.stack || err}`);
       }

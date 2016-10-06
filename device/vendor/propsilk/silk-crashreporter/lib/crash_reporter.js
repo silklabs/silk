@@ -453,6 +453,7 @@ export class CrashReporter {
       let stats = await fs.stat(tombstonePath);
       let operation = new CrashReporterOperation({
         size: stats.size,
+        raygun,
         raygunMessage,
         metadata: {
           timeStamp: stats.birthtime,

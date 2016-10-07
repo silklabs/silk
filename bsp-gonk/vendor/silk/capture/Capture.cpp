@@ -441,7 +441,7 @@ public:
       }
 
       if (buffer == NULL) {
-        ALOGE("Failed to get buffer from %d source", mName);
+        ALOGE("Failed to get buffer from %s source", mName);
         return false;
       }
       buffer->release();

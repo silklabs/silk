@@ -1,6 +1,6 @@
 {
   "name": "silk-bsp-version",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "bsp version info",
   "main": "index.json",
   "scripts": {

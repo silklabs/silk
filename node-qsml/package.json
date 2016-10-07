@@ -1,6 +1,6 @@
 {
   "name": "node-qsml",
-  "version": "0.0.1",
+  "version": "1.4.0",
   "description": "Node bindings for QSML",
   "main": "build/Release/qsml.node",
   "scripts": {

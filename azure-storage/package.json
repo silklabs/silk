@@ -1,6 +1,6 @@
 {
   "name": "silk-azure-storage",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Simplified azure table service client for node and the browser.",
   "main": "node.js",
   "repository": {

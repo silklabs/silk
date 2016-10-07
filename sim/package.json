@@ -1,6 +1,6 @@
 {
   "name": "silk-simulator",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Silk Device Simulator",
   "scripts": {
     "postinstall": "cd system/silk && npm install",

@@ -27,6 +27,7 @@ import java.util.Map;
 public class CryptoModule extends ReactContextBaseJavaModule {
 
   static {
+    LinuxPRNG.install();
     Security.insertProviderAt(new BouncyCastleProvider(), 1);
   }
 

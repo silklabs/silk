@@ -38,14 +38,14 @@ __kernel void relu(const int n, __global Dtype* in, __global Dtype* out, float n
   }
 }
 
-__kernel void bias(const int n, const int spatial_stride, const int num_channels, __global Dtype* data, __global const Dtype *biases, float negative_slope) {
+__kernel void bias(const int n, const int spatial_stride, const int num_channels, __global Dtype* data, __constant const Dtype *biases, float negative_slope) {
   for (int i = get_global_id(0); i < n; i += get_global_size(0)) {
     int c = (i / spatial_stride) % num_channels;
     data[i] = relu_helper(data[i] + biases[c], negative_slope);
   }
 }
 
-__kernel void batch_normalize(const int n, const int spatial_stride, const int num_channels, __global Dtype* data, __global const Dtype *means, __global const Dtype *scales,
+__kernel void batch_normalize(const int n, const int spatial_stride, const int num_channels, __global Dtype* data, __constant const Dtype *means, __constant const Dtype *scales,
                               float negative_slope) {
   for (int i = get_global_id(0); i < n; i += get_global_size(0)) {
     int c = (i / spatial_stride) % num_channels;
@@ -120,15 +120,21 @@ __kernel void gemv(const int m, const int n, __global const Dtype *a, __global c
   }
 }
 
+static int irem(int *ip, int mod) {
+  int j = *ip;
+  *ip /= mod;
+  return j - (*ip * mod);
+}
+
 __kernel void im2col(__global const Dtype *in_data, const int in_data_offset, const int in_channels, const int in_height, const int in_width,
                      const int filter_size, const int filter_stride, const int filter_pad,
                      __global Dtype *out_data, const int out_channels, const int out_height, const int out_width) {
   in_data += in_data_offset;
-  int out_spatial = get_global_id(0);
-  int in_c = get_global_id(1);
-  if (out_spatial < out_width * out_height && in_c < in_channels) {
-    int out_x = out_spatial % out_width;
-    int out_y = out_spatial / out_width;
+  int i = get_global_id(0);
+  int out_x = irem(&i, out_width);
+  int out_y = irem(&i, out_height);
+  int in_c = i;
+  if (in_c < in_channels) {
     for (int fy = 0; fy < filter_size; ++fy) {
       for (int fx = 0; fx < filter_size; ++fx) {
         int out_c = (in_c * filter_size + fy) * filter_size + fx;

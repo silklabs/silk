@@ -351,7 +351,7 @@ function im2col(config, in_blob, in_data_offset, filter_size, filter_stride, fil
   cl.setKernelArg(kernel, 9, 'int', out_channels);
   cl.setKernelArg(kernel, 10, 'int', out_height);
   cl.setKernelArg(kernel, 11, 'int', out_width);
-  run(kernel, [out_shape.spatial, in_shape.channels], null, [in_buffer], out_buffer);
+  run(kernel, [out_shape.spatial * in_shape.channels], null, [in_buffer], out_buffer);
   return out_blob;
 }
 

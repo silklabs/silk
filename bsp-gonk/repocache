@@ -51,15 +51,15 @@ fetch)
     set -ex
     if curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix --output /dev/null --head --fail --silent; then
       if [[ -n $CI ]]; then
-        # Provide a less verbose progress indication when running in CI to be
+        # No progress indication when running in CI to be
         # mindful of log length limits
-        PROGRESS="--progress=dot:giga"
+        PROGRESS="-q"
       fi
       wget --continue \
            $PROGRESS \
            --retry-connrefused \
            --read-timeout=60 \
-           $REPOCACHE_URLPREFIX$repocache_urlsuffix -q -O - \
+           $REPOCACHE_URLPREFIX$repocache_urlsuffix -O - \
         | tar zx
     fi
   fi

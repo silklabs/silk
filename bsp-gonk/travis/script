@@ -22,7 +22,7 @@ source build/envsetup.sh force
     frameworks/base/tests \
     prebuilts/android-emulator/windows \
     prebuilts/qemu-kernel/{mips,x86,x86_64} \
-    prebuilts/misc/{android-mips,android-mips64,android-x86,android-x86_64,darwin-x86,windows} \
+    prebuilts/misc/{android-mips,android-mips64,android-x86,android-x86_64,windows} \
     prebuilts/ndk/{4,5,6,7} \
 
   find prebuilts/ndk -type d -name arch-mips -o -name arch-mips64 -o -name arch-x86 -o -name arch-x86_64 | xargs rm -rf

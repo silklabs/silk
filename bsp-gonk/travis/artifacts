@@ -30,10 +30,10 @@ os=$(uname | tr '[:upper:]' '[:lower:]')
 version=$(get_version)
 target_upload_path=$channel/$SILK_BOARD/$os/$branch/$version
 
-rm -rf artifacts
-mkdir -p artifacts
+# Produce target tarball
 ./archive dist
-tar -czf artifacts/target.tar.gz dist
+mkdir -p sos_release
+tar -czf sos_release/target.tar.gz dist
 
 # Build ccache tarball
 pushd $HOME/.ccache/
@@ -45,7 +45,7 @@ if [[ -d ../../s3-artifacts ]]; then
   ../../s3-artifacts/bin/upload \
     silk-sos-release \
     $target_upload_path \
-    $PWD/artifacts \
+    $PWD/sos_release \
     --credentials sos_release
 
   ../../s3-artifacts/bin/upload \

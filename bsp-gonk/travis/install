@@ -28,6 +28,7 @@ export CCACHE_WEBHOST=https://s3.amazonaws.com/silk-sos-release
 export CCACHE_URL=$CCACHE_WEBHOST/$CCACHE_PATH/ccache.tar.gz
 export CCACHE_COMPRESS=true
 
+source ../../ci-artifacts/setup
 source ../travis/common_before_install.sh
 
 node -p 'require("os").cpus()'

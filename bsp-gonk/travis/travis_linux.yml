@@ -37,8 +37,6 @@ addons:
       - openjdk-7-jdk
       - zip
 
-install:
-  - source ./travis/install
-
-script:
-  - ./travis/script
+install: source ./travis/install
+script: ../../ci-artifacts/logger ./travis/script
+after_script: ../../ci-artifacts/upload

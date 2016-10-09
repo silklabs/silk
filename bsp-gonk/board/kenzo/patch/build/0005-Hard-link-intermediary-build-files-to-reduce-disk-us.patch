@@ -1,0 +1,63 @@
+From 88a9a7efeed82efcef7e38a7bb5aa46d92e61cac Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 8 Oct 2016 18:50:17 -0700
+Subject: [PATCH] Hard link intermediary build files to reduce disk usage in CI
+
+Change-Id: I9cc3ca3143fd3369be5ac9690b5eedc3c0082c62
+---
+ core/base_rules.mk     | 4 ++--
+ core/definitions.mk    | 5 +++++
+ core/dynamic_binary.mk | 2 +-
+ 3 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index 496009f..ea041a0 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -551,12 +551,12 @@ $(LOCAL_INSTALLED_MODULE): PRIVATE_POST_INSTALL_CMD := $(LOCAL_POST_INSTALL_CMD)
+ ifneq ($(LOCAL_ACP_UNAVAILABLE),true)
+ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE) | $(ACP)
+ 	@echo "Install: $@"
+-	$(copy-file-to-new-target)
++	$(hardlink-file-to-target)
+ 	$(PRIVATE_POST_INSTALL_CMD)
+ else
+ $(LOCAL_INSTALLED_MODULE): $(LOCAL_BUILT_MODULE)
+ 	@echo "Install: $@"
+-	$(copy-file-to-target-with-cp)
++	$(hardlink-file-to-target)
+ endif
+ 
+ endif # !LOCAL_UNINSTALLABLE_MODULE
+diff --git a/core/definitions.mk b/core/definitions.mk
+index 0886579..0bb3b33 100644
+--- a/core/definitions.mk
++++ b/core/definitions.mk
+@@ -1903,6 +1903,11 @@ define copy-file-to-target
+ $(hide) $(ACP) -fp $< $@
+ endef
+ 
++define hardlink-file-to-target
++@mkdir -p $(dir $@)
++$(hide) ln -f $< $@
++endef
++
+ # The same as copy-file-to-target, but use the local
+ # cp command instead of acp.
+ define copy-file-to-target-with-cp
+diff --git a/core/dynamic_binary.mk b/core/dynamic_binary.mk
+index d798efe..618cdf9 100644
+--- a/core/dynamic_binary.mk
++++ b/core/dynamic_binary.mk
+@@ -74,7 +74,7 @@ symbolic_input := $(compress_output)
+ symbolic_output := $(my_unstripped_path)/$(my_installed_module_stem)
+ $(symbolic_output) : $(symbolic_input) | $(ACP)
+ 	$(hideecho) "target Symbolic: $(PRIVATE_MODULE) ($@)"
+-	$(copy-file-to-target)
++	$(hardlink-file-to-target)
+ 
+ 
+ ###########################################################
+-- 
+2.10.0
+

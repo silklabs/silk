@@ -101,16 +101,18 @@ export function exec(cmd: string, args: Array<string>): Promise<ExecOutput> {
  * @memberof silk-sysutils
  */
 export function execRetry(
-    cmd: string,
-    args: Array<string>,
-    retries: number,
-    delayMs: number): Promise<ExecOutput> {
+  cmd: string,
+  args: Array<string>,
+  retries: number,
+  delayMs: number
+): Promise<ExecOutput> {
   return exec(cmd, args).then(result => {
     if (0 === result.code) {
       return result;
     }
     if (retries > 0) {
-      return timeout(delayMs).then(() => execRetry(cmd, args, retries - 1, delayMs));
+      return timeout(delayMs)
+        .then(() => execRetry(cmd, args, retries - 1, delayMs));
     }
     return Promise.reject(result);
   });
@@ -129,7 +131,7 @@ type ScalarPropTypes = string | boolean | number;
  * @property {(Array<PropTypes> | ScalarPropTypes)} PropTypes
  * @private
  */
-type PropTypes = Array<PropTypes> | ScalarPropTypes;
+type PropTypes = Array<ScalarPropTypes> | ScalarPropTypes;
 
 /**
  * Get value of a system property. Check to see if system property
@@ -220,6 +222,7 @@ export function getlistprop(
 export function setprop(prop: string, value: PropTypes): void {
   props.set(prop, value.toString());
 }
+
 /**
  * This class provides helper utility to watch an android property and notify
  * via an event if the specified property has changed

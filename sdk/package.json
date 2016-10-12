@@ -23,7 +23,7 @@
   "devDependencies": {
     "babel-eslint": "6.1.0",
     "babel-cli": "6.9.0",
-    "eslint": "2.13.1"
+    "eslint": "3.7.1"
   },
   "dependencies": {
     "event-to-promise": "0.7.0",

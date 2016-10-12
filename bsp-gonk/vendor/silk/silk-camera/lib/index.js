@@ -17,17 +17,39 @@
  *   log.info('Received a frame at timestamp', when, '-', image);
  * });
  *
- * @noflow
+ * @flow
  */
 
 import invariant from 'assert';
 import CBuffer from 'CBuffer';
 import EventEmitter from 'events';
-import net from 'net';
+import * as net from 'net';
 import cv from 'opencv';
-import silkcapture from 'silk-capture';
+import * as silkcapture from 'silk-capture';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
+
+import type {Matrix} from 'opencv';
+import type {ConfigDeviceMic} from 'silk-config';
+import type {VideoCapture} from 'silk-capture';
+import type {Socket} from 'net';
+
+type CameraClipFrameImages = [
+  number,
+  Matrix,
+  Matrix,
+  Matrix,
+];
+
+type FrameReplacer = {
+  reset(): void;
+  maybeReplace(
+    when: number,
+    imRGB: Matrix,
+    imGray: Matrix,
+    imScaledGray: Matrix
+  ): CameraClipFrameImages;
+};
 
 /**
  * Type representing an object rectangle
@@ -54,7 +76,7 @@ type Rect = {
  *                          CameraFrameFormat format
  * @memberof silk-camera
  */
-export type CameraCallback = (err: boolean, image: any) => void;
+export type CameraCallback = (err: ?Error, image: Matrix) => void;
 
 /**
  * The available camera frame formats:
@@ -90,7 +112,16 @@ export type CameraFrameFormat =
  */
 export type CameraFrameSize = 'low' | 'normal' | 'high' | 'full';
 
-type RawHalFace = {
+/**
+ * The camera video frame size
+ * @memberof silk-camera
+ */
+type VideoSizeType = {
+  width: number;
+  height: number;
+};
+
+type RawHalFaceType = {
   rect: [number, number, number, number];
   score: number;
   id: number;
@@ -99,8 +130,74 @@ type RawHalFace = {
   mouth: [number, number];
 };
 
-//const FRONT = 1;
-//const BACK = 0;
+type FaceType = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  id: number;
+  leftEye: [number, number];
+  rightEye: [number, number];
+};
+
+type GetFrameType = {
+  userCb: CameraCallback;
+  when: number;
+  formats: Array<CameraFrameFormat>;
+};
+
+type ImageCacheType = {
+  when: number;
+  fullgray: Matrix;
+  fullrgb: Matrix;
+  gray: Matrix;
+};
+
+type CommandSetParameterType = {
+  cmdName: 'setParameter';
+  name: string;
+  value: string;
+};
+
+type CommandInitType = {
+  cmdName: 'init';
+  cmdData: {
+    frames: boolean;
+    video: boolean;
+    audio: boolean;
+    frameIntervalMs: number;
+    width: number;
+    height: number;
+    fps: number;
+    vbr: number;
+    audioMute: boolean;
+    audioSampleRate: number;
+    audioChannels: number;
+  };
+};
+
+type CommandUpdateType = {
+  cmdName: 'update';
+  cmdData: {
+    audioMute: boolean;
+  };
+};
+
+type CommandGetParameterIntType = {
+  cmdName: 'getParameterInt';
+  name: string;
+};
+
+type CommandGetParameterStrType = {
+  cmdName: 'getParameterStr';
+  name: string;
+};
+
+type CommandTypes = CommandSetParameterType |
+                    CommandInitType |
+                    CommandUpdateType |
+                    CommandGetParameterIntType |
+                    CommandGetParameterStrType;
 
 const log = createLog('camera');
 
@@ -114,7 +211,7 @@ const DURATION_MS =
 
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
-const FOCUS_MODE = util.getprop('ro.silk.camera.focus_mode', 'continuous-video');
+const FOCUS_MODE = util.getstrprop('ro.silk.camera.focus_mode', 'continuous-video');
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 
@@ -209,7 +306,7 @@ let FLASH_MODE = {
  * system/core/include/system/camera.h.
  * @private
  */
-function rawFaceArrayToFaces(buf): Array<RawHalFace> {
+function rawFaceArrayToFaces(buf: Buffer): Array<RawHalFaceType> {
   const SIZEOF_CAMERA_FACE_T = 12 * 4;
   if (buf.length % SIZEOF_CAMERA_FACE_T) {
     throw new Error(`Raw face array has invalid length ${buf.length}`);
@@ -234,12 +331,11 @@ function rawFaceArrayToFaces(buf): Array<RawHalFace> {
 }
 
 /**
- * Set the fields `{ x, y, width, height }` in `face` representing the
- * `face.rect` rectangle mapped into mako screen space IN THE
- * ORIENTATION WHERE FRONT CAMERA IS BOTTOM RIGHT FACING YOU.
+ * Normalize face rectangle
+ *
  * @private
  */
-function normalizeFace(face) { //eslint-disable-line no-unused-vars
+function normalizeFace(face: RawHalFaceType): FaceType { //eslint-disable-line no-unused-vars
 
   // These params are defined by the long comment just below the
   // declaration of `struct camera_face` in
@@ -284,13 +380,35 @@ function normalizeFace(face) { //eslint-disable-line no-unused-vars
  */
 export default class Camera extends EventEmitter {
 
-  _liveDiag: boolean;
-  _audioMute: boolean;
+  _liveDiag: boolean = false;
+  _audioMute: boolean = false;
   _frameCaptureEnabled: boolean = false;
   _fastFrameCaptureEnabled: boolean = false;
   _fastFrameCount: number = 0;
+  _config: ConfigDeviceMic;
+  _ready: boolean = false;
+  _recording: boolean = false;
+  _cvVideoCapture: ?VideoCapture = null;
+  _cvVideoCaptureBusy: boolean = false;
+  _ctlSocket: ?Socket = null;
+  _dataSocket: ?Socket = null;
+  _micDataSocket: ?Socket = null;
+  _vidDataSocket: ?Socket = null;
+  _frameQueue: Array<GetFrameType> = []; // Queue of pending camera frame requests
+  _noFrameCount: number = 0;
+  _frameReplacer: ?FrameReplacer = null;
+  _imagecache: CBuffer;
+  _initTimeout: ?number = null;
+  _frameTimeout: ?number = null;
+  _tagMonitorTimeout: ?number = null;
+  _restartTimeout: ?number = null;
+  _videoTagReceived: ?boolean = null;
+  _micTagReceived: ?boolean = null;
+  _buffer: string = '';
+  _getParameterCallback: ?{resolve: Function, reject: Function} = null;
+  faces: Array<FaceType>;
 
-  constructor(config) {
+  constructor(config: ConfigDeviceMic) {
     super();
     this._config = Object.assign({
       deviceMic: {
@@ -300,19 +418,6 @@ export default class Camera extends EventEmitter {
         numChannels: 1,
         sampleRate: 16000,
       }}, config);
-    this._ready = false;
-    this._recording = false;
-    this._cvVideoCapture = null;
-    this._cvVideoCaptureBusy = false;
-    this._ctlSocket = null;
-    this._micDataSocket = null;
-    this._vidDataSocket = null;
-    this._frameQueue = []; // Queue of pending camera frame requests
-    this._noFrameCount = 0;
-
-    this._liveDiag = false;
-    this._audioMute = false;
-    this._frameReplacer = null;
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
@@ -344,23 +449,23 @@ export default class Camera extends EventEmitter {
     }
   }
 
-  attachFrameReplacer(frameReplacer) {
+  attachFrameReplacer(frameReplacer: FrameReplacer) {
     this._frameReplacer = frameReplacer;
   }
 
-  get FRAME_SIZE() {
+  get FRAME_SIZE(): typeof FRAME_SIZE {
     return FRAME_SIZE;
   }
 
-  get FLASH_MODE() {
+  get FLASH_MODE(): typeof FLASH_MODE{
     return FLASH_MODE;
   }
 
-  get FRAME_DELAY_MS() {
+  get FRAME_DELAY_MS(): number {
     return FRAME_DELAY_MS;
   }
 
-  get FAST_FRAME_DELAY_MS() {
+  get FAST_FRAME_DELAY_MS(): number {
     return FAST_FRAME_DELAY_MS;
   }
 
@@ -370,7 +475,7 @@ export default class Camera extends EventEmitter {
    * @memberof silk-camera
    * @instance
    */
-  get available() {
+  get available(): boolean {
     return CAMERA_HW_ENABLED;
   }
 
@@ -378,7 +483,7 @@ export default class Camera extends EventEmitter {
    * Releases cached images
    * @private
    */
-  _releaseImageCacheEntry(item) {
+  _releaseImageCacheEntry(item: ImageCacheType) {
     for (let key in item) {
       if (!item.hasOwnProperty(key)) {
         continue;
@@ -404,13 +509,14 @@ export default class Camera extends EventEmitter {
    * an attempt to recover the system.
    * @private
    */
-  _restart(why, restartCaptureProcess = false) {
+  _restart(why: string, restartCaptureProcess: boolean = false) {
     if (this._restartTimeout) {
-      log.info(`camera restart pending (ignored "${why}")`);
+      log.info(`camera restart pending (ignored "${String(why)}")`);
       return;
     }
 
-    log.warn(`camera restart: ${why} captureRestart=${restartCaptureProcess}`);
+    log.warn(
+      `camera restart: ${why} captureRestart=${String(restartCaptureProcess)}`);
 
     /**
      * This event is emitted when camera service is restarting
@@ -523,7 +629,7 @@ export default class Camera extends EventEmitter {
    *
    * @private
    */
-  _throwyEmit(eventName, ...args) {
+  _throwyEmit(eventName: string, ...args: Array<any>) {
     try {
       this.emit(eventName, ...args);
     } catch (err) {
@@ -598,11 +704,14 @@ export default class Camera extends EventEmitter {
 
       this._command({cmdName: 'init', cmdData});
     });
-    this._ctlSocket.on('data', data => this._onCtlSocketRead(data));
-    this._ctlSocket.on('error', err => {
+    const ctlSocket = this._ctlSocket;
+    invariant(ctlSocket);
+
+    ctlSocket.on('data', data => this._onCtlSocketRead(data));
+    ctlSocket.on('error', err => {
       this._restart(`camera control socket error, reason=${err}`);
     });
-    this._ctlSocket.on('close', hadError => {
+    ctlSocket.on('close', hadError => {
       if (!hadError) {
         this._restart(`camera control socket close`);
       }
@@ -619,15 +728,18 @@ export default class Camera extends EventEmitter {
       this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
       return;
     }
-    this._restart(`Expected Tags not received from capture promptly. ` +
-                  `video=${this._videoTagReceived}, mic=${this._micTagReceived}`,
-                  true);
+    this._restart(
+      `Expected Tags not received from capture promptly. ` +
+      `video=${String(this._videoTagReceived)}, ` +
+      `mic=${String(this._micTagReceived)}`,
+      true
+   );
   };
 
   /**
    * @private
    */
-  _onCtlSocketRead(data) {
+  _onCtlSocketRead(data: string) {
     log.verbose(`received ctl data: ${data.toString()}`);
     this._buffer += data.toString();
 
@@ -674,7 +786,7 @@ export default class Camera extends EventEmitter {
     }
 
     // Dequeue the next frame request
-    let [userCb, when, formats] = this._frameQueue.shift();
+    let {userCb, when, formats} = this._frameQueue.shift();
 
     // Search the image in the cache
     let index = 0;
@@ -684,7 +796,7 @@ export default class Camera extends EventEmitter {
         continue;
       }
 
-      let err = false;
+      let err = null;
 
       let frames = formats.map(format => { //eslint-disable-line no-loop-func
         switch (format) {
@@ -725,7 +837,7 @@ export default class Camera extends EventEmitter {
           }
           return image.lowgray;
         default:
-          err = `unsupported format: ${format}`;
+          err = new Error(`unsupported format: ${format}`);
           return null;
         }
       });
@@ -733,7 +845,7 @@ export default class Camera extends EventEmitter {
       userCb(err, frames);
       return;
     }
-    userCb('image not available in the cache', null);
+    userCb(new Error('image not available in the cache'), null);
   }
 
   /**
@@ -743,7 +855,7 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _scheduleNextFrameCapture() {
-    if (!this._ready || this.__frameTimeout) {
+    if (!this._ready || this._frameTimeout) {
       return;
     }
 
@@ -763,8 +875,8 @@ export default class Camera extends EventEmitter {
     // (+5 to ensure the timeout doesn't fire early by ~1ms)
     const requestedDelayMs = delayMs - spilloverMs + 5;
 
-    this.__frameTimeout = setTimeout(async () => {
-      this.__frameTimeout = null;
+    this._frameTimeout = setTimeout(async () => {
+      this._frameTimeout = null;
       let isFastFrame = false;
       if (this._fastFrameCaptureEnabled) {
         this._fastFrameCount++;
@@ -786,8 +898,9 @@ export default class Camera extends EventEmitter {
    * @param fastFrameOnly : Only emit the fast frame data if true, false for the full * frame data
    * @private
    */
-  _captureFrame(fastFrameOnly) {
-    if (!this._cvVideoCapture || !this._recording) {
+  _captureFrame(fastFrameOnly: boolean) {
+    const cvVideoCapture = this._cvVideoCapture;
+    if (!cvVideoCapture || !this._recording) {
       return;
     }
     if (this._cvVideoCaptureBusy) {
@@ -809,7 +922,7 @@ export default class Camera extends EventEmitter {
 
     let im = new cv.Matrix();
     if (fastFrameOnly) {
-      this._cvVideoCapture.read(im, (err) => {
+      cvVideoCapture.read(im, (err) => {
         if (err) {
           log.warn(`Unable to fetch frame: err=${err}`);
         } else {
@@ -821,9 +934,9 @@ export default class Camera extends EventEmitter {
       let imRGB = new cv.Matrix();
       let imGray = new cv.Matrix();
       let imScaledGray = new cv.Matrix();
-      this._cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
+      cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
         if (err) {
-          log.warn(`Unable to fetch frame: err=${err}`);
+          log.warn(`Unable to fetch frame: err=${err.message}`);
         } else {
           this._handleNextFastFrame(when, im);
           this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
@@ -837,7 +950,12 @@ export default class Camera extends EventEmitter {
    * Handle the next preview frame
    * @private
    */
-  _handleNextPreviewFrame(when, imRGB, imGray, imScaledGray) {
+  _handleNextPreviewFrame(
+    when: number,
+    imRGB: Matrix,
+    imGray: Matrix,
+    imScaledGray: Matrix
+  ) {
     if (this._frameReplacer) {
       [when, imRGB, imGray, imScaledGray] =
         this._frameReplacer.maybeReplace(when, imRGB, imGray, imScaledGray);
@@ -881,7 +999,7 @@ export default class Camera extends EventEmitter {
    * Handle the next fast frame
    * @private
    */
-  _handleNextFastFrame(when, im) {
+  _handleNextFastFrame(when: number, im: Matrix) {
     /**
      * This event is emitted when a fast preview frame (12 FPS) is available.
      *
@@ -899,22 +1017,25 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _connectDataSocket(_dataSocket, socketName) {
+  _connectDataSocket(_dataSocket: ?Socket, socketName: string) {
     let _dataBuffer = null;
     log.verbose(`connecting to ${socketName} socket`);
     this._dataSocket = net.createConnection(socketName, () => {
       log.verbose(`connected to ${socketName} socket`);
       _dataBuffer = null;
     });
-    this._dataSocket.on('error', err => {
+    const dataSocket = this._dataSocket;
+    invariant(dataSocket);
+
+    dataSocket.on('error', err => {
       this._restart(`camera data socket error, reason=${err}`);
     });
-    this._dataSocket.on('close', hadError => {
+    dataSocket.on('close', hadError => {
       if (!hadError) {
         this._restart(`camera data socket close`);
       }
     });
-    this._dataSocket.on('data', (newdata) => {
+    dataSocket.on('data', (newdata) => {
       let buf;
       if (_dataBuffer) {
         // Prepend previous incomplete packet
@@ -1014,16 +1135,17 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _command(cmd) {
-    if (this._ctlSocket === null) {
-      log.warn(`Null ctlSocket, ignoring ${cmd}`);
+  _command(cmd: CommandTypes) {
+    const ctlSocket = this._ctlSocket;
+    if (ctlSocket === null) {
+      log.warn(`Null ctlSocket, ignoring ${JSON.stringify(cmd)}`);
       return false;
     }
-
     // Camera socket expects the command data in the following format
     let event = JSON.stringify(cmd) + '\0';
 
-    this._ctlSocket.write(event);
+    invariant(ctlSocket);
+    ctlSocket.write(event);
     log.verbose(`camera << ${event}`);
     return true;
   }
@@ -1066,7 +1188,7 @@ export default class Camera extends EventEmitter {
   startRecording() {
     if (!this._recording) {
       this._recording = true;
-      log.verbose(`recording enabled (ready=${this._ready}`);
+      log.verbose(`recording enabled (ready=${String(this._ready)}`);
     }
   }
 
@@ -1079,18 +1201,18 @@ export default class Camera extends EventEmitter {
   stopRecording() {
     if (this._recording) {
       this._recording = false;
-      log.verbose(`recording disabled (ready=${this._ready})`);
+      log.verbose(`recording disabled (ready=${String(this._ready)})`);
     }
   }
 
   /**
    * Set flash mode as specified by flashMode parameter
    *
-   * @param {string} flashMode flash-mode parameter to set in camera
+   * @param flashMode flash-mode parameter to set in camera
    * @memberof silk-camera.Camera
    * @instance
    */
-  flash(flashMode) {
+  flash(flashMode: string) {
     if (!FLASH_LIGHT_ENABLED) {
       log.warn(`flash light is not enabled`);
       return;
@@ -1105,11 +1227,11 @@ export default class Camera extends EventEmitter {
   /**
    * Set mute mode
    *
-   * @param {boolean} mute Mute mic true or false
+   * @param mute Mute mic true or false
    * @memberof silk-camera.Camera
    * @instance
    */
-  setMute(mute) {
+  setMute(mute: boolean) {
     // Persist mute setting if changed
     if (this._audioMute !== mute) {
       this._audioMute = mute;
@@ -1125,12 +1247,12 @@ export default class Camera extends EventEmitter {
    * Get integer camera parameter. This function returns a Promise that resolves
    * when the parameter value is successfully retrieved
    *
-   * @param {string} name of camera parameter to get
+   * @param name of camera parameter to get
    * @return {Promise}
    * @memberof silk-camera.Camera
    * @instance
    */
-  async getParameterInt(name) {
+  async getParameterInt(name: string) {
     if (this._getParameterCallback) {
       throw new Error(`Re-entered getParameter?`);
     }
@@ -1156,12 +1278,12 @@ export default class Camera extends EventEmitter {
    * Get string camera parameter. This function returns a Promise that resolves
    * when the parameter value is successfully retrieved
    *
-   * @param {string} name of camera parameter to get
+   * @param name of camera parameter to get
    * @return {Promise}
    * @memberof silk-camera.Camera
    * @instance
    */
-  async getParameterStr(name) {
+  async getParameterStr(name: string) {
     if (this._getParameterCallback) {
       throw new Error(`Re-entered getParameter?`);
     }
@@ -1181,11 +1303,11 @@ export default class Camera extends EventEmitter {
   /**
    * Returns the camera video size.
    *
-   * @return {Size}
+   * @return {VideoSizeType}
    * @memberof silk-camera.Camera
    * @instance
    */
-  get videoSize() {
+  get videoSize(): VideoSizeType {
     return { width: WIDTH, height: HEIGHT };
   }
 
@@ -1252,25 +1374,24 @@ export default class Camera extends EventEmitter {
   _getFrame(when: number,
            formats: Array<CameraFrameFormat>,
            userCb: CameraCallback): void {
-    this._frameQueue.push([userCb, when, formats]);
+    this._frameQueue.push({userCb, when, formats});
     this._retrieveNextFrame();
   }
 
   /**
    * Obtain a camera frame in one or more formats
    *
-   * @param when - timestamp of the frame to get
-   * @param formats - requested formats
-   * @param userCb - callback that receives an error object and the image
-   *                 as an OpenCV matrix
+   * @param when timestamp of the frame to get
+   * @param formats requested formats
    *
    * @return {Promise<Array<?cv::Matrix>>}
    * @memberof silk-camera.Camera
    * @instance
    */
-  getFrame(when: number,
-           formats: Array<CameraFrameFormat>,
-           userCb: CameraCallback): Promise<Array<?any>> {
+  getFrame(
+    when: number,
+    formats: Array<CameraFrameFormat>
+  ): Promise<Array<Matrix>> {
     return new Promise((resolve, reject) => {
       this._getFrame(when, formats, (err, frames) => {
         if (err) {

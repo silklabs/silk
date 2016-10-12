@@ -4,10 +4,11 @@ module.exports = {
     "plugin:flowtype/recommended"
   ],
   "parserOptions": {
-    "ecmaVersion": 7,
+    "ecmaVersion": 2017,
     "ecmaFeatures": {
       "modules": true
-    }
+    },
+    "sourceType": "module"
   },
   "plugins": [
     "flowtype"
@@ -72,7 +73,7 @@ module.exports = {
     "eol-last": 2,
     "no-extra-parens": [2, "functions"],
     "eqeqeq": 2,
-    "indent": [2, 2],
+    "indent": [2, 2, {"FunctionDeclaration": {"body": 1, "parameters": 1}, "FunctionExpression": {"body": 1, "parameters": 1}}],
     "jsx-quotes": [2, "prefer-double"],
     "key-spacing": [2, {"beforeColon": false, "afterColon": true}],
     "new-cap": 2,

@@ -16,6 +16,6 @@
     "babel-eslint": "6.1.0",
     "eslint": "3.7.1",
     "eslint-plugin-flowtype": "2.18.1",
-    "eslint-plugin-react": "3.16.1"
+    "eslint-plugin-react": "6.4.1"
   }
 }

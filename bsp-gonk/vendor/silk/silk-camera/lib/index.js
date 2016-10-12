@@ -31,7 +31,7 @@ import * as util from 'silk-sysutils';
 
 import type {Matrix} from 'opencv';
 import type {ConfigDeviceMic} from 'silk-config';
-import type {VideoCapture} from 'silk-capture';
+import type {VideoCapture, ImageFormat} from 'silk-capture';
 import type {Socket} from 'net';
 
 type CameraClipFrameImages = [
@@ -140,10 +140,17 @@ type FaceType = {
   rightEye: [number, number];
 };
 
-type GetFrameType = {
+type PreviewFrameQueueType = {
   userCb: CameraCallback;
   when: number;
   formats: Array<CameraFrameFormat>;
+};
+
+type CustomFrameQueueType = {
+  format: ImageFormat;
+  width: number;
+  height: number;
+  callback: CameraCallback,
 };
 
 type ImageCacheType = {
@@ -394,7 +401,8 @@ export default class Camera extends EventEmitter {
   _dataSocket: ?Socket = null;
   _micDataSocket: ?Socket = null;
   _vidDataSocket: ?Socket = null;
-  _frameQueue: Array<GetFrameType> = []; // Queue of pending camera frame requests
+  _previewFrameRequests: Array<PreviewFrameQueueType> = [];
+  _customFrameRequests: Array<CustomFrameQueueType> = [];
   _noFrameCount: number = 0;
   _frameReplacer: ?FrameReplacer = null;
   _imagecache: CBuffer;
@@ -781,12 +789,12 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _retrieveNextFrame() {
-    if (this._frameQueue.length === 0) {
+    if (this._previewFrameRequests.length === 0) {
       return;
     }
 
     // Dequeue the next frame request
-    let {userCb, when, formats} = this._frameQueue.shift();
+    let {userCb, when, formats} = this._previewFrameRequests.shift();
 
     // Search the image in the cache
     let index = 0;
@@ -929,6 +937,7 @@ export default class Camera extends EventEmitter {
           this._handleNextFastFrame(when, im);
         }
         this._cvVideoCaptureBusy = false;
+        this._handleCustomFrameRequest();
       });
     } else {
       let imRGB = new cv.Matrix();
@@ -942,8 +951,56 @@ export default class Camera extends EventEmitter {
           this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
         }
         this._cvVideoCaptureBusy = false;
+        this._handleCustomFrameRequest();
       });
     }
+  }
+
+  /**
+   * Read the next frame in the specified format and size
+   * @private
+   */
+  _captureFrameCustom(
+    format: ImageFormat,
+    width: number,
+    height: number,
+    callback: CameraCallback
+  ) {
+    if (!this._cvVideoCapture || !this._recording) {
+      callback(new Error(`capture not ready`));
+      return;
+    }
+    if (this._cvVideoCaptureBusy) {
+      // Queue the request if the capture process is busy
+      this._customFrameRequests.push({
+        format,
+        width,
+        height,
+        callback,
+      });
+      return;
+    }
+    this._cvVideoCaptureBusy = true;
+    let im = new cv.Matrix();
+    this._cvVideoCapture.readCustom(im, format, width, height, (err) => {
+      callback(err, im);
+      this._cvVideoCaptureBusy = false;
+      this._handleCustomFrameRequest();
+    });
+  }
+
+  /**
+   * Service any pending custom frame requests if any
+   * @private
+   */
+  _handleCustomFrameRequest() {
+    if (this._customFrameRequests.length === 0) {
+      return;
+    }
+
+    // Dequeue the next frame request
+    let {format, width, height, callback} = this._customFrameRequests.shift();
+    this._captureFrameCustom(format, width, height, callback);
   }
 
   /**
@@ -1376,7 +1433,7 @@ export default class Camera extends EventEmitter {
     formats: Array<CameraFrameFormat>,
     userCb: CameraCallback
   ): void {
-    this._frameQueue.push({userCb, when, formats});
+    this._previewFrameRequests.push({userCb, when, formats});
     this._retrieveNextFrame();
   }
 
@@ -1400,6 +1457,29 @@ export default class Camera extends EventEmitter {
           reject(err);
         } else {
           resolve(frames);
+        }
+      });
+    });
+  }
+
+  /**
+   * Obtain the next camera frame in the specified format and size
+   *
+   * @param format - requested format
+   * @param width  - width of the requested frame
+   * @param height - height of the requested frame
+   *
+   * @return {Promise<?cv::Matrix>}
+   * @memberof silk-camera.Camera
+   * @instance
+   */
+  getNextFrame(format: ImageFormat, width: number, height: number): Promise<?any> {
+    return new Promise((resolve, reject) => {
+      this._captureFrameCustom(format, width, height, (err, frame) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(frame);
         }
       });
     });

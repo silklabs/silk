@@ -5,6 +5,15 @@
  * VideoCapture API is used for other targets.
  */
 
+//#define LOG_NDEBUG 0
+#define LOG_TAG "silk-capture"
+#ifdef ANDROID
+#include <utils/Log.h>
+#include <libpreview.h>
+#else
+#define ALOGE(fmt, args...) printf(LOG_TAG fmt, ##args)
+#endif
+
 #include <memory>
 #include <nan.h>
 #include "Matrix.h"
@@ -15,14 +24,7 @@
 #include <opencv2/videoio.hpp>
 #endif
 
-//#define LOG_NDEBUG 0
-#define LOG_TAG "silk-capture"
-#ifdef ANDROID
-#include <utils/Log.h>
-#include <libpreview.h>
-#else
-#define ALOGE(fmt, args...) printf(LOG_TAG fmt, ##args)
-#endif
+using std::string;
 
 #define OBJECT_FROM_ARGS(NAME, IND) \
   if (info[IND]->IsObject()) { \
@@ -30,6 +32,16 @@
   } else { \
     Nan::ThrowTypeError("Argument not of expected format"); \
   } \
+
+#define INT_FROM_ARGS(NAME, IND) \
+  if (info[IND]->IsInt32()) { \
+    NAME = info[IND]->Uint32Value(); \
+  }
+
+#define STRING_FROM_ARGS(NAME, IND) \
+  if (info[IND]->IsString()) { \
+    NAME = string(*Nan::Utf8String(info[IND]->ToString())); \
+  }
 
 ////
 // Holds the current state of a VideoCapture session
@@ -125,6 +137,7 @@ private:
  */
 class VideoCapture: public Nan::ObjectWrap {
 friend class VideoCaptureFrameWorker;
+friend class VideoCaptureCustomFrameWorker;
 public:
   static void Init(v8::Local<v8::Object> exports);
 
@@ -133,6 +146,7 @@ private:
   ~VideoCapture() {}
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Read(const Nan::FunctionCallbackInfo<v8::Value>& info);
+  static void ReadCustom(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static void Close(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
 
@@ -303,6 +317,133 @@ private:
   bool grabAll;
 };
 
+/*
+ * Async worker used to process the next custom frame
+ */
+class VideoCaptureCustomFrameWorker : public Nan::AsyncWorker {
+public:
+  explicit VideoCaptureCustomFrameWorker(std::weak_ptr<State> weakState,
+                                   v8::Local<v8::Object> im,
+                                   string format,
+                                   int width,
+                                   int height,
+                                   Nan::Callback *callback)
+    : Nan::AsyncWorker(callback),
+      weakState(weakState),
+      format(format),
+      width(width),
+      height(height) {
+    destIm.Reset(im);
+  }
+  virtual ~VideoCaptureCustomFrameWorker() {}
+
+  void Execute() {
+    auto state = weakState.lock();
+    if (!state) {
+      SetErrorMessage("Camera gone");
+      return;
+    }
+
+    if ((format != "yvu420sp") && (format != "rgb")) {
+      SetErrorMessage("unknown custom preview format");
+      return;
+    }
+
+#ifdef ANDROID
+    if (state->frameBuffer == NULL) {
+      SetErrorMessage("no frame yet");
+      return;
+    }
+    uv_mutex_lock(&state->frameDataLock);
+    switch (state->frameFormat) {
+      default:
+        // Porting error.  Nothing to do but soldier on...
+        ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
+        //fall through
+      case libpreview::FRAMEFORMAT_YVU420SP: {
+        // Setup a Matrix object to store the remote image using the
+        // height/width that OpenCV expects for a YVU420 semi-planar format
+        cv::Mat remote(
+            state->frameHeight * 3 / 2,
+            state->frameWidth,
+            CV_8UC1,
+            state->frameBuffer
+        );
+
+        if (format == "yvu420sp") {
+          im = remote.clone();
+        } else if (format == "rgb") {
+          cv::cvtColor(remote, im, CV_YUV420sp2BGR, 0);
+        }
+        break;
+      }
+      case libpreview::FRAMEFORMAT_RGB: {
+        if (format != "rgb") {
+          SetErrorMessage("Only rgb preview format is supported");
+          return;
+        }
+
+        cv::Mat remote(
+            state->frameHeight,
+            state->frameWidth,
+            CV_8UC3,
+            state->frameBuffer
+        );
+        im = remote.clone();
+        break;
+      }
+    }
+    uv_mutex_unlock(&state->frameDataLock);
+#else
+    if (!state->cap.grab()) {
+      SetErrorMessage("grab failed");
+      return;
+    }
+    if (!state->cap.retrieve(im)) {
+      SetErrorMessage("retrieve failed");
+      return;
+    }
+#endif
+    cv::Size s = im.size();
+    if ((width != s.width) || (height != s.height)) {
+      cv::resize(im, im, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+    }
+  }
+
+  void HandleErrorCallback() {
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
+      Nan::AsyncWorker::HandleErrorCallback();
+    }
+  }
+
+  void HandleOKCallback() {
+    auto state = weakState.lock();
+    if (state) {
+      state->busy = false;
+      Nan::HandleScope scope;
+      node_opencv::Matrix *mat;
+
+      v8::Local<v8::Object> localIm = Nan::New(destIm);
+      mat = Nan::ObjectWrap::Unwrap<node_opencv::Matrix>(localIm);
+      mat->mat = im;
+      destIm.Reset();
+
+      Nan::AsyncWorker::HandleOKCallback();
+    }
+  }
+
+private:
+  cv::Mat im;
+
+  Nan::Persistent<v8::Object> destIm;
+  std::weak_ptr<State> weakState;
+  string format;
+  int width;
+  int height;
+};
+
 Nan::Persistent<v8::Function> VideoCapture::constructor;
 
 void VideoCapture::Init(v8::Local<v8::Object> exports) {
@@ -314,6 +455,7 @@ void VideoCapture::Init(v8::Local<v8::Object> exports) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   Nan::SetPrototypeMethod(tpl, "read", Read);
+  Nan::SetPrototypeMethod(tpl, "readCustom", ReadCustom);
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
   constructor.Reset(tpl->GetFunction());
@@ -393,6 +535,43 @@ NAN_METHOD(VideoCapture::Read) {
       imRGB,
       imGray,
       imScaledGray,
+      callback
+    )
+  );
+}
+
+NAN_METHOD(VideoCapture::ReadCustom) {
+  VideoCapture* self = ObjectWrap::Unwrap<VideoCapture>(info.Holder());
+
+  if (!self->state || self->state->busy) {
+    Nan::ThrowError("Busy");
+    return;
+  }
+
+  if (info.Length() != 5) {
+    Nan::ThrowError("Insufficient number of arguments provided");
+  }
+
+  v8::Local<v8::Object> im;
+  Nan::Callback *callback = NULL;
+  string format;
+  int width = 0;
+  int height = 0;
+
+  OBJECT_FROM_ARGS(im, 0);
+  STRING_FROM_ARGS(format, 1);
+  INT_FROM_ARGS(width, 2);
+  INT_FROM_ARGS(height, 3);
+  callback = new Nan::Callback(info[4].As<v8::Function>());
+
+  self->state->busy = true;
+  Nan::AsyncQueueWorker(
+    new VideoCaptureCustomFrameWorker(
+      self->state,
+      im,
+      format,
+      width,
+      height,
       callback
     )
   );

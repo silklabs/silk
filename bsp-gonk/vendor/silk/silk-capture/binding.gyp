@@ -25,6 +25,7 @@
           ],
           "cflags": [
             "-Wall",
+            "-Wstrict-aliasing",
           ],
         }],
         [ "OS==\"linux\"", {

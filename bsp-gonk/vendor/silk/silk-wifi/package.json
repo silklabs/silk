@@ -12,6 +12,11 @@
   "dependencies": {
     "netmask": "1.0.5"
   },
+  "devDependencies": {
+    "babel-eslint": "7.0.0",
+    "eslint": "3.7.1",
+    "eslint-plugin-flowtype": "2.18.1"
+  },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
     "silk-buildjs": "../../../../buildjs/",

@@ -4,9 +4,15 @@
   "description": "System utilities for Silk",
   "main": "lib/index.js",
   "scripts": {
+    "lint": "eslint .",
     "postinstall": "../../../../npm_postinstall && silk-buildjs"
   },
   "license": "MIT",
+  "devDependencies": {
+    "babel-eslint": "7.0.0",
+    "eslint": "3.7.1",
+    "eslint-plugin-flowtype": "2.18.1"
+  },
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs/",
     "silk-log": "../../../../log"

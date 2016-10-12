@@ -4,6 +4,7 @@
   "description": "wrapper for bledroid",
   "main": "./lib/index.js",
   "scripts": {
+    "lint": "eslint .",
     "postinstall": "../../../../npm_postinstall && silk-buildjs",
     "build": "silk-buildjs"
   },
@@ -15,6 +16,11 @@
   "dependencies": {
     "babel-runtime": "6.9.0",
     "uuid": "2.0.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "7.0.0",
+    "eslint": "3.7.1",
+    "eslint-plugin-flowtype": "2.18.1"
   },
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs/",

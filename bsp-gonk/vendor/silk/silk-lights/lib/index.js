@@ -273,11 +273,13 @@ export class Light extends events.EventEmitter {
    * @memberof silk-lights.Light
    * @instance
    */
-  set(color: LightColor = 0,
-      flashMode: FlashMode = 'none',
-      flashOnMS: number = 0,
-      flashOffMS: number = 0,
-      brightnessMode: BrightnessMode = 'user'): Promise<void> {
+  set(
+    color: LightColor = 0,
+    flashMode: FlashMode = 'none',
+    flashOnMS: number = 0,
+    flashOffMS: number = 0,
+    brightnessMode: BrightnessMode = 'user'
+  ): Promise<void> {
     if (this._color === color &&
         this._flashMode === flashMode &&
         this._flashOnMS === flashOnMS &&

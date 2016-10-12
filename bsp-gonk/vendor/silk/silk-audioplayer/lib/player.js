@@ -13,7 +13,7 @@ export type PlayerType = {
   stop(): boolean;
   pause(): boolean;
   resume(): boolean;
-}
+};
 
 let bindings = null;
 

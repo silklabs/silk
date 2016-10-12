@@ -1371,9 +1371,11 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _getFrame(when: number,
-           formats: Array<CameraFrameFormat>,
-           userCb: CameraCallback): void {
+  _getFrame(
+    when: number,
+    formats: Array<CameraFrameFormat>,
+    userCb: CameraCallback
+  ): void {
     this._frameQueue.push({userCb, when, formats});
     this._retrieveNextFrame();
   }

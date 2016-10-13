@@ -381,7 +381,7 @@ class Lights {
   get(lightId: LightId): Light {
     let light = this._get(lightId);
     if (!light) {
-      throw new Error(lightId, 'unknown');
+      throw new Error(`Unknown lightId: ${lightId}`);
     }
     return light;
   }

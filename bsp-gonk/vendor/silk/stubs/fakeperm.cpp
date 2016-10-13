@@ -73,6 +73,10 @@ FakePermissionService::checkPermission(const String16& permission, int32_t pid, 
       if (uid == 0 || uid == AID_CAMERA) {
         return true;
       }
+    } else if (perm8 == "android.permission.ACCESS_SURFACE_FLINGER") {
+      if (uid == AID_CAMERA) {
+        return true;
+      }
     } else if (perm8 == "android.permission.RECORD_AUDIO") {
       if (uid == 0 || uid == AID_CAMERA) {
         return true;

@@ -22,6 +22,28 @@ type soundMapDataType = {
 };
 
 /**
+ * The available media states
+ *
+ * @memberof silk-audioplayer
+ * @example
+ * idle    - Audio hasn't started playing yet
+ * playing - Audio is now playing
+ * paused  - Audio has paused
+ * stopped - Audio has stopped or finished playback
+ */
+type MediaState = 'idle' | 'playing' | 'paused' | 'stopped';
+
+/**
+ * Information about an audio file
+ *
+ * @memberof silk-audioplayer
+ * @property {string} name name of the audio file
+ */
+type FileInfo = {
+  name: string;
+};
+
+/**
  * This module provides an interface to play audio files.
  * @module silk-audioplayer
  *
@@ -34,9 +56,17 @@ type soundMapDataType = {
  * player.play('data/media/test.mp3')
  * .then(() => log.info('Done playing'))
  * .catch(err => log.error(err));
- * player.pause();
- * player.setVolume(0.5);
- * player.resume();
+ *
+ * setTimeout(() => {
+ *   player.pause();
+ *   log.info(`getState ${player.getState()}`);
+ *   player.setVolume(0.5);
+ *   player.resume();
+ *   log.info(`getState ${player.getState()}`);
+ *   log.info(`getCurrentPosition ${player.getCurrentPosition()}`);
+ *   log.info(`getDuration ${player.getDuration()}`);
+ *   log.info(`getInfo ${JSON.stringify(player.getInfo())}`);
+ * }, 1000);
  *
  * // Reduce latency by preloading the sound file
  * player.load('data/media/test.wav')
@@ -49,6 +79,8 @@ export default class Player {
   _gain: number = GAIN_MAX;
   _soundMap: {[key: string]: soundMapDataType} = {};
   _player: PlayerType = null;
+  _mediaState: MediaState = 'idle';
+  _fileName: string = '';
 
   constructor() {
     this._player = new bindings.Player();
@@ -98,8 +130,9 @@ export default class Player {
   async play(fileName: string): Promise<void> {
     let exists = await fs.exists(fileName);
     if (!exists) {
-      return Promise.reject(`${fileName} not found`);
+      return Promise.reject(new Error(`${fileName} not found`));
     }
+    this._fileName = fileName;
 
     // A cached PCM data for the file is available so stream PCM data instead
     // of using MediaPlayer to play the file
@@ -113,8 +146,10 @@ export default class Player {
       });
     }
 
+    this._mediaState = 'playing';
     return new Promise((resolve, reject) => {
       this._player.play(fileName, (err) => {
+        this._mediaState = 'stopped';
         if (err) {
           reject(err);
           return;
@@ -132,7 +167,11 @@ export default class Player {
    * @instance
    */
   stop(): boolean {
-    return this._player.stop();
+    let result = this._player.stop();
+    if (result) {
+      this._mediaState = 'stopped';
+    }
+    return result;
   }
 
   /**
@@ -142,7 +181,11 @@ export default class Player {
    * @instance
    */
   pause(): boolean {
-    return this._player.pause();
+    let result = this._player.pause();
+    if (result) {
+      this._mediaState = 'paused';
+    }
+    return result;
   }
 
   /**
@@ -152,7 +195,55 @@ export default class Player {
    * @instance
    */
   resume(): boolean {
-    return this._player.resume();
+    let result = this._player.resume();
+    if (result) {
+      this._mediaState = 'playing';
+    }
+    return result;
+  }
+
+  /**
+   * Gets the current state of audio player
+   * @return {MediaState} the current audio player state
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  getState(): MediaState {
+    return this._mediaState;
+  }
+
+  /**
+   * Gets the current playback position
+   * @return {number} the current position in milliseconds
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  getCurrentPosition(): number {
+    return this._player.getCurrentPosition();
+  }
+
+  /**
+   * Gets the duration of the file. Duration is not available in
+   * the idle state.
+   * @return {number} the duration in milliseconds, if no duration is available
+   *                  (for example, there is an error), -1 is returned.
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  getDuration(): number {
+    return this._player.getDuration();
+  }
+
+  /**
+   * Gets the information about an audio file being played
+   * @return {FileInfo}
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  getInfo(): FileInfo {
+    return {
+      name: this._fileName,
+    };
   }
 
   /**

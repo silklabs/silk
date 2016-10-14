@@ -69,6 +69,18 @@ if (process.platform === 'android') {
       this.resume = function() {
         log.warn(`resume is not supported on this platform`);
       };
+      this.getState = function() {
+        log.warn(`getState is not supported on this platform`);
+      };
+      this.getCurrentPosition = function() {
+        log.warn(`getCurrentPosition is not supported on this platform`);
+      };
+      this.getDuration = function() {
+        log.warn(`getDuration is not supported on this platform`);
+      };
+      this.getInfo = function() {
+        log.warn(`getInfo is not supported on this platform`);
+      };
     },
   };
 }

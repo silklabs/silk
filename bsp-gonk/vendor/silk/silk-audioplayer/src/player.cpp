@@ -66,6 +66,8 @@ void Player::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "stop", Stop);
   Nan::SetPrototypeMethod(ctor, "pause", Pause);
   Nan::SetPrototypeMethod(ctor, "resume", Resume);
+  Nan::SetPrototypeMethod(ctor, "getCurrentPosition", GetCurrentPosition);
+  Nan::SetPrototypeMethod(ctor, "getDuration", GetDuration);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Player").ToLocalChecked(), ctor->GetFunction());
@@ -206,6 +208,26 @@ NAN_METHOD(Player::Resume) {
     ret = self->mMediaPlayer->start();
   }
   info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
+}
+
+NAN_METHOD(Player::GetCurrentPosition) {
+  SETUP_FUNCTION(Player)
+
+  int msec = -1;
+  if (self->mMediaPlayer != NULL) {
+    self->mMediaPlayer->getCurrentPosition(&msec);
+  }
+  info.GetReturnValue().Set(Nan::New<Number>(msec));
+}
+
+NAN_METHOD(Player::GetDuration) {
+  SETUP_FUNCTION(Player)
+
+  int msec = -1;
+  if (self->mMediaPlayer != NULL) {
+    self->mMediaPlayer->getDuration(&msec);
+  }
+  info.GetReturnValue().Set(Nan::New<Number>(msec));
 }
 
 NODE_MODULE(player, Player::Init);

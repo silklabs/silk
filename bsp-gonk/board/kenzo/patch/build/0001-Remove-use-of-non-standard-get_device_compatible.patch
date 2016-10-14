@@ -1,0 +1,29 @@
+From 4cf8a0871a794a9bb483fb11047c4ce8d7750a82 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 14 Oct 2016 10:35:32 -0700
+Subject: [PATCH] Remove use of non-standard get_device_compatible()
+
+This edify function only exists in some CAF trees, and notably does not exist in
+AOSP trees.
+
+Change-Id: Iaff33726b2fef0c8df81a3776d2c1e61db23f43b
+---
+ tools/releasetools/edify_generator.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/releasetools/edify_generator.py b/tools/releasetools/edify_generator.py
+index 89840c6..e52c264 100644
+--- a/tools/releasetools/edify_generator.py
++++ b/tools/releasetools/edify_generator.py
+@@ -116,7 +116,7 @@ class EdifyGenerator(object):
+ 
+   def AssertDevice(self, device):
+     """Assert that the device identifier is the given string."""
+-    cmd = ('get_device_compatible("%s") == "OK" || '
++    cmd = ('getprop("ro.product.device") == "%s" || '
+            'abort("This package is for \\"%s\\" devices; '
+            'this is a \\"" + getprop("ro.product.device") + "\\".");'
+            ) % (device, device)
+-- 
+2.10.0
+

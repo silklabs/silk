@@ -1,0 +1,35 @@
+From af33f822fcc93e0185eb29d0795c7f53c71c91a0 Mon Sep 17 00:00:00 2001
+From: Jesse Zhao <jessezhao@google.com>
+Date: Mon, 2 Mar 2015 16:53:08 -0800
+Subject: [PATCH 1/4] Fix the error that free_string is not defined.
+
+Change-Id: I7490a91ea930daaf194dad0c8b3a3357558b4770
+Bug:19573713
+---
+ tools/releasetools/blockimgdiff.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/tools/releasetools/blockimgdiff.py b/tools/releasetools/blockimgdiff.py
+index 0646c5f..5cf0f2d 100644
+--- a/tools/releasetools/blockimgdiff.py
++++ b/tools/releasetools/blockimgdiff.py
+@@ -294,6 +294,8 @@ class BlockImageDiff(object):
+       if stashed_blocks > max_stashed_blocks:
+         max_stashed_blocks = stashed_blocks
+ 
++      free_string = []
++
+       if self.version == 1:
+         src_string = xf.src_ranges.to_string_raw()
+       elif self.version >= 2:
+@@ -306,7 +308,6 @@ class BlockImageDiff(object):
+ 
+         size = xf.src_ranges.size()
+         src_string = [str(size)]
+-        free_string = []
+ 
+         unstashed_src_ranges = xf.src_ranges
+         mapped_stashes = []
+-- 
+2.10.0
+

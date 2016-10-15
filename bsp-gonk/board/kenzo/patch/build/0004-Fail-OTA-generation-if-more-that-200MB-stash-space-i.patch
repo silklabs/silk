@@ -1,0 +1,32 @@
+From f102cf7f1f8c4e98d20933f0438a0be7c683817c Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 15 Oct 2016 14:59:30 -0700
+Subject: [PATCH 4/4] Fail OTA generation if more that 200MB stash space is
+ required
+
+Kenzo's /cache partition is only ~250MB
+
+Change-Id: Id28dd02e206fffd34b875c9ac75707345291d313
+---
+ tools/releasetools/blockimgdiff.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tools/releasetools/blockimgdiff.py b/tools/releasetools/blockimgdiff.py
+index a6749da..1145887 100644
+--- a/tools/releasetools/blockimgdiff.py
++++ b/tools/releasetools/blockimgdiff.py
+@@ -435,9 +435,9 @@ class BlockImageDiff(object):
+         out.append("".join(free_string))
+ 
+ 
+-      # sanity check: abort if we're going to need more than 512 MB if
++      # sanity check: abort if we're going to need more than 200 MB if
+       # stash space
+-      assert max_stashed_blocks * self.tgt.blocksize < (512 << 20)
++      assert max_stashed_blocks * self.tgt.blocksize < (200 << 20)
+ 
+     all_tgt = RangeSet(data=(0, self.tgt.total_blocks))
+     if performs_read:
+-- 
+2.10.0
+

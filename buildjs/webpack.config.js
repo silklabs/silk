@@ -115,6 +115,7 @@ const externals = [
   'silk-vad',
   'silk-vibrator',
   'silk-volume',
+  'silk-watchdog',
   'silk-wifi',
   'sodium',
   'v8-profiler',

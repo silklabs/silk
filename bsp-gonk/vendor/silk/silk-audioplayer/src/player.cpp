@@ -14,6 +14,9 @@
 
 #include "player.h"
 
+using Nan::AsyncProgressWorker;
+using Nan::Callback;
+
 #define OK(expression) { \
     status_t err = expression; \
     if (err != 0) { \
@@ -117,15 +120,17 @@ NAN_METHOD(Player::New) {
 /**
  * Async worker handler for playing audio file
  */
-class PlayAsyncWorker: public Nan::AsyncWorker {
+class PlayAsyncWorker: public AsyncProgressWorker {
 public:
-  PlayAsyncWorker(Nan::Callback *callback, Player* player, string fileName):
-    Nan::AsyncWorker(callback),
+  PlayAsyncWorker(Player* player, string fileName, Callback *doneCallback,
+                  Callback *startCallback):
+    AsyncProgressWorker(doneCallback),
     player(player),
-    fileName(fileName) {
+    fileName(fileName),
+    startCallback(startCallback) {
   }
 
-  void Execute() {
+  void Execute(const AsyncProgressWorker::ExecutionProgress& progress) {
     int fd = open(fileName.c_str(), O_RDONLY);
     int64_t length = lseek64(fd, 0, SEEK_END);
     lseek64(fd, 0, SEEK_SET);
@@ -138,6 +143,8 @@ public:
     OK(player->mMediaPlayer->setVolume(player->gain, player->gain));
     OK(player->mMediaPlayer->start());
 
+    progress.Signal();
+
     int err;
     TEMP_FAILURE_RETRY(read(pipefd[0], &err, sizeof(int)));
     player->Done();
@@ -148,23 +155,35 @@ public:
     }
   }
 
+  void HandleProgressCallback(const char *data, size_t size) {
+    Nan::HandleScope scope;
+
+    Local<Value> argv[1] = {Nan::Null()};
+    startCallback->Call(1, argv);
+  }
+
 private:
   Player *player;
   string fileName;
+  Callback *startCallback;
 };
 
 NAN_METHOD(Player::Play) {
   SETUP_FUNCTION(Player)
 
-  if (info.Length() != 2) {
+  if (info.Length() != 3) {
     JSTHROW("Invalid number of arguments provided");
   }
 
   string fileName = string(*Nan::Utf8String(info[0]->ToString()));
-  REQ_FUN_ARG(1, cb);
-  Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
+  REQ_FUN_ARG(1, donecb);
+  Callback *doneCallback = new Callback(donecb.As<Function>());
 
-  Nan::AsyncQueueWorker(new PlayAsyncWorker(callback, self, fileName));
+  REQ_FUN_ARG(2, startcb);
+  Callback *startCallback = new Callback(startcb.As<Function>());
+
+  Nan::AsyncQueueWorker(new PlayAsyncWorker(self, fileName, doneCallback,
+                                            startCallback));
 }
 
 NAN_METHOD(Player::SetVolume) {

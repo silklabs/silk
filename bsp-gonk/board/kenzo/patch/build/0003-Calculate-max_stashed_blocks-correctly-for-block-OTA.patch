@@ -1,0 +1,52 @@
+From d768e202f392a6c2dcfb46d806db58c00a991319 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 17 Apr 2015 16:28:08 +0100
+Subject: [PATCH 3/4] Calculate max_stashed_blocks correctly for block OTA v3
+
+The updater automatically stashes overlapping source blocks to
+make it possible to resume if the command performing the update
+is interrupted. However, blockimgdiff.py does not take this into
+account and therefore, max_stashed_blocks indicates only the
+number of explicitly stashed blocks. Change blockimgdiff.py to
+correctly calculate the maximum used stash space, including any
+automatically stashed blocks.
+
+Bug: 20309033
+Change-Id: Ibf5cb1abc38c54e60a6ad3ce4cbce43556b08ac2
+---
+ tools/releasetools/blockimgdiff.py | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/tools/releasetools/blockimgdiff.py b/tools/releasetools/blockimgdiff.py
+index 5b5c4cc..a6749da 100644
+--- a/tools/releasetools/blockimgdiff.py
++++ b/tools/releasetools/blockimgdiff.py
+@@ -385,6 +385,12 @@ class BlockImageDiff(object):
+                 xf.style,
+                 xf.tgt_ranges.to_string_raw(), src_string))
+           elif self.version >= 3:
++            # take into account automatic stashing of overlapping blocks
++            if xf.src_ranges.overlaps(xf.tgt_ranges):
++              temp_stash_usage = stashed_blocks + xf.src_ranges.size();
++              if temp_stash_usage > max_stashed_blocks:
++                max_stashed_blocks = temp_stash_usage
++
+             out.append("%s %s %s %s\n" % (
+                 xf.style,
+                 self.HashBlocks(self.tgt, xf.tgt_ranges),
+@@ -403,6 +409,12 @@ class BlockImageDiff(object):
+               xf.style, xf.patch_start, xf.patch_len,
+               xf.tgt_ranges.to_string_raw(), src_string))
+         elif self.version >= 3:
++          # take into account automatic stashing of overlapping blocks
++          if xf.src_ranges.overlaps(xf.tgt_ranges):
++            temp_stash_usage = stashed_blocks + xf.src_ranges.size();
++            if temp_stash_usage > max_stashed_blocks:
++              max_stashed_blocks = temp_stash_usage
++
+           out.append("%s %d %d %s %s %s %s\n" % (
+               xf.style,
+               xf.patch_start, xf.patch_len,
+-- 
+2.10.0
+

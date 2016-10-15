@@ -51,6 +51,8 @@ private:
   JSFUNC(Stop);
   JSFUNC(Pause);
   JSFUNC(Resume);
+  JSFUNC(GetCurrentPosition);
+  JSFUNC(GetDuration);
 };
 
 #endif

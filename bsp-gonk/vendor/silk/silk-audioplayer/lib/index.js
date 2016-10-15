@@ -8,6 +8,7 @@ import bindings from './player';
 import fs from 'mz/fs';
 import wav from 'wav';
 import Speaker from 'silk-speaker';
+import events from 'events';
 
 import type { PlayerType } from './player';
 import type { ConfigDeviceMic } from 'silk-config';
@@ -57,7 +58,7 @@ type FileInfo = {
  * .then(() => log.info('Done playing'))
  * .catch(err => log.error(err));
  *
- * setTimeout(() => {
+ * player.on('started', () => {
  *   player.pause();
  *   log.info(`getState ${player.getState()}`);
  *   player.setVolume(0.5);
@@ -66,7 +67,7 @@ type FileInfo = {
  *   log.info(`getCurrentPosition ${player.getCurrentPosition()}`);
  *   log.info(`getDuration ${player.getDuration()}`);
  *   log.info(`getInfo ${JSON.stringify(player.getInfo())}`);
- * }, 1000);
+ * });
  *
  * // Reduce latency by preloading the sound file
  * player.load('data/media/test.wav')
@@ -74,7 +75,7 @@ type FileInfo = {
  * .then(() => log.info('Done playing'));
  * .catch(err => log.error(err));
  */
-export default class Player {
+export default class Player extends events.EventEmitter {
 
   _gain: number = GAIN_MAX;
   _soundMap: {[key: string]: soundMapDataType} = {};
@@ -83,6 +84,7 @@ export default class Player {
   _fileName: string = '';
 
   constructor() {
+    super();
     this._player = new bindings.Player();
   }
 
@@ -156,6 +158,15 @@ export default class Player {
         }
         log.debug(`Done playing ${fileName}`);
         resolve();
+      }, () => {
+        /**
+         * This event is emitted when audio file has started to play
+         *
+         * @event started
+         * @memberof silk-audioplayer
+         * @instance
+         */
+        this.emit('started');
       });
     });
   }

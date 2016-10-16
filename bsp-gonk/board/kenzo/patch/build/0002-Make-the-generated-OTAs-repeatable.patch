@@ -1,0 +1,35 @@
+From 5bbafa68b38c00355cea7fc7b8f9a8aada98cca5 Mon Sep 17 00:00:00 2001
+From: Tao Bao <tbao@google.com>
+Date: Thu, 19 Mar 2015 19:42:12 -0700
+Subject: [PATCH 2/4] Make the generated OTAs repeatable
+
+The generated OTAs are supposed to be repeatable. The use of dict in
+blockimgdiff.py breaks the assumption for block-based OTAs. Fixed by
+using OrderedDict instead.
+
+Change-Id: I945bdc879912ba174ca330c152b1f8fc7ed211ac
+---
+ tools/releasetools/blockimgdiff.py | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/tools/releasetools/blockimgdiff.py b/tools/releasetools/blockimgdiff.py
+index 5cf0f2d..5b5c4cc 100644
+--- a/tools/releasetools/blockimgdiff.py
++++ b/tools/releasetools/blockimgdiff.py
+@@ -140,8 +140,11 @@ class Transfer(object):
+     self.style = style
+     self.intact = (getattr(tgt_ranges, "monotonic", False) and
+                    getattr(src_ranges, "monotonic", False))
+-    self.goes_before = {}
+-    self.goes_after = {}
++
++    # We use OrderedDict rather than dict so that the output is repeatable;
++    # otherwise it would depend on the hash values of the Transfer objects.
++    self.goes_before = OrderedDict()
++    self.goes_after = OrderedDict()
+ 
+     self.stash_before = []
+     self.use_stash = []
+-- 
+2.10.0
+

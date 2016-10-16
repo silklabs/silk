@@ -1,5 +1,5 @@
 /**
- * @noflow
+ * @flow
  * @private
  */
 
@@ -14,13 +14,18 @@ const log = createLog('input');
 // https://github.com/Bornholm/node-keyboard (MIT)
 //
 class InputDevice extends events.EventEmitter {
-  constructor(dev) {
+  buf: Buffer;
+  bufferSize: number;
+  dev: string;
+  fd: number;
+
+  constructor(dev: string) {
     super();
     log.info(`InputDevice: ${dev}`);
     this.dev = dev;
     this.bufferSize = 16; // input event size for a 32-bit kernel ONLY
     this.buf = new Buffer(this.bufferSize);
-    fs.open(this.dev, 'r', (err, fd) => {
+    fs.open(this.dev, 'r', 0, (err, fd) => {
       if (err) {
         log.warn(`Unable to open ${dev}`);
         return;
@@ -37,7 +42,7 @@ class InputDevice extends events.EventEmitter {
 
   _onRead(err, bytesRead, buffer) {
     if (err) {
-      log.warn(`Unable to read ${this.dev}: ${err}`);
+      log.warn(`Unable to read ${this.dev}: ${err.toString()}`);
       return;
     }
     let event;
@@ -52,24 +57,28 @@ class InputDevice extends events.EventEmitter {
        * @property {number} timeS Timestamp (Seconds part)
        * @property {number} timeMS  Timestamp (Microseconds part)
        * @property {number} keyCode Keyboard code
+       * @property {string} keyId String key id
        * @memberof silk-input
        */
       event = {
         timeS: buffer.readUInt32LE(0),
         timeMS: buffer.readUInt32LE(4),
         keyCode: buffer.readUInt16LE(10),
+        keyId: 'unknown',
         type: ['up', 'down', 'repeat'][buffer.readUInt32LE(12)],
       };
       const keys = {
-        113: 'mute',
-        114: 'volumedown',
-        115: 'volumeup',
-        116: 'power',
-        224: 'brightnessdown',
-        225: 'brightnessup',
-        330: 'touch',
+        '113': 'mute',
+        '114': 'volumedown',
+        '115': 'volumeup',
+        '116': 'power',
+        '224': 'brightnessdown',
+        '225': 'brightnessup',
+        '330': 'touch',
       };
-      event.keyId = keys[event.keyCode];
+      if (keys[event.keyCode]) {
+        event.keyId = keys[event.keyCode];
+      }
     }
 
     if (event) {
@@ -97,16 +106,18 @@ let inputDevices = {};
  * input.on('up', e => log.info('Key up event', JSON.stringify(e)));
  */
 export default class Input extends events.EventEmitter {
+  _inputDevices: ?Array<InputDevice>;
+
   constructor() {
     super();
 
-    const devices = util.getlistprop('ro.silk.ui.inputevents', null);
-    if (devices) {
+    const devices = util.getlistprop('ro.silk.ui.inputevents');
+    if (devices.length > 0) {
       this._open(devices);
     } else {
       fs.readdir('/dev/input', (err, availDevices) => {
         if (err) {
-          log.warn(`Unable to enumerate input devices: ${err}`);
+          log.warn(`Unable to enumerate input devices: ${err.toString()}`);
           return;
         }
         this._open(availDevices.filter(i => i.substring(0, 5) === 'event'));
@@ -114,7 +125,7 @@ export default class Input extends events.EventEmitter {
     }
   }
 
-  _open(devices) {
+  _open(devices: Array<string>) {
     this._inputDevices = devices.map(device => {
       const devicePath = `/dev/input/${device}`;
       let d;

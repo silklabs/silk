@@ -1,51 +1,20 @@
 /**
+ * @flow
  * @private
- * @noflow
  */
 
 import EventEmitter from 'events';
-import net from 'net';
+import * as net from 'net';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
+import invariant from 'assert';
+
+import type {Socket} from 'net';
 
 const log = createLog('sensors');
 
 const SENSORS_SOCKET_NAME = '/dev/socket/sensors';
 
-/**
- * Type of sensors to interact with. For a full list of
- * sensor types please refer to the source code.
- *
- * @property {(ACCELEROMETER|LIGHT|PROXIMITY)} SENSOR_TYPE
- * @memberof silk-sensors
- */
-let SENSOR_TYPE = {
-  ACCELEROMETER: 1,
-  MAGNETIC_FIELD: 2,
-  ORIENTATION: 3,
-  GYROSCOPE: 4,
-  LIGHT: 5,
-  PRESSURE: 6,
-  TEMPERATURE: 7,
-  PROXIMITY: 8,
-  GRAVITY: 9,
-  LINEAR_ACCELERATION: 10,
-  ROTATION_VECTOR: 11,
-  RELATIVE_HUMIDITY: 12,
-  AMBIENT_TEMPERATURE: 13,
-  MAGNETIC_FIELD_UNCALIBRATED: 14,
-  GAME_ROTATION_VECTOR: 15,
-  GYROSCOPE_UNCALIBRATED: 16,
-  SIGNIFICANT_MOTION: 17,
-  STEP_DETECTOR: 18,
-  STEP_COUNTER: 19,
-  GEOMAGNETIC_ROTATION_VECTOR: 20,
-  HEART_RATE: 21,
-  TILT_DETECTOR: 22,
-  WAKE_GESTURE: 23,
-  GLANCE_GESTURE: 24,
-  PICK_UP_GESTURE: 25,
-};
 
 /**
  * This module exposes functionality to activate/deactivate and read sensors
@@ -63,7 +32,47 @@ let SENSOR_TYPE = {
  *  log.info('Sensor values: + sensorEvent.values');
  * });
  */
-class Sensors extends EventEmitter {
+export class Sensors extends EventEmitter {
+  _active: boolean;
+  _buffer: string;
+  _ready: boolean;
+  _socket: ?Socket;
+
+  /**
+   * Type of sensors to interact with. For a full list of
+   * sensor types please refer to the source code.
+   *
+   * @property {(ACCELEROMETER|LIGHT|PROXIMITY)} SENSOR_TYPE
+   * @memberof silk-sensors
+   */
+  SENSOR_TYPE = {
+    ACCELEROMETER: 1,
+    MAGNETIC_FIELD: 2,
+    ORIENTATION: 3,
+    GYROSCOPE: 4,
+    LIGHT: 5,
+    PRESSURE: 6,
+    TEMPERATURE: 7,
+    PROXIMITY: 8,
+    GRAVITY: 9,
+    LINEAR_ACCELERATION: 10,
+    ROTATION_VECTOR: 11,
+    RELATIVE_HUMIDITY: 12,
+    AMBIENT_TEMPERATURE: 13,
+    MAGNETIC_FIELD_UNCALIBRATED: 14,
+    GAME_ROTATION_VECTOR: 15,
+    GYROSCOPE_UNCALIBRATED: 16,
+    SIGNIFICANT_MOTION: 17,
+    STEP_DETECTOR: 18,
+    STEP_COUNTER: 19,
+    GEOMAGNETIC_ROTATION_VECTOR: 20,
+    HEART_RATE: 21,
+    TILT_DETECTOR: 22,
+    WAKE_GESTURE: 23,
+    GLANCE_GESTURE: 24,
+    PICK_UP_GESTURE: 25,
+  };
+
   constructor() {
     super();
     this._ready = false;
@@ -77,17 +86,17 @@ class Sensors extends EventEmitter {
    */
   init() {
     log.verbose(`connecting to ${SENSORS_SOCKET_NAME} socket`);
-    this._socket = net.createConnection(SENSORS_SOCKET_NAME, () => {
+    const socket = this._socket = net.createConnection(SENSORS_SOCKET_NAME, () => {
       log.verbose(`connected to ${SENSORS_SOCKET_NAME} socket`);
       this._buffer = '';
       this._ready = true;
       this._command({cmdName: 'ready'});
     });
-    this._socket.on('data', data => this._onData(data));
-    this._socket.on('error', err => {
+    socket.on('data', data => this._onData(data));
+    socket.on('error', err => {
       this._restart(`sensors error, reason=${err}`);
     });
-    this._socket.on('close', hadError => {
+    socket.on('close', hadError => {
       if (!hadError) {
         this._restart(`sensors close`);
       }
@@ -102,7 +111,7 @@ class Sensors extends EventEmitter {
    * @memberof silk-sensors
    * @instance
    */
-  activate(sensorType, rate) {
+  activate(sensorType: number, rate: number) {
     this._active = true;
     this._command({cmdName: 'activate', sensorType, rate});
   }
@@ -114,7 +123,7 @@ class Sensors extends EventEmitter {
    * @memberof silk-sensors
    * @instance
    */
-  deactivate(sensorType) {
+  deactivate(sensorType: number) {
     this._active = false;
     this._command({cmdName: 'deactivate', sensorType});
   }
@@ -122,7 +131,7 @@ class Sensors extends EventEmitter {
   /**
    * @private
    */
-  _restart(why) {
+  _restart(why: string) {
     if (this._socket) {
       this._ready = false;
       this._socket = null;
@@ -139,7 +148,7 @@ class Sensors extends EventEmitter {
   /**
    * @private
    */
-  _onData(data) {
+  _onData(data: Buffer) {
     log.debug(`received data: ${data.toString()}`);
     this._buffer += data.toString();
 
@@ -193,20 +202,18 @@ class Sensors extends EventEmitter {
   /**
    * @private
    */
-  _command(cmd) {
+  _command(cmd: Object) {
     if (!this._ready) {
       log.warn(`sensors service not ready, ignoring the command`);
       return;
     }
-
     // sensors socket expects the command data in the following format
     const event = JSON.stringify(cmd) + '\0';
+    invariant(this._socket);
     this._socket.write(event);
     log.verbose(`sensors << ${JSON.stringify(cmd)}`);
   }
 }
 
-Sensors.prototype.SENSOR_TYPE = SENSOR_TYPE;
-
-let sensors = new Sensors();
-module.exports = sensors;
+const sensors = new Sensors();
+export default sensors;

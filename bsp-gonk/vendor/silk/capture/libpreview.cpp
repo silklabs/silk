@@ -47,13 +47,16 @@ public:
 #else
   virtual void onFrameAvailable(const BufferItem& item);
 #endif
-  void onFrameAvailableUnlocked();
-  void onFrameAvailableLocked();
 
 private:
   Vector<ClientImpl*> mClients;
   mutable Mutex mClientsMutex; // Acquire before using mClients
-  mutable Mutex mOnFrameAvailable; // Prevent multiple callers in onFrameAvailableLocked()
+
+  // Acquire before locking or unlocking a CpuConsumer buffer
+  mutable Mutex mBufferLockOrUnlockMutex;
+
+  // Condition to wait for an unlocked CpuConsumer buffer
+  mutable Condition mBufferUnlockCondition;
 
   CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture);
   ~CaptureFrameGrabber();
@@ -63,6 +66,7 @@ private:
     LockedFrame(void *frame, sp<CaptureFrameGrabber> grabber)
         : frame(frame), mGrabber(grabber) {}
     ~LockedFrame() {
+      Mutex::Autolock autolock(mGrabber->mBufferLockOrUnlockMutex);
       CpuConsumer::LockedBuffer img;
       img.data = static_cast<uint8_t*>(frame);
 
@@ -70,7 +74,7 @@ private:
       if (err != 0) {
         ALOGE("Unable to unlock buffer, err=%d", err);
       }
-      mGrabber->onFrameAvailableUnlocked();
+      mGrabber->mBufferUnlockCondition.signal();
     }
   private:
     void *frame;
@@ -244,44 +248,28 @@ void CaptureFrameGrabber::onFrameAvailable()
 void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
 #endif
 {
-  ALOGV("CaptureFrameGrabber::onFrameAvailable");
-  onFrameAvailableUnlocked();
-}
-
-void CaptureFrameGrabber::onFrameAvailableUnlocked()
-{
-  if (!mOnFrameAvailable.tryLock()) {
-    onFrameAvailableLocked();
-    mOnFrameAvailable.unlock();
-  }
-}
-
-void CaptureFrameGrabber::onFrameAvailableLocked()
-{
-  ALOGV("CaptureFrameGrabber::onFrameAvailableLocked");
-  Mutex::Autolock autolock(mClientsMutex);
-  if (mClients.size() == 0) {
-    ALOGW("No clients onFrameAvailable");
-    return;
-  }
-
   status_t err = 0;
   while (!err) {
     CpuConsumer::LockedBuffer img;
-    err = mCpuConsumer->lockNextBuffer(&img);
-    if (err) {
-      if (err != BAD_VALUE) { // BAD_VALUE == No more buffers, not an error
+
+    {
+      Mutex::Autolock autolock(mBufferLockOrUnlockMutex);
+      err = mCpuConsumer->lockNextBuffer(&img);
+      if (err) {
         switch (err) {
         case NOT_ENOUGH_DATA:
-          // Too many locked buffers, exit and wait for buffers to be returned
-          ALOGV("CaptureFrameGrabber: NOT_ENOUGH_DATA");
-          return;
+          mBufferUnlockCondition.wait(mBufferLockOrUnlockMutex);
+          err = 0; // A buffer was unlocked so let's try again
+          break;
+        case BAD_VALUE:
+          // No more buffers, not an error
+          break;
         default:
           ALOGE("CaptureFrameGrabber: error %d from lockNextBuffer", err);
           break;
         }
+        continue;
       }
-      continue;
     }
 
 #ifdef CAF_CPUCONSUMER
@@ -323,14 +311,17 @@ void CaptureFrameGrabber::onFrameAvailableLocked()
 
     RefBase *lockedFrame = new LockedFrame(img.data, this);
     lockedFrame->incStrong(NULL);
-    for (size_t i = 0; i < mClients.size(); i++) {
-      ClientImpl *client = mClients.itemAt(i);
-      lockedFrame->incStrong(NULL);
-      client->frameCallback(img.data,
-                            frameformat,
-                            img.width,
-                            img.height,
-                            (FrameOwner) lockedFrame);
+    {
+      Mutex::Autolock autolock(mClientsMutex);
+      for (size_t i = 0; i < mClients.size(); i++) {
+        ClientImpl *client = mClients.itemAt(i);
+        lockedFrame->incStrong(NULL);
+        client->frameCallback(img.data,
+                              frameformat,
+                              img.width,
+                              img.height,
+                              (FrameOwner) lockedFrame);
+      }
     }
     lockedFrame->decStrong(NULL);
   }

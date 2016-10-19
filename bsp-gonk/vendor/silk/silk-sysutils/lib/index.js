@@ -45,7 +45,7 @@ try {
  * @param {string} e Error string
  * @memberof silk-sysutils
  */
-export function processthrow(e: string) {
+export function processthrow(e: Error | string) {
   process.emit('uncaughtException', e);
 }
 

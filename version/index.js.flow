@@ -1,0 +1,12 @@
+/**
+ * @flow
+ */
+
+declare module.exports: {
+  branch: string;
+  bsp_api_id: string;
+  buildtime: number;
+  official: boolean;
+  semver: string;
+  sha: string;
+};

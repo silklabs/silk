@@ -23,6 +23,7 @@ dependencies {
 
 
 group = "com.silklabs.react"
+version = SILK_CORE_VERSION
 
 uploadArchives {
     repositories {

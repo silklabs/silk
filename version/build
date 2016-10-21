@@ -24,7 +24,7 @@ cat > $DEST/dist/index.json <<-EOF
 	{
 	  "branch": "$(source branch; echo $BRANCH)",
 	  "bsp_api_id": "$(node -p "require('silk-bsp-version').bsp_api_id")",
-	  "buildtime": "$(node -p "Date.now()")",
+	  "buildtime": $(node -p "Date.now()"),
 	  "fingerprint": "$BUILD_FINGERPRINT",
 	  "official": $OFFICIAL,
 	  "semver": "$(node -p "require('./package.json').version")",

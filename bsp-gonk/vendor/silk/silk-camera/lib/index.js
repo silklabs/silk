@@ -900,6 +900,15 @@ export default class Camera extends EventEmitter {
     }, requestedDelayMs);
   }
 
+  _incNoFrameCount() {
+    this._noFrameCount++;
+    log.warn(`Waiting for camera frame: ` +
+             `${this._noFrameCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
+    if (this._noFrameCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
+      this._restart(`Camera frame timeout`, true);
+    }
+  }
+
   /**
    * Read the next frame
    *
@@ -912,18 +921,11 @@ export default class Camera extends EventEmitter {
       return;
     }
     if (this._cvVideoCaptureBusy) {
+      log.info(`capture busy`);
       if (!fastFrameOnly) {
-        this._noFrameCount++;
-        log.warn(`Waiting for camera frame: ` +
-                 `${this._noFrameCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
-        if (this._noFrameCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
-          this._restart(`Camera frame timeout`, true);
-        }
+        this._incNoFrameCount();
       }
       return;
-    }
-    if (!fastFrameOnly) {
-      this._noFrameCount = 0;
     }
     this._cvVideoCaptureBusy = true;
     let when = Date.now();
@@ -932,7 +934,7 @@ export default class Camera extends EventEmitter {
     if (fastFrameOnly) {
       cvVideoCapture.read(im, (err) => {
         if (err) {
-          log.warn(`Unable to fetch frame: err=${err}`);
+          log.warn(`Unable to fetch fast frame: err=${err.message}`);
         } else {
           this._handleNextFastFrame(when, im);
         }
@@ -946,7 +948,9 @@ export default class Camera extends EventEmitter {
       cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
         if (err) {
           log.warn(`Unable to fetch frame: err=${err.message}`);
+          this._incNoFrameCount();
         } else {
+          this._noFrameCount = 0;
           this._handleNextFastFrame(when, im);
           this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
         }

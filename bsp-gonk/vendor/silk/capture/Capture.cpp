@@ -17,6 +17,7 @@
 #include <media/stagefright/OMXCodec.h>
 #include <system/audio.h>
 #include <utils/Thread.h>
+#include <poll.h>
 
 #include "AudioSourceEmitter.h"
 #include "AudioMutter.h"
@@ -494,14 +495,24 @@ status_t CaptureCommand::initThreadAudioOnly() {
  * Thread function that initializes the camera
  */
 status_t CaptureCommand::initThreadCamera() {
-  // Setup the camera
   int cameraId = 0;
-  mCamera = Camera::connect(cameraId, String16(CAMERA_NAME),
-      Camera::USE_CALLING_UID);
-  if (mCamera == NULL) {
-    ALOGE("Unable to connect to camera");
-    return -1;
+
+  // Make several attempts to connect with the camera.  Reconnects in particular
+  // can fail a couple times as the camera subsystem recovers.
+  for (int attempts = 0; ; ++attempts) {
+    mCamera = Camera::connect(cameraId, String16(CAMERA_NAME),
+        Camera::USE_CALLING_UID);
+    if (mCamera != NULL) {
+      break;
+    }
+    if (attempts == 40 /* ~20 seconds */) {
+      ALOGE("Too many failed attempts to connect to camera");
+      return -1;
+    }
+    ALOGI("Unable to connect to camera #%d", attempts);
+    poll(NULL, 0, 500 /*ms*/);
   }
+  ALOGI("Connected to camera service");
   mRemote = mCamera->remote();
 
   FaceDetection faces(&mVidChannel);

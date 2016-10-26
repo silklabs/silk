@@ -1,6 +1,6 @@
-From 3b03e9cfa526078a3c5b2115ef62558bd61e3943 Mon Sep 17 00:00:00 2001
-From: James Lal <james@silklabs.com>
-Date: Wed, 7 Oct 2015 12:25:25 -0700
+From d4dcaf7eb9d10c05029299e6fa8e7e2a853fe6d9 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 26 Oct 2016 14:44:35 -0700
 Subject: [PATCH] Turn off GTEST c++11 extensions
 
 ---
@@ -8,18 +8,18 @@ Subject: [PATCH] Turn off GTEST c++11 extensions
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/common.gypi b/common.gypi
-index dc7f9b6..c6bd04d 100644
+index 01ab2de..8df8617 100644
 --- a/common.gypi
 +++ b/common.gypi
-@@ -276,7 +276,7 @@
+@@ -332,7 +332,7 @@
+       ['OS=="android"', {
+         'target_conditions': [
+           ['_toolset=="target"', {
+-            'defines': [ '_GLIBCXX_USE_C99_MATH' ],
++            'defines': [ '_GLIBCXX_USE_C99_MATH', 'GTEST_LANG_CXX11=0' ],
+             'libraries': [ '-llog' ],
+           }],
          ],
-       }],
-       [ 'OS=="android"', {
--        'defines': ['_GLIBCXX_USE_C99_MATH'],
-+        'defines': ['_GLIBCXX_USE_C99_MATH', 'GTEST_LANG_CXX11=0'],
-         'libraries': [ '-llog' ],
-       }],
-       ['OS=="mac"', {
 -- 
-2.4.5
+2.10.0
 

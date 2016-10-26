@@ -1,6 +1,6 @@
-From a4eda5daf9d6bc764750701ae68276ad7a02415d Mon Sep 17 00:00:00 2001
+From 3597303e8aceb556809e542b4cb6fc305721c865 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
-Date: Wed, 8 Jun 2016 21:27:07 -0700
+Date: Wed, 26 Oct 2016 17:28:29 -0700
 Subject: [PATCH] De-pie. This breaks linking native .node modules
 
 ---
@@ -8,31 +8,31 @@ Subject: [PATCH] De-pie. This breaks linking native .node modules
  1 file changed, 8 deletions(-)
 
 diff --git a/common.gypi b/common.gypi
-index ed20eda..366053f 100644
+index 204c1c6..afd9db4 100644
 --- a/common.gypi
 +++ b/common.gypi
-@@ -70,10 +70,6 @@
+@@ -76,10 +76,6 @@
              'cflags': [ '-gxcoff' ],
              'ldflags': [ '-Wl,-bbigtoc' ],
            }],
 -          ['OS == "android"', {
 -            'cflags': [ '-fPIE' ],
 -            'ldflags': [ '-fPIE', '-pie' ]
--          }]
-         ],
-         'msvs_settings': {
-           'VCCLCompilerTool': {
-@@ -107,10 +103,6 @@
+-          }],
+           ['node_shared=="true"', {
+             'msvs_settings': {
+              'VCCLCompilerTool': {
+@@ -126,10 +122,6 @@
            ['OS!="mac" and OS!="win"', {
              'cflags': [ '-fno-omit-frame-pointer' ],
            }],
 -          ['OS == "android"', {
 -            'cflags': [ '-fPIE' ],
 -            'ldflags': [ '-fPIE', '-pie' ]
--          }]
-         ],
-         'msvs_settings': {
-           'VCCLCompilerTool': {
+-          }],
+           ['node_shared=="true"', {
+             'msvs_settings': {
+              'VCCLCompilerTool': {
 -- 
-2.7.4 (Apple Git-66)
+2.10.0
 

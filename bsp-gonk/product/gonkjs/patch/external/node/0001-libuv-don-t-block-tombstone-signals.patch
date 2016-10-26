@@ -109,7 +109,7 @@ index b6acc9d..f9acae2 100644
  }
  
 @@ -3576,6 +3585,23 @@ inline void PlatformInit() {
-   for (unsigned nr = 1; nr < 32; nr += 1) {
+   for (unsigned nr = 1; nr < kMaxSignal; nr += 1) {
      if (nr == SIGKILL || nr == SIGSTOP)
        continue;
 +

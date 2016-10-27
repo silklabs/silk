@@ -85,6 +85,8 @@ public:
   ~State() {
 #ifdef ANDROID
     if (client != NULL) {
+      client->stopFrameCallback();
+
       // Null client while holding frameDataLock, to ensure that another thread
       // isn't sitting in OnFrameCallback() when libpreview is closed
       uv_mutex_lock(&frameDataLock);
@@ -101,7 +103,7 @@ public:
       uv_mutex_unlock(&frameDataLock);
 
       // Shutdown calls to OnFrameCallback and/or OnAbandonedCallback
-      delete localclient;
+      localclient->release();
 
       // Grab then release frameDataLock again, to ensure that a thread didn't
       // sneak into OnFrameCallback() before localclient was really deleted.

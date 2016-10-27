@@ -17,9 +17,13 @@ typedef enum {
 typedef void *FrameOwner;
 
 class Client {
-public:
-  virtual ~Client() = 0;
+ public:
+  virtual void addref() = 0;
+  virtual void release() = 0;
+  virtual void stopFrameCallback() = 0;
   virtual void releaseFrame(FrameOwner owner) = 0;
+ protected:
+  virtual ~Client() = 0;
 };
 
 typedef void (*FrameCallback)(void *userData,

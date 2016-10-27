@@ -8,6 +8,7 @@
 #include <gui/CpuConsumer.h>
 #include <media/openmax/OMX_IVCommon.h>
 #include <system/camera.h>
+#include <cutils/atomic.h>
 #include <utils/Log.h>
 #include <utils/Vector.h>
 #include <utils/String16.h>
@@ -17,14 +18,13 @@
 
 #include "libpreview.h"
 
-
 namespace libpreview {
 
 using namespace android;
 
 class ClientImpl;
 class CaptureFrameGrabber: public ConsumerBase::FrameAvailableListener {
-public:
+ public:
   static sp<CaptureFrameGrabber> create();
 
   void registerClient(ClientImpl *client) {
@@ -47,8 +47,7 @@ public:
 #else
   virtual void onFrameAvailable(const BufferItem& item);
 #endif
-
-private:
+ private:
   Vector<ClientImpl*> mClients;
   mutable Mutex mClientsMutex; // Acquire before using mClients
 
@@ -62,7 +61,7 @@ private:
   ~CaptureFrameGrabber();
 
   class LockedFrame: public RefBase {
-  public:
+   public:
     LockedFrame(void *frame, sp<CaptureFrameGrabber> grabber)
         : frame(frame), mGrabber(grabber) {}
     ~LockedFrame() {
@@ -76,13 +75,13 @@ private:
       }
       mGrabber->mBufferUnlockCondition.signal();
     }
-  private:
+   private:
     void *frame;
     sp<CaptureFrameGrabber> mGrabber;
   };
 
   class DeathRecipient: public IBinder::DeathRecipient {
-  public:
+   public:
     DeathRecipient(CaptureFrameGrabber *grabber) : mGrabber(grabber) {}
 
     ~DeathRecipient() {
@@ -93,7 +92,7 @@ private:
       ALOGI("DeathRecipient::binderDied");
       mGrabber->binderDied();
     }
-  private:
+   private:
     CaptureFrameGrabber *mGrabber;
   };
   void binderDied();
@@ -107,24 +106,26 @@ private:
 
 
 class ClientImpl : public Client {
-public:
+ public:
   ClientImpl(FrameCallback frameCallback,
              AbandonedCallback abandonedCallback,
              void *userData,
              sp<CaptureFrameGrabber> grabber)
-      : mFrameCallback(frameCallback),
+      : mCount(1),
+        mFrameCallback(frameCallback),
         mAbandonedCallback(abandonedCallback),
         mUserData(userData),
         mGrabber(grabber) {
     mGrabber->registerClient(this);
   }
 
-  ~ClientImpl() {
-    mGrabber->unregisterClient(this);
-    {
-      Mutex::Autolock autolock(mFrameCallbackMutex);
-      mFrameCallback = NULL;
-      mAbandonedCallback = NULL;
+  void addref() {
+    android_atomic_inc(&mCount);
+  }
+
+  void release() {
+    if (android_atomic_dec(&mCount) == 1) {
+      delete this;
     }
   }
 
@@ -133,6 +134,12 @@ public:
       RefBase *ref = (RefBase *) frameOwner;
       ref->decStrong(NULL);
     }
+  }
+
+  void stopFrameCallback() {
+    Mutex::Autolock autolock(mFrameCallbackMutex);
+    mFrameCallback = NULL;
+    mAbandonedCallback = NULL;
   }
 
   void frameCallback(void *frame,
@@ -154,8 +161,18 @@ public:
     }
     mFrameCallback = NULL;
   }
+ protected:
+  ~ClientImpl() {
+    mGrabber->unregisterClient(this);
+    {
+      Mutex::Autolock autolock(mFrameCallbackMutex);
+      mFrameCallback = NULL;
+      mAbandonedCallback = NULL;
+    }
+  }
 
-private:
+ private:
+  mutable volatile int32_t mCount;
   mutable Mutex mFrameCallbackMutex; // Acquire before using mFrameCallback/mAbandonedCallback
   FrameCallback mFrameCallback;
   AbandonedCallback mAbandonedCallback;

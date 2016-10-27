@@ -3,6 +3,9 @@ From: Michael Vines <mvines@silklabs.com>
 Date: Tue, 22 Sep 2015 10:54:45 -0700
 Subject: [PATCH] Engrave logs from all processes, not just the crasher
 
+Also limit logs to avoid massive tombstones if some process is spewing logging
+faster than they can be engraved.
+
 ---
  debuggerd/tombstone.cpp | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -16,7 +19,7 @@ index 0c1b80f..c4b2bdb 100644
  
    if (want_logs) {
 -    dump_logs(log, pid, 0);
-+    dump_logs(log, 0, 0);
++    dump_logs(log, 0, 65535);
    }
  
    // send EOD to the Activity Manager, then wait for its ack to avoid racing ahead

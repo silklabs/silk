@@ -131,5 +131,8 @@ PRODUCT_PACKAGES += silk-speaker
 # vendor/silk/silk-audioplayer
 PRODUCT_PACKAGES += silk-audioplayer
 
+# vendor/silk/node-wav
+PRODUCT_PACKAGES += node-wav
+
 # include board-specific makefile if it exists
 -include board/$(SILK_BOARD)/$(SILK_BOARD).mk

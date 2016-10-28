@@ -73,6 +73,7 @@ const externals = [
   'node-opencl',
   'node-qsml',
   'node-shm',
+  'node-wav',
   'node-webrtc',
   'opencv',
   'segfault-handler',

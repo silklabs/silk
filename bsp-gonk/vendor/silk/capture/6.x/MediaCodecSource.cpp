@@ -218,7 +218,7 @@ void MediaCodecSource::Puller::onMessageReceived(const sp<AMessage> &msg) {
             status_t err = mSource->read(&mbuf);
 
             if (mPaused) {
-                if (err == OK) {
+                if (err == OK && (NULL != mbuf)) {
                     mbuf->release();
                     mbuf = NULL;
                 }

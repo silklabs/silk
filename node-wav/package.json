@@ -1,0 +1,21 @@
+{
+  "name": "node-wav",
+  "version": "0.0.2",
+  "description": "High performance WAV file decoder and encoder",
+  "main": "lib/index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "mocha": "mocha $(find test -name '*_test.js')",
+    "test": "npm install --only=dev && npm run mocha"
+  },
+  "keywords": [
+    "wav",
+    "decode"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "nodeunit": "^0.9.1",
+    "wav-decoder": "^1.1.0",
+    "wav-encoder": "^1.1.0"
+  }
+}

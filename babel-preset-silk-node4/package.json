@@ -6,7 +6,7 @@
   "main": "index.js",
   "devDependencies": {
     "babel-cli": "6.9.0",
-    "babel-features": "^2.0.0-beta",
+    "babel-features": "2.0.0",
     "babel-plugin-syntax-flow": "6.5.0",
     "babel-plugin-syntax-trailing-function-commas": "6.5.0",
     "babel-plugin-transform-async-to-generator": "6.5.0",
@@ -20,7 +20,7 @@
     "babel-plugin-transform-es2015-unicode-regex": "6.5.0",
     "babel-plugin-transform-export-extensions": "6.5.0",
     "babel-plugin-transform-flow-strip-types": "6.5.0",
-    "json-loader": "^0.5.4",
+    "json-loader": "0.5.4",
     "mocha": "2.4.5",
     "webpack": "1.13.0",
     "babel-plugin-transform-es2015-spread": "6.5.0",

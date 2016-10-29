@@ -10,6 +10,6 @@
     "babel-loader": "6.2.4",
     "babel-register": "6.9.0",
     "json-loader": "0.5.4",
-    "webpack": "1.12.13"
+    "webpack": "1.13.0"
   }
 }

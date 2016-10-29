@@ -22,7 +22,7 @@
     "babel-plugin-transform-flow-strip-types": "6.5.0",
     "json-loader": "^0.5.4",
     "mocha": "2.4.5",
-    "webpack": "^1.12.13",
+    "webpack": "1.13.0",
     "babel-plugin-transform-es2015-spread": "6.5.0",
     "babel-plugin-transform-object-rest-spread": "6.5.0",
     "babel-plugin-transform-decorators": "6.5.0",

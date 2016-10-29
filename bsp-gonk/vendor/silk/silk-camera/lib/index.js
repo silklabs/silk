@@ -172,7 +172,7 @@ type CommandInitType = {
     frames: boolean;
     video: boolean;
     audio: boolean;
-    frameIntervalMs: number;
+    videoSegmentLength: number;
     width: number;
     height: number;
     fps: number;
@@ -208,13 +208,8 @@ type CommandTypes = CommandSetParameterType |
 
 const log = createLog('camera');
 
-const DURATION_PROP = 'persist.silk.video.duration';
-
-// Clamp duration between 100ms and 10s. Any longer and the object metadata
-// associated with a video clip could easily get too large for the server to
-// handle (silk-device#1054). Defaults to 1s.
-const DURATION_MS =
-  Math.max(100, Math.min(util.getintprop(DURATION_PROP, 1000), 10000));
+const VIDEO_SEGMENT_DURATION_SECS =
+  Math.max(1, Math.min(util.getintprop('persist.silk.video.duration', 1), 20));
 
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
@@ -700,7 +695,7 @@ export default class Camera extends EventEmitter {
         frames: CAMERA_HW_ENABLED,
         video: CAMERA_VIDEO_ENABLED,
         audio: AUDIO_HW_ENABLED,
-        frameIntervalMs: DURATION_MS,
+        videoSegmentLength: VIDEO_SEGMENT_DURATION_SECS,
         width: WIDTH,
         height: HEIGHT,
         fps: FPS,

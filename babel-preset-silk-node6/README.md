@@ -1,6 +1,6 @@
-# Silk Babel Preset (Node 4)
+# Silk Babel Preset (Node 6)
 
-This is a flattened babel-preset for node 4 ...
+This is a flattened babel-preset for node 6.x LTS ...
 
 This project does not ship with the entire set of babel plugins as npm
 dependencies instead it flattens all the dependencies into a single fast
@@ -19,11 +19,9 @@ babel-node).
 
 ## How to build:
 
-```js
-npm run compile
-
-# Check in index.js to source tree ...
-```
+1. Run `npm run compile`
+2. Check in `index.js` to source tree
+3. Ignore/revert changes to `package.json`
 
 # LICENSE
 

@@ -13,6 +13,7 @@ check_npm_version() {
 }
 
 main() {
+  npm install
   ./build/stage
   check_npm_version
   npm install

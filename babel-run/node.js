@@ -1,5 +1,5 @@
 /**
- * Require helper to run particular module under babel6 + node4 preset.
+ * require() helper to run particular module under babel-preset-silk-node6.
  */
 
 'use strict';
@@ -27,7 +27,7 @@ for (let dep of BABEL_DEP_PATHS) {
 
 const DEFAULT_OPTIONS = {
   presets: [
-    require('babel-preset-silk-node4'),
+    require('babel-preset-silk-node6'),
   ],
   only: babeldeps
 };

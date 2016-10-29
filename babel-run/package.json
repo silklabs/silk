@@ -9,10 +9,10 @@
     "prepublish": "cd ../babelcompile && npm run compile"
   },
   "symlinkDependencies": {
-    "babel-preset-silk-node4": "../babel-preset-silk-node4"
+    "babel-preset-silk-node6": "../babel-preset-silk-node6"
   },
   "dependencies": {
-    "babel-preset-silk-node4": ">=0.13.0 <1.0.0"
+    "babel-preset-silk-node6": "^1.5.0"
   },
   "bin": {
     "babel-node": "./babel-node"

@@ -16,13 +16,11 @@
     "url": "https://github.com/silklabs/silk/issues"
   },
   "symlinkDependencies": {
-    "babel-core": "../babel-core",
-    "babel-preset-silk-node4": "../babel-preset-silk-node4"
+    "babel-preset-silk-node6": "../babel-preset-silk-node6"
   },
   "dependencies": {
-    "babel-core": "6.8.0",
     "babel-loader": "6.2.0",
-    "babel-preset-silk-node4": ">=0.13.0 <1.0.0",
+    "babel-preset-silk-node6": "^1.5.0",
     "copy-webpack-plugin": "2.1.5",
     "json-loader": "0.5.4",
     "node-gyp": "3.3.1",

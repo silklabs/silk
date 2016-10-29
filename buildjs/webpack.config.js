@@ -202,7 +202,7 @@ const config = {
   babel: {
     cacheDirectory: babelCache,
     presets: [
-      require('babel-preset-silk-node4'),
+      require('babel-preset-silk-node6'),
     ],
   },
   module : {

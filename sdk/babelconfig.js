@@ -7,7 +7,7 @@ var fs = require('fs');
 
 function main() {
   return {
-    preset: path.join(__dirname, '..', 'babel-preset-silk-node4'),
+    preset: path.join(__dirname, '..', 'babel-preset-silk-node6'),
     register: path.join(__dirname, '..', 'babel-run/node'),
   };
 }

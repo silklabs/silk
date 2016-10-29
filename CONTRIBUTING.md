@@ -15,7 +15,7 @@ Silk's key components are open source and we :heart: to receive contributions fr
 The repository generally consists of those parts:
 
 - `babel`: Babel utilities
-- `babel-preset-silk-node4`: Standardized babel configuration
+- `babel-preset-silk-node6`: Standardized babel configuration
 - `bsp-gonk`: Board support package for various Android-like devices
 - `cli`: Commandline tool
 - `device-main`: Device javascript entry point

@@ -45,8 +45,6 @@ const ADDITIONAL_PLUGINS = [
   // XXX: v8 does not like you to use super.X syntax which is used in our
   // codebase so we compile our modules down using es2015.
   'transform-es2015-classes',
-
-  'array-includes',
 ];
 
 const es2015Plugins = features.options().plugins.filter((name) => {

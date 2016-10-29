@@ -41,7 +41,7 @@ status_t OK = static_cast<status_t>(android::OK);
 Size sVideoSize(1280, 720);
 int32_t sVideoBitRateInK = 1024;
 int32_t sFPS = 24;
-int32_t sIFrameIntervalMs = 1000;
+int32_t sIFrameIntervalS = 1;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
@@ -250,9 +250,9 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sFPS = cmdData["fps"].asInt();
     ALOGV("sFPS %d", sFPS);
   }
-  if (!cmdData["frameIntervalMs"].isNull()) {
-    sIFrameIntervalMs = cmdData["frameIntervalMs"].asInt();
-    ALOGV("sIFrameIntervalSec %d", sIFrameIntervalMs);
+  if (!cmdData["videoSegmentLength"].isNull()) {
+    sIFrameIntervalS = cmdData["videoSegmentLength"].asInt();
+    ALOGV("sIFrameIntervalS %d", sIFrameIntervalS);
   }
   if (!cmdData["audioBitRate"].isNull()) {
     sAudioBitRate = cmdData["audioBitRate"].asInt();
@@ -391,10 +391,12 @@ sp<MediaSource> prepareVideoEncoder(const sp<ALooper>& looper,
   format->setInt32("color-format", colorFormat);
 
   format->setString("mime", kMimeTypeAvc);
+  //format->setInt32("profile", OMX_VIDEO_AVCProfileBaseline);
+  //format->setInt32("level", OMX_VIDEO_AVCLevel12);
   format->setInt32("bitrate", sVideoBitRateInK * 1024);
   format->setInt32("bitrate-mode", OMX_Video_ControlRateVariable);
   format->setFloat("frame-rate", sFPS);
-  format->setInt32("i-frame-interval-ms", sIFrameIntervalMs);
+  format->setInt32("i-frame-interval", sIFrameIntervalS);
 
   return MediaCodecSource::Create(
     looper,
@@ -548,6 +550,7 @@ status_t CaptureCommand::initThreadCamera() {
     mLooper->start();
 
     sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
+    LOG_ERROR(videoEncoder == NULL, "Unable to prepareVideoEncoder");
 
     sp<MediaSource> audioSource(
       new AudioSource(

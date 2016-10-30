@@ -14,7 +14,7 @@
     "test": "PATH=$PWD/node_modules/.silk-node/bin:$PATH mocha $(find test -name '*_test.js')",
     "lint": "eslint src test main.js bootstrap",
     "postinstall": "./bootstrap",
-    "posttest": "./posttest",
+    "posttest": "PATH=$PWD/node_modules/.silk-node/bin:$PATH ./posttest",
     "prepublish": "./prepublish"
   },
   "bin": {

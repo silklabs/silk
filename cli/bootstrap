@@ -23,19 +23,19 @@ var fs = require('fs');
 var path = require('path');
 var util = require('util');
 
-// 4.x LTS.
-var RELEASE_PATH = 'v4.3.0';
+// 6.x LTS.
+var RELEASE_PATH = 'v6.9.1';
 var RELEASE_BASE_URL = 'https://nodejs.org/download/release/';
-var RELEASE_VERSION = 'v4.3.0';
+var RELEASE_VERSION = 'v6.9.1';
 
-var MIN_NODE_MAJOR_VER = 4;
+var MIN_NODE_MAJOR_VER = 6;
 
 // We do not support an unlimited number of nodes so we only store a few common
 // checksums. See: https://nodejs.org/download/release/latest-argon/SHASUMS256.txt
 var CHECKSUMS = {
-  'darwin-x64': '72858adf7bc84b632f5635dd4a8030226048af5ad5cb166c7ee169dfcb4645ef',
-  'linux-x64': '90ce6e23ad9748813742e1cf09e86fa4c0f3d53972d5dbe920a38bcc842e2d09',
-  'linux-x86': '6972ed77c36f026498a0fde6b237fbc554325fa3a7426ee17ce563bdc08caa69',
+  'darwin-x64': '392e511ca0d6203c80700ed753187535e04069d0df0074cbfd1e4f1bd571d4c5',
+  'linux-x64': 'a9d9e6308931fa2a2b0cada070516d45b76d752430c31c9198933c78f8d54b17',
+  'linux-x86': 'd2f4cb3f7e784a8c1c1b6477db613d67635d69cbf9ca80c17b87c9e85378d3bd',
 };
 
 // Node very happily will run from any location on almost all modern linux and

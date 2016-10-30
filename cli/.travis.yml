@@ -1,7 +1,7 @@
 language: node_js
 node_js:
-  - "4" # LTS
-  - "5" # Development
+  - "6" # LTS
+  - "4" # previous LTS
   - "0.12" # Crazy old but on a lot of distros
   - "0.10" # Crazy old but on a lot of distros
 dist: trusty

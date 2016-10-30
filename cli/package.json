@@ -32,7 +32,7 @@
     "silk-flow-bin": "../flow-bin"
   },
   "devDependencies": {
-    "babel-cli": "6.9.0",
+    "babel-cli": "6.18.0",
     "babel-eslint": "7.0.0",
     "babel-plugin-transform-runtime": "6.4.3",
     "eslint": "3.7.1",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "argparse": "1.0.7",
-    "babel-runtime": "6.9.0",
+    "babel-runtime": "6.18.0",
     "cli-color": "1.1.0",
     "debug": "2.2.0",
     "json5": "0.4.0",

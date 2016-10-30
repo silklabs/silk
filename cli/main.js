@@ -22,9 +22,9 @@ if (fs.existsSync(CONFIG_PATH)) {
   var preset = require(config.preset);
   require(config.register)({
     presets: [preset],
-    // Be strict! We only want to include what is in our own src/* ... For usage
-    // where you do not want to use a precompile step an additional
-    // babel-register can be used for those files.
+    // Be strict! We only want to include what is in our own src/*.
+    // For plugins that do not want to use a precompile step, an
+    // additional babel-register step can be used for those files.
     only: function (file) {
       if (file.indexOf('node_modules') !== -1) {
         return false;

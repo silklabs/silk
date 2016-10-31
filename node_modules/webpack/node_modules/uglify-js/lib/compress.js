@@ -75,18 +75,36 @@ function Compressor(options, false_by_default) {
         screw_ie8     : false,
         drop_console  : false,
         angular       : false,
-
         warnings      : true,
-        global_defs   : {}
+        global_defs   : {},
+        passes        : 1,
     }, true);
+    this.warnings_produced = {};
 };
 
 Compressor.prototype = new TreeTransformer;
 merge(Compressor.prototype, {
     option: function(key) { return this.options[key] },
-    warn: function() {
-        if (this.options.warnings)
-            AST_Node.warn.apply(AST_Node, arguments);
+    compress: function(node) {
+        var passes = +this.options.passes || 1;
+        for (var pass = 0; pass < passes && pass < 3; ++pass) {
+            if (pass > 0) node.clear_opt_flags();
+            node = node.transform(this);
+        }
+        return node;
+    },
+    warn: function(text, props) {
+        if (this.options.warnings) {
+            // only emit unique warnings
+            var message = string_template(text, props);
+            if (!(message in this.warnings_produced)) {
+                this.warnings_produced[message] = true;
+                AST_Node.warn.apply(AST_Node, arguments);
+            }
+        }
+    },
+    clear_warnings: function() {
+        this.warnings_produced = {};
     },
     before: function(node, descend, in_list) {
         if (node._squeezed) return node;
@@ -129,6 +147,15 @@ merge(Compressor.prototype, {
         return this.print_to_string() == node.print_to_string();
     });
 
+    AST_Node.DEFMETHOD("clear_opt_flags", function(){
+        this.walk(new TreeWalker(function(node){
+            if (!(node instanceof AST_Directive || node instanceof AST_Constant)) {
+                node._squeezed = false;
+                node._optimized = false;
+            }
+        }));
+    });
+
     function make_node(ctor, orig, props) {
         if (!props) props = {};
         if (orig) {
@@ -156,9 +183,18 @@ merge(Compressor.prototype, {
                 value: val
             }).optimize(compressor);
           case "number":
-            return make_node(isNaN(val) ? AST_NaN : AST_Number, orig, {
-                value: val
-            }).optimize(compressor);
+            if (isNaN(val)) {
+                return make_node(AST_NaN, orig);
+            }
+
+            if ((1 / val) < 0) {
+                return make_node(AST_UnaryPrefix, orig, {
+                    operator: "-",
+                    expression: make_node(AST_Number, null, { value: -val })
+                });
+            }
+
+            return make_node(AST_Number, orig, { value: val }).optimize(compressor);
           case "boolean":
             return make_node(val ? AST_True : AST_False, orig).optimize(compressor);
           case "undefined":
@@ -302,7 +338,7 @@ merge(Compressor.prototype, {
                     if (ref.scope.uses_eval || ref.scope.uses_with) break;
 
                     // Constant single use vars can be replaced in any scope.
-                    if (var_decl.value.is_constant(compressor)) {
+                    if (!(var_decl.value instanceof AST_RegExp) && var_decl.value.is_constant(compressor)) {
                         var ctt = new TreeTransformer(function(node) {
                             if (node === ref)
                                 return replace_var(node, ctt.parent(), true);
@@ -392,10 +428,7 @@ merge(Compressor.prototype, {
                     var_defs_removed = true;
                 }
                 // Further optimize statement after substitution.
-                stat.walk(new TreeWalker(function(node){
-                    delete node._squeezed;
-                    delete node._optimized;
-                }));
+                stat.clear_opt_flags();
 
                 compressor.warn("Replacing " + (is_constant ? "constant" : "variable") +
                     " " + var_name + " [{file}:{line},{col}]", node.start);
@@ -502,6 +535,7 @@ merge(Compressor.prototype, {
 
         function handle_if_return(statements, compressor) {
             var self = compressor.self();
+            var multiple_if_returns = has_multiple_if_returns(statements);
             var in_lambda = self instanceof AST_Lambda;
             var ret = [];
             loop: for (var i = statements.length; --i >= 0;) {
@@ -539,7 +573,8 @@ merge(Compressor.prototype, {
                         }
                         //---
                         // if (foo()) return x; [ return ; ] ==> return foo() ? x : undefined;
-                        if ((ret.length == 0 || ret[0] instanceof AST_Return) && stat.body.value && !stat.alternative && in_lambda) {
+                        if (multiple_if_returns && (ret.length == 0 || ret[0] instanceof AST_Return)
+                            && stat.body.value && !stat.alternative && in_lambda) {
                             CHANGED = true;
                             stat = stat.clone();
                             stat.alternative = ret[0] || make_node(AST_Return, stat, {
@@ -554,11 +589,13 @@ merge(Compressor.prototype, {
                             CHANGED = true;
                             stat = stat.clone();
                             stat.condition = stat.condition.negate(compressor);
+                            var body = as_statement_array(stat.alternative).concat(ret);
+                            var funs = extract_functions_from_statement_array(body);
                             stat.body = make_node(AST_BlockStatement, stat, {
-                                body: as_statement_array(stat.alternative).concat(ret)
+                                body: body
                             });
                             stat.alternative = null;
-                            ret = [ stat.transform(compressor) ];
+                            ret = funs.concat([ stat.transform(compressor) ]);
                             continue loop;
                         }
                         //---
@@ -629,6 +666,17 @@ merge(Compressor.prototype, {
                 }
             }
             return ret;
+
+            function has_multiple_if_returns(statements) {
+                var n = 0;
+                for (var i = statements.length; --i >= 0;) {
+                    var stat = statements[i];
+                    if (stat instanceof AST_If && stat.body instanceof AST_Return) {
+                        if (++n > 1) return true;
+                    }
+                }
+                return false;
+            }
         };
 
         function eliminate_dead_code(statements, compressor) {
@@ -673,13 +721,29 @@ merge(Compressor.prototype, {
                 seq = [];
             };
             statements.forEach(function(stat){
-                if (stat instanceof AST_SimpleStatement && seq.length < 2000) seq.push(stat.body);
-                else push_seq(), ret.push(stat);
+                if (stat instanceof AST_SimpleStatement && seqLength(seq) < 2000) {
+                    seq.push(stat.body);
+                } else {
+                    push_seq();
+                    ret.push(stat);
+                }
             });
             push_seq();
             ret = sequencesize_2(ret, compressor);
             CHANGED = ret.length != statements.length;
             return ret;
+        };
+
+        function seqLength(a) {
+            for (var len = 0, i = 0; i < a.length; ++i) {
+                var stat = a[i];
+                if (stat instanceof AST_Seq) {
+                    len += stat.len();
+                } else {
+                    len++;
+                }
+            }
+            return len;
         };
 
         function sequencesize_2(statements, compressor) {
@@ -769,6 +833,9 @@ merge(Compressor.prototype, {
                 if (stat instanceof AST_SimpleStatement) {
                     stat.body = (function transform(thing) {
                         return thing.transform(new TreeTransformer(function(node){
+                            if (node instanceof AST_New) {
+                                return node;
+                            }
                             if (node instanceof AST_Call && node.expression instanceof AST_Function) {
                                 return make_node(AST_UnaryPrefix, node, {
                                     operator: "!",
@@ -800,8 +867,22 @@ merge(Compressor.prototype, {
 
     };
 
+    function extract_functions_from_statement_array(statements) {
+        var funs = [];
+        for (var i = statements.length - 1; i >= 0; --i) {
+            var stat = statements[i];
+            if (stat instanceof AST_Defun) {
+                statements.splice(i, 1);
+                funs.unshift(stat);
+            }
+        }
+        return funs;
+    }
+
     function extract_declarations_from_unreachable_code(compressor, stat, target) {
-        compressor.warn("Dropping unreachable code [{file}:{line},{col}]", stat.start);
+        if (!(stat instanceof AST_Defun)) {
+            compressor.warn("Dropping unreachable code [{file}:{line},{col}]", stat.start);
+        }
         stat.walk(new TreeWalker(function(node){
             if (node instanceof AST_Definitions) {
                 compressor.warn("Declarations in unreachable code! [{file}:{line},{col}]", node.start);
@@ -969,42 +1050,43 @@ merge(Compressor.prototype, {
                 return typeof e;
               case "void": return void ev(e, compressor);
               case "~": return ~ev(e, compressor);
-              case "-":
-                e = ev(e, compressor);
-                if (e === 0) throw def;
-                return -e;
+              case "-": return -ev(e, compressor);
               case "+": return +ev(e, compressor);
             }
             throw def;
         });
         def(AST_Binary, function(c){
-            var left = this.left, right = this.right;
+            var left = this.left, right = this.right, result;
             switch (this.operator) {
-              case "&&"         : return ev(left, c) &&         ev(right, c);
-              case "||"         : return ev(left, c) ||         ev(right, c);
-              case "|"          : return ev(left, c) |          ev(right, c);
-              case "&"          : return ev(left, c) &          ev(right, c);
-              case "^"          : return ev(left, c) ^          ev(right, c);
-              case "+"          : return ev(left, c) +          ev(right, c);
-              case "*"          : return ev(left, c) *          ev(right, c);
-              case "/"          : return ev(left, c) /          ev(right, c);
-              case "%"          : return ev(left, c) %          ev(right, c);
-              case "-"          : return ev(left, c) -          ev(right, c);
-              case "<<"         : return ev(left, c) <<         ev(right, c);
-              case ">>"         : return ev(left, c) >>         ev(right, c);
-              case ">>>"        : return ev(left, c) >>>        ev(right, c);
-              case "=="         : return ev(left, c) ==         ev(right, c);
-              case "==="        : return ev(left, c) ===        ev(right, c);
-              case "!="         : return ev(left, c) !=         ev(right, c);
-              case "!=="        : return ev(left, c) !==        ev(right, c);
-              case "<"          : return ev(left, c) <          ev(right, c);
-              case "<="         : return ev(left, c) <=         ev(right, c);
-              case ">"          : return ev(left, c) >          ev(right, c);
-              case ">="         : return ev(left, c) >=         ev(right, c);
-              case "in"         : return ev(left, c) in         ev(right, c);
-              case "instanceof" : return ev(left, c) instanceof ev(right, c);
+              case "&&"  : result = ev(left, c) &&  ev(right, c); break;
+              case "||"  : result = ev(left, c) ||  ev(right, c); break;
+              case "|"   : result = ev(left, c) |   ev(right, c); break;
+              case "&"   : result = ev(left, c) &   ev(right, c); break;
+              case "^"   : result = ev(left, c) ^   ev(right, c); break;
+              case "+"   : result = ev(left, c) +   ev(right, c); break;
+              case "*"   : result = ev(left, c) *   ev(right, c); break;
+              case "/"   : result = ev(left, c) /   ev(right, c); break;
+              case "%"   : result = ev(left, c) %   ev(right, c); break;
+              case "-"   : result = ev(left, c) -   ev(right, c); break;
+              case "<<"  : result = ev(left, c) <<  ev(right, c); break;
+              case ">>"  : result = ev(left, c) >>  ev(right, c); break;
+              case ">>>" : result = ev(left, c) >>> ev(right, c); break;
+              case "=="  : result = ev(left, c) ==  ev(right, c); break;
+              case "===" : result = ev(left, c) === ev(right, c); break;
+              case "!="  : result = ev(left, c) !=  ev(right, c); break;
+              case "!==" : result = ev(left, c) !== ev(right, c); break;
+              case "<"   : result = ev(left, c) <   ev(right, c); break;
+              case "<="  : result = ev(left, c) <=  ev(right, c); break;
+              case ">"   : result = ev(left, c) >   ev(right, c); break;
+              case ">="  : result = ev(left, c) >=  ev(right, c); break;
+              default:
+                  throw def;
             }
-            throw def;
+            if (isNaN(result) && c.find_parent(AST_With)) {
+                // leave original expression as is
+                throw def;
+            }
+            return result;
         });
         def(AST_Conditional, function(compressor){
             return ev(this.condition, compressor)
@@ -1012,8 +1094,16 @@ merge(Compressor.prototype, {
                 : ev(this.alternative, compressor);
         });
         def(AST_SymbolRef, function(compressor){
-            var d = this.definition();
-            if (d && d.constant && d.init) return ev(d.init, compressor);
+            if (this._evaluating) throw def;
+            this._evaluating = true;
+            try {
+                var d = this.definition();
+                if (d && d.constant && d.init) {
+                    return ev(d.init, compressor);
+                }
+            } finally {
+                this._evaluating = false;
+            }
             throw def;
         });
         def(AST_Dot, function(compressor){
@@ -1240,8 +1330,10 @@ merge(Compressor.prototype, {
         if (compressor.option("unused")
             && !(self instanceof AST_Toplevel)
             && !self.uses_eval
+            && !self.uses_with
            ) {
             var in_use = [];
+            var in_use_ids = {}; // avoid expensive linear scans of in_use
             var initializations = new Dictionary();
             // pass 1: find out which symbols are directly used in
             // this scope (not in nested scopes).
@@ -1264,7 +1356,11 @@ merge(Compressor.prototype, {
                         return true;
                     }
                     if (node instanceof AST_SymbolRef) {
-                        push_uniq(in_use, node.definition());
+                        var node_def = node.definition();
+                        if (!(node_def.id in in_use_ids)) {
+                            in_use_ids[node_def.id] = true;
+                            in_use.push(node_def);
+                        }
                         return true;
                     }
                     if (node instanceof AST_Scope) {
@@ -1287,7 +1383,11 @@ merge(Compressor.prototype, {
                     if (init) init.forEach(function(init){
                         var tw = new TreeWalker(function(node){
                             if (node instanceof AST_SymbolRef) {
-                                push_uniq(in_use, node.definition());
+                                var node_def = node.definition();
+                                if (!(node_def.id in in_use_ids)) {
+                                    in_use_ids[node_def.id] = true;
+                                    in_use.push(node_def);
+                                }
                             }
                         });
                         init.walk(tw);
@@ -1315,7 +1415,7 @@ merge(Compressor.prototype, {
                         }
                     }
                     if (node instanceof AST_Defun && node !== self) {
-                        if (!member(node.name.definition(), in_use)) {
+                        if (!(node.name.definition().id in in_use_ids)) {
                             compressor.warn("Dropping unused function {name} [{file}:{line},{col}]", {
                                 name : node.name.name,
                                 file : node.name.start.file,
@@ -1328,7 +1428,7 @@ merge(Compressor.prototype, {
                     }
                     if (node instanceof AST_Definitions && !(tt.parent() instanceof AST_ForIn)) {
                         var def = node.definitions.filter(function(def){
-                            if (member(def.name.definition(), in_use)) return true;
+                            if (def.name.definition().id in in_use_ids) return true;
                             var w = {
                                 name : def.name.name,
                                 file : def.name.start.file,
@@ -2406,9 +2506,11 @@ merge(Compressor.prototype, {
                 });
                 self = best_of(self, negated);
             }
-            switch (self.operator) {
-              case "<": reverse(">"); break;
-              case "<=": reverse(">="); break;
+            if (compressor.option("unsafe_comps")) {
+                switch (self.operator) {
+                  case "<": reverse(">"); break;
+                  case "<=": reverse(">="); break;
+                }
             }
         }
         if (self.operator == "+" && self.right instanceof AST_String
@@ -2500,16 +2602,19 @@ merge(Compressor.prototype, {
 
         if (self.undeclared() && !isLHS(self, compressor.parent())) {
             var defines = compressor.option("global_defs");
-            if (defines && defines.hasOwnProperty(self.name)) {
+            if (defines && HOP(defines, self.name)) {
                 return make_node_from_constant(compressor, defines[self.name], self);
             }
-            switch (self.name) {
-              case "undefined":
-                return make_node(AST_Undefined, self);
-              case "NaN":
-                return make_node(AST_NaN, self).transform(compressor);
-              case "Infinity":
-                return make_node(AST_Infinity, self).transform(compressor);
+            // testing against !self.scope.uses_with first is an optimization
+            if (!self.scope.uses_with || !compressor.find_parent(AST_With)) {
+                switch (self.name) {
+                  case "undefined":
+                    return make_node(AST_Undefined, self);
+                  case "NaN":
+                    return make_node(AST_NaN, self).transform(compressor);
+                  case "Infinity":
+                    return make_node(AST_Infinity, self).transform(compressor);
+                }
             }
         }
         return self;
@@ -2641,7 +2746,7 @@ merge(Compressor.prototype, {
         if (consequent.is_constant(compressor)
             && alternative.is_constant(compressor)
             && consequent.equivalent_to(alternative)) {
-            var consequent_value = consequent.constant_value();
+            var consequent_value = consequent.constant_value(compressor);
             if (self.condition.has_side_effects(compressor)) {
                 return AST_Seq.from_array([self.condition, make_node_from_constant(compressor, consequent_value, self)]);
             } else {
@@ -2649,23 +2754,57 @@ merge(Compressor.prototype, {
             }
         }
 
-        // y?true:false --> !!y
-        if (is_true(consequent) && is_false(alternative)) {
-            if (self.condition.is_boolean()) {
-                // boolean_expression ? true : false --> boolean_expression
-                return self.condition;
+        if (is_true(self.consequent)) {
+            if (is_false(self.alternative)) {
+                // c ? true : false ---> !!c
+                return booleanize(self.condition);
             }
-            self.condition = self.condition.negate(compressor);
-            return make_node(AST_UnaryPrefix, self.condition, {
-                operator: "!",
-                expression: self.condition
+            // c ? true : x ---> !!c || x
+            return make_node(AST_Binary, self, {
+                operator: "||",
+                left: booleanize(self.condition),
+                right: self.alternative
             });
         }
-        // y?false:true --> !y
-        if (is_false(consequent) && is_true(alternative)) {
-            return self.condition.negate(compressor)
+        if (is_false(self.consequent)) {
+            if (is_true(self.alternative)) {
+                // c ? false : true ---> !c
+                return booleanize(self.condition.negate(compressor));
+            }
+            // c ? false : x ---> !c && x
+            return make_node(AST_Binary, self, {
+                operator: "&&",
+                left: booleanize(self.condition.negate(compressor)),
+                right: self.alternative
+            });
         }
+        if (is_true(self.alternative)) {
+            // c ? x : true ---> !c || x
+            return make_node(AST_Binary, self, {
+                operator: "||",
+                left: booleanize(self.condition.negate(compressor)),
+                right: self.consequent
+            });
+        }
+        if (is_false(self.alternative)) {
+            // c ? x : false ---> !!c && x
+            return make_node(AST_Binary, self, {
+                operator: "&&",
+                left: booleanize(self.condition),
+                right: self.consequent
+            });
+        }
+
         return self;
+
+        function booleanize(node) {
+            if (node.is_boolean()) return node;
+            // !!expression
+            return make_node(AST_UnaryPrefix, node, {
+                operator: "!",
+                expression: node.negate(compressor)
+            });
+        }
 
         // AST_True or !0
         function is_true(node) {

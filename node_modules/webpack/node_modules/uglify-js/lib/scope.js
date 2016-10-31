@@ -53,7 +53,10 @@ function SymbolDef(scope, index, orig) {
     this.undeclared = false;
     this.constant = false;
     this.index = index;
+    this.id = SymbolDef.next_id++;
 };
+
+SymbolDef.next_id = 1;
 
 SymbolDef.prototype = {
     unmangleable: function(options) {
@@ -372,7 +375,7 @@ AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options){
     return defaults(options, {
         except      : [],
         eval        : false,
-        sort        : false,
+        sort        : false, // Ignored. Flag retained for backwards compatibility.
         toplevel    : false,
         screw_ie8   : false,
         keep_fnames : false
@@ -414,9 +417,6 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options){
                 if (options.except.indexOf(symbol.name) < 0) {
                     a.push(symbol);
                 }
-            });
-            if (options.sort) a.sort(function(a, b){
-                return b.references.length - a.references.length;
             });
             to_mangle.push.apply(to_mangle, a);
             return;

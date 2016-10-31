@@ -1,5 +1,5 @@
 /**
- * @noflow
+ * @flow
  */
 
 const dataDecoders = {
@@ -221,7 +221,14 @@ function decodeHeader(v, pos, end) {
   return null;
 }
 
-function decode(buffer) {
+type DecodeReturnType = {
+  sampleRate: number;
+  channels: number;
+  bitDepth: number;
+  channelData: Array<Float32Array>;
+};
+
+function decode(buffer: any): DecodeReturnType {
   let pos = 0, end = 0;
   if (buffer.buffer) {
     // If we are handed a typed array or a buffer, then we have to consider the
@@ -238,6 +245,10 @@ function decode(buffer) {
 
   let v = new DataView(buffer);
   let result = decodeHeader(v, pos, end);
+  if (!result) {
+    throw new Error(`Failed to decode`);
+  }
+
   let fmt = result.fmt;
   let samples = result.samples;
   pos = result.pos;
@@ -257,7 +268,14 @@ function decode(buffer) {
   };
 }
 
-function decodeRaw(buffer) {
+type DecodeRawReturnType = {
+  sampleRate: number;
+  channels: number;
+  bitDepth: number;
+  channelData: Buffer;
+};
+
+function decodeRaw(buffer: any): DecodeRawReturnType {
   let pos = 0, end = 0;
   if (buffer.buffer) {
     // If we are handed a typed array or a buffer, then we have to consider the
@@ -274,10 +292,14 @@ function decodeRaw(buffer) {
 
   let v = new DataView(buffer);
   let result = decodeHeader(v, pos, end);
+  if (!result) {
+    throw new Error(`Failed to decode`);
+  }
+
   let fmt = result.fmt;
   pos = result.pos;
 
-  let channelData = new Buffer(buffer, pos);
+  let channelData = new Buffer.from(buffer, pos);
 
   return {
     sampleRate: fmt.sampleRate,
@@ -339,9 +361,19 @@ function encodeHeader(
   return pos;
 }
 
-function encode(channelData, opts) {
+type EncodeOptionsType = {
+  sampleRate: number;
+  float?: boolean;
+  channels?: number;
+  bitDepth: number;
+};
+
+function encode(
+  channelData: Array<Float32Array>,
+  opts: EncodeOptionsType
+): Buffer {
   let sampleRate = opts.sampleRate || 16000;
-  let floatingPoint = !!(opts.float || opts.floatingPoint);
+  let floatingPoint = !!opts.float;
   let bitDepth = floatingPoint ? 32 : ((opts.bitDepth | 0) || 16);
   let channels = channelData.length;
   let samples = channelData[0].length;
@@ -366,9 +398,9 @@ function encode(channelData, opts) {
   return new Buffer(buffer);
 }
 
-function encodeRaw(channelData, opts) {
+function encodeRaw(channelData: Buffer, opts: EncodeOptionsType): Buffer {
   let sampleRate = opts.sampleRate || 16000;
-  let floatingPoint = !!(opts.float || opts.floatingPoint);
+  let floatingPoint = !!opts.float;
   let bitDepth = floatingPoint ? 32 : ((opts.bitDepth | 0) || 16);
   let channels = opts.channels || 1;
 

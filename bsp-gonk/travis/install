@@ -31,11 +31,6 @@ export CCACHE_COMPRESS=true
 source ../../ci-artifacts/setup
 source ../travis/common_before_install.sh
 
-node -p 'require("os").cpus()'
-if [ $(uname) = "Darwin" ]; then
-  sysctl -n hw.ncpu
-fi
-
 # Fetch ccache from last build
 function get_http_status() {
   local url=$1

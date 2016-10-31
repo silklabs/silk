@@ -6,7 +6,7 @@
 import createLog from 'silk-log/device';
 import bindings from './player';
 import fs from 'mz/fs';
-import wav from 'wav';
+import wav from 'node-wav';
 import Speaker from 'silk-speaker';
 import events from 'events';
 
@@ -286,35 +286,19 @@ export default class Player extends events.EventEmitter {
    * @private
    */
   async _readWavFile(fileName: string): Promise<soundMapDataType> {
-    let reader = new wav.Reader();
     let options = {};
-    let buffer = new Buffer(0);
 
-    let exists = await fs.exists(fileName);
-    if (!exists) {
-      return Promise.reject(`${fileName} not found`);
+    try {
+      let buffer = await fs.readFile(fileName);
+      let result = wav.decodeRaw(buffer);
+      options.numChannels = result.channels;
+      options.sampleRate = result.sampleRate;
+      options.bytesPerSample = result.bitDepth / 8;
+
+      return {buffer: result.channelData, options};
+    } catch (err) {
+      log.debug(err);
+      return Promise.reject(`Failed to decode ${fileName}`);
     }
-
-    return new Promise((resolve, reject) => {
-      reader.on('format', format => {
-        options.numChannels = format.channels;
-        options.sampleRate = format.sampleRate;
-        options.bytesPerSample = format.bitDepth / 8;
-        options.encoding = format.signed ? 'signed-integer' : 'unsigned-integer';
-      });
-      reader.on('data', pcmData => {
-        buffer = Buffer.concat([buffer, pcmData]);
-      });
-      reader.on('end', () => {
-        resolve({buffer, options});
-      });
-      reader.on('error', err => {
-        reader.removeAllListeners('data');
-        reader.removeAllListeners('end');
-        reader.removeAllListeners('format');
-        reject(err);
-      });
-      fs.createReadStream(fileName).pipe(reader).resume();
-    });
   }
 }

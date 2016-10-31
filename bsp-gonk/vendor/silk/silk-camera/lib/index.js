@@ -1168,9 +1168,7 @@ export default class Camera extends EventEmitter {
            *                         since epoch
            * @property {Buffer} frames buffer containing the mic data
            */
-          if (this._recording) {
-            this._throwyEmit('mic-data', {when: when, frames: pkt});
-          }
+          this._throwyEmit('mic-data', {when: when, frames: pkt});
           break;
         default:
           // Flush the buffer and restart the socket

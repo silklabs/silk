@@ -1,3 +1,13 @@
+1.3.1 / 2016-10-25
+------------------
+### Added
+- `graceful-fs` added as an `optionalDependencies`. Thanks [ryanzim]!
+
+1.3.0 / 2016-06-09
+------------------
+### Added
+- `filter` option to pre-filter and not walk directories.
+
 1.2.0 / 2016-04-16
 ------------------
 - added support for custom `fs` implementation. Useful for https://github.com/tschaub/mock-fs
@@ -27,3 +37,6 @@
 0.1.0 / 2015-10-25
 ------------------
 - initial release
+
+<!-- contributors -->
+[ryanzim]: https://github.com/ryanzim

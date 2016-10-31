@@ -1,14 +1,19 @@
-# Ubuntu 14.04 with opencv and node opencv@3.2.0
-FROM borromeotlhs/node-opencv
+FROM ubuntu:14.04
 
-MAINTAINER borromeotlhs@gmail.com
+MAINTAINER mvine@silklabs.com
 
-RUN add-apt-repository ppa:george-edison55/cmake-3.x
-RUN add-apt-repository ppa:git-core/ppa
-RUN add-apt-repository ppa:kubuntu-ppa/backports 
-RUN add-apt-repository ppa:phablet-team/tools
-RUN add-apt-repository ppa:ubuntu-toolchain-r/ppa
+RUN apt-get update -qq
+RUN apt-get install -y software-properties-common python-software-properties
+RUN add-apt-repository -y ppa:george-edison55/cmake-3.x
+RUN add-apt-repository -y ppa:git-core/ppa
+RUN add-apt-repository -y ppa:kubuntu-ppa/backports 
+RUN add-apt-repository -y ppa:phablet-team/tools
+RUN add-apt-repository -y ppa:ubuntu-toolchain-r/ppa
 RUN apt-get update
+RUN apt-get install -y libcv-dev libcvaux-dev libhighgui-dev libopencv-dev
+RUN curl -sL https://deb.nodesource.com/setup | bash -
+RUN apt-get install -y nodejs
+RUN npm install opencv@3.2.0 || cat npm-debug.log
 
 ENV JAVA_HOME /usr
 RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile &&\
@@ -19,6 +24,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   android-tools-adb \
   android-tools-fastboot \
   apt-file \
+  bc \
   ccache \
   cmake \
   g++ \

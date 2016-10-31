@@ -41,7 +41,13 @@ source build/envsetup.sh force
   du -hs .
 )
 
-make -j2
+if [[ -z $MAKE_J ]]; then
+  MAKE_J="-j$(nproc --all)"
+fi
+( 
+  set -ex
+  make $MAKE_J
+)
 
 (
   set -x

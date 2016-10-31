@@ -10,7 +10,7 @@
   },
   "license": "proprietary",
   "dependencies": {
-    "nan": "2.4"
+    "nan": "2.4.0"
   },
   "devDependencies": {
     "babel-eslint": "7.0.0",

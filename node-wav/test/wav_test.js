@@ -37,7 +37,7 @@ suite('wav', () => {
         channelData: data,
       };
       let opts = {
-        floatingPoint: floatingPoint,
+        float: floatingPoint,
         bitDepth: bitDepth,
       };
       encoder.encode(audioData, opts).then(buffer => {

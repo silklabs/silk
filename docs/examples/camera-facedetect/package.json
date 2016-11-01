@@ -6,13 +6,13 @@
   },
   "dependencies": {
     "opencv": "^5.0.0",
-    "silk": "^0.17.0",
-    "silk-buildjs": "^0.17.0"
+    "silk": "^1.0.0",
+    "silk-buildjs": "^1.0.0"
   },
   "devDependencies": {
     "copy-webpack-plugin": "2.1.5",
     "babel-eslint": "6.1.0",
     "eslint": "2.13.1",
-    "eslint-config-silk": "^0.17.0"
+    "eslint-config-silk": "^1.0.0"
   }
 }

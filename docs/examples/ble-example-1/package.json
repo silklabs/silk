@@ -2,6 +2,6 @@
   "silk": {},
   "name": "ble-example-1",
   "dependencies": {
-    "silk": ">=0.13.0 <1.0.0"
+    "silk": "^1.0.0"
   }
 }

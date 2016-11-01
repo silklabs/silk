@@ -1,7 +1,9 @@
 #! /usr/bin/env node
 
-var path = require('path');
+var force = process.argv[2] === '-f';
 
+var path = require('path');
+var fs = require('fs');
 var Download = require('download');
 
 // TODO: Get a real cloudfront hostname.
@@ -14,15 +16,20 @@ var download = new Download({
 });
 
 var assetUrl = BASE + path.join('linux' /*OS*/, VERSION, '/target.tar.gz');
+var destPath = path.join(__dirname, '../vendor');
 
-console.log('Downloading', assetUrl);
-download.use(require('download-status')());
-download.get(assetUrl);
-download.dest(path.join(__dirname, '../vendor'));
+if (fs.existsSync(destPath) && !force) {
+  console.log('emulator:', destPath);
+} else {
+  console.log('Downloading', assetUrl);
+  download.use(require('download-status')());
+  download.get(assetUrl);
+  download.dest(destPath);
 
-download.run(function(err) {
-  if (err) {
-    throw err;
-  }
-});
-
+  download.run(function(err) {
+    if (err) {
+      throw err;
+    }
+    console.log('emulator:', destPath);
+  });
+}

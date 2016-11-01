@@ -13,7 +13,7 @@ var download = new Download({
   extract: true,
 });
 
-var assetUrl = BASE + path.join('linux' /*OS*/, 'master', VERSION, '/target.tar.gz');
+var assetUrl = BASE + path.join('linux' /*OS*/, VERSION, '/target.tar.gz');
 
 console.log('Downloading', assetUrl);
 download.use(require('download-status')());

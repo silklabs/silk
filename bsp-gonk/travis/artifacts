@@ -28,7 +28,7 @@ channel=${SILK_CHANNEL:-commit}
 branch=$TRAVIS_BRANCH
 os=$(uname | tr '[:upper:]' '[:lower:]')
 version=$(get_version)
-target_upload_path=$channel/$SILK_BOARD/$os/$branch/$version
+target_upload_path=$channel/$SILK_BOARD/$os/$version
 
 # Produce target tarball
 ./archive dist

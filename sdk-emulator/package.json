@@ -4,9 +4,10 @@
   "description": "Silk Emulator",
   "main": "package.json",
   "scripts": {
-    "postinstall": "./bin/postinstall"
+    "postinstall": "./bin/silk-emulator-download"
   },
   "bin": {
+    "silk-emulator-download": "./bin/silk-emulator-download",
     "silk-emulator": "./bin/silk-emulator"
   },
   "repository": "silklabs/silk",

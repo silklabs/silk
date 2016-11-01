@@ -11,4 +11,5 @@ ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 cd $ROOT/..
 
-exec ./vendor/dist/bin/run-emulator
+set -x
+exec $PWD/vendor/dist/bin/run-emulator

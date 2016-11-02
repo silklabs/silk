@@ -7,7 +7,7 @@ import assert from 'assert';
 import EventEmitter from 'events';
 import net from 'net';
 import parseAdvertising from './advertisingDataParser';
-import { getprop } from 'silk-sysutils';
+import {getstrprop} from 'silk-sysutils';
 import createLog from 'silk-log/device';
 
 const log = createLog('bledroid');
@@ -81,12 +81,12 @@ export class Bledroid extends EventEmitter {
 
     this.startBufferingCommands();
 
-    if (getprop('ro.board.platform') === 'msm8952') {
+    if (getstrprop('ro.board.platform') === 'msm8952') {
       // On Kenzo, initializing Bluetooth before Wifi causes the wifi firmware
       // to not load.  Work around this for now by requiring that wifi always be
       // initialized first.
       const waitForWlan = () => {
-        if (getprop('wlan.driver.status') === 'ok') {
+        if (getstrprop('wlan.driver.status') === 'ok') {
           this._connect();
           return;
         }

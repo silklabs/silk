@@ -8,7 +8,7 @@ import * as util from 'silk-sysutils';
 import version from 'silk-core-version';
 
 // Vibrate by default only on developer builds
-let enabled = !util.getprop('persist.silk.quiet', version.official);
+let enabled = !util.getboolprop('persist.silk.quiet', version.official);
 
 /**
  * Silk vibrator module

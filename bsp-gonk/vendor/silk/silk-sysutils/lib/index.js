@@ -5,7 +5,7 @@
  * @example
  * const util = require('silk-sysutils');
  *
- * util.getprop('ro.product.name', 'unknown');
+ * util.getstrprop('ro.product.name', 'unknown');
  *
  * @flow
  * @private
@@ -118,31 +118,14 @@ export function execRetry(
   });
 }
 
-
-/**
- * Type of system scalar property
- * @property {(number|string|boolean)} ScalarPropTypes
- * @private
- */
-type ScalarPropTypes = string | boolean | number;
-
 /**
  * Type of system property
- * @property {(Array<PropTypes> | ScalarPropTypes)} PropTypes
+ * @property {(number|string|boolean)} PropTypes
  * @private
  */
-type PropTypes = Array<ScalarPropTypes> | ScalarPropTypes;
+type PropTypes = string | boolean | number;
 
-/**
- * Get value of a system property. Check to see if system property
- * is available. If property is not available check silk.prop file instead.
- *
- * @param {string} prop Name of the property to fetch
- * @param {string | boolean | number} [defaultValue=null] Default value to use if property is not available
- * @return {string | boolean | number} Value of the property
- * @memberof silk-sysutils
- */
-export function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
+function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
   let value = props.get(prop);
   if (value === '') {
     return (defaultValue === null || defaultValue === undefined) ? '' :
@@ -195,21 +178,6 @@ export function getintprop(prop: string, defaultValue: number = 0): number {
     throw new Error(`Expected ${prop} to be an integer`);
   }
   return value;
-}
-
-/**
- * Get value of a system property as string array
- *
- * @param {string} prop Name of the property to fetch
- * @param {Array<string>} [defaultValue=[]] Default value to use if property is not available
- * @return {Array<string>} Value of the property
- * @memberof silk-sysutils
- */
-export function getlistprop(
-  prop: string,
-  defaultValue: Array<string> = []): Array<string> {
-  let value = getprop(prop, '');
-  return (value === '') ? defaultValue : String(value).split(',');
 }
 
 /**

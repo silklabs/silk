@@ -21,7 +21,9 @@ if [ $TRAVIS_OS_NAME == osx ]; then
   source $(brew --prefix nvm)/nvm.sh
   npm config set spin=false
 fi
-nvm install 6.2
-nvm use 6.2
+
+NODE_VERSION=6.9.1
+nvm install $NODE_VERSION
+nvm use $NODE_VERSION
 node --version
 npm --version

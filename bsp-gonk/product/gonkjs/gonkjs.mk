@@ -12,6 +12,12 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \
 
+# 'import.prop' gets built into /system/build.prop, making it easier to add
+# silk-specific system properties without having to deal with manipulating
+# /system/build.prop
+TARGET_SYSTEM_PROP = $(wildcard $(TARGET_DEVICE_DIR)/system.prop) \
+                     product/gonkjs/import.prop
+
 # Volume defaults
 PRODUCT_PROPERTY_OVERRIDES += \
  persist.silk.volume.level=75 \

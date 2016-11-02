@@ -52,7 +52,7 @@ if [ -f /init ]; then
 fi
 
 
-NODE_ARGS="--harmony"
+NODE_ARGS=
 if [ "$1" = "--debug-brk" ]; then
   NODE_ARGS="$NODE_ARGS $1"
   shift

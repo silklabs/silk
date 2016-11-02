@@ -4,6 +4,7 @@ var force = process.argv[2] === '-f';
 
 var path = require('path');
 var fs = require('fs');
+var rimraf = require('rimraf');
 var Download = require('download');
 
 // TODO: Get a real cloudfront hostname.
@@ -26,6 +27,7 @@ if (fs.existsSync(destPath) && !force) {
   download.get(assetUrl);
   download.dest(destPath);
 
+  rimraf.sync(destPath);
   download.run(function(err) {
     if (err) {
       throw err;

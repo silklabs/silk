@@ -111,7 +111,8 @@ export default class Input extends events.EventEmitter {
   constructor() {
     super();
 
-    const devices = util.getlistprop('ro.silk.ui.inputevents');
+    const deviceList = util.getstrprop('ro.silk.ui.inputevents', '');
+    const devices = deviceList.split(',');
     if (devices.length > 0) {
       this._open(devices);
     } else {

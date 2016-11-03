@@ -38,6 +38,6 @@ cleanly_close_emulator() {
 }
 
 trap cleanly_close_emulator HUP INT QUIT KILL TERM
-emulator -verbose -show-kernel -no-skin -no-audio -no-window &
+emulator -verbose -show-kernel -no-skin -no-audio -no-window -memory 512 &
 wait
 exit 0

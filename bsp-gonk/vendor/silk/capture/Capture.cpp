@@ -526,6 +526,7 @@ status_t CaptureCommand::initThreadCamera() {
     CameraParameters params = mCamera->getParameters();
     params.set(CameraParameters::KEY_PREVIEW_SIZE, previewSize);
     params.set(CameraParameters::KEY_PREVIEW_FORMAT, "yuv420sp");
+    params.set(CameraParameters::KEY_FOCUS_MODE, CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
     status_t err = mCamera->setParameters(params.flatten());
     CHECK(err == 0);
     params = mCamera->getParameters();
@@ -543,6 +544,13 @@ status_t CaptureCommand::initThreadCamera() {
       sVideoSize, sFPS,
       NULL, sUseMetaDataMode);
   CHECK_EQ(mCameraSource->initCheck(), ::OK);
+
+  {
+    status_t err = mCamera->autoFocus();
+    if (err != ::OK) {
+      ALOGW("Error %d: Unable to set autofocus", err);
+    }
+  }
 
   if (sInitCameraVideo) {
     mLooper = new ALooper;

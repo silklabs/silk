@@ -16,6 +16,8 @@ void FaceDetection::notify(int32_t msgType, int32_t ext1, int32_t ext2) {
       focusMoving = ext1 == 1;
       ALOGW("Camera focus moving: %d", focusMoving);
     }
+  } else if (msgType == CAMERA_MSG_FOCUS) {
+    ALOGD("Camera focus result: %d", ext1);
   } else {
     ALOGD("notify: msgType=0x%x ext1=%d ext2=%d", msgType, ext1, ext2);
   }

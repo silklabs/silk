@@ -213,7 +213,6 @@ const VIDEO_SEGMENT_DURATION_SECS =
 
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
-const FOCUS_MODE = util.getstrprop('ro.silk.camera.focus_mode', 'continuous-video');
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 
@@ -764,7 +763,6 @@ export default class Camera extends EventEmitter {
         this._initComplete();
 
         if (CAMERA_HW_ENABLED) {
-          this._command({cmdName: 'setParameter', name: 'focus-mode', value: FOCUS_MODE});
           this._scheduleNextFrameCapture();
         }
       } else if (captureEvent.eventName === 'getParameter') {

@@ -1,4 +1,0 @@
---harmony
---ui tdd
---timeout 10000
---require silk-babel-run/mocha

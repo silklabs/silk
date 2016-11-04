@@ -1,9 +1,0 @@
-{
-  "extends": "eslint-config-silk/react",
-  "env": {
-    "browser": true
-  },
-  "globals": {
-    "SourceBuffer": false
-  }
-}

@@ -1,7 +1,0 @@
-{
-  "name": "mock-app",
-  "symlinkDependencies": {
-    "mock-api": "/api",
-    "mock-log": "/log"
-  }
-}

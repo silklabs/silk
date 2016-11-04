@@ -1,1 +1,0 @@
-../pandohub/gonk.sh

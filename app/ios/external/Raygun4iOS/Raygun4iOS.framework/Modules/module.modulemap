@@ -1,6 +1,0 @@
-framework module Raygun4iOS {
-  umbrella header "Raygun4iOS.h"
-
-  export *
-  module * { export * }
-}

@@ -1,9 +1,0 @@
-{
-  "name": "silk-svm",
-  "version": "1.4.0",
-  "description": "Trained sound-event recognition SVMs",
-  "main": "index.js",
-  "scripts": {
-    "preinstall": "./npm_preinstall"
-  }
-}

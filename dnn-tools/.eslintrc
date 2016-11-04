@@ -1,6 +1,0 @@
-{
-  "extends": "eslint-config-silk",
-  "rules": {
-    "no-console": 0,
-  }
-}

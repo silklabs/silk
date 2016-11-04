@@ -1,3 +1,0 @@
-#!/usr/bin/env node
-
-require('../lib/ntp-client.js').demo(process.argv);

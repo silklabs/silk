@@ -1,4 +1,0 @@
-#! /bin/bash -ex
-
-echo TODO: ../../../propsilk/silk-cv/bin/preinstall or not?
-#../../../propsilk/silk-cv/bin/preinstall

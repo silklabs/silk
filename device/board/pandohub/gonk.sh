@@ -1,3 +1,0 @@
-export TARGET_PRODUCT=msm8909
-
-

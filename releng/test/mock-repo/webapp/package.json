@@ -1,6 +1,0 @@
-{
-  "name": "mock-webapp",
-  "symlinkDependencies": {
-    "mock-api": "/api"
-  }
-}

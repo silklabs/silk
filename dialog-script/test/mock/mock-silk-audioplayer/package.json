@@ -1,9 +1,0 @@
-{
-  "name": "mock-silkaudioplayer",
-  "version": "0.0.1",
-  "description": "Mock for silk-audioplayer",
-  "main": "index.js",
-  "dependencies": {
-    "babel-preset-silk-node4": "^1.0.0"
-  }
-}

@@ -1,1 +1,0 @@
-web: cd server && npm run-script start-server

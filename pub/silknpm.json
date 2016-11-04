@@ -1,6 +1,0 @@
-{
-  "ignored": ["babel-preset-silk-node4"],
-  "restrict": {
-    "bsp-gonk": ["package.json"]
-  }
-}

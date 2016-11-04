@@ -1,7 +1,0 @@
-*
-!/bootstrap
-!/build/**
-!/main.js
-!/silk
-!/templates/**
-!/npm-shrinkwrap.json

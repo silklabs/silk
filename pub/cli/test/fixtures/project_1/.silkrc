@@ -1,3 +1,0 @@
-{
-  "plugins": ["a", "./node_modules/b/"]
-}

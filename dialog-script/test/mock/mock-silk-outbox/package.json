@@ -1,9 +1,0 @@
-{
-  "name": "mock-silk-outbox",
-  "version": "0.0.1",
-  "description": "Mock for silk-outbox",
-  "main": "index.js",
-  "dependencies": {
-    "babel-preset-silk-node4": "^1.0.0"
-  }
-}

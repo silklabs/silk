@@ -1,4 +1,0 @@
---harmony
---ui tdd
---timeout 45000
---require ../../../../../pub/babel-run/mocha

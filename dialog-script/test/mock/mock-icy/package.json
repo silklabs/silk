@@ -1,9 +1,0 @@
-{
-  "name": "mock-icy",
-  "version": "0.0.1",
-  "description": "Mock for icy",
-  "main": "index.js",
-  "dependencies": {
-    "babel-preset-silk-node4": "^1.0.0"
-  }
-}

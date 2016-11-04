@@ -1,3 +1,0 @@
---ui tdd
---timeout 15s
---require test/babel.js

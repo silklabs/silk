@@ -1,1 +1,0 @@
-../pandohub/silk_pandohub.mk

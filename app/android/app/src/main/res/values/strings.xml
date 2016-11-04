@@ -1,4 +1,0 @@
-<resources>
-    <string name="app_name">Silk</string>
-    <string name="blob_provider_authority">com.silklabs.app.blobs</string>
-</resources>

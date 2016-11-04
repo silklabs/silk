@@ -1,9 +1,0 @@
-{
-  "name": "silk-device",
-  "version": "1.4.0",
-  "scripts": {
-    "postinstall": "make"
-  },
-  "license": "proprietary",
-  "private": true
-}

@@ -1,9 +1,0 @@
-language: node_js
-node_js: 6.2
-dist: trusty
-
-os:
-  - linux
-
-install: true
-script: npm test

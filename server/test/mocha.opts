@@ -1,4 +1,0 @@
---harmony
---ui tdd
---require test/babel.js
-test/setup.js

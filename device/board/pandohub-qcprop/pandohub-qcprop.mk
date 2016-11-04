@@ -1,1 +1,0 @@
-../pandohub/pandohub.mk

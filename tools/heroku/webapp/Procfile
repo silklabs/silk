@@ -1,1 +1,0 @@
-web: cd webapp && npm run-script start-server

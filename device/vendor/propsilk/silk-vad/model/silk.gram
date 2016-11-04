@@ -1,7 +1,0 @@
-#JSGF V1.0;
-
-grammar commands;
-
-<startPolite> = [please | kindly | could you];
-<lights> = (turn ( on | off) lights) | ((dim | bright) lights);
-public <commandLights> = <startPolite> <lights>;

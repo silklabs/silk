@@ -1,9 +1,0 @@
-{
-  "extends": "eslint-config-silk",
-  "rules": {
-    "no-console": 0,
-    "import/no-require": 0,
-    "no-process-exit": 0,
-    "flowtype/require-valid-file-annotation": 0
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "name": "silk-config",
-  "version": "1.4.0",
-  "description": "Cross-project configuration parameters",
-  "main": "index.json",
-  "license": "proprietary",
-  "private": true
-}

@@ -1,5 +1,0 @@
-#!/bin/bash -ex
-
-npm run lint
-
-exit 0

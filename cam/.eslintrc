@@ -1,9 +1,0 @@
-{
-  "extends": "eslint-config-silk",
-  "env": {
-    "browser": true
-  },
-  "globals": {
-    "ArrayBufferView": false
-  }
-}

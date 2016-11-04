@@ -1,6 +1,0 @@
-/build/
-/.DS_Store
-*.sw?
-/test/output/
-/test/fixtures/
-/system/silk/media/shape_predictor_68_face_landmarks.dat

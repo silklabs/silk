@@ -1,9 +1,0 @@
-dlib/
-dist/
-caffe/
-protobuf/
-build/
-gflags*/
-glog*
-lmdb/
-master.zip

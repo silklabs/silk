@@ -1,1 +1,0 @@
-../../../pub/bsp-gonk/board/hammerhead/gonk.sh

@@ -1,6 +1,0 @@
-#!/usr/bin/env node
-
-'use strict';
-
-require('silk-babel-run/node')();
-require('.');

@@ -1,7 +1,0 @@
-/system/silk/bin/dash
-/system/silk/bin/node
-/system/silk/bin/silk-init
-/system/silk/silk-props.json
-/data
-/crash.log
-/system/silk/media/dnn/model/ped/caltech10x_warp_finetune_train_iter_100000

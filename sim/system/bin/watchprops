@@ -1,6 +1,0 @@
-#!/bin/sh
-
-cd $(dirname $0)/../..
-mkdir -p data/system/
-touch data/system/watchprops
-exec tail -f data/system/watchprops -n 0 1>&2

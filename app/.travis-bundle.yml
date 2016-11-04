@@ -1,8 +1,0 @@
-language: node_js
-node_js: 4.2
-install: app/install.sh
-env:
-  matrix:
-    - PLATFORM=ios
-    - PLATFORM=android
-script: app/tools/test_bundle.sh

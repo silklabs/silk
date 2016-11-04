@@ -1,9 +1,0 @@
-language: generic
-os:
-  - osx
-
-before_install:
-  - source ../pub/travis/common_before_install.sh
-
-install: true
-script: npm test

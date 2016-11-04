@@ -1,4 +1,0 @@
-language: generic
-sudo: required
-dist: trusty
-script: bob/bob

@@ -1,6 +1,0 @@
-#!/bin/bash -e
-
-source $(dirname $0)/envsetup.sh
-./system/silk/postinstall
-
-exec system/silk/bin/silk-init $@

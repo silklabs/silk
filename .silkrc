@@ -1,8 +1,0 @@
-{
-  plugins: [
-    "./cli-plugin-internal",
-    "./pub/sdk/cli",
-    "./cli-npm",
-    "./cli-m2",
-  ]
-}

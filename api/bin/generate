@@ -1,4 +1,0 @@
-#! /usr/bin/env node
-
-require('../../pub/babel-run/node')();
-require('../src/_generate').default();

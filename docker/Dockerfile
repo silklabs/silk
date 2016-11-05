@@ -6,7 +6,7 @@ RUN apt-get update -qq
 RUN apt-get install -y software-properties-common python-software-properties
 RUN add-apt-repository -y ppa:george-edison55/cmake-3.x
 RUN add-apt-repository -y ppa:git-core/ppa
-RUN add-apt-repository -y ppa:kubuntu-ppa/backports 
+RUN add-apt-repository -y ppa:kubuntu-ppa/backports
 RUN add-apt-repository -y ppa:phablet-team/tools
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/ppa
 RUN apt-get update
@@ -26,9 +26,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   apt-file \
   bc \
   ccache \
+  chrpath \
   cmake \
   g++ \
   g++-4.8 \
+  gawk \
   git \
   lib32stdc++6 \
   lib32z1 \
@@ -43,6 +45,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   mkisofs \
   openjdk-7-jdk \
   openssh-server \
+  texinfo \
   zip
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get remove -y nodejs

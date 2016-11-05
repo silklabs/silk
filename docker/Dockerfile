@@ -25,12 +25,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   ccache \
   chrpath \
   cmake \
+  diffstat \
   g++ \
   g++-4.8 \
+  g++-4.8-multilib \
   gawk \
   git \
   lib32stdc++6 \
   lib32z1 \
+  libc6-dev \
   libc6-dev-i386 \
   libcv-dev \
   libcvaux-dev \

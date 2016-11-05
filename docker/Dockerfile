@@ -11,9 +11,6 @@ RUN add-apt-repository -y ppa:phablet-team/tools
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/ppa
 RUN apt-get update
 RUN apt-get install -y libcv-dev libcvaux-dev libhighgui-dev libopencv-dev
-RUN curl -sL https://deb.nodesource.com/setup | bash -
-RUN apt-get install -y nodejs
-RUN npm install opencv@3.2.0 || cat npm-debug.log
 
 ENV JAVA_HOME /usr
 RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile &&\
@@ -48,8 +45,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   texinfo \
   zip
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get remove -y nodejs
-
 USER root
 # SSH login fix so user isn't kicked after login
 RUN sed 's#session\s*required\s*pam_loginuid.so#session optional pam_loginuid.so#g' -i /etc/pam.d/sshd
@@ -65,7 +60,7 @@ RUN adduser -ingroup silk --gecos "" --disabled-password silk
 COPY sudoers_silk /etc/sudoers.d/silk
 
 USER silk
-RUN ccache -M 6GB
+RUN ccache -M 10GB
 
 RUN ssh-keygen -q -N "" -t rsa -f /home/silk/.ssh/id_rsa
 RUN cp /home/silk/.ssh/id_rsa.pub /home/silk/.ssh/authorized_keys
@@ -84,3 +79,4 @@ RUN git config --global color.ui true
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
 RUN bash -i -c 'nvm install 6'
 ENV NVM_DIR /home/silk/.nvm
+

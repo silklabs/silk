@@ -75,8 +75,8 @@ RUN git config --global user.email "silkysmooth@example.com"
 RUN git config --global user.name "Silky Smooth"
 RUN git config --global color.ui true
 
-# Install node 6
+# Install node
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
-RUN bash -i -c 'nvm install 6'
+RUN bash -i -c 'nvm install 6.9.1'
 ENV NVM_DIR /home/silk/.nvm
 

@@ -1,0 +1,9 @@
+sudo: required
+language: generic
+services: docker
+
+script: docker build -t silklabs/silk .
+after_success:
+  - docker login -u=stooge -p="$STOOGE_DOCKER_PASSWORD"
+  - if [ $TRAVIS_PULL_REQUEST = false ]; then docker push silklabs/silk; fi
+

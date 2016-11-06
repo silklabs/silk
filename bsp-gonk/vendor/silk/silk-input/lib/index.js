@@ -112,9 +112,8 @@ export default class Input extends events.EventEmitter {
     super();
 
     const deviceList = util.getstrprop('ro.silk.ui.inputevents', '');
-    const devices = deviceList.split(',');
-    if (devices.length > 0) {
-      this._open(devices);
+    if (deviceList.length > 0) {
+      this._open(deviceList.split(','));
     } else {
       fs.readdir('/dev/input', (err, availDevices) => {
         if (err) {

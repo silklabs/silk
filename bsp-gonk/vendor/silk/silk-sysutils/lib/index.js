@@ -13,21 +13,23 @@
 
 import {execFile, spawn, spawnSync} from 'child_process';
 import EventEmitter from 'events';
+import {end as trimNewLinesAtEnd} from 'trim-newlines';
 
 import createLog from 'silk-log/device';
 
 const log = createLog('sysutils');
 
 let props;
-if (process.platform === 'android') {
+
+try {
   props = require('silk-properties'); //eslint-disable-line
-} else {
-  // TODO: Ideally silk-properties as is would work on the host
+} catch (e) {
+  log.debug('silk-properties not found, using fallback:', e);
   props = {
     get(prop: string): string {
       let result = spawnSync('getprop', [prop], {encoding: 'utf8'});
       if (result.stdout) {
-        return result.stdout.toString();
+        return trimNewLinesAtEnd(result.stdout.toString());
       }
       return '';
     },

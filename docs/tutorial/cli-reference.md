@@ -85,5 +85,5 @@ silk log
 Configure wifi on the device or emulator.
 
 ```bash
-silk setupwifi SSID PASSWORD
+silk setupwifi 'SSID' 'PASSWORD'
 ```

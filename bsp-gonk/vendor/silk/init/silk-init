@@ -5,7 +5,7 @@ export DEBUG_COLORS=$(getprop persist.silk.debug.colors true)
 export UV_THREADPOOL_SIZE=32
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/silk/lib
 
-if [ $(getprop ro.debuggable) -eq 1 ]; then
+if [ "$(getprop ro.debuggable)" = "1" ]; then
   export NODE_ENV="debug"
   export NODE_PATH=$NODE_PATH:data/node_modules/
 else
@@ -24,7 +24,7 @@ maybe_enable_static_eth0() {
   ETH0_CONFIGURED=$(getprop eth0.static.configured 0)
 
   if [ $ETH0_STATIC_ENABLE -eq 1 ] && [ $ETH0_CONFIGURED -eq 0 ] ; then
-    info "Wait for some reson (else eth0 no workie), yes this sucks ..."
+    info "Wait for some reason (else eth0 no workie), yes this sucks ..."
     sleep 7
     info "Enabling static eth0:"
     info "  ip       : $ETH0_STATIC_IP"

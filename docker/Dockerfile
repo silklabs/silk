@@ -20,6 +20,7 @@ RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile &&\
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   android-tools-adb \
   android-tools-fastboot \
+  autoconf \
   apt-file \
   bc \
   ccache \
@@ -37,6 +38,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   libc6-dev-i386 \
   libcv-dev \
   libcvaux-dev \
+  libtool \
   libhighgui-dev \
   libopencv-dev \
   libxml2-utils \

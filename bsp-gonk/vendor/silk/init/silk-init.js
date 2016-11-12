@@ -5,4 +5,5 @@ const MAIN_PROP = 'persist.silk.main';
 
 const main = sysutils.getstrprop(MAIN_PROP, 'silk-device-main');
 console.log(`initializing silk with main: ${main}`);
+process.title = main;
 require(main);

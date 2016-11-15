@@ -23,16 +23,27 @@ type soundMapDataType = {
 };
 
 /**
+ * The available audio types
+ *
+ * @memberof silk-audioplayer
+ * @example
+ * file   - Should be set to this value to play an audio file. Default
+ * stream - Should be set to this value to play an audio stream
+ */
+export type AudioType = 'file' | 'stream';
+
+/**
  * The available media states
  *
  * @memberof silk-audioplayer
  * @example
- * idle    - Audio hasn't started playing yet
- * playing - Audio is now playing
- * paused  - Audio has paused
- * stopped - Audio has stopped or finished playback
+ * idle      - Audio hasn't started playing yet
+ * preparing - Audio stream is being prepared to play
+ * playing   - Audio file or stream is now playing
+ * paused    - Audio file or stream has paused
+ * stopped   - Audio file or stream has stopped or finished playback
  */
-type MediaState = 'idle' | 'playing' | 'paused' | 'stopped';
+type MediaState = 'idle' | 'preparing' |'playing' | 'paused' | 'stopped';
 
 /**
  * Information about an audio file
@@ -82,15 +93,22 @@ export default class Player extends events.EventEmitter {
   _player: PlayerType = null;
   _mediaState: MediaState = 'idle';
   _fileName: string = '';
+  _audioType: AudioType;
+  _closed: boolean = false;
 
-  constructor() {
+  constructor(audioType: AudioType = 'file') {
     super();
-    this._player = new bindings.Player();
+    this._audioType = audioType;
+    this._player = new bindings.Player(audioType === 'stream' ? 1 : 0);
+
+    if (audioType === 'stream') {
+      this._prepare();
+    }
   }
 
   /**
-   * Sets the specified output gain value on all channels of this sound file. Gain
-   * values are clamped to the closed interval [0.0, 1.0]. A value of 0.0
+   * Sets the specified output gain value on all channels of this sound file.
+   * Gain values are clamped to the closed interval [0.0, 1.0]. A value of 0.0
    * results in zero gain (silence), and a value of 1.0 means signal unchanged.
    * The default value is 1.0. Audio player volume can be set before or during
    * the playback.
@@ -130,6 +148,11 @@ export default class Player extends events.EventEmitter {
    * @instance
    */
   async play(fileName: string): Promise<void> {
+    if (this._audioType !== 'file') {
+      return Promise.reject(
+        new Error(`Play can only be called for AUDIO_TYPE_FILE`)
+      );
+    }
     let exists = await fs.exists(fileName);
     if (!exists) {
       return Promise.reject(new Error(`${fileName} not found`));
@@ -169,6 +192,48 @@ export default class Player extends events.EventEmitter {
         this.emit('started');
       });
     });
+  }
+
+  _prepare() {
+    // Prepare stream player
+    this._player.prepare(err => {
+      log.debug(`On prepared done`);
+      if (err) {
+        this._onError(err);
+        return;
+      }
+      this._mediaState = 'playing';
+      this.emit('started');
+    });
+    this._mediaState = 'preparing';
+  }
+
+  _onError(err: Error) {
+    log.debug(`Error`, err.message);
+    this.emit('error', err);
+    this._mediaState = 'stopped';
+  }
+
+  /**
+   * Write audio buffer to be player's queue
+   * @private
+   */
+  write(chunk: Buffer) {
+    if (this._audioType !== 'stream') {
+      this._onError(new Error(`Write can only be called for AUDIO_TYPE_STREAM`));
+      return;
+    }
+
+    if (this._closed) {
+      // stop() has already been called. this should not be called
+      this._onError(new Error('write() call after close() call'));
+      return;
+    }
+
+    if (this._player.write(chunk, chunk.length) <= 0) {
+      this._onError(new Error('Failed to queue buffer to play'));
+      return;
+    }
   }
 
   /**

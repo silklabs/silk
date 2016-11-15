@@ -10,6 +10,8 @@
         [ "OS==\"android\"", {
           "sources": [
             "src/player.cpp",
+            "src/BufferedDataSource.cpp",
+            "src/StreamPlayer.cpp",
           ],
           "include_dirs": [
             "<!(echo $ANDROID_BUILD_TOP/frameworks/av/include)",
@@ -25,8 +27,10 @@
             "-Wall",
             '-std=c++11',
             '-Wno-sign-compare',
-            '-Wstrict-aliasing',
+            '-Wno-strict-aliasing',
             '-Wno-sign-promo',
+            '-Wno-parentheses',
+            '-Wno-missing-field-initializers',
           ],
         }],
       ],

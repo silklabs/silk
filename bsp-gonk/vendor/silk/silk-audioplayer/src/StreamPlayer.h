@@ -37,7 +37,7 @@ public:
   void setVolume(float volume);
   status_t start();
   status_t stop();
-  status_t reset();
+  void getCurrentPosition(int* msec);
 
 
 protected:
@@ -86,6 +86,8 @@ private:
 
   int64_t mStartTimeRealUs;
 
+  static status_t PostAndAwaitResponse(const sp<AMessage> &msg,
+                                       sp<AMessage> *response);
   status_t onPrepare();
   status_t onStart();
   status_t onStop();

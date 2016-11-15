@@ -78,23 +78,6 @@ void StreamPlayer::setVolume(float gain) {
   }
 }
 
-// static
-status_t PostAndAwaitResponse(
-    const sp<AMessage> &msg, sp<AMessage> *response) {
-  ALOGV("%s", __FUNCTION__);
-  status_t err = msg->postAndAwaitResponse(response);
-
-  if (err != OK) {
-    return err;
-  }
-
-  if (!(*response)->findInt32("err", &err)) {
-    err = OK;
-  }
-
-  return err;
-}
-
 status_t StreamPlayer::start() {
   ALOGV("%s", __FUNCTION__);
   sp<AMessage> msg = new AMessage(kWhatStart, id());
@@ -110,6 +93,34 @@ status_t StreamPlayer::stop() {
   sp<AMessage> msg = new AMessage(kWhatStop, id());
   sp<AMessage> response;
   return PostAndAwaitResponse(msg, &response);
+}
+
+void StreamPlayer::getCurrentPosition(int* msec) {
+  ALOGV("%s", __FUNCTION__);
+
+  int64_t timeUs;
+  if (mExtractor->getSampleTime(&timeUs) == OK) {
+    *msec = timeUs / 1000;
+  } else {
+    *msec = -1;
+  }
+}
+
+// static
+status_t StreamPlayer::PostAndAwaitResponse(
+    const sp<AMessage> &msg, sp<AMessage> *response) {
+  ALOGV("%s", __FUNCTION__);
+  status_t err = msg->postAndAwaitResponse(response);
+
+  if (err != OK) {
+    return err;
+  }
+
+  if (!(*response)->findInt32("err", &err)) {
+    err = OK;
+  }
+
+  return err;
 }
 
 void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {

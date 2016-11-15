@@ -318,6 +318,8 @@ NAN_METHOD(Player::GetCurrentPosition) {
   int msec = -1;
   if (self->mMediaPlayer != NULL) {
     self->mMediaPlayer->getCurrentPosition(&msec);
+  } else if (self->mStreamPlayer != NULL) {
+    self->mStreamPlayer->getCurrentPosition(&msec);
   }
   info.GetReturnValue().Set(Nan::New<Number>(msec));
 }

@@ -8,5 +8,7 @@ LOCAL_SHARED_LIBRARIES := \
   liblog \
   libutils \
   libmedia \
+  libstagefright \
+  libstagefright_foundation \
 
 include $(BUILD_NODE_MODULE)

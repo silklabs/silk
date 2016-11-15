@@ -65,6 +65,8 @@ void Player::Init(Local<Object> exports) {
 
   // Prototype
   Nan::SetPrototypeMethod(ctor, "play", Play);
+  Nan::SetPrototypeMethod(ctor, "prepare", Prepare);
+  Nan::SetPrototypeMethod(ctor, "write", Write);
   Nan::SetPrototypeMethod(ctor, "setVolume", SetVolume);
   Nan::SetPrototypeMethod(ctor, "stop", Stop);
   Nan::SetPrototypeMethod(ctor, "pause", Pause);
@@ -79,15 +81,23 @@ void Player::Init(Local<Object> exports) {
 /**
  *
  */
-Player::Player():
+Player::Player(AudioType audioType):
     gain(GAIN_MAX) {
   ALOGV("Creating instance of player");
 
-  sp<ProcessState> ps = ProcessState::self();
-  ps->startThreadPool();
+  if (audioType == AUDIO_TYPE_FILE) {
+    sp<ProcessState> ps = ProcessState::self();
+    ps->startThreadPool();
 
-  mMediaPlayer = new MediaPlayer();
-  mMediaPlayer->setListener(new MPListener);
+    mMediaPlayer = new MediaPlayer();
+    mMediaPlayer->setListener(new MPListener);
+  } else {
+    mLooper = new ALooper();
+    mLooper->start();
+
+    mStreamPlayer = new StreamPlayer();
+    mLooper->registerHandler(mStreamPlayer);
+  }
 }
 
 /**
@@ -107,13 +117,19 @@ void Player::Done() {
 NAN_METHOD(Player::New) {
   if (info.IsConstructCall()) {
     // Invoked as constructor: `new Player(...)`
-    Player* obj = new Player();
+    uint32_t audioType = AUDIO_TYPE_FILE;
+    INT_FROM_ARGS(audioType, 0)
+
+    Player* obj = new Player((AudioType) audioType);
     obj->Wrap(info.This());
     info.GetReturnValue().Set(info.This());
   } else {
     // Invoked as plain function `Player(...)`, turn into construct call.
+    const int argc = 1;
+    v8::Local<v8::Value> argv[argc] = { info[0] };
+
     Local<Function> cons = Nan::New<Function>(constructor);
-    info.GetReturnValue().Set(cons->NewInstance());
+    info.GetReturnValue().Set(cons->NewInstance(argc, argv));
   }
 }
 
@@ -186,6 +202,69 @@ NAN_METHOD(Player::Play) {
                                             startCallback));
 }
 
+/**
+ * Async worker handler for preparing and starting the stream player
+ */
+class PrepareAsyncWorker: public Nan::AsyncWorker {
+public:
+  PrepareAsyncWorker(Nan::Callback *callback, Player* player):
+    Nan::AsyncWorker(callback),
+    player(player) {
+  }
+
+  void Execute() {
+    // Prepare and then start the player
+    if (player->mStreamPlayer != NULL) {
+      player->mStreamPlayer->start();
+    } else {
+      SetErrorMessage("Stream player not initialized?");
+    }
+  }
+
+  void HandleOKCallback() {
+    Local<Value> argv[] = {
+      Nan::Null()
+    };
+    callback->Call(1, argv);
+  }
+
+private:
+  Player *player;
+};
+
+NAN_METHOD(Player::Prepare) {
+  SETUP_FUNCTION(Player)
+
+  if (info.Length() != 1) {
+    JSTHROW("Invalid number of arguments provided");
+  }
+
+  REQ_FUN_ARG(0, cb);
+
+  // Call to stream player start is blocking so use asyn worker
+  Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
+  Nan::AsyncQueueWorker(new PrepareAsyncWorker(callback, self));
+}
+
+NAN_METHOD(Player::Write) {
+  SETUP_FUNCTION(Player)
+
+  if (info.Length() != 2) {
+     JSTHROW("Invalid number of arguments provided");
+  }
+
+  char *buffer = UnwrapPointer(info[0]);
+  int len = info[1]->Int32Value();
+  // ALOGV("Received %d bytes to be written", len);
+
+  // Buffer audio data to be played by stream player
+  int written = 0;
+  if (self->mStreamPlayer != NULL) {
+    written = self->mStreamPlayer->write((const void*) buffer, len);
+  }
+  info.GetReturnValue().Set(Nan::New<Number>(written));
+}
+
 NAN_METHOD(Player::SetVolume) {
   SETUP_FUNCTION(Player)
 
@@ -196,6 +275,8 @@ NAN_METHOD(Player::SetVolume) {
   self->gain = info[0]->NumberValue();
   if (self->mMediaPlayer != NULL) {
     self->mMediaPlayer->setVolume(self->gain, self->gain);
+  } else if (self->mStreamPlayer != NULL) {
+    self->mStreamPlayer->setVolume(self->gain);
   }
 }
 
@@ -205,6 +286,8 @@ NAN_METHOD(Player::Stop) {
   status_t ret = INVALID_OPERATION;
   if (self->mMediaPlayer != NULL) {
     ret = self->mMediaPlayer->stop();
+  } else if (self->mStreamPlayer != NULL) {
+    ret = self->mStreamPlayer->stop();
   }
   info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
 }

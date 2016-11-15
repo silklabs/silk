@@ -521,14 +521,22 @@ status_t CaptureCommand::initThreadCamera() {
   mCamera->setListener(&faces);
 
   {
+    status_t err;
     char previewSize[80];
     snprintf(previewSize, sizeof(previewSize), "%dx%d", sVideoSize.width, sVideoSize.height);
     CameraParameters params = mCamera->getParameters();
     params.set(CameraParameters::KEY_PREVIEW_SIZE, previewSize);
     params.set(CameraParameters::KEY_PREVIEW_FORMAT, "yuv420sp");
-    params.set(CameraParameters::KEY_FOCUS_MODE, CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
-    status_t err = mCamera->setParameters(params.flatten());
+    err = mCamera->setParameters(params.flatten());
     CHECK(err == 0);
+
+    params = mCamera->getParameters();
+    params.set(CameraParameters::KEY_FOCUS_MODE, CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
+    err = mCamera->setParameters(params.flatten());
+    if (err != ::OK) {
+      ALOGW("Error %d: Unable to set focus mode", err);
+    }
+
     params = mCamera->getParameters();
     params.dump();
   }

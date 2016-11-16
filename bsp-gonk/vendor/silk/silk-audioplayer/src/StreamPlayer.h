@@ -17,6 +17,8 @@
 #include <media/stagefright/foundation/AHandler.h>
 #include <media/stagefright/foundation/AString.h>
 #include <utils/KeyedVector.h>
+#include <media/mediaplayer.h>
+
 #include "BufferedDataSource.h"
 
 namespace android {
@@ -33,11 +35,13 @@ public:
   StreamPlayer();
   ~StreamPlayer();
 
+  status_t setListener(const sp<MediaPlayerListener>& listener);
   int write(const void* bytes, size_t size);
   void setVolume(float volume);
   status_t start();
-  status_t stop();
+  status_t stop(bool pause = false);
   void getCurrentPosition(int* msec);
+  void eos();
 
 
 protected:
@@ -85,6 +89,8 @@ private:
   int32_t mDoMoreStuffGeneration;
 
   int64_t mStartTimeRealUs;
+  sp<MediaPlayerListener> mListener;
+  Mutex mNotifyLock;
 
   static status_t PostAndAwaitResponse(const sp<AMessage> &msg,
                                        sp<AMessage> *response);
@@ -95,8 +101,9 @@ private:
   status_t onDoMoreStuff();
   status_t onOutputFormatChanged(size_t trackIndex, CodecState *state);
 
-  void renderAudio(CodecState *state, BufferInfo *info,
+  status_t renderAudio(CodecState *state, BufferInfo *info,
                    const sp<ABuffer> &buffer);
+  void notify(int msg, int ext1);
 
   DISALLOW_EVIL_CONSTRUCTORS(StreamPlayer);
   sp<BufferedDataSource> bufferedDataSource;

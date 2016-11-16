@@ -28,11 +28,18 @@ using Nan::Callback;
 
 static int pipefd[2];
 
+// Message passing queue between StreamPlayer callback and v8 async handler
+uv_async_t asyncHandle;
+Mutex eventMutex;
+std::queue<EventInfo *> eventQueue;
+Persistent<Function> eventCallback;
+
 static void unblockMainThread(int err) {
   write(pipefd[1], &err, sizeof(int));
 }
 
 Nan::Persistent<Function> Player::constructor;
+extern uv_async_t async;
 
 class MPListener : public MediaPlayerListener {
 public:
@@ -73,6 +80,8 @@ void Player::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "resume", Resume);
   Nan::SetPrototypeMethod(ctor, "getCurrentPosition", GetCurrentPosition);
   Nan::SetPrototypeMethod(ctor, "getDuration", GetDuration);
+  Nan::SetPrototypeMethod(ctor, "endOfStream", EndOfStream);
+  Nan::SetPrototypeMethod(ctor, "addEventListener", AddEventListener);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Player").ToLocalChecked(), ctor->GetFunction());
@@ -96,14 +105,73 @@ Player::Player(AudioType audioType):
     mLooper->start();
 
     mStreamPlayer = new StreamPlayer();
+    mStreamPlayer->setListener(this);
     mLooper->registerHandler(mStreamPlayer);
   }
+}
+
+/**
+ * Fetch the new event from the event queue and call the JS callback
+ */
+void Player::async_cb_handler(uv_async_t *handle) {
+  EventInfo* eventInfo;
+  Mutex::Autolock autoLock(eventMutex);
+  while (!eventQueue.empty()) {
+    eventInfo = eventQueue.front();
+
+    Isolate *isolate = Isolate::GetCurrent();
+    v8::HandleScope handleScope(isolate);
+    Local<Value> argv[] = {
+      Nan::New<String>(eventInfo->event.c_str()).ToLocalChecked(),
+      Nan::New<String>(eventInfo->errorMsg.c_str()).ToLocalChecked(),
+    };
+    Local<Function>::New(isolate, eventCallback)->
+        Call(isolate->GetCurrentContext()->Global(), 2, argv);
+
+    delete eventInfo;
+    eventQueue.pop();
+  }
+}
+
+/**
+ * Add an event in the event queue and wake up the v8 default loop
+ */
+void Player::notify(int msg, int ext1, int ext2, const Parcel *obj) {
+  EventInfo *eventInfo = new EventInfo();
+  eventInfo->errorMsg = "";
+
+  switch (msg) {
+  case MEDIA_PREPARED:
+    eventInfo->event = "prepared";
+    break;
+  case MEDIA_STARTED:
+    eventInfo->event = "started";
+    break;
+  case MEDIA_PAUSED:
+    eventInfo->event = "paused";
+    break;
+  case MEDIA_PLAYBACK_COMPLETE:
+    eventInfo->event = "done";
+    break;
+  case MEDIA_ERROR:
+    eventInfo->event = "error";
+    eventInfo->errorMsg = "unknown media error";
+    break;
+  default:
+    ALOGV("Ignoring message msg=%d, ext1=%d, ext2=%d", msg, ext1, ext2);
+    return;
+  }
+
+  Mutex::Autolock autoLock(eventMutex);
+  eventQueue.push(eventInfo);
+  uv_async_send(&asyncHandle);
 }
 
 /**
  *
  */
 Player::~Player() {
+  eventCallback.Reset();
 }
 
 void Player::Done() {
@@ -202,48 +270,12 @@ NAN_METHOD(Player::Play) {
                                             startCallback));
 }
 
-/**
- * Async worker handler for preparing and starting the stream player
- */
-class PrepareAsyncWorker: public Nan::AsyncWorker {
-public:
-  PrepareAsyncWorker(Nan::Callback *callback, Player* player):
-    Nan::AsyncWorker(callback),
-    player(player) {
-  }
-
-  void Execute() {
-    // Prepare and then start the player
-    if (player->mStreamPlayer != NULL) {
-      player->mStreamPlayer->start();
-    } else {
-      SetErrorMessage("Stream player not initialized?");
-    }
-  }
-
-  void HandleOKCallback() {
-    Local<Value> argv[] = {
-      Nan::Null()
-    };
-    callback->Call(1, argv);
-  }
-
-private:
-  Player *player;
-};
-
 NAN_METHOD(Player::Prepare) {
   SETUP_FUNCTION(Player)
 
-  if (info.Length() != 1) {
-    JSTHROW("Invalid number of arguments provided");
+  if (self->mStreamPlayer != NULL) {
+    self->mStreamPlayer->start();
   }
-
-  REQ_FUN_ARG(0, cb);
-
-  // Call to stream player start is blocking so use asyn worker
-  Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
-  Nan::AsyncQueueWorker(new PrepareAsyncWorker(callback, self));
 }
 
 NAN_METHOD(Player::Write) {
@@ -299,8 +331,9 @@ NAN_METHOD(Player::Pause) {
   if (self->mMediaPlayer != NULL) {
     ret = self->mMediaPlayer->pause();
   } else if (self->mStreamPlayer != NULL) {
-    ret = self->mStreamPlayer->stop();
+    ret = self->mStreamPlayer->stop(true /* paused */);
   }
+
   info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
 }
 
@@ -336,6 +369,29 @@ NAN_METHOD(Player::GetDuration) {
     self->mMediaPlayer->getDuration(&msec);
   }
   info.GetReturnValue().Set(Nan::New<Number>(msec));
+}
+
+NAN_METHOD(Player::EndOfStream) {
+  SETUP_FUNCTION(Player)
+
+  if (self->mStreamPlayer != NULL) {
+    self->mStreamPlayer->eos();
+  }
+}
+
+NAN_METHOD(Player::AddEventListener) {
+  ALOGD("Adding event listener");
+  SETUP_FUNCTION(Player)
+
+  if (info.Length() != 1) {
+    JSTHROW("Invalid number of arguments provided");
+  }
+
+  Isolate *isolate = info.GetIsolate();
+  REQ_FUN_ARG(0, eventcb);
+  eventCallback.Reset(isolate, eventcb);
+
+  uv_async_init(uv_default_loop(), &asyncHandle, Player::async_cb_handler);
 }
 
 NODE_MODULE(player, Player::Init);

@@ -38,12 +38,12 @@ export type AudioType = 'file' | 'stream';
  * @memberof silk-audioplayer
  * @example
  * idle      - Audio hasn't started playing yet
- * preparing - Audio stream is being prepared to play
+ * prepared  - Audio stream is being prepared to play
  * playing   - Audio file or stream is now playing
- * paused    - Audio file or stream has paused
  * stopped   - Audio file or stream has stopped or finished playback
+ * paused    - Audio file or stream has paused
  */
-type MediaState = 'idle' | 'preparing' |'playing' | 'paused' | 'stopped';
+type MediaState = 'idle' | 'prepared' | 'playing' | 'paused' | 'stopped';
 
 /**
  * Information about an audio file
@@ -86,6 +86,47 @@ type FileInfo = {
  * .then(() => log.info('Done playing'));
  * .catch(err => log.error(err));
  */
+
+/**
+ * This event is emitted when audio player is ready to play back audio
+ *
+ * @event prepared
+ * @memberof silk-audioplayer
+ * @instance
+ */
+
+/**
+ * This event is emitted when audio playback has started
+ *
+ * @event started
+ * @memberof silk-audioplayer
+ * @instance
+ */
+
+/**
+ * This event is emitted when audio playback has finished
+ *
+ * @event done
+ * @memberof silk-audioplayer
+ * @instance
+ */
+
+/**
+ * This event is emitted when audio playback has paused
+ *
+ * @event paused
+ * @memberof silk-audioplayer
+ * @instance
+ */
+
+/**
+ * This event is emitted when audio playback has resumed
+ *
+ * @event resumed
+ * @memberof silk-audioplayer
+ * @instance
+ */
+
 export default class Player extends events.EventEmitter {
 
   _gain: number = GAIN_MAX;
@@ -101,10 +142,42 @@ export default class Player extends events.EventEmitter {
     this._audioType = audioType;
     this._player = new bindings.Player(audioType === 'stream' ? 1 : 0);
 
+    // Prepare stream player
     if (audioType === 'stream') {
-      this._prepare();
+      this._player.prepare();
     }
+
+    this._player.addEventListener(this._nativeEventListener);
   }
+
+  /**
+   * @private
+   */
+  _nativeEventListener = (event: string, err: Error) => {
+    log.debug(`received event: ${event}, errorMsg: ${err}`);
+
+    switch (event) {
+    case 'prepared':
+      this._mediaState = 'prepared';
+      break;
+    case 'started':
+      if (this._mediaState === 'paused') { // Resumed
+        event = 'resumed';
+      }
+      this._mediaState = 'playing';
+      break;
+    case 'paused':
+      this._mediaState = 'paused';
+      break;
+    case 'done':
+      this._mediaState = 'stopped';
+      break;
+    default:
+      log.warn(`Unknown event ${event}`);
+      break;
+    }
+    this.emit(event, new Error(err));
+  };
 
   /**
    * Sets the specified output gain value on all channels of this sound file.
@@ -194,24 +267,9 @@ export default class Player extends events.EventEmitter {
     });
   }
 
-  _prepare() {
-    // Prepare stream player
-    this._player.prepare(err => {
-      log.debug(`On prepared done`);
-      if (err) {
-        this._onError(err);
-        return;
-      }
-      this._mediaState = 'playing';
-      this.emit('started');
-    });
-    this._mediaState = 'preparing';
-  }
-
   _onError(err: Error) {
     log.debug(`Error`, err.message);
-    this.emit('error', err);
-    this._mediaState = 'stopped';
+    this._nativeEventListener('error', err);
   }
 
   /**
@@ -238,44 +296,29 @@ export default class Player extends events.EventEmitter {
 
   /**
    * Stop the currently playing audio file
-   * @return true if the operation was successful, false otherwise
    * @memberof silk-audioplayer
    * @instance
    */
-  stop(): boolean {
-    let result = this._player.stop();
-    if (result) {
-      this._mediaState = 'stopped';
-    }
-    return result;
+  stop() {
+    this._player.stop();
   }
 
   /**
    * Pause the currently playing audio file
-   * @return true if the operation was successful, false otherwise
    * @memberof silk-audioplayer
    * @instance
    */
-  pause(): boolean {
-    let result = this._player.pause();
-    if (result) {
-      this._mediaState = 'paused';
-    }
-    return result;
+  pause() {
+    this._player.pause();
   }
 
   /**
    * Resume the currently paused audio file
-   * @return true if the operation was successful, false otherwise
    * @memberof silk-audioplayer
    * @instance
    */
-  resume(): boolean {
-    let result = this._player.resume();
-    if (result) {
-      this._mediaState = 'playing';
-    }
-    return result;
+  resume() {
+    this._player.resume();
   }
 
   /**
@@ -320,6 +363,19 @@ export default class Player extends events.EventEmitter {
     return {
       name: this._fileName,
     };
+  }
+
+  /**
+   * Mark the end of audio stream. This API doesn't stop the audio streaming
+   * but rather tells the audio player to finish when all the audio buffers
+   * are done playing.
+   *
+   * @return {FileInfo}
+   * @memberof silk-audioplayer
+   * @instance
+   */
+  endOfStream() {
+    this._player.endOfStream();
   }
 
   /**

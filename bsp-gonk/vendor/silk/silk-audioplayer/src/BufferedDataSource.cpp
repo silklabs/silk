@@ -54,6 +54,7 @@ void BufferedDataSource::doneSniffing() {
 
 status_t BufferedDataSource::deleteUpTo(off64_t offset) {
   off64_t newOffset = offset - mOffset;
+  ALOGV("new offset %lld", newOffset);
 
   if (waitForData(0, newOffset) != OK) {
     if (newOffset >= mLength) {

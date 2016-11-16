@@ -88,8 +88,6 @@ status_t StreamPlayer::start() {
 status_t StreamPlayer::stop() {
   ALOGV("%s", __FUNCTION__);
 
-  bufferedDataSource->queueEOS(ERROR_END_OF_STREAM);
-
   sp<AMessage> msg = new AMessage(kWhatStop, id());
   sp<AMessage> response;
   return PostAndAwaitResponse(msg, &response);

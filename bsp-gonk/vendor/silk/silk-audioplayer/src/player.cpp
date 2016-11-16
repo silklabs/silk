@@ -298,6 +298,8 @@ NAN_METHOD(Player::Pause) {
   status_t ret = INVALID_OPERATION;
   if (self->mMediaPlayer != NULL) {
     ret = self->mMediaPlayer->pause();
+  } else if (self->mStreamPlayer != NULL) {
+    ret = self->mStreamPlayer->stop();
   }
   info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
 }
@@ -308,6 +310,8 @@ NAN_METHOD(Player::Resume) {
   status_t ret = INVALID_OPERATION;
   if (self->mMediaPlayer != NULL) {
     ret = self->mMediaPlayer->start();
+  } else if (self->mStreamPlayer != NULL) {
+    ret = self->mStreamPlayer->start();
   }
   info.GetReturnValue().Set(Nan::New<Boolean>(ret == NO_ERROR));
 }

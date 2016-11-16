@@ -6,21 +6,13 @@
 import createLog from 'silk-log/device';
 import bindings from './player';
 import fs from 'mz/fs';
-import wav from 'node-wav';
-import Speaker from 'silk-speaker';
 import events from 'events';
 
 import type { PlayerType } from './player';
-import type { ConfigDeviceMic } from 'silk-config';
 
 const log = createLog('audioplayer');
 const GAIN_MIN = 0.0;
 const GAIN_MAX = 1.0;
-
-type soundMapDataType = {
-  buffer: Buffer;
-  options: ConfigDeviceMic;
-};
 
 /**
  * The available audio types
@@ -79,12 +71,6 @@ type FileInfo = {
  *   log.info(`getDuration ${player.getDuration()}`);
  *   log.info(`getInfo ${JSON.stringify(player.getInfo())}`);
  * });
- *
- * // Reduce latency by preloading the sound file
- * player.load('data/media/test.wav')
- * .then(() => player.play('data/media/test.wav'))
- * .then(() => log.info('Done playing'));
- * .catch(err => log.error(err));
  */
 
 /**
@@ -130,7 +116,6 @@ type FileInfo = {
 export default class Player extends events.EventEmitter {
 
   _gain: number = GAIN_MAX;
-  _soundMap: {[key: string]: soundMapDataType} = {};
   _player: PlayerType = null;
   _mediaState: MediaState = 'idle';
   _fileName: string = '';
@@ -231,18 +216,6 @@ export default class Player extends events.EventEmitter {
       return Promise.reject(new Error(`${fileName} not found`));
     }
     this._fileName = fileName;
-
-    // A cached PCM data for the file is available so stream PCM data instead
-    // of using MediaPlayer to play the file
-    if (this._soundMap[fileName]) {
-      return new Promise((resolve, reject) => {
-        let speaker = new Speaker(this._soundMap[fileName].options);
-        speaker.setVolume(this._gain);
-        speaker.on('close', () => resolve());
-        speaker.write(this._soundMap[fileName].buffer);
-        speaker.end();
-      });
-    }
 
     this._mediaState = 'playing';
     return new Promise((resolve, reject) => {
@@ -376,50 +349,5 @@ export default class Player extends events.EventEmitter {
    */
   endOfStream() {
     this._player.endOfStream();
-  }
-
-  /**
-   * Load the audio into a raw 16-bit PCM mono or stereo stream to provide
-   * low-latency audio playback.
-   * <b>NOTE:</b> Only wav files are supported at this time.
-   *
-   * @param fileName Name of the audio file to load
-   * @return {Promise} Return a promise that is fulfilled when the sound
-   *                   is done loading
-   * @memberof silk-audioplayer
-   * @instance
-   */
-  load(fileName: string): Promise<void> {
-    log.debug(`Loading sound ${fileName}`);
-    if (this._soundMap[fileName]) {
-      log.debug(`${fileName} already loaded`);
-      return Promise.resolve();
-    }
-
-    return this._readWavFile(fileName).then((wav) => {
-      log.debug(`Done loading ${fileName}`);
-      this._soundMap[fileName] = wav;
-    });
-  }
-
-  /**
-   * Read pcm data from the wav file
-   * @private
-   */
-  async _readWavFile(fileName: string): Promise<soundMapDataType> {
-    let options = {};
-
-    try {
-      let buffer = await fs.readFile(fileName);
-      let result = wav.decodeRaw(buffer);
-      options.numChannels = result.channels;
-      options.sampleRate = result.sampleRate;
-      options.bytesPerSample = result.bitDepth / 8;
-
-      return {buffer: result.channelData, options};
-    } catch (err) {
-      log.debug(err);
-      return Promise.reject(`Failed to decode ${fileName}`);
-    }
   }
 }

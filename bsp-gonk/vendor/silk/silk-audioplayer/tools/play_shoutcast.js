@@ -9,7 +9,7 @@ const log = createLog('test');
 
 let url = 'http://firewall.pulsradio.com';
 
-let player = new Player('stream');
+let player = new Player();
 
 // Connect to the remote stream
 icy.get(url, function (res) {
@@ -35,9 +35,9 @@ icy.get(url, function (res) {
   res.once('end', onEnd);
 
   player.on('error', (err) => log.error(err));
-  player.on('prepared', (err) => log.info(`Player prepared`));
-  player.on('paused', (err) => log.info(`Player paused`));
-  player.on('resumed', (err) => log.info(`Player resumed`));
+  player.on('prepared', () => log.info(`Player prepared`));
+  player.on('paused', () => log.info(`Player paused`));
+  player.on('resumed', () => log.info(`Player resumed`));
   player.on('started', () => {
     log.info(`Player started`);
     setTimeout(() => {

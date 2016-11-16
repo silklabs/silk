@@ -52,12 +52,12 @@ if (process.platform === 'android') {
 } else {
   bindings = {
     Player: function () {
-      this.play = function(fileName, callback) {
-        playOnHost(fileName)
-        .then(() => callback())
-        .catch(err => callback(err));
+      this.start = function() {
       };
-      this.setVolume = function(gain) {
+      this.setDataSource = function(dataSource, fileName) {
+        playOnHost(fileName)
+        .then(() => this.listener('done'))
+        .catch(err => this.listener('error', err));
         log.warn(`setVolume is not supported on this platform`);
       };
       this.stop = function() {
@@ -80,6 +80,12 @@ if (process.platform === 'android') {
       };
       this.getInfo = function() {
         log.warn(`getInfo is not supported on this platform`);
+      };
+      this.endOfStream = function() {
+        log.warn(`endOfStream is not supported on this platform`);
+      };
+      this.addEventListener = function(listener) {
+        this.listener = listener;
       };
     },
   };

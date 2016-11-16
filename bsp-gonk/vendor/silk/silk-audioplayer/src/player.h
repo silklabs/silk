@@ -50,12 +50,6 @@ inline static char * UnwrapPointer(Local<Value> buffer, int64_t offset = 0) {
 
 static const float GAIN_MAX = 1.0;
 
-typedef enum _AudioType {
-  AUDIO_TYPE_FILE = 0,
-  AUDIO_TYPE_STREAM = 1
-} AudioType;
-
-
 // Callback struct to copy data from the StreamPayer thread to the v8 event loop
 typedef struct {
   std::string event;
@@ -68,22 +62,20 @@ typedef struct {
 class Player : public Nan::ObjectWrap, public MediaPlayerListener {
 public:
   static void Init(v8::Local<v8::Object> exports);
-  void Done();
   virtual void notify(int msg, int ext1, int ext2, const Parcel *obj);
   static void async_cb_handler(uv_async_t *handle);
 
-  sp<MediaPlayer> mMediaPlayer;
   float gain;
   sp<StreamPlayer> mStreamPlayer;
 
 private:
-  explicit Player(AudioType audioType);
+  explicit Player();
   ~Player();
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
 
-  JSFUNC(Play);
-  JSFUNC(Prepare);
+  JSFUNC(SetDataSource);
+  JSFUNC(Start);
   JSFUNC(Write);
   JSFUNC(SetVolume);
   JSFUNC(Stop);

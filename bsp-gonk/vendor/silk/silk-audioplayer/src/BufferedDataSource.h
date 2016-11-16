@@ -12,6 +12,7 @@ struct ABuffer;
 
 struct BufferedDataSource : public DataSource {
     BufferedDataSource();
+    ~BufferedDataSource();
 
     virtual status_t initCheck() const;
 

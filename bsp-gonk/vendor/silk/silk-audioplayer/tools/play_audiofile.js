@@ -8,11 +8,10 @@ const log = createLog('test');
 
 let player = new Player();
 
-player.play(__dirname + '/../media/stream.mp3')
-.then(() => log.info('Done playing'))
-.catch(err => log.error(err));
+player.play(__dirname + '/../media/mpthreetest.mp3')
+.then(() => log.info(`Done playing`))
+.catch((err) => log.error(err));
 
-player.on('error', (err) => log.error(err));
 player.on('started', () => {
   player.pause();
   log.info(`getState ${player.getState()}`);

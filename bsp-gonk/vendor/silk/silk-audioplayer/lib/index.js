@@ -15,27 +15,24 @@ const GAIN_MIN = 0.0;
 const GAIN_MAX = 1.0;
 
 /**
- * The available audio types
- *
- * @memberof silk-audioplayer
- * @example
- * file   - Should be set to this value to play an audio file. Default
- * stream - Should be set to this value to play an audio stream
- */
-export type AudioType = 'file' | 'stream';
-
-/**
  * The available media states
  *
  * @memberof silk-audioplayer
  * @example
- * idle      - Audio hasn't started playing yet
+ * idle      - Audio playback hasn't started yet
+ * preparing - Audio is preparing for playback
  * prepared  - Audio stream is being prepared to play
- * playing   - Audio file or stream is now playing
- * stopped   - Audio file or stream has stopped or finished playback
- * paused    - Audio file or stream has paused
+ * playing   - Audio playback has started
+ * stopped   - Audio playback has stopped
+ * paused    - Audio playback has paused
  */
-type MediaState = 'idle' | 'prepared' | 'playing' | 'paused' | 'stopped';
+type MediaState =
+  'idle' |
+  'preparing' |
+  'prepared' |
+  'playing' |
+  'paused' |
+  'stopped';
 
 /**
  * Information about an audio file
@@ -52,6 +49,8 @@ type FileInfo = {
  * @module silk-audioplayer
  *
  * @example
+ * Example1 - Play an audio file
+ *
  * const Player = require('silk-audioplayer').default;
  * const log = require('silk-alog');
  * const player = new Player();
@@ -64,12 +63,34 @@ type FileInfo = {
  * player.on('started', () => {
  *   player.pause();
  *   log.info(`getState ${player.getState()}`);
+ *
  *   player.setVolume(0.5);
  *   player.resume();
+ *
  *   log.info(`getState ${player.getState()}`);
  *   log.info(`getCurrentPosition ${player.getCurrentPosition()}`);
  *   log.info(`getDuration ${player.getDuration()}`);
  *   log.info(`getInfo ${JSON.stringify(player.getInfo())}`);
+ * });
+ *
+ * Example2 - Play an audio stream
+ *
+ * const Player = require('silk-audioplayer').default;
+ * const https = require('https');
+ * const log = require('silk-alog');
+ * const player = new Player();
+ *
+ * https.get('https://test.mp3', (res) => {
+ *  res.once('error', (err) => log.error(err));
+ *  res.on('data', data => player.write(data));
+ *  res.once('end', () => {
+ *    if (res.statusCode !== 200) {
+ *      log.error(`status code ${res.statusCode}, error \'${res.statusMessage}\'`);
+ *    } else {
+ *      log.info(`Request complete`);
+ *      player.endOfStream();
+ *    }
+ *  });
  * });
  */
 
@@ -113,56 +134,33 @@ type FileInfo = {
  * @instance
  */
 
+/**
+ * This event is emitted when there is an error in audio playback
+ *
+ * @event error
+ * @memberof silk-audioplayer
+ * @instance
+ */
+
 export default class Player extends events.EventEmitter {
 
   _gain: number = GAIN_MAX;
   _player: PlayerType = null;
   _mediaState: MediaState = 'idle';
   _fileName: string = '';
-  _audioType: AudioType;
-  _closed: boolean = false;
+  _playPromiseAccept: ?(value: Promise<void> | void) => void = null;
+  _playPromiseReject: ?(error: any) => void = null;
 
-  constructor(audioType: AudioType = 'file') {
+  constructor() {
     super();
-    this._audioType = audioType;
-    this._player = new bindings.Player(audioType === 'stream' ? 1 : 0);
-
-    // Prepare stream player
-    if (audioType === 'stream') {
-      this._player.prepare();
-    }
-
-    this._player.addEventListener(this._nativeEventListener);
+    this._player = new bindings.Player();
+    this._player.addEventListener((event, err) => {
+      // process.nextTick doesn't work here as the caller of this
+      // callback needs to finish before the nextTick happens, which isn't
+      // the case here.
+      setTimeout(() => this._nativeEventListener(event, err), 0);
+    });
   }
-
-  /**
-   * @private
-   */
-  _nativeEventListener = (event: string, err: Error) => {
-    log.debug(`received event: ${event}, errorMsg: ${err}`);
-
-    switch (event) {
-    case 'prepared':
-      this._mediaState = 'prepared';
-      break;
-    case 'started':
-      if (this._mediaState === 'paused') { // Resumed
-        event = 'resumed';
-      }
-      this._mediaState = 'playing';
-      break;
-    case 'paused':
-      this._mediaState = 'paused';
-      break;
-    case 'done':
-      this._mediaState = 'stopped';
-      break;
-    default:
-      log.warn(`Unknown event ${event}`);
-      break;
-    }
-    this.emit(event, new Error(err));
-  };
 
   /**
    * Sets the specified output gain value on all channels of this sound file.
@@ -171,10 +169,9 @@ export default class Player extends events.EventEmitter {
    * The default value is 1.0. Audio player volume can be set before or during
    * the playback.
    *
+   * @param gain output gain for all channels
    * @memberof silk-audioplayer
    * @instance
-   *
-   * @param gain output gain for all channels
    */
   setVolume(gain: number) {
     this._gain = this._clampGain(gain);
@@ -199,66 +196,43 @@ export default class Player extends events.EventEmitter {
   /**
    * Play an audio file.
    *
-   * @param {string} fileName Name of the audio file to play
+   * @param fileName Name of the audio file to play
    * @return {Promise} Return a promise that is fulfilled when the sound is
    *                   done playing.
    * @memberof silk-audioplayer
    * @instance
    */
   async play(fileName: string): Promise<void> {
-    if (this._audioType !== 'file') {
-      return Promise.reject(
-        new Error(`Play can only be called for AUDIO_TYPE_FILE`)
-      );
-    }
     let exists = await fs.exists(fileName);
     if (!exists) {
+      this._mediaState = 'stopped';
       return Promise.reject(new Error(`${fileName} not found`));
     }
+
     this._fileName = fileName;
 
-    this._mediaState = 'playing';
     return new Promise((resolve, reject) => {
-      this._player.play(fileName, (err) => {
-        this._mediaState = 'stopped';
-        if (err) {
-          reject(err);
-          return;
-        }
-        log.debug(`Done playing ${fileName}`);
-        resolve();
-      }, () => {
-        /**
-         * This event is emitted when audio file has started to play
-         *
-         * @event started
-         * @memberof silk-audioplayer
-         * @instance
-         */
-        this.emit('started');
-      });
+      this._playPromiseAccept = resolve;
+      this._playPromiseReject = reject;
+
+      this._player.setDataSource(bindings.DATA_SOURCE_TYPE_FILE, fileName);
+      this._player.start();
     });
   }
 
-  _onError(err: Error) {
-    log.debug(`Error`, err.message);
-    this._nativeEventListener('error', err);
-  }
-
   /**
-   * Write audio buffer to be player's queue
-   * @private
+   * Write audio buffer to the player's queue to be played
+   *
+   * @param Buffer buffer containing audio data to be played
+   * @memberof silk-audioplayer
+   * @instance
    */
   write(chunk: Buffer) {
-    if (this._audioType !== 'stream') {
-      this._onError(new Error(`Write can only be called for AUDIO_TYPE_STREAM`));
-      return;
-    }
-
-    if (this._closed) {
-      // stop() has already been called. this should not be called
-      this._onError(new Error('write() call after close() call'));
-      return;
+    // Prepare stream player with BufferedDataSource
+    if (this._mediaState === 'idle') {
+      this._mediaState = 'preparing';
+      this._player.setDataSource(bindings.DATA_SOURCE_TYPE_BUFFER);
+      this._player.start();
     }
 
     if (this._player.write(chunk, chunk.length) <= 0) {
@@ -349,5 +323,51 @@ export default class Player extends events.EventEmitter {
    */
   endOfStream() {
     this._player.endOfStream();
+  }
+
+  /**
+   * @private
+   */
+  _nativeEventListener = (event: string, err: Error) => {
+    log.debug(`received event: ${event}`);
+
+    switch (event) {
+    case 'prepared':
+      this._mediaState = 'prepared';
+      break;
+    case 'started':
+      if (this._mediaState === 'paused') {
+        event = 'resumed';
+      }
+      this._mediaState = 'playing';
+      break;
+    case 'paused':
+      this._mediaState = 'paused';
+      break;
+    case 'done':
+      this._mediaState = 'stopped';
+      if (this._playPromiseAccept) {
+        this._playPromiseAccept();
+        this._playPromiseAccept = null;
+      }
+      break;
+    case 'error':
+      log.error(`errorMsg: `, err);
+      this._mediaState = 'stopped';
+      if (this._playPromiseReject) {
+        this._playPromiseReject();
+        this._playPromiseReject = null;
+      }
+      break;
+    default:
+      log.warn(`Unknown event ${event}`);
+      break;
+    }
+    this.emit(event, new Error(err));
+  };
+
+  _onError(err: Error) {
+    log.debug(`Error`, err.message);
+    this._nativeEventListener('error', err);
   }
 }

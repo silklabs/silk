@@ -25,7 +25,6 @@
 #include <media/ICrypto.h>
 #include <media/IMediaHTTPService.h>
 #include <media/stagefright/foundation/ABuffer.h>
-// #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/AMessage.h>
 #include <media/stagefright/MediaCodec.h>
 #include <media/stagefright/MediaErrors.h>
@@ -79,12 +78,25 @@ StreamPlayer::StreamPlayer() :
     mDoMoreStuffGeneration(0),
     mStartTimeRealUs(-1ll),
     mListener(NULL) {
-  bufferedDataSource = new BufferedDataSource();
   ALOGV("Finished initializing StreamPlayer");
 }
 
 StreamPlayer::~StreamPlayer(){
   ALOGV("Exiting StreamPlayer");
+}
+
+void StreamPlayer::setDataSource(uint32_t dataSourceType, const char *path) {
+  ALOGV("%s", __FUNCTION__);
+
+  mDataSourceType = dataSourceType;
+  mPath = path;
+
+  ALOGV("datasource type %d fileName %s", mDataSourceType, mPath.c_str());
+  if (mDataSourceType == DATA_SOURCE_TYPE_BUFFER) {
+    mBufferedDataSource = new BufferedDataSource();
+  }
+
+  ALOGV("setting datasource done");
 }
 
 status_t StreamPlayer::setListener(const sp<MediaPlayerListener>& listener) {
@@ -104,10 +116,14 @@ void StreamPlayer::notify(int msg, int ext1) {
  * Write the audio buffer to the BufferedDataSource to be played
  */
 int StreamPlayer::write(const void* bytes, size_t size) {
-  // ALOGV("%s", __FUNCTION__);
+  if (mDataSourceType != DATA_SOURCE_TYPE_BUFFER) {
+    notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);
+    return 0;
+  }
+
   sp<ABuffer> abuffer = ABuffer::CreateAsCopy(bytes, size);
   if (abuffer != NULL) {
-    bufferedDataSource->queueBuffer(abuffer);
+    mBufferedDataSource->queueBuffer(abuffer);
     return size;
   }
   return 0;
@@ -126,14 +142,13 @@ void StreamPlayer::setVolume(float gain) {
   }
 }
 
-status_t StreamPlayer::start() {
+void StreamPlayer::start() {
   ALOGV("%s", __FUNCTION__);
   sp<AMessage> msg = new AMessage(kWhatStart, id());
   msg->post();
-  return NO_ERROR;
 }
 
-status_t StreamPlayer::stop(bool pause) {
+void StreamPlayer::stop(bool pause) {
   ALOGV("%s", __FUNCTION__);
 
   sp<AMessage> msg = new AMessage(kWhatStop, id());
@@ -144,7 +159,6 @@ status_t StreamPlayer::stop(bool pause) {
   }
 
   msg->post();
-  return NO_ERROR;
 }
 
 void StreamPlayer::getCurrentPosition(int* msec) {
@@ -160,7 +174,12 @@ void StreamPlayer::getCurrentPosition(int* msec) {
 
 void StreamPlayer::eos() {
   ALOGV("%s", __FUNCTION__);
-  bufferedDataSource->queueEOS(ERROR_END_OF_STREAM);
+  mBufferedDataSource->queueEOS(ERROR_END_OF_STREAM);
+}
+
+void StreamPlayer::reset() {
+  sp<AMessage> msg = new AMessage(kWhatReset, id());
+  msg->post();
 }
 
 void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
@@ -240,6 +259,29 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
       }
       break;
     }
+    case kWhatReset: {
+      status_t err = OK;
+
+      if (mState == STARTED) {
+        err = onStop();
+        if (err == OK) {
+          mState = STOPPED;
+        }
+      }
+
+      if (mState == STOPPED) {
+        err = onReset();
+        mState = UNPREPARED;
+      }
+
+      uint32_t replyID;
+      CHECK(msg->senderAwaitsResponse(&replyID));
+
+      sp<AMessage> response = new AMessage;
+      response->setInt32("err", err);
+      response->postReply(replyID);
+      break;
+    }
     default:
       ALOGW("Unknown msg type %d", msg->what());
   }
@@ -248,13 +290,15 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
 status_t StreamPlayer::onPrepare() {
   CHECK_EQ(mState, UNPREPARED);
 
-  mExtractor = new NuMediaExtractor;
-  status_t err = mExtractor->setDataSource(bufferedDataSource);
-  if (err != OK) {
-    ALOGE("Failed to add data source %d", err);
-    mExtractor.clear();
-    return err;
+  mExtractor = new NuMediaExtractor();
+  status_t err = NO_ERROR;
+  if (mDataSourceType == DATA_SOURCE_TYPE_BUFFER) {
+    err = mExtractor->setDataSource(mBufferedDataSource);
+  } else if (mDataSourceType == DATA_SOURCE_TYPE_FILE) {
+    err = mExtractor->setDataSource(NULL, mPath.c_str());
   }
+
+  CHECK_EQ(err, (status_t)OK);
 
   if (mCodecLooper == NULL) {
     mCodecLooper = new ALooper;
@@ -341,7 +385,9 @@ status_t StreamPlayer::onPrepare() {
     }
   }
 
-  bufferedDataSource->doneSniffing();
+  if (mBufferedDataSource != NULL) {
+    mBufferedDataSource->doneSniffing();
+  }
   notify(MEDIA_PREPARED, 0);
   return OK;
 }
@@ -365,6 +411,21 @@ status_t StreamPlayer::onStop() {
 
   ++mDoMoreStuffGeneration;
 
+  return OK;
+}
+
+status_t StreamPlayer::onReset() {
+  CHECK_EQ(mState, STOPPED);
+
+  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
+    CodecState *state = &mStateByTrackIndex.editValueAt(i);
+    CHECK_EQ(state->mCodec->release(), (status_t)OK);
+  }
+
+  mStartTimeRealUs = -1ll;
+  mStateByTrackIndex.clear();
+  mCodecLooper.clear();
+  mExtractor.clear();
   return OK;
 }
 

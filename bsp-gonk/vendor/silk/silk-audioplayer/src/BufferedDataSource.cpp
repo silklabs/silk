@@ -26,6 +26,10 @@ BufferedDataSource::BufferedDataSource() :
     mLength(0) {
 }
 
+BufferedDataSource::~BufferedDataSource() {
+  mBufferQueue.clear();
+}
+
 status_t BufferedDataSource::getSize(off64_t *size) {
   Mutex::Autolock autoLock(mLock);
 

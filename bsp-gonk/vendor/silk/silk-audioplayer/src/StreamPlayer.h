@@ -30,6 +30,9 @@ struct MediaCodec;
 struct NuMediaExtractor;
 class Sniffer;
 
+const uint32_t DATA_SOURCE_TYPE_FILE = 0;
+const uint32_t DATA_SOURCE_TYPE_BUFFER = 1;
+
 class StreamPlayer: public AHandler {
 public:
   StreamPlayer();
@@ -38,10 +41,12 @@ public:
   status_t setListener(const sp<MediaPlayerListener>& listener);
   int write(const void* bytes, size_t size);
   void setVolume(float volume);
-  status_t start();
-  status_t stop(bool pause = false);
+  void setDataSource(uint32_t dataSourceType, const char *path);
+  void start();
+  void stop(bool pause = false);
   void getCurrentPosition(int* msec);
   void eos();
+  void reset();
 
 
 protected:
@@ -59,6 +64,7 @@ private:
     kWhatStart = 1,
     kWhatStop = 2,
     kWhatDoMoreStuff = 3,
+    kWhatReset = 4,
   };
 
   struct BufferInfo {
@@ -82,18 +88,19 @@ private:
   };
 
   State mState;
+  AString mPath;
 
   sp<NuMediaExtractor> mExtractor;
   sp<ALooper> mCodecLooper;
   KeyedVector<size_t, CodecState> mStateByTrackIndex;
   int32_t mDoMoreStuffGeneration;
+  sp<BufferedDataSource> mBufferedDataSource;
+  uint32_t mDataSourceType;
 
   int64_t mStartTimeRealUs;
   sp<MediaPlayerListener> mListener;
   Mutex mNotifyLock;
 
-  static status_t PostAndAwaitResponse(const sp<AMessage> &msg,
-                                       sp<AMessage> *response);
   status_t onPrepare();
   status_t onStart();
   status_t onStop();
@@ -106,7 +113,6 @@ private:
   void notify(int msg, int ext1);
 
   DISALLOW_EVIL_CONSTRUCTORS(StreamPlayer);
-  sp<BufferedDataSource> bufferedDataSource;
 };
 
 } // namespace android

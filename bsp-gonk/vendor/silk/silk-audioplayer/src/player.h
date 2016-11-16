@@ -3,6 +3,7 @@
 
 #include <nan.h>
 #include <string.h>
+#include <queue>
 #include <binder/ProcessState.h>
 #include <media/mediaplayer.h>
 #include "StreamPlayer.h"
@@ -54,13 +55,23 @@ typedef enum _AudioType {
   AUDIO_TYPE_STREAM = 1
 } AudioType;
 
+
+// Callback struct to copy data from the StreamPayer thread to the v8 event loop
+typedef struct {
+  std::string event;
+  std::string errorMsg;
+} EventInfo;
+
 /**
  *
  */
-class Player : public Nan::ObjectWrap {
+class Player : public Nan::ObjectWrap, public MediaPlayerListener {
 public:
   static void Init(v8::Local<v8::Object> exports);
   void Done();
+  virtual void notify(int msg, int ext1, int ext2, const Parcel *obj);
+  static void async_cb_handler(uv_async_t *handle);
+
   sp<MediaPlayer> mMediaPlayer;
   float gain;
   sp<StreamPlayer> mStreamPlayer;
@@ -80,6 +91,8 @@ private:
   JSFUNC(Resume);
   JSFUNC(GetCurrentPosition);
   JSFUNC(GetDuration);
+  JSFUNC(EndOfStream);
+  JSFUNC(AddEventListener);
 
   sp<ALooper> mLooper;
 };

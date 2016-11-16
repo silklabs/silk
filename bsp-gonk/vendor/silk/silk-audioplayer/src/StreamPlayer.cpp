@@ -25,7 +25,7 @@
 #include <media/ICrypto.h>
 #include <media/IMediaHTTPService.h>
 #include <media/stagefright/foundation/ABuffer.h>
-#include <media/stagefright/foundation/ADebug.h>
+// #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/AMessage.h>
 #include <media/stagefright/MediaCodec.h>
 #include <media/stagefright/MediaErrors.h>
@@ -38,18 +38,66 @@
 
 #define BUF_SIZE 8192
 
+#define LITERAL_TO_STRING(x) #x
+
+#define CHECK(condition)                        \
+  if (!(condition)) {                           \
+    ALOGE("%s",                                 \
+    __FILE__ ":" LITERAL_TO_STRING(__LINE__)    \
+    " CHECK(" #condition ") failed.");          \
+    notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);   \
+  }
+
+#define CHECK_EQ(x,y)                            \
+  do {                                           \
+    if (x != y) {                                \
+      AString ___full =                          \
+      __FILE__ ":" LITERAL_TO_STRING(__LINE__)   \
+      " CHECK_EQ" "( " #x "," #y ") failed: ";   \
+      ALOGE("%s", ___full.c_str());              \
+      notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);  \
+      return UNKNOWN_ERROR;                      \
+    }                                            \
+  } while (false)
+
+#define CHECK_LE(x,y)                            \
+  do {                                           \
+    if (x > y) {                                 \
+      AString ___full =                          \
+      __FILE__ ":" LITERAL_TO_STRING(__LINE__)   \
+      " CHECK_EQ" "( " #x "," #y ") failed: ";   \
+      ALOGE("%s", ___full.c_str());              \
+      notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);  \
+      return UNKNOWN_ERROR;                      \
+    }                                            \
+  } while (false)
+
 namespace android {
 
 StreamPlayer::StreamPlayer() :
     mState(UNPREPARED),
     mDoMoreStuffGeneration(0),
-    mStartTimeRealUs(-1ll) {
+    mStartTimeRealUs(-1ll),
+    mListener(NULL) {
   bufferedDataSource = new BufferedDataSource();
   ALOGV("Finished initializing StreamPlayer");
 }
 
 StreamPlayer::~StreamPlayer(){
   ALOGV("Exiting StreamPlayer");
+}
+
+status_t StreamPlayer::setListener(const sp<MediaPlayerListener>& listener) {
+  ALOGV("setListener");
+  mListener = listener;
+  return NO_ERROR;
+}
+
+void StreamPlayer::notify(int msg, int ext1) {
+  if (mListener != NULL) {
+    Mutex::Autolock _l(mNotifyLock);
+    mListener->notify(msg, ext1, 0, NULL);
+  }
 }
 
 /**
@@ -81,16 +129,22 @@ void StreamPlayer::setVolume(float gain) {
 status_t StreamPlayer::start() {
   ALOGV("%s", __FUNCTION__);
   sp<AMessage> msg = new AMessage(kWhatStart, id());
-  sp<AMessage> response;
-  return PostAndAwaitResponse(msg, &response);
+  msg->post();
+  return NO_ERROR;
 }
 
-status_t StreamPlayer::stop() {
+status_t StreamPlayer::stop(bool pause) {
   ALOGV("%s", __FUNCTION__);
 
   sp<AMessage> msg = new AMessage(kWhatStop, id());
-  sp<AMessage> response;
-  return PostAndAwaitResponse(msg, &response);
+  if (pause) {
+    msg->setInt32("media_event_type", MEDIA_PAUSED);
+  } else {
+    msg->setInt32("media_event_type", MEDIA_PLAYBACK_COMPLETE);
+  }
+
+  msg->post();
+  return NO_ERROR;
 }
 
 void StreamPlayer::getCurrentPosition(int* msec) {
@@ -104,21 +158,9 @@ void StreamPlayer::getCurrentPosition(int* msec) {
   }
 }
 
-// static
-status_t StreamPlayer::PostAndAwaitResponse(
-    const sp<AMessage> &msg, sp<AMessage> *response) {
+void StreamPlayer::eos() {
   ALOGV("%s", __FUNCTION__);
-  status_t err = msg->postAndAwaitResponse(response);
-
-  if (err != OK) {
-    return err;
-  }
-
-  if (!(*response)->findInt32("err", &err)) {
-    err = OK;
-  }
-
-  return err;
+  bufferedDataSource->queueEOS(ERROR_END_OF_STREAM);
 }
 
 void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
@@ -161,16 +203,10 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
           err = onStart();
           if (err == OK) {
             mState = STARTED;
+            notify(MEDIA_STARTED, 0);
           }
         }
       }
-
-      uint32_t replyID;
-      CHECK(msg->senderAwaitsResponse(&replyID));
-
-      sp<AMessage> response = new AMessage;
-      response->setInt32("err", err);
-      response->postReply(replyID);
       break;
     }
     case kWhatStop: {
@@ -182,15 +218,11 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
         err = onStop();
         if (err == OK) {
           mState = STOPPED;
+          int event;
+          msg->findInt32("media_event_type", &event);
+          notify(event, 0);
         }
       }
-
-      uint32_t replyID;
-      CHECK(msg->senderAwaitsResponse(&replyID));
-
-      sp<AMessage> response = new AMessage;
-      response->setInt32("err", err);
-      response->postReply(replyID);
       break;
     }
     case kWhatDoMoreStuff: {
@@ -310,6 +342,7 @@ status_t StreamPlayer::onPrepare() {
   }
 
   bufferedDataSource->doneSniffing();
+  notify(MEDIA_PREPARED, 0);
   return OK;
 }
 
@@ -387,8 +420,13 @@ status_t StreamPlayer::onDoMoreStuff() {
     size_t trackIndex;
     status_t err = mExtractor->getSampleTrackIndex(&trackIndex);
 
-    if (err != OK) {
+    if (err == ERROR_END_OF_STREAM) {
       ALOGI("encountered input EOS.");
+      stop();
+      break;
+    } else if (err != OK) {
+      ALOGE("error %d", err);
+      notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);
       break;
     } else {
       CodecState *state = &mStateByTrackIndex.editValueFor(trackIndex);
@@ -517,7 +555,7 @@ status_t StreamPlayer::onOutputFormatChanged(
   return OK;
 }
 
-void StreamPlayer::renderAudio(
+status_t StreamPlayer::renderAudio(
     CodecState *state, BufferInfo *info, const sp<ABuffer> &buffer) {
   ALOGV("%s", __FUNCTION__);
   CHECK(state->mAudioTrack != NULL);
@@ -542,7 +580,7 @@ void StreamPlayer::renderAudio(
   }
 
   if (copy == 0) {
-    return;
+    return OK;
   }
 
   int64_t startTimeUs = ALooper::GetNowUs();
@@ -566,6 +604,7 @@ void StreamPlayer::renderAudio(
   info->mSize -= nbytes;
 
   state->mNumFramesWritten += numFramesWritten;
+  return OK;
 }
 
 }  // namespace android

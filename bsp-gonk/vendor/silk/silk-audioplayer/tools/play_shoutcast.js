@@ -35,5 +35,21 @@ icy.get(url, function (res) {
   res.once('end', onEnd);
 
   player.on('error', (err) => log.error(err));
+  player.on('prepared', (err) => log.info(`Player prepared`));
+  player.on('paused', (err) => log.info(`Player paused`));
+  player.on('resumed', (err) => log.info(`Player resumed`));
+  player.on('started', () => {
+    log.info(`Player started`);
+    setTimeout(() => {
+      log.info(`Pausing now`);
+      player.pause();
+    }, 5000);
+
+    setTimeout(() => {
+      log.info(`Resuming now`);
+      player.resume();
+    }, 7000);
+  });
+
   res.on('data', data => player.write(data));
 });

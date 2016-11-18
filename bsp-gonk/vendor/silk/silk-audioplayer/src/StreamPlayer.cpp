@@ -42,26 +42,22 @@
 
 #define BUF_SIZE 8192
 
-#undef LITERAL_TO_STRING
-#define LITERAL_TO_STRING(x) #x
-
 #undef CHECK
-#define CHECK(condition)                        \
-  if (!(condition)) {                           \
-    ALOGE("%s",                                 \
-    __FILE__ ":" LITERAL_TO_STRING(__LINE__)    \
-    " CHECK(" #condition ") failed.");          \
-    notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);   \
+#define CHECK(condition)                         \
+  if (!(condition)) {                            \
+    ALOGE("%s:%d "                               \
+        " CHECK(" #condition ") failed.",        \
+        __FILE__,__LINE__);                      \
+    notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);    \
   }
 
 #undef CHECK_EQ
 #define CHECK_EQ(x,y)                            \
   do {                                           \
     if (x != y) {                                \
-      AString ___full =                          \
-      __FILE__ ":" LITERAL_TO_STRING(__LINE__)   \
-      " CHECK_EQ" "( " #x "," #y ") failed: ";   \
-      ALOGE("%s", ___full.c_str());              \
+      ALOGE("%s:%d "                             \
+        " CHECK_EQ" "( " #x "," #y ") failed: ", \
+        __FILE__,__LINE__);                      \
       notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);  \
       return UNKNOWN_ERROR;                      \
     }                                            \
@@ -71,10 +67,9 @@
 #define CHECK_LE(x,y)                            \
   do {                                           \
     if (x > y) {                                 \
-      AString ___full =                          \
-      __FILE__ ":" LITERAL_TO_STRING(__LINE__)   \
-      " CHECK_EQ" "( " #x "," #y ") failed: ";   \
-      ALOGE("%s", ___full.c_str());              \
+      ALOGE("%s:%d "                             \
+        " CHECK_EQ" "( " #x "," #y ") failed: ", \
+        __FILE__,__LINE__);                      \
       notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);  \
       return UNKNOWN_ERROR;                      \
     }                                            \

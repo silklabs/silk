@@ -77,7 +77,8 @@ StreamPlayer::StreamPlayer() :
     mState(UNPREPARED),
     mDoMoreStuffGeneration(0),
     mStartTimeRealUs(-1ll),
-    mListener(NULL) {
+    mListener(NULL),
+    mDurationUs(-1) {
   ALOGV("Finished initializing StreamPlayer");
 }
 
@@ -167,6 +168,14 @@ void StreamPlayer::getCurrentPosition(int* msec) {
   int64_t timeUs;
   if (mExtractor->getSampleTime(&timeUs) == OK) {
     *msec = timeUs / 1000;
+  } else {
+    *msec = -1;
+  }
+}
+
+void StreamPlayer::getDuration(int64_t* msec) {
+  if (mDurationUs > 0) {
+    *msec = mDurationUs / 1000;
   } else {
     *msec = -1;
   }
@@ -304,6 +313,11 @@ status_t StreamPlayer::onPrepare() {
     status_t err = mExtractor->getTrackFormat(i, &formatFile);
     CHECK_EQ(err, (status_t)OK);
     ALOGD("Track format is '%s'", formatFile->debugString(0).c_str());
+
+    int64_t duration;
+    if (formatFile->findInt64("durationUs", &duration)) {
+      mDurationUs = duration;
+    }
 
     AString mime;
     CHECK(formatFile->findString("mime", &mime));

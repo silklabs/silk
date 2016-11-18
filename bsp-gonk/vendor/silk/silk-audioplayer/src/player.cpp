@@ -269,11 +269,11 @@ NAN_METHOD(Player::GetCurrentPosition) {
 NAN_METHOD(Player::GetDuration) {
   SETUP_FUNCTION(Player)
 
-//  off64_t msec = -1;
-//  if (self->mStreamPlayer != NULL) {
-//    self->mStreamPlayer->getDuration(&msec);
-//  }
-//  info.GetReturnValue().Set(Nan::New<Number>(msec));
+  int64_t msec = -1;
+  if (self->mStreamPlayer != NULL) {
+    self->mStreamPlayer->getDuration(&msec);
+  }
+  info.GetReturnValue().Set(Nan::New<Number>(msec));
 }
 
 NAN_METHOD(Player::EndOfStream) {

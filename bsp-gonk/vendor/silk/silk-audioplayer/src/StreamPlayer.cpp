@@ -410,6 +410,7 @@ status_t StreamPlayer::onStop() {
 }
 
 status_t StreamPlayer::onReset() {
+  ALOGV("%s", __FUNCTION__);
   CHECK_EQ(mState, STOPPED);
 
   for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
@@ -482,6 +483,7 @@ status_t StreamPlayer::onDoMoreStuff() {
     if (err == ERROR_END_OF_STREAM) {
       ALOGI("encountered input EOS.");
       stop();
+      reset();
       break;
     } else if (err != OK) {
       ALOGE("error %d", err);

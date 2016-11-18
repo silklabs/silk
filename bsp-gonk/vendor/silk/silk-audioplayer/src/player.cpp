@@ -70,6 +70,10 @@ void Player::Init(Local<Object> exports) {
 Player::Player():
     gain(GAIN_MAX) {
   ALOGV("Creating instance of player");
+
+  // This is required for Marshmallow onwards
+  DataSource::RegisterDefaultSniffers();
+
   mLooper = new ALooper();
   mLooper->start();
 

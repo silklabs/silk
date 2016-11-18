@@ -31,6 +31,7 @@
             '-Wno-sign-promo',
             '-Wno-parentheses',
             '-Wno-missing-field-initializers',
+            "<!(echo $SILK_PLAYER_EXTRA_CFLAGS)",
           ],
         }],
       ],

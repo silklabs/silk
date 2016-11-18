@@ -10,5 +10,10 @@ LOCAL_SHARED_LIBRARIES := \
   libmedia \
   libstagefright \
   libstagefright_foundation \
+  libgui \
+
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+export SILK_PLAYER_EXTRA_CFLAGS=-DTARGET_GE_MARSHMALLOW
+endif
 
 include $(BUILD_NODE_MODULE)

@@ -61,11 +61,10 @@ private:
   };
 
   enum {
-    kWhatPrepare = 0,
-    kWhatStart = 1,
-    kWhatStop = 2,
-    kWhatDoMoreStuff = 3,
-    kWhatReset = 4,
+    kWhatStart = 0,
+    kWhatStop = 1,
+    kWhatDoMoreStuff = 2,
+    kWhatReset = 3,
   };
 
   struct BufferInfo {
@@ -113,6 +112,7 @@ private:
   status_t renderAudio(CodecState *state, BufferInfo *info,
                    const sp<ABuffer> &buffer);
   void notify(int msg, int ext1);
+  AMessage* getMessage(uint32_t what);
 
   DISALLOW_EVIL_CONSTRUCTORS(StreamPlayer);
 };

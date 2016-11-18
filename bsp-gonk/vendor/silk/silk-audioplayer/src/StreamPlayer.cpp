@@ -21,6 +21,7 @@
 #include "StreamPlayer.h"
 #include <fcntl.h>
 
+#include <gui/Surface.h>
 #include <media/AudioTrack.h>
 #include <media/ICrypto.h>
 #include <media/IMediaHTTPService.h>
@@ -28,17 +29,23 @@
 #include <media/stagefright/foundation/AMessage.h>
 #include <media/stagefright/MediaCodec.h>
 #include <media/stagefright/MediaErrors.h>
-#include <media/stagefright/NativeWindowWrapper.h>
 #include <media/stagefright/NuMediaExtractor.h>
 #include <media/stagefright/Utils.h>
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/FileSource.h>
 
+#ifndef TARGET_GE_MARSHMALLOW
+#include <media/stagefright/NativeWindowWrapper.h>
+#define AStringPrintf StringPrintf
+#endif
+
 #define BUF_SIZE 8192
 
+#undef LITERAL_TO_STRING
 #define LITERAL_TO_STRING(x) #x
 
+#undef CHECK
 #define CHECK(condition)                        \
   if (!(condition)) {                           \
     ALOGE("%s",                                 \
@@ -47,6 +54,7 @@
     notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);   \
   }
 
+#undef CHECK_EQ
 #define CHECK_EQ(x,y)                            \
   do {                                           \
     if (x != y) {                                \
@@ -59,6 +67,7 @@
     }                                            \
   } while (false)
 
+#undef CHECK_LE
 #define CHECK_LE(x,y)                            \
   do {                                           \
     if (x > y) {                                 \
@@ -145,14 +154,14 @@ void StreamPlayer::setVolume(float gain) {
 
 void StreamPlayer::start() {
   ALOGV("%s", __FUNCTION__);
-  sp<AMessage> msg = new AMessage(kWhatStart, id());
+  sp<AMessage> msg = getMessage(kWhatStart);
   msg->post();
 }
 
 void StreamPlayer::stop(bool pause) {
   ALOGV("%s", __FUNCTION__);
 
-  sp<AMessage> msg = new AMessage(kWhatStop, id());
+  sp<AMessage> msg = getMessage(kWhatStop);
   if (pause) {
     msg->setInt32("media_event_type", MEDIA_PAUSED);
   } else {
@@ -187,33 +196,13 @@ void StreamPlayer::eos() {
 }
 
 void StreamPlayer::reset() {
-  sp<AMessage> msg = new AMessage(kWhatReset, id());
+  sp<AMessage> msg = getMessage(kWhatReset);
   msg->post();
 }
 
 void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
   ALOGV("%s %d", __FUNCTION__, msg->what());
   switch (msg->what()) {
-    case kWhatPrepare: {
-      status_t err;
-
-      if (mState != UNPREPARED) {
-        err = INVALID_OPERATION;
-      } else {
-        err = onPrepare();
-        if (err == OK) {
-          mState = STOPPED;
-        }
-      }
-
-      uint32_t replyID;
-      CHECK(msg->senderAwaitsResponse(&replyID));
-
-      sp<AMessage> response = new AMessage;
-      response->setInt32("err", err);
-      response->postReply(replyID);
-      break;
-    }
     case kWhatStart: {
       status_t err = OK;
 
@@ -351,7 +340,7 @@ status_t StreamPlayer::onPrepare() {
 
     size_t j = 0;
     sp<ABuffer> buffer;
-    while (formatFile->findBuffer(StringPrintf("csd-%d", j).c_str(), &buffer)) {
+    while (formatFile->findBuffer(AStringPrintf("csd-%d", j).c_str(), &buffer)) {
       state->mCSD.push_back(buffer);
       ++j;
     }
@@ -405,7 +394,7 @@ status_t StreamPlayer::onStart() {
 
   mStartTimeRealUs = -1ll;
 
-  sp<AMessage> msg = new AMessage(kWhatDoMoreStuff, id());
+  sp<AMessage> msg = getMessage(kWhatDoMoreStuff);
   msg->setInt32("generation", ++mDoMoreStuffGeneration);
   msg->post();
 
@@ -677,6 +666,14 @@ status_t StreamPlayer::renderAudio(
 
   state->mNumFramesWritten += numFramesWritten;
   return OK;
+}
+
+AMessage* StreamPlayer::getMessage(uint32_t what) {
+#ifdef TARGET_GE_MARSHMALLOW
+  return new AMessage(what, this);
+#else
+  return new AMessage(what, id());
+#endif
 }
 
 }  // namespace android

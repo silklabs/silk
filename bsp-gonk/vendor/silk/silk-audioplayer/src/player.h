@@ -68,6 +68,13 @@ public:
   float gain;
   sp<StreamPlayer> mStreamPlayer;
 
+  // Message passing queue between StreamPlayer callback and v8 async handler
+  uv_async_t asyncHandle;
+  Mutex eventMutex;
+  std::queue<EventInfo *> eventQueue;
+  Persistent<Function> eventCallback;
+  uv_async_t async;
+
 private:
   explicit Player();
   ~Player();

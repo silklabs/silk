@@ -273,13 +273,6 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
         err = onReset();
         mState = UNPREPARED;
       }
-
-      uint32_t replyID;
-      CHECK(msg->senderAwaitsResponse(&replyID));
-
-      sp<AMessage> response = new AMessage;
-      response->setInt32("err", err);
-      response->postReply(replyID);
       break;
     }
     default:
@@ -426,6 +419,10 @@ status_t StreamPlayer::onReset() {
   mStateByTrackIndex.clear();
   mCodecLooper.clear();
   mExtractor.clear();
+
+  if (mBufferedDataSource != NULL) {
+    mBufferedDataSource->reset();
+  }
   return OK;
 }
 

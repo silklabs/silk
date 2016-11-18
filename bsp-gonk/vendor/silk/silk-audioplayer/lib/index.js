@@ -229,7 +229,7 @@ export default class Player extends events.EventEmitter {
    */
   write(chunk: Buffer) {
     // Prepare stream player with BufferedDataSource
-    if (this._mediaState === 'idle') {
+    if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
       this._mediaState = 'preparing';
       this._player.setDataSource(bindings.DATA_SOURCE_TYPE_BUFFER);
       this._player.start();

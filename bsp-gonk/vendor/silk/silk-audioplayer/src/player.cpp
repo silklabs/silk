@@ -26,13 +26,7 @@ using Nan::Callback;
     } \
   }
 
-// Message passing queue between StreamPlayer callback and v8 async handler
-uv_async_t asyncHandle;
-Mutex eventMutex;
-std::queue<EventInfo *> eventQueue;
-Persistent<Function> eventCallback;
 Nan::Persistent<Function> Player::constructor;
-extern uv_async_t async;
 
 /**
  *
@@ -88,10 +82,16 @@ Player::Player():
  * Fetch the new event from the event queue and call the JS callback
  */
 void Player::async_cb_handler(uv_async_t *handle) {
+  Player* player = (Player*) handle->data;
+  if (player == NULL) {
+    ALOGE("Player handle null");
+    return;
+  }
+
   EventInfo* eventInfo;
-  Mutex::Autolock autoLock(eventMutex);
-  while (!eventQueue.empty()) {
-    eventInfo = eventQueue.front();
+  Mutex::Autolock autoLock(player->eventMutex);
+  while (!player->eventQueue.empty()) {
+    eventInfo = player->eventQueue.front();
 
     Isolate *isolate = Isolate::GetCurrent();
     v8::HandleScope handleScope(isolate);
@@ -99,11 +99,11 @@ void Player::async_cb_handler(uv_async_t *handle) {
       Nan::New<String>(eventInfo->event.c_str()).ToLocalChecked(),
       Nan::New<String>(eventInfo->errorMsg.c_str()).ToLocalChecked(),
     };
-    Local<Function>::New(isolate, eventCallback)->
+    Local<Function>::New(isolate, player->eventCallback)->
         Call(isolate->GetCurrentContext()->Global(), 2, argv);
 
     delete eventInfo;
-    eventQueue.pop();
+    player->eventQueue.pop();
   }
 }
 
@@ -138,6 +138,8 @@ void Player::notify(int msg, int ext1, int ext2, const Parcel *obj) {
 
   Mutex::Autolock autoLock(eventMutex);
   eventQueue.push(eventInfo);
+
+  asyncHandle.data = this;
   uv_async_send(&asyncHandle);
 }
 
@@ -234,6 +236,7 @@ NAN_METHOD(Player::Stop) {
 
   if (self->mStreamPlayer != NULL) {
     self->mStreamPlayer->stop();
+    self->mStreamPlayer->reset();
   }
 }
 
@@ -282,7 +285,7 @@ NAN_METHOD(Player::EndOfStream) {
 }
 
 NAN_METHOD(Player::AddEventListener) {
-  ALOGD("Adding event listener");
+  ALOGV("Adding event listener");
   SETUP_FUNCTION(Player)
 
   if (info.Length() != 1) {
@@ -291,9 +294,9 @@ NAN_METHOD(Player::AddEventListener) {
 
   Isolate *isolate = info.GetIsolate();
   REQ_FUN_ARG(0, eventcb);
-  eventCallback.Reset(isolate, eventcb);
+  self->eventCallback.Reset(isolate, eventcb);
 
-  uv_async_init(uv_default_loop(), &asyncHandle, Player::async_cb_handler);
+  uv_async_init(uv_default_loop(), &self->asyncHandle, Player::async_cb_handler);
 }
 
 NODE_MODULE(player, Player::Init);

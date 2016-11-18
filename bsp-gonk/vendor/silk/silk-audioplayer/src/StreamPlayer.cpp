@@ -80,7 +80,6 @@ namespace android {
 StreamPlayer::StreamPlayer() :
     mState(UNPREPARED),
     mDoMoreStuffGeneration(0),
-    mStartTimeRealUs(-1ll),
     mListener(NULL),
     mDurationUs(-1) {
   ALOGV("Finished initializing StreamPlayer");
@@ -387,8 +386,6 @@ status_t StreamPlayer::onStart() {
   ALOGV("%s", __FUNCTION__);
   CHECK_EQ(mState, STOPPED);
 
-  mStartTimeRealUs = -1ll;
-
   sp<AMessage> msg = getMessage(kWhatDoMoreStuff);
   msg->setInt32("generation", ++mDoMoreStuffGeneration);
   msg->post();
@@ -402,6 +399,13 @@ status_t StreamPlayer::onStop() {
 
   ++mDoMoreStuffGeneration;
 
+  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
+    CodecState *state = &mStateByTrackIndex.editValueAt(i);
+    if ((state != NULL) && (state->mAudioTrack != NULL)) {
+      state->mAudioTrack->pause();
+    }
+  }
+
   return OK;
 }
 
@@ -413,7 +417,6 @@ status_t StreamPlayer::onReset() {
     CHECK_EQ(state->mCodec->release(), (status_t)OK);
   }
 
-  mStartTimeRealUs = -1ll;
   mStateByTrackIndex.clear();
   mCodecLooper.clear();
   mExtractor.clear();
@@ -519,57 +522,36 @@ status_t StreamPlayer::onDoMoreStuff() {
     }
   }
 
-  int64_t nowUs = ALooper::GetNowUs();
-
-  if (mStartTimeRealUs < 0ll) {
-    mStartTimeRealUs = nowUs + 1000000ll;
-  }
-
   for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
     CodecState *state = &mStateByTrackIndex.editValueAt(i);
 
     while (!state->mAvailOutputBufferInfos.empty()) {
       BufferInfo *info = &*state->mAvailOutputBufferInfos.begin();
 
-      int64_t whenRealUs = info->mPresentationTimeUs + mStartTimeRealUs;
-      int64_t lateByUs = nowUs - whenRealUs;
+      bool release = true;
 
-      if (lateByUs > -10000ll) {
-        bool release = true;
+      if (state->mAudioTrack != NULL) {
+        const sp<ABuffer> &srcBuffer =
+            state->mBuffers[1].itemAt(info->mIndex);
 
-        if (lateByUs > 30000ll) {
-          ALOGI("track %d buffer late by %lld us, dropping.",
-                mStateByTrackIndex.keyAt(i), lateByUs);
-          state->mCodec->releaseOutputBuffer(info->mIndex);
-        } else {
-          if (state->mAudioTrack != NULL) {
-            const sp<ABuffer> &srcBuffer =
-                state->mBuffers[1].itemAt(info->mIndex);
+        renderAudio(state, info, srcBuffer);
 
-            renderAudio(state, info, srcBuffer);
-
-            if (info->mSize > 0) {
-              release = false;
-            }
-          }
-
-          if (release) {
-            state->mCodec->renderOutputBufferAndRelease(
-                info->mIndex);
-          }
+        if (info->mSize > 0) {
+          release = false;
         }
 
         if (release) {
-          state->mAvailOutputBufferInfos.erase(
-              state->mAvailOutputBufferInfos.begin());
-
-          info = NULL;
-        } else {
-          break;
+          state->mCodec->renderOutputBufferAndRelease(
+              info->mIndex);
         }
+      }
+
+      if (release) {
+        state->mAvailOutputBufferInfos.erase(
+            state->mAvailOutputBufferInfos.begin());
+
+        info = NULL;
       } else {
-        ALOGV("track %d buffer early by %lld us.",
-              mStateByTrackIndex.keyAt(i), -lateByUs);
         break;
       }
     }

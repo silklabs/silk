@@ -97,7 +97,6 @@ private:
   sp<BufferedDataSource> mBufferedDataSource;
   uint32_t mDataSourceType;
 
-  int64_t mStartTimeRealUs;
   sp<MediaPlayerListener> mListener;
   Mutex mNotifyLock;
   int64_t mDurationUs;

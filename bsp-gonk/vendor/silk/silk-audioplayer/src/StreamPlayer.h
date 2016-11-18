@@ -45,6 +45,7 @@ public:
   void start();
   void stop(bool pause = false);
   void getCurrentPosition(int* msec);
+  void getDuration(int64_t* msec);
   void eos();
   void reset();
 
@@ -100,6 +101,7 @@ private:
   int64_t mStartTimeRealUs;
   sp<MediaPlayerListener> mListener;
   Mutex mNotifyLock;
+  int64_t mDurationUs;
 
   status_t onPrepare();
   status_t onStart();

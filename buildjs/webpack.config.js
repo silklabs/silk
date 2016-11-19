@@ -82,7 +82,6 @@ const externals = [
   'silk-battery',
   'silk-bledroid',
   'silk-bsp-version',
-  'silk-caffe',
   'silk-camera',
   'silk-core-version',
   'silk-crashreporter',

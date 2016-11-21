@@ -11,6 +11,11 @@
            remote="github"
            revision="v2.2" clone-depth="1"/>
 
+  <project name="silklabs/i2c-tools"
+           path="external/i2c-tools"
+           remote="github"
+           revision="master"
+           clone-depth="1"/>
   <project name="silklabs/intel-tbb"
            path="external/intel-tbb"
            remote="github"

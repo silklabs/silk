@@ -45,7 +45,7 @@ type FileInfo = {
 };
 
 /**
- * This module provides an interface to play audio files.
+ * This module provides an interface to play audio files or audio streams
  * @module silk-audioplayer
  *
  * @example
@@ -72,6 +72,7 @@ type FileInfo = {
  *   log.info(`getDuration ${player.getDuration()}`);
  *   log.info(`getInfo ${JSON.stringify(player.getInfo())}`);
  * });
+ *
  *
  * Example2 - Play an audio stream
  *
@@ -223,7 +224,7 @@ export default class Player extends events.EventEmitter {
   /**
    * Write audio buffer to the player's queue to be played
    *
-   * @param Buffer buffer containing audio data to be played
+   * @param chunk buffer containing audio data to be played
    * @memberof silk-audioplayer
    * @instance
    */
@@ -242,7 +243,7 @@ export default class Player extends events.EventEmitter {
   }
 
   /**
-   * Stop the currently playing audio file
+   * Stop the currently playing audio file or an audio stream
    * @memberof silk-audioplayer
    * @instance
    */
@@ -251,7 +252,7 @@ export default class Player extends events.EventEmitter {
   }
 
   /**
-   * Pause the currently playing audio file
+   * Pause the currently playing audio file or an audio stream
    * @memberof silk-audioplayer
    * @instance
    */
@@ -260,7 +261,7 @@ export default class Player extends events.EventEmitter {
   }
 
   /**
-   * Resume the currently paused audio file
+   * Resume the currently paused audio file or an audio stream
    * @memberof silk-audioplayer
    * @instance
    */
@@ -289,10 +290,9 @@ export default class Player extends events.EventEmitter {
   }
 
   /**
-   * Gets the duration of the file. Duration is not available in
-   * the idle state.
-   * @return {number} the duration in milliseconds, if no duration is available
-   *                  (for example, there is an error), -1 is returned.
+   * Gets the duration of the file or an audio stream. Duration is not available
+   * in the idle state.
+   * @return {number} the duration in milliseconds
    * @memberof silk-audioplayer
    * @instance
    */
@@ -314,8 +314,8 @@ export default class Player extends events.EventEmitter {
 
   /**
    * Mark the end of audio stream. This API doesn't stop the audio streaming
-   * but rather tells the audio player to finish when all the audio buffers
-   * are done playing.
+   * but rather tells the audio player to stop when all the buffers in the audio
+   * queue are done playing.
    *
    * @return {FileInfo}
    * @memberof silk-audioplayer

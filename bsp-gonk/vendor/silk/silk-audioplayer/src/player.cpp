@@ -113,7 +113,7 @@ void Player::async_cb_handler(uv_async_t *handle) {
 /**
  * Add an event in the event queue and wake up the v8 default loop
  */
-void Player::notify(int msg, int ext1, int ext2, const Parcel *obj) {
+void Player::notify(int msg, const char* errorMsg) {
   EventInfo *eventInfo = new EventInfo();
   eventInfo->errorMsg = "";
 
@@ -132,10 +132,10 @@ void Player::notify(int msg, int ext1, int ext2, const Parcel *obj) {
     break;
   case MEDIA_ERROR:
     eventInfo->event = "error";
-    eventInfo->errorMsg = "unknown media error";
+    eventInfo->errorMsg = errorMsg;
     break;
   default:
-    ALOGV("Ignoring message msg=%d, ext1=%d, ext2=%d", msg, ext1, ext2);
+    ALOGV("Ignoring message msg=%d, errorMsg=%s", msg, errorMsg);
     return;
   }
 

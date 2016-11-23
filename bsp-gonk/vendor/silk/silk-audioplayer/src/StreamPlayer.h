@@ -17,7 +17,6 @@
 #include <media/stagefright/foundation/AHandler.h>
 #include <media/stagefright/foundation/AString.h>
 #include <utils/KeyedVector.h>
-#include <media/mediaplayer.h>
 
 #include "BufferedDataSource.h"
 
@@ -33,12 +32,17 @@ class Sniffer;
 const uint32_t DATA_SOURCE_TYPE_FILE = 0;
 const uint32_t DATA_SOURCE_TYPE_BUFFER = 1;
 
+class StreamPlayerListener: virtual public RefBase {
+public:
+  virtual void notify(int msg, const char* errorMsg) = 0;
+};
+
 class StreamPlayer: public AHandler {
 public:
   StreamPlayer();
   ~StreamPlayer();
 
-  status_t setListener(const sp<MediaPlayerListener>& listener);
+  status_t setListener(const sp<StreamPlayerListener>& listener);
   int write(const void* bytes, size_t size);
   void setVolume(float volume);
   void setDataSource(uint32_t dataSourceType, const char *path);
@@ -97,7 +101,7 @@ private:
   sp<BufferedDataSource> mBufferedDataSource;
   uint32_t mDataSourceType;
 
-  sp<MediaPlayerListener> mListener;
+  sp<StreamPlayerListener> mListener;
   Mutex mNotifyLock;
   int64_t mDurationUs;
   float mGain;
@@ -111,7 +115,7 @@ private:
 
   status_t renderAudio(CodecState *state, BufferInfo *info,
                    const sp<ABuffer> &buffer);
-  void notify(int msg, int ext1);
+  void notify(int msg, const char* errorMsg);
   AMessage* getMessage(uint32_t what);
 
   DISALLOW_EVIL_CONSTRUCTORS(StreamPlayer);

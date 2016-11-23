@@ -43,34 +43,34 @@
 #define BUF_SIZE 8192
 
 #undef CHECK
-#define CHECK(condition)                         \
+#define CHECK(condition,errorMsg)                \
   if (!(condition)) {                            \
     ALOGE("%s:%d "                               \
         " CHECK(" #condition ") failed.",        \
         __FILE__,__LINE__);                      \
-    notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);    \
+    notify(MEDIA_ERROR, errorMsg);               \
   }
 
 #undef CHECK_EQ
-#define CHECK_EQ(x,y)                            \
+#define CHECK_EQ(x,y,errorMsg)                   \
   do {                                           \
     if (x != y) {                                \
       ALOGE("%s:%d "                             \
         " CHECK_EQ" "( " #x "," #y ") failed: ", \
         __FILE__,__LINE__);                      \
-      notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);  \
+      notify(MEDIA_ERROR, errorMsg);             \
       return UNKNOWN_ERROR;                      \
     }                                            \
   } while (false)
 
 #undef CHECK_LE
-#define CHECK_LE(x,y)                            \
+#define CHECK_LE(x,y,errorMsg)                   \
   do {                                           \
     if (x > y) {                                 \
       ALOGE("%s:%d "                             \
         " CHECK_EQ" "( " #x "," #y ") failed: ", \
         __FILE__,__LINE__);                      \
-      notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);  \
+      notify(MEDIA_ERROR, errorMsg);             \
       return UNKNOWN_ERROR;                      \
     }                                            \
   } while (false)
@@ -104,16 +104,16 @@ void StreamPlayer::setDataSource(uint32_t dataSourceType, const char *path) {
   ALOGV("setting datasource done");
 }
 
-status_t StreamPlayer::setListener(const sp<MediaPlayerListener>& listener) {
+status_t StreamPlayer::setListener(const sp<StreamPlayerListener>& listener) {
   ALOGV("setListener");
   mListener = listener;
   return NO_ERROR;
 }
 
-void StreamPlayer::notify(int msg, int ext1) {
+void StreamPlayer::notify(int msg, const char* errorMsg) {
   if (mListener != NULL) {
     Mutex::Autolock _l(mNotifyLock);
-    mListener->notify(msg, ext1, 0, NULL);
+    mListener->notify(msg, errorMsg);
   }
 }
 
@@ -122,7 +122,7 @@ void StreamPlayer::notify(int msg, int ext1) {
  */
 int StreamPlayer::write(const void* bytes, size_t size) {
   if (mDataSourceType != DATA_SOURCE_TYPE_BUFFER) {
-    notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);
+    notify(MEDIA_ERROR, "Invalid data source");
     return 0;
   }
 
@@ -239,8 +239,8 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
       break;
     }
     case kWhatDoMoreStuff: {
-      int32_t generation;
-      CHECK(msg->findInt32("generation", &generation));
+      int32_t generation = 0;
+      msg->findInt32("generation", &generation);
 
       if (generation != mDoMoreStuffGeneration) {
         ALOGD("Stop called");
@@ -275,7 +275,7 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
 }
 
 status_t StreamPlayer::onPrepare() {
-  CHECK_EQ(mState, UNPREPARED);
+  CHECK_EQ(mState, UNPREPARED, "Invalid media state");
 
   mExtractor = new NuMediaExtractor();
   status_t err = NO_ERROR;
@@ -285,7 +285,7 @@ status_t StreamPlayer::onPrepare() {
     err = mExtractor->setDataSource(NULL, mPath.c_str());
   }
 
-  CHECK_EQ(err, (status_t)OK);
+  CHECK_EQ(err, (status_t)OK, "Failed to autodetect media content");
 
   if (mCodecLooper == NULL) {
     mCodecLooper = new ALooper;
@@ -296,7 +296,7 @@ status_t StreamPlayer::onPrepare() {
   for (size_t i = 0; i < mExtractor->countTracks(); ++i) {
     sp<AMessage> formatFile;
     status_t err = mExtractor->getTrackFormat(i, &formatFile);
-    CHECK_EQ(err, (status_t)OK);
+    CHECK_EQ(err, (status_t)OK, "Failed to get track format");
     ALOGD("Track format is '%s'", formatFile->debugString(0).c_str());
 
     int64_t duration;
@@ -305,7 +305,7 @@ status_t StreamPlayer::onPrepare() {
     }
 
     AString mime;
-    CHECK(formatFile->findString("mime", &mime));
+    CHECK(formatFile->findString("mime", &mime), "Failed to get mime type");
 
     if (!haveAudio && !strncasecmp(mime.c_str(), "audio/", 6)) {
       haveAudio = true;
@@ -314,7 +314,7 @@ status_t StreamPlayer::onPrepare() {
     }
 
     err = mExtractor->selectTrack(i);
-    CHECK_EQ(err, (status_t)OK);
+    CHECK_EQ(err, (status_t)OK, "Failed to select track");
 
     CodecState *state =
         &mStateByTrackIndex.editValueAt(
@@ -324,7 +324,7 @@ status_t StreamPlayer::onPrepare() {
     state->mCodec = MediaCodec::CreateByType(
         mCodecLooper, mime.c_str(), false /* encoder */);
 
-    CHECK(state->mCodec != NULL);
+    CHECK(state->mCodec != NULL, "Failed to create media codec");
 
     err = state->mCodec->configure(
         formatFile,
@@ -332,7 +332,7 @@ status_t StreamPlayer::onPrepare() {
         NULL /* crypto */,
         0 /* flags */);
 
-    CHECK_EQ(err, (status_t)OK);
+    CHECK_EQ(err, (status_t)OK, "Failed to configure media codec");
 
     size_t j = 0;
     sp<ABuffer> buffer;
@@ -346,24 +346,25 @@ status_t StreamPlayer::onPrepare() {
     CodecState *state = &mStateByTrackIndex.editValueAt(i);
 
     status_t err = state->mCodec->start();
-    CHECK_EQ(err, (status_t)OK);
+    CHECK_EQ(err, (status_t)OK, "Failed to start media codec");
 
     err = state->mCodec->getInputBuffers(&state->mBuffers[0]);
-    CHECK_EQ(err, (status_t)OK);
+    CHECK_EQ(err, (status_t)OK, "Failed to get input buffers");
 
     err = state->mCodec->getOutputBuffers(&state->mBuffers[1]);
-    CHECK_EQ(err, (status_t)OK);
+    CHECK_EQ(err, (status_t)OK, "Failed to get output buffers");
 
     for (size_t j = 0; j < state->mCSD.size(); ++j) {
       const sp<ABuffer> &srcBuffer = state->mCSD.itemAt(j);
 
       size_t index;
       err = state->mCodec->dequeueInputBuffer(&index, -1ll);
-      CHECK_EQ(err, (status_t)OK);
+      CHECK_EQ(err, (status_t)OK, "Failed to dequeue input buffers");
 
       const sp<ABuffer> &dstBuffer = state->mBuffers[0].itemAt(index);
 
-      CHECK_LE(srcBuffer->size(), dstBuffer->capacity());
+      CHECK_LE(srcBuffer->size(), dstBuffer->capacity(),
+               "Invalid buffer capacity");
       dstBuffer->setRange(0, srcBuffer->size());
       memcpy(dstBuffer->data(), srcBuffer->data(), srcBuffer->size());
 
@@ -373,7 +374,7 @@ status_t StreamPlayer::onPrepare() {
           dstBuffer->size(),
           0ll,
           MediaCodec::BUFFER_FLAG_CODECCONFIG);
-      CHECK_EQ(err, (status_t)OK);
+      CHECK_EQ(err, (status_t)OK, "Failed to queue input buffers");
     }
   }
 
@@ -386,7 +387,7 @@ status_t StreamPlayer::onPrepare() {
 
 status_t StreamPlayer::onStart() {
   ALOGV("%s", __FUNCTION__);
-  CHECK_EQ(mState, STOPPED);
+  CHECK_EQ(mState, STOPPED, "Invalid media state");
 
   sp<AMessage> msg = getMessage(kWhatDoMoreStuff);
   msg->setInt32("generation", ++mDoMoreStuffGeneration);
@@ -397,7 +398,7 @@ status_t StreamPlayer::onStart() {
 
 status_t StreamPlayer::onStop() {
   ALOGV("%s", __FUNCTION__);
-  CHECK_EQ(mState, STARTED);
+  CHECK_EQ(mState, STARTED, "Invalid media state");
 
   ++mDoMoreStuffGeneration;
 
@@ -413,11 +414,11 @@ status_t StreamPlayer::onStop() {
 
 status_t StreamPlayer::onReset() {
   ALOGV("%s", __FUNCTION__);
-  CHECK_EQ(mState, STOPPED);
+  CHECK_EQ(mState, STOPPED, "Invalid media state");
 
   for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
     CodecState *state = &mStateByTrackIndex.editValueAt(i);
-    CHECK_EQ(state->mCodec->release(), (status_t)OK);
+    state->mCodec->release();
   }
 
   mStateByTrackIndex.clear();
@@ -469,10 +470,10 @@ status_t StreamPlayer::onDoMoreStuff() {
         state->mAvailOutputBufferInfos.push_back(info);
       } else if (err == INFO_FORMAT_CHANGED) {
         err = onOutputFormatChanged(mStateByTrackIndex.keyAt(i), state);
-        CHECK_EQ(err, (status_t)OK);
+        CHECK_EQ(err, (status_t)OK, "Failed to get output format");
       } else if (err == INFO_OUTPUT_BUFFERS_CHANGED) {
         err = state->mCodec->getOutputBuffers(&state->mBuffers[1]);
-        CHECK_EQ(err, (status_t)OK);
+        CHECK_EQ(err, (status_t)OK, "Failed to get output buffers");
       } else {
         ALOGV("dequeueOutputBuffer on track %d returned %d",
               mStateByTrackIndex.keyAt(i), err);
@@ -491,7 +492,7 @@ status_t StreamPlayer::onDoMoreStuff() {
       break;
     } else if (err != OK) {
       ALOGE("error %d", err);
-      notify(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN);
+      notify(MEDIA_ERROR, "Unknown media error");
       break;
     } else {
       CodecState *state = &mStateByTrackIndex.editValueFor(trackIndex);
@@ -508,10 +509,11 @@ status_t StreamPlayer::onDoMoreStuff() {
           state->mBuffers[0].itemAt(index);
 
       err = mExtractor->readSampleData(dstBuffer);
-      CHECK_EQ(err, (status_t)OK);
+      CHECK_EQ(err, (status_t)OK, "Failed to read more data");
 
       int64_t timeUs;
-      CHECK_EQ(mExtractor->getSampleTime(&timeUs), (status_t)OK);
+      CHECK_EQ(mExtractor->getSampleTime(&timeUs), (status_t)OK,
+               "Failed to get sample time");
 
       err = state->mCodec->queueInputBuffer(
           index,
@@ -519,12 +521,12 @@ status_t StreamPlayer::onDoMoreStuff() {
           dstBuffer->size(),
           timeUs,
           0);
-      CHECK_EQ(err, (status_t)OK);
+      CHECK_EQ(err, (status_t)OK, "Failed to queue input buffers");
 
       ALOGV("enqueued input data on track %d", trackIndex);
 
       err = mExtractor->advance();
-      CHECK_EQ(err, (status_t)OK);
+      CHECK_EQ(err, (status_t)OK, "Failed to read more data");
     }
   }
 
@@ -578,13 +580,15 @@ status_t StreamPlayer::onOutputFormatChanged(
   }
 
   AString mime;
-  CHECK(format->findString("mime", &mime));
+  CHECK(format->findString("mime", &mime), "Failed to get mime type");
 
   if (!strncasecmp(mime.c_str(), "audio/", 6)) {
     int32_t channelCount;
     int32_t sampleRate;
-    CHECK(format->findInt32("channel-count", &channelCount));
-    CHECK(format->findInt32("sample-rate", &sampleRate));
+    CHECK(format->findInt32("channel-count", &channelCount),
+          "Failed to get channel count");
+    CHECK(format->findInt32("sample-rate", &sampleRate),
+          "Failed to get sample rate");
 
     state->mAudioTrack = new AudioTrack(
         AUDIO_STREAM_MUSIC,
@@ -602,7 +606,7 @@ status_t StreamPlayer::onOutputFormatChanged(
 status_t StreamPlayer::renderAudio(
     CodecState *state, BufferInfo *info, const sp<ABuffer> &buffer) {
   ALOGV("%s", __FUNCTION__);
-  CHECK(state->mAudioTrack != NULL);
+  CHECK((state->mAudioTrack != NULL), "Failed to get audio track");
 
   if (state->mAudioTrack->stopped()) {
     state->mAudioTrack->setVolume(mGain);
@@ -610,7 +614,8 @@ status_t StreamPlayer::renderAudio(
   }
 
   uint32_t numFramesPlayed;
-  CHECK_EQ(state->mAudioTrack->getPosition(&numFramesPlayed), (status_t)OK);
+  CHECK_EQ(state->mAudioTrack->getPosition(&numFramesPlayed), (status_t)OK,
+           "Failed to get position of audio track");
 
   uint32_t numFramesAvailableToWrite =
       state->mAudioTrack->frameCount()
@@ -633,7 +638,7 @@ status_t StreamPlayer::renderAudio(
   ssize_t nbytes = state->mAudioTrack->write(
       buffer->base() + info->mOffset, copy);
 
-  CHECK_EQ(nbytes, (ssize_t)copy);
+  CHECK_EQ(nbytes, (ssize_t)copy, "Failed to write data to audio track");
 
   int64_t delayUs = ALooper::GetNowUs() - startTimeUs;
 

@@ -57,10 +57,10 @@ typedef struct {
 /**
  *
  */
-class Player : public Nan::ObjectWrap, public MediaPlayerListener {
+class Player : public Nan::ObjectWrap, public StreamPlayerListener {
 public:
   static void Init(v8::Local<v8::Object> exports);
-  virtual void notify(int msg, int ext1, int ext2, const Parcel *obj);
+  virtual void notify(int msg, const char* errorMsg);
   static void async_cb_handler(uv_async_t *handle);
 
   sp<StreamPlayer> mStreamPlayer;

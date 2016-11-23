@@ -14,7 +14,8 @@
 
 // Don't wait for data that is larger that these many bytes to avoid having
 // to buffer the stream for a long time
-const off64_t HIGH_WATERMARK = 10000;
+// AAC requires 8K worth of data to correctly parse the header
+const off64_t HIGH_WATERMARK = 8202;
 off64_t MAX_OFF_64_T = (off64_t)1 << ((sizeof(off64_t) * 8) - 2);
 
 namespace android {
@@ -162,17 +163,19 @@ ssize_t BufferedDataSource::readAt_l(off64_t offset, void *data, size_t size) {
  * Block until size bytes starting at offset are available to read
  */
 status_t BufferedDataSource::waitForData(off64_t offset, size_t size) {
-  off64_t watermark = (offset + size - mLength);
-
   while (((mLength - offset) < size) &&
       (mFinalResult != ERROR_END_OF_STREAM) &&
-      (watermark < HIGH_WATERMARK)) {
+      (mEraseOnRead || (mLength < HIGH_WATERMARK))) {
     mCondition.wait(mLock);
   }
 
   // High watermark reached; return early
-  if (watermark >= HIGH_WATERMARK) {
-    ALOGV("Reached watermark %lld", watermark);
+  // Only check for watermark when sniffing data to avoid delay in starting
+  // the audio stream
+  if (((mLength - offset) < size) &&
+      (mFinalResult != ERROR_END_OF_STREAM) &&
+      (!mEraseOnRead && (mLength >= HIGH_WATERMARK))) {
+    ALOGV("Reached watermark");
     return ERROR_OUT_OF_RANGE;
   }
 

@@ -177,7 +177,8 @@ export function getboolprop(prop: string, defaultValue: boolean = false): boolea
 export function getintprop(prop: string, defaultValue: number = 0): number {
   let value = parseInt(String(getprop(prop, defaultValue)), 10);
   if (isNaN(value)) {
-    throw new Error(`Expected ${prop} to be an integer`);
+    log.warn(`Expected ${prop} to be an integer`);
+    return defaultValue;
   }
   return value;
 }

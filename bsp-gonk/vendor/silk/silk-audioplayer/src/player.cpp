@@ -67,8 +67,7 @@ void Player::Init(Local<Object> exports) {
 /**
  *
  */
-Player::Player():
-    gain(GAIN_MAX) {
+Player::Player() {
   ALOGV("Creating instance of player");
 
   // This is required for Marshmallow onwards
@@ -229,9 +228,8 @@ NAN_METHOD(Player::SetVolume) {
     JSTHROW("Invalid number of arguments provided");
   }
 
-  self->gain = info[0]->NumberValue();
   if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->setVolume(self->gain);
+    self->mStreamPlayer->setVolume(info[0]->NumberValue());
   }
 }
 

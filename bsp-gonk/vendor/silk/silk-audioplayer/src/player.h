@@ -48,8 +48,6 @@ inline static char * UnwrapPointer(Local<Value> buffer, int64_t offset = 0) {
   }
 }
 
-static const float GAIN_MAX = 1.0;
-
 // Callback struct to copy data from the StreamPayer thread to the v8 event loop
 typedef struct {
   std::string event;
@@ -65,7 +63,6 @@ public:
   virtual void notify(int msg, int ext1, int ext2, const Parcel *obj);
   static void async_cb_handler(uv_async_t *handle);
 
-  float gain;
   sp<StreamPlayer> mStreamPlayer;
 
   // Message passing queue between StreamPlayer callback and v8 async handler

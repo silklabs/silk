@@ -81,7 +81,8 @@ StreamPlayer::StreamPlayer() :
     mState(UNPREPARED),
     mDoMoreStuffGeneration(0),
     mListener(NULL),
-    mDurationUs(-1) {
+    mDurationUs(-1),
+    mGain(1.0) {
   ALOGV("Finished initializing StreamPlayer");
 }
 
@@ -138,6 +139,7 @@ int StreamPlayer::write(const void* bytes, size_t size) {
  */
 void StreamPlayer::setVolume(float gain) {
   ALOGD("Audio player setting volume %f", gain);
+  mGain = gain;
   for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
     CodecState *state = &mStateByTrackIndex.editValueAt(i);
     if ((state != NULL) && (state->mAudioTrack != NULL)) {
@@ -425,6 +427,8 @@ status_t StreamPlayer::onReset() {
   if (mBufferedDataSource != NULL) {
     mBufferedDataSource->reset();
   }
+
+  mGain = 1.0;
   return OK;
 }
 
@@ -601,6 +605,7 @@ status_t StreamPlayer::renderAudio(
   CHECK(state->mAudioTrack != NULL);
 
   if (state->mAudioTrack->stopped()) {
+    state->mAudioTrack->setVolume(mGain);
     state->mAudioTrack->start();
   }
 

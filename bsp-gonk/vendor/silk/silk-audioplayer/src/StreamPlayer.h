@@ -100,6 +100,7 @@ private:
   sp<MediaPlayerListener> mListener;
   Mutex mNotifyLock;
   int64_t mDurationUs;
+  float mGain;
 
   status_t onPrepare();
   status_t onStart();

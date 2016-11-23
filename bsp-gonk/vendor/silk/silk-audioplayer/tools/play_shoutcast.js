@@ -34,7 +34,10 @@ icy.get(url, function (res) {
   res.once('error', onEnd);
   res.once('end', onEnd);
 
-  player.on('error', (err) => log.error(err));
+  player.on('error', (err) => {
+    log.error(err);
+    process.exit(1); // eslint-disable-line
+  });
   player.on('prepared', () => log.info(`Player prepared`));
   player.on('paused', () => log.info(`Player paused`));
   player.on('resumed', () => log.info(`Player resumed`));

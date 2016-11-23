@@ -13,12 +13,20 @@ player.play(__dirname + '/../media/mpthreetest.mp3')
 .catch((err) => log.error(err));
 
 player.on('started', () => {
+  log.info(`getState ${player.getState()}`);
+  log.info(`getInfo ${JSON.stringify(player.getInfo())}`);
+
   player.pause();
-  log.info(`getState ${player.getState()}`);
-  player.setVolume(0.5);
-  player.resume();
-  log.info(`getState ${player.getState()}`);
+
   log.info(`getCurrentPosition ${player.getCurrentPosition()}`);
   log.info(`getDuration ${player.getDuration()}`);
-  log.info(`getInfo ${JSON.stringify(player.getInfo())}`);
+});
+
+player.on('paused', () => {
+  log.info(`getState ${player.getState()}`);
+  player.resume();
+});
+
+player.on('resumed', () => {
+  log.info(`getState ${player.getState()}`);
 });

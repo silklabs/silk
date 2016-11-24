@@ -140,11 +140,9 @@ int StreamPlayer::write(const void* bytes, size_t size) {
 void StreamPlayer::setVolume(float gain) {
   ALOGD("Audio player setting volume %f", gain);
   mGain = gain;
-  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
-    CodecState *state = &mStateByTrackIndex.editValueAt(i);
-    if ((state != NULL) && (state->mAudioTrack != NULL)) {
-      state->mAudioTrack->setVolume(gain);
-    }
+
+  if (mCodecState.mAudioTrack != NULL) {
+    mCodecState.mAudioTrack->setVolume(gain);
   }
 }
 
@@ -316,17 +314,13 @@ status_t StreamPlayer::onPrepare() {
     err = mExtractor->selectTrack(i);
     CHECK_EQ(err, (status_t)OK, "Failed to select track");
 
-    CodecState *state =
-        &mStateByTrackIndex.editValueAt(
-            mStateByTrackIndex.add(i, CodecState()));
-
-    state->mNumFramesWritten = 0;
-    state->mCodec = MediaCodec::CreateByType(
+    mCodecState.mNumFramesWritten = 0;
+    mCodecState.mCodec = MediaCodec::CreateByType(
         mCodecLooper, mime.c_str(), false /* encoder */);
 
-    CHECK(state->mCodec != NULL, "Failed to create media codec");
+    CHECK(mCodecState.mCodec != NULL, "Failed to create media codec");
 
-    err = state->mCodec->configure(
+    err = mCodecState.mCodec->configure(
         formatFile,
         NULL,
         NULL /* crypto */,
@@ -337,45 +331,41 @@ status_t StreamPlayer::onPrepare() {
     size_t j = 0;
     sp<ABuffer> buffer;
     while (formatFile->findBuffer(AStringPrintf("csd-%d", j).c_str(), &buffer)) {
-      state->mCSD.push_back(buffer);
+      mCodecState.mCSD.push_back(buffer);
       ++j;
     }
   }
 
-  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
-    CodecState *state = &mStateByTrackIndex.editValueAt(i);
+  err = mCodecState.mCodec->start();
+  CHECK_EQ(err, (status_t)OK, "Failed to start media codec");
 
-    status_t err = state->mCodec->start();
-    CHECK_EQ(err, (status_t)OK, "Failed to start media codec");
+  err = mCodecState.mCodec->getInputBuffers(&mCodecState.mBuffers[0]);
+  CHECK_EQ(err, (status_t)OK, "Failed to get input buffers");
 
-    err = state->mCodec->getInputBuffers(&state->mBuffers[0]);
-    CHECK_EQ(err, (status_t)OK, "Failed to get input buffers");
+  err = mCodecState.mCodec->getOutputBuffers(&mCodecState.mBuffers[1]);
+  CHECK_EQ(err, (status_t)OK, "Failed to get output buffers");
 
-    err = state->mCodec->getOutputBuffers(&state->mBuffers[1]);
-    CHECK_EQ(err, (status_t)OK, "Failed to get output buffers");
+  for (size_t j = 0; j < mCodecState.mCSD.size(); ++j) {
+    const sp<ABuffer> &srcBuffer = mCodecState.mCSD.itemAt(j);
 
-    for (size_t j = 0; j < state->mCSD.size(); ++j) {
-      const sp<ABuffer> &srcBuffer = state->mCSD.itemAt(j);
+    size_t index;
+    err = mCodecState.mCodec->dequeueInputBuffer(&index, -1ll);
+    CHECK_EQ(err, (status_t)OK, "Failed to dequeue input buffers");
 
-      size_t index;
-      err = state->mCodec->dequeueInputBuffer(&index, -1ll);
-      CHECK_EQ(err, (status_t)OK, "Failed to dequeue input buffers");
+    const sp<ABuffer> &dstBuffer = mCodecState.mBuffers[0].itemAt(index);
 
-      const sp<ABuffer> &dstBuffer = state->mBuffers[0].itemAt(index);
+    CHECK_LE(srcBuffer->size(), dstBuffer->capacity(),
+             "Invalid buffer capacity");
+    dstBuffer->setRange(0, srcBuffer->size());
+    memcpy(dstBuffer->data(), srcBuffer->data(), srcBuffer->size());
 
-      CHECK_LE(srcBuffer->size(), dstBuffer->capacity(),
-               "Invalid buffer capacity");
-      dstBuffer->setRange(0, srcBuffer->size());
-      memcpy(dstBuffer->data(), srcBuffer->data(), srcBuffer->size());
-
-      err = state->mCodec->queueInputBuffer(
-          index,
-          0,
-          dstBuffer->size(),
-          0ll,
-          MediaCodec::BUFFER_FLAG_CODECCONFIG);
-      CHECK_EQ(err, (status_t)OK, "Failed to queue input buffers");
-    }
+    err = mCodecState.mCodec->queueInputBuffer(
+        index,
+        0,
+        dstBuffer->size(),
+        0ll,
+        MediaCodec::BUFFER_FLAG_CODECCONFIG);
+    CHECK_EQ(err, (status_t)OK, "Failed to queue input buffers");
   }
 
   if (mBufferedDataSource != NULL) {
@@ -402,11 +392,8 @@ status_t StreamPlayer::onStop() {
 
   ++mDoMoreStuffGeneration;
 
-  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
-    CodecState *state = &mStateByTrackIndex.editValueAt(i);
-    if ((state != NULL) && (state->mAudioTrack != NULL)) {
-      state->mAudioTrack->pause();
-    }
+  if (mCodecState.mAudioTrack != NULL) {
+    mCodecState.mAudioTrack->pause();
   }
 
   return OK;
@@ -416,12 +403,9 @@ status_t StreamPlayer::onReset() {
   ALOGV("%s", __FUNCTION__);
   CHECK_EQ(mState, STOPPED, "Invalid media state");
 
-  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
-    CodecState *state = &mStateByTrackIndex.editValueAt(i);
-    state->mCodec->release();
+  if (mCodecState.mCodec != NULL) {
+    mCodecState.mCodec->release();
   }
-
-  mStateByTrackIndex.clear();
   mCodecLooper.clear();
   mExtractor.clear();
 
@@ -435,51 +419,44 @@ status_t StreamPlayer::onReset() {
 
 status_t StreamPlayer::onDoMoreStuff() {
   ALOGV("%s", __FUNCTION__);
-  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
-    CodecState *state = &mStateByTrackIndex.editValueAt(i);
+  status_t err;
+  do {
+    size_t index;
+    err = mCodecState.mCodec->dequeueInputBuffer(&index);
 
-    status_t err;
-    do {
-      size_t index;
-      err = state->mCodec->dequeueInputBuffer(&index);
+    if (err == OK) {
+      ALOGV("dequeued input buffer");
 
-      if (err == OK) {
-        ALOGV("dequeued input buffer on track %d",
-              mStateByTrackIndex.keyAt(i));
+      mCodecState.mAvailInputBufferIndices.push_back(index);
+    } else {
+      ALOGV("dequeueInputBuffer returned %d", err);
+    }
+  } while (err == OK);
 
-        state->mAvailInputBufferIndices.push_back(index);
-      } else {
-        ALOGV("dequeueInputBuffer on track %d returned %d",
-              mStateByTrackIndex.keyAt(i), err);
-      }
-    } while (err == OK);
+  do {
+    BufferInfo info;
+    err = mCodecState.mCodec->dequeueOutputBuffer(
+        &info.mIndex,
+        &info.mOffset,
+        &info.mSize,
+        &info.mPresentationTimeUs,
+        &info.mFlags);
 
-    do {
-      BufferInfo info;
-      err = state->mCodec->dequeueOutputBuffer(
-          &info.mIndex,
-          &info.mOffset,
-          &info.mSize,
-          &info.mPresentationTimeUs,
-          &info.mFlags);
+    if (err == OK) {
+      ALOGV("dequeued output buffer");
 
-      if (err == OK) {
-        ALOGV("dequeued output buffer on track %d",
-              mStateByTrackIndex.keyAt(i));
-
-        state->mAvailOutputBufferInfos.push_back(info);
-      } else if (err == INFO_FORMAT_CHANGED) {
-        err = onOutputFormatChanged(mStateByTrackIndex.keyAt(i), state);
-        CHECK_EQ(err, (status_t)OK, "Failed to get output format");
-      } else if (err == INFO_OUTPUT_BUFFERS_CHANGED) {
-        err = state->mCodec->getOutputBuffers(&state->mBuffers[1]);
-        CHECK_EQ(err, (status_t)OK, "Failed to get output buffers");
-      } else {
-        ALOGV("dequeueOutputBuffer on track %d returned %d",
-              mStateByTrackIndex.keyAt(i), err);
-      }
-    } while (err == OK || err == INFO_FORMAT_CHANGED || err == INFO_OUTPUT_BUFFERS_CHANGED);
-  }
+      mCodecState.mAvailOutputBufferInfos.push_back(info);
+    } else if (err == INFO_FORMAT_CHANGED) {
+      err = onOutputFormatChanged();
+      CHECK_EQ(err, (status_t)OK, "Failed to get output format");
+    } else if (err == INFO_OUTPUT_BUFFERS_CHANGED) {
+      err = mCodecState.mCodec->getOutputBuffers(&mCodecState.mBuffers[1]);
+      CHECK_EQ(err, (status_t)OK, "Failed to get output buffers");
+    } else {
+      ALOGV("dequeueOutputBuffer returned %d", err);
+    }
+  } while (err == OK || err == INFO_FORMAT_CHANGED ||
+           err == INFO_OUTPUT_BUFFERS_CHANGED);
 
   for (;;) {
     size_t trackIndex;
@@ -495,18 +472,16 @@ status_t StreamPlayer::onDoMoreStuff() {
       notify(MEDIA_ERROR, "Unknown media error");
       break;
     } else {
-      CodecState *state = &mStateByTrackIndex.editValueFor(trackIndex);
-
-      if (state->mAvailInputBufferIndices.empty()) {
+      if (mCodecState.mAvailInputBufferIndices.empty()) {
         break;
       }
 
-      size_t index = *state->mAvailInputBufferIndices.begin();
-      state->mAvailInputBufferIndices.erase(
-          state->mAvailInputBufferIndices.begin());
+      size_t index = *mCodecState.mAvailInputBufferIndices.begin();
+      mCodecState.mAvailInputBufferIndices.erase(
+          mCodecState.mAvailInputBufferIndices.begin());
 
       const sp<ABuffer> &dstBuffer =
-          state->mBuffers[0].itemAt(index);
+          mCodecState.mBuffers[0].itemAt(index);
 
       err = mExtractor->readSampleData(dstBuffer);
       CHECK_EQ(err, (status_t)OK, "Failed to read more data");
@@ -515,7 +490,7 @@ status_t StreamPlayer::onDoMoreStuff() {
       CHECK_EQ(mExtractor->getSampleTime(&timeUs), (status_t)OK,
                "Failed to get sample time");
 
-      err = state->mCodec->queueInputBuffer(
+      err = mCodecState.mCodec->queueInputBuffer(
           index,
           dstBuffer->offset(),
           dstBuffer->size(),
@@ -530,38 +505,34 @@ status_t StreamPlayer::onDoMoreStuff() {
     }
   }
 
-  for (size_t i = 0; i < mStateByTrackIndex.size(); ++i) {
-    CodecState *state = &mStateByTrackIndex.editValueAt(i);
+  while (!mCodecState.mAvailOutputBufferInfos.empty()) {
+    BufferInfo *info = &*mCodecState.mAvailOutputBufferInfos.begin();
 
-    while (!state->mAvailOutputBufferInfos.empty()) {
-      BufferInfo *info = &*state->mAvailOutputBufferInfos.begin();
+    bool release = true;
 
-      bool release = true;
+    if (mCodecState.mAudioTrack != NULL) {
+      const sp<ABuffer> &srcBuffer =
+          mCodecState.mBuffers[1].itemAt(info->mIndex);
 
-      if (state->mAudioTrack != NULL) {
-        const sp<ABuffer> &srcBuffer =
-            state->mBuffers[1].itemAt(info->mIndex);
+      renderAudio(info, srcBuffer);
 
-        renderAudio(state, info, srcBuffer);
-
-        if (info->mSize > 0) {
-          release = false;
-        }
-
-        if (release) {
-          state->mCodec->renderOutputBufferAndRelease(
-              info->mIndex);
-        }
+      if (info->mSize > 0) {
+        release = false;
       }
 
       if (release) {
-        state->mAvailOutputBufferInfos.erase(
-            state->mAvailOutputBufferInfos.begin());
-
-        info = NULL;
-      } else {
-        break;
+        mCodecState.mCodec->renderOutputBufferAndRelease(
+            info->mIndex);
       }
+    }
+
+    if (release) {
+      mCodecState.mAvailOutputBufferInfos.erase(
+          mCodecState.mAvailOutputBufferInfos.begin());
+
+      info = NULL;
+    } else {
+      break;
     }
   }
 
@@ -569,11 +540,10 @@ status_t StreamPlayer::onDoMoreStuff() {
   return OK;
 }
 
-status_t StreamPlayer::onOutputFormatChanged(
-    size_t trackIndex, CodecState *state) {
+status_t StreamPlayer::onOutputFormatChanged() {
   ALOGV("%s", __FUNCTION__);
   sp<AMessage> format;
-  status_t err = state->mCodec->getOutputFormat(&format);
+  status_t err = mCodecState.mCodec->getOutputFormat(&format);
 
   if (err != OK) {
     return err;
@@ -590,39 +560,38 @@ status_t StreamPlayer::onOutputFormatChanged(
     CHECK(format->findInt32("sample-rate", &sampleRate),
           "Failed to get sample rate");
 
-    state->mAudioTrack = new AudioTrack(
+    mCodecState.mAudioTrack = new AudioTrack(
         AUDIO_STREAM_MUSIC,
         sampleRate,
         AUDIO_FORMAT_PCM_16_BIT,
         audio_channel_out_mask_from_count(channelCount),
         0);
 
-    state->mNumFramesWritten = 0;
+    mCodecState.mNumFramesWritten = 0;
   }
 
   return OK;
 }
 
-status_t StreamPlayer::renderAudio(
-    CodecState *state, BufferInfo *info, const sp<ABuffer> &buffer) {
+status_t StreamPlayer::renderAudio(BufferInfo *info, const sp<ABuffer> &buffer) {
   ALOGV("%s", __FUNCTION__);
-  CHECK((state->mAudioTrack != NULL), "Failed to get audio track");
+  CHECK((mCodecState.mAudioTrack != NULL), "Failed to get audio track");
 
-  if (state->mAudioTrack->stopped()) {
-    state->mAudioTrack->setVolume(mGain);
-    state->mAudioTrack->start();
+  if (mCodecState.mAudioTrack->stopped()) {
+    mCodecState.mAudioTrack->setVolume(mGain);
+    mCodecState.mAudioTrack->start();
   }
 
   uint32_t numFramesPlayed;
-  CHECK_EQ(state->mAudioTrack->getPosition(&numFramesPlayed), (status_t)OK,
+  CHECK_EQ(mCodecState.mAudioTrack->getPosition(&numFramesPlayed), (status_t)OK,
            "Failed to get position of audio track");
 
   uint32_t numFramesAvailableToWrite =
-      state->mAudioTrack->frameCount()
-      - (state->mNumFramesWritten - numFramesPlayed);
+      mCodecState.mAudioTrack->frameCount()
+      - (mCodecState.mNumFramesWritten - numFramesPlayed);
 
   size_t numBytesAvailableToWrite =
-      numFramesAvailableToWrite * state->mAudioTrack->frameSize();
+      numFramesAvailableToWrite * mCodecState.mAudioTrack->frameSize();
 
   size_t copy = info->mSize;
   if (copy > numBytesAvailableToWrite) {
@@ -635,14 +604,14 @@ status_t StreamPlayer::renderAudio(
 
   int64_t startTimeUs = ALooper::GetNowUs();
 
-  ssize_t nbytes = state->mAudioTrack->write(
+  ssize_t nbytes = mCodecState.mAudioTrack->write(
       buffer->base() + info->mOffset, copy);
 
   CHECK_EQ(nbytes, (ssize_t)copy, "Failed to write data to audio track");
 
   int64_t delayUs = ALooper::GetNowUs() - startTimeUs;
 
-  uint32_t numFramesWritten = nbytes / state->mAudioTrack->frameSize();
+  uint32_t numFramesWritten = nbytes / mCodecState.mAudioTrack->frameSize();
 
   if (delayUs > 2000ll) {
     ALOGW("AudioTrack::write took %lld us, numFramesAvailableToWrite=%u, "
@@ -653,7 +622,7 @@ status_t StreamPlayer::renderAudio(
   info->mOffset += nbytes;
   info->mSize -= nbytes;
 
-  state->mNumFramesWritten += numFramesWritten;
+  mCodecState.mNumFramesWritten += numFramesWritten;
   return OK;
 }
 

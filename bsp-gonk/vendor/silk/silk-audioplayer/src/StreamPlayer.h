@@ -96,7 +96,7 @@ private:
 
   sp<NuMediaExtractor> mExtractor;
   sp<ALooper> mCodecLooper;
-  KeyedVector<size_t, CodecState> mStateByTrackIndex;
+  CodecState mCodecState;
   int32_t mDoMoreStuffGeneration;
   sp<BufferedDataSource> mBufferedDataSource;
   uint32_t mDataSourceType;
@@ -111,10 +111,9 @@ private:
   status_t onStop();
   status_t onReset();
   status_t onDoMoreStuff();
-  status_t onOutputFormatChanged(size_t trackIndex, CodecState *state);
+  status_t onOutputFormatChanged();
 
-  status_t renderAudio(CodecState *state, BufferInfo *info,
-                   const sp<ABuffer> &buffer);
+  status_t renderAudio(BufferInfo *info, const sp<ABuffer> &buffer);
   void notify(int msg, const char* errorMsg);
   AMessage* getMessage(uint32_t what);
 

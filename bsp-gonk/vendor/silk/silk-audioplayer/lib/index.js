@@ -210,12 +210,18 @@ export default class Player extends events.EventEmitter {
       return Promise.reject(new Error(`${fileName} not found`));
     }
 
+    if (this._mediaState !== 'idle') {
+      this._mediaState = 'stopped';
+      return Promise.reject(new Error(`Invalid state for this operation`));
+    }
+
     this._fileName = fileName;
 
     return new Promise((resolve, reject) => {
       this._playPromiseAccept = resolve;
       this._playPromiseReject = reject;
 
+      this._mediaState = 'preparing';
       this._player.setDataSource(bindings.DATA_SOURCE_TYPE_FILE, fileName);
       this._player.start();
     });
@@ -237,7 +243,7 @@ export default class Player extends events.EventEmitter {
     }
 
     if (this._player.write(chunk, chunk.length) <= 0) {
-      this._onError(new Error('Failed to queue buffer to play'));
+      this._onError(`Failed to queue buffer to play`);
       return;
     }
   }
@@ -248,6 +254,10 @@ export default class Player extends events.EventEmitter {
    * @instance
    */
   stop() {
+    if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
+      this._onError(`Invalid state for this operation`);
+      return;
+    }
     this._player.stop();
   }
 
@@ -257,6 +267,10 @@ export default class Player extends events.EventEmitter {
    * @instance
    */
   pause() {
+    if (this._mediaState !== 'playing') {
+      this._onError(`Invalid state for this operation`);
+      return;
+    }
     this._player.pause();
   }
 
@@ -266,6 +280,10 @@ export default class Player extends events.EventEmitter {
    * @instance
    */
   resume() {
+    if (this._mediaState !== 'paused') {
+      this._onError(`Invalid state for this operation`);
+      return;
+    }
     this._player.resume();
   }
 
@@ -328,7 +346,7 @@ export default class Player extends events.EventEmitter {
   /**
    * @private
    */
-  _nativeEventListener = (event: string, err: Error) => {
+  _nativeEventListener = (event: string, err: string) => {
     log.debug(`received event: ${event}`);
 
     switch (event) {
@@ -352,7 +370,7 @@ export default class Player extends events.EventEmitter {
       }
       break;
     case 'error':
-      log.error(`errorMsg: `, err);
+      this._player.stop(); // Stop player if not already
       this._mediaState = 'stopped';
       if (this._playPromiseReject) {
         this._playPromiseReject();
@@ -366,8 +384,8 @@ export default class Player extends events.EventEmitter {
     this.emit(event, new Error(err));
   };
 
-  _onError(err: Error) {
-    log.debug(`Error`, err.message);
+  _onError(err: string) {
+    log.debug(`Error`, err);
     this._nativeEventListener('error', err);
   }
 }

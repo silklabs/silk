@@ -64,6 +64,10 @@ RUN addgroup silk
 RUN adduser -ingroup silk --gecos "" --disabled-password silk
 COPY sudoers_silk /etc/sudoers.d/silk
 
+# Install node v6.9.1
+RUN wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz
+RUN tar -xv -C /usr/local --strip-components 1 -f node-v6.9.1-linux-x64.tar.gz
+
 USER silk
 RUN ccache -M 10GB
 
@@ -79,9 +83,4 @@ RUN ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 RUN git config --global user.email "silkysmooth@example.com"
 RUN git config --global user.name "Silky Smooth"
 RUN git config --global color.ui true
-
-# Install node
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
-RUN bash -i -c 'nvm install 6.9.1'
-ENV NVM_DIR /home/silk/.nvm
 

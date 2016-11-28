@@ -1,6 +1,6 @@
-From f262b9f8666d9776f190a3a4a6dc4840b10f42f5 Mon Sep 17 00:00:00 2001
-From: James Lal <james@silklabs.com>
-Date: Sun, 22 May 2016 17:21:13 -0700
+From 954e7249d424ffd6adaf598f44d70b011a6f52e7 Mon Sep 17 00:00:00 2001
+From: Anshul Jain <anshul@silklabs.com>
+Date: Mon, 28 Nov 2016 12:02:34 -0800
 Subject: [PATCH] Androidify
 
 ---
@@ -15,7 +15,7 @@ Subject: [PATCH] Androidify
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..30ccb67
+index 0000000..abccc73
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,7 @@
@@ -27,7 +27,7 @@ index 0000000..30ccb67
 +include external/opencv3/opencv.mk
 +include $(BUILD_NODE_MODULE)
 diff --git a/binding.gyp b/binding.gyp
-index 1d5e1c3..219f98b 100755
+index 69b4d12..f7ad1e2 100755
 --- a/binding.gyp
 +++ b/binding.gyp
 @@ -24,12 +24,11 @@
@@ -44,7 +44,7 @@ index 1d5e1c3..219f98b 100755
          "<!(node -e \"require('nan')\")"
        ],
  
-@@ -80,12 +79,11 @@
+@@ -104,12 +103,11 @@
        ],
  
        "libraries": [
@@ -58,7 +58,7 @@ index 1d5e1c3..219f98b 100755
          "<!(node -e \"require('nan')\")",
          "<!(node -e \"require('./include_dirs')\")"
        ],
-@@ -128,16 +126,5 @@
+@@ -152,16 +150,5 @@
            }
          }]
      ]
@@ -149,11 +149,11 @@ index dc043a0..7af0a86 100755
  var Matrix = cv.Matrix
    , VideoCapture = cv.VideoCapture
 diff --git a/package.json b/package.json
-index 0c3e7d4..e039669 100644
+index d0d159a..2fac274 100644
 --- a/package.json
 +++ b/package.json
 @@ -3,6 +3,9 @@
-   "version": "5.0.0",
+   "version": "6.0.0",
    "description": "Node Bindings to OpenCV",
    "author": "Peter Braden <peterbraden@peterbraden.co.uk>",
 +  "os": [
@@ -161,7 +161,7 @@ index 0c3e7d4..e039669 100644
 +  ],
    "dependencies": {
      "buffers": "^0.1.1",
-     "nan": "^2.0.9",
+     "istanbul": "0.4.5",
 -- 
-2.7.3
+2.8.2
 

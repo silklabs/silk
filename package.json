@@ -21,6 +21,6 @@
     "eslint": "3.7.1",
     "eslint-plugin-flowtype": "2.18.1",
     "mocha": "2.4.5",
-    "opencv": "peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd"
+    "opencv": "silklabs/node-opencv#silk-v6.0.0-1"
   }
 }

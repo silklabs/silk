@@ -9,7 +9,7 @@
   "license": "MIT",
   "dependencies": {
     "nan": "2.4.0",
-    "opencv": "peterbraden/node-opencv#13a1de4f9259b5e745021f3198a8339ac99edecd"
+    "opencv": "silklabs/node-opencv#silk-v6.0.0-1"
   },
   "gypfile": true,
   "private": true

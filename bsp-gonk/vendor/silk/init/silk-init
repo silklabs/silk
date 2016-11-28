@@ -6,7 +6,7 @@ export UV_THREADPOOL_SIZE=32
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/silk/lib
 
 if [ "$(getprop ro.debuggable)" = "1" ]; then
-  export NODE_ENV="debug"
+  export NODE_ENV="development"
   export NODE_PATH=$NODE_PATH:data/node_modules/
 else
   export NODE_ENV="production"

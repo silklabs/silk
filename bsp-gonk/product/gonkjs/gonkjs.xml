@@ -31,7 +31,7 @@
            revision="refs/tags/3.1.0" clone-depth="100"/>
   <project name="silklabs/node-opencv"
            path="external/node-opencv"
-           revision="refs/tags/silk-v3.0.0-1"
+           revision="refs/tags/silk-v6.0.0-1"
            remote="github" clone-depth="1" />
 
   <project name="sandeepmistry/noble"

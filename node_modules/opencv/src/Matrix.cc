@@ -65,6 +65,7 @@ void Matrix::Init(Local<Object> target) {
   Nan::SetPrototypeMethod(ctor, "roi", ROI);
   Nan::SetPrototypeMethod(ctor, "ptr", Ptr);
   Nan::SetPrototypeMethod(ctor, "absDiff", AbsDiff);
+  Nan::SetPrototypeMethod(ctor, "dct", Dct);
   Nan::SetPrototypeMethod(ctor, "addWeighted", AddWeighted);
   Nan::SetPrototypeMethod(ctor, "bitwiseXor", BitwiseXor);
   Nan::SetPrototypeMethod(ctor, "bitwiseNot", BitwiseNot);
@@ -93,6 +94,7 @@ void Matrix::Init(Local<Object> target) {
   Nan::SetPrototypeMethod(ctor, "equalizeHist", EqualizeHist);
   Nan::SetPrototypeMethod(ctor, "floodFill", FloodFill);
   Nan::SetPrototypeMethod(ctor, "matchTemplate", MatchTemplate);
+  Nan::SetPrototypeMethod(ctor, "matchTemplateByMatrix", MatchTemplateByMatrix);
   Nan::SetPrototypeMethod(ctor, "templateMatches", TemplateMatches);
   Nan::SetPrototypeMethod(ctor, "minMaxLoc", MinMaxLoc);
   Nan::SetPrototypeMethod(ctor, "pushBack", PushBack);
@@ -197,7 +199,7 @@ double Matrix::DblGet(cv::Mat mat, int i, int j) {
 
   switch (mat.type()) {
     case CV_32FC3:
-      pix = mat.at<cv::Vec3b>(i, j);
+      pix = mat.at<cv::Vec3f>(i, j);
       pint |= (uchar) pix.val[2];
       pint |= ((uchar) pix.val[1]) << 8;
       pint |= ((uchar) pix.val[0]) << 16;
@@ -205,6 +207,9 @@ double Matrix::DblGet(cv::Mat mat, int i, int j) {
       break;
     case CV_64FC1:
       val = mat.at<double>(i, j);
+      break;
+    case CV_32FC1:
+      val = mat.at<float>(i, j);
       break;
     default:
       val = mat.at<double>(i, j);
@@ -280,9 +285,9 @@ NAN_METHOD(Matrix::Set) {
     switch (self->mat.type()) {
       case CV_32FC3:
         vint = static_cast<unsigned int>(val + 0.5);
-        self->mat.at<cv::Vec3b>(i, j)[0] = (uchar) (vint >> 16) & 0xff;
-        self->mat.at<cv::Vec3b>(i, j)[1] = (uchar) (vint >> 8) & 0xff;
-        self->mat.at<cv::Vec3b>(i, j)[2] = (uchar) (vint) & 0xff;
+        self->mat.at<cv::Vec3f>(i, j)[0] = (uchar) (vint >> 16) & 0xff;
+        self->mat.at<cv::Vec3f>(i, j)[1] = (uchar) (vint >> 8) & 0xff;
+        self->mat.at<cv::Vec3f>(i, j)[2] = (uchar) (vint) & 0xff;
         // printf("!!!i %x, %x, %x", (vint >> 16) & 0xff, (vint >> 8) & 0xff, (vint) & 0xff);
         break;
       default:
@@ -317,10 +322,16 @@ NAN_METHOD(Matrix::GetData) {
   Nan::HandleScope scope;
 
   Matrix *self = Nan::ObjectWrap::Unwrap<Matrix>(info.This());
-  int size = self->mat.rows * self->mat.cols * self->mat.elemSize1();
+  int size = self->mat.rows * self->mat.cols * self->mat.elemSize();
   Local<Object> buf = Nan::NewBuffer(size).ToLocalChecked();
   uchar* data = (uchar*) Buffer::Data(buf);
-  memcpy(data, self->mat.data, size);
+  // if there is padding after each row, clone first to get rid of it
+  if (self->mat.dims == 2 && self->mat.step[0] != size_t(self->mat.size[1])) {
+    cv::Mat copy = self->mat.clone();
+    memcpy(data, copy.data, size);
+  } else {
+    memcpy(data, self->mat.data, size);
+  }
 
   v8::Local<v8::Object> globalObj = Nan::GetCurrentContext()->Global();
   v8::Local<v8::Function> bufferConstructor = v8::Local<v8::Function>::Cast(globalObj->Get(Nan::New<String>("Buffer").ToLocalChecked()));
@@ -1270,6 +1281,24 @@ NAN_METHOD(Matrix::AbsDiff) {
   info.GetReturnValue().Set(Nan::Null());
 }
 
+NAN_METHOD(Matrix::Dct) {
+  Nan::HandleScope scope;
+
+  Matrix *self = Nan::ObjectWrap::Unwrap<Matrix>(info.This());
+  int cols = self->mat.cols;
+  int rows = self->mat.rows;
+
+  bool inverse = info[1]->ToBoolean()->Value();
+
+  Local<Object> out = Nan::New(Matrix::constructor)->GetFunction()->NewInstance();
+  Matrix *m_out = Nan::ObjectWrap::Unwrap<Matrix>(out);
+  m_out->mat.create(rows, cols, CV_32F);
+
+  cv::dct(self->mat, m_out->mat, inverse ? 1 : 0);
+
+  info.GetReturnValue().Set(out);
+}
+
 NAN_METHOD(Matrix::AddWeighted) {
   Nan::HandleScope scope;
 
@@ -1479,7 +1508,16 @@ NAN_METHOD(Matrix::DrawContour) {
   }
 
   int thickness = info.Length() < 4 ? 1 : info[3]->NumberValue();
-  cv::drawContours(self->mat, cont->contours, pos, color, thickness);
+  int lineType = info.Length() < 5 ? 8 : info[4]->NumberValue();
+  int maxLevel = info.Length() < 6 ? 0 : info[5]->NumberValue();
+
+  cv::Point offset;
+  if (info.Length() == 6) {
+    Local<Array> _offset = Local<Array>::Cast(info[5]);
+    offset = cv::Point(_offset->Get(0)->ToNumber()->Value(), _offset->Get(1)->ToNumber()->Value());
+  }
+
+  cv::drawContours(self->mat, cont->contours, pos, color, thickness, lineType, cont->hierarchy, maxLevel, offset);
 
   return;
 }
@@ -1590,13 +1628,27 @@ NAN_METHOD(Matrix::HoughCircles) {
 }
 
 cv::Scalar setColor(Local<Object> objColor) {
-  Local<Value> valB = objColor->Get(0);
-  Local<Value> valG = objColor->Get(1);
-  Local<Value> valR = objColor->Get(2);
+  int64_t channels[4] = { 0, 0, 0, 0 };
 
-  cv::Scalar color = cv::Scalar(valB->IntegerValue(), valG->IntegerValue(),
-      valR->IntegerValue());
-  return color;
+  // We'll accomodate a channel count up to 4 and fall back to the old
+  // "assume it's always 3" in the default case
+  if (!objColor->HasRealIndexedProperty(1)) {
+    channels[0] = objColor->Get(0)->IntegerValue();
+  } else if (!objColor->HasRealIndexedProperty(2)) {
+    channels[0] = objColor->Get(0)->IntegerValue();
+    channels[1] = objColor->Get(1)->IntegerValue();
+  } else if (!objColor->HasRealIndexedProperty(4)) {
+    channels[0] = objColor->Get(0)->IntegerValue();
+    channels[1] = objColor->Get(1)->IntegerValue();
+    channels[2] = objColor->Get(2)->IntegerValue();
+    channels[3] = objColor->Get(3)->IntegerValue();
+  } else {
+    channels[0] = objColor->Get(0)->IntegerValue();
+    channels[1] = objColor->Get(1)->IntegerValue();
+    channels[2] = objColor->Get(2)->IntegerValue();
+  }
+
+  return cv::Scalar(channels[0], channels[1], channels[2], channels[3]);
 }
 
 cv::Point setPoint(Local<Object> objPoint) {
@@ -2240,6 +2292,36 @@ NAN_METHOD(Matrix::TemplateMatches) {
   info.GetReturnValue().Set(probabilites_array);
 }
 
+// @author Evilcat325
+// MatchTemplate accept a Matrix
+// Usage: output = input.matchTemplateByMatrix(matrix. method);
+NAN_METHOD(Matrix::MatchTemplateByMatrix) {
+  Nan::HandleScope scope;
+
+  Matrix *self = Nan::ObjectWrap::Unwrap<Matrix>(info.This());
+  Matrix *templ = Nan::ObjectWrap::Unwrap<Matrix>(info[0]->ToObject());
+
+  Local<Object> out = Nan::New(Matrix::constructor)->GetFunction()->NewInstance();
+  Matrix *m_out = Nan::ObjectWrap::Unwrap<Matrix>(out);
+  int cols = self->mat.cols - templ->mat.cols + 1;
+  int rows = self->mat.rows - templ->mat.rows + 1;
+  m_out->mat.create(cols, rows, CV_32FC1);
+
+  /*
+   TM_SQDIFF        =0
+   TM_SQDIFF_NORMED =1
+   TM_CCORR         =2
+   TM_CCORR_NORMED  =3
+   TM_CCOEFF        =4
+   TM_CCOEFF_NORMED =5
+   */
+
+  int method = (info.Length() < 2) ? (int)cv::TM_CCORR_NORMED : info[1]->Uint32Value();
+  if (!(method >= 0 && method <= 5)) method = (int)cv::TM_CCORR_NORMED;
+  cv::matchTemplate(self->mat, templ->mat, m_out->mat, method);
+  info.GetReturnValue().Set(out);
+}
+
 // @author ytham
 // Match Template filter
 // Usage: output = input.matchTemplate("templateFileString", method);
@@ -2271,19 +2353,19 @@ NAN_METHOD(Matrix::MatchTemplate) {
   int method = (info.Length() < 2) ? (int)cv::TM_CCORR_NORMED : info[1]->Uint32Value();
   cv::matchTemplate(self->mat, templ, m_out->mat, method);
   cv::normalize(m_out->mat, m_out->mat, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
-  double minVal; 
-  double maxVal; 
-  cv::Point minLoc; 
+  double minVal;
+  double maxVal;
+  cv::Point minLoc;
   cv::Point maxLoc;
   cv::Point matchLoc;
 
   minMaxLoc(m_out->mat, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
 
-  if(method  == CV_TM_SQDIFF || method == CV_TM_SQDIFF_NORMED) { 
-    matchLoc = minLoc; 
+  if(method  == CV_TM_SQDIFF || method == CV_TM_SQDIFF_NORMED) {
+    matchLoc = minLoc;
   }
-  else { 
-    matchLoc = maxLoc; 
+  else {
+    matchLoc = maxLoc;
   }
 
   //detected ROI

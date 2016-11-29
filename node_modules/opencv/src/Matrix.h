@@ -68,6 +68,7 @@ public:
   JSFUNC(ROI)
   JSFUNC(Ptr)
   JSFUNC(AbsDiff)
+  JSFUNC(Dct)  
   JSFUNC(AddWeighted)
   JSFUNC(BitwiseXor)
   JSFUNC(BitwiseNot)
@@ -109,6 +110,7 @@ public:
   JSFUNC(FloodFill)
 
   JSFUNC(MatchTemplate)
+  JSFUNC(MatchTemplateByMatrix)
   JSFUNC(TemplateMatches)
   JSFUNC(MinMaxLoc)
 

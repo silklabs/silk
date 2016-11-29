@@ -832,4 +832,10 @@ status_t MediaCodecSource::requestIDRFrame() {
   return mEncoder->requestIDRFrame();
 }
 
+status_t MediaCodecSource::videoBitRate(uint32_t bitRate) {
+  sp<AMessage> message = new AMessage();
+  message->setInt32("video-bitrate", bitRate);
+  return mEncoder->setParameters(message);
+}
+
 } // namespace android

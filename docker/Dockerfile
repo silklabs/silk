@@ -9,8 +9,8 @@ RUN add-apt-repository -y ppa:git-core/ppa
 RUN add-apt-repository -y ppa:kubuntu-ppa/backports
 RUN add-apt-repository -y ppa:phablet-team/tools
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/ppa
+RUN add-apt-repository -y ppa:amarburg/opencv3
 RUN apt-get update
-RUN apt-get install -y libcv-dev libcvaux-dev libhighgui-dev libopencv-dev
 
 ENV JAVA_HOME /usr
 RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile &&\
@@ -36,11 +36,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   lib32z1 \
   libc6-dev \
   libc6-dev-i386 \
-  libcv-dev \
-  libcvaux-dev \
   libtool \
-  libhighgui-dev \
-  libopencv-dev \
+  libopencv3-dev \
   libxml2-utils \
   linux-libc-dev  \
   m4 \

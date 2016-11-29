@@ -6,7 +6,7 @@
   "author": "Silk Labs Inc.",
   "license": "MIT",
   "scripts": {
-    "prepublish": "cd ../babelcompile && npm run compile"
+    "prepublish": "cd compile && npm run compile"
   },
   "symlinkDependencies": {
     "babel-preset-silk-node6": "../babel-preset-silk-node6"

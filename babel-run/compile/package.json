@@ -5,7 +5,7 @@
     "compile": "./compile"
   },
   "devDependencies": {
-    "babel-core": "6.18.0",
+    "babel-core": "6.18.2",
     "babel-loader": "6.2.7",
     "babel-register": "6.18.0",
     "json-loader": "0.5.4",

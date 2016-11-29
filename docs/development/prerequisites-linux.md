@@ -23,6 +23,7 @@ sudo add-apt-repository ppa:george-edison55/precise-backports
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo add-apt-repository ppa:kubuntu-ppa/backports
 sudo add-apt-repository ppa:nilarimogard/webupd8
+sudo add-apt-repository ppa:amarburg/opencv3
 sudo apt-get update
 ```
 
@@ -39,10 +40,7 @@ sudo apt-get install -y \
   lib32stdc++6 \
   lib32z1 \
   libc6-dev-i386 \
-  libcv-dev \
-  libcvaux-dev \
-  libhighgui-dev \
-  libopencv-dev \
+  libopencv3-dev \
   libstdc++6:i386  \
   libxml2-utils \
   linux-libc-dev  \

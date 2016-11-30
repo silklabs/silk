@@ -228,6 +228,10 @@ if (fs.existsSync(localWebpack)) {
     config.externals = rules.externals.concat(config.externals);
     delete rules.externals;
   }
+  if (rules.loaders && Array.isArray(rules.loaders)) {
+    config.module.loaders = rules.loaders.concat(config.module.loaders);
+    delete rules.loaders;
+  }
   Object.assign(config, rules);
 }
 

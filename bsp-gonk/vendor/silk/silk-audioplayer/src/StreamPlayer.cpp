@@ -68,7 +68,7 @@
   do {                                           \
     if (x > y) {                                 \
       ALOGE("%s:%d "                             \
-        " CHECK_EQ" "( " #x "," #y ") failed: ", \
+        " CHECK_LE" "( " #x "," #y ") failed: ", \
         __FILE__,__LINE__);                      \
       notify(MEDIA_ERROR, errorMsg);             \
       return UNKNOWN_ERROR;                      \
@@ -318,7 +318,7 @@ status_t StreamPlayer::onPrepare() {
     mCodecState.mCodec = MediaCodec::CreateByType(
         mCodecLooper, mime.c_str(), false /* encoder */);
 
-    CHECK(mCodecState.mCodec != NULL, "Failed to create media codec");
+    CHECK((mCodecState.mCodec != NULL), "Failed to create media codec");
 
     err = mCodecState.mCodec->configure(
         formatFile,
@@ -335,6 +335,9 @@ status_t StreamPlayer::onPrepare() {
       ++j;
     }
   }
+
+  CHECK((mCodecState.mCodec != NULL),
+        "Failed to create media codec, invalid media content?");
 
   err = mCodecState.mCodec->start();
   CHECK_EQ(err, (status_t)OK, "Failed to start media codec");

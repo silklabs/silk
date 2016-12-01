@@ -1,0 +1,31 @@
+{
+  "name": "node-caffe",
+  "version": "0.0.1",
+  "description": "Caffe bindings for node",
+  "main": "./src/module.js",
+  "scripts": {
+    "install": "node-gyp configure && node-gyp rebuild",
+    "test": "./node_modules/nodeunit/bin/nodeunit ./tests/tests.js",
+    "preinstall": "sh install-caffe.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/silklabs/node-caffe.git"
+  },
+  "keywords": [
+    "caffe"
+  ],
+  "author": "Andreas Gal",
+  "license": "MIT",
+  "homepage": "https://github.com/andreasgal/node-caffe",
+  "engines": {
+    "node": ">=4.4.0"
+  },
+  "dependencies": {
+    "bindings": "^1.2.1",
+    "nan": "^2.3.5"
+  },
+  "devDependencies": {
+    "nodeunit": "^0.9.1"
+  }
+}

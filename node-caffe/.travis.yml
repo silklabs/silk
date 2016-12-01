@@ -3,10 +3,10 @@ dist: trusty
 language: node_js
 node_js:
   - "4.4.0"
-  - "6.4.0"
+  - "6.9.1"
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler
   - sudo apt-get install -y --no-install-recommends libboost-all-dev
   - sudo apt-get install -y libgflags-dev libgoogle-glog-dev liblmdb-dev libatlas-base-dev
-  - sudo apt-get install -y python-numpy
+

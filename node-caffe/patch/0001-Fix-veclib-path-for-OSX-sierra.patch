@@ -1,0 +1,24 @@
+From 77605669932b1eeb003d97f63a733be3877ce262 Mon Sep 17 00:00:00 2001
+From: Anshul Jain <anshul@silklabs.com>
+Date: Thu, 1 Dec 2016 12:52:14 -0800
+Subject: [PATCH] Fix veclib path for OSX sierra
+
+---
+ cmake/Modules/FindvecLib.cmake | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/cmake/Modules/FindvecLib.cmake b/cmake/Modules/FindvecLib.cmake
+index 4604336..53c55c5 100644
+--- a/cmake/Modules/FindvecLib.cmake
++++ b/cmake/Modules/FindvecLib.cmake
+@@ -17,6 +17,7 @@ find_path(vecLib_INCLUDE_DIR vecLib.h
+           PATHS /System/Library/Frameworks/Accelerate.framework/Versions/Current/${__veclib_include_suffix}
+                 /System/Library/${__veclib_include_suffix}
+                 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers/
++                /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers/
+           NO_DEFAULT_PATH)
+ 
+ include(FindPackageHandleStandardArgs)
+-- 
+2.8.2
+

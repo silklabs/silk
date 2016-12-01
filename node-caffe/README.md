@@ -1,9 +1,7 @@
 node-caffe
 ==========
 
-[![Build Status](https://travis-ci.com/silklabs/node-caffe.svg?token=gdyBzz73sa8NmR6zhEKz&branch=master)](https://travis-ci.com/silklabs/node-caffe)
-
-Caffe findings for node.
+Caffe bindings for node.
 
 * Simple to use
 * Allows Javascript to inspect layers and their content

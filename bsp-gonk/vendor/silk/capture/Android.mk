@@ -117,3 +117,57 @@ LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0
 LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
 include $(BUILD_SILK_EXECUTABLE)
 
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libsilkSimpleH264Encoder
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := \
+  SimpleH264Encoder.cpp \
+
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0 -std=c++11
+LOCAL_SHARED_LIBRARIES := \
+  liblog \
+  libutils \
+  libstagefright \
+  libstagefright_foundation \
+
+LOCAL_C_INCLUDES := . \
+  frameworks/native/include/media/openmax \
+
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/6.x
+ifneq (,$(wildcard frameworks/av/media/libavextensions))
+LOCAL_C_INCLUDES += frameworks/av/media/libavextensions
+LOCAL_CFLAGS += -DTARGET_USE_AVEXTENSIONS
+endif
+else
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/5.1.1_r6
+endif
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+LOCAL_SRC_FILES += 6.x/MediaCodecSource.cpp
+else
+LOCAL_SRC_FILES += 5.1.1_r6/MediaCodecSource.cpp
+endif
+
+include $(BUILD_SHARED_LIBRARY)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE       := h264EncodeTest
+LOCAL_MODULE_TAGS  := eng
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := h264EncodeTest.cpp
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0 -std=c++11
+LOCAL_SHARED_LIBRARIES := \
+  libbinder \
+  libcutils \
+  libdl \
+  liblog \
+  libsilkSimpleH264Encoder \
+  libutils \
+  libstagefright \
+
+
+include $(BUILD_SILK_EXECUTABLE)
+
+

@@ -5,8 +5,10 @@
   "main": "build/Release/caffe.node",
   "scripts": {
     "install": "node-gyp rebuild",
+    "lint": "eslint --fix .",
+    "mocha": "mocha $(find test -name '*_test.js')",
     "preinstall": "./install-caffe.sh",
-    "test": "./node_modules/nodeunit/bin/nodeunit ./tests/tests.js"
+    "test": "npm run mocha"
   },
   "keywords": [
     "caffe"
@@ -21,7 +23,7 @@
   },
   "devDependencies": {
     "eslint": "3.7.1",
-    "nodeunit": "^0.9.1"
+    "mocha": "2.4.5"
   },
   "gypfile": true
 }

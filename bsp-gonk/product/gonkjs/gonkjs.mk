@@ -36,7 +36,11 @@ PRODUCT_PACKAGES += silk-bledroid-daemon
 PRODUCT_PACKAGES += bootctl
 
 # vendor/silk/capture/
-PRODUCT_PACKAGES += silk-capture-daemon libpreview silk-capture-mic silk-mic
+PRODUCT_PACKAGES += silk-capture-daemon \
+  libpreview \
+  libsilkSimpleH264Encoder \
+  silk-capture-mic \
+  silk-mic \
 
 # vendor/silk/dhcputil/
 PRODUCT_PACKAGES += silk-dhcputil

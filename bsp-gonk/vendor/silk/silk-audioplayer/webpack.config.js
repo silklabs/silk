@@ -7,6 +7,7 @@ module.exports = {
     'tools/play_audiofile.js': './tools/play_audiofile.js',
     'tools/play_filestream.js': './tools/play_filestream.js',
     'tools/play_shoutcast.js': './tools/play_shoutcast.js',
+    'tools/play_progressive.js': './tools/play_progressive.js',
   },
   plugins: [
     new CopyWebpack([

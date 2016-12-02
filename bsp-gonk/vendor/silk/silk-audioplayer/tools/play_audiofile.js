@@ -9,7 +9,13 @@ const log = createLog('test');
 let player = new Player();
 
 player.play(__dirname + '/../media/mpthreetest.mp3')
-.then(() => log.info(`Done playing`))
+.then(() => {
+  log.info(`Done playing 1`);
+  return player.play(__dirname + '/../media/mpthreetest.mp3');
+})
+.then(() => {
+  log.info(`Done playing 2`);
+})
 .catch((err) => log.error(err));
 
 player.on('started', () => {

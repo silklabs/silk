@@ -210,7 +210,7 @@ export default class Player extends events.EventEmitter {
       return Promise.reject(new Error(`${fileName} not found`));
     }
 
-    if (this._mediaState !== 'idle') {
+    if ((this._mediaState !== 'idle') && (this._mediaState !== 'stopped')) {
       this._mediaState = 'stopped';
       return Promise.reject(new Error(`Invalid state for this operation`));
     }

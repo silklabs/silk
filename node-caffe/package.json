@@ -2,6 +2,7 @@
   "name": "node-caffe",
   "version": "0.0.1",
   "description": "Caffe bindings for node",
+  "repository": "silklabs/node-caffe",
   "main": "build/Release/caffe.node",
   "scripts": {
     "install": "node-gyp rebuild",

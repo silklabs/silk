@@ -596,10 +596,10 @@ public:
     Caffe::set_mode(gpu_mode_);
     if (gpu_mode_ == Caffe::Brew::GPU)
       Caffe::SetDevice(gpu_device_);
-    op_(&*handle_, input_);
+    op_(handle_, input_);
   }
 
-  Worker(Nan::Callback* callback, shared_ptr<T> handle, OUT_T (*op)(T *, IN_T), Local<Value> input) :
+  Worker(Nan::Callback* callback, shared_ptr<T> handle, OUT_T (*op)(shared_ptr<T>, IN_T), Local<Value> input) :
     AsyncWorker(callback),
     handle_(handle), op_(op) {
     FromValue(input, input_);
@@ -611,7 +611,7 @@ private:
   shared_ptr<T> handle_;
   IN_T input_;
   OUT_T output_;
-  OUT_T (*op_)(T *, IN_T);
+  OUT_T (*op_)(shared_ptr<T>, IN_T);
 };
 
 // Node wrapper for Net objects.
@@ -756,7 +756,7 @@ private:
     info.GetReturnValue().Set(net_->num_inputs());
   }
 
-  static double CallForward(caffe::Net<Dtype> *net, Void v) {
+  static double CallForward(shared_ptr<caffe::Net<Dtype> > net, Void v) {
     Dtype loss;
     net->Forward(&loss);
     return loss;
@@ -776,7 +776,7 @@ private:
     info.GetReturnValue().Set(loss);
   }
 
-  static Void CallBackward(caffe::Net<Dtype> *net, Void v) {
+  static Void CallBackward(shared_ptr<caffe::Net<Dtype> > net, Void v) {
     net->Backward();
     return Void();
   }
@@ -826,17 +826,69 @@ static Local<Value> ToValue(shared_ptr<caffe::Net<Dtype> > net) {
   return Net<Dtype>::Create(net);
 }
 
+// Solver state
+template <typename Dtype>
+struct SolverState {
+  shared_ptr<caffe::Solver<Dtype> > solver_;
+  shared_ptr<caffe::P2PSync<Dtype> > sync_;
+  vector<shared_ptr<caffe::P2PSync<Dtype> > > gpuWorkers_;
+
+  SolverState(const char *config) {
+    caffe::SolverParameter param;
+    caffe::ReadSolverParamsFromTextFileOrDie(string(config), &param);
+    shared_ptr<caffe::Solver<Dtype> > solver(caffe::SolverRegistry<Dtype>::CreateSolver(param));
+    solver_ = solver;
+    sync_ = NULL;
+  }
+
+  ~SolverState() {
+    StopThreads();
+  }
+
+  void Step(int steps) {
+#ifndef CPU_ONLY
+    if (sync_ == NULL) {
+      vector<int> gpus;
+      get_gpus(&gpus);
+      if ((gpus.size() > 1) && (Caffe::solver_count() > 1)) {
+        LOG(INFO) << "Instantiating GPU workers";
+        sync_.reset(new caffe::P2PSync<Dtype>(solver_, NULL, solver_->param()));
+        gpuWorkers_.resize(Caffe::solver_count());
+        sync_->Prepare(gpus, &gpuWorkers_);
+
+        for (int i = 1; i < gpuWorkers_.size(); ++i) {
+          gpuWorkers_[i]->StartInternalThread();
+        }
+      }
+    }
+#endif
+    solver_->Step(steps);
+  }
+
+  void StopThreads() {
+#ifndef CPU_ONLY
+    if (sync_ == NULL) {
+      return;
+    }
+
+    LOG(INFO) << "Stopping GPU workers";
+
+    for (int i = 1; i < gpuWorkers_.size(); ++i) {
+      gpuWorkers_[i]->StopInternalThread();
+    }
+    sync_ = nullptr;
+#endif
+  }
+};
+
 // Node wrapper for Solver objects.
 
 template <typename Dtype>
 class Solver : public ObjectWrap {
 public:
   explicit Solver(const char *config) {
-    caffe::SolverParameter param;
-    caffe::ReadSolverParamsFromTextFileOrDie(string(config), &param);
-    shared_ptr<caffe::Solver<Dtype> > solver(caffe::SolverRegistry<Dtype>::CreateSolver(param));
-    solver_ = solver;
-    sync_ = NULL;
+    shared_ptr<SolverState<Dtype> > state(new SolverState<Dtype>(config));
+    state_ = state;
   }
 
   static Local<String> class_name() {
@@ -888,7 +940,7 @@ private:
     if (!Nan::New(ctor_)->HasInstance(info.This())) \
       return; \
     Solver* obj_(Unwrap<Solver>(info.This())); \
-    shared_ptr<caffe::Solver<Dtype> > solver_(obj_->solver_);
+    shared_ptr<caffe::Solver<Dtype> > solver_(obj_->state_->solver_);
 
   static NAN_METHOD(ToString) {
     UNWRAP;
@@ -938,8 +990,8 @@ private:
     }
   }
 
-  static Void CallStep(caffe::Solver<Dtype> *solver, int steps) {
-    solver->Step(steps);
+  static Void CallStep(shared_ptr<SolverState<Dtype> > state, int steps) {
+    state->Step(steps);
     return Void();
   }
 
@@ -947,48 +999,21 @@ private:
     UNWRAP;
     Local<Value> fun = Arg(info, 1);
     Nan::Callback *callback = fun->IsFunction() ? new Nan::Callback(fun.As<Function>()) : nullptr;
-    Nan::AsyncQueueWorker(new Worker<caffe::Solver<Dtype>, int, Void>(callback, solver_, &CallStep, Arg(info, 0)));
+    Nan::AsyncQueueWorker(new Worker<SolverState<Dtype>, int, Void>(callback, obj_->state_, &CallStep, Arg(info, 0)));
   }
 
   static NAN_METHOD(StepSync) {
     UNWRAP;
     if (Arg(info, 0)->IsInt32()) {
       int stepCount = Arg(info, 0)->IntegerValue();
-
-      vector<int> gpus;
-      get_gpus(&gpus);
-
-      if ((gpus.size() > 1) && (Caffe::solver_count() > 1)) {
-        if (obj_->sync_ == NULL) {
-          LOG(INFO) << "Instantiating GPU workers";
-          obj_->sync_.reset(new caffe::P2PSync<Dtype>(obj_->solver_, NULL,
-                                                      obj_->solver_->param()));
-          obj_->gpuWorkers_.resize(Caffe::solver_count());
-          obj_->sync_->Prepare(gpus, &obj_->gpuWorkers_);
-
-          for (int i = 1; i < obj_->gpuWorkers_.size(); ++i) {
-            obj_->gpuWorkers_[i]->StartInternalThread();
-          }
-          LOG(INFO) << "Starting Optimization";
-        }
-        obj_->solver_->Step(stepCount);
-      } else {
-        obj_->solver_->Step(stepCount);
-      }
+      CallStep(obj_->state_, stepCount);
     }
   }
 
   static NAN_METHOD(Done) {
     UNWRAP;
-    if (obj_->sync_ == NULL) {
-      return;
-    }
-
-    for (int i = 1; i < obj_->gpuWorkers_.size(); ++i) {
-      obj_->gpuWorkers_[i]->StopInternalThread();
-    }
-    LOG(INFO)<< "Optimization done.";
- }
+    obj_->state_->StopThreads();
+  }
 
   static NAN_METHOD(Snapshot) {
     UNWRAP;
@@ -1006,9 +1031,7 @@ private:
   static Persistent<FunctionTemplate> ctor_;
   static Persistent<Function> ctor_instance_;
 
-  shared_ptr<caffe::Solver<Dtype> > solver_;
-  shared_ptr<caffe::P2PSync<Dtype> > sync_;
-  vector<shared_ptr<caffe::P2PSync<Dtype> > > gpuWorkers_;
+  shared_ptr<SolverState<Dtype> > state_;
 };
 
 template <typename T>

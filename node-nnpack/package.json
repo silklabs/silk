@@ -1,0 +1,26 @@
+{
+  "name": "node-nnpack",
+  "version": "1.7.0",
+  "description": "Node bindings for NNPACK",
+  "main": "build/Release/nnpack.node",
+  "scripts": {
+    "install": "node-gyp configure && node-gyp rebuild"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/silklabs/node-nnpack.git"
+  },
+  "keywords": [
+    "NNPACK"
+  ],
+  "author": "Andreas Gal",
+  "license": "MIT",
+  "homepage": "https://github.com/silklabs/node-nnpack",
+  "engines": {
+    "node": ">=4.4.0"
+  },
+  "dependencies": {
+    "bindings": "^1.2.1",
+    "nan": "^2.3.5"
+  }
+}

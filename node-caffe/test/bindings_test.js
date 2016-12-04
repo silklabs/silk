@@ -2,6 +2,8 @@
  * @noflow
  */
 
+'use strict'; // Enable block-scoped declarations in node4
+
 const caffe = require('../');
 const assert = require('assert');
 

@@ -1,6 +1,6 @@
 {
   "name": "node-caffe",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Caffe bindings for node",
   "repository": "silklabs/node-caffe",
   "main": "build/Release/caffe.node",

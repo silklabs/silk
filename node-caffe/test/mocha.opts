@@ -1,3 +1,2 @@
 --ui tdd
 --timeout 45000
---require ../babel-run/mocha

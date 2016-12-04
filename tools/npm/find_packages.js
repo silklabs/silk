@@ -14,7 +14,6 @@ const config = require('./find_config')();
 // Will not traverse any directories matching these names...
 const RESTRICTED_DIRNAMES = [
   'node_modules',
-  'local_node_modules'
 ];
 
 function resolvePath(absPath, result) {

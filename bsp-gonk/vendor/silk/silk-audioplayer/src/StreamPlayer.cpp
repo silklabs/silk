@@ -49,6 +49,7 @@
         " CHECK(" #condition ") failed.",        \
         __FILE__,__LINE__);                      \
     notify(MEDIA_ERROR, errorMsg);               \
+    return UNKNOWN_ERROR;                        \
   }
 
 #undef CHECK_EQ

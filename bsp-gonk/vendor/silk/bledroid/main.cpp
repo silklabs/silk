@@ -679,8 +679,8 @@ bool disconnected_if_list_busy = false;
 // accessed on multiple threads but locks are used to ensure sequential
 // access and consistency.
 int client_if_during_connect = -1;
+int conn_id_during_connect = -1;
 bt_uuid_t uuid_during_connect = kInvalidUuid;
-bool connect_failed = false;
 
 const size_t disconnected_if_list_count =
   sizeof(disconnected_if_list) / sizeof(disconnected_if_list[0]);
@@ -1116,6 +1116,7 @@ void gatt_client_connect_callback(int conn_id,
 
     if (!status) {
       gatt_client_connection_count++;
+      conn_id_during_connect = conn_id;
     }
   }
 
@@ -1123,8 +1124,6 @@ void gatt_client_connect_callback(int conn_id,
 
   char address[18];
   addr_to_str(*bda, address);
-
-  connect_failed = !!status;
 
   char uuid[33] = { 0 };
   if (!uuid_to_str(uuid_during_connect, uuid, sizeof(uuid))) {
@@ -3043,14 +3042,14 @@ int bt_connect(char *&saveptr) {
 
   const bool isDirect = true;
 
-  connect_failed = true;
+  conn_id_during_connect = -1;
   CALL_AND_WAIT_NO_RETURN(gatt->client->connect(client_if_during_connect,
                                                 &addr,
                                                 isDirect,
                                                 ConnectTransportLE),
                           WaitConnect);
 
-  if (connect_failed) {
+  if (conn_id_during_connect == -1) {
     ALOGV("connect failed");
 
     if (gatt->client->unregister_client(client_if_during_connect) !=
@@ -3061,7 +3060,7 @@ int bt_connect(char *&saveptr) {
     return BT_STATUS_FAIL;
   }
 
-  CALL_AND_WAIT_NO_RETURN(gatt->client->configure_mtu(client_if_during_connect,
+  CALL_AND_WAIT_NO_RETURN(gatt->client->configure_mtu(conn_id_during_connect,
                                                       MTU_SIZE),
                           WaitMTUChange);
 

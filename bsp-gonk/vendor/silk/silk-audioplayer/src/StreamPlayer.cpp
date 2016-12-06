@@ -293,18 +293,18 @@ status_t StreamPlayer::onPrepare() {
 
   bool haveAudio = false;
   for (size_t i = 0; i < mExtractor->countTracks(); ++i) {
-    sp<AMessage> formatFile;
-    status_t err = mExtractor->getTrackFormat(i, &formatFile);
+    sp<AMessage> format;
+    status_t err = mExtractor->getTrackFormat(i, &format);
     CHECK_EQ(err, (status_t)OK, "Failed to get track format");
-    ALOGD("Track format is '%s'", formatFile->debugString(0).c_str());
+    ALOGD("Track format is '%s'", format->debugString(0).c_str());
 
     int64_t duration;
-    if (formatFile->findInt64("durationUs", &duration)) {
+    if (format->findInt64("durationUs", &duration)) {
       mDurationUs = duration;
     }
 
     AString mime;
-    CHECK(formatFile->findString("mime", &mime), "Failed to get mime type");
+    CHECK(format->findString("mime", &mime), "Failed to get mime type");
 
     if (!haveAudio && !strncasecmp(mime.c_str(), "audio/", 6)) {
       haveAudio = true;
@@ -312,6 +312,7 @@ status_t StreamPlayer::onPrepare() {
       continue;
     }
 
+    mAudioTrackFormat = format;
     err = mExtractor->selectTrack(i);
     CHECK_EQ(err, (status_t)OK, "Failed to select track");
 
@@ -322,7 +323,7 @@ status_t StreamPlayer::onPrepare() {
     CHECK((mCodecState.mCodec != NULL), "Failed to create media codec");
 
     err = mCodecState.mCodec->configure(
-        formatFile,
+        format,
         NULL,
         NULL /* crypto */,
         0 /* flags */);
@@ -331,7 +332,7 @@ status_t StreamPlayer::onPrepare() {
 
     size_t j = 0;
     sp<ABuffer> buffer;
-    while (formatFile->findBuffer(AStringPrintf("csd-%d", j).c_str(), &buffer)) {
+    while (format->findBuffer(AStringPrintf("csd-%d", j).c_str(), &buffer)) {
       mCodecState.mCSD.push_back(buffer);
       ++j;
     }
@@ -546,28 +547,46 @@ status_t StreamPlayer::onDoMoreStuff() {
 
 status_t StreamPlayer::onOutputFormatChanged() {
   ALOGV("%s", __FUNCTION__);
-  sp<AMessage> format;
-  status_t err = mCodecState.mCodec->getOutputFormat(&format);
-
-  if (err != OK) {
-    return err;
-  }
 
   AString mime;
-  CHECK(format->findString("mime", &mime), "Failed to get mime type");
+  CHECK(mAudioTrackFormat->findString("mime", &mime), "Failed to get mime type");
 
   if (!strncasecmp(mime.c_str(), "audio/", 6)) {
     int32_t channelCount;
     int32_t sampleRate;
-    CHECK(format->findInt32("channel-count", &channelCount),
+    CHECK(mAudioTrackFormat->findInt32("channel-count", &channelCount),
           "Failed to get channel count");
-    CHECK(format->findInt32("sample-rate", &sampleRate),
+    CHECK(mAudioTrackFormat->findInt32("sample-rate", &sampleRate),
           "Failed to get sample rate");
+
+    // Get bits per sample
+    int32_t bitsPerSample = 16; // Default to 16 bit PCM
+    mAudioTrackFormat->findInt32("bits-per-sample", &bitsPerSample);
+    ALOGV("bitsPerSample %d", bitsPerSample);
+
+    audio_format_t format;
+    switch(bitsPerSample) {
+      case 8:
+        format = AUDIO_FORMAT_PCM_8_BIT;
+        break;
+      case 16:
+        format = AUDIO_FORMAT_PCM_16_BIT;
+        break;
+      case 24:
+        format = AUDIO_FORMAT_PCM_24_BIT_PACKED;
+        break;
+      case 32:
+        format = AUDIO_FORMAT_PCM_32_BIT;
+        break;
+      default:
+        ALOGD("Bit depth of %d not supported", bitsPerSample);
+        CHECK(false, "Unsupported bit depth");
+    }
 
     mCodecState.mAudioTrack = new AudioTrack(
         AUDIO_STREAM_MUSIC,
         sampleRate,
-        AUDIO_FORMAT_PCM_16_BIT,
+        format,
         audio_channel_out_mask_from_count(channelCount),
         0);
 

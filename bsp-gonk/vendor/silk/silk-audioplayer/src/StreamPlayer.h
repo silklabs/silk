@@ -105,6 +105,7 @@ private:
   Mutex mNotifyLock;
   int64_t mDurationUs;
   float mGain;
+  sp<AMessage> mAudioTrackFormat;
 
   status_t onPrepare();
   status_t onStart();

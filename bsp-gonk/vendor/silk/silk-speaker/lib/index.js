@@ -88,6 +88,10 @@ export default class Speaker extends Writable {
         this._options.encoding === 'float') {
       return bindings.AUDIO_FORMAT_PCM_FLOAT;
     }
+    if (this._options.bytesPerSample === 3 &&
+        this._options.encoding === 'signed-integer') {
+      return bindings.AUDIO_FORMAT_PCM_24_BIT_PACKED;
+    }
     return null;
   }
 
@@ -174,8 +178,18 @@ export default class Speaker extends Writable {
     };
 
     let onwrite = written => {
-      if (written !== buffer.length) {
+      if (written <= 0) {
         done(new Error(`write() failed: ${written}`));
+      } else if (written !== buffer.length) {
+        // Failed to write all the bytes to audio track due to block
+        // misalignment so retry the left over bytes again with more data
+        if (left) {
+          let leftOver = buffer.slice(written);
+          left = Buffer.concat([leftOver, left]);
+          write();
+        } else {
+          done(new Error(`write() failed: ${written}`));
+        }
       } else if (left) {
         write();
       } else {

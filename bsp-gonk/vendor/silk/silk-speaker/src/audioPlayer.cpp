@@ -77,7 +77,7 @@ int AudioPlayer::writeToAudioTrack(const void* bytes, size_t size) {
 
   size_t count = 0;
   while (count < size) {
-    int written = mAudioTrack->write(bytes, size, true);
+    int written = mAudioTrack->write(bytes + count, size - count, true);
     ALOGV("Audio data written %d", written);
     if (written <= 0) {
       break;

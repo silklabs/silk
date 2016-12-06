@@ -1,6 +1,6 @@
 {
   "name": "silk-babel-run",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Misc utilities for running babel / mocha",
   "main": "node.js",
   "author": "Silk Labs Inc.",

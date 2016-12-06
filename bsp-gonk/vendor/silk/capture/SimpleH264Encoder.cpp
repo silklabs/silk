@@ -24,7 +24,7 @@ static const int32_t kIFrameInterval = 3;
 class SingleBufferMediaSource: public MediaSource {
  public:
   SingleBufferMediaSource(int width, int height)
-      : mBuffer(0) {
+      : mBuffer(0), mHaveNextBuffer(false) {
     mMetaData = new MetaData();
     mMetaData->setInt32(kKeyWidth, width);
     mMetaData->setInt32(kKeyHeight, height);
@@ -55,9 +55,11 @@ class SingleBufferMediaSource: public MediaSource {
       return ERROR_END_OF_STREAM;
     }
 
-    if (!mBuffer) {
+    while (!mHaveNextBuffer) {
       mBufferCondition.wait(mBufferLock);
     }
+    mHaveNextBuffer = false;
+
     if (!mBuffer) {
       ALOGI("End of stream");
       return ERROR_END_OF_STREAM;
@@ -74,11 +76,13 @@ class SingleBufferMediaSource: public MediaSource {
       mBuffer->release();
     }
     mBuffer = yuv420SemiPlanarFrame;
+    mHaveNextBuffer = true;
     mBufferCondition.signal();
   }
 
  private:
   MediaBuffer *mBuffer;
+  bool mHaveNextBuffer;
   Mutex mBufferLock;
   Condition mBufferCondition;
 

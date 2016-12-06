@@ -88,6 +88,10 @@ export default class Speaker extends Writable {
         this._options.encoding === 'float') {
       return bindings.AUDIO_FORMAT_PCM_FLOAT;
     }
+    if (this._options.bytesPerSample === 3 &&
+        this._options.encoding === 'signed-integer') {
+      return bindings.AUDIO_FORMAT_PCM_24_BIT_PACKED;
+    }
     return null;
   }
 

@@ -41,6 +41,7 @@ void Speaker::Init(Local<Object> exports) {
   CONST_INT(AUDIO_FORMAT_PCM_8_BIT);
   CONST_INT(AUDIO_FORMAT_PCM_16_BIT);
   CONST_INT(AUDIO_FORMAT_PCM_FLOAT);
+  CONST_INT(AUDIO_FORMAT_PCM_24_BIT_PACKED);
 
   constructor.Reset(ctor->GetFunction());
   exports->Set(Nan::New("Speaker").ToLocalChecked(), ctor->GetFunction());

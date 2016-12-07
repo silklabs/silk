@@ -24,7 +24,7 @@ let props;
 try {
   props = require('silk-properties'); //eslint-disable-line
 } catch (e) {
-  log.debug('silk-properties not found, using fallback:', e);
+  log.debug('silk-properties not found, using fallback:', e.message);
   props = {
     get(prop: string): string {
       let result = spawnSync('getprop', [prop], {encoding: 'utf8'});

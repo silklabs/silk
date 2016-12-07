@@ -122,8 +122,8 @@ ssize_t BufferedDataSource::readAt_l(off64_t offset, void *data, size_t size) {
   while (sizeDone < size) {
     if (waitForData(offset, (size - sizeDone)) != OK) {
       if (offset >= mLength) {
-        ALOGW("Returning early %d", sizeDone);
-        return sizeDone;
+        ALOGW("Returning early %d", -EAGAIN);
+        return -EAGAIN;
       } else {
         // Try to return as much as we can
         size = mLength - offset;

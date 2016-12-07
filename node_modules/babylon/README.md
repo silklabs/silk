@@ -14,7 +14,7 @@
  - The latest ECMAScript version enabled by default (ES2017).
  - Comment attachment.
  - Support for JSX and Flow.
- - Support for experimental language proposals (accepting PRs for anything at least [stage-0](https://github.com/tc39/proposals/blob/master/stage-0-proposals.md).
+ - Support for experimental language proposals (accepting PRs for anything at least [stage-0](https://github.com/tc39/proposals/blob/master/stage-0-proposals.md)).
 
 ## Credits
 
@@ -106,6 +106,8 @@ require("babylon").parse("code", {
 ```
 
 ### Plugins
+
+> You can use `"*"` to include everything (may be useful in certain cases)
 
  - `jsx`
  - `flow`

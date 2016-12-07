@@ -3,6 +3,8 @@
  * @private
  */
 
+/* eslint-disable indent */
+
 import assert from 'assert';
 import makeLog from 'debug';
 import uuid from 'uuid';
@@ -278,6 +280,7 @@ export default function(buffer) {
 
 // These are big maps so they're all instantiated lazily.
 const MAPS = Object.defineProperties({ }, {
+
   types: {
     get() {
       delete this.types;

@@ -336,8 +336,7 @@ function rawFaceArrayToFaces(buf: Buffer): Array<RawHalFaceType> {
  *
  * @private
  */
-function normalizeFace(face: RawHalFaceType): FaceType { //eslint-disable-line no-unused-vars
-
+function normalizeFace(face: RawHalFaceType): FaceType {
   // These params are defined by the long comment just below the
   // declaration of `struct camera_face` in
   // system/core/include/system/camera.h.
@@ -366,10 +365,14 @@ function normalizeFace(face: RawHalFaceType): FaceType { //eslint-disable-line n
     y: normCoord(top, DEFAULT_FRAME_HEIGHT),
     width: normLen(right - left, DEFAULT_FRAME_WIDTH),
     height: normLen(bottom - top, DEFAULT_FRAME_HEIGHT),
-    leftEye: [normCoord(face.leftEye[0], DEFAULT_FRAME_WIDTH),
-        normCoord(face.leftEye[1], DEFAULT_FRAME_HEIGHT)],
-    rightEye: [normCoord(face.rightEye[0], DEFAULT_FRAME_WIDTH),
-        normCoord(face.rightEye[1], DEFAULT_FRAME_HEIGHT)],
+    leftEye: [
+      normCoord(face.leftEye[0], DEFAULT_FRAME_WIDTH),
+      normCoord(face.leftEye[1], DEFAULT_FRAME_HEIGHT),
+    ],
+    rightEye: [
+      normCoord(face.rightEye[0], DEFAULT_FRAME_WIDTH),
+      normCoord(face.rightEye[1], DEFAULT_FRAME_HEIGHT),
+    ],
     id: face.id,
   };
 }

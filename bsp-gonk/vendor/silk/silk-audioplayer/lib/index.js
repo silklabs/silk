@@ -45,7 +45,106 @@ type FileInfo = {
 };
 
 /**
- * This module provides an interface to play audio files or audio streams
+ * This module provides an interface to play audio files or audio streams.
+ *
+ * <style>
+ * table {
+ *   border-collapse: collapse;
+ * }
+ * th, td {
+ *   border: 1px solid #ccc;
+ *   padding: 10px;
+ *   text-align: left;
+ * }
+ * tr:nth-child(even) {
+ *   background-color: #eee;
+ * }
+ * tr:nth-child(odd) {
+ *   background-color: #fff;
+ * }
+ * </style>
+ *
+ * <strong>Valid and invalid states</strong>
+ * <table>
+ * <tr>
+ * <th>Method</th>
+ * <th>Valid States</th>
+ * <th>Comments</th>
+ * </tr>
+ * <tr>
+ * <td>endOfStream</td>
+ * <td>any</td>
+ * <td>This method can be called in any state and calling it does not change the
+ * player state.</td>
+ * </tr>
+ * <tr>
+ * <td>getCurrentPosition</td>
+ * <td>any</td>
+ * <td>This method can be called in any state and calling it does not change the
+ * player state.</td>
+ * </tr>
+ * <tr>
+ * <td>getDuration</td>
+ * <td>{preparing, prepared, playing, paused}</td>
+ * <td>Successful invoke of this method in a valid state does not change the
+ * player state.</td>
+ * </tr>
+ * <tr>
+ * <td>getInfo</td>
+ * <td>{preparing, prepared, playing, paused, stopped}</td>
+ * <td>Successful invoke of this method in a valid state does not change the
+ * player state.</td>
+ * </tr>
+ * <tr>
+ * <td>getState</td>
+ * <td>any</td>
+ * <td>This method can be called in any state and calling it does not change the
+ * player state.</td>
+ * </tr>
+ * <tr>
+ * <td>pause</td>
+ * <td>{playing}</td>
+ * <td>Successful invoke of this method in a valid state transfers the player
+ * to the <i>paused</i> state. Calling this method in an invalid state transfers
+ * the player to the <i>stopped</i> state.</td>
+ * </tr>
+ * <tr>
+ * <td>play</td>
+ * <td>{idle, stopped}</td>
+ * <td>Successful invoke of this method in a valid state transfers the player
+ * through <i>preparing</i>, <i>prepared</i> and <i>playing</i> state. Calling
+ * this method in an invalid state transfers the player to the <i>stopped</i>
+ * state.</td>
+ * </tr>
+ * <tr>
+ * <td>resume</td>
+ * <td>{paused}</td>
+ * <td>Successful invoke of this method in a valid state transfers the player
+ * to the <i>playing</i> state. Calling this method in an invalid state transfers
+ * the player to the <i>stopped</i> state.</td>
+ * </tr>
+ * <tr>
+ * <td>setVolume</td>
+ * <td>any</td>
+ * <td>This method can be called in any state and calling it does not change the
+ * player state.</td>
+ * </tr>
+ * <tr>
+ * <td>stop</td>
+ * <td>{preparing, prepared, playing, paused}</td>
+ * <td>Successful invoke of this method in a valid as well as invalid state
+ * transfers the player to the <i>stopped</i> state.</td>
+ * </tr>
+ * <tr>
+ * <td>write</td>
+ * <td>{idle, stopped}</td>
+ * <td>Successful invoke of this method in a valid state transfers the player
+ * through <i>preparing</i>, <i>prepared</i> and <i>playing</i> state. Calling
+ * this method in an invalid state transfers the player to the <i>stopped</i>
+ * state.</td>
+ * </tr>
+ * </table>
+ *
  * @module silk-audioplayer
  *
  * @example
@@ -228,7 +327,9 @@ export default class Player extends events.EventEmitter {
   }
 
   /**
-   * Write audio buffer to the player's queue to be played
+   * Write audio buffer to the player's queue to be played. This method is
+   * analagous to play method but for streaming uses cases instead of audio
+   * files.
    *
    * @param chunk buffer containing audio data to be played
    * @memberof silk-audioplayer
@@ -249,7 +350,10 @@ export default class Player extends events.EventEmitter {
   }
 
   /**
-   * Stop the currently playing audio file or an audio stream
+   * Stop the currently playing audio file or an audio stream. Same
+   * instance of audioplayer can be reused to play another file or stream after
+   * the current instance has finished playback or has been stopped by calling
+   * stop on audioplayer.
    * @memberof silk-audioplayer
    * @instance
    */
@@ -308,8 +412,7 @@ export default class Player extends events.EventEmitter {
   }
 
   /**
-   * Gets the duration of the file or an audio stream. Duration is not available
-   * in the idle state.
+   * Gets the duration of the file or an audio stream.
    * @return {number} the duration in milliseconds
    * @memberof silk-audioplayer
    * @instance

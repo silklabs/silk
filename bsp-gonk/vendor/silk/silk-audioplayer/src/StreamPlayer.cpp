@@ -547,19 +547,25 @@ status_t StreamPlayer::onDoMoreStuff() {
 
 status_t StreamPlayer::onOutputFormatChanged() {
   ALOGV("%s", __FUNCTION__);
+  sp<AMessage> format;
+  status_t err = mCodecState.mCodec->getOutputFormat(&format);
+  if (err != OK) {
+    return err;
+  }
 
   AString mime;
-  CHECK(mAudioTrackFormat->findString("mime", &mime), "Failed to get mime type");
+  CHECK(format->findString("mime", &mime), "Failed to get mime type");
 
   if (!strncasecmp(mime.c_str(), "audio/", 6)) {
     int32_t channelCount;
     int32_t sampleRate;
-    CHECK(mAudioTrackFormat->findInt32("channel-count", &channelCount),
+    CHECK(format->findInt32("channel-count", &channelCount),
           "Failed to get channel count");
-    CHECK(mAudioTrackFormat->findInt32("sample-rate", &sampleRate),
+    CHECK(format->findInt32("sample-rate", &sampleRate),
           "Failed to get sample rate");
 
-    // Get bits per sample
+    // Get bits per sample for AudioFormat if available. Only applicable to
+    // wav files. For all other format the default of 16 is used.
     int32_t bitsPerSample = 16; // Default to 16 bit PCM
     mAudioTrackFormat->findInt32("bits-per-sample", &bitsPerSample);
     ALOGV("bitsPerSample %d", bitsPerSample);
@@ -583,6 +589,7 @@ status_t StreamPlayer::onOutputFormatChanged() {
         CHECK(false, "Unsupported bit depth");
     }
 
+    ALOGD("format %d", format);
     mCodecState.mAudioTrack = new AudioTrack(
         AUDIO_STREAM_MUSIC,
         sampleRate,

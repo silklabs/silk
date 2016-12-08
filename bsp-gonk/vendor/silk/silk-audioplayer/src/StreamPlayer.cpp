@@ -187,7 +187,9 @@ void StreamPlayer::getDuration(int64_t* msec) {
 
 void StreamPlayer::eos() {
   ALOGV("%s", __FUNCTION__);
-  mBufferedDataSource->queueEOS(ERROR_END_OF_STREAM);
+  if (mBufferedDataSource != NULL) {
+    mBufferedDataSource->queueEOS(ERROR_END_OF_STREAM);
+  }
 }
 
 void StreamPlayer::reset() {

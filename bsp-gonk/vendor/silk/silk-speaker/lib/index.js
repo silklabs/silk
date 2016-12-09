@@ -4,7 +4,7 @@
  */
 
 import createLog from 'silk-log/device';
-import Writable from 'readable-stream/writable';
+import stream from 'readable-stream';
 import bindings from './speaker';
 
 import type { WritableStreamOptions } from 'silk-streams';
@@ -29,17 +29,18 @@ const GAIN_MAX = 1.0;
  * const Speaker = require('silk-speaker').default;
  * const log = require('silk-alog');
  *
- * let speaker = new Speaker({ numChannels: 1,    // Default is 2
- *                             sampleRate: 16000, // Default is 44100
- *                             bytesPerSample: 2,
- *                             encoding: 'signed-integer'
- *                           });
+ * let speaker = new Speaker({
+ *   numChannels: 1,    // Default is 2
+ *   sampleRate: 16000, // Default is 44100
+ *   bytesPerSample: 2,
+ *   encoding: 'signed-integer'
+ * });
  * speaker.setVolume(1.0);
  * speaker.write(pcmBuffer);
  * speaker.end();
  * speaker.on('close', () => log.info(`done`));
  */
-export default class Speaker extends Writable {
+export default class Speaker extends stream.Writable {
 
   _speaker: SpeakerType;
   _closed: boolean = false;

@@ -16,15 +16,15 @@ const GAIN_MAX = 1.0;
 
 /**
  * The available media states
- *
+ * <ul>
+ * <li>idle      - Audio playback hasn't started yet</li>
+ * <li>preparing - Audio is preparing for playback</li>
+ * <li>prepared  - Audio stream is being prepared to play</li>
+ * <li>playing   - Audio playback has started</li>
+ * <li>stopped   - Audio playback has stopped</li>
+ * <li>paused    - Audio playback has paused</li>
+ * </ul>
  * @memberof silk-audioplayer
- * @example
- * idle      - Audio playback hasn't started yet
- * preparing - Audio is preparing for playback
- * prepared  - Audio stream is being prepared to play
- * playing   - Audio playback has started
- * stopped   - Audio playback has stopped
- * paused    - Audio playback has paused
  */
 type MediaState =
   'idle' |
@@ -192,54 +192,6 @@ type FileInfo = {
  *    }
  *  });
  * });
- */
-
-/**
- * This event is emitted when audio player is ready to play back audio
- *
- * @event prepared
- * @memberof silk-audioplayer
- * @instance
- */
-
-/**
- * This event is emitted when audio playback has started
- *
- * @event started
- * @memberof silk-audioplayer
- * @instance
- */
-
-/**
- * This event is emitted when audio playback has finished
- *
- * @event done
- * @memberof silk-audioplayer
- * @instance
- */
-
-/**
- * This event is emitted when audio playback has paused
- *
- * @event paused
- * @memberof silk-audioplayer
- * @instance
- */
-
-/**
- * This event is emitted when audio playback has resumed
- *
- * @event resumed
- * @memberof silk-audioplayer
- * @instance
- */
-
-/**
- * This event is emitted when there is an error in audio playback
- *
- * @event error
- * @memberof silk-audioplayer
- * @instance
  */
 
 export default class Player extends events.EventEmitter {
@@ -438,7 +390,6 @@ export default class Player extends events.EventEmitter {
    * but rather tells the audio player to stop when all the buffers in the audio
    * queue are done playing.
    *
-   * @return {FileInfo}
    * @memberof silk-audioplayer
    * @instance
    */
@@ -454,18 +405,53 @@ export default class Player extends events.EventEmitter {
 
     switch (event) {
     case 'prepared':
+      /**
+       * This event is emitted when audio player is ready to play back audio
+       *
+       * @event prepared
+       * @memberof silk-audioplayer
+       * @instance
+       */
       this._mediaState = 'prepared';
       break;
     case 'started':
+      /**
+       * This event is emitted when audio playback has started
+       *
+       * @event started
+       * @memberof silk-audioplayer
+       * @instance
+       */
       if (this._mediaState === 'paused') {
+        /**
+         * This event is emitted when audio playback has resumed
+         *
+         * @event resumed
+         * @memberof silk-audioplayer
+         * @instance
+         */
         event = 'resumed';
       }
       this._mediaState = 'playing';
       break;
     case 'paused':
+      /**
+       * This event is emitted when audio playback has paused
+       *
+       * @event paused
+       * @memberof silk-audioplayer
+       * @instance
+       */
       this._mediaState = 'paused';
       break;
     case 'done':
+      /**
+       * This event is emitted when audio playback has finished
+       *
+       * @event done
+       * @memberof silk-audioplayer
+       * @instance
+       */
       this._mediaState = 'stopped';
       if (this._playPromiseAccept) {
         this._playPromiseAccept();
@@ -473,6 +459,14 @@ export default class Player extends events.EventEmitter {
       }
       break;
     case 'error':
+      /**
+       * This event is emitted when there is an error in audio playback
+       *
+       * @event error
+       * @property {Error} error reason
+       * @memberof silk-audioplayer
+       * @instance
+       */
       this._player.stop(); // Stop player if not already
       this._mediaState = 'stopped';
       if (this._playPromiseReject) {

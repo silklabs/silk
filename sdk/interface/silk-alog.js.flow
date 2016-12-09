@@ -36,6 +36,7 @@ declare export var fatal: SilkALogFunc;
  * Print debug log message
  *
  * @name debug
+ * @method
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -45,6 +46,7 @@ declare export var fatal: SilkALogFunc;
  * Print verbose log message
  *
  * @name verbose
+ * @method
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -54,6 +56,7 @@ declare export var fatal: SilkALogFunc;
  * Print info log message
  *
  * @name info
+ * @method
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -63,6 +66,7 @@ declare export var fatal: SilkALogFunc;
  * Print warn log message
  *
  * @name warn
+ * @method
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -72,6 +76,7 @@ declare export var fatal: SilkALogFunc;
  * Print error log message
  *
  * @name error
+ * @method
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log
@@ -81,6 +86,7 @@ declare export var fatal: SilkALogFunc;
  * Print fatal log message
  *
  * @name fatal
+ * @method
  * @memberof silk-alog
  * @param {string} [tag='node'] Source of the log message
  * @param {string} message The message to log

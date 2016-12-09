@@ -3,7 +3,7 @@
  * @private
  */
 
-import EventEmitter from 'events';
+import events from 'events';
 import * as net from 'net';
 import createLog from 'silk-log/device';
 import * as util from 'silk-sysutils';
@@ -32,7 +32,7 @@ const SENSORS_SOCKET_NAME = '/dev/socket/sensors';
  *  log.info('Sensor values: + sensorEvent.values');
  * });
  */
-export class Sensors extends EventEmitter {
+export class Sensors extends events.EventEmitter {
   _active: boolean;
   _buffer: string;
   _ready: boolean;

@@ -30,6 +30,9 @@ APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
   build/silk-properties.js \
 "
 
+# Use the silkified version of default_theme
+cp -ar theme/default_theme/* node_modules/documentation/default_theme/
+
 ./node_modules/.bin/documentation \
   build \
   $APIDOC_SOURCE_FILES \
@@ -37,7 +40,6 @@ APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
   -f html \
   -o latest \
   --shallow \
-  -t node_modules/documentation-theme-default \
   --name silk-device-api
 
 rm -rf build

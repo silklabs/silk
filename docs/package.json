@@ -7,7 +7,7 @@
     "postinstall": "npm run build"
   },
   "dependencies": {
-    "documentation": "documentationjs/documentation#bb41619c734e59ef3fbc3648610032efcfdaaace",
+    "documentation": "documentationjs/documentation#v4.0.0-beta16",
     "documentation-theme-default": "./theme/documentation-theme-default/"
   },
   "license": "MIT",

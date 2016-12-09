@@ -8,8 +8,9 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
   display: block;
   overflow-x: auto;
   padding: 0.5em;
-  background: #424242;
-  color: #e6e1dc;
+  color: #333;
+  background: #f8f8f8;
+  -webkit-text-size-adjust: none;
 }
 
 .hljs-comment,
@@ -26,7 +27,7 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
 .hljs-subst,
 .hljs-request,
 .hljs-status {
-  color: #357687;
+  color: #1184CE;
 }
 
 .hljs-number,
@@ -40,7 +41,7 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
 .hljs-phpdoc,
 .hljs-dartdoc,
 .tex .hljs-formula {
-  color: #E4754A;
+  color: #ed225d;
 }
 
 .hljs-title,

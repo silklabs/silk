@@ -12,7 +12,7 @@
   <div class='max-width-4 mx-auto'>
     <div class='clearfix md-mxn2'>
       <div class='fixed xs-hide fix-3 overflow-auto max-height-100'>
-        <div class='py1 px2 top-0 bottom-0 left-0 bg-silkblue dark-link'>
+        <div class='py1 px2'>
           <h3 class='mb0 no-anchor'><%- options.name %></h3>
           <div class='mb1'><code><%- options.version %></code></div>
           <input
@@ -25,11 +25,8 @@
               <% docs.forEach(function(doc) { %>
                 <% var hasMembers = doc.members.static.length || doc.members.instance.length %>
                 <li><a
-                  href='#<%=doc.namespace%>'
-                  <% if (hasMembers) { %>
-                  class='toggle-sibling'
-                  <% } %>
-                  >
+                  href='#<%=slug(doc.namespace)%>'
+                  class="<% if (doc.kind === 'note') { %>h5 bold black caps<% } %><% if (hasMembers) { %> toggle-sibling<% } %>">
                   <%- doc.name %>
                   <% if (hasMembers) { %><span class='icon'>▸</span><% } %>
                 </a>
@@ -37,7 +34,7 @@
                 <div class='toggle-target display-none'>
                   <% if (doc.members.static && doc.members.static.length) { %>
                   <ul class='list-reset py1-ul pl1'>
-                    <li class='h5'>Static members</li>
+                    <li class='h5'><span>Static members</span></li>
                     <% doc.members.static.forEach(function(member) { %>
                       <li><a
                         href='#<%=member.namespace%>'
@@ -49,7 +46,7 @@
                   <% } %>
                   <% if (doc.members.instance && doc.members.instance.length) { %>
                     <ul class='list-reset py1-ul pl1'>
-                      <li class='h5'>Instance members</li>
+                      <li class='h5'><span>Instance members</span></li>
                       <% doc.members.instance.forEach(function(member) { %>
                       <li><a
                         href='#<%=member.namespace%>'
@@ -77,14 +74,23 @@
               <% }) %>
             </ul>
           </div>
+          <div class='mt1 h6 quiet'>
+            <a href='http://documentation.js.org/reading-documentation.html'>Need help reading this?</a>
+          </div>
         </div>
       </div>
       <div class='fix-margin-3'>
-        <div class='px2'>
-          <% docs.forEach(function(s) { %>
-            <div class='keyline-top-not py2'><%=renderSection({ section: s, renderSection: renderSection })%></div>
-          <% }) %>
-        </div>
+        <% docs.forEach(function(s) { %>
+          <% if (s.kind !== 'note') { %>
+            <%= renderSection({
+              section: s,
+              renderSection: renderSection,
+              renderSectionList: renderSectionList
+            }) %>
+          <% } else { %>
+            <div class='keyline-top-not py2'><%=renderNote({ note: s })%></div>
+          <% } %>
+        <% }) %>
       </div>
     </div>
   </div>

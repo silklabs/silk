@@ -12,7 +12,7 @@
   <div class='max-width-4 mx-auto'>
     <div class='clearfix md-mxn2'>
       <div class='fixed xs-hide fix-3 overflow-auto max-height-100'>
-        <div class='py1 px2'>
+        <div class='py1 px2 top-0 bottom-0 left-0 bg-silkblue dark-link'>
           <h3 class='mb0 no-anchor'><%- options.name %></h3>
           <div class='mb1'><code><%- options.version %></code></div>
           <input

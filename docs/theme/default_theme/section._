@@ -130,7 +130,7 @@
     <div class='py1 quiet mt1 prose-big'>Example</div>
     <% section.examples.forEach(function(example) { %>
       <% if (example.caption) { %><p><%= md(example.caption) %></p><% } %>
-      <pre class='p1 overflow-auto round fill-light'><%= highlight(example.description) %></pre>
+      <pre class='hljs css small'><%= highlight(example.description) %></pre>
     <% }) %>
   <% } %>
 

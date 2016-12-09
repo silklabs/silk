@@ -17,19 +17,13 @@
  * let movie = new Movie();
  * movie.run(path.join(__dirname, 'splash.zip'));
  */
-
-/**
- * Silk Movie class
- *
- * @class
- * @memberof silk-movie
- */
 declare export class Movie {
 
   /**
    * Starts a new animation sequence using the provided file
    *
-   * @memberof silk-movie.Movie
+   * @method
+   * @memberof silk-movie
    * @instance
    */
   run (animationFile: string, completedCallback: (() => void)): void;
@@ -37,7 +31,8 @@ declare export class Movie {
   /**
    * Stops the movie, leaving it visible
    *
-   * @memberof silk-movie.Movie
+   * @method
+   * @memberof silk-movie
    * @instance
    */
   stop(): void;
@@ -45,7 +40,8 @@ declare export class Movie {
   /**
    * Stops the movie and hides it
    *
-   * @memberof silk-movie.Movie
+   * @method
+   * @memberof silk-movie
    * @instance
    */
   hide(): void;

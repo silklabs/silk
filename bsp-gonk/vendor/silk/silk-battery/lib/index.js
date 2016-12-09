@@ -21,7 +21,7 @@ const BATTERY_OK_TO_BOOT_LEVEL = 10;
 const BATTERY_OUT_OF_POWER_LEVEL = 5;
 
 /**
- * Silk battery module. Following events are supported by this module.
+ * Silk battery module.
  * @module silk-battery
  * @example
  * 'use strict';
@@ -39,12 +39,6 @@ const BATTERY_OUT_OF_POWER_LEVEL = 5;
  * .catch(err => {
  *   log.error('Failed to initialize battery', err);
  * });
- */
-
-/**
- * Silk Battery class
- * @memberof silk-battery
- * @class
  */
 export default class Battery extends events.EventEmitter {
 
@@ -94,7 +88,7 @@ export default class Battery extends events.EventEmitter {
 
   /**
    * Initialize battery module
-   * @memberof silk-battery.Battery
+   * @memberof silk-battery
    * @instance
    */
   init(): Promise<void> {

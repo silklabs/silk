@@ -27,6 +27,7 @@ declare export function set(name: string, value: string): void;
  * Get system property
  *
  * @name get
+ * @method
  * @memberof silk-properties
  * @param {string} key The name of the system property to fetch
  * @return {?string} Returns the value of a system property or null if no such property exists
@@ -36,6 +37,7 @@ declare export function set(name: string, value: string): void;
  * Set system property
  *
  * @name set
+ * @method
  * @memberof silk-properties
  * @param {string} key The name of the system property to set
  * @param {string} value The value to set

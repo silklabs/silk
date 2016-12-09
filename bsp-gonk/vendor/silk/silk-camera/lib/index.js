@@ -1,22 +1,5 @@
 /**
- * Silk Camera module
- *
- * @module silk-camera
- * @example
- * 'use strict';
- *
- * const Camera = require('silk-camera').default;
- * const log = require('silk-alog');
- *
- * let camera = new Camera();
- * camera.init()
- * .then(() => {
- *   camera.startRecording();
- * });
- * camera.on('frame', (when, image) => {
- *   log.info('Received a frame at timestamp', when, '-', image);
- * });
- *
+ * @private
  * @flow
  */
 
@@ -54,10 +37,10 @@ type FrameReplacer = {
 /**
  * Type representing an object rectangle
  *
- * @property {number} x x co-ordinate of the object rectangle
- * @property {number} y y co-ordinate of the object rectangle
- * @property {number} width width of the object rectangle
- * @property {number} height height of the object rectangle
+ * @property x x co-ordinate of the object rectangle
+ * @property y y co-ordinate of the object rectangle
+ * @property width width of the object rectangle
+ * @property height height of the object rectangle
  * @memberof silk-camera
  */
 type Rect = {
@@ -70,9 +53,9 @@ type Rect = {
 /**
  * Type representing the camera frame callback
  *
- * @property {boolean} err True if the frame is retrieved succesfully, false
+ * @property {Error} err True if the frame is retrieved succesfully, false
  *                         otherwise
- * @property {object} image Requested preivew image as per the specified
+ * @property {Matrix} image Requested preivew image as per the specified
  *                          CameraFrameFormat format
  * @memberof silk-camera
  */
@@ -81,15 +64,16 @@ export type CameraCallback = (err: ?Error, image: Matrix) => void;
 /**
  * The available camera frame formats:
  *
+ * <ul>
+ * <li>fullgray - full resolution grayscale (CameraFrameSize === 'full')</li>
+ * <li>fullrgb - full resolution rgb (CameraFrameSize === 'full')</li>
+ * <li>highgray - higher res grayscale (CameraFrameSize === 'high')</li>
+ * <li>gray - normal grayscale (CameraFrameSize === 'normal')</li>
+ * <li>grayeq - normal grayscale equalized (CameraFrameSize === 'normal')</li>
+ * <li>rgb - normal rgb (CameraFrameSize === 'normal')</li>
+ * <li>lowgray - lower res grayscale (CameraFrameSize === 'low')</li>
+ * </ul>
  * @memberof silk-camera
- * @example
- * fullgray - full resolution grayscale   (CameraFrameSize === 'full')
- * fullrgb  - full resolution rgb         (CameraFrameSize === 'full')
- * highgray - higher res grayscale        (CameraFrameSize === 'high')
- * gray     - normal grayscale            (CameraFrameSize === 'normal')
- * grayeq   - normal grayscale equalized  (CameraFrameSize === 'normal')
- * rgb      - normal rgb                  (CameraFrameSize === 'normal')
- * lowgray  - lower res grayscale         (CameraFrameSize === 'low')
  */
 export type CameraFrameFormat =
     'fullgray'
@@ -103,20 +87,21 @@ export type CameraFrameFormat =
 
 /**
  * The available camera frame sizes:
+ * <ul>
+ * <li>full - full resolution frame</li>
+ * <li>high - higher resolution frame for image analysis</li>
+ * <li>normal - normal frame size for image analysis</li>
+ * <li>low - lower resolution frame for image analysis</li>
+ * </ul>
  * @memberof silk-camera
- * @example
- * full - full resolution frame
- * high - higher resolution frame for image analysis
- * normal - normal frame size for image analysis
- * low - lower resolution frame for image analysis
  */
 export type CameraFrameSize = 'low' | 'normal' | 'high' | 'full';
 
 /**
- * The camera video frame size
+ * The camera frame size
  * @memberof silk-camera
  */
-type VideoSizeType = {
+type SizeType = {
   width: number;
   height: number;
 };
@@ -145,6 +130,14 @@ type PreviewFrameQueueType = {
   when: number;
   formats: Array<CameraFrameFormat>;
 };
+
+/**
+ * The available image formats:
+ *
+ * @name ImageFormat
+ * @property {yvu420sp|rgb} ImageFormat image format
+ * @memberof silk-camera
+ */
 
 type CustomFrameQueueType = {
   format: ImageFormat;
@@ -239,6 +232,8 @@ const FRAME_SIZE = {
   },
 };
 
+type FrameSize = typeof FRAME_SIZE;
+
 // Rate that new camera frames are proceeded.  Ideally this would equal
 // 1000/FPS however is usually longer due to limited compute
 const FRAME_DELAY_MS = 250; // 4 FPS
@@ -292,6 +287,7 @@ const NUM_IMAGES_TO_CACHE = 10;
 /**
  * Flash modes as defined in <camera/CameraParameters.cpp>
  * @memberof silk-camera
+ * @property {(OFF|AUTO|ON|RED_EYE|TORCH)} FLASH_MODE flash modes
  */
 let FLASH_MODE = {
   OFF: 'off',
@@ -300,6 +296,8 @@ let FLASH_MODE = {
   RED_EYE: 'red-eye',
   TORCH: 'torch',
 };
+
+type FlashMode = typeof FLASH_MODE;
 
 /**
  * Return the raw Buffer of bytes `buf` parsed into array of face
@@ -378,9 +376,23 @@ function normalizeFace(face: RawHalFaceType): FaceType {
 }
 
 /**
- * Class that talks to capture service to receive camera frames
- * @class
- * @memberof silk-camera
+ * Module that talks to capture service to receive camera frames
+ *
+ * @module silk-camera
+ * @example
+ * 'use strict';
+ *
+ * const Camera = require('silk-camera').default;
+ * const log = require('silk-alog');
+ *
+ * let camera = new Camera();
+ * camera.init()
+ * .then(() => {
+ *   camera.startRecording();
+ * });
+ * camera.on('frame', (when, image) => {
+ *   log.info('Received a frame at timestamp', when, '-', image);
+ * });
  */
 export default class Camera extends EventEmitter {
 
@@ -458,11 +470,11 @@ export default class Camera extends EventEmitter {
     this._frameReplacer = frameReplacer;
   }
 
-  get FRAME_SIZE(): typeof FRAME_SIZE {
+  get FRAME_SIZE(): FrameSize {
     return FRAME_SIZE;
   }
 
-  get FLASH_MODE(): typeof FLASH_MODE{
+  get FLASH_MODE(): FlashMode {
     return FLASH_MODE;
   }
 
@@ -1039,7 +1051,7 @@ export default class Camera extends EventEmitter {
      * @instance
      * @property {number} when Timestamp of the preview frame in UTC milliseconds
      *                         since epoch
-     * @property {Object} imRGB {@link https://github.com/peterbraden/node-opencv Opencv}
+     * @property {Matrix} imRGB {@link https://github.com/peterbraden/node-opencv Opencv}
      *                          matrix representing the image in RGB format
      */
     this._throwyEmit('frame', when, imRGB);
@@ -1068,7 +1080,7 @@ export default class Camera extends EventEmitter {
      * @instance
      * @property {number} when Timestamp of the preview frame in UTC milliseconds
      *                         since epoch
-     * @property {Object} im {@link https://github.com/peterbraden/node-opencv Opencv}
+     * @property {Matrix} im {@link https://github.com/peterbraden/node-opencv Opencv}
      *                          matrix representing the image in raw YVU420SP format
      */
     this._throwyEmit('fast-frame', when, im);
@@ -1211,24 +1223,26 @@ export default class Camera extends EventEmitter {
   /**
    * Initialize camera stream
    *
-   * @memberof silk-camera.Camera
+   * @return A promise that is resolved when the camera stream is
+   * initialized
+   * @memberof silk-camera
    * @instance
    */
-  async init() {
+  async init(): Promise<void> {
     this._init();
     return Promise.resolve();
   }
 
   /**
    * Block until the camera is online and operational.
-   * IMPORTANT: Since the camera can crash at any time, once this method returns
-   *            it's never guaranteed that the camera is STILL online
+   * <b>IMPORTANT:</b> Since the camera can crash at any time, once this method
+   * returns it's never guaranteed that the camera is STILL online
    *
-   * @return {Promise}
-   * @memberof silk-camera.Camera
+   * @return A promise that is resolved when camera is ready and operational
+   * @memberof silk-camera
    * @instance
    */
-  /* async */ ready() {
+  /* async */ ready(): Promise<void> {
     if (this._ready) {
       return Promise.resolve();
     }
@@ -1240,7 +1254,7 @@ export default class Camera extends EventEmitter {
   /**
    * Start camera recording
    *
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   startRecording() {
@@ -1253,7 +1267,7 @@ export default class Camera extends EventEmitter {
   /**
    * Stop camera recording
    *
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   stopRecording() {
@@ -1267,7 +1281,7 @@ export default class Camera extends EventEmitter {
    * Set flash mode as specified by flashMode parameter
    *
    * @param flashMode flash-mode parameter to set in camera
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   flash(flashMode: string) {
@@ -1286,7 +1300,7 @@ export default class Camera extends EventEmitter {
    * Set mute mode
    *
    * @param mute Mute mic true or false
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   setMute(mute: boolean) {
@@ -1306,11 +1320,10 @@ export default class Camera extends EventEmitter {
    * when the parameter value is successfully retrieved
    *
    * @param name of camera parameter to get
-   * @return {Promise}
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
-  async getParameterInt(name: string) {
+  async getParameterInt(name: string): Promise<number> {
     if (this._getParameterCallback) {
       throw new Error(`Re-entered getParameter?`);
     }
@@ -1337,11 +1350,10 @@ export default class Camera extends EventEmitter {
    * when the parameter value is successfully retrieved
    *
    * @param name of camera parameter to get
-   * @return {Promise}
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
-  async getParameterStr(name: string) {
+  async getParameterStr(name: string): Promise<string> {
     if (this._getParameterCallback) {
       throw new Error(`Re-entered getParameter?`);
     }
@@ -1361,11 +1373,10 @@ export default class Camera extends EventEmitter {
   /**
    * Returns the camera video size.
    *
-   * @return {VideoSizeType}
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
-  get videoSize(): VideoSizeType {
+  get videoSize(): SizeType {
     return { width: WIDTH, height: HEIGHT };
   }
 
@@ -1373,11 +1384,10 @@ export default class Camera extends EventEmitter {
    * Returns the camera frame size.
    *
    * @param frameSize Frame size of interest ('normal' if null)
-   * @return {Size}
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
-  getFrameSize(frameSize?: CameraFrameSize) {
+  getFrameSize(frameSize?: CameraFrameSize): SizeType {
     frameSize = frameSize || 'normal';
     if (typeof FRAME_SIZE[frameSize] !== 'object') {
       throw new Error(`Invalid frameSize: ${frameSize}`);
@@ -1403,7 +1413,7 @@ export default class Camera extends EventEmitter {
    * @param rects Array of normalized rectangles to scale
    * @param frameSize Desired scale
    * @return Array of rectangles in the desired scale
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   normalRectsTo(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
@@ -1417,7 +1427,7 @@ export default class Camera extends EventEmitter {
    * @param rects Array of rectangles to normalize
    * @param frameSize Desired scale
    * @return Array of normalized rectangles
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   normalRectsFrom(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
@@ -1443,9 +1453,7 @@ export default class Camera extends EventEmitter {
    *
    * @param when timestamp of the frame to get
    * @param formats requested formats
-   *
-   * @return {Promise<Array<?cv::Matrix>>}
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   getFrame(
@@ -1469,9 +1477,7 @@ export default class Camera extends EventEmitter {
    * @param format - requested format
    * @param width  - width of the requested frame
    * @param height - height of the requested frame
-   *
-   * @return {Promise<?cv::Matrix>}
-   * @memberof silk-camera.Camera
+   * @memberof silk-camera
    * @instance
    */
   getNextFrame(

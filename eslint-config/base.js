@@ -87,6 +87,7 @@ module.exports = {
     "strict": 0,
     "yoda": 0,
     "flowtype/delimiter-dangle": [2, "always-multiline"],
+    "flowtype/no-weak-types": [2, {"any": true, "Object": false, "Function": false}],
     "flowtype/require-valid-file-annotation": [2, "always"],
     "flowtype/semi": [2, "always"]
   }

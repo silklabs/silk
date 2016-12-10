@@ -15,7 +15,7 @@ export type Plugin = {
   help?: string;
   arguments?: Array<PluginArgument>;
   // any because we don't care if this is async function or not.
-  main: (argv: Object, context?: Object) => any;
+  main: (argv: Object, context?: Object) => mixed;
 };
 
 export type PluginModule = {[key: string]: Plugin};

@@ -96,6 +96,9 @@ class Volume extends EventEmitter {
    *
    * @private
    */
+  // Legitimate use of 'any' here based on the fact that Flow's library
+  // definition for EventEmitter uses it.
+  // eslint-disable-next-line flowtype/no-weak-types
   _throwyEmit(eventName: string, ...args: any): void {
     try {
       this.emit(eventName, ...args);

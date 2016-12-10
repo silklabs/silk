@@ -6,6 +6,8 @@ if [[ -z $CI ]]; then
 fi
 
 if [ -z "$CAFFE_ROOT" ]; then
+  cd $(dirname $0)
+
   # Download caffe
   SHA=24d2f67173db3344141dce24b1008efffbfe1c7d
   if [[ ! -d caffe ]]; then

@@ -634,6 +634,9 @@ export default class Camera extends EventEmitter {
    *
    * @private
    */
+  // Legitimate use of 'any' here based on the fact that Flow's library
+  // definition for EventEmitter uses it.
+  // eslint-disable-next-line flowtype/no-weak-types
   _throwyEmit(eventName: string, ...args: Array<any>) {
     try {
       this.emit(eventName, ...args);
@@ -1471,14 +1474,18 @@ export default class Camera extends EventEmitter {
    * @memberof silk-camera.Camera
    * @instance
    */
-  getNextFrame(format: ImageFormat, width: number, height: number): Promise<?any> {
+  getNextFrame(
+    format: ImageFormat,
+    width: number,
+    height: number,
+  ): Promise<?Matrix> {
     return new Promise((resolve, reject) => {
       this._captureFrameCustom(format, width, height, (err, frame) => {
         if (err) {
           reject(err);
-        } else {
-          resolve(frame);
+          return;
         }
+        resolve(frame);
       });
     });
   }

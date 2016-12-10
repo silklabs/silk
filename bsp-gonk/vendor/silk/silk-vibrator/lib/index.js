@@ -21,13 +21,6 @@ let enabled = !util.getboolprop('persist.silk.quiet', version.official);
  * let vibrator = new Vibrator();
  * vibrator.pattern(100, 50, 100);
  */
-
-/**
- * Silk vibrator class
- *
- * @class
- * @memberof silk-vibrator
- */
 export default class Vibrator {
 
   _active: boolean = false;
@@ -49,7 +42,8 @@ export default class Vibrator {
   /**
    * Test if the vibrator is active
    *
-   * @memberof silk-vibrator.Vibrator
+   * @return true if vibrator is active, false otherwise
+   * @memberof silk-vibrator
    * @instance
    */
   get active(): boolean {
@@ -57,9 +51,10 @@ export default class Vibrator {
   }
 
   /**
-   * Run the vibrator for the specified duration
+   * Turn on the vibrator for the specified duration
    *
-   * @memberof silk-vibrator.Vibrator
+   * @param duration Duration in milliseconds to activate the vibrator for
+   * @memberof silk-vibrator
    * @instance
    */
   on(duration: number) {
@@ -70,7 +65,7 @@ export default class Vibrator {
   /**
    * Turn off the vibrator
    *
-   * @memberof silk-vibrator.Vibrator
+   * @memberof silk-vibrator
    * @instance
    */
   off() {
@@ -81,7 +76,11 @@ export default class Vibrator {
   /**
    * Play a vibrator pattern
    *
-   * @memberof silk-vibrator.Vibrator
+   * @param onDuration duration in milliseconds to activate the vibrator for
+   * @param offDuration duration in milliseconds to deactivate the vibrator for
+   * @param more sequence of onDurations and offDurations
+   * @param
+   * @memberof silk-vibrator
    * @instance
    */
   pattern(onDuration: number, offDuration?: number, ...more: Array<number>) {

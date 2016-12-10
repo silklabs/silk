@@ -4,7 +4,7 @@
  */
 
 import invariant from 'assert';
-import EventEmitter from 'events';
+import events from 'events';
 import * as net from 'net';
 import {Netmask} from 'netmask';
 import * as util from 'silk-sysutils';
@@ -75,7 +75,11 @@ async function configureDhcpInterface(iface: string) {
 // Duration between network scans while not connected.
 const SCAN_INTERVAL_MS = 10 * 1000;
 
-// ref: external/wpa_supplicant_8/src/common/defs.h
+/**
+ * Supported wifi states
+ * @memberof silk-wifi
+ */
+//ref: external/wpa_supplicant_8/src/common/defs.h
 export type WifiState = 'disconnected' |
                         'disabled' |
                         'inactive' |
@@ -203,7 +207,7 @@ function unescapeSSID(ssid: string): string {
  * Wrapper around Gonk's WiFi daemons.
  * @private
  */
-class WpaMonitor extends EventEmitter {
+class WpaMonitor extends events.EventEmitter {
 
   _ready: boolean = false;
   _socket: ?Socket;
@@ -464,7 +468,7 @@ async function wpaCliGetCurrentNetworkRSSI(): Promise<?number> {
  *   log.error('Failed to initialize wifi', err);
  * });
  */
-export class Wifi extends EventEmitter {
+export class Wifi extends events.EventEmitter {
 
   // Always start as offline until proven otherwise...
   _online: boolean = false;
@@ -855,7 +859,7 @@ export class Wifi extends EventEmitter {
 }
 
 
-export class StubWifi extends EventEmitter {
+export class StubWifi extends events.EventEmitter {
 
   constructor() {
     super();

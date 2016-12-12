@@ -1,0 +1,27 @@
+From bbd207e27fc3fabbc708c5a05357ce65458957f4 Mon Sep 17 00:00:00 2001
+From: Felipe Angel <angelpipe@gmail.com>
+Date: Fri, 17 Jun 2016 12:21:13 -0500
+Subject: [PATCH] Add silk product
+
+---
+ full_victara.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/full_victara.mk b/full_victara.mk
+index b3604a2..5d49d73 100644
+--- a/full_victara.mk
++++ b/full_victara.mk
+@@ -14,8 +14,8 @@
+ # limitations under the License.
+ #
+ 
+-# Get the long list of APNs
+-PRODUCT_COPY_FILES := device/sample/etc/apns-full-conf.xml:system/etc/apns-conf.xml
++# Silk product
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
+ 
+ # Inherit from those products. Most specific first.
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
+-- 
+2.8.3
+

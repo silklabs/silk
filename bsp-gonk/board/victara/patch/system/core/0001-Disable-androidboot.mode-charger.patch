@@ -1,0 +1,30 @@
+From 634c2399f5211466824ccca0d66a70f4f2a478e6 Mon Sep 17 00:00:00 2001
+From: Felipe Angel <angelpipe@gmail.com>
+Date: Mon, 13 Jun 2016 14:47:37 -0500
+Subject: [PATCH] Disable androidboot.mode=charger
+
+---
+ init/init.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/init/init.c b/init/init.c
+index e7ce1f9..a0e36ca 100644
+--- a/init/init.c
++++ b/init/init.c
+@@ -1101,6 +1101,13 @@ int main(int argc, char **argv)
+     is_ffbm = !strncmp(bootmode, "ffbm", 4);
+     if (!is_ffbm)
+         is_charger = (!strcmp(bootmode, "charger") || !strcmp(bootmode, "mot-charger"));
++    if (is_charger) {
++       // Charger mode is not desired but cannot be disabled without a bootloader
++       // change, continuing to boot the system normally while in charge mode
++       // does not work on all devices.  The best thing to do is to therefore
++       // reboot and start normally
++       android_reboot(ANDROID_RB_RESTART, 0, 0);
++     }
+ #endif
+ 
+     INFO("property init\n");
+-- 
+2.8.4
+

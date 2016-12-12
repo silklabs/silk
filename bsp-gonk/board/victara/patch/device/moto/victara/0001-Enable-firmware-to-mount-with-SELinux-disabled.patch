@@ -1,0 +1,25 @@
+From 1f09995fd3981a77c98550fbe2e971c6ebc0a755 Mon Sep 17 00:00:00 2001
+From: angelpipe <angelpipe@gmail.com>
+Date: Mon, 13 Jun 2016 08:49:37 -0500
+Subject: [PATCH] Enable /firmware to mount with SELinux disabled
+
+---
+ rootdir/etc/init.target.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rootdir/etc/init.target.rc b/rootdir/etc/init.target.rc
+index 259923a..e94111c 100755
+--- a/rootdir/etc/init.target.rc
++++ b/rootdir/etc/init.target.rc
+@@ -65,7 +65,7 @@ on fs
+ 
+     wait /dev/block/platform/msm_sdcc.1/by-name/modem
+     exec /system/bin/resize2fs /dev/block/platform/msm_sdcc.1/by-name/modem
+-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/modem /firmware ro nosuid nodev barrier=0 context=u:object_r:firmware_file:s0
++    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/modem /firmware ro nosuid nodev barrier=0
+ 
+ on post-fs-data
+     mkdir /data/tombstones 0771 system system
+-- 
+2.8.4
+

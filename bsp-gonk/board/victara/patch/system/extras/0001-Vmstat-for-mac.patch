@@ -1,0 +1,29 @@
+From b3dc46a596926bff00b5ad07583465917c01765b Mon Sep 17 00:00:00 2001
+From: Felipe Angel <fangel@hugeinc.com>
+Date: Sat, 18 Jun 2016 11:09:02 -0500
+Subject: [PATCH] Use right command for vmstat on mac
+
+---
+ ext4_utils/mkuserimg.sh | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/ext4_utils/mkuserimg.sh b/ext4_utils/mkuserimg.sh
+index 78936e0..b14fd28 100755
+--- a/ext4_utils/mkuserimg.sh
++++ b/ext4_utils/mkuserimg.sh
+@@ -91,7 +91,11 @@ fi
+ 
+ MAKE_EXT4FS_CMD="make_ext4fs $ENABLE_SPARSE_IMAGE -T $TIMESTAMP $OPT -l $SIZE $JOURNAL_FLAGS -a $MOUNT_POINT $OUTPUT_FILE $SRC_DIR"
+ echo $MAKE_EXT4FS_CMD
+-vmstat 1 &
++if [ "$(uname -s)" == "Darwin" ]; then
++  vm_stat 1 &
++else
++  vmstat 1 &
++fi
+ statpid=$!
+ $MAKE_EXT4FS_CMD
+ if [ $? -ne 0 ]; then
+-- 
+2.8.3
+

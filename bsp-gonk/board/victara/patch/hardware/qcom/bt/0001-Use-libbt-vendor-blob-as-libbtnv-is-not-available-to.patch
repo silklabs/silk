@@ -1,0 +1,27 @@
+From 83fa2a2aafd0aedcc0a06874ea9e2c3a3d7b451a Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 2 May 2016 14:24:19 -0700
+Subject: [PATCH] Use libbt-vendor blob as libbtnv is not available to link
+ against
+
+Change-Id: I953cac7eba5f9e9d9152dff514a09fbd45565f96
+---
+ libbt-vendor/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libbt-vendor/Android.mk b/libbt-vendor/Android.mk
+index 540592b..53b7a24 100644
+--- a/libbt-vendor/Android.mk
++++ b/libbt-vendor/Android.mk
+@@ -16,7 +16,7 @@
+ 
+ LOCAL_PATH := $(call my-dir)
+ 
+-ifeq ($(BOARD_HAVE_BLUETOOTH_QCOM),true)
++ifeq (false,true)
+ 
+ include $(CLEAR_VARS)
+ 
+-- 
+1.9.1
+

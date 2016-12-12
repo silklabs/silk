@@ -1,0 +1,27 @@
+From 22ca23aa3a991c125336c4f6bf9e00033156a71a Mon Sep 17 00:00:00 2001
+From: angelpipe <angelpipe@gmail.com>
+Date: Mon, 13 Jun 2016 08:31:09 -0500
+Subject: [PATCH] Don't enable MTP by default
+
+---
+ device.mk | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index 390191d..c9b65f6 100644
+--- a/device.mk
++++ b/device.mk
+@@ -48,10 +48,6 @@ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/com.nxp.mifare.xml:system/etc/permissions/com.nxp.mifare.xml \
+     frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml
+ 
+-# System Properties
+-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+-    persist.sys.usb.config=mtp
+-
+ # Screen density
+ PRODUCT_AAPT_CONFIG := normal
+ PRODUCT_AAPT_PREF_CONFIG := xhdpi
+-- 
+2.8.4
+

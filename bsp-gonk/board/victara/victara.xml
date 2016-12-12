@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+
+  <!--
+     This comment is a trick to include patches from board/android-5.1.1_r1/...
+       <include name="android-5.1.1_r1.xml" />
+   -->
+  
+  <remote name="caf" fetch="git://codeaurora.org/" />
+  <default remote="caf" revision="LA.BF.1.1.1_rb1.20"/>
+  
+  <project groups="pdk-cw-fs" name="device/common" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="CAF-victara/device_moto_victara" path="device/moto/victara" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project name="CAF-victara/device_qcom_common" path="device/qcom/common" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project name="device/qcom/sepolicy" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="CAF-victara/kernel_msm" path="kernel" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project groups="pdk" name="platform/abi/cpp" path="abi/cpp" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="CAF-victara/platform_bionic" path="bionic" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project groups="pdk-cw-fs" name="platform/bootable/bootloader/legacy" path="bootable/bootloader/legacy" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/bootable/recovery" path="bootable/recovery" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="CAF-victara/platform_build" path="build" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara">
+    <copyfile dest="Makefile" src="core/root.mk"/>
+  </project>
+  <project groups="pdk" name="platform/external/aac" path="external/aac" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/android-clat" path="external/android-clat" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/ant-wireless/ant_native" path="external/ant-wireless/ant_native" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/ant-wireless/ant_service" path="external/ant-wireless/ant_service" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/bison" path="external/bison" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/blktrace" path="external/blktrace" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/bluetooth/bluedroid" path="external/bluetooth/bluedroid" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/bouncycastle" path="external/bouncycastle" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/brctl" path="external/brctl" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/bsdiff" path="external/bsdiff" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/bson" path="external/bson" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/bzip2" path="external/bzip2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/checkpolicy" path="external/checkpolicy" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/compiler-rt" path="external/compiler-rt" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/connectivity" path="external/connectivity" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/curl" path="external/curl" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/dhcpcd" path="external/dhcpcd" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/dnsmasq" path="external/dnsmasq" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/e2fsprogs" path="external/e2fsprogs" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/ebtables" path="external/ebtables" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/elfutils" path="external/elfutils" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/esd" path="external/esd" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/expat" path="external/expat" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/eyes-free" path="external/eyes-free" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/f2fs-tools" path="external/f2fs-tools" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/fdlibm" path="external/fdlibm" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/flac" path="external/flac" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/fonttools" path="external/fonttools" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/freetype" path="external/freetype" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/fsck_msdos" path="external/fsck_msdos" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/gcc-demangle" path="external/gcc-demangle" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/genext2fs" path="external/genext2fs" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/giflib" path="external/giflib" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/gtest" path="external/gtest" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/harfbuzz_ng" path="external/harfbuzz_ng" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/icu" path="external/icu" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/iproute2" path="external/iproute2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/ipsec-tools" path="external/ipsec-tools" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/iptables" path="external/iptables" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/iputils" path="external/iputils" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/jack" path="external/jack" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/jdiff" path="external/jdiff" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/jemalloc" path="external/jemalloc" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/jhead" path="external/jhead" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/jline" path="external/jline" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/jmdns" path="external/jmdns" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/jpeg" path="external/jpeg" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/jsmn" path="external/jsmn" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/jsoncpp" path="external/jsoncpp" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/kernel-headers" path="external/kernel-headers" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/ksoap2" path="external/ksoap2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libcap-ng" path="external/libcap-ng" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libcxx" path="external/libcxx" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libcxxabi" path="external/libcxxabi" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libgsm" path="external/libgsm" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/liblzf" path="external/liblzf" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libmtp" path="external/libmtp" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libnl" path="external/libnl" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libogg" path="external/libogg" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libopus" path="external/libopus" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libpcap" path="external/libpcap" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libpng" path="external/libpng" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libseccomp-helper" path="external/libseccomp-helper" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libselinux" path="external/libselinux" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libsepol" path="external/libsepol" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libssh2" path="external/libssh2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libunwind" path="external/libunwind" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libusb" path="external/libusb" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libusb-compat" path="external/libusb-compat" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libutf" path="external/libutf" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libvorbis" path="external/libvorbis" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/libvpx" path="external/libvpx" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/libvterm" path="external/libvterm" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/libxml2" path="external/libxml2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/linux-tools-perf" path="external/linux-tools-perf" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/littlemock" path="external/littlemock" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/ltrace" path="external/ltrace" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/lzma" path="external/lzma" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/mdnsresponder" path="external/mdnsresponder" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/messageformat" path="external/messageformat" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/mksh" path="external/mksh" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/mobicore" path="external/mobicore" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/mp4parser" path="external/mp4parser" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/mtpd" path="external/mtpd" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/netcat" path="external/netcat" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/netperf" path="external/netperf" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/nfacct" path="external/nfacct" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/oauth" path="external/oauth" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/openssh" path="external/openssh" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/openssl" path="external/openssl" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/pcre" path="external/pcre" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/pixman" path="external/pixman" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/protobuf" path="external/protobuf" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/external/protobuf-c" path="external/protobuf-c" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/regex-re2" path="external/regex-re2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/safe-iop" path="external/safe-iop" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/scrypt" path="external/scrypt" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/sepolicy" path="external/sepolicy" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/sfntly" path="external/sfntly" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/skia" path="external/skia" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/sonivox" path="external/sonivox" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/speex" path="external/speex" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/sqlite" path="external/sqlite" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/stlport" path="external/stlport" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/strace" path="external/strace" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/tcpdump" path="external/tcpdump" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/tinyalsa" path="external/tinyalsa" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/tinycompress" path="external/tinycompress" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/tinyxml" path="external/tinyxml" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/tinyxml2" path="external/tinyxml2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/tremolo" path="external/tremolo" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs,qcom_msm8x26" name="platform/external/webp" path="external/webp" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/webrtc" path="external/webrtc" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/wpa_supplicant_8" path="external/wpa_supplicant_8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/xmlwriter" path="external/xmlwriter" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/yaffs2" path="external/yaffs2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/zlib" path="external/zlib" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/external/zopfli" path="external/zopfli" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/external/zxing" path="external/zxing" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/frameworks/av" path="frameworks/av" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="CAF-victara/platform_frameworks_base" path="frameworks/base" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project groups="pdk-cw-fs" name="platform/frameworks/ex" path="frameworks/ex" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/frameworks/ml" path="frameworks/ml" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/frameworks/multidex" path="frameworks/multidex" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/frameworks/native" path="frameworks/native" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/frameworks/wilhelm" path="frameworks/wilhelm" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/hardware/libhardware" path="hardware/libhardware" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/hardware/libhardware_legacy" path="hardware/libhardware_legacy" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="qcom,default" name="CAF-victara/platform_hardware_qcom_audio" path="hardware/qcom/audio" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project groups="qcom,default" name="CAF-victara/platform_hardware_qcom_bt" path="hardware/qcom/bt" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/display" path="hardware/qcom/display" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/gps" path="hardware/qcom/gps" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="qcom" name="platform/hardware/qcom/keymaster" path="hardware/qcom/keymaster" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/media" path="hardware/qcom/media" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/sensors" path="hardware/qcom/sensors" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/wlan" path="hardware/qcom/wlan" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/libnativehelper" path="libnativehelper" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/ndk" path="ndk" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/prebuilts/android-emulator" path="prebuilts/android-emulator" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/3.1" path="prebuilts/clang/darwin-x86/3.1" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/3.2" path="prebuilts/clang/darwin-x86/3.2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="arm,darwin,pdk-cw-fs" name="platform/prebuilts/clang/darwin-x86/arm/3.3" path="prebuilts/clang/darwin-x86/arm/3.3" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/host/3.4" path="prebuilts/clang/darwin-x86/host/3.4" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin" name="platform/prebuilts/clang/darwin-x86/host/3.5" path="prebuilts/clang/darwin-x86/host/3.5" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="darwin,mips,pdk-cw-fs" name="platform/prebuilts/clang/darwin-x86/mips/3.3" path="prebuilts/clang/darwin-x86/mips/3.3" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="darwin,pdk-cw-fs,x86" name="platform/prebuilts/clang/darwin-x86/x86/3.3" path="prebuilts/clang/darwin-x86/x86/3.3" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/3.1" path="prebuilts/clang/linux-x86/3.1" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/3.2" path="prebuilts/clang/linux-x86/3.2" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="arm,linux,pdk-cw-fs" name="platform/prebuilts/clang/linux-x86/arm/3.3" path="prebuilts/clang/linux-x86/arm/3.3" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/host/3.4" path="prebuilts/clang/linux-x86/host/3.4" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/host/3.5" path="prebuilts/clang/linux-x86/host/3.5" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="linux,mips,pdk-cw-fs" name="platform/prebuilts/clang/linux-x86/mips/3.3" path="prebuilts/clang/linux-x86/mips/3.3" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="linux,pdk-cw-fs,x86" name="platform/prebuilts/clang/linux-x86/x86/3.3" path="prebuilts/clang/linux-x86/x86/3.3" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.8" path="prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/darwin-x86/aarch64/aarch64-linux-android-4.9" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-linux-androideabi-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/headers" path="prebuilts/gcc/darwin-x86/host/headers" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin" name="platform/prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" path="prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin,mips" name="platform/prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.8" path="prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.9" path="prebuilts/gcc/darwin-x86/mips/mips64el-linux-android-4.9" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin,mips" name="platform/prebuilts/gcc/darwin-x86/mips/mipsel-linux-android-4.8" path="prebuilts/gcc/darwin-x86/mips/mipsel-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,darwin,x86" name="platform/prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.8" path="prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.9" path="prebuilts/gcc/darwin-x86/x86/x86_64-linux-android-4.9" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux,mips" name="platform/prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.8" path="prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.9" path="prebuilts/gcc/linux-x86/mips/mips64el-linux-android-4.9" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux,mips" name="platform/prebuilts/gcc/linux-x86/mips/mipsel-linux-android-4.8" path="prebuilts/gcc/linux-x86/mips/mipsel-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk,linux,x86" name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.8" path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.8" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/prebuilts/libs/libedit" path="prebuilts/libs/libedit" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/prebuilts/misc" path="prebuilts/misc" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="darwin,pdk-cw-fs" name="platform/prebuilts/python/darwin-x86/2.7.5" path="prebuilts/python/darwin-x86/2.7.5" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="linux,pdk-cw-fs" name="platform/prebuilts/python/linux-x86/2.7.5" path="prebuilts/python/linux-x86/2.7.5" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/prebuilts/qemu-kernel" path="prebuilts/qemu-kernel" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk-cw-fs" name="platform/sdk" path="sdk" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="CAF-victara/platform_system_core" path="system/core" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project groups="pdk" name="platform/system/extras" path="system/extras" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/system/keymaster" path="system/keymaster" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/system/media" path="system/media" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/system/netd" path="system/netd" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="CAF-victara/platform_system_qcom" path="system/qcom" remote="github" clone-depth="1" revision="lollipop-5.1.1-unofficial-victara"/>
+  <project groups="pdk" name="platform/system/security" path="system/security" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/system/vold" path="system/vold" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/tools/build" path="tools/build" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project groups="pdk" name="platform/tools/swt" path="tools/swt" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="platform/vendor/qcom-opensource/dpm" path="vendor/qcom/opensource/dpm" revision="LA.BF.1.1.1_rb1.20" clone-depth="1"/>
+  <project name="TheMuppets/proprietary_vendor_motorola" path="vendor/motorola" clone-depth="1" groups="device,victara" remote="github" revision="cm-12.1"/>
+  <project name="CyanogenMod/android_device_generic_goldfish" path="device/generic/goldfish" clone-depth="1" groups="device,victara" remote="github" revision="cm-12.1"/>
+</manifest>

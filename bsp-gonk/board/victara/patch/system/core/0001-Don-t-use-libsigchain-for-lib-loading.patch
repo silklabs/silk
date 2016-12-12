@@ -1,0 +1,21 @@
+From 6395c2e1ecec73be3830998a0b97b4623810be23 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <waynelee@silklabs.com>
+Date: Thu, 17 Sep 2015 20:39:56 -0700
+Subject: [PATCH] Don't use libsigchain for lib loading
+
+---
+ rootdir/init.environ.rc.in | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/rootdir/init.environ.rc.in b/rootdir/init.environ.rc.in
+index c32337a..30bef46 100644
+--- a/rootdir/init.environ.rc.in
++++ b/rootdir/init.environ.rc.in
+@@ -10,4 +10,3 @@ on init
+     export LOOP_MOUNTPOINT /mnt/obb
+     export BOOTCLASSPATH %BOOTCLASSPATH%
+     export SYSTEMSERVERCLASSPATH %SYSTEMSERVERCLASSPATH%
+-    export LD_PRELOAD libsigchain.so%TARGET_LDPRELOAD%
+-- 
+2.5.0
+

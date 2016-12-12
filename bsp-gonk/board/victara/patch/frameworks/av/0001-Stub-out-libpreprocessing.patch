@@ -1,0 +1,50 @@
+From df69e59533aeda876558ba488d2b87f93cd788eb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 30 Apr 2016 17:19:19 -0700
+Subject: [PATCH] Stub out libpreprocessing
+
+Change-Id: Ia569b872dc79edfe4d5c7ae124d986953cd92bb3
+---
+ media/libeffects/preprocessing/Android.mk | 30 ------------------------------
+ 1 file changed, 30 deletions(-)
+ delete mode 100644 media/libeffects/preprocessing/Android.mk
+
+diff --git a/media/libeffects/preprocessing/Android.mk b/media/libeffects/preprocessing/Android.mk
+deleted file mode 100644
+index ea3c59d..0000000
+--- a/media/libeffects/preprocessing/Android.mk
++++ /dev/null
+@@ -1,30 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-
+-# audio preprocessing wrapper
+-include $(CLEAR_VARS)
+-
+-LOCAL_MODULE:= libaudiopreprocessing
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE_RELATIVE_PATH := soundfx
+-
+-LOCAL_SRC_FILES:= \
+-    PreProcessing.cpp
+-
+-LOCAL_C_INCLUDES += \
+-    external/webrtc/src \
+-    external/webrtc/src/modules/interface \
+-    external/webrtc/src/modules/audio_processing/interface \
+-    $(call include-path-for, audio-effects)
+-
+-LOCAL_C_INCLUDES += $(call include-path-for, speex)
+-
+-LOCAL_SHARED_LIBRARIES := \
+-    libwebrtc_audio_preprocessing \
+-    libspeexresampler \
+-    libutils \
+-    liblog
+-
+-LOCAL_SHARED_LIBRARIES += libdl
+-LOCAL_CFLAGS += -fvisibility=hidden
+-
+-include $(BUILD_SHARED_LIBRARY)
+-- 
+1.9.1
+

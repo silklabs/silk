@@ -1,0 +1,25 @@
+From 8a566396b404c7c49e3e9879030156f80aa245e2 Mon Sep 17 00:00:00 2001
+From: Felipe Angel <fangel@hugeinc.com>
+Date: Sat, 18 Jun 2016 09:11:08 -0500
+Subject: [PATCH] Enable victara modules
+
+---
+ arch/arm/configs/cyanogenmod_victara_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/configs/cyanogenmod_victara_defconfig b/arch/arm/configs/cyanogenmod_victara_defconfig
+index 9e2dcac..6d51455 100644
+--- a/arch/arm/configs/cyanogenmod_victara_defconfig
++++ b/arch/arm/configs/cyanogenmod_victara_defconfig
+@@ -183,7 +183,7 @@ CONFIG_HAVE_ARCH_JUMP_LABEL=y
+ CONFIG_HAVE_GENERIC_DMA_COHERENT=y
+ CONFIG_RT_MUTEXES=y
+ CONFIG_BASE_SMALL=0
+-# CONFIG_MODULES is not set
++CONFIG_MODULES=y
+ CONFIG_STOP_MACHINE=y
+ CONFIG_BLOCK=y
+ CONFIG_LBDAF=y
+-- 
+2.8.3
+

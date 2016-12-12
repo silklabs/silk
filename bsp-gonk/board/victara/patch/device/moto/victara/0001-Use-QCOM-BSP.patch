@@ -1,0 +1,24 @@
+From 651a52f59fb8b792371de5ce2a153e728e426b17 Mon Sep 17 00:00:00 2001
+From: Felipe Angel <fangel@hugeinc.com>
+Date: Fri, 17 Jun 2016 11:53:57 -0500
+Subject: [PATCH] Use QCOM BSP
+
+---
+ BoardConfig.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 1d78d25..84a0b8e 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -19,6 +19,7 @@
+ LOCAL_PATH := device/moto/victara
+ 
+ BOARD_VENDOR := motorola-qcom
++TARGET_USES_QCOM_BSP := true
+ 
+ # Platform
+ TARGET_BOARD_PLATFORM := msm8974
+-- 
+2.8.3
+

@@ -1,0 +1,25 @@
+From 710f15149bb851d64bbe8f1405af01d8e4e423cf Mon Sep 17 00:00:00 2001
+From: Felipe Angel <fangel@hugeinc.com>
+Date: Sat, 18 Jun 2016 15:20:48 -0500
+Subject: [PATCH] Set victara product name
+
+---
+ BoardConfig.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 1d78d25..1d78243 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -26,7 +26,7 @@ TARGET_BOARD_PLATFORM_GPU := qcom-adreno330
+ BOARD_USES_QCOM_HARDWARE := false
+ 
+ # Bootloader
+-TARGET_BOOTLOADER_BOARD_NAME := MSM8974
++TARGET_BOOTLOADER_BOARD_NAME := victara
+ TARGET_NO_BOOTLOADER := true
+ 
+ # Architecture
+-- 
+2.8.3
+

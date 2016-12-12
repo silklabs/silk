@@ -1,0 +1,25 @@
+From 57a60a423a3f7bb96a196421323bdc9db8f6d0cc Mon Sep 17 00:00:00 2001
+From: Felipe Angel <angelpipe@gmail.com>
+Date: Mon, 13 Jun 2016 15:03:58 -0500
+Subject: [PATCH] Import init.silk.rc
+
+---
+ rootdir/init.rc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 488deba..cb6a6f6 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -636,6 +636,8 @@ service pre-recovery /system/bin/uncrypt
+     disabled
+     oneshot
+ 
++import /init.silk.rc
++
+ on property:ro.build.type=eng
+     chmod 0777 /data/anr
+     chmod 0777 /data/misc
+-- 
+2.8.4
+

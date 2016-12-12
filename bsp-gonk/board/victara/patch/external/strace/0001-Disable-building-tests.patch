@@ -1,0 +1,22 @@
+From 7bceb5f8a1b8e0db8ef0c45aa39a411055a5cfcc Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 6 May 2016 20:09:49 -0700
+Subject: [PATCH] Disable building tests
+
+Change-Id: I38e9431e5f1c5e7a6ebfeabd6cfb350d17353d48
+---
+ Android.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index d8246e6..2c67c9e 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -224,4 +224,3 @@ endif
+ 
+ # -------------------------------------------------------------------------
+ 
+-include $(LOCAL_PATH)/test/Android.mk
+-- 
+1.9.1
+

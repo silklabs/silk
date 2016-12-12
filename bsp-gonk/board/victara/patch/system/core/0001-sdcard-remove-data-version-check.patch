@@ -1,0 +1,28 @@
+From 2521459772bac15685114d220ee922823abd2393 Mon Sep 17 00:00:00 2001
+From: Felipe Angel <angelpipe@gmail.com>
+Date: Mon, 13 Jun 2016 15:10:55 -0500
+Subject: [PATCH] sdcard: remove /data version check
+
+---
+ sdcard/sdcard.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/sdcard/sdcard.c b/sdcard/sdcard.c
+index 76d1165..c735aae 100644
+--- a/sdcard/sdcard.c
++++ b/sdcard/sdcard.c
+@@ -2020,11 +2020,6 @@ int main(int argc, char **argv)
+         ERROR("Error setting RLIMIT_NOFILE, errno = %d\n", errno);
+     }
+ 
+-    while ((fs_read_atomic_int("/data/.layout_version", &fs_version) == -1) || (fs_version < 3)) {
+-        ERROR("installd fs upgrade not yet complete. Waiting...\n");
+-        sleep(1);
+-    }
+-
+     res = run(source_path, dest_path, uid, gid, write_gid, num_threads, derive, split_perms);
+     return res < 0 ? 1 : 0;
+ }
+-- 
+2.8.4
+

@@ -1,0 +1,29 @@
+From d2b8b838b11dbb5f1742422b694711e92388107c Mon Sep 17 00:00:00 2001
+From: Felipe Angel <fangel@hugeinc.com>
+Date: Fri, 17 Jun 2016 11:47:05 -0500
+Subject: [PATCH] Fix init.mmi.diag to call rc instead of sh
+
+---
+ rootdir/Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/rootdir/Android.mk b/rootdir/Android.mk
+index 478a0a1..c17ed58 100644
+--- a/rootdir/Android.mk
++++ b/rootdir/Android.mk
+@@ -35,10 +35,10 @@ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+-LOCAL_MODULE       := init.mmi.diag.sh
++LOCAL_MODULE       := init.mmi.diag.rc
+ LOCAL_MODULE_TAGS  := optional eng
+ LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/init.mmi.diag.sh
++LOCAL_SRC_FILES    := etc/init.mmi.diag.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+ include $(BUILD_PREBUILT)
+ 
+-- 
+2.8.3
+

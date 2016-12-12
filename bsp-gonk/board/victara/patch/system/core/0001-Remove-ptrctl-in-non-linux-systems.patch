@@ -1,0 +1,37 @@
+From 2c1dd662dd678651656eaf2096cdafbdfe17ac05 Mon Sep 17 00:00:00 2001
+From: Felipe Angel <fangel@hugeinc.com>
+Date: Fri, 17 Jun 2016 19:58:20 -0500
+Subject: [PATCH] Remove ptrctl in non linux systems
+
+---
+ libcutils/sched_policy.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/libcutils/sched_policy.c b/libcutils/sched_policy.c
+index bec924a..4a43ebe 100644
+--- a/libcutils/sched_policy.c
++++ b/libcutils/sched_policy.c
+@@ -15,8 +15,9 @@
+ */
+ 
+ #define LOG_TAG "SchedPolicy"
+-
++#if defined(__linux__)
+ #include <sys/prctl.h>
++#endif
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <stdio.h>
+@@ -42,7 +43,9 @@ static inline SchedPolicy _policy(SchedPolicy p)
+ 
+ #include <pthread.h>
+ #include <sched.h>
++#if defined(__linux__)
+ #include <sys/prctl.h>
++#endif
+ 
+ #define POLICY_DEBUG 0
+ 
+-- 
+2.8.3
+

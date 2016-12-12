@@ -1,0 +1,27 @@
+From 13ee7098ee15bb8ec654c9be845fc1c158e9db06 Mon Sep 17 00:00:00 2001
+From: Felipe Angel <fangel@hugeinc.com>
+Date: Fri, 17 Jun 2016 18:43:57 -0500
+Subject: [PATCH] Removing F2FS in non linux systems
+
+---
+ core/config.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/config.mk b/core/config.mk
+index 141e8f3..80b5dcf 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -395,8 +395,10 @@ FS_GET_STATS := $(HOST_OUT_EXECUTABLES)/fs_get_stats$(HOST_EXECUTABLE_SUFFIX)
+ MKEXT2IMG := $(HOST_OUT_EXECUTABLES)/genext2fs$(HOST_EXECUTABLE_SUFFIX)
+ MAKE_EXT4FS := $(HOST_OUT_EXECUTABLES)/make_ext4fs$(HOST_EXECUTABLE_SUFFIX)
+ MKEXTUSERIMG := $(HOST_OUT_EXECUTABLES)/mkuserimg.sh
++ifeq ($(HOST_OS),linux)
+ MAKE_F2FS := $(HOST_OUT_EXECUTABLES)/make_f2fs$(HOST_EXECUTABLE_SUFFIX)
+ MKF2FSUSERIMG := $(HOST_OUT_EXECUTABLES)/mkf2fsuserimg.sh
++endif
+ MKEXT2BOOTIMG := external/genext2fs/mkbootimg_ext2.sh
+ SIMG2IMG := $(HOST_OUT_EXECUTABLES)/simg2img$(HOST_EXECUTABLE_SUFFIX)
+ E2FSCK := $(HOST_OUT_EXECUTABLES)/e2fsck$(HOST_EXECUTABLE_SUFFIX)
+-- 
+2.8.3
+

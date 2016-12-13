@@ -1,6 +1,8 @@
 {
   "silk": {},
   "name": "ble-example-1",
+  "license": "MIT",
+  "private": true,
   "dependencies": {
     "silk": "^1.0.0"
   }

@@ -1,4 +1,6 @@
 {
   "name": "silk-init",
+  "license": "MIT",
+  "private": true,
   "main": "silk-init.js"
 }

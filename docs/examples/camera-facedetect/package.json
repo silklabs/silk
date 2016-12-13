@@ -1,5 +1,7 @@
 {
   "name": "silk-camera-facedetect",
+  "license": "MIT",
+  "private": true,
   "scripts": {
     "lint": "eslint .",
     "silk-build": "silk-buildjs ."

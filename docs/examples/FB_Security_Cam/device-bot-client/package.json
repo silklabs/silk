@@ -1,6 +1,8 @@
 {
   "silk": {},
   "name": "device-bot-client",
+  "license": "MIT",
+  "private": true,
   "dependencies": {
     "any-promise": "^1.3.0",
     "event-to-promise": "^0.7.0",

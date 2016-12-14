@@ -5,6 +5,11 @@
 require('./node')();
 
 let main = require('path').resolve(process.argv[2]);
-let splice = process.argv.splice(0, 1);
+
+// Modify arguments as if node was executing the script
+// directly, removing ourselves from the argument list.
+// Use the 'babel-node-allargs' executable if your script expects
+// unaltered arguments (e.g. for cluster.fork())
+process.argv.splice(1, 1);
 
 require(main);

@@ -35,3 +35,23 @@ require('../../babel-run/node')();
 
 require('./your_babel_main_file.js');
 ```
+
+Normally, you may also want to use `babel-node` executable to
+babelify files in shebang for example:
+
+```js
+#! /usr/bin/env ../pub/babel-run/babel-node
+
+console.log(`This is ES6 Code`);
+```
+Above example modifies arguments as if node was
+executing the script directly, but instead if you need
+to run the script directly without altering arguments
+(for e.g. cluster.fork() expects unaltered arguments)
+you may want to use `babel-node-allargs` executable
+
+```js
+#! /usr/bin/env ../pub/babel-run/babel-node-allargs
+
+console.log(`This is ES6 Code`);
+```

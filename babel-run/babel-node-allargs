@@ -1,0 +1,15 @@
+#! /usr/bin/env node
+
+'use strict';
+
+require('./node')();
+
+let main = require('path').resolve(process.argv[2]);
+
+// Run the script directly without altering arguments
+// (e.g. cluster.fork() expects unaltered arguments).
+// Use the 'babel-node' executable if your scripts
+// expects only node and the script name before any
+// further arguments.
+
+require(main);

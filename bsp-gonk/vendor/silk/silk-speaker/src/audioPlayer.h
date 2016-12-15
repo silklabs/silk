@@ -17,6 +17,8 @@ typedef enum _playState {
   PLAYSTATE_PLAYING = 3
 } PlayState;
 
+typedef void (*PlaybackPositionUpdateListener)(void *userData);
+
 /**
  *
  */
@@ -27,6 +29,15 @@ public:
   int write(const void* bytes, size_t size);
   void setVolume(float volume);
   void stop();
+  size_t frameSize();
+  bool reachedEOS();
+  status_t setNotificationMarkerPosition(uint32_t marker);
+  void setPlaybackPositionUpdateListener(
+      const PlaybackPositionUpdateListener listener, void* userData);
+
+  PlaybackPositionUpdateListener mListener;
+  void* mUserData;
+  bool mReachedEOS;
 
 private:
   void play();

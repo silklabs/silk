@@ -32,6 +32,11 @@ void Speaker::Init(Local<Object> exports) {
   Nan::SetPrototypeMethod(ctor, "write", Write);
   Nan::SetPrototypeMethod(ctor, "close", Close);
   Nan::SetPrototypeMethod(ctor, "setVolume", SetVolume);
+  Nan::SetPrototypeMethod(ctor, "getFrameSize", GetFrameSize);
+  Nan::SetPrototypeMethod(ctor, "setNotificationMarkerPosition",
+                          SetNotificationMarkerPosition);
+  Nan::SetPrototypeMethod(ctor, "setPlaybackPositionUpdateListener",
+                          SetPlaybackPositionUpdateListener);
 
   // Constants
   #define CONST_INT(value) \
@@ -72,10 +77,10 @@ Speaker::Speaker():
   ALOGV("Creating instance of speaker");
 }
 
-/**
- *
- */
-Speaker::~Speaker() {
+void Speaker::playbackPositionUpdateListener(void *userData) {
+  Speaker* speaker = (Speaker*) userData;
+  Mutex::Autolock autoLock(speaker->mLock);
+  speaker->mEOSCondition.signal();
 }
 
 NAN_METHOD(Speaker::Open) {
@@ -172,6 +177,68 @@ NAN_METHOD(Speaker::Close) {
   // data to the mixer and discard any pending buffers that the
   // track holds
   self->mAudioPlayer->stop();
+}
+
+NAN_METHOD(Speaker::GetFrameSize) {
+  SETUP_FUNCTION(Speaker)
+
+  size_t frameSize = self->mAudioPlayer->frameSize();
+  info.GetReturnValue().Set(Nan::New<Number>(frameSize));
+}
+
+NAN_METHOD(Speaker::SetNotificationMarkerPosition) {
+  SETUP_FUNCTION(Speaker)
+
+  if (info.Length() != 1) {
+    JSTHROW("Invalid number of arguments provided");
+  }
+
+  int markerInFrames = info[0]->Int32Value();
+
+  status_t result =
+      self->mAudioPlayer->setNotificationMarkerPosition(markerInFrames);
+  info.GetReturnValue().Set(Nan::New<Boolean>(result == NO_ERROR));
+}
+
+/**
+ * Async worker handler that waits for playback to finish
+ */
+class UpdateListenerAsyncWorker: public Nan::AsyncWorker {
+public:
+  UpdateListenerAsyncWorker(Nan::Callback *callback, Speaker* speaker):
+    Nan::AsyncWorker(callback),
+    speaker(speaker) {
+  }
+
+  void Execute() {
+    Mutex::Autolock autoLock(speaker->mLock);
+    while (!speaker->mAudioPlayer->reachedEOS()) {
+      speaker->mEOSCondition.wait(speaker->mLock);
+    }
+  }
+
+  void HandleOKCallback() {
+    Local<Value> argv[1] = {Nan::Null()};
+    callback->Call(1, argv);
+  }
+
+private:
+  Speaker *speaker;
+};
+
+NAN_METHOD(Speaker::SetPlaybackPositionUpdateListener) {
+  SETUP_FUNCTION(Speaker)
+
+  if (info.Length() != 1) {
+    JSTHROW("Invalid number of arguments provided");
+  }
+
+  self->mAudioPlayer->setPlaybackPositionUpdateListener(
+      &self->playbackPositionUpdateListener, self);
+
+  REQ_FUN_ARG(0, cb);
+  Nan::Callback *callback = new Nan::Callback(cb.As<Function>());
+  Nan::AsyncQueueWorker(new UpdateListenerAsyncWorker(callback, self));
 }
 
 NODE_MODULE(speaker, Speaker::Init);

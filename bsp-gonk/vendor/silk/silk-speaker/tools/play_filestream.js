@@ -7,7 +7,7 @@ import fs from 'fs';
 import createLog from 'silk-log/device';
 const log = createLog('test');
 
-let buffer = fs.readFileSync(process.argv[2]);
+let stream = fs.createReadStream(process.argv[2]);
 let speaker = new Speaker({
   numChannels: 1,
   sampleRate: 16000,
@@ -16,5 +16,6 @@ let speaker = new Speaker({
 });
 speaker.setVolume(1.0);
 speaker.on('close', () => log.info(`done`));
-speaker.write(buffer);
-speaker.end();
+speaker.on('error', (err) => log.error(err));
+stream.on('data', (data) => speaker.write(data));
+stream.on('end', () => speaker.end());

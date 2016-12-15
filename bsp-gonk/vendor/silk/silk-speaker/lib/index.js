@@ -4,22 +4,18 @@
  */
 
 import createLog from 'silk-log/device';
-import stream from 'readable-stream';
 import bindings from './speaker';
+import events from 'events';
 
-import type { WritableStreamOptions } from 'silk-streams';
 import type { ConfigDeviceMic } from 'silk-config';
 import type { SpeakerType } from './speaker';
 
-type SpeakerOptions = WritableStreamOptions & ConfigDeviceMic;
-
 const log = createLog('speaker');
-const SAMPLES_PER_FRAME = 1024;
 const GAIN_MIN = 0.0;
 const GAIN_MAX = 1.0;
 
 /**
- * This module provides a writable stream instance to stream raw PCM data to
+ * This module provides functionality to stream raw PCM data to
  * the device speakers.
  * @module silk-speaker
  *
@@ -39,16 +35,19 @@ const GAIN_MAX = 1.0;
  * speaker.write(pcmBuffer);
  * speaker.end();
  * speaker.on('close', () => log.info(`done`));
+ * speaker.on('error', (err) => log.error(err));
  */
-export default class Speaker extends stream.Writable {
+export default class Speaker extends events.EventEmitter {
 
   _speaker: SpeakerType;
   _closed: boolean = false;
-  _opened: boolean = false;
-  _options: SpeakerOptions;
-  _chunkSize: number;
+  _options: ConfigDeviceMic;
+  _frameSize: number = 0;
+  _pcmBuffer: Buffer;
+  _totalBufferLen: number = 0;
+  _writing: boolean = false;
 
-  constructor(options: ?SpeakerOptions) {
+  constructor(options: ?ConfigDeviceMic) {
     super(options); // Calls the stream.Writable() constructor
     this._options = {
       numChannels: 2,
@@ -62,12 +61,32 @@ export default class Speaker extends stream.Writable {
       throw new Error('invalid PCM format specified');
     }
 
-    // Calculate the block alignment
-    let blockAlign = this._options.bytesPerSample / this._options.numChannels;
-    this._chunkSize = blockAlign * SAMPLES_PER_FRAME;
+    this._pcmBuffer = new Buffer(0);
+    this._open();
+  }
 
-    this.on('finish', () => this._flush());
+  /**
+   * @private
+   */
+  _open() {
+    // Open native bindings
     this._speaker = new bindings.Speaker();
+    this._speaker.open(this._options.numChannels, this._options.sampleRate,
+        this.getFormat());
+
+    // Calculate the frame size
+    this._frameSize = this._speaker.getFrameSize();
+    log.debug(`Audio frame size: ${this._frameSize}`);
+
+    /**
+     * This event is fired when speaker stream is opened and ready to receive
+     * a stream to play
+     *
+     * @event open
+     * @memberof silk-speaker
+     * @instance
+     */
+    this.emit('open');
   }
 
   /**
@@ -127,103 +146,120 @@ export default class Speaker extends stream.Writable {
   }
 
   /**
-   * _write() callback for the Writable stream base class
-   * @private
+   * Write PCM buffer to the player's queue to be played.
+   *
+   * @param chunk buffer containing audio data to be played
+   * @memberof silk-speaker
+   * @instance
    */
-  _write(chunk: Buffer, encoding: string, done: Function) {
+  write(chunk: Buffer) {
     if (this._closed) {
-      // close() has already been called. this should not be called
-      done(new Error('write() call after close() call'));
+      // end() has already been called. this should not be called
+      this._done(new Error('write() call after close() call'));
       return;
     }
 
-    // Open native bindings
-    if (!this._opened) {
-      this._speaker.open(this._options.numChannels, this._options.sampleRate,
-          this.getFormat());
-      this._opened = true;
-
-      /**
-       * This event is fired when speaker stream is opened and ready to receive
-       * a stream to play
-       *
-       * @event open
-       * @memberof silk-speaker
-       * @instance
-       */
-      this.emit('open');
-    }
-
-    let buffer = chunk;
-    let left = chunk;
-
-    let write = () => {
-      if (this._closed) {
-        log.debug(`Aborting remainder of write() call since speaker is closed`);
-        done();
-        return;
-      }
-      if (!left) {
-        done();
-        return;
-      }
-      buffer = left;
-      if (buffer.length > this._chunkSize) {
-        let tmp = buffer;
-        buffer = tmp.slice(0, this._chunkSize);
-        left = tmp.slice(this._chunkSize);
-      } else {
-        left = null;
-      }
-      this._speaker.write(buffer, buffer.length, onwrite);
-    };
-
-    let onwrite = written => {
-      if (written <= 0) {
-        done(new Error(`write() failed: ${written}`));
-      } else if (written !== buffer.length) {
-        // Failed to write all the bytes to audio track due to block
-        // misalignment so retry the left over bytes again with more data
-        if (left) {
-          let leftOver = buffer.slice(written);
-          left = Buffer.concat([leftOver, left]);
-          write();
-        } else {
-          done(new Error(`write() failed: ${written}`));
-        }
-      } else if (left) {
-        write();
-      } else {
-        done();
-      }
-    };
-
-    write();
+    this._totalBufferLen += chunk.length;
+    this._pcmBuffer = Buffer.concat([this._pcmBuffer, chunk]);
+    this._write();
   }
 
   /**
-   * Calls the `.close()` function on this Speaker instance.
-   *
    * @private
    */
-  _flush() {
-    this.close();
+  _write() {
+    if (this._closed) {
+      log.debug(`Aborting remainder of write() call since speaker is closed`);
+      return;
+    }
+
+    if (this._writing) {
+      return;
+    }
+
+    // Find number of full frames contained with in the pcm buffer
+    let numFrames = Math.floor(this._pcmBuffer.length / this._frameSize);
+    let chunkSize = numFrames * this._frameSize;
+
+    if (chunkSize <= 0) {
+      // Not enough data; wait
+      return;
+    }
+
+    this._writing = true;
+    let buffer = this._pcmBuffer.slice(0, chunkSize);
+    this._pcmBuffer = this._pcmBuffer.slice(chunkSize);
+
+    let onwrite = written => {
+      if (written <= 0) {
+        this._done(new Error(`write() failed: ${written}`));
+      } else if (written !== buffer.length) {
+        // Failed to write all the bytes to audio track due to block
+        // misalignment so retry the left over bytes again with more data
+        if (this._pcmBuffer) {
+          let leftOver = buffer.slice(written);
+          this._pcmBuffer = Buffer.concat([leftOver, this._pcmBuffer]);
+          process.nextTick(() => this._write());
+        } else {
+          this._done(new Error(`write() failed: ${written}`));
+        }
+      } else if (this._pcmBuffer.length) {
+        process.nextTick(() => this._write());
+      }
+      this._writing = false;
+    };
+
+    this._speaker.write(buffer, buffer.length, onwrite);
+  }
+
+  /**
+   * Mark the end of audio stream. This API doesn't stop the audio streaming
+   * but rather tells the speaker to stop when all the buffers in the audio
+   * queue are done playing.
+   *
+   * @memberof silk-speaker
+   * @instance
+   */
+  end() {
+    if (this._closed) {
+      log.error(`Speaker already closed`);
+      return;
+    }
+
+    let numFrames = this._totalBufferLen / this._frameSize;
+    if (!this._speaker.setNotificationMarkerPosition(numFrames)) {
+      this._done(new Error(`Failed to set marker for eos`));
+      return;
+    }
+
+    this._speaker.setPlaybackPositionUpdateListener((err) => {
+      // Done playback
+      this._done(err);
+    });
+  }
+
+  /**
+   * @private
+   */
+  _done(err: Error) {
+    if (err) {
+      this.emit('error', err);
+    }
+    this._close();
   }
 
   /**
    * Closes the audio backend
-   * @memberof silk-speaker
-   * @instance
+   * @private
    */
-  close() {
+  _close() {
     log.debug(`Closing the stream`);
     if (this._closed) {
       log.debug('already closed...');
       return;
     }
-    if (this._opened) {
+    if (this._speaker) {
       this._speaker.close();
-      this._opened = false;
     }
 
     this._closed = true;

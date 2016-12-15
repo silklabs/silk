@@ -9,17 +9,37 @@
 #include <media/IAudioPolicyService.h>
 #include "audioPlayer.h"
 
+static void audioCallback(int event, void* user, void *info) {
+  AudioPlayer *player = (AudioPlayer*) user;
+  switch (event) {
+    case AudioTrack::EVENT_MARKER: {
+      ALOGD("Received event EVENT_MARKER");
+      player->mReachedEOS = true;
+      if (player->mListener != NULL) {
+        (*player->mListener)(player->mUserData);
+        player->mListener = NULL;
+      }
+      break;
+    }
+    default:
+      ALOGV("Received unknown event %d", event);
+  }
+}
+
 /**
  * Constructor
  */
 AudioPlayer::AudioPlayer(int sampleRate,
     audio_format_t audioFormat, int channelCount) :
+    mListener(NULL),
+    mUserData(NULL),
     mSampleRateInHz(sampleRate),
     mAudioFormat(audioFormat),
     mChannelCount(channelCount),
     mStopped(false),
     mAudioTrack(NULL),
-    mPlayState(PLAYSTATE_STOPPED) {
+    mPlayState(PLAYSTATE_STOPPED),
+    mReachedEOS(false) {
   ALOGD("%s sampleRate: %d, audioFormat: %d, channelCount: %d", __FUNCTION__,
       sampleRate, audioFormat, channelCount);
   Mutex::Autolock autoLock(mAudioServiceInitLock);
@@ -35,8 +55,25 @@ AudioPlayer::AudioPlayer(int sampleRate,
  */
 void AudioPlayer::init() {
   ALOGV("%s", __FUNCTION__);
-  mAudioTrack = new AudioTrack(AUDIO_STREAM_MUSIC, mSampleRateInHz,
-      mAudioFormat, audio_channel_out_mask_from_count(mChannelCount), 0);
+  mAudioTrack = new AudioTrack();
+  mAudioTrack->set(
+      AUDIO_STREAM_DEFAULT,
+      mSampleRateInHz,
+      mAudioFormat,
+      audio_channel_out_mask_from_count(mChannelCount),
+      0,
+      AUDIO_OUTPUT_FLAG_NONE,
+      audioCallback,
+      this,
+      0,
+      0,
+      false,
+      AUDIO_SESSION_ALLOCATE,
+      AudioTrack::TRANSFER_SYNC,
+      NULL,
+      -1,
+      -1,
+      NULL);
 }
 
 /**
@@ -44,8 +81,16 @@ void AudioPlayer::init() {
  */
 void AudioPlayer::stop() {
   ALOGV("%s", __FUNCTION__);
+
+  // Just in case the listener is still waiting for eos
+  if (mListener != NULL) {
+    (*mListener)(mUserData);
+    mListener = NULL;
+  }
+
   if (mAudioTrack != NULL) {
     mAudioTrack->stop();
+    mAudioTrack->flush();
     mAudioTrack = NULL;
   }
   mStopped = true;
@@ -61,6 +106,7 @@ int AudioPlayer::write(const void* bytes, size_t size) {
   if (mAudioTrack == NULL || mStopped) {
     return -1;
   }
+
   int bytesWritten = writeToAudioTrack(bytes, size);
   return bytesWritten;
 }
@@ -104,4 +150,25 @@ void AudioPlayer::play() {
     mAudioTrack->start();
     mPlayState = PLAYSTATE_PLAYING;
   }
+}
+
+size_t AudioPlayer::frameSize() {
+  return mAudioTrack->frameSize();
+}
+
+bool AudioPlayer::reachedEOS() {
+  return mReachedEOS;
+}
+
+status_t AudioPlayer::setNotificationMarkerPosition(uint32_t marker) {
+  if (mAudioTrack != NULL) {
+    return mAudioTrack->setMarkerPosition(marker);
+  }
+  return INVALID_OPERATION;
+}
+
+void AudioPlayer::setPlaybackPositionUpdateListener(
+    const PlaybackPositionUpdateListener listener, void* userData) {
+  mListener = listener;
+  mUserData = userData;
 }

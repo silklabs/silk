@@ -45,12 +45,15 @@ inline static char * UnwrapPointer(Local<Value> buffer, int64_t offset = 0) {
 class Speaker : public Nan::ObjectWrap {
 public:
   static void Init(v8::Local<v8::Object> exports);
+  static void playbackPositionUpdateListener(void *userData);
+
   sp<AudioPlayer> mAudioPlayer;
   float gain;
+  Mutex mLock;
+  Condition mEOSCondition; // Signal that we reached the end of a stream
 
 private:
   explicit Speaker();
-  ~Speaker();
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
   static Nan::Persistent<v8::Function> constructor;
 
@@ -58,6 +61,9 @@ private:
   JSFUNC(Write);
   JSFUNC(Close);
   JSFUNC(SetVolume);
+  JSFUNC(GetFrameSize);
+  JSFUNC(SetNotificationMarkerPosition);
+  JSFUNC(SetPlaybackPositionUpdateListener);
 };
 
 #endif

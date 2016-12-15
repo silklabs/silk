@@ -349,65 +349,56 @@ function wpaCli(...args) {
   const bin = 'wpa_cli';
   const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, ...args];
 
-  return util.exec(bin, fullArgs)
-    .then(r => {
-      if (r.code !== 0) {
-        return Promise.reject(new Error(`'${bin} ${fullArgs.join(' ')}' ` +
-                                        `returned ${r.code}: ` +
-                                        `'${r.stdout.replace(/\n/g, '')}'`));
-      }
-      return Promise.resolve(r.stdout);
-    });
+  return util.exec(bin, fullArgs).then((r) => {
+    if (r.code !== 0) {
+      const stdout = r.stdout.replace(/\n/g, '');
+      throw new Error(
+        `'${bin} ${fullArgs.join(' ')}' returned ${r.code}: '${stdout}'`
+      );
+    }
+    return r.stdout;
+  });
 }
 
-function wpaCliExpectOk(...args) {
-  return wpaCli(...args).then(
-    ok => {
-      if (ok.match(/^OK/)) {
-        return Promise.resolve();
-      }
-
-      const bin = 'wpa_cli';
-      const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, ...args];
-
-      return Promise.reject(new Error(`'${bin} ${fullArgs.join(' ')}': ` +
-                                      `'${ok.replace(/\n/g, '')}'`));
+function wpaCliExpectOk(...args): Promise<void> {
+  return wpaCli(...args).then((ok) => {
+    if (ok.match(/^OK/)) {
+      return;
     }
-  );
+    const bin = 'wpa_cli';
+    const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, ...args];
+    throw new Error(
+      `'${bin} ${fullArgs.join(' ')}': '${ok.replace(/\n/g, '')}'`
+    );
+  });
 }
 
 function wpaCliGetNetworkIds() {
-  return wpaCli('list_networks').then(
-    networkList => {
-      let ids = networkList.split('\n').map(
-        netInfo => {
-          let found;
-          if ((found = netInfo.match(/^([0-9]+)/))) {
-            return found[1];
-          }
-          return null;
-        }
-      );
-      return Promise.resolve(ids.filter(notnull => notnull));
-    }
-  );
+  return wpaCli('list_networks').then((networkList) => {
+    let ids = networkList.split('\n').map((netInfo) => {
+      let found;
+      if ((found = netInfo.match(/^([0-9]+)/))) {
+        return found[1];
+      }
+      return null;
+    });
+    return ids.filter(notnull => notnull);
+  });
 }
 
 function wpaCliAddNetwork() {
-  return wpaCli('add_network').then(
-    id => {
-      let found;
-      if ((found = id.match(/^([0-9]+)/))) {
-        return Promise.resolve(found[1]);
-      }
-
-      const bin = 'wpa_cli';
-      const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, `add_network`];
-
-      return Promise.reject(new Error(`'${bin} ${fullArgs.join(' ')}': ` +
-                                      `'${id.replace(/\n/g, '')}'`));
+  return wpaCli('add_network').then((id) => {
+    let found;
+    if ((found = id.match(/^([0-9]+)/))) {
+      return found[1];
     }
-  );
+
+    const bin = 'wpa_cli';
+    const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, `add_network`];
+    throw new Error(
+      `'${bin} ${fullArgs.join(' ')}': '${id.replace(/\n/g, '')}'`
+    );
+  });
 }
 
 async function wpaCliRemoveNetwork(id) {
@@ -585,7 +576,7 @@ export class Wifi extends events.EventEmitter {
       this.emit('offline');
       this.scan();
     });
-    monitor.on('stateChange', state => {
+    monitor.on('stateChange', (state) => {
       this.state = state;
       this.emit('stateChange', state);
     });
@@ -791,17 +782,14 @@ export class Wifi extends events.EventEmitter {
     await wpaCliExpectOk('reconnect');
   }
 
-  networkConfigured() {
-    return wpaCliGetNetworkIds()
-      .then(
-        ids => {
-          if (ids.length > 0) {
-            // If any networks exist then the device is 'configured'
-            return Promise.resolve();
-          }
-          return Promise.reject();
-        }
-      );
+  networkConfigured(): Promise<void> {
+    return wpaCliGetNetworkIds().then((ids) => {
+      if (ids.length > 0) {
+        // If any networks exist, then the device is 'configured'.
+        return;
+      }
+      throw new Error('No network configured');
+    });
   }
 
   /**
@@ -853,21 +841,26 @@ export class StubWifi extends events.EventEmitter {
 
   init(): Promise<void> {
     log.info('Using stub "WiFi"');
-    if (util.getboolprop('ro.kernel.qemu')) {
-      // Most of the emulator eth0 networking is setup automatically.  The only
-      // thing missing is to instruct netd to use the DNS servers for the
-      // hardcoded netId == 0
-      let dns = [];
-      for (let i = 1; i <= 4; i++) {
-        let dnsN = util.getstrprop(`net.eth0.dns${i}`);
-        if (dnsN) {
-          dns.push(dnsN);
-        }
-      }
-      return util.exec('ndc', ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns])
-        .then(() => undefined);
+    if (!util.getboolprop('ro.kernel.qemu')) {
+      return Promise.resolve();
     }
-    return Promise.resolve();
+
+    // Most of the emulator eth0 networking is setup automatically.  The only
+    // thing missing is to instruct netd to use the DNS servers for the
+    // hardcoded netId == 0
+    let dns = [];
+    for (let i = 1; i <= 4; i++) {
+      let dnsN = util.getstrprop(`net.eth0.dns${i}`);
+      if (dnsN) {
+        dns.push(dnsN);
+      }
+    }
+    return util.exec(
+      'ndc',
+      ['resolver', 'setnetdns', /*netId=*/'0', '.localhost', ...dns],
+    ).then(() => {
+      return;
+    });
   }
 
   shutdown(): Promise<void> {

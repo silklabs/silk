@@ -126,7 +126,7 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
                         FrameOutCallback frameOutCallback,
                         void *frameOutUserData);
 
-  bool init(int bitrateK, int targetFps);
+  bool init(int targetFps);
   bool threadLoop();
 
   int width;
@@ -162,7 +162,7 @@ SimpleH264Encoder *SimpleH264EncoderImpl::Create(int width,
     frameOutUserData
   );
 
-  if (!enc->init(maxBitrateK, targetFps)) {
+  if (!enc->init(targetFps)) {
     delete enc;
     enc = nullptr;
   };
@@ -197,7 +197,7 @@ SimpleH264EncoderImpl::SimpleH264EncoderImpl(int width,
   framePuller = new SimpleH264EncoderImpl::FramePuller(this);
 };
 
-bool SimpleH264EncoderImpl::init(int bitrateK, int targetFps) {
+bool SimpleH264EncoderImpl::init(int targetFps) {
   sp<MetaData> meta = frameQueue->getFormat();
   int32_t width, height, stride, sliceHeight, colorFormat;
   CHECK(meta->findInt32(kKeyWidth, &width));
@@ -214,7 +214,7 @@ bool SimpleH264EncoderImpl::init(int bitrateK, int targetFps) {
   format->setInt32("color-format", colorFormat);
 
   format->setString("mime", kMimeTypeAvc);
-  format->setInt32("bitrate", bitrateK * 1024);
+  format->setInt32("bitrate", maxBitrateK * 1024);
   format->setInt32("bitrate-mode", OMX_Video_ControlRateConstant);
   format->setFloat("frame-rate", targetFps);
   format->setInt32("i-frame-interval", kIFrameInterval);
@@ -436,5 +436,4 @@ SimpleH264Encoder *SimpleH264Encoder::Create(int width,
     frameOutUserData
   );
 }
-
 

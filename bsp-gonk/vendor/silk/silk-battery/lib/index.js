@@ -11,8 +11,8 @@ import * as util from 'silk-sysutils';
 const log = createLog('battery');
 
 // Some boards have no battery but /sys/class/power_supply/battery/present is
-// still 1.  Set persist.silk.battery.present to false to override
-const BATTERY_PRESENT = util.getboolprop('persist.silk.battery.present', true);
+// still 1.  Set ro.silk.battery.present to false to override
+const BATTERY_PRESENT = util.getboolprop('ro.silk.battery.present', true);
 
 // Hold off boot when the battery is below this level
 const BATTERY_OK_TO_BOOT_LEVEL = 10;

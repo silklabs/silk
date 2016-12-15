@@ -226,6 +226,13 @@ export default class Speaker extends events.EventEmitter {
       return;
     }
 
+    if ((this._totalBufferLen % this._frameSize) !== 0) {
+      this._done(
+        new Error(`Buffer not a multiple of frame size of ${this._frameSize}`)
+      );
+      return;
+    }
+
     let numFrames = this._totalBufferLen / this._frameSize;
     if (!this._speaker.setNotificationMarkerPosition(numFrames)) {
       this._done(new Error(`Failed to set marker for eos`));

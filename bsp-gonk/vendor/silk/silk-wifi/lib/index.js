@@ -468,6 +468,7 @@ export class Wifi extends events.EventEmitter {
   _shutdown: boolean = false;
   _dhcpRetryTimer: ?number = null;
   _shutdown: boolean = false;
+  _scanTimer: ?number = null;
 
   /**
    * Current wifi state.
@@ -580,19 +581,36 @@ export class Wifi extends events.EventEmitter {
       this.state = state;
       this.emit('stateChange', state);
     });
-    monitor.on('scanResults', async () => {
-      await this._emitScanResults();
-      if (this._online) {
-        return;
-      }
-      // Schedule another scan
-      await util.timeout(SCAN_INTERVAL_MS);
-      if (!this._online) {
-        this.scan();
-      }
+    monitor.on('scanResults', () => {
+      this._emitScanResults().then(() => {
+        this._scheduleScan();
+      });
     });
 
     return Promise.resolve();
+  }
+
+  _scheduleScan() {
+    if (this._scanTimer) {
+      log.verbose(`Not scheduling a scan, already got one scheduled.`);
+      return;
+    }
+    log.verbose(`Scheduling next scan in ${SCAN_INTERVAL_MS}ms.`);
+    this._scanTimer = setTimeout(() => {
+      this._scanTimer = null;
+      if (this.online) {
+        log.verbose(`We're online, not going to scan anymore.`);
+        return;
+      }
+      if (this.state !== 'disconnected') {
+        log.verbose(
+          `Not going to scan while in state '${this.state}', postponing.`
+        );
+        this._scheduleScan();
+        return;
+      }
+      this.scan();
+    }, SCAN_INTERVAL_MS);
   }
 
   /**
@@ -670,6 +688,11 @@ export class Wifi extends events.EventEmitter {
    * });
    */
   scan() {
+    if (this._scanTimer) {
+      log.debug(`Clearing scan timer, we're about to scan.`);
+      clearTimeout(this._scanTimer);
+      this._scanTimer = null;
+    }
     log.info('Issuing scan request');
     wpaCli('scan').catch((err) => {
       log.warn('scan failed with', err.stack || err);

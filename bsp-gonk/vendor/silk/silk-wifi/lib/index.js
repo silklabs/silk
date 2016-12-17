@@ -74,6 +74,7 @@ async function configureDhcpInterface(iface: string) {
 
 // Duration between network scans while not connected.
 const SCAN_INTERVAL_MS = 10 * 1000;
+const DHCP_TIMEOUT_MS = 2000;
 
 /**
  * Supported wifi states
@@ -502,34 +503,31 @@ export class Wifi extends events.EventEmitter {
       });
   }
 
-  _requestDhcp() {
+  async _requestDhcp(): Promise<void> {
     log.info('Issuing DHCP request');
 
     this.emit('stateChange', 'dhcping');
 
-    util.exec('dhcputil', [iface, 'dhcp_stop'])
-    .then(result => {
+    try {
+      let result = await util.exec('dhcputil', [iface, 'dhcp_stop']);
       if (result.code !== 0) {
         log.warn(`dhcp_stop failed: ret=${result.code}: ${result.stdout}`);
       }
-      return util.exec('dhcputil', [iface, 'dhcp_request']);
-    })
-    .then(result => {
+
+      result = await util.exec('dhcputil', [iface, 'dhcp_request']);
       if (result.code !== 0) {
-        let err = new Error(result.stdout);
-        throw err;
+        throw new Error(result.stdout);
       }
 
-      return configureDhcpInterface(iface)
+      const r = await configureDhcpInterface(iface)
         .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
         .catch(util.processthrow);
-    })
-    .then(r => {
       log.info(`${iface} state| ${r.stdout}`);
 
       if (this._shutdown) {
         log.info('(WiFi shutdown)');
-        return this._networkCleanup();
+        await this._networkCleanup();
+        return;
       }
 
       log.info('==> Wifi online');
@@ -543,15 +541,13 @@ export class Wifi extends events.EventEmitter {
        * @instance
        */
       this.emit('online');
-      return null;
-    })
-    .catch(err => {
+    } catch (err) {
       log.warn(`Error: DHCP request failed: ${err.stack || err}, retrying...`);
       this._dhcpRetryTimer = setTimeout(() => {
         this._requestDhcp();
         this._dhcpRetryTimer = null;
-      }, 2000);
-    });
+      }, DHCP_TIMEOUT_MS);
+    }
   }
 
   _startWpaMonitor(): Promise<void> {

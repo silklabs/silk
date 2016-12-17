@@ -284,7 +284,8 @@ class WpaMonitor extends events.EventEmitter {
             }
 
             /**
-             * This event is emitted when wifi is disconnected from an access point
+             * This event is emitted when wifi is disconnected from an
+             * access point
              *
              * @event disconnected
              * @memberof silk-wifi
@@ -473,7 +474,7 @@ export class Wifi extends events.EventEmitter {
   // Always start as offline until proven otherwise...
   _online: boolean = false;
   _shutdown: boolean = false;
-  _dhcpRetryTimer: ?number;
+  _dhcpRetryTimer: ?number = null;
   _shutdown: boolean = false;
 
   /**
@@ -483,11 +484,6 @@ export class Wifi extends events.EventEmitter {
    * @instance
    */
   state: WifiState = 'disconnected';
-
-  constructor() {
-    super();
-    this._dhcpRetryTimer = null;
-  }
 
   _networkCleanup() {
     if (this._dhcpRetryTimer) {
@@ -559,7 +555,6 @@ export class Wifi extends events.EventEmitter {
   }
 
   _startWpaMonitor(): Promise<void> {
-
     monitor = new WpaMonitor(iface);
     monitor.on('connected', () => {
       log.info('Wifi Connected.');
@@ -663,7 +658,7 @@ export class Wifi extends events.EventEmitter {
    * @memberof silk-wifi
    * @instance
    */
-  /* async */ online(): Promise<void> {
+  online(): Promise<void> {
     if (this._online) {
       return Promise.resolve();
     }
@@ -689,8 +684,7 @@ export class Wifi extends events.EventEmitter {
    */
   scan() {
     log.info('Issuing scan request');
-    wpaCli('scan')
-    .catch(err => {
+    wpaCli('scan').catch((err) => {
       log.warn('scan failed with', err.stack || err);
     });
   }
@@ -860,10 +854,6 @@ export class Wifi extends events.EventEmitter {
 
 
 export class StubWifi extends events.EventEmitter {
-
-  constructor() {
-    super();
-  }
 
   init(): Promise<void> {
     log.info('Using stub "WiFi"');

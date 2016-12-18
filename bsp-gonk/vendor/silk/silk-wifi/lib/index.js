@@ -598,7 +598,7 @@ export class Wifi extends events.EventEmitter {
     log.verbose(`Scheduling next scan in ${SCAN_INTERVAL_MS}ms.`);
     this._scanTimer = setTimeout(() => {
       this._scanTimer = null;
-      if (this.online) {
+      if (this._online) {
         log.verbose(`We're online, not going to scan anymore.`);
         return;
       }

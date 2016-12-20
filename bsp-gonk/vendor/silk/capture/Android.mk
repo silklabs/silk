@@ -164,6 +164,22 @@ LOCAL_SHARED_LIBRARIES := \
   libutils \
   libstagefright \
 
+include $(BUILD_SILK_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE       := h264SharedEncodeTest
+LOCAL_MODULE_TAGS  := eng
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := h264SharedEncodeTest.cpp
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0 -std=c++11
+LOCAL_SHARED_LIBRARIES := \
+  libbinder \
+  libcutils \
+  libdl \
+  liblog \
+  libsilkSimpleH264Encoder \
+  libutils \
+  libstagefright \
 
 include $(BUILD_SILK_EXECUTABLE)
 

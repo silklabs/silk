@@ -215,7 +215,7 @@ bool SimpleH264EncoderImpl::init(int bitrateK, int targetFps) {
 
   format->setString("mime", kMimeTypeAvc);
   format->setInt32("bitrate", bitrateK * 1024);
-  format->setInt32("bitrate-mode", OMX_Video_ControlRateVariable);
+  format->setInt32("bitrate-mode", OMX_Video_ControlRateConstant);
   format->setFloat("frame-rate", targetFps);
   format->setInt32("i-frame-interval", kIFrameInterval);
 

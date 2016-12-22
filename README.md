@@ -12,8 +12,10 @@ Silk is an IoT platform that aims to making programming and developing Internet 
 
 First off you need to install the Silk Command Line Interface, with which you will be able to push your Silk programs to the device or emulator.
 
-Install Silk CLI by running<br>
-`npm install -g silk-cli`
+Install Silk CLI by running
+```
+npm install -g silk-cli
+```
 
 ### Silk ROMs for devices
 
@@ -21,14 +23,19 @@ If you have one of the devices supported by Silk, you can flash it with a Silk r
 
 ### Silk emulator
 
-If you don't have a compatible device, you can still run Silk using our emulator.<br>
-Just run<br>
-`npm install -g silk-emulator`
+If you don't have a compatible device, you can still run Silk using our emulator.
+
+Just run
+```
+npm install -g silk-emulator
+```
 
 ### Write code
 
-All you have to do then is create a new program with the Silk CLI by running<br>
-`silk init <program_name>`<br>
+All you have to do then is create a new program with the Silk CLI by running
+```
+silk init <program_name>
+```
 It will create a new node package you can start hacking on immediately. Here's the full list of Silk commands that you can use with the CLI: [Silk Command Line Interface Reference](docs/tutorial/cli-reference.md).
 
 We offer a robust set of API you can use in your Silk program. Check them all out: [Silk API reference](http://api.silk.io).
@@ -37,9 +44,18 @@ Also don't forget to check out the links in the `Resources` of this page for all
 
 ### Push code to Silk, see it live
 
-Done with the code? Time to try your code. Simply push your program to the device/emulator.<br>
-First make sure it's connected: `adb devices`<br>
-And if it shows up, just type `silk run`.<br>
+Done with the code? Time to try your code. Simply push your program to the device/emulator.
+
+First make sure it's connected:
+```
+adb devices
+```
+
+And if it shows up, just type
+```
+silk run
+```
+
 You're now good to go, if you've done everything correctly, your program should be up and running!
 
 ## Release notes

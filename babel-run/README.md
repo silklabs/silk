@@ -1,57 +1,72 @@
 # Babel Run utils
 
-This folder contains various pieces to make using babel easier from the
-tree...
+This folder contains various pieces to make using Babel with our Babel
+preset easier, without the need for Babel configurations in every module.
 
+## CLI
 
-## Node usage:
+You can run scripts written in ES6 directly from the command line:
 
-### Mocha:
-
-For example you can use the `node.js` file to setup a mocha environment:
-
-`$CORE/your/module/test/setup.js`
-```js
-require('../../babel-run/node')();
+```
+$ ../babel-run/babel-node my_script.js
 ```
 
-`$CORE/your/module/test/mocha.opts`:
+The `babel-node` wrapper modifies CLI arguments as if node were
+executing the script directly. If you need to run the script without
+altered arguments (for e.g. `cluster.fork()` expects unaltered
+arguments) you may want to use `babel-node-allargs` wrapper:
 
-```sh
---ui tdd --require test/setup.js
+```
+$ ../babel-run/babel-node-allargs my_script.js
 ```
 
-### CLI Usage:
+## Shebang
 
-Or for example you want to create a CLI script which automatically
-babelfies files it includes:
-
-```js
-#! /usr/bin/env node
-
-'use strict';
-
-require('../../babel-run/node')();
-
-require('./your_babel_main_file.js');
-```
-
-Normally, you may also want to use `babel-node` executable to
-babelify files in shebang for example:
+Both `babel-node` and `babel-node-allargs` can be used in a shebang
+line so you can directly create executable scripts written in ES6:
 
 ```js
 #! /usr/bin/env ../pub/babel-run/babel-node
 
 console.log(`This is ES6 Code`);
 ```
-Above example modifies arguments as if node was
-executing the script directly, but instead if you need
-to run the script directly without altering arguments
-(for e.g. cluster.fork() expects unaltered arguments)
-you may want to use `babel-node-allargs` executable
+
+## Custom wrapper scripts
+
+If you need to do additional things besides Babelifying the code, you
+may want to write your own wrapper script rather than using
+`babel-node` or `babel-node-allargs`.
+
 
 ```js
-#! /usr/bin/env ../pub/babel-run/babel-node-allargs
+#!/usr/bin/env node
 
-console.log(`This is ES6 Code`);
+'use strict';
+
+require('../babel-run/node')();
+doAdditionalStuff();
+require('./myscript');
+```
+
+## Mocha:
+
+For example you can use the `node.js` file to setup a mocha
+environment, by adding a `your-module/test/mocha.opts` file:
+
+```
+--require ../../babel-run/mocha
+```
+
+Alternatively, you can refer to a dedicated JS module to set up the
+node environment if you wish to do additional stuff:
+
+```sh
+--require test/setup.js
+```
+
+`test/setup.js` would look similar to a CLI wrapper script:
+
+```js
+require('../../babel-run/node')();
+doAdditionalStuff();
 ```

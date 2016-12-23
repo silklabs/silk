@@ -166,6 +166,7 @@ type CommandInitType = {
     video: boolean;
     audio: boolean;
     videoSegmentLength: number;
+    cameraId: number;
     width: number;
     height: number;
     fps: number;
@@ -204,6 +205,7 @@ const log = createLog('camera');
 const VIDEO_SEGMENT_DURATION_SECS =
   Math.max(1, Math.min(util.getintprop('persist.silk.video.duration', 1), 20));
 
+const CAMERA_ID = util.getintprop('ro.silk.camera.id', 0);
 const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
 const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
@@ -713,6 +715,7 @@ export default class Camera extends EventEmitter {
         video: CAMERA_VIDEO_ENABLED,
         audio: AUDIO_HW_ENABLED,
         videoSegmentLength: VIDEO_SEGMENT_DURATION_SECS,
+        cameraId: CAMERA_ID,
         width: WIDTH,
         height: HEIGHT,
         fps: FPS,

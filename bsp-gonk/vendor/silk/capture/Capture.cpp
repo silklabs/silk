@@ -38,6 +38,7 @@ using namespace std;
 //
 const char* kMimeTypeAvc = "video/avc";
 status_t OK = static_cast<status_t>(android::OK);
+int sCameraId = 0; // 0 = back camera, 1 = front camera
 Size sVideoSize(1280, 720);
 int32_t sVideoBitRateInK = 1024;
 int32_t sFPS = 24;
@@ -234,6 +235,10 @@ int CaptureCommand::capture_init(Value& cmdData) {
     }
   }
 
+  if (!cmdData["cameraId"].isNull()) {
+    sCameraId = cmdData["cameraId"].asInt();
+    ALOGV("sCameraId %d", sCameraId);
+  }
   if (!cmdData["width"].isNull()) {
     sVideoSize.width = cmdData["width"].asInt();
     ALOGV("sVideoSize.width %d", sVideoSize.width);
@@ -497,12 +502,10 @@ status_t CaptureCommand::initThreadAudioOnly() {
  * Thread function that initializes the camera
  */
 status_t CaptureCommand::initThreadCamera() {
-  int cameraId = 0;
-
   // Make several attempts to connect with the camera.  Reconnects in particular
   // can fail a couple times as the camera subsystem recovers.
   for (int attempts = 0; ; ++attempts) {
-    mCamera = Camera::connect(cameraId, String16(CAMERA_NAME),
+    mCamera = Camera::connect(sCameraId, String16(CAMERA_NAME),
         Camera::USE_CALLING_UID);
     if (mCamera != NULL) {
       break;
@@ -547,7 +550,7 @@ status_t CaptureCommand::initThreadCamera() {
   //CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
   CHECK(mCamera->sendCommand(CAMERA_CMD_ENABLE_FOCUS_MOVE_MSG, 1, 0) == 0);
 
-  mCameraSource = CameraSource::CreateFromCamera(mRemote, mCamera->getRecordingProxy(), cameraId,
+  mCameraSource = CameraSource::CreateFromCamera(mRemote, mCamera->getRecordingProxy(), sCameraId,
       String16(CAMERA_NAME, strlen(CAMERA_NAME)), Camera::USE_CALLING_UID,
       sVideoSize, sFPS,
       NULL, sUseMetaDataMode);

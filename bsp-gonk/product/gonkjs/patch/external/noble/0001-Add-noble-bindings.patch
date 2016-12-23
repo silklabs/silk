@@ -1,14 +1,14 @@
-From 7ae2e6284d7d14db2e79e62ed44b3280bcabd2c8 Mon Sep 17 00:00:00 2001
+From a56365a179ad57fdfd0d3eb59f8d7c9967193a65 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:46:53 -0700
 Subject: [PATCH] Android bindings
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2878 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2880 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/resolve-bindings.js |    2 +
  package.json            |    6 +-
- 4 files changed, 2890 insertions(+), 2 deletions(-)
+ 4 files changed, 2892 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..39c5a58
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..c691645
+index 0000000..890683b
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2878 @@
+@@ -0,0 +1,2880 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -569,39 +569,41 @@ index 0000000..c691645
 +  var txPowerLevel;
 +  var manufacturerData;
 +
-+  advertisingData.forEach(function(packet) {
-+    switch (packet.type) {
-+      case 'full-name':
-+        localName = packet.data;
-+        break;
-+      case 'short-name':
-+        // Favor full-name.
-+        localName = localName || packet.data;
-+        break;
-+      case 'tx-power':
-+        txPowerLevel = packet.data;
-+        break;
-+      case 'manufacturer-data':
-+        manufacturerData = packet.data.buffer;
-+        break;
-+      case 'service-uuids':
-+        packet.data.forEach(function(serviceUuid) {
-+          serviceUuidSet.add(serviceUuid);
-+        });
-+        break;
-+      case 'service-data':
-+        serviceDataSet.add(packet.data.uuid);
-+        serviceData.push({
-+          uuid: packet.data.uuid,
-+          data: packet.data.data
-+        });
-+        break;
++  if (advertisingData) {
++    advertisingData.forEach(function(packet) {
++      switch (packet.type) {
++        case 'full-name':
++          localName = packet.data;
++          break;
++        case 'short-name':
++          // Favor full-name.
++          localName = localName || packet.data;
++          break;
++        case 'tx-power':
++          txPowerLevel = packet.data;
++          break;
++        case 'manufacturer-data':
++          manufacturerData = packet.data.buffer;
++          break;
++        case 'service-uuids':
++          packet.data.forEach(function(serviceUuid) {
++            serviceUuidSet.add(serviceUuid);
++          });
++          break;
++        case 'service-data':
++          serviceDataSet.add(packet.data.uuid);
++          serviceData.push({
++            uuid: packet.data.uuid,
++            data: packet.data.data
++          });
++          break;
 +
-+      default:
-+        log.debug('Ignoring advertisement packet: \'' + packet.description +
-+                  '\'');
-+    }
-+  });
++        default:
++          log.debug('Ignoring advertisement packet: \'' + packet.description +
++                    '\'');
++      }
++    });
++  }
 +
 +  if (!force && this.scanState.filter) {
 +    var found = false;
@@ -2957,5 +2959,5 @@ index 46baeca..f2fa9d4 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.10.2
+2.11.0
 

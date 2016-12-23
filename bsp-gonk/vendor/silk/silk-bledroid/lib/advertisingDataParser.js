@@ -211,19 +211,18 @@ export default function(buffer) {
   let data = [ ];
 
   for ( ; ; ) {
-    const dataLength = buffer.readUInt8(bufferOffset, /* noAssert */ true);
     if (bufferOffset === buffer.length) {
-      log('Incomplete advertising data buffer');
-      return undefined;
+      log('Missing final 0');
+      break;
     }
+
+    const dataLength = buffer.readUInt8(bufferOffset, /* noAssert */ true);
+    bufferOffset++;
 
     if (!dataLength) {
       // All done.
       break;
     }
-
-    // Advance bufferOffset now.
-    bufferOffset++;
 
     if (buffer.length < bufferOffset + dataLength) {
       log('Incomplete advertising data buffer');

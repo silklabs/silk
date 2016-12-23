@@ -1,0 +1,29 @@
+From e188644ea09a6a2b845cad93da1b42c5b1e27ebb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 22 Dec 2016 20:38:51 -0800
+Subject: [PATCH] Use kenzo_defconfig
+
+---
+ AndroidBoard.mk | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/AndroidBoard.mk b/AndroidBoard.mk
+index ae8f192..58bd502 100644
+--- a/AndroidBoard.mk
++++ b/AndroidBoard.mk
+@@ -19,11 +19,7 @@ endif
+ # Compile Linux Kernel
+ #----------------------------------------------------------------------
+ ifeq ($(KERNEL_DEFCONFIG),)
+-    ifeq ($(TARGET_BUILD_VARIANT),user)
+-      KERNEL_DEFCONFIG := msm-perf_defconfig
+-    else
+-      KERNEL_DEFCONFIG := msm_defconfig
+-    endif
++      KERNEL_DEFCONFIG := kenzo_defconfig
+ endif
+ 
+ include kernel/AndroidKernel.mk
+-- 
+2.9.2
+

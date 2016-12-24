@@ -1,0 +1,37 @@
+From 879f39476c043b1d8717ab65156b5f9d70a4be64 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 23 Dec 2016 22:58:19 -0800
+Subject: [PATCH] Add android_usb hid config
+
+Change-Id: Ibb454304ce24ce1542c4fd984b06ec1ec697d883
+---
+ rootdir/etc/init.qcom.usb.rc | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/rootdir/etc/init.qcom.usb.rc b/rootdir/etc/init.qcom.usb.rc
+index cbc7d03..b254d63 100644
+--- a/rootdir/etc/init.qcom.usb.rc
++++ b/rootdir/etc/init.qcom.usb.rc
+@@ -448,6 +448,19 @@ on property:sys.usb.config=diag,serial_smd,rmnet_ipa,adb
+     start adbd
+     setprop sys.usb.state ${sys.usb.config}
+ 
++on property:sys.usb.config=hid,diag,serial_smd,rmnet_ipa,adb
++    stop adbd
++    write /sys/class/android_usb/android0/enable 0
++    write /sys/class/android_usb/android0/idVendor 05C6
++    write /sys/class/android_usb/android0/idProduct 9091
++    write /sys/class/android_usb/android0/f_diag/clients diag
++    write /sys/class/android_usb/android0/f_serial/transports smd
++    write /sys/class/android_usb/android0/f_rmnet/transports qti,bam2bam_ipa
++    write /sys/class/android_usb/android0/functions hid,diag,serial,rmnet,adb
++    write /sys/class/android_usb/android0/enable 1
++    start adbd
++    setprop sys.usb.state ${sys.usb.config}
++
+ on property:sys.usb.config=diag,serial_smd,rmnet_ipa
+     write /sys/class/android_usb/android0/enable 0
+     write /sys/class/android_usb/android0/idVendor 05C6
+-- 
+2.10.0
+

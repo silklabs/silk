@@ -1,3 +1,6 @@
+/*
+ @noflow
+ */
 'use strict';
 
 const log = require('silk-alog');
@@ -24,7 +27,7 @@ module.exports = {
     battery.init();
     battery.on('out-of-power', () => {
       log.warn('Device ran out of power; shutting down...');
-      shutdown();
+      util.setprop('sys.powerctl', 'shutdown');
     });
 
     /**

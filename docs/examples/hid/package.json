@@ -1,0 +1,22 @@
+{
+  "silk": {},
+  "name": "silk-hid",
+  "scripts": {
+    "lint": "eslint --fix .",
+    "silk-build": "silk-buildjs ."
+  },
+  "dependencies": {
+    "babel-core": "^6.21.0",
+    "babel-eslint": "^7.0.0",
+    "babel-preset-silk-node6": "^1.6.1",
+    "eslint": "^3.7.1",
+    "eslint-config-silk": "^1.6.1",
+    "eslint-plugin-flowtype": "^2.18.1",
+    "eslint-plugin-react": "^6.4.1",
+    "mz": "^2.6.0",
+    "silk": "^1.0.0",
+    "silk-buildjs": "^1.6.1",
+    "silk-log": "^1.6.1",
+    "webpack": "^1.14.0"
+  }
+}

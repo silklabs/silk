@@ -1,6 +1,6 @@
-From 6331bf88f677834f348f0de02b5b46c8c62dd1bf Mon Sep 17 00:00:00 2001
+From 8af5608911f63b119672527385ca3004a4dcdce2 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
-Date: Sat, 1 Oct 2016 22:53:28 -0700
+Date: Mon, 2 Jan 2017 18:25:09 -0800
 Subject: [PATCH] Remove APN list
 
 ---
@@ -8,12 +8,12 @@ Subject: [PATCH] Remove APN list
  1 file changed, 5 deletions(-)
 
 diff --git a/common.mk b/common.mk
-index 715e3fa..a9430a4 100644
+index 48b3ea5..04a28ff 100644
 --- a/common.mk
 +++ b/common.mk
-@@ -153,11 +153,6 @@ PRODUCT_PACKAGES += \
+@@ -160,11 +160,6 @@ PRODUCT_PACKAGES += \
  PRODUCT_PACKAGES += \
-     ExtendedSettings
+     fs_config_files
  
 -# APN list
 -PRODUCT_COPY_FILES += \
@@ -24,5 +24,5 @@ index 715e3fa..a9430a4 100644
  PRODUCT_PROPERTY_OVERRIDES += \
      dalvik.vm.dex2oat-threads=2 \
 -- 
-2.8.4 (Apple Git-73)
+2.10.0
 

@@ -696,11 +696,15 @@ export default class Camera extends EventEmitter {
       return;
     }
 
-    // Connecting to data socket
-    this._connectDataSocket(this._micDataSocket, CAPTURE_MIC_DATA_SOCKET_NAME);
-    this._connectDataSocket(this._vidDataSocket, CAPTURE_VID_DATA_SOCKET_NAME);
+    // Connect to data sockets
+    if (AUDIO_HW_ENABLED) {
+      this._connectDataSocket(this._micDataSocket, CAPTURE_MIC_DATA_SOCKET_NAME);
+    }
+    if (CAMERA_VIDEO_ENABLED) {
+      this._connectDataSocket(this._vidDataSocket, CAPTURE_VID_DATA_SOCKET_NAME);
+    }
 
-    // Connecting to control socket
+    // Connect to control socket
     log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
     this._ctlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
       log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);

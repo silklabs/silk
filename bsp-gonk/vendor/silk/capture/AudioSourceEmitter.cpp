@@ -84,8 +84,13 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
         len -= fillLen;
       }
 
-      mObserver->OnData(mAudioBufferVad, mAudioBuffer, mAudioBufferLen);
-      mAudioBuffer = nullptr; // Buffer ownership is transferred to OnData()
+      if (mObserver.get() != nullptr) {
+        mObserver->OnData(mAudioBufferVad, mAudioBuffer, mAudioBufferLen);
+        mAudioBuffer = nullptr; // Buffer ownership is transferred to OnData()
+      } else {
+        free(mAudioBuffer);
+        mAudioBuffer = nullptr;
+      }
       mAudioBufferIdx = 0;
       mAudioBufferVad = false;
     }

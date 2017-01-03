@@ -221,9 +221,6 @@ int CaptureCommand::capture_init(Value& cmdData) {
   if (!cmdData["frames"].isNull()) {
     sInitCameraFrames = cmdData["frames"].asBool();
     ALOGV("sInitCameraFrames %d", sInitCameraFrames);
-    if (sInitCameraFrames) {
-      LOG_ERROR(!sInitAudio, "Must init audio for camera frames"); // TODO: Relax this
-    }
   }
 
   if (!cmdData["video"].isNull()) {
@@ -478,9 +475,13 @@ status_t CaptureCommand::initThreadAudioOnly() {
       sAudioChannels
     )
   );
-  sp<MediaSource> audioSourceEmitter =
-    new AudioSourceEmitter(audioSource, &mMicChannel,
-                           sAudioSampleRate, sAudioChannels);
+
+  sp<MediaSource> audioSourceEmitter = new AudioSourceEmitter(
+    audioSource,
+    sInitAudio ? &mMicChannel : nullptr,
+    sAudioSampleRate,
+    sAudioChannels
+  );
   sp<MediaSource> audioMutter =
     new AudioMutter(audioSourceEmitter);
 
@@ -581,9 +582,13 @@ status_t CaptureCommand::initThreadCamera() {
         sAudioChannels
       )
     );
-    sp<MediaSource> audioSourceEmitter =
-      new AudioSourceEmitter(audioSource, &mMicChannel,
-                             sAudioSampleRate, sAudioChannels);
+
+    sp<MediaSource> audioSourceEmitter = new AudioSourceEmitter(
+      audioSource,
+      sInitAudio ? &mMicChannel : nullptr,
+      sAudioSampleRate,
+      sAudioChannels
+    );
     sp<MediaSource> audioMutter =
       new AudioMutter(audioSourceEmitter);
     sp<MediaSource> audioEncoder =
@@ -598,10 +603,16 @@ status_t CaptureCommand::initThreadCamera() {
     // Block this thread while camera is running
     mSegmenter->join();
   } else {
-    pthread_create(&mAudioThread, NULL, initThreadAudioOnlyWrapper, this);
+    if (sInitAudio) {
+      pthread_create(&mAudioThread, NULL, initThreadAudioOnlyWrapper, this);
+    } else {
+      mHardwareActive = true;
+      notifyCameraEvent("initialized");
+    }
 
     CHECK_EQ(mCameraSource->start(), ::OK);
     MediaSourceNullPuller cameraPuller(mCameraSource, "camera");
+    // Block this thread while camera is running
     if (!cameraPuller.loop()) {
       notifyCameraEvent("error");
     }

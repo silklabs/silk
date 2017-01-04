@@ -78,6 +78,7 @@ module.exports = {
     "key-spacing": [2, {"beforeColon": false, "afterColon": true}],
     "new-cap": 2,
     "new-parens": 2,
+    "object-curly-spacing": [2, "never"],
     "quotes": [2, "single", {"avoidEscape": true, "allowTemplateLiterals": true}],
     "semi": 2,
     "semi-spacing": [2, {"before": false, "after": true}],

@@ -1,0 +1,18 @@
+/**
+ * @flow
+ */
+
+export type Logger = {
+  debug: (...args: Array<mixed>) => void;
+  verbose: (...args: Array<mixed>) => void;
+  info: (...args: Array<mixed>) => void;
+  warn: (...args: Array<mixed>) => void;
+  error: (...args: Array<mixed>) => void;
+  fatal: (...args: Array<mixed>) => void;
+};
+
+declare module.exports: {
+  (libraryName: string): Logger;
+  createLogger: (libraryName: string) => Logger;
+  configureLog: (config: string) => void;
+};

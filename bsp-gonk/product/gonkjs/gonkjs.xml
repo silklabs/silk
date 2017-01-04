@@ -16,19 +16,14 @@
            remote="github"
            revision="master"
            clone-depth="1"/>
-  <project name="silklabs/intel-tbb"
-           path="external/intel-tbb"
-           remote="github"
-           revision="master"
-           clone-depth="1"/>
   <project name="Itseez/opencv"
            path="external/opencv3"
            remote="github"
-           revision="refs/tags/3.1.0" clone-depth="100"/>
+           revision="refs/tags/3.2.0" clone-depth="100"/>
   <project name="Itseez/opencv_contrib"
            path="external/opencv3_contrib"
            remote="github"
-           revision="refs/tags/3.1.0" clone-depth="100"/>
+           revision="refs/tags/3.2.0" clone-depth="100"/>
   <project name="silklabs/node-opencv"
            path="external/node-opencv"
            revision="refs/tags/silk-v6.0.0-1"

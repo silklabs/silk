@@ -1,23 +1,23 @@
-From 0264ff455606488c4b3b9a04c8813c01a1a6a6cd Mon Sep 17 00:00:00 2001
+From ae20a3063513f2568abf07b58af72002b24f2f93 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 7 Mar 2016 08:51:20 -0800
-Subject: [PATCH 1/2] Android.mk
+Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 110 +++++++++++++++++++++++++++++++++++++++++++
+ Android.mk                   | 111 +++++++++++++++++++++++++++++++++++++++++++
  apps/traincascade/Android.mk |  19 ++++++++
  opencv.mk                    |  46 ++++++++++++++++++
- 3 files changed, 175 insertions(+)
+ 3 files changed, 176 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 apps/traincascade/Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..f6dfc27
+index 0000000..1c8737e
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,111 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -102,6 +102,7 @@ index 0000000..f6dfc27
 +   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 +   -DBUILD_TESTS=false \
 +   -DWITH_TIFF=false \
++   -DWITH_CAROTENE=false \
 +   -DWITH_CUDA=false \
 +   -DWITH_OPENCL=true \
 +   -DBUILD_ANDROID_EXAMPLES=false \
@@ -206,5 +207,5 @@ index 0000000..c5d29f5
 +
 +endif
 -- 
-2.8.1
+2.9.2
 

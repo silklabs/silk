@@ -7,7 +7,7 @@ import {ArgumentParser} from 'argparse';
 import loadConfig from './config';
 import * as log from './logs';
 
-import type { Config } from './config';
+import type {Config} from './config';
 
 // TODO: we can do better here than `Object`
 export type PluginArgument = [Array<string>, Object];
@@ -86,7 +86,7 @@ function loadPlugins(config: Config): {[key: string]: SubCommand} {
     for (let cliName in module) {
       let cli = module[cliName];
       let subcommandName = cli.name || cliName;
-      subcommands[subcommandName] = { main: cli.main, path: pluginPath };
+      subcommands[subcommandName] = {main: cli.main, path: pluginPath};
       let subcommandParser = sub.addParser(subcommandName, {
         addHelp: cli.help ? true : false,
         help: cli.help,

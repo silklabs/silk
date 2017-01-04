@@ -104,7 +104,7 @@ export default function config(
 ): Config {
   debug('config', cwd);
   let globalConfigPath = path.join(global, SILKRC);
-  let globalConfig = { plugins: [] };
+  let globalConfig = {plugins: []};
   if (fs.existsSync(globalConfigPath)) {
     globalConfig = loadAndResolveConfig(globalConfigPath);
   }
@@ -117,10 +117,10 @@ export default function config(
     // Check for the environment variable override.
     projectConfigPath = process.env.SILKRC;
   } else {
-    projectConfigPath = lookup(SILKRC, { cwd });
+    projectConfigPath = lookup(SILKRC, {cwd});
   }
 
-  let projectConfig = { plugins: [] };
+  let projectConfig = {plugins: []};
 
   // Fallback to checking if there is a silk sdk installed.
   if (!projectConfigPath && fs.existsSync(silkSDKPath)) {

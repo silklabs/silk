@@ -8,7 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { exec } from 'mz/child_process';
+import {exec} from 'mz/child_process';
 
 import createDebug from 'debug';
 

@@ -11,7 +11,7 @@ module.exports = {
   },
   plugins: [
     new CopyWebpack([
-      { from: 'media', to: 'media' },
+      {from: 'media', to: 'media'},
     ]),
   ],
 };

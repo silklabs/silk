@@ -633,7 +633,7 @@ export default class Camera extends EventEmitter {
     });
     let micInput = simMic.getAudioStream();
     micInput.on('data', (data) => {
-      this._throwyEmit('mic-data', { when: Date.now(), frames: data });
+      this._throwyEmit('mic-data', {when: Date.now(), frames: data});
     });
     micInput.on('error', (error) => {
       // TODO: what should we do on errors ...
@@ -1347,7 +1347,7 @@ export default class Camera extends EventEmitter {
       throw new Error('Unable to issue command');
     }
     let getParamPromise = new Promise((resolve, reject) => {
-      this._getParameterCallback = { resolve, reject };
+      this._getParameterCallback = {resolve, reject};
     });
     return await getParamPromise;
   }
@@ -1372,7 +1372,7 @@ export default class Camera extends EventEmitter {
       throw new Error('Unable to issue command');
     }
     let getParamPromise = new Promise((resolve, reject) => {
-      this._getParameterCallback = { resolve, reject };
+      this._getParameterCallback = {resolve, reject};
     });
     return await getParamPromise;
   }
@@ -1384,7 +1384,7 @@ export default class Camera extends EventEmitter {
    * @instance
    */
   get videoSize(): SizeType {
-    return { width: WIDTH, height: HEIGHT };
+    return {width: WIDTH, height: HEIGHT};
   }
 
   /**

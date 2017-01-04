@@ -8,7 +8,7 @@ import bindings from './player';
 import fs from 'mz/fs';
 import events from 'events';
 
-import type { PlayerType } from './player';
+import type {PlayerType} from './player';
 
 const log = createLog('audioplayer');
 const GAIN_MIN = 0.0;

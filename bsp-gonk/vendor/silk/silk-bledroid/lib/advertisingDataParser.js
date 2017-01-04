@@ -3,7 +3,7 @@
  * @private
  */
 
-/* eslint-disable indent */
+/* eslint-disable indent, object-curly-spacing */
 
 import assert from 'assert';
 import makeLog from 'debug';

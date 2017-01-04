@@ -19,7 +19,7 @@
 
 import events from 'events';
 import invariant from 'assert';
-import { exec } from 'silk-sysutils';
+import {exec} from 'silk-sysutils';
 import createLog from 'silk-log/device';
 
 const log = createLog('lights');

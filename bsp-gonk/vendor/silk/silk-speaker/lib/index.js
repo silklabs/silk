@@ -4,11 +4,12 @@
  */
 
 import createLog from 'silk-log/device';
-import bindings from './speaker';
 import events from 'events';
 
-import type { ConfigDeviceMic } from 'silk-config';
-import type { SpeakerType } from './speaker';
+import bindings from './speaker';
+
+import type {ConfigDeviceMic} from 'silk-config';
+import type {SpeakerType} from './speaker';
 
 const log = createLog('speaker');
 const GAIN_MIN = 0.0;

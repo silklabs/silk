@@ -4,9 +4,10 @@
  */
 
 import createLog from 'silk-log/device';
-import bindings from './player';
 import fs from 'mz/fs';
 import events from 'events';
+
+import bindings from './player';
 
 import type {PlayerType} from './player';
 
@@ -201,7 +202,7 @@ export default class Player extends events.EventEmitter {
   _mediaState: MediaState = 'idle';
   _fileName: string = '';
   _playPromiseAccept: ?(value: Promise<void> | void) => void = null;
-  _playPromiseReject: ?(error: any) => void = null;
+  _playPromiseReject: ?(error: Error) => void = null;
 
   constructor() {
     super();
@@ -258,12 +259,12 @@ export default class Player extends events.EventEmitter {
     let exists = await fs.exists(fileName);
     if (!exists) {
       this._mediaState = 'stopped';
-      return Promise.reject(new Error(`${fileName} not found`));
+      throw new Error(`${fileName} not found`);
     }
 
     if ((this._mediaState !== 'idle') && (this._mediaState !== 'stopped')) {
       this._mediaState = 'stopped';
-      return Promise.reject(new Error(`Invalid state for this operation`));
+      throw new Error(`Invalid state for this operation`);
     }
 
     this._fileName = fileName;
@@ -456,6 +457,7 @@ export default class Player extends events.EventEmitter {
       if (this._playPromiseAccept) {
         this._playPromiseAccept();
         this._playPromiseAccept = null;
+        this._playPromiseReject = null;
       }
       break;
     case 'error':
@@ -470,7 +472,8 @@ export default class Player extends events.EventEmitter {
       this._player.stop(); // Stop player if not already
       this._mediaState = 'stopped';
       if (this._playPromiseReject) {
-        this._playPromiseReject();
+        this._playPromiseReject(new Error(err));
+        this._playPromiseAccept = null;
         this._playPromiseReject = null;
       }
       break;

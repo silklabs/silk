@@ -228,19 +228,19 @@ type DecodeReturnType = {
   channelData: Array<Float32Array>;
 };
 
-function decode(buffer: any): DecodeReturnType {
+function decode(buffer: ArrayBuffer | $TypedArray): DecodeReturnType {
   let pos = 0, end = 0;
-  if (buffer.buffer) {
+  if (buffer instanceof ArrayBuffer) {
+    // If we are handed a straight up array buffer, start at offset 0 and use
+    // the full length of the buffer.
+    pos = 0;
+    end = buffer.byteLength;
+  } else {
     // If we are handed a typed array or a buffer, then we have to consider the
     // offset and length into the underlying array buffer.
     pos = buffer.byteOffset;
     end = buffer.length;
     buffer = buffer.buffer;
-  } else {
-    // If we are handed a straight up array buffer, start at offset 0 and use
-    // the full length of the buffer.
-    pos = 0;
-    end = buffer.byteLength;
   }
 
   let v = new DataView(buffer);
@@ -264,7 +264,7 @@ function decode(buffer: any): DecodeReturnType {
     sampleRate: fmt.sampleRate,
     channels: fmt.channels,
     bitDepth: fmt.bitDepth,
-    channelData: channelData,
+    channelData,
   };
 }
 
@@ -275,19 +275,19 @@ type DecodeRawReturnType = {
   channelData: Buffer;
 };
 
-function decodeRaw(buffer: any): DecodeRawReturnType {
+function decodeRaw(buffer: ArrayBuffer | $TypedArray): DecodeRawReturnType {
   let pos = 0, end = 0;
-  if (buffer.buffer) {
+  if (buffer instanceof ArrayBuffer) {
+    // If we are handed a straight up array buffer, start at offset 0 and use
+    // the full length of the buffer.
+    pos = 0;
+    end = buffer.byteLength;
+  } else {
     // If we are handed a typed array or a buffer, then we have to consider the
     // offset and length into the underlying array buffer.
     pos = buffer.byteOffset;
     end = buffer.length;
     buffer = buffer.buffer;
-  } else {
-    // If we are handed a straight up array buffer, start at offset 0 and use
-    // the full length of the buffer.
-    pos = 0;
-    end = buffer.byteLength;
   }
 
   let v = new DataView(buffer);
@@ -299,13 +299,11 @@ function decodeRaw(buffer: any): DecodeRawReturnType {
   let fmt = result.fmt;
   pos = result.pos;
 
-  let channelData = new Buffer.from(buffer, pos);
-
   return {
     sampleRate: fmt.sampleRate,
     channels: fmt.channels,
     bitDepth: fmt.bitDepth,
-    channelData: channelData,
+    channelData: Buffer.from(buffer, pos),
   };
 }
 
@@ -395,7 +393,7 @@ function encode(
   );
 
   encodeData(buffer, pos, channelData, channels, samples);
-  return new Buffer(buffer);
+  return Buffer.from(buffer);
 }
 
 function encodeRaw(channelData: Buffer, opts: EncodeOptionsType): Buffer {
@@ -419,7 +417,7 @@ function encodeRaw(channelData: Buffer, opts: EncodeOptionsType): Buffer {
     channelData.length + 44
   );
 
-  return Buffer.concat([new Buffer(header), channelData]);
+  return Buffer.concat([Buffer.from(header), channelData]);
 }
 
 module.exports = {

@@ -213,6 +213,9 @@ function decodeHeader(v, pos, end) {
         samples: size / fmt.blockSize,
       };
     }
+    case 'FLLR':
+    case 'LIST':
+      break; // Ignore
     default:
       throw new TypeError(`Invalid sub chunk type ${type}`);
     }

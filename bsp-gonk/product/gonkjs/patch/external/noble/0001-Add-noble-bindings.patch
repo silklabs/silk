@@ -1,4 +1,4 @@
-From a56365a179ad57fdfd0d3eb59f8d7c9967193a65 Mon Sep 17 00:00:00 2001
+From 5d63e11f42f5ddaaf1c48e93c6216934918227dd Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:46:53 -0700
 Subject: [PATCH] Android bindings
@@ -26,7 +26,7 @@ index 0000000..39c5a58
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..890683b
+index 0000000..efb1f36
 --- /dev/null
 +++ b/lib/android/bindings.js
 @@ -0,0 +1,2880 @@
@@ -448,8 +448,7 @@ index 0000000..890683b
 +  log.debug('onStateChange(\'%s\')', state);
 +
 +  if (state !== 'poweredOn') {
-+    var message = 'Adapter state changed to \'' + state + '\'';
-+    log.warn(message);
++    log.warn('Adapter state changed to \'' + state + '\'');
 +
 +    if (this.commandQueue.length) {
 +      log.warn('Clearing command queue');
@@ -469,13 +468,14 @@ index 0000000..890683b
 +      for (var peripheralInfo of this.peripheralMap.values()) {
 +        uniquePeripheralInfos.add(peripheralInfo);
 +      }
-+      this.peripheralMap.clear();
 +
 +      for (var peripheralInfo of uniquePeripheralInfos) {
 +        this.onClientDisconnect(peripheralInfo.address,
-+                                message,
++                                -1,
 +                                peripheralInfo.connectionId);
 +      }
++
++      this.peripheralMap.clear();
 +    }
 +  }
 +

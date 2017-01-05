@@ -17,8 +17,10 @@ class SharedSimpleH264EncoderStub: public SharedSimpleH264Encoder {
     encoder->requestKeyFrame();
   }
 
-  virtual void nextFrame(void *yuv420SemiPlanarFrame, long long timeMillis, void (*deallocator)(void *)) {
-    encoder->nextFrame(yuv420SemiPlanarFrame, timeMillis, deallocator);
+  virtual void nextFrame(void *yuv420SemiPlanarFrame,
+                         void (*deallocator)(void *),
+                         InputFrameInfo& inputFrameInfo) {
+    encoder->nextFrame(yuv420SemiPlanarFrame, deallocator, inputFrameInfo);
   }
 
   virtual void stop() {

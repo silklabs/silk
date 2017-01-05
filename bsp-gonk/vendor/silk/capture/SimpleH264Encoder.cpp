@@ -1,6 +1,8 @@
 #define LOG_TAG "silk-h264-enc"
 #include "SimpleH264Encoder.h"
 
+#include <queue>
+
 #include <media/stagefright/MediaBuffer.h>
 #include <media/stagefright/MetaData.h>
 // This is an ugly hack. We forked this from libstagefright
@@ -10,7 +12,6 @@
 #include <media/stagefright/OMXCodec.h>
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/AMessage.h>
-
 #include <utils/Thread.h>
 #include <utils/SystemClock.h>
 #include <utils/Log.h>
@@ -103,7 +104,9 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
   }
   virtual void setBitRate(int bitrateK);
   virtual void requestKeyFrame();
-  virtual void nextFrame(void *yuv420SemiPlanarFrame, long long timeMillis, void (*deallocator)(void *));
+  virtual void nextFrame(void *yuv420SemiPlanarFrame,
+                         void (*deallocator)(void *),
+                         InputFrameInfo& inputFrameInfo);
   virtual void stop();
 
  private:
@@ -143,6 +146,7 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
   android::sp<android::MediaCodecSource> mediaCodecSource;
   android::sp<SingleBufferMediaSource> frameQueue;
   android::sp<android::Thread> framePuller;
+  std::queue<InputFrameInfo> frameInfo;
   android::Mutex mutex;
 };
 
@@ -278,7 +282,9 @@ class UserMediaBuffer: public android::MediaBuffer {
   void (*deallocator)(void *);
 };
 
-void SimpleH264EncoderImpl::nextFrame(void *yuv420SemiPlanarFrame, long long timeMillis, void (*deallocator)(void *)) {
+void SimpleH264EncoderImpl::nextFrame(void *yuv420SemiPlanarFrame,
+                                      void (*deallocator)(void *),
+                                      InputFrameInfo& inputFrameInfo) {
   Mutex::Autolock autolock(mutex);
   if (frameQueue == nullptr) {
     ALOGI("Stopped, ignoring frame");
@@ -290,7 +296,8 @@ void SimpleH264EncoderImpl::nextFrame(void *yuv420SemiPlanarFrame, long long tim
     height * width * 3 / 2,
     deallocator
   );
-  buffer->meta_data()->setInt64(kKeyTime, timeMillis * 1000);
+  buffer->meta_data()->setInt64(kKeyTime, inputFrameInfo.captureTimeMs * 1000);
+  frameInfo.push(inputFrameInfo);
   frameQueue->nextFrame(buffer);
 }
 
@@ -356,7 +363,6 @@ bool SimpleH264EncoderImpl::threadLoop() {
   buffer->meta_data()->findInt32(kKeyIsSyncFrame, &isIFrame);
 
   if (isCodecConfig) {
-
     if (codecConfig) {
       delete [] codecConfig;
     }
@@ -369,39 +375,62 @@ bool SimpleH264EncoderImpl::threadLoop() {
 
   } else {
     EncodedFrameInfo info;
+    bool drop = false;
     info.userData = frameOutUserData;
     info.keyFrame = isIFrame;
     int64_t timeMicro = 0;
     buffer->meta_data()->findInt64(kKeyTime, &timeMicro);
-    info.timeMillis = timeMicro / 1000;
+    info.input.captureTimeMs = timeMicro / 1000;
 
-    if (isIFrame) {
-      int encodedFrameLength = codecConfigLength + buffer->range_length();
-
-      if (encodedFrame == nullptr ||
-          encodedFrameMaxLength < encodedFrameLength) {
-        encodedFrameMaxLength = encodedFrameLength + encodedFrameLength / 2;
-        delete [] encodedFrame;
-        encodedFrame = new uint8_t[encodedFrameMaxLength];
+    {
+      Mutex::Autolock autolock(mutex);
+      for (;;) {
+        if (frameInfo.empty()) {
+          ALOGE("frameInfo exhausted. Encoder broken?");
+          drop = true;
+          break;
+        }
+        InputFrameInfo& ifi = frameInfo.front();
+        if (ifi.captureTimeMs != info.input.captureTimeMs) {
+          ALOGE("Unknown frame. Encoder broken?");
+          frameInfo.pop();
+          continue;
+        }
+        info.input = ifi;
+        frameInfo.pop();
+        break;
       }
-
-      // Always send codecConfig with an i-frame to make the stream more
-      // resilient
-      if (codecConfig) {
-        memcpy(encodedFrame, codecConfig, codecConfigLength);
-      }
-      memcpy(
-        encodedFrame + codecConfigLength,
-        static_cast<uint8_t*>(buffer->data()) + buffer->range_offset(),
-        buffer->range_length()
-      );
-      info.encodedFrame = encodedFrame;
-      info.encodedFrameLength = encodedFrameLength;
-    } else {
-      info.encodedFrame = static_cast<uint8_t*>(buffer->data()) + buffer->range_offset();
-      info.encodedFrameLength = buffer->range_length();
     }
-    frameOutCallback(info);
+
+    if (!drop) {
+      if (isIFrame) {
+        int encodedFrameLength = codecConfigLength + buffer->range_length();
+
+        if (encodedFrame == nullptr ||
+            encodedFrameMaxLength < encodedFrameLength) {
+          encodedFrameMaxLength = encodedFrameLength + encodedFrameLength / 2;
+          delete [] encodedFrame;
+          encodedFrame = new uint8_t[encodedFrameMaxLength];
+        }
+
+        // Always send codecConfig with an i-frame to make the stream more
+        // resilient
+        if (codecConfig) {
+          memcpy(encodedFrame, codecConfig, codecConfigLength);
+        }
+        memcpy(
+          encodedFrame + codecConfigLength,
+          static_cast<uint8_t*>(buffer->data()) + buffer->range_offset(),
+          buffer->range_length()
+        );
+        info.encodedFrame = encodedFrame;
+        info.encodedFrameLength = encodedFrameLength;
+      } else {
+        info.encodedFrame = static_cast<uint8_t*>(buffer->data()) + buffer->range_offset();
+        info.encodedFrameLength = buffer->range_length();
+      }
+      frameOutCallback(info);
+    }
   }
 
   buffer->release();

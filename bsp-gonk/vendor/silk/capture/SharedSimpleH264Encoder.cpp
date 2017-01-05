@@ -84,13 +84,15 @@ class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
     return encoderPool->isPrimary(this);
   }
 
-  virtual void nextFrame(void *yuv420SemiPlanarFrame, long long timeMillis, void (*deallocator)(void *)) {
+  virtual void nextFrame(void *yuv420SemiPlanarFrame,
+                         void (*deallocator)(void *),
+                         InputFrameInfo& frameInfo) {
     if (!encoderPool->isPrimary(this)) {
       ALOGI("Not primary, ignoring nextFrame");
       deallocator(yuv420SemiPlanarFrame);
       return;
     }
-    encoderPool->encoder->nextFrame(yuv420SemiPlanarFrame, timeMillis, deallocator);
+    encoderPool->encoder->nextFrame(yuv420SemiPlanarFrame, deallocator, frameInfo);
   }
 
   int bitrateK;

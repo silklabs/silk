@@ -144,6 +144,7 @@ else
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/5.1.1_r6
 LOCAL_SRC_FILES += 5.1.1_r6/MediaCodecSource.cpp
 LOCAL_SRC_FILES += SharedSimpleH264EncoderStub.cpp
+include external/stlport/libstlport.mk
 endif
 
 include $(BUILD_SHARED_LIBRARY)
@@ -181,6 +182,7 @@ LOCAL_SHARED_LIBRARIES := \
   libutils \
   libstagefright \
 
+-include external/stlport/libstlport.mk
 include $(BUILD_SILK_EXECUTABLE)
 
 

@@ -3,15 +3,22 @@
 /**
  * An H264 encoder with as few user-serviceable parts as possible
  */
+#include <stdint.h>
 
 class SimpleH264Encoder {
  public:
+  struct InputFrameInfo {
+    int64_t captureTimeMs;
+    int64_t ntpTimeMs;
+    uint32_t timestamp; // 90kHz
+  };
+
   struct EncodedFrameInfo {
     void *userData;
     void *encodedFrame;
     int encodedFrameLength;
     bool keyFrame;
-    long long timeMillis;
+    InputFrameInfo input;
   };
 
   // Callback that receives the next encoded frame.
@@ -27,7 +34,9 @@ class SimpleH264Encoder {
   virtual ~SimpleH264Encoder() {};
   virtual void setBitRate(int bitrateK) = 0;
   virtual void requestKeyFrame() = 0;
-  virtual void nextFrame(void *yuv420SemiPlanarFrame, long long timestamp, void (*deallocator)(void *)) = 0;
+  virtual void nextFrame(void *yuv420SemiPlanarFrame,
+                         void (*deallocator)(void *),
+                         InputFrameInfo& inputFrameInfo) = 0;
   virtual void stop() = 0;
 };
 

@@ -104,7 +104,6 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
   virtual void setBitRate(int bitrateK);
   virtual void requestKeyFrame();
   virtual void nextFrame(void *yuv420SemiPlanarFrame, long long timeMillis, void (*deallocator)(void *));
-  virtual void nextFrame(android::MediaBuffer *yuv420SemiPlanarFrame);
   virtual void stop();
 
  private:
@@ -265,23 +264,6 @@ void SimpleH264EncoderImpl::requestKeyFrame() {
   }
 }
 
-void SimpleH264EncoderImpl::nextFrame(android::MediaBuffer *yuv420SemiPlanarFrame) {
-  Mutex::Autolock autolock(mutex);
-
-  if (frameQueue == nullptr) {
-    ALOGI("Stopped, ignoring frame");
-  } else {
-    const size_t size = height * width * 3 / 2;
-    if (yuv420SemiPlanarFrame->range_length() != size) {
-      ALOGE("Invalid buffer size: %d, expected %d", yuv420SemiPlanarFrame->range_length(), size);
-    } else {
-      frameQueue->nextFrame(yuv420SemiPlanarFrame);
-      return;
-    }
-  }
-  yuv420SemiPlanarFrame->release();
-}
-
 class UserMediaBuffer: public android::MediaBuffer {
  public:
   UserMediaBuffer(void *data, size_t size, void (*deallocator)(void *))
@@ -297,13 +279,19 @@ class UserMediaBuffer: public android::MediaBuffer {
 };
 
 void SimpleH264EncoderImpl::nextFrame(void *yuv420SemiPlanarFrame, long long timeMillis, void (*deallocator)(void *)) {
+  Mutex::Autolock autolock(mutex);
+  if (frameQueue == nullptr) {
+    ALOGI("Stopped, ignoring frame");
+    return;
+  }
+
   auto buffer = new UserMediaBuffer(
     yuv420SemiPlanarFrame,
     height * width * 3 / 2,
     deallocator
   );
   buffer->meta_data()->setInt64(kKeyTime, timeMillis * 1000);
-  nextFrame(buffer);
+  frameQueue->nextFrame(buffer);
 }
 
 

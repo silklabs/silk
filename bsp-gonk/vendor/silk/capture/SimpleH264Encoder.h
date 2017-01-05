@@ -4,10 +4,6 @@
  * An H264 encoder with as few user-serviceable parts as possible
  */
 
-namespace android {
-class MediaBuffer;
-}
-
 class SimpleH264Encoder {
  public:
   struct EncodedFrameInfo {
@@ -32,7 +28,6 @@ class SimpleH264Encoder {
   virtual void setBitRate(int bitrateK) = 0;
   virtual void requestKeyFrame() = 0;
   virtual void nextFrame(void *yuv420SemiPlanarFrame, long long timestamp, void (*deallocator)(void *)) = 0;
-  virtual void nextFrame(android::MediaBuffer *yuv420SemiPlanarFrame) = 0;
   virtual void stop() = 0;
 };
 

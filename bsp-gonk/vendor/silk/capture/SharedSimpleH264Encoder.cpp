@@ -93,15 +93,6 @@ class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
     encoderPool->encoder->nextFrame(yuv420SemiPlanarFrame, timeMillis, deallocator);
   }
 
-  virtual void nextFrame(android::MediaBuffer *yuv420SemiPlanarFrame) {
-    if (!encoderPool->isPrimary(this)) {
-      ALOGI("Not primary, ignoring nextFrame");
-      yuv420SemiPlanarFrame->release();
-      return;
-    }
-    encoderPool->encoder->nextFrame(yuv420SemiPlanarFrame);
-  }
-
   int bitrateK;
   FrameOutCallback frameOutCallback;
   void *frameOutUserData;

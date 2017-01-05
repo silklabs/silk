@@ -21,10 +21,6 @@ class SharedSimpleH264EncoderStub: public SharedSimpleH264Encoder {
     encoder->nextFrame(yuv420SemiPlanarFrame, timeMillis, deallocator);
   }
 
-  virtual void nextFrame(android::MediaBuffer *yuv420SemiPlanarFrame) {
-    encoder->nextFrame(yuv420SemiPlanarFrame);
-  }
-
   virtual void stop() {
     encoder->stop();
   }

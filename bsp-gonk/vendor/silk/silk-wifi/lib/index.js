@@ -631,6 +631,9 @@ export class Wifi extends events.EventEmitter {
     await this._startWpaMonitor();
     await wpaCli('scan');
     await wpaCli('status');
+    if (util.getboolprop('persist.silk.wifi.excessivelog')) {
+      await wpaCliExpectOk('log_level', 'excessive');
+    }
     log.info('WiFi initialization complete');
   }
 

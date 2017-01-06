@@ -173,7 +173,7 @@ static const int kScanLostFoundTimeout = 0;
 static const int kScanFoundSightings = 2;
 static const int kScanFilterIndex = 1;
 
-static const char kWakeLockId[] = "BledroidWakeLock";
+static const char kWakeLockId[] = "bluedroid_timer";
 
 static const bt_bdaddr_t kInvalidAddr = {{
   0xff, 0xff, 0xff, 0xff, 0xff, 0xff
@@ -718,13 +718,27 @@ static bool set_wake_alarm(uint64_t delay_millis, bool should_wake, alarm_cb cb,
 }
 
 static int bledroid_acquire_wake_lock(const char *lock_name) {
-  acquire_wake_lock(PARTIAL_WAKE_LOCK, kWakeLockId);
+  LOG_ERROR(strcmp(lock_name, kWakeLockId),
+            "Wake lock request for unsupported lock \"%s\"", lock_name);
+
+  if (acquire_wake_lock(PARTIAL_WAKE_LOCK, kWakeLockId) == -1) {
+    ALOGW("Failed to acquire wake lock: %s", strerror(errno));
+    return BT_STATUS_FAIL;
+  }
+
   ALOGV("Acquired wake lock");
   return BT_STATUS_SUCCESS;
 }
 
 static int bledroid_release_wake_lock(const char *lock_name) {
-  release_wake_lock(kWakeLockId);
+  LOG_ERROR(strcmp(lock_name, kWakeLockId),
+            "Wake lock request for unsupported lock \"%s\"", lock_name);
+
+  if (release_wake_lock(kWakeLockId) == -1) {
+    ALOGW("Failed to release wake lock: %s", strerror(errno));
+    return BT_STATUS_FAIL;
+  }
+
   ALOGV("Released wake lock");
   return BT_STATUS_SUCCESS;
 }
@@ -3702,23 +3716,36 @@ int main(int argc, char *argv[]) {
   //
   // See <kernel>/net/rfkill/core.c:rfkill_state_store()
   {
+    // Do this now while still root. Once we change uid the proper fds can no
+    // longer be opened.
+    if (bledroid_release_wake_lock(kWakeLockId) == -1) {
+      ALOGW("Failed to release wake lock: %s", strerror(errno));
+    }
+
     prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0);
 
-    setuid(AID_BLUETOOTH);
     setgid(AID_BLUETOOTH);
+    setuid(AID_BLUETOOTH);
 
     prctl(PR_SET_DUMPABLE, 1, 0, 0, 0); // setuid clears PR_SET_DUMPABLE
 
-    __user_cap_header_struct header = {
-      .version = _LINUX_CAPABILITY_VERSION,
-      .pid = 0
-    };
+    __user_cap_header_struct header;
+    memset(&header, 0, sizeof(header));
+    header.version = _LINUX_CAPABILITY_VERSION_3;
+    header.pid = 0;
 
-    __user_cap_data_struct cap;
-    cap.effective = cap.permitted = cap.inheritable = 1 << CAP_NET_ADMIN;
-    int err = capset(&header, &cap);
-    if (err) {
-      ALOGE("capset failed: %d", err);
+    __user_cap_data_struct data[(CAP_TO_INDEX(CAP_LAST_CAP) + 1)];
+    memset(&data, 0, sizeof(data));
+
+    data[CAP_TO_INDEX(CAP_NET_ADMIN)].effective |= CAP_TO_MASK(CAP_NET_ADMIN);
+    data[CAP_TO_INDEX(CAP_NET_ADMIN)].permitted |= CAP_TO_MASK(CAP_NET_ADMIN);
+
+    // This capability is required to use wake locks.
+    data[CAP_TO_INDEX(CAP_BLOCK_SUSPEND)].effective |= CAP_TO_MASK(CAP_BLOCK_SUSPEND);
+    data[CAP_TO_INDEX(CAP_BLOCK_SUSPEND)].permitted |= CAP_TO_MASK(CAP_BLOCK_SUSPEND);
+
+    if (capset(&header, &data[0]) == -1) {
+      ALOGE("capset failed: %s", strerror(errno));
       return 1;
     }
   }

@@ -59,6 +59,9 @@ PRODUCT_PACKAGES += silk-lights
 # vendor/silk/sensors/
 PRODUCT_PACKAGES += silk-sensors
 
+# vendor/silk/silk-log/
+PRODUCT_PACKAGES += silk-log
+
 # vendor/silk/silk-alog/
 PRODUCT_PACKAGES += silk-alog
 

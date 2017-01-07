@@ -97,6 +97,7 @@ const externals = [
   'silk-audio-dnn',
   'silk-lifx',
   'silk-lights',
+  'silk-log',
   'silk-modwatcher',
   'silk-movie',
   'silk-netstatus',

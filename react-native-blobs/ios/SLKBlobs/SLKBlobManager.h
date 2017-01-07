@@ -1,8 +1,3 @@
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- */
- 
 #import "RCTBridge.h"
 #import "RCTBridgeModule.h"
 #import "RCTURLRequestHandler.h"

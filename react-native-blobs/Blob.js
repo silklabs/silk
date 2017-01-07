@@ -1,7 +1,4 @@
 /**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- *
  * Opaque JS representation of some binary data in native.
  *
  * The API is modeled after the W3C Blob API, with one caveat

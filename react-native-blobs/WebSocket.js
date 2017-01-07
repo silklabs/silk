@@ -1,7 +1,3 @@
-/**
- * Copyright (c) 2015-2016 Silk Labs, Inc.
- * All Rights Reserved.
- */
 'use strict';
 
 const base64 = require('base64-js');

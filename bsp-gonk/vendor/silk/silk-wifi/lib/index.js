@@ -722,7 +722,7 @@ export class Wifi extends events.EventEmitter {
     for (const line of lines) {
       let info = line.split('\t');
       if (info.length !== 5) {
-        log.warning(`Unexpected wpa_cli scan result: "${line}"`);
+        log.warn(`Unexpected wpa_cli scan result: "${line}"`);
         continue;
       }
       let [/*bssid*/, /*freq*/, level, flags, ssid ] = info;

@@ -1,6 +1,6 @@
 import assert from 'assert';
-import { StderrHook } from './hook';
-import makeLog from '../index';
+import {StdoutHook} from './hook';
+import makeLog, {configureLog} from '..';
 
 suite(`log`, () => {
 
@@ -13,7 +13,7 @@ suite(`log`, () => {
       args = [expectedOutput];
     }
 
-    const hook = new StderrHook();
+    const hook = new StdoutHook();
 
     log.debug(...args);
 
@@ -37,8 +37,8 @@ suite(`log`, () => {
   }
 
   const colorRegExp =
-    /\u001b\[3\dm\(\+\d+ms\)\s(.+)\u001b\[0m\n/;
-  const noColorRegExp = /\(\+\d+ms\)\s(.+)\n/;
+    /silk\-log\:debug\s\u001b\[3\dm\(\+\d+ms\)\s(.+)\u001b\[0m\n/;
+  const noColorRegExp = /silk\-log\:debug\s\(\+\d+ms\)\s(.+)\n/;
 
   setup(() => {
     log = makeLog(`log`);

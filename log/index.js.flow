@@ -13,6 +13,5 @@ export type Logger = {
 
 declare module.exports: {
   (libraryName: string): Logger;
-  createLogger: (libraryName: string) => Logger;
   configureLog: (config: string) => void;
 };

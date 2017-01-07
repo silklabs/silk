@@ -8,7 +8,7 @@ import events from 'events';
 import * as net from 'net';
 import {Netmask} from 'netmask';
 import * as util from 'silk-sysutils';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 
 import type {Socket} from 'net';
 

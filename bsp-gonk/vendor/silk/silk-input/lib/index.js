@@ -4,7 +4,7 @@
  */
 
 import events from 'events';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 import fs from 'fs';
 import * as util from 'silk-sysutils';
 const log = createLog('input');

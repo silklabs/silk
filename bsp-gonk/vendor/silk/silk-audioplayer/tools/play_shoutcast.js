@@ -4,7 +4,7 @@
 
 import Player from 'silk-audioplayer';
 import icy from 'icy';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 const log = createLog('test');
 
 let url = 'http://firewall.pulsradio.com';

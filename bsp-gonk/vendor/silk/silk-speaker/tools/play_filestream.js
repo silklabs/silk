@@ -4,7 +4,7 @@
 
 import Speaker from 'silk-speaker';
 import fs from 'fs';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 const log = createLog('test');
 
 let stream = fs.createReadStream(process.argv[2]);

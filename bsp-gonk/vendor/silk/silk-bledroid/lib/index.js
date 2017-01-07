@@ -8,7 +8,7 @@ import EventEmitter from 'events';
 import net from 'net';
 import parseAdvertising from './advertisingDataParser';
 import {getstrprop} from 'silk-sysutils';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 
 const log = createLog('bledroid');
 const BLE_SOCKET_PATH = '/dev/socket/bledroid';

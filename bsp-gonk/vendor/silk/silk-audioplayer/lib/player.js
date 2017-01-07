@@ -3,7 +3,7 @@
  * @private
  */
 
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 import * as util from 'silk-sysutils';
 const log = createLog('audioplayer');
 

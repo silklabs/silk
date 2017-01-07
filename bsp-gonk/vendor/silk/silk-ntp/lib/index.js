@@ -6,7 +6,7 @@
 import EventEmitter from 'events';
 import ntpClient from 'external-node-ntp-client';
 import * as util from 'silk-sysutils';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 import version from 'silk-core-version';
 import wifi from 'silk-wifi';
 

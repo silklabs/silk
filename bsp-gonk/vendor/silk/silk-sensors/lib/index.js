@@ -5,7 +5,7 @@
 
 import events from 'events';
 import * as net from 'net';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 import * as util from 'silk-sysutils';
 import invariant from 'assert';
 

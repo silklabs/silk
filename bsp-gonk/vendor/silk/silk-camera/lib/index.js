@@ -9,7 +9,7 @@ import EventEmitter from 'events';
 import * as net from 'net';
 import cv from 'opencv';
 import * as silkcapture from 'silk-capture';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 import * as util from 'silk-sysutils';
 
 import type {Matrix} from 'opencv';

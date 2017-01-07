@@ -3,7 +3,7 @@
  * @private
  */
 
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 import fs from 'mz/fs';
 import events from 'events';
 

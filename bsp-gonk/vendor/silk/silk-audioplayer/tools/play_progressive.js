@@ -3,7 +3,7 @@
  */
 
 import Player from 'silk-audioplayer';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 import http from 'http';
 const log = createLog('test');
 

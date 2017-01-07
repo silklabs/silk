@@ -4,7 +4,7 @@
 
 import Player from 'silk-audioplayer';
 import fs from 'fs';
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 const log = createLog('test');
 
 let player = new Player();

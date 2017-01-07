@@ -15,7 +15,7 @@ import {execFile, spawn, spawnSync} from 'child_process';
 import EventEmitter from 'events';
 import {end as trimNewLinesAtEnd} from 'trim-newlines';
 
-import createLog from 'silk-log/device';
+import createLog from 'silk-log';
 
 const log = createLog('sysutils');
 

@@ -1,11 +1,12 @@
-import { Readable } from 'stream';
+/* @noflow */
+import {Readable} from 'stream';
 
 export class WritableStreamHook extends Readable {
 
   _chunks = [];
   _unhook = null;
 
-  constructor(stream, options = { }) {
+  constructor(stream, options = {}) {
     if (!(`encoding` in options)) {
       options.encoding = `utf8`;
     }

@@ -1,6 +1,7 @@
+/* @noflow */
 import assert from 'assert';
 import {StdoutHook} from './hook';
-import makeLog, {configureLog} from '..';
+import makeLog from '..';
 
 suite(`log`, () => {
 

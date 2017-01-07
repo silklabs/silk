@@ -1,3 +1,4 @@
+/* @noflow */
 'use strict';
 
 const debug = require('debug');
@@ -66,6 +67,6 @@ module.exports = function createLog(libraryName) {
     error: createLogger(libraryName, 'error', 'error'),
     fatal: createLogger(libraryName, 'error', 'fatal'),
   };
-}
+};
 
 module.exports.configureLog = debug.enable;

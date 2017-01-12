@@ -14,7 +14,7 @@
     "decode"
   ],
   "symlinkDependencies": {
-    "eslint-config-silk": "/pub/eslint-config"
+    "eslint-config-silk": "../eslint-config"
   },
   "dependencies": {},
   "devDependencies": {

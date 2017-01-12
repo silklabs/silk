@@ -60,7 +60,9 @@ void libpreview_FrameCallback(void *userData,
     }
 
     libpreviewClient->releaseFrame(owner);
-    simpleH264Encoder->nextFrame(data, android::elapsedRealtime(), free);
+    SimpleH264Encoder::InputFrameInfo info;
+    info.captureTimeMs = android::elapsedRealtime();
+    simpleH264Encoder->nextFrame(data, free, info);
   }
 }
 
@@ -72,7 +74,7 @@ void libpreview_AbandonedCallback(void *userData)
 
 void frameOutCallback(SimpleH264Encoder::EncodedFrameInfo& info) {
   printf("Frame %lld size=%8d bits, keyframe=%d\n",
-    info.timeMillis, info.encodedFrameLength * 8, info.keyFrame);
+    info.input.captureTimeMs, info.encodedFrameLength, info.keyFrame);
   if (!info.userData) {
     TEMP_FAILURE_RETRY(
       write(

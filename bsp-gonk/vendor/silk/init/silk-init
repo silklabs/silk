@@ -1,6 +1,6 @@
 #!/system/bin/sh
 
-export DEBUG=$(getprop persist.silk.debug "silk-*,-silk-*:debug,-silk-*:verbose")
+export DEBUG=$(getprop persist.silk.debug)
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors true)
 export UV_THREADPOOL_SIZE=32
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/silk/lib

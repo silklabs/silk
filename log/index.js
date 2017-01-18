@@ -69,4 +69,8 @@ module.exports = function createLog(libraryName) {
   };
 };
 
-module.exports.configureLog = debug.enable;
+module.exports.configureLog = function configureLog() {
+  debug.skips = [];
+  debug.names = [];
+  debug.enable.apply(null, arguments);
+};

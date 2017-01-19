@@ -1,0 +1,34 @@
+From 4bbbe6a9cce43e1192e360e1918b6d55fd0b8009 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 18 Jan 2017 16:46:13 -0800
+Subject: [PATCH] Recover when IR Service fails to start
+
+Change-Id: If2bc10fc2508b957feb6ef5eef32fe2cd332d932
+---
+ services/java/com/android/server/SystemServer.java | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index a55a5131489..be046755a45 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -475,9 +475,13 @@ public final class SystemServer {
+             vibrator = new VibratorService(context);
+             ServiceManager.addService("vibrator", vibrator);
+ 
+-            Slog.i(TAG, "Consumer IR Service");
+-            consumerIr = new ConsumerIrService(context);
+-            ServiceManager.addService(Context.CONSUMER_IR_SERVICE, consumerIr);
++            try {
++              Slog.i(TAG, "Consumer IR Service");
++              consumerIr = new ConsumerIrService(context);
++              ServiceManager.addService(Context.CONSUMER_IR_SERVICE, consumerIr);
++            } catch (Throwable e) {
++              Slog.e(TAG, "Failure starting IR Service", e);
++            }
+ 
+             mAlarmManagerService = mSystemServiceManager.startService(AlarmManagerService.class);
+             alarm = IAlarmManager.Stub.asInterface(
+-- 
+2.11.0
+

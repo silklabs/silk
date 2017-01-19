@@ -1,16 +1,16 @@
-From ef57ee6f41fc66c40a246c39b549243457619b1b Mon Sep 17 00:00:00 2001
+From 621d63fb1214569235e6d899a2e0769f81b5c287 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Fri, 29 Apr 2016 17:33:52 -0700
 Subject: [PATCH] BoardConfig adjustments
 
 Change-Id: I6b8299e79c280590472df39a79128552cc12c91c
 ---
- BoardConfig.mk | 41 ++++++++++++++++++++++++++++++++++++++---
+ BoardConfig.mk | 43 ++++++++++++++++++++++++++++++++++++++++---
  msm8952_64.mk  |  1 -
- 2 files changed, 38 insertions(+), 4 deletions(-)
+ 2 files changed, 40 insertions(+), 4 deletions(-)
 
 diff --git a/BoardConfig.mk b/BoardConfig.mk
-index 5d49783..bb8e593 100644
+index 5d49783..b7f4f7d 100644
 --- a/BoardConfig.mk
 +++ b/BoardConfig.mk
 @@ -39,13 +39,13 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
@@ -38,10 +38,12 @@ index 5d49783..bb8e593 100644
  BOARD_KERNEL_SEPARATED_DT := true
  
  BOARD_KERNEL_BASE        := 0x80000000
-@@ -126,3 +126,38 @@ ifneq ($(TARGET_USES_AOSP),true)
+@@ -126,3 +126,40 @@ ifneq ($(TARGET_USES_AOSP),true)
      endif
    endif
  endif
++
++USE_OPENGL_RENDERER := true
 +
 +# Audio settings
 +BOARD_USES_ALSA_AUDIO := true
@@ -90,5 +92,5 @@ index db728b2..49d2d26 100644
      device/qcom/msm8952_32/mixer_paths_skuk.xml:system/etc/mixer_paths_skuk.xml \
      device/qcom/msm8952_32/mixer_paths.xml:system/etc/mixer_paths.xml \
 -- 
-2.7.0
+2.11.0
 

@@ -1,17 +1,17 @@
-From de8e87c162ad8bdce428421ff000aafe72d7484f Mon Sep 17 00:00:00 2001
+From 644227b8eddffe935adc0e2dde63571f346b046f Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
 
 ---
  Android.mk                        |   7 +
- lib/android/bindings.js           | 837 ++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js           | 851 ++++++++++++++++++++++++++++++++++++++
  lib/android/ccc-descriptor.js     | 196 +++++++++
  lib/android/descriptor-wrapper.js |  92 +++++
  lib/bleno.js                      |  20 +-
  lib/characteristic.js             |   2 +
  package.json                      |   6 +-
- 7 files changed, 1149 insertions(+), 11 deletions(-)
+ 7 files changed, 1163 insertions(+), 11 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
  create mode 100644 lib/android/ccc-descriptor.js
@@ -32,10 +32,10 @@ index 0000000..d59df9c
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..fc52c3b
+index 0000000..b32a80c
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,837 @@
+@@ -0,0 +1,851 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -598,8 +598,13 @@ index 0000000..fc52c3b
 +BlenoBindings.prototype.onServiceAdded = function(status, handle) {
 +  log.debug('onServiceAdded', status, handle);
 +
-+  assert(this.pendingSetServices);
 +  assert(this.serviceHandle === null);
++
++  if (!this.pendingSetServices) {
++    log.warn('Adapter reset while adding service');
++    return;
++  }
++
 +
 +  if (status) {
 +    const error = new Error('Failed to add service, status ' + status);
@@ -619,8 +624,13 @@ index 0000000..fc52c3b
 +BlenoBindings.prototype.onAttributeAdded = function(status, handle) {
 +  log.debug('onAttributeAdded', status, handle);
 +
-+  assert(this.pendingSetServices);
++  if (!this.pendingSetServices) {
++    log.warn('Adapter reset while adding attributes');
++    return;
++  }
++
 +  assert(this.serviceHandle !== null);
++  assert(this.pendingAttributes);
 +
 +  if (status) {
 +    const error = new Error('Failed to add attribute, status ' + status);
@@ -649,11 +659,15 @@ index 0000000..fc52c3b
 +BlenoBindings.prototype.onServiceStarted = function(status) {
 +  log.debug('onServiceStarted', status);
 +
-+  assert(this.pendingSetServices);
++  if (!this.pendingSetServices) {
++    log.warn('Adapter reset while starting service');
++    return;
++  }
++
 +  assert(this.serviceHandle !== null);
++  assert(!this.pendingAttributes);
 +
 +  this.pendingSetServices = null;
-+  this.pendingAttributes = null;
 +
 +  if (status) {
 +    const error = new Error('Failed to start service, status ' + status);
@@ -1278,5 +1292,5 @@ index c585abc..360e603 100644
      "bplist-parser": "0.0.6",
      "xpc-connection": "~0.1.4"
 -- 
-2.9.2
+2.11.0
 

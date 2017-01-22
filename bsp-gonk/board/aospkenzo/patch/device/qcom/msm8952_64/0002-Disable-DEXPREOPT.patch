@@ -1,0 +1,27 @@
+From 57565b32a7ec70502bd64a40426d2a869149dae2 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 21 Jan 2017 21:20:51 -0800
+Subject: [PATCH] Disable DEXPREOPT
+
+Change-Id: I6bf0f4e3c71c05cbaa0e91b3c4842674639a4348
+---
+ BoardConfig.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index b7f4f7d..8824ea0 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -13,6 +13,9 @@ BOARD_USES_GENERIC_AUDIO := true
+ # bring-up overrides
+ BOARD_USES_GENERIC_AUDIO := true
+ 
++# .odex files in system seem to be causing art system_server crashes
++WITH_DEXPREOPT := false
++
+ # Force camera module to be compiled only in 32-bit mode on 64-bit systems
+ # Once camera module can run in the native mode of the system (either
+ # 32-bit or 64-bit), the following line should be deleted
+-- 
+2.11.0
+

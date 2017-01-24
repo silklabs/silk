@@ -9,4 +9,5 @@ declare module.exports: {
   official: boolean;
   semver: string;
   sha: string;
+  string: string;
 };

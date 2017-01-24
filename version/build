@@ -20,17 +20,12 @@ elif [[ -n $CI ]]; then  # CI environment?
 fi
 
 mkdir -p $DEST/dist
-cat > $DEST/dist/index.json <<-EOF
-	{
-	  "branch": "$(source branch; echo $BRANCH)",
-	  "bsp_api_id": "$(node -p "try { require('silk-bsp-version').bsp_api_id } catch(err) {''};")",
-	  "buildtime": $(node -p "Date.now()"),
-	  "fingerprint": "$BUILD_FINGERPRINT",
-	  "official": $OFFICIAL,
-	  "semver": "$(node -p "require('./package.json').version")",
-	  "sha": "$SOURCE_VERSION"
-	}
-EOF
+rm -f $DEST/dist/index.json
+DIST=$(node -p "\
+  const gen = require('silk-core-version/gen');\
+  JSON.stringify(gen({sha: '$SOURCE_VERSION', official: $OFFICIAL}))\
+")
+echo $DIST > $DEST/dist/index.json
 cat $DEST/dist/index.json
 
 if [[ "$DEST" != "." ]]; then

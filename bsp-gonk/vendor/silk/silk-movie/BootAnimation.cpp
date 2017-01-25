@@ -546,7 +546,7 @@ bool BootAnimation::load(char const *zipFile)
               dinfo.w, dinfo.h, PIXEL_FORMAT_RGB_565);
 
       SurfaceComposerClient::openGlobalTransaction();
-      control->setLayer(0x40000000);
+      control->setLayer(0);
       SurfaceComposerClient::closeGlobalTransaction();
 
       mFlingerSurfaceControl = control;

@@ -86,9 +86,15 @@ FakePermissionService::checkPermission(const String16& permission, int32_t pid, 
         return true;
       }
     }
+#ifdef FAKEPERM_GRANT_EVERY_REQUEST
+    ALOGE("%s for pid=%d,uid=%d granted",
+        String8(permission).string(), pid, uid);
+    return true;
+#else
     ALOGE("%s for pid=%d,uid=%d denied",
         String8(permission).string(), pid, uid);
     return false;
+#endif
 }
 
 #ifdef TARGET_GE_MARSHMALLOW

@@ -33,6 +33,13 @@ LOCAL_SRC_FILES    := fakeperm.cpp
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 endif
+ifneq ($(TARGET_FAKEPERM_GRANT_EVERY_REQUEST),)
+ifeq ($(TARGET_BUILD_VARIANT),user)
+$(error FAKEPERM_GRANT_EVERY_REQUEST should never be defined in a user build)
+endif
+LOCAL_CFLAGS += -DFAKEPERM_GRANT_EVERY_REQUEST
+endif
+
 LOCAL_SHARED_LIBRARIES := libbinder libutils liblog
 include $(BUILD_SILK_EXECUTABLE)
 

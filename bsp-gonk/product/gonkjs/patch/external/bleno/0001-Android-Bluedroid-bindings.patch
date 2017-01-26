@@ -1,21 +1,21 @@
-From 644227b8eddffe935adc0e2dde63571f346b046f Mon Sep 17 00:00:00 2001
+From ab3e317903047016867b673b6e0800065a0ecda3 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
 
 ---
- Android.mk                        |   7 +
- lib/android/bindings.js           | 851 ++++++++++++++++++++++++++++++++++++++
- lib/android/ccc-descriptor.js     | 196 +++++++++
- lib/android/descriptor-wrapper.js |  92 +++++
- lib/bleno.js                      |  20 +-
- lib/characteristic.js             |   2 +
- package.json                      |   6 +-
- 7 files changed, 1163 insertions(+), 11 deletions(-)
+ Android.mk                              |   7 +
+ lib/android/bindings.js                 | 859 ++++++++++++++++++++++++++++++++
+ lib/android/ccc-descriptor.js           | 196 ++++++++
+ lib/android/descriptor-event-emitter.js |  89 ++++
+ lib/bleno.js                            |  20 +-
+ lib/characteristic.js                   |   2 +
+ package.json                            |   6 +-
+ 7 files changed, 1168 insertions(+), 11 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
  create mode 100644 lib/android/ccc-descriptor.js
- create mode 100644 lib/android/descriptor-wrapper.js
+ create mode 100644 lib/android/descriptor-event-emitter.js
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
@@ -32,10 +32,10 @@ index 0000000..d59df9c
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..b32a80c
+index 0000000..8c0cfc7
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,851 @@
+@@ -0,0 +1,859 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -46,16 +46,17 @@ index 0000000..b32a80c
 +const makeBledroidConnection = require('silk-bledroid');
 +
 +const CCCDescriptor = require('./ccc-descriptor');
-+const DescriptorWrapper = require('./descriptor-wrapper');
++const DescriptorEventEmitter = require('./descriptor-event-emitter');
 +
 +const RESULT_SUCCESS = require('../characteristic').RESULT_SUCCESS;
 +
 +const log = (function() {
 +  const debug = require('debug');
++  const prefix = 'silk-bleno:';
 +  return {
-+    debug: debug('silk-bleno:debug'),
-+    info: debug('silk-bleno:info'),
-+    warn: debug('silk-bleno:warn'),
++    debug: debug(prefix + 'debug'),
++    info: debug(prefix + 'info'),
++    warn: debug(prefix + 'warn'),
 +  };
 +})();
 +
@@ -110,19 +111,21 @@ index 0000000..b32a80c
 +function BlenoBindings() {
 +  log.debug('BlenoBindings');
 +
++  events.EventEmitter.call(this);
++
 +  // A connection to the bledroid executable.
-+  this.bledroid = null;
++  this._bledroid = null;
 +
 +  // Maps device address and connectionId to CentralInfo.
-+  this.centralMap = new Map();
++  this._centralMap = new Map();
 +
 +  // Maps handle to attribute and attribute to handle.
-+  this.attributeMap = new Map();
-+  this.pendingSetServices = null;
-+  this.pendingAttributes = null;
-+  this.serviceHandle = null;
++  this._attributeMap = new Map();
++  this._pendingSetServices = null;
++  this._pendingAttributes = null;
++  this._serviceHandle = null;
 +
-+  this.pendingNotifyCallbacks = [];
++  this._pendingNotifyCallbacks = [];
 +}
 +
 +util.inherits(BlenoBindings, events.EventEmitter);
@@ -130,7 +133,7 @@ index 0000000..b32a80c
 +BlenoBindings.prototype.init = function() {
 +  log.debug('init');
 +
-+  this.bledroid = makeBledroidConnection();
++  this._bledroid = makeBledroidConnection();
 +
 +  // These events will trigger callbacks here instead of simply being forwarded
 +  // to the main bleno objects.
@@ -156,20 +159,20 @@ index 0000000..b32a80c
 +  // Connect listeners directly to bledroid unless the events must be hooked.
 +  this.on('newListener', function(event, listener) {
 +    if (hookedEvents.indexOf(event) === -1) {
-+      this.bledroid.addListener(event, listener);
++      this._bledroid.addListener(event, listener);
 +    }
 +  }.bind(this));
 +
 +  this.on('removeListener', function(event, listener) {
-+    this.bledroid.removeListener(event, listener);
++    this._bledroid.removeListener(event, listener);
 +  }.bind(this));
 +
 +  // Automatically hook all events in the list above.
 +  hookedEvents.forEach(function(event) {
 +    const methodName =
-+      'on' + event.charAt(0).toUpperCase() + event.substring(1);
++      '_on' + event.charAt(0).toUpperCase() + event.substring(1);
 +    if (methodName in this) {
-+      this.bledroid.addListener(event, this[methodName].bind(this));
++      this._bledroid.addListener(event, this[methodName].bind(this));
 +    } else {
 +      throw new Error('\'' + methodName + '\' not found!');
 +    }
@@ -196,7 +199,7 @@ index 0000000..b32a80c
 +                  serviceUuids.length +
 +                  (serviceUuids.length ? (' ' + serviceUuids.join(' ')) : '');
 +
-+  this.bledroid.command(command);
++  this._bledroid.command(command);
 +};
 +
 +BlenoBindings.prototype.startAdvertisingIBeacon = function(data) {
@@ -209,98 +212,138 @@ index 0000000..b32a80c
 +    data.length         // Size of the iBeacon data
 +  ]);
 +
-+  const manufacturerLength = header.length + data.length;
 +  const manufacturerData = header.toString('hex') + data.toString('hex');
 +
 +  const command = 'startAdvertising ' +
 +                  '0 ' + // include_name
 +                  '0 ' + // include_txpower
 +                  '0 ' + // appearance
-+                  manufacturerLength + ' ' +
++                  (manufacturerData.length / 2) + ' ' +
 +                  manufacturerData + ' ' +
 +                  '0 ' + // service_data_len
 +                  ''   + // service_data
 +                  '0 ' + // service_uuid_len
 +                  '';    // service_uuid
 +
-+  this.bledroid.command(command);
++  this._bledroid.command(command);
 +};
 +
 +BlenoBindings.prototype.stopAdvertising = function() {
 +  log.debug('stopAdvertising');
 +
-+  this.bledroid.command('stopAdvertising');
++  this._bledroid.command('stopAdvertising');
 +};
 +
 +BlenoBindings.prototype.updateRssi = function(address) {
 +  log.debug('updateRssi', address);
 +
-+  assert(this.centralMap.has(address), 'Not connected to \'' + address + '\'');
++  if (!this._centralMap.has(address)) {
++    throw new Error('Not connected to \'' + address + '\'');
++  }
 +
-+  this.bledroid.command('updateRssi ' + address.replace(/:/g, ''));
++  this._bledroid.command('updateRssi ' + address.replace(/:/g, ''));
 +};
 +
 +BlenoBindings.prototype.setServices = function(services) {
 +  services = services || [];
 +  log.debug('setServices', services);
 +
-+  assert(services.length <= 1, 'Only one service currently supported');
-+  assert(!this.pendingSetServices,
-+         'setServices called before previous call finished');
++  if (services.length > 1) {
++    throw new Error('Only one service currently supported');
++  }
 +
-+  this.pendingSetServices = services;
++  if (this._pendingSetServices) {
++    throw new Error('setServices called before previous call finished');
++  }
 +
-+  if (this.serviceHandle === null) {
-+    this.processSetServices();
++  this._pendingSetServices = services;
++
++  if (this._serviceHandle === null) {
++    this._processSetServices();
 +  } else {
 +    log.debug('Removing old service before setting new service');
-+    this.bledroid.command('deleteService ' + this.serviceHandle);
++    this._bledroid.command('deleteService ' + this._serviceHandle);
 +  }
 +};
 +
-+BlenoBindings.prototype.failSetServices = function(error) {
-+  log.warn('failSetServices', error);
-+  assert(this.pendingSetServices);
++BlenoBindings.prototype.disconnect = function(address) {
++  log.debug('disconnect', address);
 +
-+  this.pendingSetServices = null;
-+  this.pendingAttributes = null;
++  const connectionInfo = this._centralMap.get(address);
++  if (!connectionInfo) {
++    log.warn('Unknown central \'%s\', cannot disconnect', address);
++    return;
++  }
++
++  this._bledroid.command('disconnectServer ' +
++                        address.replace(/:/g, '') + ' ' +
++                        connectionInfo.connectionId);
++};
++
++BlenoBindings.prototype.sendNotify = function(address,
++                                              characteristic,
++                                              needResponse,
++                                              data) {
++  log.debug('sendNotify',
++            address,
++            characteristic.uuid,
++            needResponse,
++            '<Buffer ' + data.length + '>');
++
++  const connectionInfo = this._centralMap.get(address);
++  if (!connectionInfo) {
++    log.warn('Unknown central \'%s\', cannot send notification', address);
++    return;
++  }
++
++  if (!this._attributeMap.has(characteristic)) {
++    log.warn('Unknown characteristic \'%s\', cannot send notification',
++             characteristic.uuid);
++    return;
++  }
++
++  const handle = this._attributeMap.get(characteristic);
++
++  let hexdata = '';
++  if (data.length) {
++    hexdata = ' ' + data.toString('hex');
++  }
++
++  this._bledroid.command('sendNotify ' +
++                        connectionInfo.connectionId + ' ' +
++                        handle + ' ' +
++                        (needResponse ? 1 : 0) + ' ' +
++                        data.length +
++                        hexdata);
++
++  this._pendingNotifyCallbacks.push(new PendingNotifyCallback(address,
++                                                             characteristic,
++                                                             needResponse));
++};
++
++BlenoBindings.prototype._failSetServices = function(error) {
++  log.warn('_failSetServices', error);
++
++  assert(this._pendingSetServices);
++
++  this._pendingSetServices = null;
++  this._pendingAttributes = null;
 +
 +  this.emit('servicesSet', error);
 +};
 +
-+BlenoBindings.prototype.onServiceDeleted = function(status) {
-+  log.debug('onServiceDeleted', status);
++BlenoBindings.prototype._processSetServices = function() {
++  log.debug('_processSetServices');
 +
-+  if (status !== 0) {
-+    const error = new Error('Failed to remove old service, status ' + status);
-+    this.failSetServices(error);
-+    return;
-+  }
++  assert(this._pendingSetServices);
 +
-+  this.serviceHandle = null;
-+  this.attributeMap.clear();
-+  this.pendingNotifyCallbacks.length = 0;
-+
-+  try {
-+    this.processSetServices();
-+  } catch(error) {
-+    this.failSetServices(error);
-+    throw error;
-+  }
-+};
-+
-+BlenoBindings.prototype.processSetServices = function() {
-+  log.debug('processSetServices');
-+
-+  assert(this.pendingSetServices);
-+
-+  if (!this.pendingSetServices.length) {
-+    this.pendingSetServices = null;
++  if (!this._pendingSetServices.length) {
++    this._pendingSetServices = null;
 +    this.emit('servicesSet');
 +    return;
 +  }
 +
-+  const service = this.pendingSetServices[0];
++  const service = this._pendingSetServices[0];
 +  const attributes = [];
 +
 +  let characteristicCount = 0;
@@ -325,7 +368,7 @@ index 0000000..b32a80c
 +
 +    for (let descriptor of characteristic.descriptors) {
 +      if (!(descriptor instanceof events.EventEmitter)) {
-+        descriptor = new DescriptorWrapper(descriptor);
++        descriptor = new DescriptorEventEmitter(descriptor);
 +      }
 +      attributes.push({
 +        descriptor: descriptor,
@@ -338,165 +381,28 @@ index 0000000..b32a80c
 +                      (characteristicCount * 2) + // characteristics
 +                      descriptorCount; // descriptors
 +
-+  assert(!this.pendingAttributes);
-+  this.pendingAttributes = attributes;
++  assert(!this._pendingAttributes);
++  this._pendingAttributes = attributes;
 +
 +  log.debug('Creating service \'%s\'', service.uuid);
-+  this.bledroid.command('addService ' + handleCount + ' ' + service.uuid);
++  this._bledroid.command('addService ' + handleCount + ' ' + service.uuid);
 +};
 +
-+BlenoBindings.prototype.onStateChange = function(state) {
-+  log.debug('onStateChange', state);
++BlenoBindings.prototype._addNextServiceAttribute = function() {
++  log.debug('_addNextServiceAttribute');
 +
-+  if (state !== 'poweredOn') {
-+    log.info('Adapter state changed to \'%s\'', state);
++  assert(this._pendingSetServices);
++  assert(this._serviceHandle !== null);
 +
-+    this.attributeMap.clear();
-+    this.pendingSetServices = null;
-+    this.pendingAttributes = null;
-+    this.serviceHandle = null;
-+    this.pendingNotifyCallbacks.length = 0;
-+
-+    if (this.centralMap.size) {
-+      log.warn('Disconnecting existing connections');
-+      // |centralMap| stores several different mappings to the same CentralInfo
-+      // object so we need to de-duplicate them before disconnecting each of
-+      // them.
-+      const uniqueCentralInfos = new Set();
-+      for (let centralInfo of this.centralMap.values()) {
-+        uniqueCentralInfos.add(centralInfo);
-+      }
-+
-+      this.centralMap.clear();
-+
-+      for (let centralInfo of uniqueCentralInfos) {
-+        this.onServerDisconnect(centralInfo.address,
-+                                centralInfo.connectionId);
-+      }
-+    }
-+  }
-+
-+  this.emit('stateChange', state);
-+};
-+
-+BlenoBindings.prototype.onAddressChange = function(address) {
-+  log.debug('onAddressChange', address);
-+
-+  this.emit('addressChange', address);
-+};
-+
-+BlenoBindings.prototype.onAdvertisingStart = function(status) {
-+  log.debug('onAdvertisingStart', status);
-+
-+  if (status) {
-+    const message = 'Failed to start advertising, status ' + status;
-+    log.warn(message);
-+    this.emit('advertisingStart', new Error(message));
-+  }
-+
-+  this.emit('advertisingStart');
-+};
-+
-+BlenoBindings.prototype.onAdvertisingStop = function(status) {
-+  log.debug('onAdvertisingStop', status);
-+
-+  if (status) {
-+    const message = 'Failed to stop advertising, status ' + status;
-+    log.warn(message);
-+    this.emit('advertisingStop', new Error(message));
-+  }
-+
-+  this.emit('advertisingStop');
-+};
-+
-+BlenoBindings.prototype.onServerConnect = function(address, connectionId) {
-+  log.debug('onServerConnect', address, connectionId);
-+
-+  assert(!this.centralMap.has(address),
-+         'Already connected to \'' + address + '\'');
-+  assert(!this.centralMap.has(connectionId),
-+         'Already have an entry for connectionId ' + connectionId);
-+
-+  const centralInfo = new CentralInfo(address, connectionId);
-+  this.centralMap.set(address, centralInfo);
-+  this.centralMap.set(connectionId, centralInfo);
-+
-+  this.emit('accept', address);
-+};
-+
-+BlenoBindings.prototype.onServerDisconnect = function(address, connectionId) {
-+  log.debug('onServerDisconnect', address, connectionId);
-+
-+  if (this.centralMap.has(address)) {
-+    assert.strictEqual(this.centralMap.get(address),
-+                       this.centralMap.get(connectionId));
-+  } else {
-+    log.debug('Unknown central \'%s\', ignoring disconnect', address);
-+    assert(!this.centralMap.has(connectionId),
-+           'Have another entry for connectionId ' + connectionId);
-+    return;
-+  }
-+
-+  this.centralMap.delete(address);
-+  this.centralMap.delete(connectionId);
-+
-+  if (this.pendingNotifyCallbacks.length) {
-+    this.pendingNotifyCallbacks = this.pendingNotifyCallbacks.filter(
-+      function(callback) {
-+        return callback.address !== address;
-+      }
-+    );
-+  }
-+
-+  this.emit('disconnect', address);
-+};
-+
-+BlenoBindings.prototype.onRssiUpdate = function(address, rssi, status) {
-+  log.debug('onRssiUpdate', address, rssi, status);
-+
-+  if (!this.centralMap.has(address)) {
-+    log.warn('Unknown central \'%s\', ignoring rssi update', address);
-+    return;
-+  }
-+
-+  if (status) {
-+    log.warn('Failed to update rssi: %d', status);
-+
-+    // XXX Total hack but we have to emit something or else API consumer
-+    //     callbacks won't be called properly.
-+    rssi = -80;
-+  }
-+
-+  this.emit('rssiUpdate', rssi, address);
-+};
-+
-+BlenoBindings.prototype.onMtuChange = function(connectionId, mtu) {
-+  log.debug('onMtuChange', connectionId, mtu);
-+
-+  const centralInfo = this.centralMap.get(connectionId);
-+  if (!centralInfo) {
-+    log.warn('Unknown connectionId %d, cannot update mtu', connectionId);
-+    return;
-+  }
-+
-+  this.emit('mtuChange', mtu, centralInfo.address);
-+};
-+
-+BlenoBindings.prototype.addNextServiceAttribute = function() {
-+  log.debug('addNextServiceAttribute');
-+
-+  assert(this.pendingSetServices);
-+  assert(this.serviceHandle !== null);
-+
-+  if (this.pendingAttributes.length === 0) {
-+    this.pendingAttributes = null;
++  if (this._pendingAttributes.length === 0) {
++    this._pendingAttributes = null;
 +
 +    log.debug('Starting service');
-+    this.bledroid.command('startService ' + this.serviceHandle);
++    this._bledroid.command('startService ' + this._serviceHandle);
 +    return;
 +  }
 +
-+  const pending = this.pendingAttributes[0];
++  const pending = this._pendingAttributes[0];
 +
 +  if (pending.descriptor) {
 +    const descriptor = pending.descriptor;
@@ -523,8 +429,8 @@ index 0000000..b32a80c
 +      }
 +    }
 +
-+    this.bledroid.command('addDescriptor ' +
-+                          this.serviceHandle + ' ' +
++    this._bledroid.command('addDescriptor ' +
++                          this._serviceHandle + ' ' +
 +                          descriptor.uuid + ' ' +
 +                          permissions);
 +    return;
@@ -588,107 +494,264 @@ index 0000000..b32a80c
 +  }
 +
 +  this.currentAttribute = characteristic;
-+  this.bledroid.command('addCharacteristic ' +
-+                        this.serviceHandle + ' ' +
++  this._bledroid.command('addCharacteristic ' +
++                        this._serviceHandle + ' ' +
 +                        characteristic.uuid + ' ' +
 +                        properties + ' ' +
 +                        permissions);
 +};
 +
-+BlenoBindings.prototype.onServiceAdded = function(status, handle) {
-+  log.debug('onServiceAdded', status, handle);
++BlenoBindings.prototype._onStateChange = function(state) {
++  log.debug('_onStateChange', state);
 +
-+  assert(this.serviceHandle === null);
++  if (state !== 'poweredOn') {
++    log.info('Adapter state changed to \'%s\'', state);
 +
-+  if (!this.pendingSetServices) {
++    this._attributeMap.clear();
++    this._pendingSetServices = null;
++    this._pendingAttributes = null;
++    this._serviceHandle = null;
++    this._pendingNotifyCallbacks.length = 0;
++
++    if (this._centralMap.size) {
++      log.warn('Disconnecting existing connections');
++      // |_centralMap| stores several different mappings to the same CentralInfo
++      // object so we need to de-duplicate them before disconnecting each of
++      // them.
++      const uniqueCentralInfos = new Set();
++      for (let centralInfo of this._centralMap.values()) {
++        uniqueCentralInfos.add(centralInfo);
++      }
++
++      this._centralMap.clear();
++
++      for (let centralInfo of uniqueCentralInfos) {
++        this._onServerDisconnect(centralInfo.address,
++                                 centralInfo.connectionId);
++      }
++    }
++  }
++
++  this.emit('stateChange', state);
++};
++
++BlenoBindings.prototype._onAddressChange = function(address) {
++  log.debug('_onAddressChange', address);
++
++  this.emit('addressChange', address);
++};
++
++BlenoBindings.prototype._onAdvertisingStart = function(status) {
++  log.debug('_onAdvertisingStart', status);
++
++  if (status) {
++    const message = 'Failed to start advertising, status ' + status;
++    log.warn(message);
++    this.emit('advertisingStart', new Error(message));
++  }
++
++  this.emit('advertisingStart');
++};
++
++BlenoBindings.prototype._onAdvertisingStop = function(status) {
++  log.debug('_onAdvertisingStop', status);
++
++  if (status) {
++    const message = 'Failed to stop advertising, status ' + status;
++    log.warn(message);
++    this.emit('advertisingStop', new Error(message));
++  }
++
++  this.emit('advertisingStop');
++};
++
++BlenoBindings.prototype._onRssiUpdate = function(address, rssi, status) {
++  log.debug('_onRssiUpdate', address, rssi, status);
++
++  if (!this._centralMap.has(address)) {
++    log.warn('Unknown central \'%s\', ignoring rssi update', address);
++    return;
++  }
++
++  if (status) {
++    log.warn('Failed to update rssi: %d', status);
++
++    // XXX Total hack but we have to emit something or else API consumer
++    //     callbacks won't be called properly.
++    rssi = -80;
++  }
++
++  this.emit('rssiUpdate', rssi, address);
++};
++
++BlenoBindings.prototype._onServerConnect = function(address, connectionId) {
++  log.debug('_onServerConnect', address, connectionId);
++
++  assert(!this._centralMap.has(address),
++         'Already connected to \'' + address + '\'');
++  assert(!this._centralMap.has(connectionId),
++         'Already have an entry for connectionId ' + connectionId);
++
++  const centralInfo = new CentralInfo(address, connectionId);
++  this._centralMap.set(address, centralInfo);
++  this._centralMap.set(connectionId, centralInfo);
++
++  this.emit('accept', address);
++};
++
++BlenoBindings.prototype._onServerDisconnect = function(address, connectionId) {
++  log.debug('_onServerDisconnect', address, connectionId);
++
++  if (this._centralMap.has(address)) {
++    assert.strictEqual(this._centralMap.get(address),
++                       this._centralMap.get(connectionId));
++  } else {
++    log.debug('Unknown central \'%s\', ignoring disconnect', address);
++    assert(!this._centralMap.has(connectionId),
++           'Have another entry for connectionId ' + connectionId);
++    return;
++  }
++
++  this._centralMap.delete(address);
++  this._centralMap.delete(connectionId);
++
++  if (this._pendingNotifyCallbacks.length) {
++    this._pendingNotifyCallbacks = this._pendingNotifyCallbacks.filter(
++      function(callback) {
++        return callback.address !== address;
++      }
++    );
++  }
++
++  this.emit('disconnect', address);
++};
++
++BlenoBindings.prototype._onMtuChange = function(connectionId, mtu) {
++  log.debug('_onMtuChange', connectionId, mtu);
++
++  const centralInfo = this._centralMap.get(connectionId);
++  if (!centralInfo) {
++    log.warn('Unknown connectionId %d, cannot update mtu', connectionId);
++    return;
++  }
++
++  this.emit('mtuChange', mtu, centralInfo.address);
++};
++
++BlenoBindings.prototype._onServiceAdded = function(status, handle) {
++  log.debug('_onServiceAdded', status, handle);
++
++  assert(this._serviceHandle === null);
++
++  if (!this._pendingSetServices) {
 +    log.warn('Adapter reset while adding service');
 +    return;
 +  }
 +
-+
 +  if (status) {
 +    const error = new Error('Failed to add service, status ' + status);
-+    this.failSetServices(error);
++    this._failSetServices(error);
 +    return;
 +  }
 +
-+  this.serviceHandle = handle;
++  this._serviceHandle = handle;
 +  try {
-+    this.addNextServiceAttribute();
++    this._addNextServiceAttribute();
 +  } catch(error) {
-+    this.failSetServices(error);
++    this._failSetServices(error);
 +    throw error;
 +  }
 +};
 +
-+BlenoBindings.prototype.onAttributeAdded = function(status, handle) {
-+  log.debug('onAttributeAdded', status, handle);
++BlenoBindings.prototype._onServiceDeleted = function(status) {
++  log.debug('_onServiceDeleted', status);
 +
-+  if (!this.pendingSetServices) {
++  if (status !== 0) {
++    const error = new Error('Failed to remove old service, status ' + status);
++    this._failSetServices(error);
++    return;
++  }
++
++  this._serviceHandle = null;
++  this._attributeMap.clear();
++  this._pendingNotifyCallbacks.length = 0;
++
++  try {
++    this._processSetServices();
++  } catch(error) {
++    this._failSetServices(error);
++    throw error;
++  }
++};
++
++BlenoBindings.prototype._onAttributeAdded = function(status, handle) {
++  log.debug('_onAttributeAdded', status, handle);
++
++  if (!this._pendingSetServices) {
 +    log.warn('Adapter reset while adding attributes');
 +    return;
 +  }
 +
-+  assert(this.serviceHandle !== null);
-+  assert(this.pendingAttributes);
++  assert(this._serviceHandle !== null);
++  assert(this._pendingAttributes);
 +
 +  if (status) {
 +    const error = new Error('Failed to add attribute, status ' + status);
-+    this.attributeMap.clear();
-+    this.failSetServices(error);
++    this._attributeMap.clear();
++    this._failSetServices(error);
 +    return;
 +  }
 +
-+  const complete = this.pendingAttributes.shift();
++  const complete = this._pendingAttributes.shift();
 +
 +  const attribute = complete.characteristic || complete.descriptor;
 +  assert(attribute);
 +
-+  this.attributeMap.set(handle, attribute);
-+  this.attributeMap.set(attribute, handle);
++  this._attributeMap.set(handle, attribute);
++  this._attributeMap.set(attribute, handle);
 +
 +  try {
-+    this.addNextServiceAttribute();
++    this._addNextServiceAttribute();
 +  } catch(error) {
-+    this.attributeMap.clear();
-+    this.failSetServices(error);
++    this._attributeMap.clear();
++    this._failSetServices(error);
 +    throw error;
 +  }
 +};
 +
-+BlenoBindings.prototype.onServiceStarted = function(status) {
-+  log.debug('onServiceStarted', status);
++BlenoBindings.prototype._onServiceStarted = function(status) {
++  log.debug('_onServiceStarted', status);
 +
-+  if (!this.pendingSetServices) {
++  if (!this._pendingSetServices) {
 +    log.warn('Adapter reset while starting service');
 +    return;
 +  }
 +
-+  assert(this.serviceHandle !== null);
-+  assert(!this.pendingAttributes);
++  assert(this._serviceHandle !== null);
++  assert(!this._pendingAttributes);
 +
-+  this.pendingSetServices = null;
++  this._pendingSetServices = null;
 +
 +  if (status) {
 +    const error = new Error('Failed to start service, status ' + status);
-+    this.failSetServices(error);
++    this._failSetServices(error);
 +    return;
 +  }
 +
 +  this.emit('servicesSet');
 +};
 +
-+BlenoBindings.prototype.onServiceStopped = function(status) {
-+  log.debug('onServiceStopped', status);
++BlenoBindings.prototype._onServiceStopped = function(status) {
++  log.debug('_onServiceStopped', status);
 +};
 +
-+BlenoBindings.prototype.onReadAttribute = function(connectionId,
-+                                                   transactionId,
-+                                                   address,
-+                                                   handle,
-+                                                   offset,
-+                                                   isLong) {
-+  log.debug('onReadAttribute',
++BlenoBindings.prototype._onReadAttribute = function(connectionId,
++                                                    transactionId,
++                                                    address,
++                                                    handle,
++                                                    offset,
++                                                    isLong) {
++  log.debug('_onReadAttribute',
 +            connectionId,
 +            transactionId,
 +            address,
@@ -696,24 +759,24 @@ index 0000000..b32a80c
 +            offset,
 +            isLong);
 +
-+  if (this.centralMap.has(address)) {
-+    assert.strictEqual(this.centralMap.get(address),
-+                       this.centralMap.get(connectionId));
++  if (this._centralMap.has(address)) {
++    assert.strictEqual(this._centralMap.get(address),
++                       this._centralMap.get(connectionId));
 +  } else {
 +    log.warn('Unknown central \'%s\', ignoring read request', address);
-+    assert(!this.centralMap.has(connectionId),
++    assert(!this._centralMap.has(connectionId),
 +           'Have another entry for connectionId ' + connectionId);
 +    return;
 +  }
 +
-+  const attribute = this.attributeMap.get(handle);
++  const attribute = this._attributeMap.get(handle);
 +  if (!attribute) {
 +    log.warn('Unknown attribute handle %d, ignoring read request', handle);
 +    return;
 +  }
 +
 +  const callback = function(result, data) {
-+    log.debug('onReadAttribute.callback',
++    log.debug('_onReadAttribute.callback',
 +              result,
 +              '<Buffer ' + data.length + '>',
 +              address);
@@ -725,7 +788,7 @@ index 0000000..b32a80c
 +      }
 +      hexdata = data.toString('hex');
 +    }
-+    this.bledroid.command('attributeResponse ' +
++    this._bledroid.command('attributeResponse ' +
 +                          connectionId + ' ' +
 +                          transactionId + ' ' +
 +                          handle + ' ' +
@@ -737,15 +800,15 @@ index 0000000..b32a80c
 +  attribute.emit('readRequest', offset, callback, address);
 +};
 +
-+BlenoBindings.prototype.onWriteAttribute = function(connectionId,
-+                                                    transactionId,
-+                                                    address,
-+                                                    handle,
-+                                                    offset,
-+                                                    needResponse,
-+                                                    isPreparedWrite,
-+                                                    data) {
-+  log.debug('onWriteAttribute',
++BlenoBindings.prototype._onWriteAttribute = function(connectionId,
++                                                     transactionId,
++                                                     address,
++                                                     handle,
++                                                     offset,
++                                                     needResponse,
++                                                     isPreparedWrite,
++                                                     data) {
++  log.debug('_onWriteAttribute',
 +            connectionId,
 +            transactionId,
 +            address,
@@ -755,17 +818,17 @@ index 0000000..b32a80c
 +            isPreparedWrite,
 +            '<Buffer ' + data.length + '>');
 +
-+  if (this.centralMap.has(address)) {
-+    assert.strictEqual(this.centralMap.get(address),
-+                       this.centralMap.get(connectionId));
++  if (this._centralMap.has(address)) {
++    assert.strictEqual(this._centralMap.get(address),
++                       this._centralMap.get(connectionId));
 +  } else {
 +    log.warn('Unknown central \'%s\', ignoring write request', address);
-+    assert(!this.centralMap.has(connectionId),
++    assert(!this._centralMap.has(connectionId),
 +           'Have another entry for connectionId ' + connectionId);
 +    return;
 +  }
 +
-+  const attribute = this.attributeMap.get(handle);
++  const attribute = this._attributeMap.get(handle);
 +  if (!attribute) {
 +    log.warn('Unknown attribute handle %d, ignoring write request', handle);
 +    return;
@@ -777,9 +840,9 @@ index 0000000..b32a80c
 +  }
 +
 +  const callback = function(result) {
-+    log.debug('onWriteAttribute.callback', result, address);
++    log.debug('_onWriteAttribute.callback', result, address);
 +    if (needResponse) {
-+      this.bledroid.command('attributeResponse ' +
++      this._bledroid.command('attributeResponse ' +
 +                            connectionId + ' ' +
 +                            transactionId + ' ' +
 +                            handle + ' ' +
@@ -795,76 +858,21 @@ index 0000000..b32a80c
 +                 address);
 +};
 +
-+BlenoBindings.prototype.disconnect = function(address) {
-+  log.debug('disconnect', address);
++BlenoBindings.prototype._onNotifySent = function(connectionId, status) {
++  log.debug('_onNotifySent', connectionId, status);
 +
-+  const connectionInfo = this.centralMap.get(address);
-+  if (!connectionInfo) {
-+    log.warn('Unknown central \'%s\', cannot disconnect', address);
-+    return;
-+  }
-+
-+  this.bledroid.command('disconnectServer ' +
-+                        address.replace(/:/g, '') + ' ' +
-+                        connectionInfo.connectionId);
-+};
-+
-+BlenoBindings.prototype.sendNotify = function(address,
-+                                              characteristic,
-+                                              needResponse,
-+                                              data) {
-+  log.debug('sendNotify',
-+            address,
-+            characteristic.uuid,
-+            needResponse,
-+            '<Buffer ' + data.length + '>');
-+
-+  const connectionInfo = this.centralMap.get(address);
-+  if (!connectionInfo) {
-+    log.warn('Unknown central \'%s\', cannot send notification', address);
-+    return;
-+  }
-+
-+  if (!this.attributeMap.has(characteristic)) {
-+    log.warn('Unknown characteristic \'%s\', cannot send notification',
-+             characteristic.uuid);
-+    return;
-+  }
-+
-+  const handle = this.attributeMap.get(characteristic);
-+
-+  let hexdata = '';
-+  if (data.length) {
-+    hexdata = ' ' + data.toString('hex');
-+  }
-+
-+  this.bledroid.command('sendNotify ' +
-+                        connectionInfo.connectionId + ' ' +
-+                        handle + ' ' +
-+                        (needResponse ? 1 : 0) + ' ' +
-+                        data.length +
-+                        hexdata);
-+
-+  this.pendingNotifyCallbacks.push(new PendingNotifyCallback(address,
-+                                                             characteristic,
-+                                                             needResponse));
-+};
-+
-+BlenoBindings.prototype.onNotifySent = function(connectionId, status) {
-+  log.debug('onNotifySent', connectionId, status);
-+
-+  const connectionInfo = this.centralMap.get(connectionId);
++  const connectionInfo = this._centralMap.get(connectionId);
 +  if (!connectionInfo) {
 +    log.warn('Unknown connectionId %d, cannot call notification callback');
 +    return;
 +  }
 +
-+  if (!this.pendingNotifyCallbacks.length) {
++  if (!this._pendingNotifyCallbacks.length) {
 +    log.warn('No pending notify callbacks');
 +    return;
 +  }
 +
-+  const pendingCallback = this.pendingNotifyCallbacks[0];
++  const pendingCallback = this._pendingNotifyCallbacks[0];
 +  if (pendingCallback.address !== connectionInfo.address) {
 +    log.warn('Pending notify callback address mismatch',
 +             pendingCallback.address,
@@ -872,7 +880,7 @@ index 0000000..b32a80c
 +    return;
 +  }
 +
-+  this.pendingNotifyCallbacks.shift();
++  this._pendingNotifyCallbacks.shift();
 +
 +  if (status) {
 +    log.warn('Failed to send notification, status %d', status);
@@ -1089,12 +1097,12 @@ index 0000000..66ac767
 +};
 +
 +module.exports = CCCDescriptor;
-diff --git a/lib/android/descriptor-wrapper.js b/lib/android/descriptor-wrapper.js
+diff --git a/lib/android/descriptor-event-emitter.js b/lib/android/descriptor-event-emitter.js
 new file mode 100644
-index 0000000..dde0b97
+index 0000000..778cf66
 --- /dev/null
-+++ b/lib/android/descriptor-wrapper.js
-@@ -0,0 +1,92 @@
++++ b/lib/android/descriptor-event-emitter.js
+@@ -0,0 +1,89 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -1106,14 +1114,15 @@ index 0000000..dde0b97
 +
 +const log = (function() {
 +  const debug = require('debug');
++  const prefix = 'silk-bleno:descriptor-event-emitter:';
 +  return {
-+    debug: debug('silk-bleno:descriptor-wrapper:debug'),
-+    info: debug('silk-bleno:descriptor-wrapper:info'),
-+    warn: debug('silk-bleno:descriptor-wrapper:warn'),
++    debug: debug(prefix + 'debug'),
++    info: debug(prefix + 'info'),
++    warn: debug(prefix + 'warn'),
 +  };
 +})();
 +
-+function DescriptorWrapper(descriptor, options) {
++function DescriptorEventEmitter(descriptor, options) {
 +  assert(descriptor instanceof Descriptor);
 +  options = options || {};
 +
@@ -1158,12 +1167,12 @@ index 0000000..dde0b97
 +  this.on('writeRequest', this.onWriteRequest.bind(this));
 +}
 +
-+util.inherits(DescriptorWrapper, events.EventEmitter);
++util.inherits(DescriptorEventEmitter, events.EventEmitter);
 +
-+DescriptorWrapper.prototype.onReadRequest = function(offset,
++DescriptorEventEmitter.prototype.onReadRequest = function(offset,
 +                                                     callback,
 +                                                     address) {
-+  log.debug('DescriptorWrapper.onReadRequest', offset, address);
++  log.debug('onReadRequest', offset, address);
 +
 +  if (Buffer.isBuffer(this.value) || typeof this.value === 'string') {
 +    callback(Characteristic.RESULT_SUCCESS, this.value);
@@ -1172,21 +1181,17 @@ index 0000000..dde0b97
 +  }
 +};
 +
-+DescriptorWrapper.prototype.onWriteRequest = function(data,
++DescriptorEventEmitter.prototype.onWriteRequest = function(data,
 +                                                      offset,
 +                                                      withoutResponse,
 +                                                      callback,
 +                                                      address) {
-+  log.debug('DescriptorWrapper.onWriteRequest',
-+            data,
-+            offset,
-+            withoutResponse,
-+            address);
++  log.debug('onWriteRequest', data, offset, withoutResponse, address);
 +
 +  callback(Characteristic.RESULT_UNLIKELY_ERROR);
 +};
 +
-+module.exports = DescriptorWrapper;
++module.exports = DescriptorEventEmitter;
 diff --git a/lib/bleno.js b/lib/bleno.js
 index 0d4f755..cdb49a3 100644
 --- a/lib/bleno.js

@@ -19,20 +19,42 @@ if [ -z "$CAFFE_ROOT" ]; then
     popd
   fi
 
+  # Check for NVIDIA GPU. If NVIDIA GPU is unavailable
+  # `nvidia-smi` command returns with an empty string.
+  # Given that scenario revert back to CPU mode, else
+  # compile with GPU support
+  if which nvidia-smi; then
+    hasGPU=true
+  else
+    hasGPU=false
+  fi
+
   # Install caffe
   if [[ ! -f caffe/build/lib/libcaffe.dylib && ! -f caffe/build/lib/libcaffe.so ]]; then
     echo "Compiling caffe"
     pushd caffe
     mkdir -p build
     pushd build
+
+    # Enable CPU/GPU
+    if $hasGPU; then
+      cpu_mode=OFF
+      cudnn_mode=ON
+    else
+      cpu_mode=ON
+      cudnn_mode=OFF
+    fi
+
     cmake \
-      -DCPU_ONLY=ON \
+      -DCPU_ONLY=$cpu_mode \
+      -DUSE_CUDNN=$cudnn_mode \
       -DBUILD_python=OFF \
       -DBUILD_matlab=OFF \
       -DUSE_LEVELDB=OFF \
       -DUSE_LMDB=OFF \
       -DBUILD_docs=OFF \
       ..
+
     make all $J
     popd
     popd

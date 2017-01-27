@@ -1,10 +1,22 @@
 <?xml version="1.0"?>
 <manifest>
-  <remote name="github" fetch="git://github.com/" sync-j="4"/>
+  <remote name="github"
+          fetch="git://github.com/"
+          sync-j="4"/>
+  <remote name="linaro"
+          fetch="git://android.git.linaro.org"
+          sync-j="4"/>
+
   <project name="nodejs/node"
            path="external/node"
            remote="github"
            revision="refs/tags/v6.9.1" clone-depth="1"/>
+
+  <project name="platform/external/busybox"
+           path="external/busybox"
+           remote="linaro"
+           revision="linaro-marshmallow"
+           clone-depth="1"/>
 
   <project name="mozilla-b2g/librecovery"
            path="external/librecovery"

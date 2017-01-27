@@ -125,6 +125,9 @@ PRODUCT_PACKAGES += silk-lights
 # vendor/silk/silk-sensors
 PRODUCT_PACKAGES += silk-sensors
 
+# external/busybox/
+PRODUCT_PACKAGES += busybox
+
 # external/librecovery/
 ENABLE_LIBRECOVERY := true
 PRODUCT_PACKAGES += librecovery_test

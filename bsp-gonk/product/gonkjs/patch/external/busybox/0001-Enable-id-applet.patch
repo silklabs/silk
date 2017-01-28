@@ -1,0 +1,25 @@
+From 10526e7f1987722ca136b1de6b5e2e4804f77f44 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 28 Jan 2017 15:10:08 -0800
+Subject: [PATCH] Enable id applet
+
+---
+ configs/android_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configs/android_defconfig b/configs/android_defconfig
+index e7c98fe..e5d009d 100644
+--- a/configs/android_defconfig
++++ b/configs/android_defconfig
+@@ -196,7 +196,7 @@ CONFIG_CAT=y
+ # CONFIG_FEATURE_DATE_NANO is not set
+ # CONFIG_FEATURE_DATE_COMPAT is not set
+ # CONFIG_HOSTID is not set
+-# CONFIG_ID is not set
++CONFIG_ID=y
+ # CONFIG_GROUPS is not set
+ CONFIG_TEST=y
+ CONFIG_FEATURE_TEST_64=y
+-- 
+2.11.0
+

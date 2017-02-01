@@ -10,8 +10,6 @@
         '<!(echo $NNPACK_ROOT/include)',
         '<!(echo $NNPACK_ROOT/third-party/pthreadpool/include)'
       ],
-      'ldflags': [
-      ],
       'cflags_cc': [
         '-std=c++11',
         '-fexceptions',
@@ -21,7 +19,7 @@
       'dependencies': [
       ],
       'conditions': [
-        [ 'OS==\"android\"', {
+        [ 'OS=="android"', {
           'include_dirs': [
             '<!(echo \" -I $ANDROID_BUILD_TOP/external/NNPACK/include \")',
             '<!(echo \" -I $ANDROID_BUILD_TOP/external/pthreadpool/include \")',
@@ -30,9 +28,13 @@
             '<!(echo $Android_mk__LIBRARIES)',
           ],
         }],
-        ['OS=="win"', {
-          'dependencies': [
-          ]
+        [ 'OS=="linux"', {
+          'ldflags': [
+            '-L<!(echo "$NNPACK_ROOT/lib")',
+          ],
+          'libraries': [
+            '-lnnpack',
+          ],
         }],
         ['OS=="mac"', {
           'defines': [

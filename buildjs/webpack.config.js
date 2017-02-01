@@ -1,3 +1,4 @@
+/* @noflow */
 'use strict';
 
 const path = require('path');
@@ -6,7 +7,6 @@ const lookup = require('look-up');
 
 const findPackage = require('./src/find_package.js');
 
-const webpack = require('webpack');
 const resolve = require('resolve');
 const mkdirp = require('mkdirp');
 
@@ -18,8 +18,10 @@ const pkg = require(path.join(modulePath, 'package.json'));
 const localWebpack = path.join(modulePath, 'webpack.config.js');
 
 // Walk up cwd looking for a project-level webpack.config.js
-const projectWebpack = lookup('webpack.config.js',
-                              {cwd: path.resolve(path.dirname(localWebpack), '..')});
+const projectWebpack = lookup(
+  'webpack.config.js',
+  {cwd: path.resolve(path.dirname(localWebpack), '..')}
+);
 
 let babelCache;
 if (!process.env.BABEL_CACHE || process.env.BABEL_CACHE === '1') {
@@ -30,7 +32,6 @@ if (!process.env.BABEL_CACHE || process.env.BABEL_CACHE === '1') {
   babelCache = false;
 }
 
-const name = pkg.name;
 let main = pkg.main || './index.js';
 if (!path.extname(main)) {
   main += '.js';
@@ -134,7 +135,7 @@ const externals = [
       return;
     }
 
-    resolve(request,  {
+    resolve(request, {
       basedir: context,
       package: pkg,
       extensions: ['.js', '.json'],
@@ -146,7 +147,7 @@ const externals = [
       }
       callback(null, false);
     });
-  }
+  },
 ];
 
 const entry = {};
@@ -181,19 +182,19 @@ const config = {
       require('babel-preset-silk-node6'),
     ],
   },
-  module : {
+  module: {
     loaders: [
-      { test: /\.json$/, loader: require.resolve('json-loader') },
+      {test: /\.json$/, loader: require.resolve('json-loader')},
       {
         test: /\.js$/,
         loader: require.resolve('babel-loader'),
         query: {
           babelrc: false,
-        }
-      }
-    ]
-  }
-}
+        },
+      },
+    ],
+  },
+};
 
 function applyWebpackConfig(webpackConfig) {
   if (fs.existsSync(webpackConfig)) {

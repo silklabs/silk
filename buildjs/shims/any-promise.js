@@ -1,1 +1,2 @@
+/* @noflow */
 module.exports = Promise;

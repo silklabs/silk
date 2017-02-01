@@ -23,6 +23,7 @@
     "babel-preset-silk-node6": "^1.5.0",
     "copy-webpack-plugin": "2.1.5",
     "json-loader": "0.5.4",
+    "look-up": "0.8.3",
     "node-gyp": "3.3.1",
     "resolve": "1.1.7",
     "mkdirp": "0.5.1",

@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const lookup = require('look-up');
 
 const findPackage = require('./src/find_package.js');
 
@@ -16,6 +17,9 @@ const modulePath = findPackage(process.env.SILK_BUILDJS_SOURCE);
 const pkg = require(path.join(modulePath, 'package.json'));
 const localWebpack = path.join(modulePath, 'webpack.config.js');
 
+// Walk up cwd looking for a project-level webpack.config.js
+const projectWebpack = lookup('webpack.config.js',
+                              {cwd: path.resolve(path.dirname(localWebpack), '..')});
 
 let babelCache;
 if (!process.env.BABEL_CACHE || process.env.BABEL_CACHE === '1') {
@@ -63,64 +67,35 @@ if (!main) {
 const externals = [
   // TODO: auto generate these ...
   'bleno',
-  'kissfft',
   'lame',
   'mic',
-  'nn.js',
   'noble',
   'node-hid',
-  'node-nnpack',
-  'node-opencl',
-  'node-qsml',
-  'node-shm',
   'node-wav',
-  'node-webrtc',
   'opencv',
   'segfault-handler',
   'silk-alog',
   'silk-audioplayer',
   'silk-battery',
   'silk-bledroid',
-  'silk-bsp-version',
   'silk-camera',
+  'silk-capture',
   'silk-core-version',
-  'silk-crashreporter',
-  'silk-cv',
-  'silk-device-api',
-  'silk-device-ui',
-  'silk-dialog-engine',
-  'silk-dialog-script',
-  'silk-dialog-storage',
-  'silk-factory-reset',
   'silk-gc1',
   'silk-input',
-  'silk-audio-dnn',
-  'silk-lifx',
   'silk-lights',
   'silk-log',
-  'silk-modwatcher',
   'silk-movie',
-  'silk-netstatus',
   'silk-ntp',
-  'silk-outbox',
-  'silk-process',
   'silk-properties',
-  'silk-say',
   'silk-sensors',
-  'silk-sonos',
   'silk-speaker',
-  'silk-streams',
-  'silk-stt',
   'silk-sysutils',
   'silk-tts',
-  'silk-update',
-  'silk-vad',
   'silk-vibrator',
   'silk-volume',
-  'silk-watchdog',
   'silk-wifi',
   'sodium',
-  'v8-profiler',
   (context, request, callback) => {
     if (resolve.isCore(request)) {
       callback(null, true);
@@ -220,20 +195,23 @@ const config = {
   }
 }
 
-if (fs.existsSync(localWebpack)) {
-  console.log(`${localWebpack} found agumenting buildjs ...`);
-  const rules = Object.assign({}, require(localWebpack));
-  if (rules.externals && Array.isArray(rules.externals)) {
-    // Order is important here the rules should be ordered such that the
-    // webpack.config comes from the module first and our global rules second.
-    config.externals = rules.externals.concat(config.externals);
-    delete rules.externals;
+function applyWebpackConfig(webpackConfig) {
+  if (fs.existsSync(webpackConfig)) {
+    console.log(`${webpackConfig} found agumenting buildjs ...`);
+    const rules = Object.assign({}, require(webpackConfig));
+    if (rules.externals && Array.isArray(rules.externals)) {
+      // Order is important here the rules should be ordered such that the
+      // webpack.config comes from the module first and our global rules second.
+      config.externals = rules.externals.concat(config.externals);
+      delete rules.externals;
+    }
+    if (rules.loaders && Array.isArray(rules.loaders)) {
+      config.module.loaders = rules.loaders.concat(config.module.loaders);
+      delete rules.loaders;
+    }
+    Object.assign(config, rules);
   }
-  if (rules.loaders && Array.isArray(rules.loaders)) {
-    config.module.loaders = rules.loaders.concat(config.module.loaders);
-    delete rules.loaders;
-  }
-  Object.assign(config, rules);
 }
+[projectWebpack, localWebpack].map(applyWebpackConfig);
 
 module.exports = config;

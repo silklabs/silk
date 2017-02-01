@@ -5,8 +5,4 @@ module.exports = {
       'any-promise': require.resolve('./lib/shims/any-promise.js'),
     },
   },
-  externals: [
-    'silk-alog',
-    'silk-sysutils',
-  ],
 };

@@ -1,0 +1,23 @@
+{
+  "name": "eslint-plugin-silk",
+  "version": "1.10.0",
+  "description": "Silk eslint plugin",
+  "main": "index.js",
+  "author": "Silk Labs Inc.",
+  "license": "MIT",
+  "keywords": [
+    "silk"
+  ],
+  "bugs": {
+    "url": "https://github.com/silklabs/silk/issues"
+  },
+  "dependencies": {
+    "eslint-plugin-import": "2.2.0",
+    "minimatch": "3.0.3",
+    "read-pkg-up": "1.0.1"
+  },
+  "peerDependencies": {
+    "babel-eslint": "7.1.1",
+    "eslint": "3.11.1"
+  }
+}

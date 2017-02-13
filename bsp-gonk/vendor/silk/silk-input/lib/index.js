@@ -3,11 +3,64 @@
  * @private
  */
 
+import invariant from 'assert';
 import events from 'events';
 import createLog from 'silk-log';
 import fs from 'fs';
 import * as util from 'silk-sysutils';
 const log = createLog('input');
+
+/**
+ * Key input event
+ *
+ * @name InputEventKey
+ * @typedef {Object} InputEventKey
+ *
+ * @property {string} type 'up', 'down', or 'repeat'
+ * @property {number} keyCode Keyboard code
+ * @property {string} keyId String key id
+ * @property {number} timeS Timestamp (Seconds part)
+ * @property {number} timeMS  Timestamp (Microseconds part)
+ * @memberof silk-input
+ */
+export type InputEventKey = {
+  type: 'keyup' | 'keydown' | 'keyrepeat';
+  timeS: number;
+  timeMS: number;
+  keyCode: number;
+  keyId: string;
+};
+
+const keyCodeToId = {
+  '113': 'mute',
+  '114': 'volumedown',
+  '115': 'volumeup',
+  '116': 'power',
+  '224': 'brightnessdown',
+  '225': 'brightnessup',
+  '330': 'touch',
+};
+
+/**
+ * Miscellaneous input event
+ *
+ * @name InputEventMisc
+ * @typedef {Object} InputEventMisc
+ *
+ * @property {string} type misc
+ * @property {number} value miscellaneous value
+ * @property {number} timeS Timestamp (Seconds part)
+ * @property {number} timeMS  Timestamp (Microseconds part)
+ * @memberof silk-input
+ */
+export type InputEventMisc = {
+  type: 'misc',
+  value: number;
+  timeS: number;
+  timeMS: number;
+};
+
+export type InputEvent = InputEventKey | InputEventMisc;
 
 //
 // Note: The InputDevice class has been inspired by
@@ -18,6 +71,7 @@ class InputDevice extends events.EventEmitter {
   bufferSize: number;
   dev: string;
   fd: number;
+  event: ?InputEvent;
 
   constructor(dev: string) {
     super();
@@ -36,55 +90,67 @@ class InputDevice extends events.EventEmitter {
   }
 
   _read() {
-    fs.read(this.fd, this.buf, 0, this.bufferSize, null,
-      (err, bytesRead, buffer) => this._onRead(err, bytesRead, buffer));
+    fs.read(this.fd, this.buf, 0, this.bufferSize, null, this._onRead);
   }
 
-  _onRead(err, bytesRead, buffer) {
+  _onRead = (err, bytesRead, buffer) => {
     if (err) {
       log.warn(`Unable to read ${this.dev}: ${err.toString()}`);
       return;
     }
-    let event;
-    if (buffer.readUInt16LE(8) === 1 /*EV_KEY*/ ) {
+    invariant(bytesRead === this.bufferSize);
+    let [timeS, timeMS, eventType, eventCode, eventValue] = [
+      buffer.readUInt32LE(0),
+      buffer.readUInt32LE(4),
+      buffer.readUInt16LE(8),
+      buffer.readUInt16LE(10),
+      buffer.readUInt16LE(12),
+    ];
 
-      /**
-       * Key event type
-       *
-       * @name KeyEventType
-       * @typedef {Object} KeyEventType
-       *
-       * @property {number} timeS Timestamp (Seconds part)
-       * @property {number} timeMS  Timestamp (Microseconds part)
-       * @property {number} keyCode Keyboard code
-       * @property {string} keyId String key id
-       * @memberof silk-input
-       */
-      event = {
-        timeS: buffer.readUInt32LE(0),
-        timeMS: buffer.readUInt32LE(4),
-        keyCode: buffer.readUInt16LE(10),
-        keyId: 'unknown',
-        type: ['up', 'down', 'repeat'][buffer.readUInt32LE(12)],
-      };
-      const keys = {
-        '113': 'mute',
-        '114': 'volumedown',
-        '115': 'volumeup',
-        '116': 'power',
-        '224': 'brightnessdown',
-        '225': 'brightnessup',
-        '330': 'touch',
-      };
-      if (keys[event.keyCode]) {
-        event.keyId = keys[event.keyCode];
+    switch (eventType) {
+    case 0 /*EV_SYN*/:
+      {
+        const event = this.event;
+        this.event = null;
+        if (event) {
+          log.debug('Input event:', event);
+          this.emit(event.type, event);
+        }
+        break;
       }
+    case 1 /*EV_KEY*/:
+      this.event = {
+        type: ['keyup', 'keydown', 'keyrepeat'][eventValue],
+        timeS,
+        timeMS,
+        keyCode: eventCode,
+        keyId: 'unknown',
+      };
+      if (keyCodeToId[this.event.keyCode]) {
+        this.event.keyId = keyCodeToId[this.event.keyCode];
+      }
+      break;
+
+    case 3 /*EV_ABS*/:
+      switch (eventCode) {
+      case 0x28 /*ABS_MISC*/:
+        this.event = {
+          type: 'misc',
+          timeS,
+          timeMS,
+          value: eventValue,
+        };
+        break;
+
+      default:
+        break;
+      }
+      break;
+
+    default:
+      break;
     }
 
-    if (event) {
-      log.debug(`input event: ${event.type}, ${event.keyId}`);
-      this.emit(event.type, event);
-    }
     this._read();
   }
 }
@@ -141,9 +207,9 @@ export default class Input extends events.EventEmitter {
        * @event up
        * @memberof silk-input
        * @instance
-       * @property {KeyEventType} e
+       * @property {InputEventKey} e
        */
-      d.on('up', e => this.emit('up', e));
+      d.on('keyup', e => this.emit('up', e));
 
       /**
        * This event is emitted when a key is pressed
@@ -151,9 +217,9 @@ export default class Input extends events.EventEmitter {
        * @event down
        * @memberof silk-input
        * @instance
-       * @property {KeyEventType} e
+       * @property {InputEventKey} e
        */
-      d.on('down', e => this.emit('down', e));
+      d.on('keydown', e => this.emit('down', e));
 
       /**
        * This event is emitted when key is pressed and held down
@@ -161,9 +227,20 @@ export default class Input extends events.EventEmitter {
        * @event repeat
        * @memberof silk-input
        * @instance
-       * @property {KeyEventType} e
+       * @property {InputEventKey} e
        */
-      d.on('repeat', e => this.emit('repeat', e));
+      d.on('keyrepeat', e => this.emit('repeat', e));
+
+      /**
+       * This event is emitted on a miscellaneous input
+       *
+       * @event misc
+       * @memberof silk-input
+       * @instance
+       * @property {InputEventMisc} e
+       */
+      d.on('misc', e => this.emit('misc', e));
+
       return d;
     });
   }

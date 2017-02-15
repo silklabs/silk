@@ -189,17 +189,13 @@ NAN_METHOD(Player::SetDataSource) {
     fileName = string(*Nan::Utf8String(info[1]->ToString()));
   }
 
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->setDataSource(dataSourceType, fileName.c_str());
-  }
+  self->mStreamPlayer->setDataSource(dataSourceType, fileName.c_str());
 }
 
 NAN_METHOD(Player::Start) {
   SETUP_FUNCTION(Player)
 
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->start();
-  }
+  self->mStreamPlayer->start();
 }
 
 NAN_METHOD(Player::Write) {
@@ -214,10 +210,7 @@ NAN_METHOD(Player::Write) {
   ALOGV("Received %d bytes to be written", len);
 
   // Buffer audio data to be played by stream player
-  int written = 0;
-  if (self->mStreamPlayer != NULL) {
-    written = self->mStreamPlayer->write((const void*) buffer, len);
-  }
+  int written = self->mStreamPlayer->write((const void*) buffer, len);
   info.GetReturnValue().Set(Nan::New<Number>(written));
 }
 
@@ -228,43 +221,33 @@ NAN_METHOD(Player::SetVolume) {
     JSTHROW("Invalid number of arguments provided");
   }
 
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->setVolume(info[0]->NumberValue());
-  }
+  self->mStreamPlayer->setVolume(info[0]->NumberValue());
 }
 
 NAN_METHOD(Player::Stop) {
   SETUP_FUNCTION(Player)
 
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->stop();
-    self->mStreamPlayer->reset();
-  }
+  self->mStreamPlayer->stop();
+  self->mStreamPlayer->reset();
 }
 
 NAN_METHOD(Player::Pause) {
   SETUP_FUNCTION(Player)
 
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->stop(true /* paused */);
-  }
+  self->mStreamPlayer->stop(true /* paused */);
 }
 
 NAN_METHOD(Player::Resume) {
   SETUP_FUNCTION(Player)
 
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->start();
-  }
+  self->mStreamPlayer->start();
 }
 
 NAN_METHOD(Player::GetCurrentPosition) {
   SETUP_FUNCTION(Player)
 
   int msec = -1;
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->getCurrentPosition(&msec);
-  }
+  self->mStreamPlayer->getCurrentPosition(&msec);
   info.GetReturnValue().Set(Nan::New<Number>(msec));
 }
 
@@ -272,18 +255,14 @@ NAN_METHOD(Player::GetDuration) {
   SETUP_FUNCTION(Player)
 
   int64_t msec = -1;
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->getDuration(&msec);
-  }
+  self->mStreamPlayer->getDuration(&msec);
   info.GetReturnValue().Set(Nan::New<Number>(msec));
 }
 
 NAN_METHOD(Player::EndOfStream) {
   SETUP_FUNCTION(Player)
 
-  if (self->mStreamPlayer != NULL) {
-    self->mStreamPlayer->eos();
-  }
+  self->mStreamPlayer->eos();
 }
 
 NAN_METHOD(Player::AddEventListener) {

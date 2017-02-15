@@ -7,7 +7,7 @@
   "dependencies": {
     "babel-features": "2.0.1",
     "json-loader": "0.5.4",
-    "webpack": "1.13.0"
+    "webpack": "1.14.0"
   },
   "devDependencies": {
     "babel-cli": "6.18.0",

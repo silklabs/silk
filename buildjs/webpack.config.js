@@ -4,6 +4,7 @@
 const path = require('path');
 const fs = require('fs');
 const lookup = require('look-up');
+const webpack = require('webpack');
 
 const findPackage = require('./src/find_package.js');
 
@@ -194,6 +195,9 @@ const config = {
       },
     ],
   },
+  plugins: [
+    new webpack.optimize.UglifyJsPlugin(),
+  ],
 };
 
 function applyWebpackConfig(webpackConfig) {
@@ -209,6 +213,10 @@ function applyWebpackConfig(webpackConfig) {
     if (rules.loaders && Array.isArray(rules.loaders)) {
       config.module.loaders = rules.loaders.concat(config.module.loaders);
       delete rules.loaders;
+    }
+    if (rules.plugins && Array.isArray(rules.plugins)) {
+      config.module.plugins = rules.plugins.concat(config.module.plugins);
+      delete rules.plugins;
     }
     Object.assign(config, rules);
   }

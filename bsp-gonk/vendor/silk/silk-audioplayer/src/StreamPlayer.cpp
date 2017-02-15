@@ -170,7 +170,7 @@ void StreamPlayer::getCurrentPosition(int* msec) {
   ALOGV("%s", __FUNCTION__);
 
   int64_t timeUs;
-  if (mExtractor->getSampleTime(&timeUs) == OK) {
+  if (mExtractor != NULL && mExtractor->getSampleTime(&timeUs) == OK) {
     *msec = timeUs / 1000;
   } else {
     *msec = -1;

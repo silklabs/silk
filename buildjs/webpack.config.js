@@ -171,7 +171,7 @@ const config = {
   },
   resolve: {
     extensions: ['', '.js', '.json'],
-    // Common "gothcha" modules ...
+    // Common "gotcha" modules ...
     alias: {
       'any-promise': require.resolve('./shims/any-promise.js'),
       'json3': require.resolve('./shims/json3.js'),
@@ -210,12 +210,14 @@ function applyWebpackConfig(webpackConfig) {
       config.externals = rules.externals.concat(config.externals);
       delete rules.externals;
     }
+    // We let individual webpack.config.js files define a top-level
+    // `loaders` field that will get merged into `modules.loaders`.
     if (rules.loaders && Array.isArray(rules.loaders)) {
       config.module.loaders = rules.loaders.concat(config.module.loaders);
       delete rules.loaders;
     }
     if (rules.plugins && Array.isArray(rules.plugins)) {
-      config.module.plugins = rules.plugins.concat(config.module.plugins);
+      config.plugins = rules.plugins.concat(config.plugins);
       delete rules.plugins;
     }
     Object.assign(config, rules);

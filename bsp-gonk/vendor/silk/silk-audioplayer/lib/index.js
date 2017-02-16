@@ -264,7 +264,7 @@ export default class Player extends events.EventEmitter {
 
     if ((this._mediaState !== 'idle') && (this._mediaState !== 'stopped')) {
       this._mediaState = 'stopped';
-      throw new Error(`Invalid state for this operation`);
+      throw new Error(`Invalid state for play operation`);
     }
 
     this._fileName = fileName;
@@ -312,7 +312,7 @@ export default class Player extends events.EventEmitter {
    */
   stop() {
     if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
-      this._onError(`Invalid state for this operation`);
+      this._onError(`Invalid state for stop operation`);
       return;
     }
     this._player.stop();
@@ -325,7 +325,7 @@ export default class Player extends events.EventEmitter {
    */
   pause() {
     if (this._mediaState !== 'playing') {
-      this._onError(`Invalid state for this operation`);
+      this._onError(`Invalid state for pause operation`);
       return;
     }
     this._player.pause();
@@ -338,7 +338,7 @@ export default class Player extends events.EventEmitter {
    */
   resume() {
     if (this._mediaState !== 'paused') {
-      this._onError(`Invalid state for this operation`);
+      this._onError(`Invalid state for resume operation`);
       return;
     }
     this._player.resume();

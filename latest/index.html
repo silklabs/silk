@@ -321,6 +321,68 @@
               
                 
                 <li><a
+                  href='#silk-input'
+                  class=" toggle-sibling">
+                  silk-input
+                  <span class='icon'>▸</span>
+                </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  <ul class='list-reset py1-ul pl1'>
+                    <li class='h5'><span>Static members</span></li>
+                    
+                      <li><a
+                        href='#silk-inputInputEventKey'
+                        class='regular pre-open'>
+                        .InputEventKey
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-inputInputEventMisc'
+                        class='regular pre-open'>
+                        .InputEventMisc
+                      </a></li>
+                    
+                    </ul>
+                  
+                  
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'>Events</li>
+                      
+                        <li><a
+                          href='#silk-input.event:up'
+                          class='regular pre-open'>
+                          ⓔ up
+                        </a></li>
+                      
+                        <li><a
+                          href='#silk-input.event:down'
+                          class='regular pre-open'>
+                          ⓔ down
+                        </a></li>
+                      
+                        <li><a
+                          href='#silk-input.event:repeat'
+                          class='regular pre-open'>
+                          ⓔ repeat
+                        </a></li>
+                      
+                        <li><a
+                          href='#silk-input.event:misc'
+                          class='regular pre-open'>
+                          ⓔ misc
+                        </a></li>
+                      
+                    </ul>
+                  
+                </div>
+                
+                </li>
+              
+                
+                <li><a
                   href='#silk-audioplayer'
                   class=" toggle-sibling">
                   silk-audioplayer
@@ -828,56 +890,6 @@
                           href='#silk-camera.event:mic-data'
                           class='regular pre-open'>
                           ⓔ mic-data
-                        </a></li>
-                      
-                    </ul>
-                  
-                </div>
-                
-                </li>
-              
-                
-                <li><a
-                  href='#silk-input'
-                  class=" toggle-sibling">
-                  silk-input
-                  <span class='icon'>▸</span>
-                </a>
-                
-                <div class='toggle-target display-none'>
-                  
-                  <ul class='list-reset py1-ul pl1'>
-                    <li class='h5'><span>Static members</span></li>
-                    
-                      <li><a
-                        href='#silk-inputKeyEventType'
-                        class='regular pre-open'>
-                        .KeyEventType
-                      </a></li>
-                    
-                    </ul>
-                  
-                  
-                  
-                    <ul class='list-reset py1-ul pl1'>
-                      <li class='h5'>Events</li>
-                      
-                        <li><a
-                          href='#silk-input.event:up'
-                          class='regular pre-open'>
-                          ⓔ up
-                        </a></li>
-                      
-                        <li><a
-                          href='#silk-input.event:down'
-                          class='regular pre-open'>
-                          ⓔ down
-                        </a></li>
-                      
-                        <li><a
-                          href='#silk-input.event:repeat'
-                          class='regular pre-open'>
-                          ⓔ repeat
                         </a></li>
                       
                     </ul>
@@ -3732,6 +3744,481 @@ ntp.on(<span class="hljs-string">'time'</span>, () =&gt; log.info(<span class="h
 
   
 
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='silk-input'>
+      silk-input
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Silk Input</p>
+
+
+  <div class='pre p1 fill-light mt0'>silk-input</div>
+  
+  
+    <p>
+      Extends
+      
+        <a href="https://nodejs.org/api/all.html#all_class_events_eventemitter">events.EventEmitter</a>
+      
+    </p>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Example</div>
+    
+      
+      <pre class='hljs css small'><span class="hljs-meta">'use strict'</span>;
+
+<span class="hljs-keyword">const</span> Input = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-input'</span>).default;
+<span class="hljs-keyword">const</span> log = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-alog'</span>);
+
+<span class="hljs-keyword">let</span> input = <span class="hljs-keyword">new</span> Input();
+input.on(<span class="hljs-string">'down'</span>, e =&gt; log.info(<span class="hljs-string">'Key down event'</span>, <span class="hljs-built_in">JSON</span>.stringify(e)));
+input.on(<span class="hljs-string">'up'</span>, e =&gt; log.info(<span class="hljs-string">'Key up event'</span>, <span class="hljs-built_in">JSON</span>.stringify(e)));</pre>
+    
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Static Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='silk-inputInputEventKey'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>InputEventKey</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Key input event</p>
+
+
+  <div class='pre p1 fill-light mt0'>InputEventKey</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>type</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+          : 'up', 'down', or 'repeat'
+
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>keyCode</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+          : Keyboard code
+
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>keyId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+          : String key id
+
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>timeS</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+          : Timestamp (Seconds part)
+
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>timeMS</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+          : Timestamp (Microseconds part)
+
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-inputInputEventMisc'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>InputEventMisc</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Miscellaneous input event</p>
+
+
+  <div class='pre p1 fill-light mt0'>InputEventMisc</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>type</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+          : misc
+
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>value</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+          : miscellaneous value
+
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>timeS</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+          : Timestamp (Seconds part)
+
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>timeMS</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+          : Timestamp (Microseconds part)
+
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Events</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='silk-input.event:up'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>up</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is emitted when a key is released</p>
+
+
+  <div class='pre p1 fill-light mt0'>up</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>e</span> <code class='quiet'>(InputEventKey)</code>
+          
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-input.event:down'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>down</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is emitted when a key is pressed</p>
+
+
+  <div class='pre p1 fill-light mt0'>down</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>e</span> <code class='quiet'>(InputEventKey)</code>
+          
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-input.event:repeat'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>repeat</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is emitted when key is pressed and held down</p>
+
+
+  <div class='pre p1 fill-light mt0'>repeat</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>e</span> <code class='quiet'>(InputEventKey)</code>
+          
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-input.event:misc'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>misc</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is emitted on a miscellaneous input</p>
+
+
+  <div class='pre p1 fill-light mt0'>misc</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>e</span> <code class='quiet'>(InputEventMisc)</code>
+          
+          
+        </div>
+      
+    </div>
   
 
   
@@ -7827,335 +8314,6 @@ since epoch
           <span class='code bold'>frames</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>)</code>
           : buffer containing the mic data
 
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-</section>
-
-          
-        
-          
-            <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-  <div class='clearfix'>
-    
-    <h3 class='fl m0' id='silk-input'>
-      silk-input
-    </h3>
-    
-    
-  </div>
-  
-
-  <p>Silk Input</p>
-
-
-  <div class='pre p1 fill-light mt0'>silk-input</div>
-  
-  
-    <p>
-      Extends
-      
-        <a href="https://nodejs.org/api/all.html#all_class_events_eventemitter">events.EventEmitter</a>
-      
-    </p>
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Example</div>
-    
-      
-      <pre class='hljs css small'><span class="hljs-meta">'use strict'</span>;
-
-<span class="hljs-keyword">const</span> Input = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-input'</span>).default;
-<span class="hljs-keyword">const</span> log = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-alog'</span>);
-
-<span class="hljs-keyword">let</span> input = <span class="hljs-keyword">new</span> Input();
-input.on(<span class="hljs-string">'down'</span>, e =&gt; log.info(<span class="hljs-string">'Key down event'</span>, <span class="hljs-built_in">JSON</span>.stringify(e)));
-input.on(<span class="hljs-string">'up'</span>, e =&gt; log.info(<span class="hljs-string">'Key up event'</span>, <span class="hljs-built_in">JSON</span>.stringify(e)));</pre>
-    
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Static Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='silk-inputKeyEventType'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>KeyEventType</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Key event type</p>
-
-
-  <div class='pre p1 fill-light mt0'>KeyEventType</div>
-  
-    <p>
-      Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>
-    </p>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Properties</div>
-    <div>
-      
-        <div class='space-bottom0'>
-          <span class='code bold'>timeS</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-          : Timestamp (Seconds part)
-
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <span class='code bold'>timeMS</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-          : Timestamp (Microseconds part)
-
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <span class='code bold'>keyCode</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-          : Keyboard code
-
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <span class='code bold'>keyId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-          : String key id
-
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Events</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='silk-input.event:up'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>up</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>This event is emitted when a key is released</p>
-
-
-  <div class='pre p1 fill-light mt0'>up</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Properties</div>
-    <div>
-      
-        <div class='space-bottom0'>
-          <span class='code bold'>e</span> <code class='quiet'>(KeyEventType)</code>
-          
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-input.event:down'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>down</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>This event is emitted when a key is pressed</p>
-
-
-  <div class='pre p1 fill-light mt0'>down</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Properties</div>
-    <div>
-      
-        <div class='space-bottom0'>
-          <span class='code bold'>e</span> <code class='quiet'>(KeyEventType)</code>
-          
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-input.event:repeat'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>repeat</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>This event is emitted when key is pressed and held down</p>
-
-
-  <div class='pre p1 fill-light mt0'>repeat</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Properties</div>
-    <div>
-      
-        <div class='space-bottom0'>
-          <span class='code bold'>e</span> <code class='quiet'>(KeyEventType)</code>
-          
           
         </div>
       

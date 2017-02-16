@@ -18,16 +18,11 @@ const TARGET = path.join(__dirname, '..');
 const PKG_PATH = path.join(TARGET, 'package.json');
 const DEST = path.join(TARGET, 'staging/index.js');
 
-const DEFAULT_BABEL_VERSION = '6.18.0';
+const DEFAULT_BABEL_VERSION = '6.22.0';
 const PLUGIN_VERSION_OVERRIDES = {
-  'syntax-trailing-function-commas': '6.13.0',
-  'transform-async-to-generator': '6.16.0',
-  'transform-es2015-function-name': '6.9.0',
-  'transform-es2015-unicode-regex': '6.11.0',
-  'transform-es2015-spread': '6.8.0',
-  'transform-export-extensions': '6.8.0',
-  'transform-object-rest-spread': '6.16.0',
-  'transform-decorators': '6.13.0',
+  // Add any version overrides here if a plugin isn't availabe as
+  // version DEFAULT_BABEL_VERSION.
+  'syntax-flow': '6.18.0',
 };
 
 const PLUGIN_SKIP = new Set([
@@ -40,7 +35,7 @@ const PLUGIN_SKIP = new Set([
 ]);
 
 const ADDITIONAL_PLUGINS = [
-  // flow ..
+  // flow
   'syntax-flow',
   'transform-flow-strip-types',
   // stage-3

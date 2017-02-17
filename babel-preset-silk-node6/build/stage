@@ -48,11 +48,6 @@ const ADDITIONAL_PLUGINS = [
   'transform-class-properties',
   'transform-decorators',
   'transform-export-extensions',
-
-  // Node does not support the super.X syntax in generators, but our
-  // codebase uses super in async methods (which are compiled down to
-  // generators.) See https://github.com/babel/babel/issues/3930.
-  'transform-es2015-classes',
 ];
 
 const es2015Plugins = features.options().plugins.filter((name) => {

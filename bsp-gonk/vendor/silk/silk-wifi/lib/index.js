@@ -11,6 +11,7 @@ import createLog from 'silk-log';
 import * as util from 'silk-sysutils';
 
 import type {Socket} from 'net';
+import type {ExecOutput} from 'silk-sysutils';
 
 export type ConnectedNetworkInfo = {
   ssid: string;
@@ -26,51 +27,6 @@ const USE_WIFI_STUB = util.getboolprop(
   'persist.silk.wifi.stub',
   process.platform !== 'android'
 );
-
-/**
- * Configures the specified network interface based on current system
- * property values as set by dhcpd
- *
- * @param iface Name of the interface to configure
- * @private
- */
-async function configureDhcpInterface(iface: string) {
-  const ifacePrefix = `dhcp.${iface}`;
-
-  // dhcpd provides its output in system properties,
-  let dns = [];
-  for (let i = 1; i <= 4; i++) {
-    const dnsN = util.getstrprop(`${ifacePrefix}.dns${i}`);
-    if (dnsN) {
-      dns.push(dnsN);
-    }
-  }
-
-  const ipaddress = util.getstrprop(`${ifacePrefix}.ipaddress`);
-  const mask = util.getstrprop(`${ifacePrefix}.mask`);
-  const gateway = util.getstrprop(`${ifacePrefix}.gateway`);
-  const domain = util.getstrprop(`${ifacePrefix}.domain`, 'localdomain');
-
-  const block = new Netmask(ipaddress + '/' + mask);
-  const baseMask = block.base + '/' + block.bitmask;
-
-  log.info(`Network configuration:\n` +
-           `interface: ${iface}\n` +
-           `ipaddress: ${ipaddress}/${mask}\n` +
-           `dns: ${String(dns)}\n` +
-           `gateway: ${gateway}\n` +
-           `domain: ${domain}\n` +
-           `base: ${baseMask}`);
-
-  // Add basic routing table and DNS
-  await util.exec('ndc', ['network', 'destroy', '100']);
-  await util.exec('ndc', ['network', 'create', '100']);
-  await util.exec('ndc', ['network', 'interface', 'add', '100', iface]);
-  await util.exec('ndc', ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway]);
-  await util.exec('ndc', ['network', 'route', 'add', '100', iface, baseMask, '0.0.0.0']);
-  await util.exec('ndc', ['network', 'default', 'set', '100']);
-  await util.exec('ndc', ['resolver', 'setnetdns', '100', domain, ...dns]);
-}
 
 // Duration between network scans while not connected.
 const SCAN_INTERVAL_MS = 10 * 1000;
@@ -186,6 +142,74 @@ const CTRL_CHARS_REGEX = /[\x00-\x1f\x80-\xff]/;
 let iface = util.getstrprop('wifi.interface');
 let monitor;
 
+/**
+ * Helper for other exec functions.
+ * @private
+ */
+async function execCommon(
+  cmd: string,
+  args: Array<string>,
+  abortPromise: ?Promise<void>,
+  warning: ?string,
+): Promise<ExecOutput> {
+  const start = Date.now();
+  log.verbose(`Executing '%s%s'`, cmd, args.length ? ` ` + args.join(` `) : ``);
+  const promises = [util.exec(cmd, args)];
+  if (abortPromise) {
+    promises.push(abortPromise);
+  }
+
+  const result = await Promise.race(promises);
+  const stop = Date.now();
+  invariant(result);
+
+  let {stderr, stdout} = result;
+  stderr = stderr.trim();
+  stdout = stdout.trim();
+  const output = (stderr && stdout) ? {stderr, stdout} : (stderr || stdout);
+
+  const {code} = result;
+  const message = `(${stop - start}ms) '${cmd}' returned code ${String(code)}:`;
+
+  if (code === 0) {
+    log.verbose(message, output);
+  } else {
+    if (warning === null) {
+      const prettyOutput =
+        typeof output === `object` ?
+        JSON.stringify(output) :
+        output;
+      throw new Error(`${message} ${prettyOutput}`);
+    }
+    log.warn(message, output);
+  }
+  return result;
+}
+
+/**
+ * Exec and throw if the process returns a non-zero exit code.
+ * @private
+ */
+async function execThrowOnNonZeroCode(
+  cmd: string,
+  args: Array<string>,
+  abortPromise: ?Promise<void> = null,
+): Promise<ExecOutput> {
+  return execCommon(cmd, args, abortPromise, null);
+}
+
+/**
+ * Exec and warn if the process returns a non-zero exit code.
+ * @private
+ */
+async function execWarnOnNonZeroCode(
+  cmd: string,
+  args: Array<string>,
+  abortPromise: ?Promise<void> = null,
+  message?: string = '',
+): Promise<ExecOutput> {
+  return execCommon(cmd, args, abortPromise, message);
+}
 
 /**
  * Unescape SSID strings as spat out by wpa_cli
@@ -202,6 +226,99 @@ function unescapeSSID(ssid: string): string {
   );
   invariant(typeof ssid === 'string');
   return ssid;
+}
+
+/**
+ * Try to restart dhcpd and set up the network route table.
+ * @private
+ */
+async function requestDhcp(abortPromise: Promise<void>): Promise<void> {
+  await execWarnOnNonZeroCode(
+    'dhcputil',
+    [iface, 'dhcp_stop'],
+    abortPromise,
+  );
+  await execThrowOnNonZeroCode(
+    'dhcputil',
+    [iface, 'dhcp_request'],
+    abortPromise,
+  );
+
+  const ifacePrefix = `dhcp.${iface}`;
+
+  // dhcpd provides its output in system properties.
+  const dns = [];
+  for (let i = 1; i <= 4; i++) {
+    const dnsN = util.getstrprop(`${ifacePrefix}.dns${i}`);
+    if (dnsN) {
+      dns.push(dnsN);
+    }
+  }
+
+  const ipaddress = util.getstrprop(`${ifacePrefix}.ipaddress`);
+  const mask = util.getstrprop(`${ifacePrefix}.mask`);
+  const gateway = util.getstrprop(`${ifacePrefix}.gateway`);
+  const domain = util.getstrprop(`${ifacePrefix}.domain`, 'localdomain');
+
+  log.info(`DHCP configuration:\n` +
+           `interface: ${iface}\n` +
+           `ipaddress: ${ipaddress}/${mask}\n` +
+           `dns: ${String(dns)}\n` +
+           `gateway: ${gateway}\n` +
+           `domain: ${domain}`);
+
+  if (!ipaddress) {
+    throw new Error(`dhcpd has not given us an address yet`);
+  }
+
+  const block = new Netmask(ipaddress + '/' + mask);
+  const baseMask = block.base + '/' + block.bitmask;
+
+  log.info(`base: ${baseMask}`);
+
+  // Add basic routing table and DNS
+  await execThrowOnNonZeroCode(
+    'ndc',
+    ['network', 'destroy', '100'],
+    abortPromise,
+  );
+  await execThrowOnNonZeroCode(
+    'ndc',
+    ['network', 'create', '100'],
+    abortPromise,
+  );
+  await execThrowOnNonZeroCode(
+    'ndc',
+    ['network', 'interface', 'add', '100', iface],
+    abortPromise,
+  );
+  await execThrowOnNonZeroCode(
+    'ndc',
+    ['network', 'route', 'add', '100', iface, '0.0.0.0/0', gateway],
+    abortPromise,
+  );
+  await execThrowOnNonZeroCode(
+    'ndc',
+    ['network', 'route', 'add', '100', iface, baseMask, '0.0.0.0'],
+    abortPromise,
+  );
+  await execThrowOnNonZeroCode(
+    'ndc',
+    ['network', 'default', 'set', '100'],
+    abortPromise,
+  );
+  await execThrowOnNonZeroCode(
+    'ndc',
+    ['resolver', 'setnetdns', '100', domain, ...dns],
+    abortPromise,
+  );
+
+  const {stdout} = await execThrowOnNonZeroCode(
+    'ndc',
+    ['interface', 'getcfg', iface],
+    abortPromise,
+  );
+  log.info(`${iface} state| ${stdout}`);
 }
 
 /**
@@ -466,9 +583,13 @@ export class Wifi extends events.EventEmitter {
   // Always start as offline until proven otherwise...
   _online: boolean = false;
   _shutdown: boolean = false;
-  _dhcpRetryTimer: ?number = null;
-  _shutdown: boolean = false;
   _scanTimer: ?number = null;
+
+  // Set when dhcp request is outstanding.
+  _dhcpPromise: ?Promise<void> = null;
+
+  // Used to cancel dhcp request.
+  _dhcpAbortFunction: ?(() => void) = null;
 
   /**
    * Current wifi state.
@@ -478,80 +599,131 @@ export class Wifi extends events.EventEmitter {
    */
   state: WifiState = 'disconnected';
 
-  _networkCleanup() {
-    if (this._dhcpRetryTimer) {
-      clearTimeout(this._dhcpRetryTimer);
-      this._dhcpRetryTimer = null;
+  async _networkCleanup(): Promise<void> {
+    // No longer "online".
+    this._online = false;
+
+    // Abort any async work that might be happening for dhcp.
+    if (this._dhcpAbortFunction) {
+      this._dhcpAbortFunction();
     }
-    return util.exec('dhcputil', [iface, 'dhcp_stop'])
-      .then(() => util.exec('ndc', ['network', 'destroy', '100']))
-      .then(() => util.exec('ndc', ['interface', 'clearaddrs', iface]))
-      .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
-      .then(r => {
-        log.info(`${iface} state| ${r.stdout}`);
-      })
-      .catch(err => {
-        log.warn(`Error: Network cleanup failed: ${err}`);
-      });
+
+    // Cleanup.
+    this._dhcpPromise = null;
+    this._dhcpAbortFunction = null;
+
+    try {
+      await execWarnOnNonZeroCode('dhcputil', [iface, 'dhcp_stop']);
+      await execWarnOnNonZeroCode('ndc', ['network', 'destroy', '100']);
+      await execWarnOnNonZeroCode('ndc', ['interface', 'clearaddrs', iface]);
+      const {stdout} =
+        await execWarnOnNonZeroCode('ndc', ['interface', 'getcfg', iface]);
+      log.info(`${iface} state| ${stdout}`);
+    } catch (error) {
+      log.warn(`Network cleanup failed`, error);
+    }
   }
 
   async _requestDhcp(): Promise<void> {
-    log.info('Issuing DHCP request');
+    // This promise never resolves, it only rejects if _dhcpAbortFunction is
+    // called by _networkCleanup.
+    const abortPromise = new Promise((_, reject) => {
+      const abortFunction = () => {
+        invariant(this._dhcpAbortFunction === abortFunction);
+        this._dhcpAbortFunction = null;
+        reject();
+      };
+
+      invariant(!this._dhcpAbortFunction);
+      this._dhcpAbortFunction = abortFunction;
+    });
 
     this.emit('stateChange', 'dhcping');
 
-    try {
-      let result = await util.exec('dhcputil', [iface, 'dhcp_stop']);
-      if (result.code !== 0) {
-        log.warn(`dhcp_stop failed: ret=${result.code}: ${result.stdout}`);
+    let retryCount = 0;
+
+    while (true) {                  // eslint-disable-line no-constant-condition
+      const attempt = ++retryCount;
+      if (attempt === 1) {
+        log.info('Issuing DHCP request');
+      } else {
+        log.warn(`Retrying DHCP request, attempt #${attempt}`);
       }
 
-      result = await util.exec('dhcputil', [iface, 'dhcp_request']);
-      if (result.code !== 0) {
-        throw new Error(result.stdout);
+      try {
+        await requestDhcp(abortPromise);
+
+        // If that didn't throw then we're done looping.
+        break;
+      } catch (error) {
+        if (!error) {
+          log.debug(`DHCP request canceled`);
+          // Don't do anything else.
+          return;
+        }
+
+        log.warn(
+          `DHCP request failed, retrying in ${String(DHCP_TIMEOUT_MS)} ms`,
+          error,
+        );
       }
 
-      const r = await configureDhcpInterface(iface)
-        .then(() => util.exec('ndc', ['interface', 'getcfg', iface]))
-        .catch(util.processthrow);
-      log.info(`${iface} state| ${r.stdout}`);
+      let retryTimer: ?number = null;
 
-      if (this._shutdown) {
-        log.info('(WiFi shutdown)');
-        await this._networkCleanup();
+      const sleep = new Promise((resolve) => {
+        retryTimer = setTimeout(() => {
+          retryTimer = null;
+          resolve();
+        }, DHCP_TIMEOUT_MS);
+      });
+
+      try {
+        await Promise.race([sleep, abortPromise]);
+      } catch (error2) {
+        // Must have been aborted.
+        invariant(!error2);
+
+        if (retryTimer) {
+          log.warn(`Canceling DHCP retry timer`);
+          clearTimeout(retryTimer);
+        }
+
+        // Don't do anything else.
         return;
       }
 
-      log.info('==> Wifi online');
-      this._online = true;
-
-      /**
-       * This event is emitted when the device is connected to the network
-       *
-       * @event online
-       * @memberof silk-wifi
-       * @instance
-       */
-      this.emit('online');
-    } catch (err) {
-      log.warn(`Error: DHCP request failed: ${err.stack || err}, retrying...`);
-      this._dhcpRetryTimer = setTimeout(() => {
-        this._requestDhcp();
-        this._dhcpRetryTimer = null;
-      }, DHCP_TIMEOUT_MS);
+      // Try again.
     }
+
+    log.info('==> Wifi online');
+    this._online = true;
+
+    /**
+     * This event is emitted when the device is connected to the network
+     *
+     * @event online
+     * @memberof silk-wifi
+     * @instance
+     */
+    this.emit('online');
   }
 
   _startWpaMonitor(): Promise<void> {
     monitor = new WpaMonitor(iface);
     monitor.on('connected', () => {
       log.info('Wifi Connected.');
-      this._requestDhcp();
+
+      invariant(!this._dhcpPromise);
+      this._dhcpPromise = this._requestDhcp();
     });
     monitor.on('disconnected', (reason) => {
+      log.info(`==> Wifi offline (${reason})`);
+
+      this._networkCleanup();
+      invariant(!this._dhcpPromise);
+
       // Send error unless leaving under normal circumstances
       if (reason !== 'deauth_leaving') {
-
         /**
          * This event is emitted to report an error
          *
@@ -563,9 +735,6 @@ export class Wifi extends events.EventEmitter {
          */
         this.emit('error', new Error(reason));
       }
-      this._networkCleanup();
-      log.info(`==> Wifi offline (${reason})`);
-      this._online = false;
 
       /**
        * This event is emitted when wifi is offline

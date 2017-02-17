@@ -57,7 +57,7 @@ export function processthrow(e: Error | string) {
  * @property {string} stderr standard error stream
  * @memberof silk-sysutils
  */
-type ExecOutput = {
+export type ExecOutput = {
   code: number | string;
   stdout: string;
   stderr: string;

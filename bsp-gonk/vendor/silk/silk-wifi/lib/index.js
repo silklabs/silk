@@ -4,7 +4,7 @@
  */
 
 import invariant from 'assert';
-import events from 'events';
+import EventEmitter from 'events';
 import * as net from 'net';
 import {Netmask} from 'netmask';
 import createLog from 'silk-log';
@@ -325,7 +325,7 @@ async function requestDhcp(abortPromise: Promise<void>): Promise<void> {
  * Wrapper around Gonk's WiFi daemons.
  * @private
  */
-class WpaMonitor extends events.EventEmitter {
+class WpaMonitor extends EventEmitter {
 
   _ready: boolean = false;
   _socket: ?Socket;
@@ -578,7 +578,7 @@ async function wpaCliGetCurrentNetworkRSSI(): Promise<?number> {
  *   log.error('Failed to initialize wifi', err);
  * });
  */
-export class Wifi extends events.EventEmitter {
+export class Wifi extends EventEmitter {
 
   // Always start as offline until proven otherwise...
   _online: boolean = false;
@@ -591,6 +591,21 @@ export class Wifi extends events.EventEmitter {
 
   // Used to cancel dhcp request.
   _dhcpAbortFunction: ?(() => void) = null;
+
+  // Don't let Wifi get bogged down with its consumer's unhandled exceptions.
+  emit(type: string, ...rest: Array<mixed>): boolean {
+    let result = true;
+    try {
+      result = super.emit(type, ...rest);
+    } catch (error) {
+      log.warn(
+        `Caught an unhandled exception while emitting '${type}' event`,
+        error,
+      );
+      util.processthrow(error);
+    }
+    return result;
+  }
 
   /**
    * Current wifi state.
@@ -1034,8 +1049,7 @@ export class Wifi extends events.EventEmitter {
   }
 }
 
-
-export class StubWifi extends events.EventEmitter {
+export class StubWifi extends EventEmitter {
 
   init(): Promise<void> {
     log.info('Using stub "WiFi"');

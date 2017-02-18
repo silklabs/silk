@@ -176,7 +176,7 @@ const config = {
     __dirname: false,
     __filename: false,
   },
-  devtool: 'source-map',
+  devtool: process.env.NODE_ENV === 'production' ? null : 'source-map',
   entry,
   output: {
     path: path.join(destination),

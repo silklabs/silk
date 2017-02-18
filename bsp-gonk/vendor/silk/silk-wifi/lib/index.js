@@ -584,6 +584,7 @@ export class Wifi extends events.EventEmitter {
   _online: boolean = false;
   _shutdown: boolean = false;
   _scanTimer: ?number = null;
+  _state: WifiState = 'disconnected';
 
   // Set when dhcp request is outstanding.
   _dhcpPromise: ?Promise<void> = null;
@@ -597,7 +598,9 @@ export class Wifi extends events.EventEmitter {
    * @memberof silk-wifi
    * @instance
    */
-  state: WifiState = 'disconnected';
+  get state(): WifiState {
+    return this._state;
+  }
 
   async _networkCleanup(): Promise<void> {
     // No longer "online".
@@ -747,7 +750,7 @@ export class Wifi extends events.EventEmitter {
       this.scan();
     });
     monitor.on('stateChange', (state) => {
-      this.state = state;
+      this._state = state;
       this.emit('stateChange', state);
     });
     monitor.on('scanResults', () => {

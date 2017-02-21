@@ -10,17 +10,50 @@ done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 help() {
-  echo 'silk-buildjs <source directory> [target directory] [--no-native]'
+  if [[ -n $1 ]]; then
+    echo Error: $@
+    echo
+  fi
+
+  echo 'silk-buildjs <source directory> <target directory> [--no-ugly] [--no-native]'
   echo
   echo 'This program is a helper to build a JS module into a single file and'
   echo 'potentially compile additional native modules if a binding.gyp is present.'
   echo 'Generally this only needs to be invoked by the android build system.'
+  exit 1
 }
 
-if [[ ! -d $1 ]]; then
-  help
-  exit 1
-fi
+SILK_BUILDJS_SOURCE=
+SILK_BUILDJS_DEST=
+SILK_BUILDJS_UGLY=true
+native=true
+
+for arg in "$@"; do
+  case $arg in
+  --no-native)
+    native=false
+    ;;
+  --no-ugly)
+    SILK_BUILDJS_UGLY=false
+    ;;
+  --*)
+    help Unknown argument: $arg
+    ;;
+  *)
+    if [[ -z $SILK_BUILDJS_SOURCE ]]; then
+      [[ -d $arg ]] || help Not a directory: $arg
+      SILK_BUILDJS_SOURCE=$(readlink -f $arg)
+    elif [[ -z $SILK_BUILDJS_DEST ]]; then
+      SILK_BUILDJS_DEST=$(readlink -f $arg)
+    else
+      help Extraneous positional parameter: $arg
+    fi
+    ;;
+  esac
+done
+
+[[ -n $SILK_BUILDJS_SOURCE ]] || help
+[[ -n $SILK_BUILDJS_DEST ]] || help Destination directory missing
 
 PATH=$ROOT/../../node_modules/.bin:$PATH
 if [[ -r $ROOT/../gnu.sh ]]; then
@@ -29,20 +62,11 @@ elif [[ -r $ROOT/../../tools/gnu.sh ]]; then
   source $ROOT/../../tools/gnu.sh
 fi
 
-export SILK_BUILDJS_SOURCE=$(readlink -f $1)
-if [[ -z $2 ]]; then
-  if [[ -z $SILK_OUT ]]; then
-    help
-    exit 1
-  fi
-  export SILK_BUILDJS_DEST=$SILK_OUT
-else
-  export SILK_BUILDJS_DEST=$(readlink -f $2)
-fi
-export SILK_BUILDJS_DEST=${2:-$1/.silkslug}
-no_native=$3
+export SILK_BUILDJS_SOURCE
+export SILK_BUILDJS_DEST
+export SILK_BUILDJS_UGLY
 
-if [[ "$no_native" != "--no-native" && -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
+if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   ## Exports for the node-gyp build system ...
   export builddir_name=$SILK_BUILDJS_DEST/build
   export srcdir=$SILK_BUILDJS_SOURCE

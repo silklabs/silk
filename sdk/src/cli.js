@@ -118,13 +118,13 @@ async function runBuild(pkg, cmd, dest) {
     buildEnv[key] = process.env[key];
   }
 
-  buildEnv.SILK_OUT = dest;
   buildEnv.PATH = buildEnv.PATH + ':' + path.join(findPackageRoot(), 'node_modules', '.bin');
   // TODO: This would be good place to bootstrap the system to handle things like
   // building native modules.
 
-  console.log(' > silk-build: ', cmd);
-  const proc = spawn('/bin/bash', ['-c', cmd], {
+  const script = `${cmd} ${dest}`;
+  console.log(' > silk-build:', script);
+  const proc = spawn('/bin/bash', ['-c', script ], {
     env: buildEnv,
     stdio: 'inherit',
   });

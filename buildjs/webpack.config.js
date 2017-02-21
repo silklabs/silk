@@ -17,6 +17,7 @@ const destination = process.env.SILK_BUILDJS_DEST;
 const modulePath = findPackage(process.env.SILK_BUILDJS_SOURCE);
 const pkg = require(path.join(modulePath, 'package.json'));
 const localWebpack = path.join(modulePath, 'webpack.config.js');
+const ugly = process.env.SILK_BUILDJS_UGLY === 'true';
 
 // Walk up cwd looking for a project-level webpack.config.js
 const projectWebpack = lookup(
@@ -195,9 +196,7 @@ const config = {
       },
     ],
   },
-  plugins: [
-    new webpack.optimize.UglifyJsPlugin(),
-  ],
+  plugins: ugly ? [new webpack.optimize.UglifyJsPlugin()] : [],
 };
 
 function applyWebpackConfig(webpackConfig) {

@@ -18,6 +18,10 @@ const modulePath = findPackage(process.env.SILK_BUILDJS_SOURCE);
 const pkg = require(path.join(modulePath, 'package.json'));
 const localWebpack = path.join(modulePath, 'webpack.config.js');
 const ugly = process.env.SILK_BUILDJS_UGLY === 'true';
+const target = process.env.SILK_BUILDJS_TARGET;
+if (target !== 'node' && target !== 'web') {
+  throw new Error(`Invalid webpack target: ${target}`);
+}
 
 // Walk up cwd looking for a project-level webpack.config.js
 const projectWebpack = lookup(
@@ -67,98 +71,107 @@ if (!main) {
   throw new Error(`package.json must have main in ${process.cwd()}`);
 }
 
-const externals = [
-  // TODO: auto generate these ...
-  'bleno',
-  'lame',
-  'mic',
-  'noble',
-  'node-hid',
-  'node-wav',
-  'opencv',
-  'segfault-handler',
-  'silk-alog',
-  'silk-audioplayer',
-  'silk-battery',
-  'silk-bledroid',
-  'silk-camera',
-  'silk-capture',
-  'silk-core-version',
-  'silk-gc1',
-  'silk-input',
-  'silk-lights',
-  'silk-log',
-  'silk-movie',
-  'silk-ntp',
-  'silk-properties',
-  'silk-sensors',
-  'silk-speaker',
-  'silk-sysutils',
-  'silk-tts',
-  'silk-vibrator',
-  'silk-volume',
-  'silk-wifi',
-  'sodium',
-  (context, request, callback) => {
-    if (resolve.isCore(request)) {
-      callback(null, true);
-      return;
-    }
-
-    // For extra fun node will allow resolving .main without a ./ this behavior
-    // makes .main look nicer but is completely different than how requiring
-    // without a specific path is handled elsewhere... To ensure we don't
-    // accidentally resolve a node module to a local file we handle this case
-    // very specifically.
-    if (context === modulePath && pkg.main === request) {
-      const resolvedPath = path.resolve(context, request);
-      if (!fs.existsSync(resolvedPath)) {
-        callback(new Error(`${modulePath} has a .main which is missing ...`));
-        return;
-      }
-    }
-
-    // Handle path rewriting for native modules
-    if (
-      /\.node$/.test(request) ||
-      request.indexOf('build/Release') !== -1
-    ) {
-      if (path.isAbsolute(request)) {
+const externals = {
+  web: [
+    'silk-alog',
+  ],
+  node: [
+    // TODO: auto generate these ...
+    'bleno',
+    'lame',
+    'mic',
+    'noble',
+    'node-hid',
+    'node-wav',
+    'opencv',
+    'segfault-handler',
+    'silk-alog',
+    'silk-audioplayer',
+    'silk-battery',
+    'silk-bledroid',
+    'silk-camera',
+    'silk-capture',
+    'silk-core-version',
+    'silk-gc1',
+    'silk-input',
+    'silk-lights',
+    'silk-log',
+    'silk-movie',
+    'silk-ntp',
+    'silk-properties',
+    'silk-sensors',
+    'silk-speaker',
+    'silk-sysutils',
+    'silk-tts',
+    'silk-vibrator',
+    'silk-volume',
+    'silk-wifi',
+    'sodium',
+    (context, request, callback) => {
+      if (target !== 'web' && resolve.isCore(request)) {
         callback(null, true);
         return;
       }
 
-      const absExternalPath = path.resolve(context, request);
-      let relativeExternalPath = path.relative(mainDir, absExternalPath);
-      if (relativeExternalPath.indexOf('.') !== 0) {
-        relativeExternalPath = `./${relativeExternalPath}`;
+      // For extra fun node will allow resolving .main without a ./ this behavior
+      // makes .main look nicer but is completely different than how requiring
+      // without a specific path is handled elsewhere... To ensure we don't
+      // accidentally resolve a node module to a local file we handle this case
+      // very specifically.
+      if (context === modulePath && pkg.main === request) {
+        const resolvedPath = path.resolve(context, request);
+        if (!fs.existsSync(resolvedPath)) {
+          callback(new Error(`${modulePath} has a .main which is missing ...`));
+          return;
+        }
       }
-      callback(null, relativeExternalPath);
-      return;
-    }
 
-    resolve(request, {
-      basedir: context,
-      package: pkg,
-      extensions: ['.js', '.json'],
-    }, (err, resolvedPath) => {
-      if (err) {
-        console.log(`Missing module imported from ${context} (${request})`);
-        callback(null, true);
+      // Handle path rewriting for native modules
+      if (
+        /\.node$/.test(request) ||
+        request.indexOf('build/Release') !== -1
+      ) {
+        if (path.isAbsolute(request)) {
+          callback(null, true);
+          return;
+        }
+
+        const absExternalPath = path.resolve(context, request);
+        let relativeExternalPath = path.relative(mainDir, absExternalPath);
+        if (relativeExternalPath.indexOf('.') !== 0) {
+          relativeExternalPath = `./${relativeExternalPath}`;
+        }
+        callback(null, relativeExternalPath);
         return;
       }
-      callback(null, false);
-    });
-  },
-];
+
+      resolve(request, {
+        basedir: context,
+        package: pkg,
+        extensions: ['.js', '.json'],
+      }, (err, resolvedPath) => {
+        if (err) {
+          console.log(`\nMissing module imported from ${context} (${request})`);
+          if (target === 'web') {
+            callback(null, `var undefined`);
+          } else {
+            callback(null, true);
+          }
+          return;
+        }
+        callback(null, false);
+      });
+    },
+  ],
+};
 
 const entry = {};
 entry[main] = main;
 
 const config = {
   context: modulePath,
-  externals,
-  target: 'node',
+  externals: externals[target],
+  target,
   node: {
     __dirname: false,
     __filename: false,
@@ -167,7 +180,7 @@ const config = {
   entry,
   output: {
     path: path.join(destination),
-    libraryTarget: 'commonjs2',
+    libraryTarget: target === 'web' ? 'var' : 'commonjs2',
     filename: `[name]`,
   },
   resolve: {
@@ -180,7 +193,13 @@ const config = {
   },
   babel: {
     cacheDirectory: babelCache,
-    presets: [
+    presets: target === 'web' ?
+    [
+      require('babel-preset-silk-node6'),
+      require('babel-preset-react'),
+    ]
+    :
+    [
       require('babel-preset-silk-node6'),
     ],
   },
@@ -190,6 +209,12 @@ const config = {
       {
         test: /\.js$/,
         loader: require.resolve('babel-loader'),
+        include: (filename) => {
+          if (target === 'web') {
+            return require('silk-babeldeps')(filename);
+          }
+          return true;
+        },
         query: {
           babelrc: false,
         },
@@ -199,10 +224,17 @@ const config = {
   plugins: ugly ? [new webpack.optimize.UglifyJsPlugin()] : [],
 };
 
-function applyWebpackConfig(webpackConfig) {
-  if (fs.existsSync(webpackConfig)) {
-    console.log(`${webpackConfig} found agumenting buildjs ...`);
-    const rules = Object.assign({}, require(webpackConfig));
+function applyWebpackConfig(webpackConfigFile) {
+  if (fs.existsSync(webpackConfigFile)) {
+    console.log(`${webpackConfigFile} found agumenting buildjs ...`);
+    const localConfig = require(webpackConfigFile);
+
+    if (typeof localConfig === 'function') {
+      localConfig(target, config);
+      return;
+    }
+
+    const rules = Object.assign({}, localConfig);
     if (rules.externals && Array.isArray(rules.externals)) {
       // Order is important here the rules should be ordered such that the
       // webpack.config comes from the module first and our global rules second.

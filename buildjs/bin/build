@@ -1,4 +1,4 @@
-#! /bin/bash -e
+#!/bin/bash -e
 
 # Resolve to realpath....
 SOURCE="${BASH_SOURCE[0]}"
@@ -9,13 +9,21 @@ while [ -h "$SOURCE" ]; do
 done
 ROOT="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+PATH=$ROOT/../../node_modules/.bin:$PATH
+if [[ -r $ROOT/../gnu.sh ]]; then
+  source $ROOT/../gnu.sh # Placed by |npm publish|
+elif [[ -r $ROOT/../../tools/gnu.sh ]]; then
+  source $ROOT/../../tools/gnu.sh
+fi
+
+
 help() {
   if [[ -n $1 ]]; then
     echo Error: $@
     echo
   fi
 
-  echo 'silk-buildjs <source directory> <target directory> [--no-ugly] [--no-native]'
+  echo 'silk-buildjs <source directory> <target directory> [--target=web|node] [--no-ugly] [--no-native]'
   echo
   echo 'This program is a helper to build a JS module into a single file and'
   echo 'potentially compile additional native modules if a binding.gyp is present.'
@@ -26,10 +34,21 @@ help() {
 SILK_BUILDJS_SOURCE=
 SILK_BUILDJS_DEST=
 SILK_BUILDJS_UGLY=true
+SILK_BUILDJS_TARGET=node
 native=true
+dev_server=false
 
 for arg in "$@"; do
   case $arg in
+  --target=node)
+    SILK_BUILDJS_TARGET=node
+    ;;
+  --target=web)
+    SILK_BUILDJS_TARGET=web
+    ;;
+  --dev-server)
+    dev_server=true
+    ;;
   --no-native)
     native=false
     ;;
@@ -55,16 +74,10 @@ done
 [[ -n $SILK_BUILDJS_SOURCE ]] || help
 [[ -n $SILK_BUILDJS_DEST ]] || help Destination directory missing
 
-PATH=$ROOT/../../node_modules/.bin:$PATH
-if [[ -r $ROOT/../gnu.sh ]]; then
-  source $ROOT/../gnu.sh # Placed by |npm publish|
-elif [[ -r $ROOT/../../tools/gnu.sh ]]; then
-  source $ROOT/../../tools/gnu.sh
-fi
-
 export SILK_BUILDJS_SOURCE
 export SILK_BUILDJS_DEST
 export SILK_BUILDJS_UGLY
+export SILK_BUILDJS_TARGET
 
 if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   ## Exports for the node-gyp build system ...
@@ -81,8 +94,14 @@ fi
 
 set -x
 mkdir -p $SILK_BUILDJS_DEST
-rm -f $SILK_BUILDJS_DEST/package.json
-cp $SILK_BUILDJS_SOURCE/package.json $SILK_BUILDJS_DEST
+if [[ $SILK_BUILDJS_TARGET != web ]]; then
+  ! $dev_server
+  rm -f $SILK_BUILDJS_DEST/package.json
+  cp $SILK_BUILDJS_SOURCE/package.json $SILK_BUILDJS_DEST
+fi
 
-
+if $dev_server; then
+  exec webpack-dev-server --progress --config $ROOT/../webpack.config.js \
+    --host 0.0.0.0 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300
+fi
 exec webpack --progress --config $ROOT/../webpack.config.js

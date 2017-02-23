@@ -1,23 +1,23 @@
-From ae20a3063513f2568abf07b58af72002b24f2f93 Mon Sep 17 00:00:00 2001
+From f3cba47b930764cd69943f76b02c22a20f1e70b8 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 7 Mar 2016 08:51:20 -0800
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 111 +++++++++++++++++++++++++++++++++++++++++++
+ Android.mk                   | 112 +++++++++++++++++++++++++++++++++++++++++++
  apps/traincascade/Android.mk |  19 ++++++++
  opencv.mk                    |  46 ++++++++++++++++++
- 3 files changed, 176 insertions(+)
+ 3 files changed, 177 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 apps/traincascade/Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..1c8737e
+index 000000000..574c68ccd
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,114 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -109,6 +109,9 @@ index 0000000..1c8737e
 +   -DWITH_OPENEXR=false \
 +   -DBUILD_PERF_TESTS=false \
 +   -DBUILD_opencv_java=false \
++   -DBUILD_opencv_dnn=OFF \
++   -DBUILD_opencv_optflow=OFF \
++   -DBUILD_opencv_xfeatures2d=OFF \
 +   -DANDROID_TOOLCHAIN_NAME=$(OPENCV3_TOOLCHAIN_NAME) \
 +   -DANDROID_ABI="$(if $(findstring x86,$(TARGET_ARCH)),x86,armeabi-v7a with NEON)" \
 +   -DANDROID_NATIVE_API_LEVEL=19 \
@@ -131,7 +134,7 @@ index 0000000..1c8737e
 +include $(call all-makefiles-under,$(LOCAL_PATH))
 diff --git a/apps/traincascade/Android.mk b/apps/traincascade/Android.mk
 new file mode 100644
-index 0000000..71fef7c
+index 000000000..71fef7c06
 --- /dev/null
 +++ b/apps/traincascade/Android.mk
 @@ -0,0 +1,19 @@
@@ -156,10 +159,10 @@ index 0000000..71fef7c
 +
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 0000000..c5d29f5
+index 000000000..c5d29f572
 --- /dev/null
 +++ b/opencv.mk
-@@ -0,0 +1,46 @@
+@@ -0,0 +1,43 @@
 +# Include from your Android.mk to link with OpenCV, after defining LOCAL_MODULE
 +OPENCV3_CORE_MODULES := \
 +  calib3d \
@@ -182,9 +185,6 @@ index 0000000..c5d29f5
 +OPENCV3_CONTRIB_MODULES := \
 +  bgsegm \
 +  face \
-+  optflow \
-+  tracking \
-+  xfeatures2d \
 +  xobjdetect \
 +
 +OPENCV3_3RDPARTY_COMPONENTS := \
@@ -207,5 +207,5 @@ index 0000000..c5d29f5
 +
 +endif
 -- 
-2.9.2
+2.11.0
 

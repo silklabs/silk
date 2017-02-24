@@ -15,6 +15,9 @@ fi
 info() {
   log -p i -t silk-init $@
 }
+warn() {
+  log -p w -t silk-init $@
+}
 
 maybe_enable_static_eth0() {
   ETH0_STATIC_ENABLE=$(getprop persist.silk.eth0.static.enable 0)
@@ -61,7 +64,20 @@ fi
 export SILKLOG_NOCONSOLE=1
 
 if [ -z $1 ]; then
-  info Starting Silk
+  bootAttempt=$((1 + $(getprop silk.boot_attempt 0)))
+  setprop silk.boot_attempt $bootAttempt
+  info Starting Silk [attempt $bootAttempt]
+
+  if [ "$(getprop ro.silk.update.ab false)" = "true" ]; then
+    bootSlot=$(bootctl get-current-slot)
+    if ! bootctl is-slot-marked-successful $bootSlot; then
+      if [ $bootAttempt -gt 5 ]; then
+        warn Slot $bootSlot BAD after $bootAttempt attempts.  Rebooting
+        exec reboot
+      fi
+      warn Slot $bootSlot is not marked GOOD yet
+    fi
+  fi
 
   if [ "$(getprop persist.silk.debugger)" = "true" ]; then
     info Debugger enabled

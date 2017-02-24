@@ -230,7 +230,7 @@ function applyWebpackConfig(webpackConfigFile) {
     const localConfig = require(webpackConfigFile);
 
     if (typeof localConfig === 'function') {
-      localConfig(target, config);
+      localConfig(pkg, target, config);
       return;
     }
 

@@ -457,7 +457,7 @@ class WpaMonitor extends EventEmitter {
   }
 }
 
-function wpaCli(...args: Array<string>) {
+function wpaCli(...args: Array<string>): Promise<string> {
   if (!monitor.ready()) {
     log.info('wpaCli: supplicant not ready, waiting');
     return util.timeout(1000).then(() => wpaCli(...args));
@@ -490,20 +490,20 @@ function wpaCliExpectOk(...args: Array<string>): Promise<void> {
   });
 }
 
-function wpaCliGetNetworkIds() {
+function wpaCliGetNetworkIds(): Promise<Array<string>> {
   return wpaCli('list_networks').then((networkList) => {
     let ids = networkList.split('\n').map((netInfo) => {
       let found;
       if ((found = netInfo.match(/^([0-9]+)/))) {
         return found[1];
       }
-      return null;
+      return ''; // will be filtered out
     });
-    return ids.filter(notnull => notnull);
+    return ids.filter((id) => !!id);
   });
 }
 
-function wpaCliAddNetwork() {
+function wpaCliAddNetwork(): Promise<string> {
   return wpaCli('add_network').then((id) => {
     let found;
     if ((found = id.match(/^([0-9]+)/))) {
@@ -518,12 +518,12 @@ function wpaCliAddNetwork() {
   });
 }
 
-async function wpaCliRemoveNetwork(id) {
+async function wpaCliRemoveNetwork(id: string): Promise<void> {
   await wpaCliExpectOk('remove_network', id);
   await wpaCliExpectOk('save_config');
 }
 
-function wpaCliRemoveAllNetworks() {
+function wpaCliRemoveAllNetworks(): Promise<void> {
   return wpaCliRemoveNetwork('all');
 }
 

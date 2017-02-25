@@ -102,6 +102,6 @@ fi
 
 if $dev_server; then
   exec webpack-dev-server --progress --config $ROOT/../webpack.config.js \
-    --host 0.0.0.0 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300
+    --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300
 fi
 exec webpack --progress --config $ROOT/../webpack.config.js

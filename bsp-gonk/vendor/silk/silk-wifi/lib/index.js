@@ -457,7 +457,7 @@ class WpaMonitor extends EventEmitter {
   }
 }
 
-function wpaCli(...args) {
+function wpaCli(...args: Array<string>) {
   if (!monitor.ready()) {
     log.info('wpaCli: supplicant not ready, waiting');
     return util.timeout(1000).then(() => wpaCli(...args));
@@ -477,7 +477,7 @@ function wpaCli(...args) {
   });
 }
 
-function wpaCliExpectOk(...args): Promise<void> {
+function wpaCliExpectOk(...args: Array<string>): Promise<void> {
   return wpaCli(...args).then((ok) => {
     if (ok.match(/^OK/)) {
       return;

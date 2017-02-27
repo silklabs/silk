@@ -92,12 +92,20 @@ if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   popd
 fi
 
-set -x
 mkdir -p $SILK_BUILDJS_DEST
 if [[ $SILK_BUILDJS_TARGET != web ]]; then
   ! $dev_server
   rm -f $SILK_BUILDJS_DEST/package.json
-  cp $SILK_BUILDJS_SOURCE/package.json $SILK_BUILDJS_DEST
+
+  if $SILK_BUILDJS_UGLY; then
+    node -p "\
+      p=require('$SILK_BUILDJS_SOURCE/package.json'); \
+      u={license: p.license}; \
+      if (p.main) u.main = p.main; \
+      JSON.stringify(u)" > $SILK_BUILDJS_DEST/package.json
+  else
+    cp $SILK_BUILDJS_SOURCE/package.json $SILK_BUILDJS_DEST
+  fi
 fi
 
 if $dev_server; then

@@ -28,20 +28,6 @@ function getDependencies(context) {
   }
 }
 
-function missingErrorMessage(packageName) {
-  return `'${packageName}' should be listed in the project's dependencies. ` +
-    `Run 'npm i -S ${packageName}' to add it`;
-}
-
-function devDepErrorMessage(packageName) {
-  return `'${packageName}' should be listed in the project's dependencies, not devDependencies.`;
-}
-
-function optDepErrorMessage(packageName) {
-  return `'${packageName}' should be listed in the project's dependencies, ` +
-    `not optionalDependencies.`;
-}
-
 function reportIfMissing(context, deps, depsOptions, node, name) {
   if (importType(name, context) !== 'external') {
     return;
@@ -64,16 +50,29 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
   }
 
   if (isInDevDeps && !depsOptions.allowDevDeps) {
-    context.report(node, devDepErrorMessage(packageName));
+    context.report({
+      node,
+      message:
+        `'${packageName}' should be listed in the project's dependencies, ` +
+        `not devDependencies.`,
+    });
     return;
   }
 
   if (isInOptDeps && !depsOptions.allowOptDeps) {
-    context.report(node, optDepErrorMessage(packageName));
+    context.report({
+      node,
+      message:
+        `'${packageName}' should be listed in the project's dependencies, ` +
+        `not optionalDependencies.`,
+    });
     return;
   }
 
-  context.report(node, missingErrorMessage(packageName));
+  context.report({
+    node,
+    message: `'${packageName}' should be listed in the project's dependencies.`,
+  });
 }
 
 function testConfig(config, filename) {

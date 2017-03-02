@@ -1,6 +1,7 @@
 /**
  * eslint rule that ensures every require()'d and imported package is declared
- * in package.json. It is based on import/no-extraneous-dependencies.
+ * in package.json. It is based on import/no-extraneous-dependencies, but has
+ * been extended to understand `symlinkDependencies`.
  */
 
 const path = require('path');
@@ -22,6 +23,7 @@ function getDependencies(context) {
       devDependencies: packageContent.devDependencies || {},
       optionalDependencies: packageContent.optionalDependencies || {},
       peerDependencies: packageContent.peerDependencies || {},
+      symlinkDependencies: packageContent.symlinkDependencies || {},
     };
   } catch (e) {
     return null;
@@ -40,10 +42,12 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
   const isInDevDeps = deps.devDependencies[packageName] !== undefined;
   const isInOptDeps = deps.optionalDependencies[packageName] !== undefined;
   const isInPeerDeps = deps.peerDependencies[packageName] !== undefined;
+  const isInSymlinkDeps = deps.symlinkDependencies[packageName] !== undefined;
 
   if (isInDeps ||
     (depsOptions.allowDevDeps && isInDevDeps) ||
     (depsOptions.allowPeerDeps && isInPeerDeps) ||
+    (depsOptions.allowSymlinkDeps && isInSymlinkDeps) ||
     (depsOptions.allowOptDeps && isInOptDeps)
   ) {
     return;
@@ -65,6 +69,16 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
       message:
         `'${packageName}' should be listed in the project's dependencies, ` +
         `not optionalDependencies.`,
+    });
+    return;
+  }
+
+  if (isInSymlinkDeps && !depsOptions.allowSymlinkDeps) {
+    context.report({
+      node,
+      message:
+        `'${packageName}' should be listed in the project's dependencies, ` +
+        `not symlinkDependencies.`,
     });
     return;
   }
@@ -98,6 +112,7 @@ module.exports = {
           'devDependencies': { 'type': ['boolean', 'array'] },
           'optionalDependencies': { 'type': ['boolean', 'array'] },
           'peerDependencies': { 'type': ['boolean', 'array'] },
+          'symlinkDependencies': { 'type': ['boolean', 'array'] },
         },
         'additionalProperties': false,
       },
@@ -117,6 +132,7 @@ module.exports = {
       allowDevDeps: testConfig(options.devDependencies, filename) !== false,
       allowOptDeps: testConfig(options.optionalDependencies, filename) !== false,
       allowPeerDeps: testConfig(options.peerDependencies, filename) !== false,
+      allowSymlinkDeps: testConfig(options.symlinkDependencies, filename) !== false,
     };
 
     // todo: use module visitor from module-utils core

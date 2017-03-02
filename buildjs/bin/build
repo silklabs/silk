@@ -63,6 +63,7 @@ for arg in "$@"; do
       [[ -d $arg ]] || help Not a directory: $arg
       SILK_BUILDJS_SOURCE=$(readlink -f $arg)
     elif [[ -z $SILK_BUILDJS_DEST ]]; then
+      mkdir -p $arg
       SILK_BUILDJS_DEST=$(readlink -f $arg)
     else
       help Extraneous positional parameter: $arg
@@ -92,7 +93,6 @@ if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   popd
 fi
 
-mkdir -p $SILK_BUILDJS_DEST
 if [[ $SILK_BUILDJS_TARGET != web ]]; then
   ! $dev_server
   rm -f $SILK_BUILDJS_DEST/package.json

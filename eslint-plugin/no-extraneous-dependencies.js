@@ -19,6 +19,7 @@ function getDependencies(context) {
     }
     const packageContent = pkg.pkg;
     return {
+      name: packageContent.name,
       dependencies: packageContent.dependencies || {},
       devDependencies: packageContent.devDependencies || {},
       optionalDependencies: packageContent.optionalDependencies || {},
@@ -38,6 +39,7 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
   const packageName = splitName[0][0] === '@'
     ? splitName.slice(0, 2).join('/')
     : splitName[0];
+  const isSelf = packageName === deps.name;
   const isInDeps = deps.dependencies[packageName] !== undefined;
   const isInDevDeps = deps.devDependencies[packageName] !== undefined;
   const isInOptDeps = deps.optionalDependencies[packageName] !== undefined;
@@ -45,6 +47,7 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
   const isInSymlinkDeps = deps.symlinkDependencies[packageName] !== undefined;
 
   if (isInDeps ||
+    (depsOptions.allowSelf && isSelf) ||
     (depsOptions.allowDevDeps && isInDevDeps) ||
     (depsOptions.allowPeerDeps && isInPeerDeps) ||
     (depsOptions.allowSymlinkDeps && isInSymlinkDeps) ||
@@ -109,6 +112,7 @@ module.exports = {
       {
         'type': 'object',
         'properties': {
+          'allowSelf': { 'type': 'boolean' },
           'devDependencies': { 'type': ['boolean', 'array'] },
           'optionalDependencies': { 'type': ['boolean', 'array'] },
           'peerDependencies': { 'type': ['boolean', 'array'] },
@@ -129,6 +133,7 @@ module.exports = {
     }
 
     const depsOptions = {
+      allowSelf: !!options.allowSelf,
       allowDevDeps: testConfig(options.devDependencies, filename) !== false,
       allowOptDeps: testConfig(options.optionalDependencies, filename) !== false,
       allowPeerDeps: testConfig(options.peerDependencies, filename) !== false,

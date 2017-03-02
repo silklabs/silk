@@ -4,6 +4,7 @@
  * been extended to understand `symlinkDependencies`.
  */
 
+const fs = require('fs');
 const path = require('path');
 const readPkgUp = require('read-pkg-up');
 const minimatch = require('minimatch');
@@ -11,15 +12,15 @@ const minimatch = require('minimatch');
 const importType = require('eslint-plugin-import/lib/core/importType').default;
 const isStaticRequire = require('eslint-plugin-import/lib/core/staticRequire').default;
 
-function getPackageContent(filename) {
+function getPkg(cwd) {
   try {
-    return readPkgUp.sync({cwd: filename, normalize: false}).pkg;
+    return readPkgUp.sync({cwd, normalize: false});
   } catch (e) {
     return null;
   }
 }
 
-const globalPkg = getPackageContent(path.join(__dirname, '../../'));
+const globalPkg = getPkg(path.join(__dirname, '../../'));
 
 function getDependencies(packageContent) {
   return {
@@ -50,10 +51,10 @@ function reportIfMissing(context, pkg, depsOptions, node, name) {
   const packageName = splitName[0][0] === '@'
     ? splitName.slice(0, 2).join('/')
     : splitName[0];
-  const isSelf = packageName === pkg.name;
+  const isSelf = packageName === pkg.pkg.name;
 
-  const inWhichDeps = findPackageInDependencies(packageName, pkg);
-  const deps = getDependencies(pkg);
+  const inWhichDeps = findPackageInDependencies(packageName, pkg.pkg);
+  const deps = getDependencies(pkg.pkg);
   const isInDeps = deps.dependencies[packageName] !== undefined;
   const isInDevDeps = deps.devDependencies[packageName] !== undefined;
   const isInOptDeps = deps.optionalDependencies[packageName] !== undefined;
@@ -72,7 +73,7 @@ function reportIfMissing(context, pkg, depsOptions, node, name) {
 
   let destination = 'dependencies';
   if (globalPkg) {
-    destination = findPackageInDependencies(packageName, globalPkg) || destination;
+    destination = findPackageInDependencies(packageName, globalPkg.pkg) || destination;
   }
 
   if (inWhichDeps === 'devDependencies' && !depsOptions.allowDevDeps) {
@@ -103,6 +104,23 @@ function reportIfMissing(context, pkg, depsOptions, node, name) {
         `not symlinkDependencies.`,
     });
     return;
+  }
+
+  // HACK: eslint fix() functions are *always* called, regardless of whether
+  // `--fix` is enabled or not, and they express a fix in terms of AST changes
+  // (which eslint then choses to apply or not based on `--fix`.) Our fixes
+  // here don't work that way, however, so skip the whole error reporting flow
+  // if we can fix the problem.
+  if (process.argv.indexOf('--fix') !== -1 && globalPkg) {
+    const globalDeps = getDependencies(globalPkg.pkg);
+    if (packageName in globalDeps[destination]) {
+      const version = globalDeps[destination][packageName];
+      const dest = pkg.pkg[destination] || {};
+      dest[packageName] = version;
+      pkg.pkg[destination] = dest;
+      fs.writeFileSync(pkg.path, JSON.stringify(pkg.pkg, null, 2));
+      return;
+    }
   }
 
   context.report({
@@ -146,7 +164,7 @@ module.exports = {
   create(context) {
     const options = context.options[0] || {};
     const filename = context.getFilename();
-    const pkg = getPackageContent(filename);
+    const pkg = getPkg(filename);
 
     if (!pkg) {
       return {};

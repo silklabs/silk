@@ -11,27 +11,38 @@ const minimatch = require('minimatch');
 const importType = require('eslint-plugin-import/lib/core/importType').default;
 const isStaticRequire = require('eslint-plugin-import/lib/core/staticRequire').default;
 
-function getDependencies(context) {
+function getPackageContent(filename) {
   try {
-    const pkg = readPkgUp.sync({cwd: context.getFilename(), normalize: false});
-    if (!pkg || !pkg.pkg) {
-      return null;
-    }
-    const packageContent = pkg.pkg;
-    return {
-      name: packageContent.name,
-      dependencies: packageContent.dependencies || {},
-      devDependencies: packageContent.devDependencies || {},
-      optionalDependencies: packageContent.optionalDependencies || {},
-      peerDependencies: packageContent.peerDependencies || {},
-      symlinkDependencies: packageContent.symlinkDependencies || {},
-    };
+    return readPkgUp.sync({cwd: filename, normalize: false}).pkg;
   } catch (e) {
     return null;
   }
 }
 
-function reportIfMissing(context, deps, depsOptions, node, name) {
+const globalPkg = getPackageContent(path.join(__dirname, '../../'));
+
+function getDependencies(packageContent) {
+  return {
+    dependencies: packageContent.dependencies || {},
+    devDependencies: packageContent.devDependencies || {},
+    optionalDependencies: packageContent.optionalDependencies || {},
+    peerDependencies: packageContent.peerDependencies || {},
+    symlinkDependencies: packageContent.symlinkDependencies || {},
+  };
+}
+
+function findPackageInDependencies(packageName, packageContent) {
+  const deps = getDependencies(packageContent);
+  return [
+    'dependencies',
+    'devDependencies',
+    'optionalDependencies',
+    'peerDependencies',
+    'symlinkDependencies',
+  ].filter((depsName) => packageName in deps[depsName])[0];
+}
+
+function reportIfMissing(context, pkg, depsOptions, node, name) {
   if (importType(name, context) !== 'external') {
     return;
   }
@@ -39,7 +50,10 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
   const packageName = splitName[0][0] === '@'
     ? splitName.slice(0, 2).join('/')
     : splitName[0];
-  const isSelf = packageName === deps.name;
+  const isSelf = packageName === pkg.name;
+
+  const inWhichDeps = findPackageInDependencies(packageName, pkg);
+  const deps = getDependencies(pkg);
   const isInDeps = deps.dependencies[packageName] !== undefined;
   const isInDevDeps = deps.devDependencies[packageName] !== undefined;
   const isInOptDeps = deps.optionalDependencies[packageName] !== undefined;
@@ -48,39 +62,44 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
 
   if (isInDeps ||
     (depsOptions.allowSelf && isSelf) ||
-    (depsOptions.allowDevDeps && isInDevDeps) ||
-    (depsOptions.allowPeerDeps && isInPeerDeps) ||
-    (depsOptions.allowSymlinkDeps && isInSymlinkDeps) ||
-    (depsOptions.allowOptDeps && isInOptDeps)
+    (depsOptions.allowDevDeps && inWhichDeps === 'devDependencies') ||
+    (depsOptions.allowPeerDeps && inWhichDeps === 'peerDependencies') ||
+    (depsOptions.allowSymlinkDeps && inWhichDeps === 'symlinkDependencies') ||
+    (depsOptions.allowOptDeps && inWhichDeps === 'optionalDependencies')
   ) {
     return;
   }
 
-  if (isInDevDeps && !depsOptions.allowDevDeps) {
+  let destination = 'dependencies';
+  if (globalPkg) {
+    destination = findPackageInDependencies(packageName, globalPkg) || destination;
+  }
+
+  if (inWhichDeps === 'devDependencies' && !depsOptions.allowDevDeps) {
     context.report({
       node,
       message:
-        `'${packageName}' should be listed in the project's dependencies, ` +
+        `'${packageName}' should be listed in the project's ${destination}, ` +
         `not devDependencies.`,
     });
     return;
   }
 
-  if (isInOptDeps && !depsOptions.allowOptDeps) {
+  if (inWhichDeps === 'optionalDependencies' && !depsOptions.allowOptDeps) {
     context.report({
       node,
       message:
-        `'${packageName}' should be listed in the project's dependencies, ` +
+        `'${packageName}' should be listed in the project's ${destination}, ` +
         `not optionalDependencies.`,
     });
     return;
   }
 
-  if (isInSymlinkDeps && !depsOptions.allowSymlinkDeps) {
+  if (inWhichDeps === 'symlinkDependencies' && !depsOptions.allowSymlinkDeps) {
     context.report({
       node,
       message:
-        `'${packageName}' should be listed in the project's dependencies, ` +
+        `'${packageName}' should be listed in the project's ${destination}, ` +
         `not symlinkDependencies.`,
     });
     return;
@@ -88,7 +107,8 @@ function reportIfMissing(context, deps, depsOptions, node, name) {
 
   context.report({
     node,
-    message: `'${packageName}' should be listed in the project's dependencies.`,
+    message:
+      `'${packageName}' should be listed in the project's ${destination}.`,
   });
 }
 
@@ -126,9 +146,9 @@ module.exports = {
   create(context) {
     const options = context.options[0] || {};
     const filename = context.getFilename();
-    const deps = getDependencies(context);
+    const pkg = getPackageContent(filename);
 
-    if (!deps) {
+    if (!pkg) {
       return {};
     }
 
@@ -143,11 +163,11 @@ module.exports = {
     // todo: use module visitor from module-utils core
     return {
       ImportDeclaration: function (node) {
-        reportIfMissing(context, deps, depsOptions, node, node.source.value);
+        reportIfMissing(context, pkg, depsOptions, node, node.source.value);
       },
       CallExpression: function handleRequires(node) {
         if (isStaticRequire(node)) {
-          reportIfMissing(context, deps, depsOptions, node, node.arguments[0].value);
+          reportIfMissing(context, pkg, depsOptions, node, node.arguments[0].value);
         }
       },
     };

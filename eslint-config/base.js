@@ -1,7 +1,8 @@
 module.exports = {
   "extends": [
     "eslint:recommended",
-    "plugin:flowtype/recommended"
+    "plugin:flowtype/recommended",
+    "plugin:silk/recommended",
   ],
   "parserOptions": {
     "ecmaVersion": 2017,
@@ -11,7 +12,8 @@ module.exports = {
     "sourceType": "module"
   },
   "plugins": [
-    "flowtype"
+    "flowtype",
+    "silk",
   ],
   "env": {
     "es6": true,

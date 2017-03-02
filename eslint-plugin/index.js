@@ -7,7 +7,11 @@ module.exports = {
       rules: {
         'silk/no-extraneous-dependencies': ['error', {
           allowSelf: true,
-          devDependencies: ["**/test/**/*.js", "**/webpack.config.js"],
+          devDependencies: [
+            'test/**/*.js',
+            'tools/**/*.js',
+            '**/webpack.config.js',
+          ],
           optionalDependencies: true,
           peerDependencies: true,
           symlinkDependencies: true,

@@ -10,12 +10,20 @@
       ],
       "conditions": [
         [
-          "OS=='android'", {
+          "OS == 'android'", {
             "libraries" : [
               "<!(echo $Android_mk__LIBRARIES)",
             ],
             "cflags" : [
               "-DANDROID",
+            ],
+          },
+          'OS == "linux"', {
+            'libraries': [
+              '<!(test -z "$BSP_LE" || echo "-llog")',
+            ],
+            'cflags': [
+              '<!(test -z "$BSP_LE" || echo "-DANDROID")',
             ],
           },
         ],

@@ -8,8 +8,16 @@ const util = require('util');
 let alog;
 
 if (typeof process !== 'undefined') {
-  if (os.platform() === 'android' && process.env.SILKLOG_NOCONSOLE) {
-    alog = require('silk-alog');
+  if (os.platform() === 'android') {
+    if (process.env.SILKLOG_NOCONSOLE) {
+      alog = require('silk-alog');
+    }
+  } else {
+    try {
+      alog = require('silk-alog');
+    } catch (err) {
+      // Fall back to using console.*
+    }
   }
 
   // If DEBUG environment variable is not set, select a sensible default.

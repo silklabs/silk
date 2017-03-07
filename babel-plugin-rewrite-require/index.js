@@ -8,6 +8,11 @@
  *     "crypto": "crypto-browserify",
  *     "zlib": "zlib-browserify",
  *   },
+ *   "throwForModules": [
+ *     "node-native-stuff",
+ *     "optional-dependency",
+ *     "never-available",
+ *   ],
  *   "throwForMissingFiles": [
  *     "/path/to/optional/configuration.json",
  *     "/path/to/internal/config.json",
@@ -82,9 +87,25 @@ module.exports = function(babel) {
           return;
         }
 
-        // If the require() argument points to a missing file that's
-        // whitelisted, replace the require() call with an exception
-        // being thrown.
+        // If the require() argument is a module that's blacklisted as
+        // never being resolvable, replace the require() call with an
+        // exception being thrown. This mimics webpack's default behavior
+        // for missing modules, but requires consumers to explicitly
+        // blacklist every affected module rather than being the default.
+        if (opts.throwForModules &&
+            opts.throwForModules.length &&
+            opts.throwForModules.indexOf(arg.value) !== -1) {
+          nodePath.replaceWith(
+            throwNewError(t, 'Could not resolve: ' + arg.value)
+          );
+          return;
+        }
+
+        // If the require() argument points to a missing file whitelisted
+        // for being optional, replace the require() call with an exception
+        // being thrown. This is similar to `throwForModules`, but (a) for
+        // relative imports and (b) will not throw if the referenced file is
+        // in fact present.
         if (opts.throwForMissingFiles &&
             opts.throwForMissingFiles.length &&
             arg.value.startsWith('.') &&

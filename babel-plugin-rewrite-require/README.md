@@ -1,5 +1,7 @@
 # Babel plugin for rewriting requires/imports
 
+## Module aliases
+
 This plugin allows rewriting ES6 module imports and CommonJS-style
 `require()` calls using a simple module alias map:
 
@@ -12,15 +14,56 @@ This plugin allows rewriting ES6 module imports and CommonJS-style
 }
 ```
 
+
+## Non-string literals
+
 With the following option enabled, `require()` calls that do not have
-a string literal argument (e.g. `require('cry'+'pto') will be replaced
-with an exception being thrown:
+a simple string literal argument will be replaced with an exception
+being thrown:
 
 ```json
 {
   "throwForNonStringLiteral": true
 }
 ```
+
+This approach is used by several browserify modules to detect whether
+their built-in counterparts are available (e.g. `require('cry'+'pto')`)
+and should be enabled if you use this Babel plugin to alias node
+built-in modules to browserify modules.
+
+
+## Optional modules
+
+A common pattern found in node modules is to check whether a certain
+dependency is available:
+
+```js
+try {
+  require('some-optional-dependency');
+} catch (ex) {
+  // Ignore, or load polyfill, or ...
+}
+```
+
+Because React Native's packager resolves `require()` calls during
+dependency resolution, it will require `'some-optional-dependency'` to
+be present and resolvable. If this module will never be available to
+your React Native app, and you want the runtime exception occur so
+that the `catch` clause can do its thing, you can blacklist these
+dependencies from ever being resolved. Instead, those `require()`
+calls will be replaced with an exception being thrown:
+
+```json
+{
+  "throwForModules": [
+    "some-optional-dependency"
+  ]
+}
+```
+
+
+## Optional files
 
 If the file that an import or `require()` call would resolve to is
 missing, it's usually up to node or the packager (e.g. webpack) to

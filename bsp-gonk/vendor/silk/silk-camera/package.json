@@ -10,7 +10,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "CBuffer": "1.1.0"
+    "CBuffer": "1.1.0",
+    "opencv": "silklabs/node-opencv#silk-v6.0.0-1"
   },
   "devDependencies": {
     "babel-eslint": "7.1.1",
@@ -18,8 +19,9 @@
     "eslint-plugin-flowtype": "2.29.1"
   },
   "symlinkDependencies": {
-    "silk-buildjs": "../../../../buildjs/",
-    "silk-log": "../../../../log/"
+    "silk-buildjs": "../../../../buildjs",
+    "silk-log": "../../../../log/",
+    "silk-sysutils": "../silk-sysutils"
   },
   "private": true
 }

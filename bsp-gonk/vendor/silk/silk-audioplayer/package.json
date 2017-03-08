@@ -10,6 +10,9 @@
   },
   "license": "proprietary",
   "dependencies": {
+    "copy-webpack-plugin": "2.1.5",
+    "icy": "2.1.0",
+    "mz": "2.4.0",
     "nan": "2.4.0"
   },
   "devDependencies": {
@@ -18,8 +21,9 @@
     "eslint-plugin-flowtype": "2.29.1"
   },
   "symlinkDependencies": {
-    "silk-buildjs": "../../../../buildjs/",
-    "silk-log": "../../../../log"
+    "silk-buildjs": "../../../../buildjs",
+    "silk-log": "../../../../log",
+    "silk-sysutils": "../silk-sysutils"
   },
   "gypfile": true,
   "private": true

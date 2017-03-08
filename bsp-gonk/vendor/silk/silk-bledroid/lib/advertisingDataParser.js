@@ -6,10 +6,10 @@
 /* eslint-disable indent, object-curly-spacing */
 
 import assert from 'assert';
-import makeLog from 'debug';
+import makeLog from 'silk-log';
 import uuid from 'uuid';
 
-const log = makeLog('silk-bledroid:adp');
+const log = makeLog('bledroid:adp');
 
 function reverseBuffer(buffer) {
   const length = buffer.length;

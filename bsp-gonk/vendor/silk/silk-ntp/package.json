@@ -16,8 +16,8 @@
   },
   "symlinkDependencies": {
     "external-node-ntp-client": "../../../../external-node-ntp-client",
-    "silk-buildjs": "../../../../buildjs/",
-    "silk-log": "../../../../log/",
+    "silk-buildjs": "../../../../buildjs",
+    "silk-log": "../../../../log",
     "silk-sysutils": "../silk-sysutils"
   },
   "private": true

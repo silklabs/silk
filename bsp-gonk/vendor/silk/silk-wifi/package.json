@@ -19,7 +19,7 @@
   },
   "symlinkDependencies": {
     "eslint-config-silk": "/pub/eslint-config",
-    "silk-buildjs": "../../../../buildjs/",
+    "silk-buildjs": "../../../../buildjs",
     "silk-log": "../../../../log"
   },
   "private": true

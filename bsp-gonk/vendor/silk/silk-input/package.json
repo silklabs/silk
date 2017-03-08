@@ -15,8 +15,8 @@
     "eslint-plugin-flowtype": "2.29.1"
   },
   "symlinkDependencies": {
-    "silk-buildjs": "../../../../buildjs/",
-    "silk-log": "../../../../log/"
+    "silk-buildjs": "../../../../buildjs",
+    "silk-log": "../../../../log"
   },
   "private": true
 }

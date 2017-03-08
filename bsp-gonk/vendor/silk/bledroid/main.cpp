@@ -87,7 +87,9 @@ enum WaitType {
 
 // These wait types won't abort if waiting fails.
 static const WaitType kToleratedWaitFailures[] = {
-  WaitReadRemoteRssi
+  WaitReadRemoteRssi,
+  WaitDisconnect,
+  WaitServerDisconnect,
 };
 
 enum {
@@ -227,7 +229,7 @@ int bt_stop_beacon();
 //
 // Helper macros
 //
-#define CALL_AND_WAIT_HELPER(_expression, _waitType, _return) \
+#define CALL_AND_WAIT_HELPER(_expression, _waitType, _waitTime, _return) \
   do { \
     Tracer _trc("wait:" #_waitType); \
     auto _lock = mainThreadWaiter.autoLock(); \
@@ -238,14 +240,17 @@ int bt_stop_beacon();
         return 1; \
       } \
     } \
-    mainThreadWaiter.wait((_waitType)); \
+    mainThreadWaiter.wait((_waitType), (_waitTime)); \
   } while(0)
 
 #define CALL_AND_WAIT(_expression, _waitType) \
-  CALL_AND_WAIT_HELPER(_expression, _waitType, true)
+  CALL_AND_WAIT_HELPER(_expression, _waitType, 0, true)
 
 #define CALL_AND_WAIT_NO_RETURN(_expression, _waitType) \
-  CALL_AND_WAIT_HELPER(_expression, _waitType, false)
+  CALL_AND_WAIT_HELPER(_expression, _waitType, 0, false)
+
+#define CALL_AND_WAIT_CUSTOM_TIME_NO_RETURN(_expression, _waitType, _waitTime) \
+  CALL_AND_WAIT_HELPER(_expression, _waitType, _waitTime, false)
 
 #define LOG_ERROR(expression, ...) \
   do { \
@@ -360,7 +365,7 @@ public:
     return AutoSignal(condition ? this : nullptr, waitType, abortIfNotWaiting);
   }
 
-  void wait(WaitType waitType) {
+  void wait(WaitType waitType, unsigned int waitTimeSec = 0) {
     // Must be locked here, but no way to assert it...
 
     if (currentWaitType != WaitNone) {
@@ -372,9 +377,13 @@ public:
 
     currentWaitType = waitType;
 
+    const nsecs_t waitTime =
+      waitTimeSec ?
+      seconds_to_nanoseconds(waitTimeSec) :
+      kDefaultWaitTimeout;
+
     while (currentWaitType != WaitNone) {
-      int err = mainThreadCondition.waitRelative(mainThreadMutex,
-                                                 kDefaultWaitTimeout);
+      int err = mainThreadCondition.waitRelative(mainThreadMutex, waitTime);
       if (err) {
         ALOGE("Waiting for type %d failed: %d", currentWaitType, err);
 
@@ -3094,8 +3103,10 @@ int bt_disconnect(char *&saveptr) {
   char *connIdString = strtok_r(NULL, " \n", &saveptr);
   int connId = atoi(connIdString);
 
-  CALL_AND_WAIT_NO_RETURN(gatt->client->disconnect(clientIf, &addr, connId),
-                          WaitDisconnect);
+  CALL_AND_WAIT_CUSTOM_TIME_NO_RETURN(
+    gatt->client->disconnect(clientIf, &addr, connId),
+    WaitDisconnect,
+    5);
 
   if (gatt->client->unregister_client(clientIf) != BT_STATUS_SUCCESS) {
     ALOGW("unregister_client failed");
@@ -3113,8 +3124,10 @@ int bt_disconnect_server(char *&saveptr) {
   char *connIdString = strtok_r(NULL, " \n", &saveptr);
   int connId = atoi(connIdString);
 
-  CALL_AND_WAIT(gatt->server->disconnect(gatt_server_if, &addr, connId),
-                WaitServerDisconnect);
+  CALL_AND_WAIT_CUSTOM_TIME_NO_RETURN(
+    gatt->server->disconnect(gatt_server_if, &addr, connId),
+    WaitServerDisconnect,
+    5);
 
   return BT_STATUS_SUCCESS;
 }

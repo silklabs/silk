@@ -1,4 +1,4 @@
-From ab3e317903047016867b673b6e0800065a0ecda3 Mon Sep 17 00:00:00 2001
+From 8d2cfdbf129728ac3209d4ca09c58f18f73ce257 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
@@ -32,7 +32,7 @@ index 0000000..d59df9c
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..8c0cfc7
+index 0000000..a11f782
 --- /dev/null
 +++ b/lib/android/bindings.js
 @@ -0,0 +1,859 @@
@@ -523,12 +523,12 @@ index 0000000..8c0cfc7
 +        uniqueCentralInfos.add(centralInfo);
 +      }
 +
-+      this._centralMap.clear();
-+
 +      for (let centralInfo of uniqueCentralInfos) {
 +        this._onServerDisconnect(centralInfo.address,
 +                                 centralInfo.connectionId);
 +      }
++
++      this._centralMap.clear();
 +    }
 +  }
 +
@@ -1297,5 +1297,5 @@ index c585abc..360e603 100644
      "bplist-parser": "0.0.6",
      "xpc-connection": "~0.1.4"
 -- 
-2.11.0
+2.11.1
 

@@ -13,9 +13,22 @@ import createLog from 'silk-log';
 import * as util from 'silk-sysutils';
 
 import type {Matrix} from 'opencv';
-import type {ConfigDeviceMic} from 'silk-config';
 import type {VideoCapture, ImageFormat} from 'silk-capture';
 import type {Socket} from 'net';
+
+type ConfigDeviceMic = {
+  bytesPerSample: number;
+  encoding: 'signed-integer' | 'unsigned-integer' | 'float';
+  endian: 'big' | 'little';
+  numChannels: number;
+  sampleRate: number;
+  sampleMin: number;
+  sampleMax: number;
+};
+
+type CameraConfig = {
+  deviceMic: ConfigDeviceMic;
+};
 
 type CameraClipFrameImages = [
   number,
@@ -403,7 +416,7 @@ export default class Camera extends EventEmitter {
   _frameCaptureEnabled: boolean = false;
   _fastFrameCaptureEnabled: boolean = false;
   _fastFrameCount: number = 0;
-  _config: ConfigDeviceMic;
+  _config: CameraConfig;
   _ready: boolean = false;
   _recording: boolean = false;
   _cvVideoCapture: ?VideoCapture = null;
@@ -427,7 +440,7 @@ export default class Camera extends EventEmitter {
   _getParameterCallback: ?{resolve: Function, reject: Function} = null;
   faces: Array<FaceType>;
 
-  constructor(config: ConfigDeviceMic) {
+  constructor(config: $Shape<CameraConfig> = {}) {
     super();
     this._config = Object.assign({
       deviceMic: {
@@ -436,7 +449,10 @@ export default class Camera extends EventEmitter {
         endian: 'little',
         numChannels: 1,
         sampleRate: 16000,
-      }}, config);
+        sampleMin: -32768,
+        sampleMax: 32767,
+      },
+    }, config);
 
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a

@@ -16,6 +16,7 @@
   },
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs",
+    "silk-core-version": "../../../../version",
     "silk-sysutils": "../silk-sysutils"
   },
   "private": true

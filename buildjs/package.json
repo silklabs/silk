@@ -22,6 +22,7 @@
   "dependencies": {
     "babel-eslint": "7.1.1",
     "babel-loader": "6.2.0",
+    "babel-preset-react": "6.22.0",
     "babel-preset-silk-node6": "^1.5.0",
     "copy-webpack-plugin": "2.1.5",
     "eslint": "3.11.1",
@@ -33,5 +34,8 @@
     "mkdirp": "0.5.1",
     "uglify-js": "git@github.com:mishoo/UglifyJS2#3ee46e91e802fb8bf20656bce115375c5f624052",
     "webpack": "1.14.0"
+  },
+  "optionalDependencies": {
+    "silk-babeldeps": "^1.0.0"
   }
 }

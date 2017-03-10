@@ -19,7 +19,8 @@
   },
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs",
-    "silk-log": "../../../../log"
+    "silk-log": "../../../../log",
+    "silk-config": "/config"
   },
   "gypfile": true,
   "private": true

@@ -17,8 +17,10 @@
   "symlinkDependencies": {
     "external-node-ntp-client": "../../../../external-node-ntp-client",
     "silk-buildjs": "../../../../buildjs",
+    "silk-core-version": "../../../../version",
     "silk-log": "../../../../log",
-    "silk-sysutils": "../silk-sysutils"
+    "silk-sysutils": "../silk-sysutils",
+    "silk-wifi": "../silk-wifi"
   },
   "private": true
 }

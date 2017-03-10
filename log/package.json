@@ -19,5 +19,8 @@
   },
   "devDependencies": {
     "mocha": "2.4.5"
+  },
+  "optionalDependencies": {
+    "silk-alog": "^1.0.0"
   }
 }

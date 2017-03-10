@@ -8,6 +8,9 @@
     "postinstall": "../../../../npm_postinstall && silk-buildjs"
   },
   "license": "MIT",
+  "dependencies": {
+    "trim-newlines": "1.0.0"
+  },
   "devDependencies": {
     "babel-eslint": "7.1.1",
     "eslint": "3.11.1",

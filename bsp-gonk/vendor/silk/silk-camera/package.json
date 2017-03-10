@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "CBuffer": "1.1.0",
+    "mic": "2.0.1",
     "opencv": "silklabs/node-opencv#silk-v6.0.0-1"
   },
   "devDependencies": {
@@ -20,7 +21,8 @@
   },
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs",
-    "silk-log": "../../../../log/",
+    "silk-capture": "../silk-capture",
+    "silk-log": "../../../../log",
     "silk-sysutils": "../silk-sysutils"
   },
   "private": true

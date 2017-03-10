@@ -11,10 +11,23 @@
     "silk-build-gonk": "npm run build-splash && ../buildjs/bin/build",
     "test": "npm run lint && npm run flow"
   },
+  "dependencies": {
+    "copy-webpack-plugin": "2.1.5"
+  },
   "symlinkDependencies": {
     "eslint-config-silk": "../eslint-config",
     "silk-flow-bin": "../flow-bin",
-    "silk-sdk": "../sdk"
+    "silk-sdk": "../sdk",
+    "silk-lights": "../bsp-gonk/vendor/silk/silk-lights",
+    "silk-alog": "../bsp-gonk/vendor/silk/silk-alog",
+    "silk-ntp": "../bsp-gonk/vendor/silk/silk-ntp",
+    "silk-sysutils": "../bsp-gonk/vendor/silk/silk-sysutils",
+    "silk-wifi": "../bsp-gonk/vendor/silk/silk-wifi",
+    "silk-battery": "../bsp-gonk/vendor/silk/silk-battery",
+    "silk-camera": "../bsp-gonk/vendor/silk/silk-camera",
+    "silk-input": "../bsp-gonk/vendor/silk/silk-input",
+    "silk-movie": "../bsp-gonk/vendor/silk/silk-movie",
+    "silk-vibrator": "../bsp-gonk/vendor/silk/silk-vibrator"
   },
   "devDependencies": {
     "babel-eslint": "7.1.1",

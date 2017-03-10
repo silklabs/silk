@@ -18,9 +18,10 @@
     "eslint-plugin-flowtype": "2.29.1"
   },
   "symlinkDependencies": {
-    "eslint-config-silk": "/pub/eslint-config",
+    "eslint-config-silk": "../../../../eslint-config",
     "silk-buildjs": "../../../../buildjs",
-    "silk-log": "../../../../log"
+    "silk-log": "../../../../log",
+    "silk-sysutils": "../silk-sysutils"
   },
   "private": true
 }

@@ -392,7 +392,6 @@ class WpaMonitor extends EventEmitter {
           if ((found = extra.match(/ ssid=\"([^"]*)\" /))) {
             const ssid = found[1];
             // TODO: maybe emit the failure count, reason code and disabled duration too?
-
             log.info(`SSID "${ssid}" temporarily disabled`);
 
             /**
@@ -816,11 +815,9 @@ export class Wifi extends EventEmitter {
       });
     });
     monitor.on('ssidTempDisabled', ssid => {
-      log.error('----------------- ssidTempDisabled');
       this.emit('ssidTempDisabled', ssid);
     });
     monitor.on('ssidReenabled', ssid => {
-      log.error('----------------- ssidReenabled');
       this.emit('ssidReenabled', ssid);
     });
 

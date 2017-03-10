@@ -12,7 +12,7 @@
   "dependencies": {
     "copy-webpack-plugin": "2.1.5",
     "icy": "2.1.0",
-    "mz": "2.4.0",
+    "mz": "2.6.0",
     "nan": "2.4.0"
   },
   "devDependencies": {

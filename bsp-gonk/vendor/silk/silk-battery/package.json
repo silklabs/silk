@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "mz": "2.4.0"
+    "mz": "2.6.0"
   },
   "devDependencies": {
     "babel-eslint": "7.1.1",

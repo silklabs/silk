@@ -70,27 +70,15 @@
                     <li class='h5'><span>Static members</span></li>
                     
                       <li><a
-                        href='#silk-alogfatal'
-                        class='regular pre-open'>
-                        .fatal
-                      </a></li>
-                    
-                      <li><a
                         href='#silk-alogerror'
                         class='regular pre-open'>
                         .error
                       </a></li>
                     
                       <li><a
-                        href='#silk-alogwarn'
+                        href='#silk-alogdebug'
                         class='regular pre-open'>
-                        .warn
-                      </a></li>
-                    
-                      <li><a
-                        href='#silk-aloginfo'
-                        class='regular pre-open'>
-                        .info
+                        .debug
                       </a></li>
                     
                       <li><a
@@ -100,9 +88,21 @@
                       </a></li>
                     
                       <li><a
-                        href='#silk-alogdebug'
+                        href='#silk-aloginfo'
                         class='regular pre-open'>
-                        .debug
+                        .info
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-alogfatal'
+                        class='regular pre-open'>
+                        .fatal
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-alogwarn'
+                        class='regular pre-open'>
+                        .warn
                       </a></li>
                     
                     </ul>
@@ -177,6 +177,45 @@
               
                 
                 <li><a
+                  href='#silk-movie'
+                  class=" toggle-sibling">
+                  silk-movie
+                  <span class='icon'>▸</span>
+                </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'><span>Instance members</span></li>
+                      
+                      <li><a
+                        href='#silk-movie#run'
+                        class='regular pre-open'>
+                        #run
+                      </a></li>
+                      
+                      <li><a
+                        href='#silk-movie#stop'
+                        class='regular pre-open'>
+                        #stop
+                      </a></li>
+                      
+                      <li><a
+                        href='#silk-movie#hide'
+                        class='regular pre-open'>
+                        #hide
+                      </a></li>
+                      
+                    </ul>
+                  
+                  
+                </div>
+                
+                </li>
+              
+                
+                <li><a
                   href='#silk-lights'
                   class=" toggle-sibling">
                   silk-lights
@@ -216,45 +255,6 @@
                         href='#silk-lights#get'
                         class='regular pre-open'>
                         #get
-                      </a></li>
-                      
-                    </ul>
-                  
-                  
-                </div>
-                
-                </li>
-              
-                
-                <li><a
-                  href='#silk-movie'
-                  class=" toggle-sibling">
-                  silk-movie
-                  <span class='icon'>▸</span>
-                </a>
-                
-                <div class='toggle-target display-none'>
-                  
-                  
-                    <ul class='list-reset py1-ul pl1'>
-                      <li class='h5'><span>Instance members</span></li>
-                      
-                      <li><a
-                        href='#silk-movie#run'
-                        class='regular pre-open'>
-                        #run
-                      </a></li>
-                      
-                      <li><a
-                        href='#silk-movie#stop'
-                        class='regular pre-open'>
-                        #stop
-                      </a></li>
-                      
-                      <li><a
-                        href='#silk-movie#hide'
-                        class='regular pre-open'>
-                        #hide
                       </a></li>
                       
                     </ul>
@@ -677,6 +677,18 @@
                   
                     <ul class='list-reset py1-ul pl1'>
                       <li class='h5'>Events</li>
+                      
+                        <li><a
+                          href='#silk-wifi.event:ssidTempDisabled'
+                          class='regular pre-open'>
+                          ⓔ ssidTempDisabled
+                        </a></li>
+                      
+                        <li><a
+                          href='#silk-wifi.event:ssidReenabled'
+                          class='regular pre-open'>
+                          ⓔ ssidReenabled
+                        </a></li>
                       
                         <li><a
                           href='#silk-wifi.event:disconnected'
@@ -1295,75 +1307,6 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
   
-    <div class='border-bottom' id='silk-alogfatal'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>fatal(tag = 'node', message)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Print fatal log message</p>
-
-
-  <div class='pre p1 fill-light mt0'>fatal(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
-            = <code>&#39;node&#39;</code>)</code>
-	    Source of the log message
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    The message to log
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
     <div class='border-bottom' id='silk-alogerror'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
@@ -1433,11 +1376,11 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
       </div>
     </div>
   
-    <div class='border-bottom' id='silk-alogwarn'>
+    <div class='border-bottom' id='silk-alogdebug'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>warn(tag = 'node', message)</span>
+            <span class='code strong strong truncate'>debug(tag = 'node', message)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -1445,79 +1388,10 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
   
 
-  <p>Print warn log message</p>
+  <p>Print debug log message</p>
 
 
-  <div class='pre p1 fill-light mt0'>warn(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
-            = <code>&#39;node&#39;</code>)</code>
-	    Source of the log message
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    The message to log
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-aloginfo'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>info(tag = 'node', message)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Print info log message</p>
-
-
-  <div class='pre p1 fill-light mt0'>info(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  <div class='pre p1 fill-light mt0'>debug(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -1640,11 +1514,11 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
       </div>
     </div>
   
-    <div class='border-bottom' id='silk-alogdebug'>
+    <div class='border-bottom' id='silk-aloginfo'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>debug(tag = 'node', message)</span>
+            <span class='code strong strong truncate'>info(tag = 'node', message)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -1652,10 +1526,148 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
   
 
-  <p>Print debug log message</p>
+  <p>Print info log message</p>
 
 
-  <div class='pre p1 fill-light mt0'>debug(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  <div class='pre p1 fill-light mt0'>info(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
+            = <code>&#39;node&#39;</code>)</code>
+	    Source of the log message
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    The message to log
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-alogfatal'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>fatal(tag = 'node', message)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Print fatal log message</p>
+
+
+  <div class='pre p1 fill-light mt0'>fatal(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
+            = <code>&#39;node&#39;</code>)</code>
+	    Source of the log message
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    The message to log
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-alogwarn'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>warn(tag = 'node', message)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Print warn log message</p>
+
+
+  <div class='pre p1 fill-light mt0'>warn(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -2132,6 +2144,205 @@ unaffected by the active mute setting.</p>
     </div>
   
 </div>
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='silk-movie'>
+      silk-movie
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Silk movie module</p>
+
+
+  <div class='pre p1 fill-light mt0'>silk-movie</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Example</div>
+    
+      
+      <pre class='hljs css small'><span class="hljs-meta">'use strict'</span>;
+
+<span class="hljs-keyword">let</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>);
+<span class="hljs-keyword">let</span> Movie = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-movie'</span>).Movie;
+
+<span class="hljs-keyword">let</span> movie = <span class="hljs-keyword">new</span> Movie();
+movie.run(path.join(__dirname, <span class="hljs-string">'splash.zip'</span>));</pre>
+    
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='silk-movie#run'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>run()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Starts a new animation sequence using the provided file</p>
+
+
+  <div class='pre p1 fill-light mt0'>run()</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-movie#stop'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>stop()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Stops the movie, leaving it visible</p>
+
+
+  <div class='pre p1 fill-light mt0'>stop()</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-movie#hide'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>hide()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Stops the movie and hides it</p>
+
+
+  <div class='pre p1 fill-light mt0'>hide()</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
 
   
 </section>
@@ -3143,205 +3354,6 @@ mode is set to LIGHT_FLASH_TIMED</p>
 
       
     
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-</section>
-
-          
-        
-          
-            <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-  <div class='clearfix'>
-    
-    <h3 class='fl m0' id='silk-movie'>
-      silk-movie
-    </h3>
-    
-    
-  </div>
-  
-
-  <p>Silk movie module</p>
-
-
-  <div class='pre p1 fill-light mt0'>silk-movie</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Example</div>
-    
-      
-      <pre class='hljs css small'><span class="hljs-meta">'use strict'</span>;
-
-<span class="hljs-keyword">let</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>);
-<span class="hljs-keyword">let</span> Movie = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-movie'</span>).Movie;
-
-<span class="hljs-keyword">let</span> movie = <span class="hljs-keyword">new</span> Movie();
-movie.run(path.join(__dirname, <span class="hljs-string">'splash.zip'</span>));</pre>
-    
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='silk-movie#run'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>run()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Starts a new animation sequence using the provided file</p>
-
-
-  <div class='pre p1 fill-light mt0'>run()</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-movie#stop'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>stop()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Stops the movie, leaving it visible</p>
-
-
-  <div class='pre p1 fill-light mt0'>stop()</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-movie#hide'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>hide()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Stops the movie and hides it</p>
-
-
-  <div class='pre p1 fill-light mt0'>hide()</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
   
 
   
@@ -6488,6 +6500,122 @@ wifi.on(<span class="hljs-string">'scanResults'</span>, (result) =&gt; {
   
     <div class='py1 quiet mt1 prose-big'>Events</div>
     <div class="clearfix">
+  
+    <div class='border-bottom' id='silk-wifi.event:ssidTempDisabled'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>ssidTempDisabled</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is emitted when an SSID is disabled due to an
+authorization error</p>
+
+
+  <div class='pre p1 fill-light mt0'>ssidTempDisabled</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>SSID</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+          : name
+
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-wifi.event:ssidReenabled'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>ssidReenabled</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is emitted when an SSID is reenabled after an
+authorization error</p>
+
+
+  <div class='pre p1 fill-light mt0'>ssidReenabled</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Properties</div>
+    <div>
+      
+        <div class='space-bottom0'>
+          <span class='code bold'>SSID</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+          : name
+
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
   
     <div class='border-bottom' id='silk-wifi.event:disconnected'>
       <div class="clearfix small pointer toggle-sibling">

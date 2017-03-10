@@ -376,27 +376,67 @@ class WpaMonitor extends EventEmitter {
 
     let nullByte;
     while ((nullByte = this._buffer.indexOf('\0')) !== -1) {
-      let line = this._buffer.substring(0, nullByte);
+      const line = this._buffer.substring(0, nullByte);
       this._buffer = this._buffer.substring(nullByte + 1);
 
       let found;
       if ((found = line.match(/^200 IFNAME=([^ ]+) ([^ ]+) (.*)/))) {
-        let [, _iface, cmd, extra] = found;
+        const [, _iface, cmd, extra] = found;
         if (iface !== _iface) {
           log.info(`Ignoring command from unknown interface ${_iface}: ${cmd}`);
           continue;
         }
 
         switch (cmd) {
+        case 'CTRL-EVENT-SSID-TEMP-DISABLED':
+          if ((found = extra.match(/ ssid=\"([^"]*)\" /))) {
+            const ssid = found[1];
+            // TODO: maybe emit the failure count, reason code and disabled duration too?
+
+            log.info(`SSID "${ssid}" temporarily disabled`);
+
+            /**
+             * This event is emitted when an SSID is disabled due to an
+             * authorization error
+             *
+             * @event ssidTempDisabled
+             * @memberof silk-wifi
+             * @instance
+             * @type {Object}
+             * @property {string} SSID name
+             */
+            this.emit('ssidTempDisabled', ssid);
+          } else {
+            log.warn(`Unable to parse ${cmd} extra: ${extra}`);
+          }
+          break;
+        case 'CTRL-EVENT-SSID-REENABLED':
+          if ((found = extra.match(/ ssid=\"([^"]*)\"/))) {
+            const ssid = found[1];
+            log.info(`SSID "${ssid}" reenabled`);
+            /**
+             * This event is emitted when an SSID is reenabled after an
+             * authorization error
+             *
+             * @event ssidReenabled
+             * @memberof silk-wifi
+             * @instance
+             * @type {Object}
+             * @property {string} SSID name
+             */
+            this.emit('ssidReenabled', ssid);
+          } else {
+            log.warn(`Unable to parse ${cmd} extra: ${extra}`);
+          }
+          break;
         case 'CTRL-EVENT-TERMINATING':
           this._reconnect(cmd);
           break;
         case 'CTRL-EVENT-DISCONNECTED':
-          // Lexical scope ...
           {
             let reason = '';
             if ((found = extra.match(/ reason=([0-9]+)/))) {
-              let reasonIndex = Number(found[1]);
+              const reasonIndex = Number(found[1]);
               reason = WIFI_DISCONNECT_REASONS[reasonIndex];
               log.info(`wifi disconnect reason: ${reason}`);
             }
@@ -430,8 +470,8 @@ class WpaMonitor extends EventEmitter {
           break;
         case 'CTRL-EVENT-STATE-CHANGE':
           if ((found = extra.match(/ state=([0-9]) /))) {
-            let stateIndex = Number(found[1]);
-            let state = WIFI_STATE_MAP[stateIndex];
+            const stateIndex = Number(found[1]);
+            const state = WIFI_STATE_MAP[stateIndex];
             log.info(`wifi state: ${state}`);
 
             /**
@@ -444,6 +484,8 @@ class WpaMonitor extends EventEmitter {
              * @property {WifiState} state new wifi state
              */
             this.emit('stateChange', state);
+          } else {
+            log.warn(`Unable to parse ${cmd} extra: ${extra}`);
           }
           break;
         default:
@@ -772,6 +814,14 @@ export class Wifi extends EventEmitter {
       this._emitScanResults().then(() => {
         this._scheduleScan();
       });
+    });
+    monitor.on('ssidTempDisabled', ssid => {
+      log.error('----------------- ssidTempDisabled');
+      this.emit('ssidTempDisabled', ssid);
+    });
+    monitor.on('ssidReenabled', ssid => {
+      log.error('----------------- ssidReenabled');
+      this.emit('ssidReenabled', ssid);
     });
 
     return Promise.resolve();

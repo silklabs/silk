@@ -100,7 +100,7 @@ if [[ $SILK_BUILDJS_TARGET != web ]]; then
   if $SILK_BUILDJS_UGLY; then
     node -p "\
       p=require('$SILK_BUILDJS_SOURCE/package.json'); \
-      u={license: p.license}; \
+      u={license: p.license, version: p.version}; \
       if (p.main) u.main = p.main; \
       JSON.stringify(u)" > $SILK_BUILDJS_DEST/package.json
   else

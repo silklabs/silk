@@ -1,17 +1,17 @@
-From f2e1d8d745afa4f3a7974e22d9b31fb4b18921cf Mon Sep 17 00:00:00 2001
+From 06bdad4d5d33e4f3f1309393675923c4945e0cff Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
 
 ---
  Android.mk                              |   7 +
- lib/android/bindings.js                 | 864 ++++++++++++++++++++++++++++++++
+ lib/android/bindings.js                 | 866 ++++++++++++++++++++++++++++++++
  lib/android/ccc-descriptor.js           | 196 ++++++++
  lib/android/descriptor-event-emitter.js |  89 ++++
  lib/bleno.js                            |  20 +-
  lib/characteristic.js                   |   2 +
  package.json                            |   6 +-
- 7 files changed, 1173 insertions(+), 11 deletions(-)
+ 7 files changed, 1175 insertions(+), 11 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
  create mode 100644 lib/android/ccc-descriptor.js
@@ -32,10 +32,10 @@ index 0000000..d59df9c
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..e3e24f5
+index 0000000..a598689
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,864 @@
+@@ -0,0 +1,866 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -761,22 +761,6 @@ index 0000000..e3e24f5
 +            offset,
 +            isLong);
 +
-+  if (this._centralMap.has(address)) {
-+    assert.strictEqual(this._centralMap.get(address),
-+                       this._centralMap.get(connectionId));
-+  } else {
-+    log.warn('Unknown central \'%s\', ignoring read request', address);
-+    assert(!this._centralMap.has(connectionId),
-+           'Have another entry for connectionId ' + connectionId);
-+    return;
-+  }
-+
-+  const attribute = this._attributeMap.get(handle);
-+  if (!attribute) {
-+    log.warn('Unknown attribute handle %d, ignoring read request', handle);
-+    return;
-+  }
-+
 +  const callback = function(result, data) {
 +    log.debug('_onReadAttribute.callback',
 +              result,
@@ -791,13 +775,31 @@ index 0000000..e3e24f5
 +      hexdata = data.toString('hex');
 +    }
 +    this._bledroid.command('attributeResponse ' +
-+                          connectionId + ' ' +
-+                          transactionId + ' ' +
-+                          handle + ' ' +
-+                          result + ' ' +
-+                          offset + ' ' +
-+                          hexdata);
++                           connectionId + ' ' +
++                           transactionId + ' ' +
++                           handle + ' ' +
++                           result + ' ' +
++                           offset + ' ' +
++                           hexdata);
 +  }.bind(this);
++
++  if (this._centralMap.has(address)) {
++    assert.strictEqual(this._centralMap.get(address),
++                       this._centralMap.get(connectionId));
++  } else {
++    log.warn('Unknown central \'%s\', ignoring read request', address);
++    assert(!this._centralMap.has(connectionId),
++           'Have another entry for connectionId ' + connectionId);
++    callback(RESULT_UNLIKELY_ERROR);
++    return;
++  }
++
++  const attribute = this._attributeMap.get(handle);
++  if (!attribute) {
++    log.warn('Unknown attribute handle %d, ignoring read request', handle);
++    callback(RESULT_UNLIKELY_ERROR);
++    return;
++  }
 +
 +  attribute.emit('readRequest', offset, callback, address);
 +};

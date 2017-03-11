@@ -23,6 +23,7 @@
     "silk-buildjs": "../../../../buildjs",
     "silk-capture": "../silk-capture",
     "silk-log": "../../../../log",
+    "silk-mic-config": "../../../../mic-config",
     "silk-sysutils": "../silk-sysutils"
   },
   "private": true

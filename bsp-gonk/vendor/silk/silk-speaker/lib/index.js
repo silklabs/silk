@@ -8,7 +8,7 @@ import events from 'events';
 
 import bindings from './speaker';
 
-import type {ConfigDeviceMic} from 'silk-config';
+import type {ConfigDeviceMic} from 'silk-mic-config';
 import type {SpeakerType} from './speaker';
 
 const log = createLog('speaker');

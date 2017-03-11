@@ -1,0 +1,11 @@
+{
+  "deviceMic": {
+    "bytesPerSample": 2,
+    "encoding": "signed-integer",
+    "endian": "little",
+    "numChannels": 1,
+    "sampleRate": 16000,
+    "sampleMin": -32768,
+    "sampleMax": 32767
+  }
+}

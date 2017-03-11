@@ -1,0 +1,17 @@
+/**
+ * @flow
+ */
+
+export type ConfigDeviceMic = {
+  bytesPerSample: number;
+  encoding: 'signed-integer' | 'unsigned-integer' | 'float';
+  endian: 'big' | 'little';
+  numChannels: number;
+  sampleRate: number;
+  sampleMin: number;
+  sampleMax: number;
+};
+
+declare module.exports: {
+  deviceMic: ConfigDeviceMic;
+}

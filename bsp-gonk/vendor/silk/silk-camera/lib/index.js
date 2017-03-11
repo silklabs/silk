@@ -12,19 +12,10 @@ import * as silkcapture from 'silk-capture';
 import createLog from 'silk-log';
 import * as util from 'silk-sysutils';
 
+import type {Socket} from 'net';
 import type {Matrix} from 'opencv';
 import type {VideoCapture, ImageFormat} from 'silk-capture';
-import type {Socket} from 'net';
-
-type ConfigDeviceMic = {
-  bytesPerSample: number;
-  encoding: 'signed-integer' | 'unsigned-integer' | 'float';
-  endian: 'big' | 'little';
-  numChannels: number;
-  sampleRate: number;
-  sampleMin: number;
-  sampleMax: number;
-};
+import type {ConfigDeviceMic} from 'silk-mic-config';
 
 type CameraConfig = {
   deviceMic: ConfigDeviceMic;

@@ -20,7 +20,7 @@
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs",
     "silk-log": "../../../../log",
-    "silk-config": "/config"
+    "silk-mic-config": "../../../../mic-config"
   },
   "gypfile": true,
   "private": true

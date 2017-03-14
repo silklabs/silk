@@ -1,0 +1,18 @@
+#! /usr/bin/env node --max_old_space_size=8000
+
+'use strict';
+
+require('./node')();
+
+// Ignore command-line --arguments
+const mainModule = process.argv.slice(2).find(arg => arg[0] !== '-');
+
+let main = require('path').resolve(mainModule);
+
+// Modify arguments as if node was executing the script
+// directly, removing ourselves from the argument list.
+// Use the 'babel-node-allargs' executable if your script expects
+// unaltered arguments (e.g. for cluster.fork())
+process.argv.splice(1, 1);
+
+require(main);

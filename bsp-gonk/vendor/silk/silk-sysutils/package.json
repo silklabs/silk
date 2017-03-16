@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "lint": "eslint .",
-    "postinstall": "../../../../npm_postinstall && silk-buildjs"
+    "postinstall": "silk-buildjs"
   },
   "license": "MIT",
   "dependencies": {

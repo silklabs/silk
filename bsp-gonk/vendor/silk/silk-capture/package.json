@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "VideoCapture",
   "main": "build/Release/silk-capture.node",
-  "scripts": {
-    "postinstall": "../../../../npm_postinstall"
-  },
   "license": "MIT",
   "dependencies": {
     "nan": "2.4.0",

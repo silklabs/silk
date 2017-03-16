@@ -6,7 +6,7 @@
   "scripts": {
     "build": "silk-buildjs",
     "lint": "eslint lib test",
-    "postinstall": "../../../../npm_postinstall && silk-buildjs"
+    "postinstall": "silk-buildjs"
   },
   "license": "MIT",
   "dependencies": {

@@ -27,6 +27,9 @@ int clampVolume(int v) {
 
 int main(int argc, char **argv)
 {
+  (void) argc;
+  (void) argv;
+
   int level = clampVolume(property_get_int32("persist.silk.volume.level", 0));
   bool mute = property_get_bool("persist.silk.volume.mute", 0) != 0;
   bool init = property_get_bool("silk.volume.init", 0) != 0;

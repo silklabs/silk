@@ -163,10 +163,6 @@ enum {
 // Constants
 //
 
-// This should be the same as GATT_MAX_PHY_CHANNEL in
-// external/bluetooth/bluedroid/include/bt_target.h
-static const size_t kMaxConnectionCount = 7;
-
 static const nsecs_t kDefaultWaitTimeout = seconds_to_nanoseconds(15);
 
 static const int kScanModeWindow = 5000 * BT_UNITS_PER_MS;
@@ -2874,12 +2870,6 @@ int bt_stop_beacon() {
 }
 
 int bt_start_scan(char *&saveptr) {
-  const char *allowDuplicatesStr = strtok_r(NULL, " \n", &saveptr);
-  LOG_ERROR(!allowDuplicatesStr, "Malformed startScanning (no duplicates)");
-  LOG_ERROR(*allowDuplicatesStr != '0' && *allowDuplicatesStr != '1',
-            "Malformed startScanning (duplicates not 0 or 1)");
-  const bool allowDuplicates = *allowDuplicatesStr == '0' ? false : true;
-
   int numServices;
   std::auto_ptr<bt_uuid_t> service_uuids;
   LOG_ERROR(str_to_uuids(saveptr, numServices, service_uuids),

@@ -166,6 +166,8 @@ public:
  * This function is run when a capture command is received from the client
  */
 int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
+  (void) c;
+  (void) argc;
   ALOGD("Received command %s", argv[0]);
 
   // Parse JSON command

@@ -2523,10 +2523,12 @@ LogicError::LogicError(std::string const& msg)
 {}
 void throwRuntimeError(std::string const& msg)
 {
+    (void) msg;
 //  throw RuntimeError(msg);
 }
 void throwLogicError(std::string const& msg)
 {
+    (void) msg;
 //  throw LogicError(msg);
 }
 
@@ -3926,7 +3928,7 @@ Value& Path::make(Value& root) const {
 #if defined(_MSC_VER) && _MSC_VER < 1500 // VC++ 8.0 and below
 #define snprintf _snprintf
 #elif defined(__ANDROID__)
-#define snprintf snprintf
+//#define snprintf snprintf
 #elif __cplusplus >= 201103L
 #define snprintf std::snprintf
 #endif

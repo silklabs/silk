@@ -265,6 +265,9 @@ void CaptureFrameGrabber::onFrameAvailable()
 void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
 #endif
 {
+#ifndef CAF_CPUCONSUMER
+  (void) item;
+#endif
   status_t err = 0;
   while (!err) {
     CpuConsumer::LockedBuffer img;

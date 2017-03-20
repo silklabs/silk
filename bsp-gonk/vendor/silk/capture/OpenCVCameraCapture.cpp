@@ -51,6 +51,7 @@ void OpenCVCameraCapture::closeCamera()
 
 void OpenCVCameraCapture::binderDied(const wp<IBinder> &who)
 {
+  (void) who;
 #if 1
   //
   // The camera HAL, on Nexus 4/5 at least, will get jammed up if the preview

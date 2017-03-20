@@ -21,6 +21,7 @@ void libpreview_FrameCallback(void *userData,
                               size_t height,
                               libpreview::FrameOwner owner)
 {
+  (void) userData;
   Mutex::Autolock autolock(simpleH264EncoderLock);
 
   if (simpleH264Encoder == nullptr) {
@@ -52,6 +53,7 @@ void libpreview_FrameCallback(void *userData,
 
 void libpreview_AbandonedCallback(void *userData)
 {
+  (void) userData;
   printf("libpreview_AbandonedCallback\n");
   exit(1);
 }
@@ -70,6 +72,8 @@ void frameOutCallback(SimpleH264Encoder::EncodedFrameInfo& info) {
 
 int main(int argc, char **argv)
 {
+  (void) argc;
+  (void) argv;
   android::sp<android::ProcessState> ps = android::ProcessState::self();
   ps->startThreadPool();
 

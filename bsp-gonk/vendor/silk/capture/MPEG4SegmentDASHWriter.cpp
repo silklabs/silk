@@ -1752,7 +1752,7 @@ bool MPEG4SegmentDASHWriter::reachedEOS() {
 }
 
 void MPEG4SegmentDASHWriter::setStartTimeOffsetMs(int ms) {
-    ALOGI("setStartTimeOffsetMs(%lld)", ms);
+    ALOGI("setStartTimeOffsetMs(%d)", ms);
     mStartTimeOffsetMs = ms;
 }
 
@@ -2053,6 +2053,7 @@ void MPEG4SegmentDASHWriter::beginBox(AutoBox& box, const char *fourcc) {
 }
 
 void MPEG4SegmentDASHWriter::endBox(AutoBox& box) {
+    (void) box;
     CHECK(!mBoxes.empty());
 
     // Get the most recently saved box offset and then erase it.

@@ -113,6 +113,8 @@ public:
   }
 
   virtual void handleProgressEvent(int64_t timeUs, ProgressType type) {
+    (void) timeUs;
+    (void) type;
     ALOGW("Encoder progress notified to non-listener?");
   }
 
@@ -123,7 +125,7 @@ private:
 };
 
 void EncoderProgress::notifyListeners(int64_t timeUs, ProgressType type) {
-  ALOGV("  notifying listeners of %d at time %lld us", type, timeUs); 
+  ALOGV("  notifying listeners of %d at time %lld us", type, timeUs);
   for (size_t n = 0; n < mListeners.size(); ++n) {
     mListeners[n]->handleProgressEvent(timeUs, type);
   }

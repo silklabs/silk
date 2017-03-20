@@ -11,7 +11,7 @@
 namespace android {
 
 class MediaBuffer;
-class MediaSource;
+struct MediaSource;
 class MetaData;
 
 struct AutoBox;

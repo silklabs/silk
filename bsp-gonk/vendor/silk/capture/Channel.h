@@ -39,10 +39,12 @@ public:
             FreeDataFunc freeDataFunc, void *freeData);
 
   void OnData(bool vad, void *data, size_t size) {
+    (void) vad;
     send(TAG_MIC, data, size, free, data);
   }
 protected:
   virtual bool onDataAvailable(SocketClient *c) {
+    (void) c;
     return true;
   };
 

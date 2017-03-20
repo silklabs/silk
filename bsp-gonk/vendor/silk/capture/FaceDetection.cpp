@@ -41,5 +41,6 @@ void FaceDetection::postData(int32_t msgType, const sp<IMemory>& dataPtr,
 void FaceDetection::postDataTimestamp(nsecs_t timestamp, int32_t msgType,
     const sp<IMemory>& dataPtr) {
   (void) timestamp;
+  (void) dataPtr;
   ALOGD("postDataTimestamp: msgType=0x%x", msgType);
 }

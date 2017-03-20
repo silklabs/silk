@@ -36,6 +36,7 @@ class SingleBufferMediaSource: public MediaSource {
   }
 
   status_t start(MetaData *params = NULL) override {
+    (void) params;
     return 0;
   }
 

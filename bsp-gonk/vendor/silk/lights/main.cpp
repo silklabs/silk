@@ -71,7 +71,7 @@ convertIntArg(char** argv,
               unsigned int* converted)
 {
   const char* start = argv[argi];
-  if (start == '\0') {
+  if (*start == '\0') {
     LOG_ERROR("Argument %d is empty", argi);
     return 1;
   }
@@ -124,6 +124,9 @@ main(int argc, char** argv)
     0 /* flashOnMS */,
     0 /* flashOffMS */,
     BRIGHTNESS_MODE_USER /* brightnessMode */
+#ifdef LIGHT_MODE_MULTIPLE_LEDS
+    , 0 /* ledsModes */
+#endif
   };
 
   int err;

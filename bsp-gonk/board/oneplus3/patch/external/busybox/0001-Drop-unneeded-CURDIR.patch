@@ -1,0 +1,34 @@
+From 2c218410bf9c8c3abe7d1840cf3c0783dc909341 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 20 Mar 2017 12:29:24 -0700
+Subject: [PATCH] Drop unneeded CURDIR
+
+---
+ Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 3709c45..2101ab3 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -9,7 +9,7 @@ else
+ endif
+ BB_TC_DIR := $(realpath $(shell dirname $(TARGET_TOOLS_PREFIX)))
+ BB_TC_PREFIX := $(shell basename $(TARGET_TOOLS_PREFIX))
+-BB_LDFLAGS := -nostdlib -Bdynamic -Wl,-z,muldefs$(shell if test $(PLATFORM_SDK_VERSION) -lt 16; then echo -ne ',-T$(CURDIR)/$(BUILD_SYSTEM)/armelf.x'; fi),-dynamic-linker,$(LINKER_BIN),-z,nocopyreloc,--no-undefined $(CURDIR)/$(TARGET_CRTBEGIN_DYNAMIC_O) $(CURDIR)/$(TARGET_CRTEND_O) $(CURDIR)/$(TARGET_OUT_SHARED_LIBRARIES)/libc.so -L$(CURDIR)/$(TARGET_OUT_SHARED_LIBRARIES)
++BB_LDFLAGS := -nostdlib -Bdynamic -Wl,-z,muldefs$(shell if test $(PLATFORM_SDK_VERSION) -lt 16; then echo -ne ',-T$(CURDIR_unnedded_unnedded)/$(BUILD_SYSTEM)/armelf.x'; fi),-dynamic-linker,$(LINKER_BIN),-z,nocopyreloc,--no-undefined $(CURDIR_unnedded)/$(TARGET_CRTBEGIN_DYNAMIC_O) $(CURDIR_unnedded)/$(TARGET_CRTEND_O) $(CURDIR_unnedded)/$(TARGET_OUT_SHARED_LIBRARIES)/libc.so -L$(CURDIR_unnedded)/$(TARGET_OUT_SHARED_LIBRARIES)
+ # FIXME remove -fno-strict-aliasing once all aliasing violations are fixed
+ BB_COMPILER_FLAGS := $(subst -I ,-I$(CURDIR)/,$(subst -include ,-include $(CURDIR)/,$(TARGET_GLOBAL_CFLAGS))) $(foreach d,$(TARGET_C_INCLUDES),-I$(CURDIR)/$(d)) -fno-stack-protector -Wno-error=format-security -fno-strict-aliasing
+ BB_LDLIBS := dl m c gcc
+@@ -25,7 +25,7 @@ include $(BUILD_PREBUILT)
+ 
+ BB_OUT_INTERMEDIATES := $(dir $(LOCAL_BUILT_MODULE))
+ 
+-BB_MAKE_FLAGS := O=$(CURDIR)/$(BB_OUT_INTERMEDIATES) CROSS_COMPILE=$(notdir $(TARGET_TOOLS_PREFIX)) CONFIG_EXTRA_CFLAGS="$(BB_COMPILER_FLAGS)" EXTRA_LDFLAGS="$(BB_LDFLAGS)" LDLIBS="$(BB_LDLIBS)" $(BB_VERBOSE)
++BB_MAKE_FLAGS := O=$(CURDIR_unnedded)/$(BB_OUT_INTERMEDIATES) CROSS_COMPILE=$(notdir $(TARGET_TOOLS_PREFIX)) CONFIG_EXTRA_CFLAGS="$(BB_COMPILER_FLAGS)" EXTRA_LDFLAGS="$(BB_LDFLAGS)" LDLIBS="$(BB_LDLIBS)" $(BB_VERBOSE)
+ 
+ $(BB_OUT_INTERMEDIATES):
+ 	mkdir -p "$@"
+-- 
+2.11.0
+

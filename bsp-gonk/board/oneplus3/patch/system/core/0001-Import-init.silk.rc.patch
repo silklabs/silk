@@ -1,0 +1,26 @@
+From 275c3d6e687657e6eea3e3db65455d91c4840490 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 19 Mar 2017 22:50:18 -0700
+Subject: [PATCH] Import init.silk.rc
+
+Change-Id: I6aaf0a5f0495a3232818d4f2b5ad42e4d905003c
+---
+ rootdir/init.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 1c6fca642..baaa9c61f 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -12,7 +12,7 @@ import /init.${ro.zygote}.rc
+ import /init.trace.rc
+ # Include CM's extra init file
+ import /init.cm.rc
+-
++import /init.silk.rc
+ 
+ on early-init
+     # Set init and its forked children's oom_adj.
+-- 
+2.11.0
+

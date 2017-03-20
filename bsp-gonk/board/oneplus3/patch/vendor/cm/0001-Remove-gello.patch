@@ -1,0 +1,71 @@
+From 2da16dd11535c038727e81321221de034f1a5a7e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 20 Mar 2017 09:11:14 -0700
+Subject: [PATCH] Remove gello
+
+Change-Id: I046321949cdcbdd97c1ad1e1fca6d27b0a8a1886
+---
+ gello/Android.mk | 51 ---------------------------------------------------
+ 1 file changed, 51 deletions(-)
+ delete mode 100644 gello/Android.mk
+
+diff --git a/gello/Android.mk b/gello/Android.mk
+deleted file mode 100644
+index 1cf0cd06..00000000
+--- a/gello/Android.mk
++++ /dev/null
+@@ -1,51 +0,0 @@
+-#
+-# Copyright (C) 2016 The CyanogenMod Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+-LOCAL_PATH := $(call my-dir)
+-
+-SOURCE_GELLO_PATH := $(LOCAL_PATH)/../../../external/gello-build
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_MODULE := Gello
+-LOCAL_MODULE_CLASS := APPS
+-LOCAL_CERTIFICATE := $(DEFAULT_SYSTEM_DEV_CERTIFICATE)
+-
+-LOCAL_OVERRIDES_PACKAGES := Browser
+-
+-ifeq ($(WITH_GELLO_SOURCE),true)
+-# Build from source
+-ifeq ($(LOCAL_GELLO),true)
+-BUILD_GELLO := $(info $(shell bash $(SOURCE_GELLO_PATH)/gello_build.sh --local 1>&2))
+-else
+-BUILD_GELLO := $(info $(shell bash $(SOURCE_GELLO_PATH)/gello_build.sh 1>&2))
+-endif
+-LOCAL_SRC_FILES := ../../../external/gello-build/Gello.apk
+-include $(BUILD_PREBUILT)
+-else
+-
+-LOCAL_DEX_PREOPT := false
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_BUILT_MODULE_STEM := package.apk
+-LOCAL_MODULE_SUFFIX := $(COMMON_ANDROID_PACKAGE_SUFFIX)
+-
+-LOCAL_MAVEN_REPO := https://maven.cyanogenmod.org/artifactory/gello_prebuilds
+-LOCAL_MAVEN_GROUP := org.cyanogenmod
+-LOCAL_MAVEN_VERSION := 40
+-LOCAL_MAVEN_ARTIFACT := gello
+-LOCAL_MAVEN_PACKAGING := apk
+-
+-include $(BUILD_MAVEN_PREBUILT)
+-endif
+-- 
+2.11.0
+

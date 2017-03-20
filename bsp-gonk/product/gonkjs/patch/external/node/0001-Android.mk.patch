@@ -1,24 +1,25 @@
-From 39f77bd2b4d047a728c718a13e06f0a296d6fa1b Mon Sep 17 00:00:00 2001
+From 4609351a24075e9c3c9dcc4ebc1be59c42299420 Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 121 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 121 insertions(+)
+ Android.mk | 122 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 122 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000..490a913
+index 00000000..14d24ab9
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,122 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +include $(CLEAR_VARS)
 +LOCAL_MODULE := node
 +LOCAL_MODULE_CLASS := EXECUTABLES
++LOCAL_CLANG := false
 +LOCAL_MODULE_TAGS := optional
 +LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_EXECUTABLES)
 +LOCAL_32_BIT_ONLY := true
@@ -136,5 +137,5 @@ index 0000000..490a913
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-2.10.0
+2.11.0
 

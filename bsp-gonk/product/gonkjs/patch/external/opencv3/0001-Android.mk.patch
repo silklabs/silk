@@ -1,23 +1,23 @@
-From f3cba47b930764cd69943f76b02c22a20f1e70b8 Mon Sep 17 00:00:00 2001
+From b1b30da4a95245fa7467a4cef01c2f5515c6acef Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 7 Mar 2016 08:51:20 -0800
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 112 +++++++++++++++++++++++++++++++++++++++++++
- apps/traincascade/Android.mk |  19 ++++++++
- opencv.mk                    |  46 ++++++++++++++++++
- 3 files changed, 177 insertions(+)
+ Android.mk                   | 121 +++++++++++++++++++++++++++++++++++++++++++
+ apps/traincascade/Android.mk |  19 +++++++
+ opencv.mk                    |  43 +++++++++++++++
+ 3 files changed, 183 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 apps/traincascade/Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 000000000..574c68ccd
+index 000000000..767b6f33e
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,121 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -95,6 +95,7 @@ index 000000000..574c68ccd
 +	@echo Configure: $@
 +	$(hide) mkdir -p $(@D)
 +	cd $(@D) && \
++  touch Android.mk && \
 +  export ANDROID_NDK=$(abspath prebuilts/ndk/current) && \
 +  cmake \
 +   -Wno-dev \
@@ -121,17 +122,23 @@ index 000000000..574c68ccd
 +   -DOPENCV_EXTRA_MODULES_PATH=$(ANDROID_BUILD_TOP)/external/opencv3_contrib/modules \
 +   $(LOCAL_PATH)
 +
++
 +$(LOCAL_BUILT_MODULE): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
 +$(LOCAL_BUILT_MODULE): $(OPENCV3_MAKEFILE) \
 +  $(__FAKE_OPENCV3_EXPORT_INCLUDES) \
 +  $(__FAKE_OPENCV3_MODULES_A) $(__FAKE_OPENCV3_3RDPARTY_COMPONENTS_A)
 +	@echo Build: $@
 +	$(hide) time $(MAKE) -C $(@D) install
-+	$(hide) cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,libopencv_,$(notdir $@)) $@
++	$(hide) if [ -d $(dir $@)sdk/native/libs ]; then \
++    cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,libopencv_,$(notdir $@)) $@; \
++  else \
++    mkdir -p $(dir $@)sdk/native/3rdparty; \
++    ln -sf $(dir $@)lib $(dir $@)sdk/native/libs ; \
++    ln -sf $(dir $@)3rdparty/lib $(dir $@)sdk/native/3rdparty/libs; \
++  fi
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 +
-+include $(call all-makefiles-under,$(LOCAL_PATH))
 diff --git a/apps/traincascade/Android.mk b/apps/traincascade/Android.mk
 new file mode 100644
 index 000000000..71fef7c06
@@ -159,7 +166,7 @@ index 000000000..71fef7c06
 +
 diff --git a/opencv.mk b/opencv.mk
 new file mode 100644
-index 000000000..c5d29f572
+index 000000000..ce01efbad
 --- /dev/null
 +++ b/opencv.mk
 @@ -0,0 +1,43 @@

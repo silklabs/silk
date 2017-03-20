@@ -1,0 +1,44 @@
+From 938e3c3cfb640b67a24b9b1648196d12468431d3 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 19 Mar 2017 22:25:17 -0700
+Subject: [PATCH] Relax system checks
+
+Change-Id: Ie400b1845a010390b43ab68174fb5f7cfdd542b2
+---
+ core/main.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index 294f674b2..00efeef48 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -133,7 +133,7 @@ $(warning ************************************************************)
+ $(warning You are building on a case-insensitive filesystem.)
+ $(warning Please move your source tree to a case-sensitive filesystem.)
+ $(warning ************************************************************)
+-$(error Case-insensitive filesystems not supported)
++$(warning Case-insensitive filesystems not supported)
+ endif
+ endif
+ 
+@@ -172,7 +172,7 @@ $(info $(space))
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/initializing.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif
+ 
+ # Check for the correct version of javac
+@@ -187,7 +187,7 @@ $(info $(space))
+ $(info Please follow the machine setup instructions at)
+ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/download.html)
+ $(info ************************************************************)
+-$(error stop)
++#$(error stop)
+ endif
+ 
+ 
+-- 
+2.11.0
+

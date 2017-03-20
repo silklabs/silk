@@ -46,6 +46,8 @@ ifeq (,$(strip $(LOCAL_MODULE_TAGS)))
 LOCAL_MODULE_TAGS := optional
 endif
 
+LOCAL_CLANG := false
+
 ifeq ($(strip $(LOCAL_MODULE_PATH)),)
 # Global node module by default
 LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)

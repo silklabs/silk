@@ -1,0 +1,26 @@
+From be3c431ecba4eb08fd3bb4a30f5c04dbd343a325 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 19 Mar 2017 22:23:25 -0700
+Subject: [PATCH] Permit any vendor to provide a config.mk
+
+Change-Id: I5b383cd517a95f33549ee5a885482fc678362727
+---
+ core/main.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/main.mk b/core/main.mk
+index 6560375f0..294f674b2 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -113,6 +113,8 @@ include $(BUILD_SYSTEM)/mtk_utils.mk
+ 
+ # Include the google-specific config
+ -include vendor/google/build/config.mk
++# Include vendor-specific config
++-include $(sort $(wildcard vendor/*/build/config.mk))
+ 
+ VERSION_CHECK_SEQUENCE_NUMBER := 5
+ 
+-- 
+2.11.0
+

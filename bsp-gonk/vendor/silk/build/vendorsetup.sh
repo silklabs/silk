@@ -106,6 +106,8 @@ find_included_manifests()
       find_included_manifests board/$basename/$i
     elif [[ -r product/$basename/$i ]]; then
       find_included_manifests product/$basename/$i
+    elif [[ -r $(dirname $xml)/$i ]]; then
+      true # Ignore local <includes>
     else
       echo Error: $xml includes an unknown file: $i >&2
       return

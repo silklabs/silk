@@ -1,0 +1,26 @@
+From f52286d6cc3a4eaed24c9c79d7f14af0532f34d8 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 19 Mar 2017 23:45:43 -0700
+Subject: [PATCH] Add silk product
+
+Change-Id: I43d44f801be04a521761f125ee7e319201bb3a17
+---
+ common.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/common.mk b/common.mk
+index 4ae6fd8..f599050 100644
+--- a/common.mk
++++ b/common.mk
+@@ -14,6 +14,8 @@
+ # limitations under the License.
+ #
+ 
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
++
+ # overlays
+ DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
+ 
+-- 
+2.11.0
+

@@ -1,0 +1,26 @@
+From c17f084d80973adacda405e1f07ef8c01c49eaf1 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 19 Mar 2017 22:26:24 -0700
+Subject: [PATCH] Add support for XCode 7
+
+Change-Id: Iaaac4d991d952f7d0ab047fd18f11b6f3a80f9bd
+---
+ core/combo/mac_version.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/combo/mac_version.mk b/core/combo/mac_version.mk
+index e9f06968c..ff6987a92 100644
+--- a/core/combo/mac_version.mk
++++ b/core/combo/mac_version.mk
+@@ -11,7 +11,7 @@ build_mac_version := $(shell sw_vers -productVersion)
+ 
+ # Caution: Do not add 10.10 to this list until the prebuilts/darwin-x86 toolchains are updated.
+ #          In the meantime, setting mac_sdk_version to 10.9 works on Yosemite (verified on 10.10.1).
+-mac_sdk_versions_supported := 10.6 10.7 10.8 10.9 10.11
++mac_sdk_versions_supported := 10.6 10.7 10.8 10.9 10.11 10.12
+ ifneq ($(strip $(MAC_SDK_VERSION)),)
+ mac_sdk_version := $(MAC_SDK_VERSION)
+ ifeq ($(filter $(mac_sdk_version),$(mac_sdk_versions_supported)),)
+-- 
+2.11.0
+

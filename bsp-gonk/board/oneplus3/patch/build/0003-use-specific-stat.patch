@@ -1,0 +1,25 @@
+From 78f26de9aaf5c4ca07c664c12a8ed8ec45ab5d43 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 19 Mar 2017 22:31:35 -0700
+Subject: [PATCH] Use specific version of stat
+
+Change-Id: I7912be1a12e468ce73d2e0d70b7a00fca525f5e0
+---
+ core/combo/HOST_darwin-x86.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/combo/HOST_darwin-x86.mk b/core/combo/HOST_darwin-x86.mk
+index 5992852ae..0ce13cdb1 100644
+--- a/core/combo/HOST_darwin-x86.mk
++++ b/core/combo/HOST_darwin-x86.mk
+@@ -112,6 +112,6 @@ GSTAT=$(which gstat) ; \
+ if [ ! -z "$GSTAT" ]; then \
+ gstat -c "%s" $(1) ; \
+ else \
+-stat -f "%z" $(1) ; \
++/usr/bin/stat -f "%z" $(1) ; \
+ fi
+ endef
+-- 
+2.11.0
+

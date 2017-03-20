@@ -1,0 +1,26 @@
+From 0dc4f92b6a6eba3803242aaf72c1b632b73dc5f3 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 20 Mar 2017 11:35:54 -0700
+Subject: [PATCH] BoardConfig adjustments
+
+Change-Id: Ic82418b737675d383ed91bf9e6504993a3fb7d3c
+---
+ BoardConfig.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index a011b77..b51cbc5 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -60,7 +60,7 @@ ENABLE_CPUSETS := true
+ TARGET_USES_64_BIT_BINDER := true
+ 
+ # Kernel
+-BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 cma=32M@0-0xffffffff
++BOARD_KERNEL_CMDLINE := androidboot.selinux=permissive androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 cma=32M@0-0xffffffff
+ BOARD_KERNEL_BASE := 0x80000000
+ BOARD_KERNEL_PAGESIZE := 4096
+ BOARD_KERNEL_TAGS_OFFSET := 0x02000000
+-- 
+2.11.0
+

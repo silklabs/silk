@@ -193,7 +193,7 @@ void StreamPlayer::reset() {
 }
 
 void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
-  ALOGV("%s %d", __FUNCTION__, msg->what());
+  ALOGV("%s %d %d", __FUNCTION__, msg->what(), mState);
   switch (msg->what()) {
     case kWhatStart: {
       status_t err = OK;
@@ -407,12 +407,24 @@ status_t StreamPlayer::onReset() {
 
   if (mCodecState.mCodec != NULL) {
     mCodecState.mCodec->release();
+    mCodecState.mCodec.clear();
   }
-  mCodecLooper.clear();
-  mExtractor.clear();
 
   if (mBufferedDataSource != NULL) {
     mBufferedDataSource->reset();
+    mBufferedDataSource.clear();
+  }
+
+  if (mCodecState.mAudioTrack != NULL) {
+    mCodecState.mAudioTrack.clear();
+  }
+
+  if (mCodecLooper != NULL) {
+    mCodecLooper.clear();
+  }
+
+  if (mExtractor != NULL) {
+    mExtractor.clear();
   }
 
   mGain = 1.0;

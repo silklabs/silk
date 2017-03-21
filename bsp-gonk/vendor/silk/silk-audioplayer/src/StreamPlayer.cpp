@@ -153,16 +153,10 @@ void StreamPlayer::start() {
   msg->post();
 }
 
-void StreamPlayer::stop(bool pause) {
+void StreamPlayer::pause() {
   ALOGV("%s", __FUNCTION__);
 
   sp<AMessage> msg = getMessage(kWhatStop);
-  if (pause) {
-    msg->setInt32("media_event_type", MEDIA_PAUSED);
-  } else {
-    msg->setInt32("media_event_type", MEDIA_PLAYBACK_COMPLETE);
-  }
-
   msg->post();
 }
 
@@ -193,6 +187,7 @@ void StreamPlayer::eos() {
 }
 
 void StreamPlayer::reset() {
+  ALOGV("%s", __FUNCTION__);
   sp<AMessage> msg = getMessage(kWhatReset);
   msg->post();
 }
@@ -232,9 +227,7 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
         err = onStop();
         if (err == OK) {
           mState = STOPPED;
-          int event;
-          msg->findInt32("media_event_type", &event);
-          notify(event, 0);
+          notify(MEDIA_PAUSED, 0);
         }
       }
       break;
@@ -267,6 +260,7 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
       if (mState == STOPPED) {
         err = onReset();
         mState = UNPREPARED;
+        notify(MEDIA_PLAYBACK_COMPLETE, 0);
       }
       break;
     }
@@ -276,6 +270,7 @@ void StreamPlayer::onMessageReceived(const sp<AMessage> &msg) {
 }
 
 status_t StreamPlayer::onPrepare() {
+  ALOGV("%s", __FUNCTION__);
   CHECK_EQ(mState, UNPREPARED, "Invalid media state");
 
   mExtractor = new NuMediaExtractor();
@@ -471,7 +466,6 @@ status_t StreamPlayer::onDoMoreStuff() {
 
     if (err == ERROR_END_OF_STREAM) {
       ALOGI("encountered input EOS.");
-      stop();
       reset();
       break;
     } else if (err != OK) {

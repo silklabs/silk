@@ -227,14 +227,13 @@ NAN_METHOD(Player::SetVolume) {
 NAN_METHOD(Player::Stop) {
   SETUP_FUNCTION(Player)
 
-  self->mStreamPlayer->stop();
   self->mStreamPlayer->reset();
 }
 
 NAN_METHOD(Player::Pause) {
   SETUP_FUNCTION(Player)
 
-  self->mStreamPlayer->stop(true /* paused */);
+  self->mStreamPlayer->pause();
 }
 
 NAN_METHOD(Player::Resume) {

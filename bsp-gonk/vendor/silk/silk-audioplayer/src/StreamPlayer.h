@@ -47,7 +47,7 @@ public:
   void setVolume(float volume);
   void setDataSource(uint32_t dataSourceType, const char *path);
   void start();
-  void stop(bool pause = false);
+  void pause();
   void getCurrentPosition(int* msec);
   void getDuration(int64_t* msec);
   void eos();

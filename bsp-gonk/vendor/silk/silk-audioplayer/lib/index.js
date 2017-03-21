@@ -262,18 +262,16 @@ export default class Player extends events.EventEmitter {
       throw new Error(`${fileName} not found`);
     }
 
-    if ((this._mediaState !== 'idle') && (this._mediaState !== 'stopped')) {
-      this._mediaState = 'stopped';
-      throw new Error(`Invalid state for play operation`);
-    }
-
-    this._fileName = fileName;
-
     return new Promise((resolve, reject) => {
+      if ((this._mediaState !== 'idle') && (this._mediaState !== 'stopped')) {
+        throw new Error(`Invalid state for play operation`);
+      }
+      this._mediaState = 'preparing';
+
+      this._fileName = fileName;
       this._playPromiseAccept = resolve;
       this._playPromiseReject = reject;
 
-      this._mediaState = 'preparing';
       this._player.setDataSource(bindings.DATA_SOURCE_TYPE_FILE, fileName);
       this._player.start();
     });

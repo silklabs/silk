@@ -149,7 +149,7 @@ type FileInfo = {
  * @module silk-audioplayer
  *
  * @example
- * Example1 - Play an audio file
+ * Example - 1 - Play an audio file
  *
  * const Player = require('silk-audioplayer').default;
  * const log = require('silk-alog');
@@ -174,7 +174,7 @@ type FileInfo = {
  * });
  *
  *
- * Example2 - Play an audio stream
+ * Example - 2 - Play an audio stream
  *
  * const Player = require('silk-audioplayer').default;
  * const https = require('https');
@@ -193,6 +193,21 @@ type FileInfo = {
  *    }
  *  });
  * });
+ *
+ * Example - 3 - Play again using the same player instance
+ *
+ * const Player = require('silk-audioplayer').default;
+ * const log = require('silk-alog');
+ * const player = new Player();
+ *
+ * player.play('data/media/test1.mp3')
+ * .then(() => log.info('Done playing test1'))
+ * .catch(err => console.log(err.message));
+ *
+ * player.stop()
+ * .then(() => player.play('data/media/test2.mp3'))
+ * .then(() => log.info('Done playing test2'))
+ * .catch(err => console.log(err.message));
  */
 
 export default class Player extends events.EventEmitter {
@@ -203,6 +218,8 @@ export default class Player extends events.EventEmitter {
   _fileName: string = '';
   _playPromiseAccept: ?(value: Promise<void> | void) => void = null;
   _playPromiseReject: ?(error: Error) => void = null;
+  _stopPromiseAccept: ?(value: Promise<void> | void) => void = null;
+  _stopPromiseReject: ?(error: Error) => void = null;
 
   constructor() {
     super();
@@ -272,6 +289,10 @@ export default class Player extends events.EventEmitter {
       this._playPromiseAccept = resolve;
       this._playPromiseReject = reject;
 
+      // Clear up any previous stop promises
+      this._stopPromiseAccept = null;
+      this._stopPromiseReject = null;
+
       this._player.setDataSource(bindings.DATA_SOURCE_TYPE_FILE, fileName);
       this._player.start();
     });
@@ -305,14 +326,27 @@ export default class Player extends events.EventEmitter {
    * instance of audioplayer can be reused to play another file or stream after
    * the current instance has finished playback or has been stopped by calling
    * stop on audioplayer.
+   *
+   * @return {Promise} Return a promise that is fulfilled when the audio
+   *                   playback has stopped successfully.
    * @memberof silk-audioplayer
    * @instance
    */
-  stop() {
-    if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
-      return;
-    }
-    this._player.stop();
+  stop(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
+        resolve();
+        return;
+      }
+
+      if (this._stopPromiseAccept || this._stopPromiseReject) {
+        throw new Error(`Another stop request is currently pending`);
+      }
+
+      this._stopPromiseAccept = resolve;
+      this._stopPromiseReject = reject;
+      this._player.stop();
+    });
   }
 
   /**
@@ -454,6 +488,11 @@ export default class Player extends events.EventEmitter {
         this._playPromiseAccept = null;
         this._playPromiseReject = null;
       }
+      if (this._stopPromiseAccept) {
+        this._stopPromiseAccept();
+        this._stopPromiseAccept = null;
+        this._stopPromiseReject = null;
+      }
       break;
     case 'error':
       /**
@@ -464,13 +503,25 @@ export default class Player extends events.EventEmitter {
        * @memberof silk-audioplayer
        * @instance
        */
-      this._player.stop(); // Stop player if not already
+
       this._mediaState = 'stopped';
+
       if (this._playPromiseReject) {
         this._playPromiseReject(new Error(err));
         this._playPromiseAccept = null;
         this._playPromiseReject = null;
       }
+
+      if (this._stopPromiseReject) {
+        this._stopPromiseReject(new Error(err));
+        this._stopPromiseAccept = null;
+        this._stopPromiseReject = null;
+      } else {
+        // Stop player if not already
+        this._player.stop()
+        .catch((err) => log.error(err));
+      }
+
       break;
     default:
       log.warn(`Unknown event ${event}`);

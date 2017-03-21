@@ -387,6 +387,7 @@ public:
         for (const auto &toleratedWaitType : kToleratedWaitFailures) {
           if (toleratedWaitType == currentWaitType) {
             ALOGD("Wait type is whitelisted, not exiting");
+            currentWaitType = WaitNone;
             return;
           }
         }

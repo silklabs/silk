@@ -20,7 +20,7 @@ using namespace android;
 
 static const char* kMimeTypeAvc = "video/avc";
 static const uint32_t kColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
-static const int32_t kIFrameInterval = 3;
+static const int32_t kIFrameInterval = 60;
 
 class SingleBufferMediaSource: public MediaSource {
  public:

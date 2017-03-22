@@ -19,8 +19,9 @@ TARGET_SYSTEM_PROP = $(wildcard $(TARGET_DEVICE_DIR)/system.prop) \
                      product/gonkjs/import.prop
 
 # Volume defaults
+SILK_DEFAULT_VOLUME_LEVEL ?= 75
 PRODUCT_PROPERTY_OVERRIDES += \
- persist.silk.volume.level=75 \
+ persist.silk.volume.level=$(SILK_DEFAULT_VOLUME_LEVEL) \
  persist.silk.volume.mute=false \
 
 PRODUCT_PACKAGES += node

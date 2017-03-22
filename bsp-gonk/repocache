@@ -38,39 +38,61 @@ while getopts "h?f" opt; do
   esac
 done
 
-[[ $# -eq 3 ]] || usage
 
 command=$1
-board=$2
-product=$3
-repocache_urlsuffix=$(uname | tr A-Z a-z)-$board-$product.tgz
+uname_lc=$(uname | tr A-Z a-z)
+
 
 case $command in
 fetch)
   if [[ ! -d .repo/projects ]] && [[ -n $REPOCACHE_URLPREFIX ]]; then
-    set -ex
-    if curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix --output /dev/null --head --fail --silent; then
-      if [[ -n $CI ]]; then
-        # No progress indication when running in CI to be
-        # mindful of log length limits
-        PROGRESS="-q"
-      fi
-      wget --continue \
-           $PROGRESS \
-           --retry-connrefused \
-           --read-timeout=60 \
-           $REPOCACHE_URLPREFIX$repocache_urlsuffix -O - \
-        | tar zx
+    repocache_urlsuffixes=$uname_lc-$board-$product.tgz
+    [[ -n $2 ]] || usage
+    board=$2
+    repocache_urlsuffixes=$uname_lc-$board.tgz
+
+    if [[ -n $3 ]]; then
+      product=$3
+      repocache_urlsuffixes="$uname_lc-$board-$product.tgz $repocache_urlsuffixes"
     fi
+
+    for repocache_urlsuffix in $repocache_urlsuffixes; do
+      set -ex
+      if curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix --output /dev/null --head --fail --silent; then
+        if [[ -n $CI ]]; then
+          # No progress indication when running in CI to be
+          # mindful of log length limits
+          PROGRESS="-q"
+        fi
+        wget --continue \
+             $PROGRESS \
+             --retry-connrefused \
+             --read-timeout=60 \
+             $REPOCACHE_URLPREFIX$repocache_urlsuffix -O - \
+          | tar zx
+        exit 0
+      fi
+    done
   fi
   ;;
 build|buildfull)
+  [[ -n $2 ]] || usage
+  board=$2
+
+  if [[ -n $3 ]]; then
+    product=$3
+    repocache_urlsuffix=$uname_lc-$board-$product.tgz
+  else
+    product=
+    repocache_urlsuffix=$uname_lc-$board.tgz
+  fi
+
   #
   # Example usage:
   #   $ make zest
-  #   $ ./repocache build <board> <product>
+  #   $ ./repocache build <board> <product (optional)>
   #
-  # Upload the resulting repocache-<gonk>.tgz somewhere
+  # Upload the resulting repocache-*.tgz somewhere
   #
   if [[ $command = "buildfull" ]]; then
     maybefull="-f"

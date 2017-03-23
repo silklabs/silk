@@ -46,6 +46,7 @@ int32_t sIFrameIntervalS = 1;
 int32_t sAudioBitRate = 32000;
 int32_t sAudioSampleRate = 8000;
 int32_t sAudioChannels = 1;
+std::map<std::string,std::string> sInitialCameraParameters;
 bool sInitAudio = true;
 bool sInitCameraFrames = true;
 bool sInitCameraVideo = true;
@@ -269,6 +270,18 @@ int CaptureCommand::capture_init(Value& cmdData) {
   if (!cmdData["audioChannels"].isNull()) {
     sAudioChannels = cmdData["audioChannels"].asInt();
     ALOGV("sAudioChannels %d", sAudioChannels);
+  }
+
+  sInitialCameraParameters.clear();
+  if (cmdData["cameraParameters"].isObject()) {
+    auto params = cmdData["cameraParameters"];
+    auto names = params.getMemberNames();
+    for (auto name: names) {
+      if (params[name].isString()) {
+        auto value = params[name].asString();
+        sInitialCameraParameters[name] = value;
+      }
+    }
   }
 
   // Now update the run-time configurable parameters
@@ -533,6 +546,12 @@ status_t CaptureCommand::initThreadCamera() {
     CameraParameters params = mCamera->getParameters();
     params.set(CameraParameters::KEY_PREVIEW_SIZE, previewSize);
     params.set(CameraParameters::KEY_PREVIEW_FORMAT, "yuv420sp");
+
+    for (auto it = sInitialCameraParameters.begin();
+         it != sInitialCameraParameters.end();
+         ++it) {
+      params.set(it->first.c_str(), it->second.c_str());
+    }
     err = mCamera->setParameters(params.flatten());
     CHECK(err == 0);
 

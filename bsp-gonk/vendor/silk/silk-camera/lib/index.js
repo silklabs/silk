@@ -178,6 +178,7 @@ type CommandInitType = {
     audioMute: boolean;
     audioSampleRate: number;
     audioChannels: number;
+    cameraParameters: {[key: string]: string};
   };
 };
 
@@ -431,6 +432,9 @@ export default class Camera extends EventEmitter {
   _getParameterCallback: ?{resolve: Function, reject: Function} = null;
   faces: Array<FaceType>;
 
+  _cameraParameters: {[key: string]: string} = {};
+  _cameraParametersDirty: boolean = false;
+
   constructor(config: $Shape<CameraConfig> = {}) {
     super();
     this._config = Object.assign({
@@ -619,8 +623,17 @@ export default class Camera extends EventEmitter {
 
     this._ready = true;
 
+    // Resend parameters since something changed since the 'init' command
+    if (this._cameraParametersDirty) {
+      this._cameraParametersDirty = false;
+      for (let name in this._cameraParameters) {
+        const value = this._cameraParameters[name];
+        this._command({cmdName: 'setParameter', name, value});
+      }
+    }
+
     /**
-     * This event is emitted when camera has finished intialization
+     * This event is emitted when camera has finished initialization
      *
      * @event ready
      * @memberof silk-camera
@@ -734,8 +747,9 @@ export default class Camera extends EventEmitter {
         audioMute: this._audioMute,
         audioSampleRate: this._config.deviceMic.sampleRate,
         audioChannels: this._config.deviceMic.numChannels,
+        cameraParameters: this._cameraParameters,
       };
-
+      this._cameraParametersDirty = false;
       this._command({cmdName: 'init', cmdData});
     });
     const ctlSocket = this._ctlSocket;
@@ -1237,8 +1251,7 @@ export default class Camera extends EventEmitter {
   /**
    * Initialize camera stream
    *
-   * @return A promise that is resolved when the camera stream is
-   * initialized
+   * @return A promise that is resolved immediately (legacy)
    * @memberof silk-camera
    * @instance
    */
@@ -1292,6 +1305,25 @@ export default class Camera extends EventEmitter {
   }
 
   /**
+   * Set a camera parameter.
+   *
+   * @param name
+   * @param value
+   * @memberof silk-camera
+   * @instance
+   */
+  setParameter(name: string, value: string) {
+    if (this._cameraParameters[name] === value) {
+      return;
+    }
+    this._cameraParametersDirty = true;
+    this._cameraParameters[name] = value;
+    if (this._ready) {
+      this._command({cmdName: 'setParameter', name, value});
+    }
+  }
+
+  /**
    * Set flash mode as specified by flashMode parameter
    *
    * @param flashMode flash-mode parameter to set in camera
@@ -1303,11 +1335,7 @@ export default class Camera extends EventEmitter {
       log.warn(`flash light is not enabled`);
       return;
     }
-    if (!this._ready) {
-      log.error(`camera not ready, ignoring flash command`);
-      return;
-    }
-    this._command({cmdName: 'setParameter', name: 'flash-mode', value: flashMode});
+    this.setParameter('flash-mode', flashMode);
   }
 
   /**

@@ -48,12 +48,14 @@ else
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/5.1.1_r6
 endif
 
-LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
-LOCAL_CFLAGS += -Dnullptr=0
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 LOCAL_CFLAGS += -DIGNORE_UNWANTED_IFRAME_AT_FRAME2
+else
+# c++11 on some pre-M gonks is missing std::unique_ptr
+LOCAL_CFLAGS += -DJSONCPP_USE_AUTOPTR
 endif
 
 -include external/stlport/libstlport.mk
@@ -99,7 +101,7 @@ LOCAL_MODULE_STEM  := mic
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := mic.cpp AudioSourceEmitter.cpp
-LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 endif
@@ -113,7 +115,7 @@ LOCAL_MODULE_STEM  := capture-mic
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := capture-mic.cpp
-LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
 include $(BUILD_SILK_EXECUTABLE)
 
@@ -155,7 +157,7 @@ LOCAL_MODULE       := h264EncodeTest
 LOCAL_MODULE_TAGS  := eng
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := h264EncodeTest.cpp
-LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0 -std=c++11
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 LOCAL_SHARED_LIBRARIES := \
   libbinder \
   libcutils \
@@ -172,7 +174,7 @@ LOCAL_MODULE       := h264SharedEncodeTest
 LOCAL_MODULE_TAGS  := eng
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := h264SharedEncodeTest.cpp
-LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -Dnullptr=0 -std=c++11
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 LOCAL_SHARED_LIBRARIES := \
   libbinder \
   libcutils \

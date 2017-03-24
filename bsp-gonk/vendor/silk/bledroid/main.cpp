@@ -171,6 +171,24 @@ static const int kScanLostFoundTimeout = 0;
 static const int kScanFoundSightings = 2;
 static const int kScanFilterIndex = 1;
 
+// Don't change *any* of these without verifying against the Apple BLE Accessory
+// Guideline documentation.
+//
+// At the time of this writing these rules are:
+//
+// - Interval Max * (Slave Latency + 1) <= 2 seconds
+// - Interval Min >= 20 ms
+// - Interval Min + 20 ms <= Interval Max
+// - Slave Latency <= 4
+// - Supervision Timeout <= 6 seconds
+// - Interval Max * (Slave Latency + 1) * 3 < Supervision Timeout
+//
+// From https://developer.apple.com/library/content/qa/qa1931/_index.html
+static const int kConnectionIntervalMin = 24; // 24 * 1.25 = 30ms
+static const int kConnectionIntervalMax = 40; // 24 * 1.25 = 50ms
+static const int kConnectionSlaveLatency = 0; // # of skipped packets allowed
+static const int kConnectionSupervisionTimeout = 500; // 500 * 10 = 5000ms
+
 static const char kWakeLockId[] = "bluedroid_timer";
 
 static const bt_bdaddr_t kInvalidAddr = {{
@@ -3010,6 +3028,21 @@ int bt_connect(char *&saveptr) {
   LOG_ERROR(!str_to_addr(addrString, addr),
             "Malformed connect (bad address)");
 
+  // Try to set the connection parameters for this connection. The other device
+  // may reject them, however.
+  int err = gatt->client->conn_parameter_update(&addr,
+                                                kConnectionIntervalMin,
+                                                kConnectionIntervalMax,
+                                                kConnectionSlaveLatency,
+                                                kConnectionSupervisionTimeout);
+  if (err == BT_STATUS_SUCCESS) {
+    // Bluedroid does not provide any callback for knowing when this async
+    // operation succeeds or fails (GRRRRRRRR), so we have to just guess here...
+    sleep(1);
+  } else {
+    ALOGW("Failed to set connection parameters: %d", err);
+  }
+
   bt_uuid_t uuid;
   generate_uuid(uuid);
 
@@ -3019,7 +3052,7 @@ int bt_connect(char *&saveptr) {
     client_if_during_connect = -1;
     uuid_during_connect = uuid;
 
-    int err = gatt->client->register_client(&uuid);
+    err = gatt->client->register_client(&uuid);
     if (err != BT_STATUS_SUCCESS) {
       ALOGE("register_client failed: %d", err);
       return err;

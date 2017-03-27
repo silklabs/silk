@@ -22,7 +22,7 @@
 #include "AudioSourceEmitter.h"
 #include "AudioMutter.h"
 #include "json/json.h"
-#include "Capturedefs.h"
+
 #include "Channel.h"
 #include "FaceDetection.h"
 #include "MPEG4SegmenterDASH.h"
@@ -33,11 +33,14 @@ using namespace android;
 using namespace Json;
 using namespace std;
 
+#define CAMERA_NAME "capture"
+#define CAPTURE_COMMAND_NAME "CaptureCommand"
+#define CAPTURE_CTL_SOCKET_NAME "capturectl"
+
 //
 // Global variables
 //
 const char* kMimeTypeAvc = "video/avc";
-status_t OK = static_cast<status_t>(android::OK);
 int sCameraId = 0; // 0 = back camera, 1 = front camera
 Size sVideoSize(1280, 720);
 int32_t sVideoBitRateInK = 1024;
@@ -129,6 +132,7 @@ private:
   sp<ALooper> mLooper;
   sp<ICamera> mRemote;
   sp<CameraSource> mCameraSource;
+  sp<AudioMutter> mAudioMutter;
   Channel& mMicChannel;
   Channel& mVidChannel;
   Mutex mPreviewTargetLock;
@@ -322,6 +326,12 @@ int CaptureCommand::capture_update(Value& cmdData) {
   if (!cmdData["audioMute"].isNull()) {
     sAudioMute = cmdData["audioMute"].asBool();
     ALOGV("sAudioMute %d", sAudioMute);
+    if (mAudioMutter != nullptr) {
+      mAudioMutter->setMute(sAudioMute);
+    }
+    if (mSegmenter != nullptr) {
+      mSegmenter->setMute(sAudioMute);
+    }
   }
   return 0;
 }
@@ -379,7 +389,7 @@ status_t CaptureCommand::setPreviewTarget() {
   ALOGI("Starting camera preview");
   CHECK(mCamera->startPreview() == 0);
   CHECK(mCamera->previewEnabled());
-  return ::OK;
+  return OK;
 }
 
 
@@ -455,7 +465,7 @@ public:
     for (;;) {
       MediaBuffer *buffer;
       status_t err = mMediaSource->read(&buffer);
-      if (err != ::OK) {
+      if (err != OK) {
         ALOGE("Error reading from %s source: %d", mName, err);
         return false;
       }
@@ -497,8 +507,7 @@ status_t CaptureCommand::initThreadAudioOnly() {
     sAudioSampleRate,
     sAudioChannels
   );
-  sp<MediaSource> audioMutter =
-    new AudioMutter(audioSourceEmitter);
+  mAudioMutter = new AudioMutter(audioSourceEmitter, sAudioMute);
 
   // Notify that audio is initialized
   notifyCameraEvent("initialized");
@@ -506,8 +515,8 @@ status_t CaptureCommand::initThreadAudioOnly() {
 
   // Start the audio source and pull out buffers as fast as they come.  The
   // TAG_MIC data will will sent as a side effect
-  CHECK_EQ(audioMutter->start(), ::OK);
-  MediaSourceNullPuller audioPuller(audioMutter, "audio");
+  CHECK_EQ(mAudioMutter->start(), OK);
+  MediaSourceNullPuller audioPuller(mAudioMutter, "audio");
   if (!audioPuller.loop()) {
     notifyCameraEvent("error");
   }
@@ -558,7 +567,7 @@ status_t CaptureCommand::initThreadCamera() {
     params = mCamera->getParameters();
     params.set(CameraParameters::KEY_FOCUS_MODE, CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
     err = mCamera->setParameters(params.flatten());
-    if (err != ::OK) {
+    if (err != OK) {
       ALOGW("Error %d: Unable to set focus mode", err);
     }
 
@@ -576,11 +585,11 @@ status_t CaptureCommand::initThreadCamera() {
       String16(CAMERA_NAME, strlen(CAMERA_NAME)), Camera::USE_CALLING_UID,
       sVideoSize, sFPS,
       NULL, sUseMetaDataMode);
-  CHECK_EQ(mCameraSource->initCheck(), ::OK);
+  CHECK_EQ(mCameraSource->initCheck(), OK);
 
   {
     status_t err = mCamera->autoFocus();
-    if (err != ::OK) {
+    if (err != OK) {
       ALOGW("Error %d: Unable to set autofocus", err);
     }
   }
@@ -610,12 +619,16 @@ status_t CaptureCommand::initThreadCamera() {
       sAudioSampleRate,
       sAudioChannels
     );
-    sp<MediaSource> audioMutter =
-      new AudioMutter(audioSourceEmitter);
+    mAudioMutter = new AudioMutter(audioSourceEmitter, sAudioMute);
     sp<MediaSource> audioEncoder =
-      prepareAudioEncoder(mLooper, audioMutter);
+      prepareAudioEncoder(mLooper, mAudioMutter);
 
-    mSegmenter = new MPEG4SegmenterDASH(videoEncoder, audioEncoder, &mVidChannel);
+    mSegmenter = new MPEG4SegmenterDASH(
+      videoEncoder,
+      audioEncoder,
+      &mVidChannel,
+      sAudioMute
+    );
     mSegmenter->run();
 
     mHardwareActive = true;
@@ -631,7 +644,7 @@ status_t CaptureCommand::initThreadCamera() {
       notifyCameraEvent("initialized");
     }
 
-    CHECK_EQ(mCameraSource->start(), ::OK);
+    CHECK_EQ(mCameraSource->start(), OK);
     MediaSourceNullPuller cameraPuller(mCameraSource, "camera");
     // Block this thread while camera is running
     if (!cameraPuller.loop()) {
@@ -670,14 +683,16 @@ int CaptureCommand::capture_setParameter(Value& name, Value& value) {
   LOG_ERROR((name.isNull()), "name not specified");
   LOG_ERROR((value.isNull()), "value not specified");
   LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
+  CHECK_EQ(mCameraSource->stop(), OK);
 
   CameraParameters params = mCamera->getParameters();
   params.set(name.asCString(), value.asCString());
   status_t err = mCamera->setParameters(params.flatten());
-  if (err != ::OK) {
-    ALOGW("Error %d: Failed to set '%s' to '%s'", err,
+  if (err != OK) {
+    ALOGW("mjv -- Error %d: Failed to set '%s' to '%s'", err,
       name.asCString(), value.asCString());
   }
+  CHECK_EQ(mCameraSource->start(), OK);
   return 0;
 }
 

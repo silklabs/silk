@@ -18,14 +18,19 @@ class MPEG4SegmenterDASH : public Thread {
 public:
   MPEG4SegmenterDASH(const sp<MediaSource>& videoEncoder,
                      const sp<MediaSource>& audioEncoder,
-                     Channel* channel);
+                     Channel* channel,
+                     bool initialMute);
 
   virtual bool threadLoop();
 
+  void setMute(bool mute) {
+    mAudioMute = mute;
+  }
 private:
   sp<PutBackWrapper2> mVideoSource;
   sp<PutBackWrapper2> mAudioSource;
   Channel* mChannel;
+  bool mAudioMute;
 
   DISALLOW_EVIL_CONSTRUCTORS(MPEG4SegmenterDASH);
 };

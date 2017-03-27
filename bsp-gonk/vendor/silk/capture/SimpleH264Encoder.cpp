@@ -69,7 +69,7 @@ class SingleBufferMediaSource: public MediaSource {
 
     *buffer = mBuffer;
     mBuffer = nullptr;
-    return ::OK;
+    return OK;
   }
 
   void nextFrame(android::MediaBuffer *yuv420SemiPlanarFrame) {
@@ -341,7 +341,7 @@ bool SimpleH264EncoderImpl::threadLoop() {
   MediaBuffer *buffer;
 
   status_t err = mediaCodecSource->read(&buffer);
-  if (err != ::OK) {
+  if (err != OK) {
     ALOGE("Error reading from source: %d", err);
     return false;
   }

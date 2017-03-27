@@ -7,7 +7,7 @@
 #include <system/camera.h>
 #include <utils/Log.h>
 
-#include "Capturedefs.h"
+
 #include "OpenCVCameraCapture.h"
 
 using namespace android;
@@ -40,7 +40,7 @@ status_t OpenCVCameraCapture::initCamera(int cameraId, const sp<IGraphicBufferPr
   }
 
   setPreviewProducer(producer);
-  return ::OK;
+  return OK;
 }
 
 void OpenCVCameraCapture::closeCamera()

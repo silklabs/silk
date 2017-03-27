@@ -8,15 +8,20 @@ using namespace android;
 
 class AudioMutter : public MediaSource {
 public:
-  AudioMutter(const sp<MediaSource> &source);
+  AudioMutter(const sp<MediaSource> &source, bool initalMute);
   virtual ~AudioMutter();
   virtual status_t start(MetaData *params = NULL);
   virtual status_t stop();
   virtual sp<MetaData> getFormat();
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
 
+  void setMute(bool mute) {
+    mAudioMute = mute;
+  }
+
 private:
   sp<MediaSource> mSource;
+  bool mAudioMute;
   DISALLOW_EVIL_CONSTRUCTORS(AudioMutter);
 };
 

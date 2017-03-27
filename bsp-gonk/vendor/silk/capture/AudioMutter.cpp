@@ -7,10 +7,10 @@
 #include <media/stagefright/AudioSource.h>
 
 #include "AudioMutter.h"
-#include "Capturedefs.h"
 
-AudioMutter::AudioMutter(const sp<MediaSource> &source) :
-    mSource(source) {
+
+AudioMutter::AudioMutter(const sp<MediaSource> &source, bool initialMute) :
+    mSource(source), mAudioMute(initialMute) {
 }
 
 AudioMutter::~AudioMutter() {
@@ -32,8 +32,8 @@ status_t AudioMutter::read(MediaBuffer **buffer,
     const ReadOptions *options) {
   status_t err = mSource->read(buffer, options);
 
-  if (err == ::OK && (*buffer) && (*buffer)->range_length()) {
-    if (sAudioMute) {
+  if (err == OK && (*buffer) && (*buffer)->range_length()) {
+    if (mAudioMute) {
       // Mute is set, replace with "silence" samples
       memset((uint8_t *) (*buffer)->data() + (*buffer)->range_offset(), 0,
           (*buffer)->range_length());

@@ -3,7 +3,7 @@
 #include <utils/Log.h>
 
 #include "MPEG4SegmenterDASH.h"
-#include "Capturedefs.h"
+
 
 #include <cutils/properties.h>
 #include <include/avc_utils.h>
@@ -87,7 +87,7 @@ status_t PutBackWrapper2::read(MediaBuffer **buffer,
   if (mStash.size() > 0) {
     *buffer = mStash.top();
     mStash.pop();
-    return ::OK;
+    return OK;
   }
   return mSource->read(buffer, options);
 }
@@ -144,7 +144,7 @@ public:
 
   virtual status_t stop() {
     // Don't stop the underlying stream.
-    return ::OK;
+    return OK;
   }
 
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
@@ -161,7 +161,7 @@ private:
 status_t VideoSegmenter::read(MediaBuffer **buffer,
                                      const ReadOptions *options)  {
   status_t err = mSource->read(buffer, options);
-  if (err != ::OK) {
+  if (err != OK) {
     ALOGE("Unexpected error from h264 encoder: %d", err);
     return err;
   }
@@ -201,7 +201,7 @@ status_t VideoSegmenter::read(MediaBuffer **buffer,
     if (!mFirstIFrameSent) {
       mFirstIFrameSent = true;
       notifyListeners(timeUs, PROGRESS_I_FRAME);
-      return ::OK;
+      return OK;
     }
 #ifdef IGNORE_UNWANTED_IFRAME_AT_FRAME2
     // The 8956 encoder sends two iframes at the start of a new segment.  This
@@ -210,7 +210,7 @@ status_t VideoSegmenter::read(MediaBuffer **buffer,
     if (mFrameCount == 2) {
       ALOGW("Masking unexpected i-frame at frame #2");
       notifyListeners(timeUs, PROGRESS_OTHER_FRAME);
-      return ::OK;
+      return OK;
     }
 #endif
 
@@ -220,7 +220,7 @@ status_t VideoSegmenter::read(MediaBuffer **buffer,
     return ERROR_END_OF_STREAM;
   }
   notifyListeners(timeUs, PROGRESS_OTHER_FRAME);
-  return ::OK;
+  return OK;
 }
 
 //--------------------------------------------------
@@ -243,7 +243,7 @@ public:
 
   virtual status_t stop() {
     // Don't stop the underlying stream.
-    return ::OK;
+    return OK;
   }
 
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
@@ -320,7 +320,7 @@ status_t AudioSegmenter::read(MediaBuffer **buffer,
   // sample rate will cover 128ms.
   ALOGV("AAC: reading new buffer to catch up to progress %lld", progressTimeUs);
   status_t err = mSource->read(buffer, options);
-  if (err != ::OK) {
+  if (err != OK) {
     ALOGE("Unexpected error from AAC encoder: %d", err);
     return err;
   }
@@ -341,7 +341,7 @@ status_t AudioSegmenter::read(MediaBuffer **buffer,
            mStashedCodecConfig->size());
     mStashedCodecConfig->meta_data()->setInt32(kKeyIsCodecConfig, true);
     ALOGV("Created up static AAC codec config");
-    return ::OK;
+    return OK;
   }
 
   int64_t startTimeUs;
@@ -359,7 +359,7 @@ status_t AudioSegmenter::read(MediaBuffer **buffer,
   int64_t frameDurationUs = kNumSamplesPerFrame * 1e6 / mSampleRate;
   mAudioReadTimeUs = startTimeUs + frameDurationUs;
 
-  return ::OK;
+  return OK;
 }
 
 void AudioSegmenter::handleProgressEvent(int64_t timeUs, ProgressType type) {
@@ -380,11 +380,13 @@ static void writerDecStrong(void* data) {
 
 MPEG4SegmenterDASH::MPEG4SegmenterDASH(const sp<MediaSource>& videoEncoder,
                                        const sp<MediaSource>& audioEncoder,
-                                       Channel* channel)
+                                       Channel* channel,
+                                       bool initalMute)
   : mVideoSource(new PutBackWrapper2(videoEncoder))
   , mAudioSource(new PutBackWrapper2(audioEncoder))
   , mChannel(channel)
-{ }
+  , mAudioMute(initalMute)
+{}
 
 bool MPEG4SegmenterDASH::threadLoop() {
   bool firstSegment = true;
@@ -394,7 +396,7 @@ bool MPEG4SegmenterDASH::threadLoop() {
     sp<MediaSource> audioSource(new AudioSegmenter(mAudioSource,
                                                    videoSource.get()));
     sp<MPEG4SegmentDASHWriter> writer = new MPEG4SegmentDASHWriter();
-    writer->init(videoSource, &audioSource, sAudioMute);
+    writer->init(videoSource, &audioSource, mAudioMute);
     
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);
@@ -402,11 +404,11 @@ bool MPEG4SegmenterDASH::threadLoop() {
     timeval when;
     gettimeofday(&when, NULL);
 
-    CHECK_EQ(writer->start(params.get()), ::OK);
+    CHECK_EQ(writer->start(params.get()), OK);
     writer->waitForEOS();
 
     status_t err = writer->stop();
-    if (err == ::OK) {
+    if (err == OK) {
       // Always skip the first segment because the audio offset is likely larger
       // than a frame and that confuses some playback implementations.
       if (firstSegment) {

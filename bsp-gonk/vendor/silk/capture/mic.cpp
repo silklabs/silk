@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   for (;;) {
     MediaBuffer *buffer;
     status_t err = audioSource->read(&buffer);
-    if (err != ::OK) {
+    if (err != OK) {
       printf("Error reading from source: %d\n", err);
       return 1;
     }

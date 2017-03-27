@@ -516,10 +516,6 @@ export default class Player extends events.EventEmitter {
         this._stopPromiseReject(new Error(err));
         this._stopPromiseAccept = null;
         this._stopPromiseReject = null;
-      } else {
-        // Stop player if not already
-        this._player.stop()
-        .catch((err) => log.error(err));
       }
 
       break;

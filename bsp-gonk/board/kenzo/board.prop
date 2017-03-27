@@ -1,4 +1,3 @@
 ro.silk.ui.light=true
 ro.silk.ui.inputevents=event0,event6,event7
-ro.silk.camera.width=1920
-ro.silk.camera.height=1080
+ro.silk.camera.resolution=1920x1080

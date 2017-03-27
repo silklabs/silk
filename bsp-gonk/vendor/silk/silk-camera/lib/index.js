@@ -211,8 +211,7 @@ const VIDEO_SEGMENT_DURATION_SECS =
   Math.max(1, Math.min(util.getintprop('persist.silk.video.duration', 1), 20));
 
 const CAMERA_ID = util.getintprop('ro.silk.camera.id', 0);
-const WIDTH = util.getintprop('ro.silk.camera.width', 1280);
-const HEIGHT = util.getintprop('ro.silk.camera.height', 720);
+
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
 const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 
@@ -220,26 +219,7 @@ const FRAME_SCALE_LOW = util.getintprop('ro.silk.camera.scale.low', 5);
 const FRAME_SCALE_DEFAULT = util.getintprop('ro.silk.camera.scale', 4);
 const FRAME_SCALE_HIGH = util.getintprop('ro.silk.camera.scale.high', 2);
 
-const FRAME_SIZE = {
-  low: {
-    width: Math.round(WIDTH / FRAME_SCALE_LOW),
-    height: Math.round(HEIGHT / FRAME_SCALE_LOW),
-  },
-  normal: {
-    width: Math.round(WIDTH / FRAME_SCALE_DEFAULT),
-    height: Math.round(HEIGHT / FRAME_SCALE_DEFAULT),
-  },
-  high: {
-    width: Math.round(WIDTH / FRAME_SCALE_HIGH),
-    height: Math.round(HEIGHT / FRAME_SCALE_HIGH),
-  },
-  full: {
-    width: WIDTH,
-    height: HEIGHT,
-  },
-};
-
-type FrameSize = typeof FRAME_SIZE;
+type FrameSize = {[key: CameraFrameSize]: SizeType};
 
 // Rate that new camera frames are proceeded.  Ideally this would equal
 // 1000/FPS however is usually longer due to limited compute
@@ -341,7 +321,7 @@ function rawFaceArrayToFaces(buf: Buffer): Array<RawHalFaceType> {
  *
  * @private
  */
-function normalizeFace(face: RawHalFaceType): FaceType {
+function normalizeFace(face: RawHalFaceType, width: number, height: number): FaceType {
   // These params are defined by the long comment just below the
   // declaration of `struct camera_face` in
   // system/core/include/system/camera.h.
@@ -363,20 +343,18 @@ function normalizeFace(face: RawHalFaceType): FaceType {
 
   // Intentionally discard additional HAL face data such as the
   // mouth/score as they are never used downstream.
-  const DEFAULT_FRAME_WIDTH = FRAME_SIZE.normal.width;
-  const DEFAULT_FRAME_HEIGHT = FRAME_SIZE.normal.height;
   return {
-    x: normCoord(left, DEFAULT_FRAME_WIDTH),
-    y: normCoord(top, DEFAULT_FRAME_HEIGHT),
-    width: normLen(right - left, DEFAULT_FRAME_WIDTH),
-    height: normLen(bottom - top, DEFAULT_FRAME_HEIGHT),
+    x: normCoord(left, width),
+    y: normCoord(top, height),
+    width: normLen(right - left, width),
+    height: normLen(bottom - top, height),
     leftEye: [
-      normCoord(face.leftEye[0], DEFAULT_FRAME_WIDTH),
-      normCoord(face.leftEye[1], DEFAULT_FRAME_HEIGHT),
+      normCoord(face.leftEye[0], width),
+      normCoord(face.leftEye[1], height),
     ],
     rightEye: [
-      normCoord(face.rightEye[0], DEFAULT_FRAME_WIDTH),
-      normCoord(face.rightEye[1], DEFAULT_FRAME_HEIGHT),
+      normCoord(face.rightEye[0], width),
+      normCoord(face.rightEye[1], height),
     ],
     id: face.id,
   };
@@ -432,6 +410,10 @@ export default class Camera extends EventEmitter {
   _getParameterCallback: ?{resolve: Function, reject: Function} = null;
   faces: Array<FaceType>;
 
+  FRAME_SIZE: FrameSize;
+  width: number;
+  height: number;
+
   _cameraParameters: {[key: string]: string} = {};
   _cameraParametersDirty: boolean = false;
 
@@ -449,17 +431,18 @@ export default class Camera extends EventEmitter {
       },
     }, config);
 
+    const resolution = util.getstrprop(
+      'persist.silk.camera.resolution',
+      util.getstrprop('ro.silk.camera.resolution', '1280x720')
+    );
+    this._cameraParameters['preview-size'] = resolution;
+    this._setResolution(resolution);
+
     // Cache last few images to guarantee the consumers get the image they are
     // expecting and not the latest camera frame. Also helps prevent resizing a
     // frame multiple times.
     this._imagecache = new CBuffer(NUM_IMAGES_TO_CACHE);
     this._imagecache.overflow = (item) => this._releaseImageCacheEntry(item);
-
-    // Helpful debug output...
-    log.verbose('Active frame sizes:');
-    for (let frameSize in FRAME_SIZE) {
-      log.verbose(`  ${frameSize}: ${JSON.stringify(FRAME_SIZE[frameSize])}`);
-    }
 
     this.on('removeListener', this._onListenerChange);
     this.on('newListener', () => process.nextTick(this._onListenerChange));
@@ -481,10 +464,6 @@ export default class Camera extends EventEmitter {
 
   attachFrameReplacer(frameReplacer: FrameReplacer) {
     this._frameReplacer = frameReplacer;
-  }
-
-  get FRAME_SIZE(): FrameSize {
-    return FRAME_SIZE;
   }
 
   get FLASH_MODE(): FlashMode {
@@ -610,7 +589,7 @@ export default class Camera extends EventEmitter {
     if (!this._cvVideoCapture) {
       try {
         this._cvVideoCapture = new silkcapture.VideoCapture(0,
-          FRAME_SIZE.normal.width, FRAME_SIZE.normal.height);
+          this.FRAME_SIZE.normal.width, this.FRAME_SIZE.normal.height);
       } catch (err) {
         throw err;
       }
@@ -740,8 +719,8 @@ export default class Camera extends EventEmitter {
         audio: AUDIO_HW_ENABLED,
         videoSegmentLength: VIDEO_SEGMENT_DURATION_SECS,
         cameraId: CAMERA_ID,
-        width: WIDTH,
-        height: HEIGHT,
+        width: this.width,
+        height: this.height,
         fps: FPS,
         vbr: VBR,
         audioMute: this._audioMute,
@@ -852,7 +831,7 @@ export default class Camera extends EventEmitter {
         case 'rgb':
           if (!image.rgb) {
             let rgb = image.fullrgb.copy();
-            rgb.resize(FRAME_SIZE.normal.width, FRAME_SIZE.normal.height); // Slow!
+            rgb.resize(this.FRAME_SIZE.normal.width, this.FRAME_SIZE.normal.height); // Slow!
             image.rgb = rgb;
           }
           return image.rgb;
@@ -861,7 +840,7 @@ export default class Camera extends EventEmitter {
         case 'highgray':
           if (!image.highgray) {
             let highgray = image.fullgray.copy();
-            highgray.resize(FRAME_SIZE.high.width, FRAME_SIZE.high.height);
+            highgray.resize(this.FRAME_SIZE.high.width, this.FRAME_SIZE.high.height);
             image.highgray = highgray;
           }
           return image.highgray;
@@ -879,7 +858,7 @@ export default class Camera extends EventEmitter {
             // TODO: Resize from fullgray instead?  This will be slower but
             // likely produce a better image.
             let lowgray = image.gray.copy();
-            lowgray.resize(FRAME_SIZE.low.width, FRAME_SIZE.low.height);
+            lowgray.resize(this.FRAME_SIZE.low.width, this.FRAME_SIZE.low.height);
             image.lowgray = lowgray;
           }
           return image.lowgray;
@@ -1194,7 +1173,15 @@ export default class Camera extends EventEmitter {
         case TAG_FACES:
           log.debug(`TAG_FACES ${when}`, tagInfo);
           if (this._recording) {
-            this.faces = rawFaceArrayToFaces(pkt).map(normalizeFace);
+            this.faces = rawFaceArrayToFaces(pkt).map(
+              face => {
+                return normalizeFace(
+                  face,
+                  this.FRAME_SIZE.normal.width,
+                  this.FRAME_SIZE.normal.height
+                );
+              }
+            );
           }
           break;
         case TAG_MIC:
@@ -1305,6 +1292,52 @@ export default class Camera extends EventEmitter {
   }
 
   /**
+   * @private
+   */
+  _setResolution(resolution: string): boolean {
+    const parts = resolution.match(/^([1-9][0-9]+)x([1-9][0-9]+)$/);
+    if (!parts) {
+      throw new Error(`Invalid resolution: ${resolution}`);
+    }
+    invariant(parts[1] && parts[2]);
+    const width = parseInt(parts[1], 10);
+    const height = parseInt(parts[2], 10);
+
+    if (width === this.width && height === this.height) {
+      return false;
+    }
+    this.width = width;
+    this.height = height;
+
+    this.FRAME_SIZE = {
+      low: {
+        width: Math.round(this.width / FRAME_SCALE_LOW),
+        height: Math.round(this.height / FRAME_SCALE_LOW),
+      },
+      normal: {
+        width: Math.round(this.width / FRAME_SCALE_DEFAULT),
+        height: Math.round(this.height / FRAME_SCALE_DEFAULT),
+      },
+      high: {
+        width: Math.round(this.width / FRAME_SCALE_HIGH),
+        height: Math.round(this.height / FRAME_SCALE_HIGH),
+      },
+      full: {
+        width: this.width,
+        height: this.height,
+      },
+    };
+
+    log.verbose('Active frame sizes:');
+
+    for (let frameSize in this.FRAME_SIZE) {
+      // $FlowFixMe: frameSize IS compatible with the CameraFrameSize type...
+      log.verbose(`  ${frameSize}: ${JSON.stringify(this.FRAME_SIZE[frameSize])}`);
+    }
+    return true;
+  }
+
+  /**
    * Set a camera parameter.
    *
    * @param name
@@ -1319,6 +1352,11 @@ export default class Camera extends EventEmitter {
     this._cameraParametersDirty = true;
     this._cameraParameters[name] = value;
     if (this._ready) {
+      if (name === 'preview-size') {
+        if (this._setResolution(value)) {
+          util.setprop('persist.silk.camera.resolution', value);
+        }
+      }
       this._command({cmdName: 'setParameter', name, value});
     }
   }
@@ -1413,17 +1451,17 @@ export default class Camera extends EventEmitter {
   }
 
   /**
-   * Returns the camera video size.
+   * Returns the current camera video size.
    *
    * @memberof silk-camera
    * @instance
    */
   get videoSize(): SizeType {
-    return {width: WIDTH, height: HEIGHT};
+    return {width: this.width, height: this.height};
   }
 
   /**
-   * Returns the camera frame size.
+   * Returns the current camera frame size.
    *
    * @param frameSize Frame size of interest ('normal' if null)
    * @memberof silk-camera
@@ -1431,10 +1469,10 @@ export default class Camera extends EventEmitter {
    */
   getFrameSize(frameSize?: CameraFrameSize): SizeType {
     frameSize = frameSize || 'normal';
-    if (typeof FRAME_SIZE[frameSize] !== 'object') {
+    if (typeof this.FRAME_SIZE[frameSize] !== 'object') {
       throw new Error(`Invalid frameSize: ${frameSize}`);
     }
-    return FRAME_SIZE[frameSize];
+    return this.FRAME_SIZE[frameSize];
   }
 
   /**
@@ -1459,7 +1497,7 @@ export default class Camera extends EventEmitter {
    * @instance
    */
   normalRectsTo(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
-    const scale = this.getFrameSize(frameSize).width / FRAME_SIZE.normal.width;
+    const scale = this.getFrameSize(frameSize).width / this.FRAME_SIZE.normal.width;
     return rects.map(rect => Camera._scaleRect(rect, scale));
   }
 
@@ -1473,7 +1511,7 @@ export default class Camera extends EventEmitter {
    * @instance
    */
   normalRectsFrom(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
-    const scale = FRAME_SIZE.normal.width / this.getFrameSize(frameSize).width;
+    const scale = this.FRAME_SIZE.normal.width / this.getFrameSize(frameSize).width;
     return rects.map(rect => Camera._scaleRect(rect, scale));
   }
 

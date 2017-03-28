@@ -6,7 +6,7 @@ if ${CI:-false}; then
   if ${TRAVIS:-false}; then
     export CI_BRANCH=$TRAVIS_BRANCH
     export CI_BUILD_ID=$TRAVIS_BUILD_ID
-    export CI_COMMIT_SHA=$TRAVIS_COMMIT
+    export CI_COMMIT=$TRAVIS_COMMIT
     export CI_JOB_ID=$TRAVIS_JOB_ID
     export CI_OS_NAME=$TRAVIS_OS_NAME
     export CI_PROJECT_DIR=$TRAVIS_BUILD_DIR
@@ -16,7 +16,7 @@ if ${CI:-false}; then
   if ${BUILDKITE:-false}; then
     export CI_BRANCH=$BUILDKITE_BRANCH
     export CI_BUILD_ID=$BUILDKITE_BUILD_ID
-    export CI_COMMIT_SHA=$BUILDKITE_COMMIT
+    export CI_COMMIT=$BUILDKITE_COMMIT
     export CI_JOB_ID=$BUILDKITE_JOB_ID
     export CI_OS_NAME=linux
     export CI_PROJECT_DIR=/ci # TODO...
@@ -26,7 +26,7 @@ if ${CI:-false}; then
   if ${GITLAB_CI:-false}; then
     export CI_BRANCH=$CI_COMMIT_REF_NAME
     #CI_BUILD_ID set natively
-    #CI_COMMIT_SHA set natively
+    export CI_COMMIT=$CI_COMMIT_SHA
     #CI_JOB_ID set natively
     export CI_OS_NAME=linux
     #CI_PROJECT_DIR set natively

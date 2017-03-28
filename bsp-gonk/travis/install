@@ -1,4 +1,5 @@
 # |source| me
+source ../cienv.sh
 
 if [[ -z $BOARD ]]; then
   echo "BOARD not defined"
@@ -8,7 +9,7 @@ fi
 echo BOARD: $BOARD
 echo PRODUCT: $PRODUCT
 
-if [[ $TRAVIS_OS_NAME == osx ]]; then
+if [[ $CI_OS_NAME == osx ]]; then
   export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
   export CC=/usr/bin/gcc CXX=/usr/bin/g++
   export FULL_SERVICE=1
@@ -23,7 +24,7 @@ else
   export CXX="g++-4.8" CC="gcc-4.8"
 fi
 
-export CCACHE_PATH="ccache/$BOARD-$PRODUCT-$TRAVIS_OS_NAME-$TRAVIS_BRANCH"
+export CCACHE_PATH="ccache/$BOARD-$PRODUCT-$CI_OS_NAME-$CI_BRANCH"
 export CCACHE_WEBHOST=https://s3.amazonaws.com/silk-sos-release
 export CCACHE_URL=$CCACHE_WEBHOST/$CCACHE_PATH/ccache.tar.gz
 export CCACHE_COMPRESS=true

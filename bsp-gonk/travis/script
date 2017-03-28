@@ -57,7 +57,7 @@ fi
   du -hs .
 )
 
-if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
+if [[ $CI_PULL_REQUEST == "false" ]]; then
   # We place this in script to ensure that when it fails it turns the build red.
   ./travis/artifacts
 fi

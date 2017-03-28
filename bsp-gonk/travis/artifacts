@@ -5,8 +5,8 @@ if [[ -z $SILK_BOARD ]]; then
   exit 1
 fi
 
-if [[ -z $TRAVIS_BRANCH ]]; then
-  echo "Please set TRAVIS_BRANCH"
+if [[ -z $CI_BRANCH ]]; then
+  echo "Please set CI_BRANCH"
   exit 1
 fi
 
@@ -25,7 +25,7 @@ get_version() {
 ensure_version
 
 channel=${SILK_CHANNEL:-commit}
-branch=$TRAVIS_BRANCH
+branch=$CI_BRANCH
 os=$(uname | tr '[:upper:]' '[:lower:]')
 version=$(get_version)
 target_upload_path=$channel/$SILK_BOARD/$os/$version

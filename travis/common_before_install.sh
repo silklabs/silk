@@ -6,7 +6,7 @@ git --version
 git config --global user.email "stooge@silklabs.com"
 git config --global user.name "Stooge"
 git config --global color.ui false
-if [ $TRAVIS_OS_NAME == osx ]; then
+if [ $CI_OS_NAME == osx ]; then
   echo HOME: $HOME # log.debug
   echo PWD: $PWD   # log.debug
 

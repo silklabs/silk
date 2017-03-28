@@ -88,15 +88,15 @@
                       </a></li>
                     
                       <li><a
-                        href='#silk-aloginfo'
-                        class='regular pre-open'>
-                        .info
-                      </a></li>
-                    
-                      <li><a
                         href='#silk-alogfatal'
                         class='regular pre-open'>
                         .fatal
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-aloginfo'
+                        class='regular pre-open'>
+                        .info
                       </a></li>
                     
                       <li><a
@@ -936,6 +936,12 @@
                       </a></li>
                       
                       <li><a
+                        href='#silk-camera#setParameter'
+                        class='regular pre-open'>
+                        #setParameter
+                      </a></li>
+                      
+                      <li><a
                         href='#silk-camera#flash'
                         class='regular pre-open'>
                         #flash
@@ -1514,11 +1520,11 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
       </div>
     </div>
   
-    <div class='border-bottom' id='silk-aloginfo'>
+    <div class='border-bottom' id='silk-alogfatal'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>info(tag = 'node', message)</span>
+            <span class='code strong strong truncate'>fatal(tag = 'node', message)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -1526,10 +1532,10 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
   
 
-  <p>Print info log message</p>
+  <p>Print fatal log message</p>
 
 
-  <div class='pre p1 fill-light mt0'>info(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  <div class='pre p1 fill-light mt0'>fatal(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -1583,11 +1589,11 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
       </div>
     </div>
   
-    <div class='border-bottom' id='silk-alogfatal'>
+    <div class='border-bottom' id='silk-aloginfo'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>fatal(tag = 'node', message)</span>
+            <span class='code strong strong truncate'>info(tag = 'node', message)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -1595,10 +1601,10 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
   
 
-  <p>Print fatal log message</p>
+  <p>Print info log message</p>
 
 
-  <div class='pre p1 fill-light mt0'>fatal(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  <div class='pre p1 fill-light mt0'>info(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -4398,7 +4404,7 @@ state.</td>
     <div class='py1 quiet mt1 prose-big'>Example</div>
     
       
-      <pre class='hljs css small'>Example1 - Play an audio file
+      <pre class='hljs css small'>Example - <span class="hljs-number">1</span> - Play an audio file
 
 <span class="hljs-keyword">const</span> Player = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-audioplayer'</span>).default;
 <span class="hljs-keyword">const</span> log = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-alog'</span>);
@@ -4423,7 +4429,7 @@ player.on(<span class="hljs-string">'started'</span>, () =&gt; {
 });
 
 
-Example2 - Play an audio stream
+Example - <span class="hljs-number">2</span> - Play an audio stream
 
 <span class="hljs-keyword">const</span> Player = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-audioplayer'</span>).default;
 <span class="hljs-keyword">const</span> https = <span class="hljs-built_in">require</span>(<span class="hljs-string">'https'</span>);
@@ -4441,7 +4447,22 @@ https.get(<span class="hljs-string">'https://test.mp3'</span>, (res) =&gt; {
      player.endOfStream();
    }
  });
-});</pre>
+});
+
+Example - <span class="hljs-number">3</span> - Play again using the same player instance
+
+<span class="hljs-keyword">const</span> Player = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-audioplayer'</span>).default;
+<span class="hljs-keyword">const</span> log = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-alog'</span>);
+<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> Player();
+
+player.play(<span class="hljs-string">'data/media/test1.mp3'</span>)
+.then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> log.info(<span class="hljs-string">'Done playing test1'</span>))
+.catch(<span class="hljs-function"><span class="hljs-params">err</span> =&gt;</span> <span class="hljs-built_in">console</span>.log(err.message));
+
+player.stop()
+.then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> player.play(<span class="hljs-string">'data/media/test2.mp3'</span>))
+.then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> log.info(<span class="hljs-string">'Done playing test2'</span>))
+.catch(<span class="hljs-function"><span class="hljs-params">err</span> =&gt;</span> <span class="hljs-built_in">console</span>.log(err.message));</pre>
     
   
 
@@ -4787,7 +4808,7 @@ the current instance has finished playback or has been stopped by calling
 stop on audioplayer.</p>
 
 
-  <div class='pre p1 fill-light mt0'>stop()</div>
+  <div class='pre p1 fill-light mt0'>stop(): <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a></div>
   
   
 
@@ -4801,6 +4822,15 @@ stop on audioplayer.</p>
 
   
 
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a></code>:
+        Return a promise that is fulfilled when the audio
+playback has stopped successfully.
+
+      
+    
   
 
   
@@ -8287,8 +8317,7 @@ returns it's never guaranteed that the camera is STILL online</p>
     
       <div class='py1 quiet mt1 prose-big'>Returns</div>
       <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>&#x3C;void></code>:
-        A promise that is resolved when the camera stream is
-initialized
+        A promise that is resolved immediately (legacy)
 
       
     
@@ -8378,6 +8407,72 @@ initialized
   
   
 
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-camera#setParameter'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>setParameter(name, value)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Set a camera parameter.</p>
+
+
+  <div class='pre p1 fill-light mt0'>setParameter(name: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, value: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>name</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>value</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    
+          </div>
+          
+        </div>
+      
+    </div>
   
 
   
@@ -9152,7 +9247,7 @@ process or not
 
   
 
-  <p>This event is emitted when camera has finished intialization</p>
+  <p>This event is emitted when camera has finished initialization</p>
 
 
   <div class='pre p1 fill-light mt0'>ready</div>

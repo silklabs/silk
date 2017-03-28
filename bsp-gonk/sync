@@ -126,6 +126,12 @@ product=${product:-$default_product}
 [[ -d product/$product ]] || usage product directory missing: product/$product/
 [[ -r board/$board/$board.xml ]] || usage board manifest missing: board/$board/$board.xml
 [[ -r product/$product/$product.xml ]] || usage product manifest missing: product/$product/$product.xml
+    
+
+# Hack for some board manifests that can't handle a shallow clone
+if [[ -e board/$board/.sync.f ]]; then
+  repo_init_depth=""
+fi
 
 set -e
 

@@ -2,5 +2,7 @@
   "name": "silk-mic-config",
   "version": "1.10.0",
   "description": "Microphone configuration parameters",
-  "main": "index.json"
+  "main": "index.json",
+  "license": "MIT",
+  "private": true
 }

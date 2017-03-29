@@ -1,23 +1,23 @@
-From b1b30da4a95245fa7467a4cef01c2f5515c6acef Mon Sep 17 00:00:00 2001
+From 0a563b22e6e36c398755504d9855cbc0c0ce28a2 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Mon, 7 Mar 2016 08:51:20 -0800
 Subject: [PATCH] Android.mk
 
 ---
- Android.mk                   | 121 +++++++++++++++++++++++++++++++++++++++++++
+ Android.mk                   | 120 +++++++++++++++++++++++++++++++++++++++++++
  apps/traincascade/Android.mk |  19 +++++++
- opencv.mk                    |  43 +++++++++++++++
- 3 files changed, 183 insertions(+)
+ opencv.mk                    |  43 ++++++++++++++++
+ 3 files changed, 182 insertions(+)
  create mode 100644 Android.mk
  create mode 100644 apps/traincascade/Android.mk
  create mode 100644 opencv.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 000000000..767b6f33e
+index 000000000..f29219333
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,120 @@
 +LOCAL_PATH:= $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -129,13 +129,12 @@ index 000000000..767b6f33e
 +  $(__FAKE_OPENCV3_MODULES_A) $(__FAKE_OPENCV3_3RDPARTY_COMPONENTS_A)
 +	@echo Build: $@
 +	$(hide) time $(MAKE) -C $(@D) install
-+	$(hide) if [ -d $(dir $@)sdk/native/libs ]; then \
-+    cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,libopencv_,$(notdir $@)) $@; \
-+  else \
++	$(hide) if [ ! -d $(dir $@)sdk/native/libs ]; then \
 +    mkdir -p $(dir $@)sdk/native/3rdparty; \
 +    ln -sf $(dir $@)lib $(dir $@)sdk/native/libs ; \
 +    ln -sf $(dir $@)3rdparty/lib $(dir $@)sdk/native/3rdparty/libs; \
 +  fi
++	$(hide) cp $(dir $@)sdk/native/libs/$(TARGET_$(LOCAL_2ND_ARCH_VAR_PREFIX)CPU_ABI)/$(subst libopencv3_,libopencv_,$(notdir $@)) $@
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 +

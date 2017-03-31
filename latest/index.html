@@ -70,9 +70,9 @@
                     <li class='h5'><span>Static members</span></li>
                     
                       <li><a
-                        href='#silk-alogerror'
+                        href='#silk-alogwarn'
                         class='regular pre-open'>
-                        .error
+                        .warn
                       </a></li>
                     
                       <li><a
@@ -88,21 +88,21 @@
                       </a></li>
                     
                       <li><a
-                        href='#silk-alogfatal'
-                        class='regular pre-open'>
-                        .fatal
-                      </a></li>
-                    
-                      <li><a
                         href='#silk-aloginfo'
                         class='regular pre-open'>
                         .info
                       </a></li>
                     
                       <li><a
-                        href='#silk-alogwarn'
+                        href='#silk-alogerror'
                         class='regular pre-open'>
-                        .warn
+                        .error
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-alogfatal'
+                        class='regular pre-open'>
+                        .fatal
                       </a></li>
                     
                     </ul>
@@ -1313,11 +1313,11 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
   
-    <div class='border-bottom' id='silk-alogerror'>
+    <div class='border-bottom' id='silk-alogwarn'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>error(tag = 'node', message)</span>
+            <span class='code strong strong truncate'>warn(tag = 'node', message)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -1325,10 +1325,10 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
   
 
-  <p>Print error log message</p>
+  <p>Print warn log message</p>
 
 
-  <div class='pre p1 fill-light mt0'>error(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  <div class='pre p1 fill-light mt0'>warn(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -1520,75 +1520,6 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
       </div>
     </div>
   
-    <div class='border-bottom' id='silk-alogfatal'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>fatal(tag = 'node', message)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Print fatal log message</p>
-
-
-  <div class='pre p1 fill-light mt0'>fatal(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
-            = <code>&#39;node&#39;</code>)</code>
-	    Source of the log message
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    The message to log
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
     <div class='border-bottom' id='silk-aloginfo'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
@@ -1658,11 +1589,11 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
       </div>
     </div>
   
-    <div class='border-bottom' id='silk-alogwarn'>
+    <div class='border-bottom' id='silk-alogerror'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>warn(tag = 'node', message)</span>
+            <span class='code strong strong truncate'>error(tag = 'node', message)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -1670,10 +1601,79 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
   
 
-  <p>Print warn log message</p>
+  <p>Print error log message</p>
 
 
-  <div class='pre p1 fill-light mt0'>warn(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  <div class='pre p1 fill-light mt0'>error(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
+            = <code>&#39;node&#39;</code>)</code>
+	    Source of the log message
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    The message to log
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-alogfatal'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>fatal(tag = 'node', message)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Print fatal log message</p>
+
+
+  <div class='pre p1 fill-light mt0'>fatal(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -8753,7 +8753,7 @@ when the parameter value is successfully retrieved</p>
 
   
 
-  <p>Returns the camera video size.</p>
+  <p>Returns the current camera video size.</p>
 
 
   <div class='pre p1 fill-light mt0'>videoSize</div>
@@ -8803,7 +8803,7 @@ when the parameter value is successfully retrieved</p>
 
   
 
-  <p>Returns the camera frame size.</p>
+  <p>Returns the current camera frame size.</p>
 
 
   <div class='pre p1 fill-light mt0'>getFrameSize(frameSize: CameraFrameSize): SizeType</div>

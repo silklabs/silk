@@ -234,7 +234,12 @@ export default class Speaker extends events.EventEmitter {
       return;
     }
 
-    let numFrames = this._totalBufferLen / this._frameSize;
+    const numFrames = this._totalBufferLen / this._frameSize;
+    if (numFrames <= 0) {
+      log.warn(`Trying to play an empty file?`);
+      this._done(null);
+      return;
+    }
     if (!this._speaker.setNotificationMarkerPosition(numFrames)) {
       this._done(new Error(`Failed to set marker for eos`));
       return;
@@ -249,7 +254,7 @@ export default class Speaker extends events.EventEmitter {
   /**
    * @private
    */
-  _done(err: Error) {
+  _done(err: ?Error) {
     if (err) {
       this.emit('error', err);
     }

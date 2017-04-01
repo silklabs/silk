@@ -20,8 +20,8 @@ RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile &&\
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   android-tools-adb \
   android-tools-fastboot \
-  autoconf \
   apt-file \
+  autoconf \
   bc \
   ccache \
   chrpath \
@@ -32,12 +32,13 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   g++-4.8-multilib \
   gawk \
   git \
+  jq \
   lib32stdc++6 \
   lib32z1 \
   libc6-dev \
   libc6-dev-i386 \
-  libtool \
   libopencv3-dev \
+  libtool \
   libxml2-utils \
   linux-libc-dev  \
   m4 \
@@ -45,6 +46,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   openjdk-7-jdk \
   openssh-server \
   texinfo \
+  xmlstarlet \
   zip
 
 USER root
@@ -64,6 +66,7 @@ COPY sudoers_silk /etc/sudoers.d/silk
 # Install node v6.9.1
 RUN wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz
 RUN tar -xv -C /usr/local --strip-components 1 -f node-v6.9.1-linux-x64.tar.gz
+RUN rm node-v6.9.1-linux-x64.tar.gz
 
 USER silk
 RUN ccache -M 10GB

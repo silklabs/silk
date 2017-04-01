@@ -285,8 +285,12 @@ export let setupwifi = ensureSetup({
     [['password'], {
       help: 'Wi-Fi network password credential (supply empty string for open networks)',
     }],
+    [['--keep', '-k'], {
+      action: 'storeTrue',
+      help: `Keep existing networks`
+    }]
   ],
   main: async (api, args) => {
-    await api.setupWifi(args.ssid, args.password);
+    await api.setupWifi(args.ssid, args.password, args.keep);
   }
 });

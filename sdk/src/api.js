@@ -158,7 +158,7 @@ export default class API {
     return devices;
   }
 
-  async setupWifi(ssid, password) {
+  async setupWifi(ssid, password, keepExistingNetworks = false) {
     if (this.device === 'sim') {
       return true; // Nothing to update on simulator
     }
@@ -180,9 +180,11 @@ export default class API {
             exit 1
           fi
         }\n`;
-        data += `run remove_network all\n`;
-        data += `run save_config\n`;
-        data += `run disconnect\n`;
+        if (!keepExistingNetworks) {
+          data += `run remove_network all\n`;
+          data += `run save_config\n`;
+          data += `run disconnect\n`;
+        }
         data += `run add_network\n`;
         data += `id=$result\n`;
         data += `run set_network $id ssid '"${ssid}"'\n`;

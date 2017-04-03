@@ -42,9 +42,9 @@ public:
 int main(int, char **)
 {
   char hardware[PROPERTY_VALUE_MAX] = {0};
-  char board_platform[PROPERTY_VALUE_MAX] = {0};
+  char board[PROPERTY_VALUE_MAX] = {0};
   property_get("ro.hardware", hardware, NULL);
-  property_get("ro.board.platform", board_platform, NULL);
+  property_get("ro.silk.build.board", board, NULL);
 
   if (!strcmp(hardware, "goldfish")) {
     ALOGW("Goldfish has no wifi");
@@ -69,7 +69,7 @@ int main(int, char **)
 
   wifi_stop_supplicant(false);
   wifi_unload_driver();
-  
+
   // Block until netd is operational.  Mako uses netd (ndc) to reload its
   // firmware but in general networking overall isn't going to get very far
   // until netd is up, so might as well wait for it.
@@ -79,14 +79,14 @@ int main(int, char **)
   }
 
   // Mako wants its firmware reloaded, all other devices don't seem to need this.
-  if (!strcmp(hardware, "mako")) {
+  if (0 == strcmp(board, "mako") || 0 == strcmp(board, "oneplus3")) {
     BAIL_ON_FAIL(system("/system/bin/logwrapper /system/bin/ndc softap fwreload wlan0 AP"));
     ALOGI("reloaded firmware");
   }
 
   // Kenzo waits for the wlan.driver.ath to be set by wcnss_service
   // before it's safe to load the kernel wlan driver
-  if (!strcmp(board_platform, "msm8952")) {
+  if (0 == strcmp(board, "kenzo")) {
     char value[PROPERTY_VALUE_MAX] = {0};
     while (strlen(value) == 0) {
       property_get("wlan.driver.ath", value, "");

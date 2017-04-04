@@ -407,8 +407,15 @@ public:
     }
 #endif
     cv::Size s = im.size();
-    if ((width != s.width) || (height != s.height)) {
-      cv::resize(im, im, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+    if ((width != s.width) ||
+        (height != (format == "yvu420sp" ? s.height / 3 * 2 : s.height))) {
+        // height in yuv420sp is not correct; adjust when comparing
+      if (format == "yvu420sp") {
+        SetErrorMessage("Cannot resize in yvu420sp");
+        return;
+      } else {
+        cv::resize(im, im, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+      }
     }
   }
 

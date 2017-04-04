@@ -87,43 +87,6 @@ sp<ICameraService> sCameraService = nullptr;
 class CaptureListener;
 
 
-class CameraDeviceCallbacks: public BinderService<CameraDeviceCallbacks>,
-                             public BnCameraDeviceCallbacks,
-                             public IBinder::DeathRecipient {
- public:
-  void binderDied(const wp<IBinder> &who) {
-    (void) who;
-    ALOGI("CameraDeviceCallbacks::binderDied");
-  }
-
-  void onDeviceError(CameraErrorCode errorCode,
-                     const CaptureResultExtras& resultExtras) {
-    (void) resultExtras;
-    ALOGW("CameraDeviceCallbacks::onDeviceError: errorCode=%d", errorCode);
-  }
-  void onDeviceIdle() {
-    ALOGI("CameraDeviceCallbacks::onDeviceIdle");
-  }
-
-  void onCaptureStarted(const CaptureResultExtras& resultExtras,
-                        int64_t timestamp) {
-    (void) resultExtras;
-    (void) timestamp;
-    ALOGV("CameraDeviceCallbacks::onCaptureStarted");
-  }
-
-  void onResultReceived(const CameraMetadata& metadata,
-                        const CaptureResultExtras& resultExtras) {
-    (void) metadata;
-    (void) resultExtras;
-    ALOGV("CameraDeviceCallbacks::onResultReceived");
-  }
-
-  void onPrepared(int streamId) {
-    ALOGI("CameraDeviceCallbacks::onPrepared: %d", streamId);
-  }
-};
-
 
 /**
  * This class provided a method that is run each time
@@ -222,6 +185,59 @@ public:
     FrameworkListener1::sendBroadcast(200, jsonMessage.c_str(), false);
   }
 };
+
+class CameraDeviceCallbacks: public BinderService<CameraDeviceCallbacks>,
+                             public BnCameraDeviceCallbacks,
+                             public IBinder::DeathRecipient {
+ public:
+  CameraDeviceCallbacks(CaptureListener* captureListener)
+      : mCaptureListener(captureListener) {}
+
+  void binderDied(const wp<IBinder> &who) {
+    (void) who;
+    ALOGI("CameraDeviceCallbacks::binderDied");
+  }
+
+  void onDeviceError(CameraErrorCode errorCode,
+                     const CaptureResultExtras& resultExtras) {
+    (void) resultExtras;
+    ALOGW("CameraDeviceCallbacks::onDeviceError: errorCode=%d", errorCode);
+  }
+  void onDeviceIdle() {
+    ALOGI("CameraDeviceCallbacks::onDeviceIdle");
+  }
+
+  void onCaptureStarted(const CaptureResultExtras& resultExtras,
+                        int64_t timestamp) {
+    (void) resultExtras;
+    (void) timestamp;
+    ALOGV("CameraDeviceCallbacks::onCaptureStarted: %lld requestId=%d frameNumber=%lld",
+      timestamp, resultExtras.requestId, resultExtras.frameNumber);
+
+    // Wait for the second frame before declaring the camera initialized.  On
+    // openplus3 there's about a 5 second delay between frameNumber 0 and
+    // frameNumber 1 (after which the frame arrival rate is normal)
+    if (resultExtras.frameNumber == 1) {
+      Value jsonMsg;
+      jsonMsg["eventName"] = "initialized";
+      mCaptureListener->sendEvent(jsonMsg);
+    }
+  }
+
+  void onResultReceived(const CameraMetadata& metadata,
+                        const CaptureResultExtras& resultExtras) {
+    (void) metadata;
+    (void) resultExtras;
+    ALOGV("CameraDeviceCallbacks::onResultReceived");
+  }
+
+  void onPrepared(int streamId) {
+    ALOGV("CameraDeviceCallbacks::onPrepared: %d", streamId);
+  }
+ private:
+  CaptureListener* mCaptureListener;
+};
+
 
 /**
  * This function is run when a capture command is received from the client
@@ -727,7 +743,8 @@ status_t CaptureCommand::initThreadCamera1() {
  */
 status_t CaptureCommand::initThreadCamera2() {
 
-  sp<CameraDeviceCallbacks> cameraDeviceCallbacks = new CameraDeviceCallbacks();
+  sp<CameraDeviceCallbacks> cameraDeviceCallbacks =
+    new CameraDeviceCallbacks(mCaptureListener);
   auto err = sCameraService->connectDevice(
     cameraDeviceCallbacks,
     sCameraId,
@@ -783,7 +800,7 @@ status_t CaptureCommand::initThreadCamera2() {
   streamId = mCameraDeviceUser->createStream(
     sVideoSize.width,
     sVideoSize.height,
-    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, // HAL_PIXEL_FORMAT_YCbCr_420_888
+    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, //HAL_PIXEL_FORMAT_YCbCr_420_888,
     previewProducer);
 #endif
 
@@ -830,7 +847,8 @@ status_t CaptureCommand::initThreadCamera2() {
       pthread_create(&mAudioThread, NULL, initThreadAudioOnlyWrapper, this);
     } else {
       mHardwareActive = true;
-      notifyCameraEvent("initialized");
+      // NB: |notifyCameraEvent("initialized")| is emitted from
+      // CameraDeviceCallbacks::onCaptureStarted()
     }
   }
 

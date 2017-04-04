@@ -9,6 +9,7 @@
 #include <media/openmax/OMX_IVCommon.h>
 #include <system/camera.h>
 #include <cutils/atomic.h>
+#include <cutils/properties.h>
 #include <utils/Log.h>
 #include <utils/Vector.h>
 #include <utils/String16.h>
@@ -41,6 +42,9 @@ class CaptureFrameGrabber: public ConsumerBase::FrameAvailableListener {
       }
     }
   }
+
+  size_t width;
+  size_t height;
 
 #ifdef CAF_CPUCONSUMER
   virtual void onFrameAvailable();
@@ -127,6 +131,11 @@ class ClientImpl : public Client {
     if (android_atomic_dec(&mCount) == 1) {
       delete this;
     }
+  }
+
+  void getSize(size_t &width, size_t &height) {
+    width = mGrabber->width;
+    height = mGrabber->height;
   }
 
   void releaseFrame(FrameOwner frameOwner) {
@@ -217,8 +226,29 @@ sp<CaptureFrameGrabber> CaptureFrameGrabber::create()
 CaptureFrameGrabber::CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture)
     : mCapture(capture)
 {
+  width = 1280;
+  height = 720;
+
+  char resolution[PROPERTY_VALUE_MAX];
+  resolution[0] = '\0';
+  if (property_get("persist.silk.camera.resolution", resolution, nullptr) <= 0) {
+    property_get("ro.silk.camera.resolution", resolution, nullptr);
+  }
+
+  for (char* x = resolution; *x; x++) {
+    if (*x == 'x') {
+      width = strtol(resolution, nullptr, 10);
+      height = strtol(x + 1, nullptr, 10);
+      break;
+    }
+  }
+
   sp<IGraphicBufferConsumer> consumer;
   BufferQueue::createBufferQueue(&mProducer, &consumer);
+  consumer->setDefaultBufferSize(width, height);
+//  consumer->setDefaultBufferFormat(HAL_PIXEL_FORMAT_YCbCr_420_888);
+  consumer->setDefaultBufferFormat(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
+
   mCpuConsumer = new CpuConsumer(consumer, MAX_UNLOCKED_FRAMES + 1, true);
   mCpuConsumer->setName(String8("LibPreviewCpuConsumer"));
   mCpuConsumer->setFrameAvailableListener(this);
@@ -312,6 +342,7 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
       frameformat = FRAMEFORMAT_RGB;
       break;
 
+    case HAL_PIXEL_FORMAT_YCbCr_420_888:
     case HAL_PIXEL_FORMAT_YCrCb_420_SP: // Nexus 4
       frameformat = FRAMEFORMAT_YVU420SP;
       break;
@@ -327,6 +358,11 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
     default:
       ALOGW("Unsupported preview format: 0x%x", img.format);
       break;
+    }
+
+    if (img.width != width || img.height != height) {
+      ALOGW("Unexpected frame size: expecting=%dx%d, got=%dx%d",
+        width, height, img.width, img.height);
     }
 
     RefBase *lockedFrame = new LockedFrame(img.data, this);

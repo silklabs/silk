@@ -20,6 +20,7 @@ class Client {
  public:
   virtual void addref() = 0;
   virtual void release() = 0;
+  virtual void getSize(size_t &width, size_t &height) = 0;
   virtual void stopFrameCallback() = 0;
   virtual void releaseFrame(FrameOwner owner) = 0;
  protected:

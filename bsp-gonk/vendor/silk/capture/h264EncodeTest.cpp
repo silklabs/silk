@@ -83,8 +83,9 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  int width = property_get_int32("ro.silk.camera.width", 1280);
-  int height = property_get_int32("ro.silk.camera.height", 720);
+  size_t width;
+  size_t height;
+  libpreviewClient->getSize(width, height);
   int vbr = property_get_int32("ro.silk.camera.vbr", 1024);
   int fps = property_get_int32("ro.silk.camera.fps", 24);
 

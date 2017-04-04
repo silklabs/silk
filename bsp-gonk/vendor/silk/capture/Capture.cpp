@@ -17,6 +17,12 @@
 #include <media/stagefright/OMXCodec.h>
 #include <system/audio.h>
 #include <utils/Thread.h>
+#include <camera/camera2/ICameraDeviceUser.h>
+#include <camera/camera2/ICameraDeviceCallbacks.h>
+#include <camera/camera2/CaptureRequest.h>
+#ifdef TARGET_GE_MARSHMALLOW
+#include <camera/camera2/OutputConfiguration.h>
+#endif
 #include <poll.h>
 
 #include "AudioSourceEmitter.h"
@@ -28,6 +34,9 @@
 #include "MPEG4SegmenterDASH.h"
 #include "OpenCVCameraCapture.h"
 #include "FrameworkListener1.h"
+
+// From frameworks/base/core/java/android/hardware/camera2/CameraDevice.java
+#define TEMPLATE_RECORD 3
 
 using namespace android;
 using namespace Json;
@@ -55,7 +64,10 @@ bool sInitCameraFrames = true;
 bool sInitCameraVideo = true;
 bool sAudioMute = false;
 bool sUseMetaDataMode = true;
-sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
+sp<OpenCVCameraCapture> sOpenCVCameraCapture = nullptr;
+
+bool sUseCamera2 = false;
+sp<ICameraService> sCameraService = nullptr;
 
 //
 // Helper macros
@@ -73,6 +85,44 @@ sp<OpenCVCameraCapture> sOpenCVCameraCapture = NULL;
 // Forward declarations
 //
 class CaptureListener;
+
+
+class CameraDeviceCallbacks: public BinderService<CameraDeviceCallbacks>,
+                             public BnCameraDeviceCallbacks,
+                             public IBinder::DeathRecipient {
+ public:
+  void binderDied(const wp<IBinder> &who) {
+    (void) who;
+    ALOGI("CameraDeviceCallbacks::binderDied");
+  }
+
+  void onDeviceError(CameraErrorCode errorCode,
+                     const CaptureResultExtras& resultExtras) {
+    (void) resultExtras;
+    ALOGW("CameraDeviceCallbacks::onDeviceError: errorCode=%d", errorCode);
+  }
+  void onDeviceIdle() {
+    ALOGI("CameraDeviceCallbacks::onDeviceIdle");
+  }
+
+  void onCaptureStarted(const CaptureResultExtras& resultExtras,
+                        int64_t timestamp) {
+    (void) resultExtras;
+    (void) timestamp;
+    ALOGV("CameraDeviceCallbacks::onCaptureStarted");
+  }
+
+  void onResultReceived(const CameraMetadata& metadata,
+                        const CaptureResultExtras& resultExtras) {
+    (void) metadata;
+    (void) resultExtras;
+    ALOGV("CameraDeviceCallbacks::onResultReceived");
+  }
+
+  void onPrepared(int streamId) {
+    ALOGI("CameraDeviceCallbacks::onPrepared: %d", streamId);
+  }
+};
 
 
 /**
@@ -111,7 +161,6 @@ private:
   static void* initThreadAudioOnlyWrapper(void* me);
   status_t setPreviewTarget();
 
-  status_t initThreadCamera();
   status_t initThreadAudioOnly();
   void notifyCameraEvent(const char* eventName);
 
@@ -120,8 +169,11 @@ private:
   pthread_t mCameraThread;
   pthread_t mAudioThread;
 
-  // Camera related
   bool mHardwareActive;
+  sp<ICameraService> mCameraService;
+
+ // Camera1:
+  status_t initThreadCamera1();
   sp<Camera> mCamera;
 
   // Faux preview target for when there's no client preview producer around
@@ -136,6 +188,10 @@ private:
   Channel& mMicChannel;
   Channel& mVidChannel;
   Mutex mPreviewTargetLock;
+
+ // Camera2:
+  status_t initThreadCamera2();
+  sp<ICameraDeviceUser> mCameraDeviceUser;
 };
 
 /**
@@ -338,7 +394,11 @@ int CaptureCommand::capture_update(Value& cmdData) {
 
 void* CaptureCommand::initThreadCameraWrapper(void* me) {
   CaptureCommand* command = static_cast<CaptureCommand *>(me);
-  command->initThreadCamera();
+  if (sUseCamera2) {
+    command->initThreadCamera2();
+  } else {
+    command->initThreadCamera1();
+  }
   return NULL;
 }
 
@@ -397,7 +457,13 @@ status_t CaptureCommand::setPreviewTarget() {
  * Notification when a client preview producer has connected.
  */
 void CaptureCommand::onPreviewProducer() {
-  CHECK(setPreviewTarget() == 0);
+  if (sUseCamera2) {
+    // TODO: Permit the preview producer to connect *after* the pipeline is
+    //       initialized
+    CHECK(false);
+  } else {
+    CHECK(setPreviewTarget() == 0);
+  }
 }
 
 sp<MediaSource> prepareVideoEncoder(const sp<ALooper>& looper,
@@ -524,9 +590,9 @@ status_t CaptureCommand::initThreadAudioOnly() {
 }
 
 /**
- * Thread function that initializes the camera
+ * Thread function that initializes the camera using the camera1 API
  */
-status_t CaptureCommand::initThreadCamera() {
+status_t CaptureCommand::initThreadCamera1() {
   // Make several attempts to connect with the camera.  Reconnects in particular
   // can fail a couple times as the camera subsystem recovers.
   for (int attempts = 0; ; ++attempts) {
@@ -657,6 +723,121 @@ status_t CaptureCommand::initThreadCamera() {
 }
 
 /**
+ * Thread function that initializes the camera using the camera2 API
+ */
+status_t CaptureCommand::initThreadCamera2() {
+
+  sp<CameraDeviceCallbacks> cameraDeviceCallbacks = new CameraDeviceCallbacks();
+  auto err = sCameraService->connectDevice(
+    cameraDeviceCallbacks,
+    sCameraId,
+    String16(CAMERA_NAME),
+    ICameraService::USE_CALLING_UID,
+    mCameraDeviceUser
+  );
+
+  if (err != 0) {
+    ALOGE("Unable to connect to camera: error=%d", err);
+    CHECK(false);
+  }
+
+  err = mCameraDeviceUser->waitUntilIdle();
+  CHECK(err == 0);
+
+  err = mCameraDeviceUser->beginConfigure();
+  CHECK(err == 0);
+
+  sOpenCVCameraCapture->setPreviewProducerListener(this);
+
+  sp<IGraphicBufferProducer> previewProducer;
+  sp<Surface> surface;
+
+#ifdef CAMERA2_DEBUG_PREVIEW_SURFACE
+  sp<SurfaceControl> previewSurfaceControl;
+  sp<SurfaceComposerClient> sCClient = new SurfaceComposerClient();
+  if (sCClient.get() == NULL) {
+    ALOGE("Unable to establish connection to Surface Composer");
+    CHECK(false);
+  }
+  previewSurfaceControl = sCClient->createSurface(String8("preview-debug"),
+      500, 500, PIXEL_FORMAT_RGBX_8888, 0);
+  if (previewSurfaceControl == NULL) {
+    ALOGE("Unable to create preview surface");
+    CHECK(false);
+  }
+  surface = previewSurfaceControl->getSurface();
+  previewProducer = surface->getIGraphicBufferProducer();
+#else
+  // TODO: Permit the preview producer to connect *after* the pipeline is
+  //       initialized
+  previewProducer = sOpenCVCameraCapture->getPreviewProducer();
+  CHECK(previewProducer != nullptr);
+  surface = new Surface(previewProducer, /*controlledByApp*/false);
+#endif
+
+  status_t streamId;
+#ifdef TARGET_GE_MARSHMALLOW
+  OutputConfiguration outputConfig(previewProducer, 0);
+  streamId = mCameraDeviceUser->createStream(outputConfig);
+#else
+  streamId = mCameraDeviceUser->createStream(
+    sVideoSize.width,
+    sVideoSize.height,
+    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, // HAL_PIXEL_FORMAT_YCbCr_420_888
+    previewProducer);
+#endif
+
+  if (streamId < 0) {
+    ALOGE("Unable to createStream: %d", streamId);
+    CHECK(false);
+  }
+
+  err = mCameraDeviceUser->endConfigure();
+  CHECK(err == 0);
+
+  CameraMetadata requestTemplate;
+  err = mCameraDeviceUser->createDefaultRequest(TEMPLATE_RECORD, &requestTemplate);
+  CHECK(err == 0);
+
+  sp<CaptureRequest> request(new CaptureRequest());
+  request->mMetadata = requestTemplate;
+  request->mSurfaceList.add(surface);
+#ifdef TARGET_GE_MARSHMALLOW
+  request->mIsReprocess = false;
+#endif
+  int64_t lastFrameNumber = 0;
+
+  int requestId = mCameraDeviceUser->submitRequest(request, /*streaming*/true, /*out*/&lastFrameNumber);
+  ALOGE("Camera submitRequest: %d, lastFrameNumber: %lld", requestId, lastFrameNumber);
+  if (requestId < 0) {
+    ALOGE("submitRequest failed, error=%d", requestId);
+    CHECK(false);
+  }
+
+  // TODO: Port camera parameter support to camera2 API...
+  for (auto it = sInitialCameraParameters.begin();
+       it != sInitialCameraParameters.end();
+       ++it) {
+    ALOGW("TODO: initial camera parameter ignored: %s=%s",
+      it->first.c_str(), it->second.c_str());
+  }
+
+  if (sInitCameraVideo) {
+    ALOGW("TODO: add camera2 API video support");
+    CHECK(false);
+  } else {
+    if (sInitAudio) {
+      pthread_create(&mAudioThread, NULL, initThreadAudioOnlyWrapper, this);
+    } else {
+      mHardwareActive = true;
+      notifyCameraEvent("initialized");
+    }
+  }
+
+  return 0;
+}
+
+/**
  * Clean up and stop camera module
  */
 int CaptureCommand::capture_cleanup() {
@@ -682,6 +863,7 @@ int CaptureCommand::capture_cleanup() {
 int CaptureCommand::capture_setParameter(Value& name, Value& value) {
   LOG_ERROR((name.isNull()), "name not specified");
   LOG_ERROR((value.isNull()), "value not specified");
+  LOG_ERROR(sUseCamera2, "TODO: port setParameter to camera2 API");
   LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
   CHECK_EQ(mCameraSource->stop(), OK);
 
@@ -689,7 +871,7 @@ int CaptureCommand::capture_setParameter(Value& name, Value& value) {
   params.set(name.asCString(), value.asCString());
   status_t err = mCamera->setParameters(params.flatten());
   if (err != OK) {
-    ALOGW("mjv -- Error %d: Failed to set '%s' to '%s'", err,
+    ALOGW("Error %d: Failed to set '%s' to '%s'", err,
       name.asCString(), value.asCString());
   }
   CHECK_EQ(mCameraSource->start(), OK);
@@ -701,6 +883,7 @@ int CaptureCommand::capture_setParameter(Value& name, Value& value) {
  */
 int CaptureCommand::capture_getParameterInt(Value& name) {
   LOG_ERROR((name.isNull()), "name not specified");
+  LOG_ERROR(sUseCamera2, "TODO: port getParameter to camera2 API");
   LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
 
   CameraParameters params = mCamera->getParameters();
@@ -719,6 +902,7 @@ int CaptureCommand::capture_getParameterInt(Value& name) {
  */
 int CaptureCommand::capture_getParameterStr(Value& name) {
   LOG_ERROR((name.isNull()), "name not specified");
+  LOG_ERROR(sUseCamera2, "TODO: port getParameter to camera2 API");
   LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
 
   CameraParameters params = mCamera->getParameters();
@@ -758,11 +942,23 @@ int main(int argc, char **argv) {
   sp<IServiceManager> sm = defaultServiceManager();
   for (;;) {
     sp<IBinder> binder = sm->getService(String16("media.camera"));
-    if (binder != NULL) {
+    if (binder != nullptr) {
+      sCameraService = interface_cast<ICameraService>(binder);
       break;
     }
   }
-  ALOGI("Found media.camera service");
+
+  auto numCameras = sCameraService->getNumberOfCameras();
+  ALOGI("%d cameras found", numCameras);
+
+  err = sCameraService->supportsCameraApi(/*cameraId=*/ 0, ICameraService::API_VERSION_2);
+  if (err == 0) {
+    ALOGI("camera2 API supported on this device.");
+#ifdef TARGET_USE_CAMERA2
+    sUseCamera2 = true;
+#endif
+  }
+  ALOGI("Selected camera API: %d", sUseCamera2 ? 2 : 1);
 
   sOpenCVCameraCapture = new OpenCVCameraCapture();
   err = sOpenCVCameraCapture->publish();

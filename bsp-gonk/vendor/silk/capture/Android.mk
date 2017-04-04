@@ -35,6 +35,7 @@ LOCAL_C_INCLUDES := \
   frameworks/av/media/libstagefright/include \
   frameworks/av/media/libstagefright/mpeg2ts \
   frameworks/native/include/media/openmax \
+  system/media/camera/include \
   vendor/silk/jsoncpp \
   vendor/silk/SocketListener \
 
@@ -50,6 +51,12 @@ endif
 
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 LOCAL_CFLAGS += -DJSON_USE_EXCEPTION=0
+
+ifneq ($(TARGET_USE_CAMERA2),)
+LOCAL_CFLAGS += -DTARGET_USE_CAMERA2
+LOCAL_CFLAGS += -Wno-mismatched-tags # |struct CaptureRequest| is forward declared as a |class|
+endif
+
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 LOCAL_CFLAGS += -DIGNORE_UNWANTED_IFRAME_AT_FRAME2
@@ -83,7 +90,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := . \
   frameworks/native/include/media/openmax \
 
-LOCAL_CFLAGS += -Wextra -Werror
+LOCAL_CFLAGS += -Wextra -Werror -std=c++11
 
 ifeq ($(TARGET_CPUCONSUMER_ONFRAMEAVAILABLE__NOITEM), true)
 # Select the (older) CAF version of the CpuConsumer interface
@@ -169,6 +176,7 @@ LOCAL_SHARED_LIBRARIES := \
 
 include $(BUILD_SILK_EXECUTABLE)
 
+ifneq ($(TARGET_GE_MARSHMALLOW),)
 include $(CLEAR_VARS)
 LOCAL_MODULE       := h264SharedEncodeTest
 LOCAL_MODULE_TAGS  := eng
@@ -186,5 +194,5 @@ LOCAL_SHARED_LIBRARIES := \
 
 -include external/stlport/libstlport.mk
 include $(BUILD_SILK_EXECUTABLE)
-
+endif
 

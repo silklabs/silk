@@ -1,0 +1,34 @@
+From 895b023cd4388df729b94b520d5c0ef28dfcafcb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 4 Apr 2017 13:47:11 -0700
+Subject: [PATCH] Remove crash looping blobs
+
+---
+ oneplus3/oneplus3-vendor.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/oneplus3/oneplus3-vendor.mk b/oneplus3/oneplus3-vendor.mk
+index 82a5edd..cc3d9b1 100644
+--- a/oneplus3/oneplus3-vendor.mk
++++ b/oneplus3/oneplus3-vendor.mk
+@@ -17,7 +17,6 @@
+ PRODUCT_COPY_FILES += \
+     vendor/oneplus/oneplus3/proprietary/bin/ifaadaemon:system/bin/ifaadaemon \
+     vendor/oneplus/oneplus3/proprietary/bin/mm-qcamera-daemon:system/bin/mm-qcamera-daemon \
+-    vendor/oneplus/oneplus3/proprietary/bin/qfp-daemon:system/bin/qfp-daemon \
+     vendor/oneplus/oneplus3/proprietary/etc/acdbdata/MTP/MTP_Bluetooth_cal.acdb:system/etc/acdbdata/MTP/MTP_Bluetooth_cal.acdb \
+     vendor/oneplus/oneplus3/proprietary/etc/acdbdata/MTP/MTP_General_cal.acdb:system/etc/acdbdata/MTP/MTP_General_cal.acdb \
+     vendor/oneplus/oneplus3/proprietary/etc/acdbdata/MTP/MTP_Global_cal.acdb:system/etc/acdbdata/MTP/MTP_Global_cal.acdb \
+@@ -474,9 +473,7 @@ PRODUCT_COPY_FILES += \
+     vendor/oneplus/oneplus3/proprietary/lib/libvpplibrary.so:system/lib/libvpplibrary.so \
+     vendor/oneplus/oneplus3/proprietary/vendor/bin/mm-pp-dpps:system/vendor/bin/mm-pp-dpps \
+     vendor/oneplus/oneplus3/proprietary/vendor/bin/pd-mapper:system/vendor/bin/pd-mapper \
+-    vendor/oneplus/oneplus3/proprietary/vendor/bin/qseeproxydaemon:system/vendor/bin/qseeproxydaemon \
+     vendor/oneplus/oneplus3/proprietary/vendor/bin/qti:system/vendor/bin/qti \
+-    vendor/oneplus/oneplus3/proprietary/vendor/bin/slim_daemon:system/vendor/bin/slim_daemon \
+     vendor/oneplus/oneplus3/proprietary/vendor/bin/thermal-engine:system/vendor/bin/thermal-engine \
+     vendor/oneplus/oneplus3/proprietary/vendor/lib64/egl/eglSubDriverAndroid.so:system/vendor/lib64/egl/eglSubDriverAndroid.so \
+     vendor/oneplus/oneplus3/proprietary/vendor/lib64/egl/libEGL_adreno.so:system/vendor/lib64/egl/libEGL_adreno.so \
+-- 
+2.11.0
+

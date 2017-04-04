@@ -1,1 +1,3 @@
 ro.silk.camera.resolution=1920x1080
+ro.silk.camera.video=false
+camera.disable_zsl_mode=1

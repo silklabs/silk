@@ -9,12 +9,59 @@
 
 const fs = require('fs');
 const path = require('path');
-const config = require('./find_config')();
+
+const CONFIG_NAME = 'silknpm.json';
 
 // Will not traverse any directories matching these names...
 const RESTRICTED_DIRNAMES = [
   'node_modules',
 ];
+
+function lookup(root, file) {
+  let basedir = root;
+  do {
+    const filePath = path.join(basedir, file);
+    if (fs.existsSync(filePath)) {
+      return filePath;
+    }
+    basedir = path.dirname(basedir);
+  } while(basedir !== '/');
+  throw new Error(`Cannot find ${file} from ${root}`);
+}
+
+function formatConfig(config, basedir) {
+  const result = {
+    root: basedir,
+    restrict: {},
+  };
+
+  const newRestrict = {};
+  for (let key in config.restrict) {
+    const restrict = config.restrict[key];
+    const restrictBaseDir = path.resolve(basedir, key);
+
+    if (!Array.isArray(restrict)) {
+      console.error(`silknpm.json .restrict.${key} must be an Array`);
+      continue;
+    }
+
+    result.restrict[restrictBaseDir] = restrict.map((restrictPath) => {
+      return path.resolve(restrictBaseDir, restrictPath);
+    });
+  }
+
+  return result;
+}
+
+function findConfig(cwd) {
+  cwd = cwd || process.cwd();
+  const configPath = lookup(cwd, CONFIG_NAME);
+  const basedir = path.resolve(path.dirname(configPath));
+  const data = require(configPath);
+
+  data.restrict = data.restrict || {};
+  return formatConfig(data, basedir);
+}
 
 function resolvePath(absPath, result) {
   let stat;
@@ -49,6 +96,7 @@ function resolvePath(absPath, result) {
 }
 
 function findModules(rootPath, result) {
+  const config = findConfig();
   rootPath = rootPath || config.root;
   result = result || [];
 

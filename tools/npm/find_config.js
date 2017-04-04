@@ -23,13 +23,8 @@ function lookup(root, file) {
 function formatConfig(config, basedir) {
   const result = {
     root: basedir,
-    ignored: [],
     restrict: {},
   };
-
-  result.ignored = config.ignored.map((ignore) => {
-    return path.resolve(basedir, ignore);
-  });
 
   const newRestrict = {};
   for (let key in config.restrict) {
@@ -55,7 +50,6 @@ function findConfig(cwd) {
   const basedir = path.resolve(path.dirname(configPath));
   const data = require(configPath);
 
-  data.ignored = data.ignored || [];
   data.restrict = data.restrict || {};
   return formatConfig(data, basedir);
 }

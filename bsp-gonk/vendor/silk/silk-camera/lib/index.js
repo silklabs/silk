@@ -261,7 +261,7 @@ const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
 
 // If there is still not a camera frame after this number of attempts assume the
 // capture process is wedged and restart it.
-const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 5 * (1000 / FRAME_DELAY_MS);
+const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 10 * (1000 / FRAME_DELAY_MS);
 
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)

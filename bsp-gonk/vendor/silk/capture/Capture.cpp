@@ -800,7 +800,7 @@ status_t CaptureCommand::initThreadCamera2() {
   streamId = mCameraDeviceUser->createStream(
     sVideoSize.width,
     sVideoSize.height,
-    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, //HAL_PIXEL_FORMAT_YCbCr_420_888,
+    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED,
     previewProducer);
 #endif
 

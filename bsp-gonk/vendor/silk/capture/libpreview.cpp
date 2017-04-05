@@ -246,7 +246,6 @@ CaptureFrameGrabber::CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture)
   sp<IGraphicBufferConsumer> consumer;
   BufferQueue::createBufferQueue(&mProducer, &consumer);
   consumer->setDefaultBufferSize(width, height);
-//  consumer->setDefaultBufferFormat(HAL_PIXEL_FORMAT_YCbCr_420_888);
   consumer->setDefaultBufferFormat(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
 
   mCpuConsumer = new CpuConsumer(consumer, MAX_UNLOCKED_FRAMES + 1, true);
@@ -363,6 +362,20 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
     if (img.width != width || img.height != height) {
       ALOGW("Unexpected frame size: expecting=%dx%d, got=%dx%d",
         width, height, img.width, img.height);
+    }
+
+    if (img.width != img.stride) {
+      ALOGW("Width (%d) != stride (%d) not supported", img.width, img.stride);
+    }
+
+    if (frameformat == FRAMEFORMAT_YVU420SP) {
+      // TODO: Update consumers to handle unpacked YVU frames.  For now just
+      //       move the VU plane (yuck) to avoid full buffer copy
+      void *packedDataCr = (char *)(img.data) + width * height;
+      if (packedDataCr != img.dataCr) {
+        ALOGV("YVU frame is not packed! Off by %d bytes", (int) packedDataCr - (int) img.dataCr);
+        memcpy(packedDataCr, img.dataCr, width * height / 2);
+      }
     }
 
     RefBase *lockedFrame = new LockedFrame(img.data, this);

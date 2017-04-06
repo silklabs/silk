@@ -182,6 +182,11 @@ type CommandInitType = {
   };
 };
 
+type CommandStopType = {
+  cmdName: 'stop';
+};
+
+
 type CommandUpdateType = {
   cmdName: 'update';
   cmdData: {
@@ -201,6 +206,7 @@ type CommandGetParameterStrType = {
 
 type CommandTypes = CommandSetParameterType |
                     CommandInitType |
+                    CommandStopType |
                     CommandUpdateType |
                     CommandGetParameterIntType |
                     CommandGetParameterStrType;
@@ -518,7 +524,7 @@ export default class Camera extends EventEmitter {
    * an attempt to recover the system.
    * @private
    */
-  _restart(why: string, restartCaptureProcess: boolean = false) {
+  async _restart(why: string, restartCaptureProcess: boolean = false) {
     if (this._restartTimeout) {
       log.info(`camera restart pending (ignored "${String(why)}")`);
       return;
@@ -553,11 +559,7 @@ export default class Camera extends EventEmitter {
       clearTimeout(this._tagMonitorTimeout);
       this._tagMonitorTimeout = null;
     }
-    if (this._cvVideoCapture) {
-      this._cvVideoCapture.close();
-      this._cvVideoCapture = null;
-      this._cvVideoCaptureBusy = false;
-    }
+    await this._closeCVVideoCapture();
     if (this._ctlSocket) {
       this._ctlSocket.destroy();
       this._ctlSocket = null;
@@ -576,7 +578,7 @@ export default class Camera extends EventEmitter {
     }
 
     this._restartTimeout = setTimeout(() => {
-      log.verbose('restart timeout expired, trying to initialize');
+      log.debug('restart timeout expired, trying to initialize');
       this._restartTimeout = null;
       this._init();
     }, CAPTURE_RESTART_DELAY_MS);
@@ -587,12 +589,21 @@ export default class Camera extends EventEmitter {
    */
   _initCVVideoCapture() {
     if (!this._cvVideoCapture) {
+      this._cvVideoCaptureBusy = false;
       try {
         this._cvVideoCapture = new silkcapture.VideoCapture(0,
           this.FRAME_SIZE.normal.width, this.FRAME_SIZE.normal.height);
       } catch (err) {
         throw err;
       }
+    }
+  }
+
+  async _closeCVVideoCapture() {
+    const cvVideoCapture = this._cvVideoCapture;
+    if (cvVideoCapture) {
+      this._cvVideoCapture = null;
+      await new Promise(resolve => cvVideoCapture.close(resolve));
     }
   }
 
@@ -704,9 +715,9 @@ export default class Camera extends EventEmitter {
     }
 
     // Connect to control socket
-    log.verbose(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+    log.debug(`connecting to ${CAPTURE_CTL_SOCKET_NAME} socket`);
     this._ctlSocket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, () => {
-      log.verbose(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
+      log.debug(`connected to ${CAPTURE_CTL_SOCKET_NAME} socket`);
 
       if (CAMERA_HW_ENABLED) {
         this._initCVVideoCapture();
@@ -796,7 +807,7 @@ export default class Camera extends EventEmitter {
           this._getParameterCallback = null;
         }
       } else if (captureEvent.eventName === 'stopped') {
-        throw new Error('Camera stop unhandled');
+        this._restart('stopped', true);
       } else {
         log.warn(`Error: Unknown capture event ${line}`);
       }
@@ -1098,9 +1109,9 @@ export default class Camera extends EventEmitter {
    */
   _connectDataSocket(_dataSocket: ?Socket, socketName: string) {
     let _dataBuffer = null;
-    log.verbose(`connecting to ${socketName} socket`);
+    log.debug(`connecting to ${socketName} socket`);
     this._dataSocket = net.createConnection(socketName, () => {
-      log.verbose(`connected to ${socketName} socket`);
+      log.debug(`connected to ${socketName} socket`);
       _dataBuffer = null;
     });
     const dataSocket = this._dataSocket;
@@ -1337,6 +1348,11 @@ export default class Camera extends EventEmitter {
     return true;
   }
 
+  async _stopCamera() {
+    await this._closeCVVideoCapture();
+    this._command({cmdName: 'stop'});
+  }
+
   /**
    * Set a camera parameter.
    *
@@ -1355,6 +1371,10 @@ export default class Camera extends EventEmitter {
       if (name === 'preview-size') {
         if (this._setResolution(value)) {
           util.setprop('persist.silk.camera.resolution', value);
+
+          // TODO: One day support resolution change without a restart
+          this._stopCamera();
+          return;
         }
       }
       this._command({cmdName: 'setParameter', name, value});

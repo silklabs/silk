@@ -1,5 +1,5 @@
 //#define LOG_NDEBUG 0
-#define LOG_TAG "silk-capture"
+#define LOG_TAG "silk-capture-daemon"
 #include <utils/Log.h>
 
 #include <binder/IServiceManager.h>
@@ -76,7 +76,7 @@ sp<ICameraService> sCameraService = nullptr;
   do { \
     if (expression) { \
       ALOGE(__VA_ARGS__); \
-      notifyCameraEvent("error"); \
+      notifyCameraEventError(); \
       return 1; \
     } \
   } while(0)
@@ -101,6 +101,7 @@ public:
       FrameworkCommand(CAPTURE_COMMAND_NAME),
       mCaptureListener(captureListener),
       mHardwareActive(false),
+      mStopped(false),
       mMicChannel(micChannel),
       mVidChannel(vidChannel) {
   }
@@ -116,7 +117,7 @@ public:
 private:
   int capture_init(Value& cmdData);
   int capture_update(Value& cmdData);
-  int capture_cleanup();
+  int capture_stop();
   int capture_setParameter(Value& name, Value& value);
   int capture_getParameterInt(Value& name);
   int capture_getParameterStr(Value& name);
@@ -126,6 +127,7 @@ private:
 
   status_t initThreadAudioOnly();
   void notifyCameraEvent(const char* eventName);
+  void notifyCameraEventError();
 
   CaptureListener* mCaptureListener;
   Reader mJsonReader;
@@ -133,6 +135,7 @@ private:
   pthread_t mAudioThread;
 
   bool mHardwareActive;
+  bool mStopped;
   sp<ICameraService> mCameraService;
 
  // Camera1:
@@ -143,9 +146,7 @@ private:
   sp<SurfaceControl> mPreviewSurfaceControl;
 
   sp<MPEG4SegmenterDASH> mSegmenter;
-  sp<MediaSource> mPreview;
-  sp<ALooper> mLooper;
-  sp<ICamera> mRemote;
+  sp<ALooper> mVideoLooper;
   sp<CameraSource> mCameraSource;
   sp<AudioMutter> mAudioMutter;
   Channel& mMicChannel;
@@ -247,6 +248,11 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   (void) argc;
   ALOGD("Received command %s", argv[0]);
 
+  if (mStopped) {
+    ALOGI("Stopped, command ignored");
+    return 0;
+  }
+
   // Parse JSON command
   Value cmdJson;
   bool result = mJsonReader.parse(argv[0], cmdJson, false);
@@ -263,7 +269,7 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   } else if (cmdName == "update") {
     capture_update(cmdJson["cmdData"]);
   } else if (cmdName == "stop") {
-    capture_cleanup();
+    capture_stop();
   } else if (cmdName == "setParameter") {
     capture_setParameter(cmdJson["name"], cmdJson["value"]);
   } else if (cmdName == "getParameterInt") {
@@ -600,7 +606,7 @@ status_t CaptureCommand::initThreadAudioOnly() {
   CHECK_EQ(mAudioMutter->start(), OK);
   MediaSourceNullPuller audioPuller(mAudioMutter, "audio");
   if (!audioPuller.loop()) {
-    notifyCameraEvent("error");
+    notifyCameraEventError();
   }
   return 0;
 }
@@ -625,7 +631,6 @@ status_t CaptureCommand::initThreadCamera1() {
     poll(NULL, 0, 500 /*ms*/);
   }
   ALOGI("Connected to camera service");
-  mRemote = mCamera->remote();
 
   FaceDetection faces(&mVidChannel);
   mCamera->setListener(&faces);
@@ -663,10 +668,17 @@ status_t CaptureCommand::initThreadCamera1() {
   //CHECK(mCamera->sendCommand(CAMERA_CMD_START_FACE_DETECTION, CAMERA_FACE_DETECTION_SW, 0) == 0);
   CHECK(mCamera->sendCommand(CAMERA_CMD_ENABLE_FOCUS_MOVE_MSG, 1, 0) == 0);
 
-  mCameraSource = CameraSource::CreateFromCamera(mRemote, mCamera->getRecordingProxy(), sCameraId,
-      String16(CAMERA_NAME, strlen(CAMERA_NAME)), Camera::USE_CALLING_UID,
-      sVideoSize, sFPS,
-      NULL, sUseMetaDataMode);
+  mCameraSource = CameraSource::CreateFromCamera(
+    mCamera->remote(),
+    mCamera->getRecordingProxy(),
+    sCameraId,
+    String16(CAMERA_NAME, strlen(CAMERA_NAME)),
+    Camera::USE_CALLING_UID,
+    sVideoSize,
+    sFPS,
+    NULL,
+    sUseMetaDataMode
+  );
   CHECK_EQ(mCameraSource->initCheck(), OK);
 
   {
@@ -677,11 +689,11 @@ status_t CaptureCommand::initThreadCamera1() {
   }
 
   if (sInitCameraVideo) {
-    mLooper = new ALooper;
-    mLooper->setName("capture-looper");
-    mLooper->start();
+    mVideoLooper = new ALooper;
+    mVideoLooper->setName("capture-looper");
+    mVideoLooper->start();
 
-    sp<MediaSource> videoEncoder = prepareVideoEncoder(mLooper, mCameraSource);
+    sp<MediaSource> videoEncoder = prepareVideoEncoder(mVideoLooper, mCameraSource);
     LOG_ERROR(videoEncoder == NULL, "Unable to prepareVideoEncoder");
 
     sp<MediaSource> audioSource(
@@ -703,7 +715,7 @@ status_t CaptureCommand::initThreadCamera1() {
     );
     mAudioMutter = new AudioMutter(audioSourceEmitter, sAudioMute);
     sp<MediaSource> audioEncoder =
-      prepareAudioEncoder(mLooper, mAudioMutter);
+      prepareAudioEncoder(mVideoLooper, mAudioMutter);
 
     mSegmenter = new MPEG4SegmenterDASH(
       videoEncoder,
@@ -730,7 +742,7 @@ status_t CaptureCommand::initThreadCamera1() {
     MediaSourceNullPuller cameraPuller(mCameraSource, "camera");
     // Block this thread while camera is running
     if (!cameraPuller.loop()) {
-      notifyCameraEvent("error");
+      notifyCameraEventError();
     }
   }
 
@@ -858,20 +870,31 @@ status_t CaptureCommand::initThreadCamera2() {
 /**
  * Clean up and stop camera module
  */
-int CaptureCommand::capture_cleanup() {
+int CaptureCommand::capture_stop() {
+  mStopped = true;
+
+  LOG_ERROR(sUseCamera2, "TODO: port stop to camera2 API");
+  sOpenCVCameraCapture->setPreviewProducerListener(NULL);
+  sOpenCVCameraCapture->closeCamera();
+
   if (mHardwareActive) {
-    mCamera->stopPreview();
-    mLooper->stop();
+    if (mCamera != nullptr) {
+      if (mVideoLooper != nullptr) {
+        mVideoLooper->stop();
+      }
+      if (mAudioMutter != nullptr) {
+        mAudioMutter->stop();
+      }
 
-    // Close camera
-    if (NULL != mCamera.get()) {
+      mCameraSource->stop();
+      mCameraSource = nullptr;
+
       mCamera->disconnect();
-      mCamera.clear();
     }
+    mHardwareActive = false;
   }
-  mHardwareActive = false;
-  notifyCameraEvent("stopped");
 
+  notifyCameraEvent("stopped");
   return 0;
 }
 
@@ -940,6 +963,16 @@ int CaptureCommand::capture_getParameterStr(Value& name) {
 void CaptureCommand::notifyCameraEvent(const char* eventName) {
   Value jsonMsg;
   jsonMsg["eventName"] = eventName;
+  mCaptureListener->sendEvent(jsonMsg);
+}
+
+void CaptureCommand::notifyCameraEventError() {
+  if (mStopped) {
+    ALOGD("Stopped. Camera error notification suppressed");
+    return;
+  }
+  Value jsonMsg;
+  jsonMsg["eventName"] = "error";
   mCaptureListener->sendEvent(jsonMsg);
 }
 

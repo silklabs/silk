@@ -83,6 +83,13 @@ public:
   }
 
   ~State() {
+    shutdown();
+#ifdef ANDROID
+    uv_mutex_destroy(&frameDataLock);
+#endif
+  }
+
+  void shutdown() {
 #ifdef ANDROID
     if (client != NULL) {
       client->stopFrameCallback();
@@ -109,10 +116,10 @@ public:
       // sneak into OnFrameCallback() before localclient was really deleted.
       uv_mutex_lock(&frameDataLock);
       uv_mutex_unlock(&frameDataLock);
+      ALOGI("Shutdown complete");
     }
-    uv_mutex_destroy(&frameDataLock);
 #else
-  cap.release();
+    cap.release();
 #endif
   }
 
@@ -453,6 +460,26 @@ private:
   int height;
 };
 
+
+class VideoCaptureCloseWorker : public Nan::AsyncWorker {
+ public:
+  explicit VideoCaptureCloseWorker(std::weak_ptr<State> weakState,
+                                   Nan::Callback *callback)
+    : Nan::AsyncWorker(callback),
+      weakState(weakState) {}
+  virtual ~VideoCaptureCloseWorker() {}
+
+  void Execute() {
+    auto state = weakState.lock();
+    if (state) {
+      state->shutdown();
+    }
+  }
+
+ private:
+  std::weak_ptr<State> weakState;
+};
+
 Nan::Persistent<v8::Function> VideoCapture::constructor;
 
 void VideoCapture::Init(v8::Local<v8::Object> exports) {
@@ -588,7 +615,21 @@ NAN_METHOD(VideoCapture::ReadCustom) {
 
 NAN_METHOD(VideoCapture::Close) {
   VideoCapture* self = ObjectWrap::Unwrap<VideoCapture>(info.Holder());
-  self->state = NULL;
+
+  if (info.Length() != 1) {
+    Nan::ThrowError("Insufficient number of arguments provided");
+  }
+
+  Nan::Callback *callback = NULL;
+  callback = new Nan::Callback(info[0].As<v8::Function>());
+
+  Nan::AsyncQueueWorker(
+    new VideoCaptureCloseWorker(
+      self->state,
+      callback
+    )
+  );
+  self->state = nullptr;
 }
 
 #ifdef ANDROID

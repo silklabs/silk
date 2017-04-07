@@ -76,14 +76,10 @@ endif
 # changes are made, as there's no NPM dependency information conveyed up to
 # Make.
 #
-# Specific "known bad" subdirectories are excluded.  These directories contain
-# files with characters such as '-', ''', and ' ', ' ' that generate invalid
-# dependencies.
+# But exclude filepaths with characters that give Make trouble (TODO: properly
+# escape these instead)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(shell find -L $(LOCAL_PATH) -type f \
-  ! -regex '.*/node_modules/babel/test/fixtures/.*' \
-  ! -regex '.*/node_modules/gulp-match/Rob.*' \
-  ! -regex '.*/dlib/.*' \
-  ! -regex '.* .*' \
+  ! -regex '.*[ :].*' \
 )
 
 LOCAL_32_BIT_ONLY := true

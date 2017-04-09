@@ -35,6 +35,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
   jq \
   lib32stdc++6 \
   lib32z1 \
+  libatlas-base-dev \
   libc6-dev \
   libc6-dev-i386 \
   libopencv3-dev \

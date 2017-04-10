@@ -2,7 +2,7 @@
   "name": "silk-volume",
   "version": "0.0.1",
   "description": "volume",
-  "main": "./lib/index.js",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "silk-build": "silk-buildjs ."

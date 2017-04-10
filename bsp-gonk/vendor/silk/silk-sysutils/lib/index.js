@@ -214,10 +214,15 @@ class PropWatcher extends EventEmitter {
   }
 
   _spawnWatchprops: (() => void) = () => {
-    let cmd = spawn('watchprops', []);
+    const options = {
+      stdio: ['ignore', 'ignore', 'pipe'],
+    };
+    const cmd = spawn('watchprops', [], options);
     cmd.stderr.on('data', data => {
-      let match = data.toString().match(/^\d+ ([^ ]+) /);
+      const line = data.toString();
+      let match = line.match(/^\d+ ([^ ]+) = '(.*)'/);
       if (match && match[1]) {
+        log.debug('property changed:', match[1], '=', match[2]);
 
         /**
          * An event that is the same name as the system property would be
@@ -245,6 +250,10 @@ class PropWatcher extends EventEmitter {
 
     // respawn if dies for some reason
     cmd.on('close', this._spawnWatchprops);
+
+    // $FlowIssue$ https://github.com/facebook/flow/issues/2903
+    cmd.stderr.unref();
+    cmd.unref();
   };
 }
 

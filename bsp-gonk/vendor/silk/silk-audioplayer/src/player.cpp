@@ -4,7 +4,7 @@
 
 #define LOG_TAG "silk-audioplayer"
 #ifdef ANDROID
-// #define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 #include <utils/Log.h>
 #else
 #define ALOGV(fmt, args...) fprintf(stderr, LOG_TAG ": " fmt, ##args); fprintf(stderr, "\n");
@@ -68,7 +68,7 @@ void Player::Init(Local<Object> exports) {
  *
  */
 Player::Player() {
-  ALOGV("Creating instance of player");
+  ALOGV("%s", __FUNCTION__);
 
   // This is required for Marshmallow onwards
   DataSource::RegisterDefaultSniffers();
@@ -85,9 +85,19 @@ Player::Player() {
 }
 
 /**
+ *
+ */
+Player::~Player() {
+  ALOGV("%s", __FUNCTION__);
+  eventCallback.Reset();
+  uv_close(reinterpret_cast<uv_handle_t*>(&asyncHandle), nullptr);
+}
+
+/**
  * Fetch the new event from the event queue and call the JS callback
  */
 void Player::async_cb_handler(uv_async_t *handle) {
+  ALOGV("%s", __FUNCTION__);
   Player* player = (Player*) handle->data;
   if (player == NULL) {
     ALOGE("Player handle null");
@@ -117,6 +127,7 @@ void Player::async_cb_handler(uv_async_t *handle) {
  * Add an event in the event queue and wake up the v8 default loop
  */
 void Player::notify(int msg, const char* errorMsg) {
+  ALOGV("%s", __FUNCTION__);
   EventInfo *eventInfo = new EventInfo();
   eventInfo->errorMsg = "";
 
@@ -132,10 +143,12 @@ void Player::notify(int msg, const char* errorMsg) {
     break;
   case MEDIA_PLAYBACK_COMPLETE:
     eventInfo->event = "done";
+    uv_unref(reinterpret_cast<uv_handle_t*>(&asyncHandle));
     break;
   case MEDIA_ERROR:
     eventInfo->event = "error";
     eventInfo->errorMsg = errorMsg;
+    uv_unref(reinterpret_cast<uv_handle_t*>(&asyncHandle));
     break;
   default:
     ALOGV("Ignoring message msg=%d, errorMsg=%s", msg, errorMsg);
@@ -147,15 +160,6 @@ void Player::notify(int msg, const char* errorMsg) {
 
   asyncHandle.data = this;
   uv_async_send(&asyncHandle);
-}
-
-/**
- *
- */
-Player::~Player() {
-  eventCallback.Reset();
-  mStreamPlayer->reset();
-  uv_close(reinterpret_cast<uv_handle_t*>(&asyncHandle), nullptr);
 }
 
 /**
@@ -197,8 +201,10 @@ NAN_METHOD(Player::SetDataSource) {
 }
 
 NAN_METHOD(Player::Start) {
+  ALOGV("%s", __FUNCTION__);
   SETUP_FUNCTION(Player)
 
+  uv_ref(reinterpret_cast<uv_handle_t*>(&self->asyncHandle));
   self->mStreamPlayer->start();
 }
 
@@ -269,7 +275,7 @@ NAN_METHOD(Player::EndOfStream) {
 }
 
 NAN_METHOD(Player::AddEventListener) {
-  ALOGV("Adding event listener");
+  ALOGV("%s", __FUNCTION__);
   SETUP_FUNCTION(Player)
 
   if (info.Length() != 1) {

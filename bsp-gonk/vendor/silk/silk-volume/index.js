@@ -23,6 +23,8 @@ class Volume extends EventEmitter {
     super();
     this._level = util.getintprop('persist.silk.volume.level', 0);
     this._mute = util.getboolprop('persist.silk.volume.mute', false);
+    util.propWatcher.on('persist.silk.volume.mute', this._onMuteChange.bind(this));
+    util.propWatcher.on('persist.silk.volume.level', this._onLevelChange.bind(this));
   }
 
   /**
@@ -109,6 +111,31 @@ class Volume extends EventEmitter {
       });
     }
   }
+
+  /**
+   * External notification of mute change
+   *
+   * @private
+   */
+  _onMuteChange() {
+    const mute = util.getboolprop('persist.silk.volume.mute', false);
+    if (mute !== this._mute) {
+      this.mute = mute;
+    }
+  }
+
+  /**
+   * External notification of level change
+   *
+   * @private
+   */
+  _onLevelChange() {
+    const level = util.getintprop('persist.silk.volume.level', 0);
+    if (level !== this._level) {
+      this.level = level;
+    }
+  }
+
 }
 
 let volume = new Volume();

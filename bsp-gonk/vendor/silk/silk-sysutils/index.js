@@ -214,9 +214,14 @@ class PropWatcher extends EventEmitter {
   }
 
   _spawnWatchprops: (() => void) = () => {
-    const options = {
+    const options: Object = {
       stdio: ['ignore', 'ignore', 'pipe'],
     };
+
+    if (typeof process.getuid === 'undefined' || process.getuid === 0) {
+      options.uid = options.gid = 9999; // AID_NOBODY
+    }
+
     const cmd = spawn('watchprops', [], options);
     cmd.stderr.on('data', data => {
       const line = data.toString();

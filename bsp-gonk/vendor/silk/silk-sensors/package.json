@@ -2,7 +2,7 @@
   "name": "silk-sensors",
   "version": "0.0.1",
   "description": "Module to provide APIs for sensors on board",
-  "main": "lib/index.js",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "postinstall": "silk-buildjs",

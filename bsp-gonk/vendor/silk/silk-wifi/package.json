@@ -2,7 +2,7 @@
   "name": "silk-wifi",
   "version": "0.0.1",
   "description": "wrapper for wifi",
-  "main": "./lib/index.js",
+  "main": "index.js",
   "scripts": {
     "build": "silk-buildjs",
     "lint": "eslint lib test",

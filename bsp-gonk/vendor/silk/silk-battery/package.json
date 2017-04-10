@@ -2,7 +2,7 @@
   "name": "silk-battery",
   "version": "0.0.1",
   "description": "Silk battery module",
-  "main": "./lib/index.js",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "postinstall": "silk-buildjs",

@@ -2,7 +2,7 @@
   "name": "silk-input",
   "version": "0.0.1",
   "description": "Key input",
-  "main": "./lib/index.js",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "postinstall": "silk-buildjs",

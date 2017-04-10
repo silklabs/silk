@@ -2,7 +2,7 @@
   "name": "silk-camera",
   "version": "0.0.1",
   "description": "Silk Camera API",
-  "main": "lib/index.js",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "postinstall": "silk-buildjs",

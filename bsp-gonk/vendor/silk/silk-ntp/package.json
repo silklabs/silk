@@ -2,7 +2,7 @@
   "name": "silk-ntp",
   "version": "0.0.1",
   "description": "NTP service",
-  "main": "./lib/index.js",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "postinstall": "silk-buildjs",

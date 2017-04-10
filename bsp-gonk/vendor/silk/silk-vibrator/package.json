@@ -2,7 +2,7 @@
   "name": "silk-vibrator",
   "version": "0.0.1",
   "description": "vibrator",
-  "main": "./lib/index.js",
+  "main": "index.js",
   "scripts": {
     "postinstall": "silk-buildjs",
     "lint": "eslint .",

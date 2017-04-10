@@ -2,7 +2,7 @@
   "name": "silk-sysutils",
   "version": "0.0.1",
   "description": "System utilities for Silk",
-  "main": "lib/index.js",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "postinstall": "silk-buildjs"

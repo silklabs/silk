@@ -79,6 +79,9 @@ Player::Player() {
   mStreamPlayer = new StreamPlayer();
   mStreamPlayer->setListener(this);
   mLooper->registerHandler(mStreamPlayer);
+
+  uv_async_init(uv_default_loop(), &asyncHandle, Player::async_cb_handler);
+  uv_unref(reinterpret_cast<uv_handle_t*>(&asyncHandle));
 }
 
 /**
@@ -152,6 +155,7 @@ void Player::notify(int msg, const char* errorMsg) {
 Player::~Player() {
   eventCallback.Reset();
   mStreamPlayer->reset();
+  uv_close(reinterpret_cast<uv_handle_t*>(&asyncHandle), nullptr);
 }
 
 /**
@@ -275,8 +279,6 @@ NAN_METHOD(Player::AddEventListener) {
   Isolate *isolate = info.GetIsolate();
   REQ_FUN_ARG(0, eventcb);
   self->eventCallback.Reset(isolate, eventcb);
-
-  uv_async_init(uv_default_loop(), &self->asyncHandle, Player::async_cb_handler);
 }
 
 NODE_MODULE(player, Player::Init);

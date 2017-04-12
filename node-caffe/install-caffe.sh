@@ -5,8 +5,31 @@ if [[ -z $CI ]]; then
   J="-j6"
 fi
 
+# Insatall and build OpenCV-3.1.0
+function install_opencv {
+  git clone --branch '3.1.0' git@github.com:Itseez/opencv.git
+  pushd opencv
+  mkdir build && cd build
+  cmake -Wno-dev \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DBUILD_TESTS=false \
+    -DWITH_TIFF=false \
+    -DWITH_CUDA=false \
+    -DBUILD_ANDROID_EXAMPLES=false \
+    -DWITH_OPENEXR=false \
+    -DBUILD_PERF_TESTS=false \
+    -DBUILD_opencv_java=false \
+    -DWITH_IPP=OFF \
+    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    ..
+  make -j4
+  sudo make install
+  popd
+}
+
+# Install and build Caffe
 if [ -z "$CAFFE_ROOT" ]; then
-  cd $(dirname $0)
+  pushd $(dirname $0)
 
   # Download caffe
   SHA=24d2f67173db3344141dce24b1008efffbfe1c7d
@@ -17,6 +40,12 @@ if [ -z "$CAFFE_ROOT" ]; then
     pushd caffe
     git am ../patch/0001-Fix-veclib-path-for-OSX-sierra.patch
     popd
+  fi
+
+  # Install OpenCV
+  if [[ ! -d "opencv" ]]; then
+    echo "Building OpenCV-3.1.0"
+    install_opencv
   fi
 
   # Check for NVIDIA GPU. If NVIDIA GPU is unavailable
@@ -53,9 +82,11 @@ if [ -z "$CAFFE_ROOT" ]; then
       -DUSE_LEVELDB=OFF \
       -DUSE_LMDB=OFF \
       -DBUILD_docs=OFF \
+      -DOpenCV_DIR=opencv \
       ..
 
     make all $J
+    popd
     popd
     popd
   else

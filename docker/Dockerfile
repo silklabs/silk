@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu14.04
 
 MAINTAINER mvine@silklabs.com
 
@@ -84,4 +84,3 @@ RUN ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 RUN git config --global user.email "silkysmooth@example.com"
 RUN git config --global user.name "Silky Smooth"
 RUN git config --global color.ui true
-

@@ -1,0 +1,52 @@
+From 7205c39f777cc2dadfa761855b6ea08742175688 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 12 Apr 2017 09:49:08 -0700
+Subject: [PATCH] Enable process.getuid()
+
+---
+ src/node.cc | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/node.cc b/src/node.cc
+index 77bb7b4..5220778 100644
+--- a/src/node.cc
++++ b/src/node.cc
+@@ -2021,19 +2021,22 @@ static gid_t gid_by_name(Isolate* isolate, Local<Value> value) {
+     return gid_by_name(*name);
+   }
+ }
++#endif
++#if defined(__POSIX__)
+ 
+ static void GetUid(const FunctionCallbackInfo<Value>& args) {
+   // uid_t is an uint32_t on all supported platforms.
+   args.GetReturnValue().Set(static_cast<uint32_t>(getuid()));
+ }
+ 
++#endif
++#if defined(__POSIX__) && !defined(__ANDROID__)
+ 
+ static void GetGid(const FunctionCallbackInfo<Value>& args) {
+   // gid_t is an uint32_t on all supported platforms.
+   args.GetReturnValue().Set(static_cast<uint32_t>(getgid()));
+ }
+ 
+-
+ static void GetEUid(const FunctionCallbackInfo<Value>& args) {
+   // uid_t is an uint32_t on all supported platforms.
+   args.GetReturnValue().Set(static_cast<uint32_t>(geteuid()));
+@@ -3366,8 +3369,10 @@ void SetupProcessObject(Environment* env,
+ 
+   env->SetMethod(process, "umask", Umask);
+ 
+-#if defined(__POSIX__) && !defined(__ANDROID__)
++#if defined(__POSIX__)
+   env->SetMethod(process, "getuid", GetUid);
++#endif
++#if defined(__POSIX__) && !defined(__ANDROID__)
+   env->SetMethod(process, "geteuid", GetEUid);
+   env->SetMethod(process, "setuid", SetUid);
+   env->SetMethod(process, "seteuid", SetEUid);
+-- 
+2.10.1 (Apple Git-78)
+

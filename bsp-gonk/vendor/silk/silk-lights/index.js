@@ -305,7 +305,7 @@ type HalLightId = 'backlight' |
                   'attention' |
                   'bluetooth' |
                   'wifi';
-type CustomLightId = string;
+export type CustomLightId = string;
 type LightId = HalLightId | CustomLightId;
 
 
@@ -320,21 +320,6 @@ class Lights {
   WHITE: LightColor = 0xFFFFFF;
 
   _lights: {[key: LightId]: Light} = {};
-
-  /**
-   * Adds a custom light source.
-   *
-   * @param light the Light object for this custom light
-   * @memberof silk-lights
-   * @instance
-   */
-  addCustomLight(light: Light) {
-    const lightId = light._id;
-    if (this._lights[lightId]) {
-      throw new Error(lightId, 'already exists');
-    }
-    this._lights[lightId] = light;
-  }
 
   _get(lightId: LightId): ?Light {
     if (this._lights[lightId]) {
@@ -351,12 +336,26 @@ class Lights {
     case 'bluetooth':
     case 'wifi':
       {
-        let light = new Light(lightId);
-        this._lights[lightId] = light;
+        const light = this._lights[lightId] = new Light(lightId);
         return light;
       }
     default:
-      return null;
+      {
+        let CustomLight = null;
+        try {
+          // $FlowFixMe$ Could not resolve name: __non_webpack_require__
+          const moduleRequire = __non_webpack_require__ || require; //eslint-disable-line
+          CustomLight = moduleRequire(`silk-lights-custom`).default;
+        } catch (err) {
+          // Ignore require errors
+        }
+
+        if (CustomLight) {
+          const light = this._lights[lightId] = new CustomLight(lightId);
+          return light;
+        }
+        return null;
+      }
     }
   }
 

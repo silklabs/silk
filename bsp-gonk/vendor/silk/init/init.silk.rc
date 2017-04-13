@@ -52,7 +52,7 @@ service silk-bledroid /system/silk/bin/debug-wrapper /system/silk/bin/bledroid
     user root
     group root
     # bledroid will switch to the bluetooth user
-    socket bledroid stream 0600 root root
+    socket bledroid stream 0660 bluetooth bluetooth
 
 service silk-sensors /system/silk/bin/debug-wrapper /system/silk/bin/silk-sensors
     class late_start

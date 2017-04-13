@@ -1,0 +1,53 @@
+From 6cb5224e9f4372c3d2cd56902a1b73716b952d4e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 12 Apr 2017 09:49:08 -0700
+Subject: [PATCH] Enable process user/group methods
+
+---
+ src/node.cc | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/src/node.cc b/src/node.cc
+index 77bb7b4..a4356e1 100644
+--- a/src/node.cc
++++ b/src/node.cc
+@@ -82,7 +82,7 @@ typedef int mode_t;
+ #include <unistd.h>  // setuid, getuid
+ #endif
+ 
+-#if defined(__POSIX__) && !defined(__ANDROID__)
++#if defined(__POSIX__)
+ #include <pwd.h>  // getpwnam()
+ #include <grp.h>  // getgrnam()
+ #endif
+@@ -1919,7 +1919,7 @@ static void Umask(const FunctionCallbackInfo<Value>& args) {
+ }
+ 
+ 
+-#if defined(__POSIX__) && !defined(__ANDROID__)
++#if defined(__POSIX__)
+ 
+ static const uid_t uid_not_found = static_cast<uid_t>(-1);
+ static const gid_t gid_not_found = static_cast<gid_t>(-1);
+@@ -1971,7 +1971,8 @@ static gid_t gid_by_name(const char* name) {
+   errno = 0;
+   pp = nullptr;
+ 
+-  if (getgrnam_r(name, &pwd, buf, sizeof(buf), &pp) == 0 && pp != nullptr) {
++  pp = getgrnam(name);
++  if (pp != nullptr) {
+     return pp->gr_gid;
+   }
+ 
+@@ -3366,7 +3367,7 @@ void SetupProcessObject(Environment* env,
+ 
+   env->SetMethod(process, "umask", Umask);
+ 
+-#if defined(__POSIX__) && !defined(__ANDROID__)
++#if defined(__POSIX__)
+   env->SetMethod(process, "getuid", GetUid);
+   env->SetMethod(process, "geteuid", GetEUid);
+   env->SetMethod(process, "setuid", SetUid);
+-- 
+2.10.1 (Apple Git-78)
+

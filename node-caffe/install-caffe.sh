@@ -23,7 +23,6 @@ function install_opencv {
     -DCMAKE_INSTALL_PREFIX=/usr/ \
     ..
   make -j4
-  sudo make install
   popd
 }
 

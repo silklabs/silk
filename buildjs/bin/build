@@ -23,7 +23,7 @@ help() {
     echo
   fi
 
-  echo 'silk-buildjs <source directory> <target directory> [--target=web|node] [--no-ugly] [--no-native]'
+  echo 'silk-buildjs <source directory> <target directory> [--target=web|node] [--no-ugly] [--no-native] [--dev-server] [--no-externals]'
   echo
   echo 'This program is a helper to build a JS module into a single file and'
   echo 'potentially compile additional native modules if a binding.gyp is present.'
@@ -35,6 +35,7 @@ SILK_BUILDJS_SOURCE=
 SILK_BUILDJS_DEST=
 SILK_BUILDJS_UGLY=true
 SILK_BUILDJS_TARGET=node
+SILK_BUILDJS_EXTERNALS=true
 native=true
 dev_server=false
 
@@ -54,6 +55,9 @@ for arg in "$@"; do
     ;;
   --no-ugly)
     SILK_BUILDJS_UGLY=false
+    ;;
+  --no-externals)
+    SILK_BUILDJS_EXTERNALS=false
     ;;
   --*)
     help Unknown argument: $arg
@@ -79,6 +83,7 @@ export SILK_BUILDJS_SOURCE
 export SILK_BUILDJS_DEST
 export SILK_BUILDJS_UGLY
 export SILK_BUILDJS_TARGET
+export SILK_BUILDJS_EXTERNALS
 
 if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   ## Exports for the node-gyp build system ...

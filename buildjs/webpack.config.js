@@ -22,6 +22,7 @@ const target = process.env.SILK_BUILDJS_TARGET;
 if (target !== 'node' && target !== 'web') {
   throw new Error(`Invalid webpack target: ${target}`);
 }
+const useExternals = process.env.SILK_BUILDJS_EXTERNALS === 'true';
 
 // Walk up cwd looking for a project-level webpack.config.js
 const projectWebpack = lookup(
@@ -169,7 +170,7 @@ entry[main] = main;
 
 const config = {
   context: modulePath,
-  externals: externals[target],
+  externals: useExternals ? externals[target] : [],
   target,
   node: {
     __dirname: false,

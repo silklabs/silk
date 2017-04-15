@@ -4,12 +4,13 @@ MAINTAINER mvine@silklabs.com
 
 RUN apt-get update -qq && \
     apt-get install -y software-properties-common python-software-properties && \
+    add-apt-repository -y ppa:amarburg/opencv3 && \
     add-apt-repository -y ppa:george-edison55/cmake-3.x && \
     add-apt-repository -y ppa:git-core/ppa && \
     add-apt-repository -y ppa:kubuntu-ppa/backports && \
     add-apt-repository -y ppa:phablet-team/tools && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/ppa && \
-    add-apt-repository -y ppa:amarburg/opencv3 && \
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive \
       apt-get install -y \
@@ -25,6 +26,7 @@ RUN apt-get update -qq && \
         g++ \
         g++-4.8 \
         g++-4.8-multilib \
+        g++-5 \
         gawk \
         git \
         jq \
@@ -54,6 +56,10 @@ ENV JAVA_HOME /usr
 RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \
     echo 'export JAVA_HOME' >> /etc/profile && \
     echo 'export PATH' >> /etc/profile && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 10 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 10 && \
     addgroup silk && \
     adduser -ingroup silk --gecos "" --disabled-password silk && \
     echo 'silk ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/silk && \

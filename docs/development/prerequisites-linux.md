@@ -15,6 +15,12 @@ sudo add-apt-repository ppa:george-edison55/cmake-3.x
 sudo apt-get update
 ```
 
+Add the gcc 5 PPA:
+```
+sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+sudo apt-get update
+```
+
 Then install the following packages:
 ```bash
 sudo apt-get install -y \
@@ -30,6 +36,7 @@ sudo apt-get install -y \
   g++ \
   g++-4.8 \
   g++-4.8-multilib \
+  g++-5 \
   gawk \
   git \
   jq \
@@ -54,6 +61,16 @@ sudo apt-get install -y \
 and configure your ccache:
 ```bash
 ccache -M 10GB
+```
+
+then select gcc 5 as the default host compiler:
+```bash
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 10
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 10
+sudo update-alternatives --display gcc
+sudo update-alternatives --display g++
 ```
 
 Once you're done, continue to the [building instructions](build-instructions-linux-osx.md).

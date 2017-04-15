@@ -1,4 +1,7 @@
 {
+  'variables' : {
+    'NNPACK_ROOT' : '<!(echo ${NNPACK_ROOT:-$(pwd)/NNPACK})',
+  },
   'targets': [
     {
       'target_name': 'nnpack',
@@ -7,8 +10,8 @@
       ],
       'include_dirs': [
         '<!(node -e "require(\'nan\')")',
-        '<!(echo $NNPACK_ROOT/include)',
-        '<!(echo $NNPACK_ROOT/third-party/pthreadpool/include)'
+        '<(NNPACK_ROOT)/include',
+        '<(NNPACK_ROOT)/third-party/pthreadpool/include'
       ],
       'cflags_cc': [
         '-std=c++11',
@@ -30,7 +33,8 @@
         }],
         [ 'OS=="linux"', {
           'ldflags': [
-            '-L<!(echo "$NNPACK_ROOT/lib")',
+            '-L<(NNPACK_ROOT)/lib',
+            '-Wl,-rpath,<(NNPACK_ROOT)/lib:\'$$ORIGIN\'/../../NNPACK/lib',
           ],
           'libraries': [
             '-lnnpack',
@@ -40,16 +44,16 @@
           'defines': [
           ],
           'include_dirs': [
-            '<!(echo $NNPACK_ROOT/include)',
-            '<!(echo $NNPACK_ROOT/third-party/pthreadpool/include)'
+            '<(NNPACK_ROOT)/include',
+            '<(NNPACK_ROOT)/third-party/pthreadpool/include'
           ],
           'xcode_settings': {
             'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
             'MACOSX_DEPLOYMENT_TARGET': '10.11',
             'OTHER_LDFLAGS': [
-              '-L<!(echo "$NNPACK_ROOT/lib")',
+              '-L<(NNPACK_ROOT)/lib',
               '-lnnpack',
-              '<!(echo "$NNPACK_ROOT/third-party/pthreadpool/lib/pthreadpool.c.o")'
+              '<(NNPACK_ROOT)/third-party/pthreadpool/lib/pthreadpool.c.o'
             ],
             'OTHER_CFLAGS': [
             ]
@@ -58,6 +62,6 @@
           ],
         }]
       ]
-    }
+    },
   ]
 }

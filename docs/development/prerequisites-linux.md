@@ -53,6 +53,7 @@ sudo apt-get install -y \
   mkisofs \
   openjdk-7-jdk \
   openssh-server \
+  python-pip \
   texinfo \
   xmlstarlet \
   zip
@@ -71,6 +72,14 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 10
 sudo update-alternatives --display gcc
 sudo update-alternatives --display g++
+```
+
+also install ninja:
+```bash
+wget https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip
+unzip ninja-linux.zip
+sudo cp ninja /usr/bin
+rm ninja-linux.zip ninja
 ```
 
 Once you're done, continue to the [building instructions](build-instructions-linux-osx.md).

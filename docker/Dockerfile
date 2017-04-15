@@ -43,14 +43,22 @@ RUN apt-get update -qq && \
         mkisofs \
         openjdk-7-jdk \
         openssh-server \
+        python-pip \
         texinfo \
         xmlstarlet \
         zip
 
 # Install node v6.9.1
-RUN wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz && \
-    tar -xv -C /usr/local --strip-components 1 -f node-v6.9.1-linux-x64.tar.gz && \
+RUN wget -q https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz && \
+    tar -x -C /usr/local --strip-components 1 -f node-v6.9.1-linux-x64.tar.gz && \
     rm node-v6.9.1-linux-x64.tar.gz
+
+# Install ninja
+RUN wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip && \
+    unzip ninja-linux.zip && \
+    rm ninja-linux.zip  && \
+    mv ninja /usr/bin && \
+    pip install ninja-syntax
 
 ENV JAVA_HOME /usr
 RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \

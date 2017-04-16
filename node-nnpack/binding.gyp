@@ -2,6 +2,13 @@
   'variables' : {
     'NNPACK_ROOT' : '<!(echo ${NNPACK_ROOT:-$(pwd)/NNPACK})',
   },
+  'conditions': [
+    [ 'OS=="android"', {
+      'variables' : {
+        'NNPACK_ROOT' : '<!(echo $ANDROID_BUILD_TOP/external/NNPACK)',
+      },
+    }],
+  ],
   'targets': [
     {
       'target_name': 'nnpack',
@@ -24,7 +31,6 @@
       'conditions': [
         [ 'OS=="android"', {
           'include_dirs': [
-            '<!(echo \" -I $ANDROID_BUILD_TOP/external/NNPACK/include \")',
             '<!(echo \" -I $ANDROID_BUILD_TOP/external/pthreadpool/include \")',
           ],
           'libraries': [

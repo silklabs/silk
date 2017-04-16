@@ -4,13 +4,18 @@
 
 require('./node')();
 
-// Ignore command-line --arguments
-const mainModule = process.argv.slice(2).find(arg => arg[0] !== '-');
+// Currently the node arguments are ignored...
+const mainModuleIndex = process.argv.slice(2).findIndex(arg => arg[0] !== '-');
+if (mainModuleIndex > 0) {
+  const ignoredArgs = process.argv.splice(2, mainModuleIndex);
+  console.warn('babel-node arguments ignored:', ignoredArgs.join());
+}
 
-let main = require('path').resolve(mainModule);
+const mainModule = process.argv[2];
+const main = require('path').resolve(mainModule);
 
 // Modify arguments as if node was executing the script
-// directly, removing ourselves from the argument list.
+// directly, removing babel-node from the argument list.
 // Use the 'babel-node-allargs' executable if your script expects
 // unaltered arguments (e.g. for cluster.fork())
 process.argv.splice(1, 1);

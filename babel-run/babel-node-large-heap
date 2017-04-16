@@ -1,4 +1,9 @@
 #! /usr/bin/env node --max_old_space_size=8000
+#
+# TODO: Merge this script into |babel-node| proper by enhancing |babel-node| to
+#       process node-specific command-line arguments, such as
+#       --max_old_space_size
+#
 
 'use strict';
 

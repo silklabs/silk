@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-silk",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "Silk eslint rules",
   "main": "index.js",
   "author": "Silk Labs Inc.",

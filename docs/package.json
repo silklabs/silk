@@ -1,6 +1,6 @@
 {
   "name": "silk-docs",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "Silk documentation",
   "scripts": {
     "build": "bin/build",

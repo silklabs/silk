@@ -8,6 +8,21 @@
         'NNPACK_ROOT' : '<!(echo $ANDROID_BUILD_TOP/external/NNPACK)',
       },
     }],
+    [ 'OS=="linux"', {
+      'targets': [
+        {
+          "target_name": "action_after_build",
+          "type": "none",
+          "dependencies": [ "nnpack" ],
+          "copies": [
+            {
+              "files": [ "<(NNPACK_ROOT)/lib/libnnpack.so" ],
+              "destination": "<(PRODUCT_DIR)",
+            },
+          ],
+        },
+      ],
+   }],
   ],
   'targets': [
     {
@@ -24,10 +39,6 @@
         '-std=c++11',
         '-fexceptions',
       ],
-      'defines': [
-      ],
-      'dependencies': [
-      ],
       'conditions': [
         [ 'OS=="android"', {
           'include_dirs': [
@@ -40,7 +51,7 @@
         [ 'OS=="linux"', {
           'ldflags': [
             '-L<(NNPACK_ROOT)/lib',
-            '-Wl,-rpath,<(NNPACK_ROOT)/lib:\'$$ORIGIN\'/../../NNPACK/lib',
+            '-Wl,-rpath,\'$$ORIGIN\'',
           ],
           'libraries': [
             '-lnnpack',

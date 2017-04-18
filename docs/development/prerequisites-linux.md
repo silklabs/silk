@@ -54,6 +54,7 @@ sudo apt-get install -y \
   openjdk-7-jdk \
   openssh-server \
   python-pip \
+  python-virtualenv \
   texinfo \
   xmlstarlet \
   zip

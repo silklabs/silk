@@ -44,6 +44,7 @@ RUN apt-get update -qq && \
         openjdk-7-jdk \
         openssh-server \
         python-pip \
+        python-virtualenv \
         texinfo \
         xmlstarlet \
         zip

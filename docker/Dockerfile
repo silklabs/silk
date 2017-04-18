@@ -59,6 +59,7 @@ RUN wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-
     unzip ninja-linux.zip && \
     rm ninja-linux.zip  && \
     mv ninja /usr/bin && \
+    chmod +x ninja /usr/bin/ninja && \
     pip install ninja-syntax
 
 ENV JAVA_HOME /usr

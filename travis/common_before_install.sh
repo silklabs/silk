@@ -11,10 +11,10 @@ if [ -n ${TRAVIS:-false} ]; then
     # Install ninja
     wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip
     unzip ninja-linux.zip
-    rm ninja-linux.zip
     sudo cp ninja /usr/bin
-    rm -r ninja
-    if [[ ! -f /usr/bin/ninja ]]; then
+    sudo chmod +x /usr/bin/ninja
+    rm -r ninja-linux.zip ninja
+    if [[ ! -x /usr/bin/ninja ]]; then
       # TODO: Perhaps use ~/bin/ instead?
       echo "/usr/bin/ninja missing, sudo failed?"
     fi

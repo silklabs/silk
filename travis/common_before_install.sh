@@ -12,7 +12,12 @@ if [ -n ${TRAVIS:-false} ]; then
     wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip
     unzip ninja-linux.zip
     rm ninja-linux.zip
-    sudo mv ninja /usr/bin
+    sudo cp ninja /usr/bin
+    rm -r ninja
+    if [[ ! -f /usr/bin/ninja ]]; then
+      # TODO: Perhaps use ~/bin/ instead?
+      echo "/usr/bin/ninja missing, sudo failed?"
+    fi
   fi
   if [ $CI_OS_NAME == osx ]; then
     # Travis OS X machines need some more installing.

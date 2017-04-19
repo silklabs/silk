@@ -629,6 +629,10 @@ export class BledroidConnection extends EventEmitter {
   get adapterState() {
     return bledroid.adapterState;
   }
+
+  setDiscoverable() {
+    bledroid.command('setDiscoverable');
+  }
 }
 
 module.exports = function() {

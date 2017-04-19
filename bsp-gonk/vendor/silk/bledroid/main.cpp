@@ -16,6 +16,9 @@
 #include <unistd.h>
 #include <hardware/bluetooth.h>
 #include <hardware/bt_gatt.h>
+#ifdef TARGET_GE_MARSHMALLOW
+#include <hardware/bt_av.h>
+#endif
 #include <hardware/hardware.h>
 #include <hardware_legacy/power.h>
 #include <utils/Condition.h>
@@ -680,6 +683,9 @@ bool desired_listen_state = false;
 bool gatt_client_scanning = false;
 bool adapter_supports_multi_adv = false;
 btgatt_interface_t const *gatt = nullptr;
+#ifdef TARGET_GE_MARSHMALLOW
+btav_interface_t const *avsink = nullptr;
+#endif
 hw_device_t *device = nullptr;
 ThreadWaiter mainThreadWaiter;
 BledroidListener bledroid;
@@ -791,12 +797,22 @@ void bt_adapter_properties_callback(bt_status_t status,
                                     int num_properties,
                                     bt_property_t *properties) {
   Tracer trc("bt_adapter_properties_callback");
+  ALOGV("bt_adapter_properties_callback. num_properties=%d", num_properties);
 
   for (int i = 0; i < num_properties; i++) {
     const bt_property_t &prop = properties[i];
 
     switch (prop.type) {
-      case BT_PROPERTY_BDADDR: {
+    case BT_PROPERTY_BDNAME:
+      {
+        // :skull: prop.len is strlen(bdname.name)
+        const auto& bdname = *(bt_bdname_t *) prop.val;
+        ALOGV("BT_PROPERTY_BDNAME: %s", bdname.name);
+      }
+      break;
+
+    case BT_PROPERTY_BDADDR:
+      if (prop.len == sizeof(bt_bdaddr_t)) {
         bt_bdaddr_t *addr = (bt_bdaddr_t *) prop.val;
         bledroid.sendEvent("!address %02X:%02X:%02X:%02X:%02X:%02X",
           addr->address[0],
@@ -806,12 +822,19 @@ void bt_adapter_properties_callback(bt_status_t status,
           addr->address[4],
           addr->address[5]
         );
-        break;
+      } else {
+        ALOGW("BT_PROPERTY_BDADDR invalid");
       }
+      break;
 
-      case BT_PROPERTY_LOCAL_LE_FEATURES: {
+    case BT_PROPERTY_UUIDS:
+      ALOGV("BT_PROPERTY_UUIDS: %d uuids present", prop.len / sizeof(bt_uuid_t));
+      break;
+
+    case BT_PROPERTY_LOCAL_LE_FEATURES:
+      if (prop.len == sizeof(bt_local_le_features_t)) {
         auto *features = static_cast<bt_local_le_features_t *>(prop.val);
-#ifdef TARGET_GE_MARSHMALLOW
+  #ifdef TARGET_GE_MARSHMALLOW
         ALOGV("BT_PROPERTY_LOCAL_LE_FEATURES "
                 "version_supported=%u "
                 "local_privacy_enabled=%u "
@@ -835,7 +858,7 @@ void bt_adapter_properties_callback(bt_status_t status,
               features->total_trackable_advertisers,
               features->extended_scan_support ? 1 : 0,
               features->debug_logging_supported ? 1 : 0);
-#else // TARGET_GE_MARSHMALLOW
+  #else // TARGET_GE_MARSHMALLOW
         ALOGV("BT_PROPERTY_LOCAL_LE_FEATURES "
                 "local_privacy_enabled=%u "
                 "max_adv_instance=%u "
@@ -853,13 +876,38 @@ void bt_adapter_properties_callback(bt_status_t status,
               features->scan_result_storage_size_lobyte,
               features->scan_result_storage_size_hibyte,
               features->activity_energy_info_supported);
-#endif // TARGET_GE_MARSHMALLOW
+  #endif // TARGET_GE_MARSHMALLOW
         adapter_supports_multi_adv = features->max_adv_instance >= 5;
+      } else {
+        ALOGE("BT_PROPERTY_LOCAL_LE_FEATURES invalid");
+      }
+      break;
+    case BT_PROPERTY_ADAPTER_SCAN_MODE:
+      if (prop.len == sizeof(bt_scan_mode_t)) {
+        const auto scanMode = *(bt_scan_mode_t *) prop.val;
+        ALOGV("BT_PROPERTY_ADAPTER_SCAN_MODE: %d", scanMode);
+      } else {
+        ALOGW("BT_PROPERTY_ADAPTER_SCAN_MODE invalid");
+      }
+      break;
+    case BT_PROPERTY_ADAPTER_BONDED_DEVICES:
+      {
+        const auto deviceCount = prop.len / sizeof(bt_bdaddr_t);
+        ALOGV("BT_PROPERTY_ADAPTER_BONDED_DEVICES: %d devices", deviceCount);
         break;
       }
+    case BT_PROPERTY_ADAPTER_DISCOVERY_TIMEOUT:
+      if (prop.len == sizeof(uint32_t)) {
+        const auto timeout = *(uint32_t *) prop.val;
+        ALOGV("BT_PROPERTY_ADAPTER_DISCOVERY_TIMEOUT: %d", timeout);
+      } else {
+        ALOGW("BT_PROPERTY_ADAPTER_DISCOVERY_TIMEOUT invalid");
+      }
+      break;
 
-      default:
-        break;
+    default:
+      ALOGV("  adapter prop #%d: (unknown) type=%d len=%d", i, prop.type, prop.len);
+      break;
     }
   }
 }
@@ -868,17 +916,195 @@ void bt_adapter_properties_callback(bt_status_t status,
 void bt_remote_device_properties_callback(bt_status_t status,
     bt_bdaddr_t *bd_addr, int num_properties, bt_property_t *properties) {
   Tracer trc("bt_remote_device_properties_callback");
-  ALOGE("bt_remote_device_properties_callback");
+
+  char address[18];
+  addr_to_str(*bd_addr, address);
+
+  ALOGD("bt_remote_device_properties_callback: %s: status=%d num_properties=%d",
+    address, status, num_properties);
+
+  for (int i = 0; i < num_properties; i++) {
+    const bt_property_t &prop = properties[i];
+    bool unknown = true;
+
+    switch (prop.type) {
+    case BT_PROPERTY_BDNAME:
+      {
+        unknown = false;
+        // :skull: prop.len is strlen(bdname.name)
+        const auto& bdname = *(bt_bdname_t *) prop.val;
+        ALOGV("  remote prop #%d: BT_PROPERTY_BDNAME: %s", i, bdname.name);
+      }
+      break;
+    case BT_PROPERTY_UUIDS:
+      unknown = false;
+      ALOGV("  remote prop #%d: BT_PROPERTY_UUIDS: %d uuids present",
+        i, prop.len / sizeof(bt_uuid_t));
+      break;
+    case BT_PROPERTY_CLASS_OF_DEVICE:
+      if (prop.len == sizeof(uint32_t)) {
+        unknown = false;
+        const auto classOfDevice = *(uint32_t *) prop.val;
+        ALOGV("  remote prop #%d: BT_PROPERTY_CLASS_OF_DEVICE: 0x%x", i, classOfDevice);
+      }
+      break;
+    case BT_PROPERTY_TYPE_OF_DEVICE:
+      if (prop.len == sizeof(bt_device_type_t)) {
+        unknown = false;
+        const auto typeOfDevice = *(bt_device_type_t *) prop.val;
+        const char *s = "";
+        switch (typeOfDevice) {
+        case BT_DEVICE_DEVTYPE_BREDR:
+          s = "bredr";
+          break;
+        case BT_DEVICE_DEVTYPE_BLE:
+          s = "ble";
+          break;
+        case BT_DEVICE_DEVTYPE_DUAL:
+          s = "dual";
+          break;
+        defaut:
+          unknown = true;
+          break;
+        }
+        if (unknown) {
+          break;
+        }
+        ALOGV("  remote prop #%d: BT_PROPERTY_TYPE_OF_DEVICE: %s (%d)", i, s, typeOfDevice);
+      }
+      break;
+    case BT_PROPERTY_REMOTE_FRIENDLY_NAME:
+      ALOGV("  remote prop #%d: BT_PROPERTY_REMOTE_FRIENDLY_NAME: len=%d", i, prop.len);
+      break;
+    default:
+      break;
+    }
+    if (unknown) {
+      ALOGV("  remote prop #%d: (unknown) type=%d len=%d",
+        i, prop.type, prop.len);
+    }
+  }
 }
 
 void bt_device_found_callback(int num_properties, bt_property_t *properties) {
   Tracer trc("bt_device_found_callback");
-  ALOGE("bt_device_found_callback. num_properties=%d", num_properties);
+
+  ALOGV("bt_device_found_callback. num_properties=%d", num_properties);
+  for (int i = 0; i < num_properties; i++) {
+    const bt_property_t& prop = properties[i];
+    bool unknown = true;
+    switch (prop.type) {
+    case BT_PROPERTY_BDNAME:
+      {
+        unknown = false;
+        // :skull: prop.len is strlen(bdname.name)
+        const auto& bdname = *(bt_bdname_t *) prop.val;
+        ALOGV("  prop #%d: BT_PROPERTY_BDNAME: %s", i, bdname.name);
+      }
+      break;
+    case BT_PROPERTY_BDADDR:
+      if (prop.len == sizeof(bt_bdaddr_t)) {
+        unknown = false;
+        const auto& bda = *(bt_bdaddr_t *) prop.val;
+        char address[18];
+        addr_to_str(bda, address);
+        ALOGV("  prop #%d: BT_PROPERTY_BDADDR: %s", i, address);
+      }
+      break;
+    case BT_PROPERTY_UUIDS:
+      unknown = false;
+      ALOGV("  prop #%d: BT_PROPERTY_UUIDS: %d uuids present", i, prop.len / sizeof(bt_uuid_t));
+      break;
+    case BT_PROPERTY_CLASS_OF_DEVICE:
+      if (prop.len == sizeof(uint32_t)) {
+        unknown = false;
+        const auto classOfDevice = *(uint32_t *) prop.val;
+        ALOGV("  prop #%d: BT_PROPERTY_CLASS_OF_DEVICE: 0x%x", i, classOfDevice);
+      }
+      break;
+    case BT_PROPERTY_TYPE_OF_DEVICE:
+      if (prop.len == sizeof(bt_device_type_t)) {
+        unknown = false;
+        const auto typeOfDevice = *(bt_device_type_t *) prop.val;
+        const char *s = "";
+        switch (typeOfDevice) {
+        case BT_DEVICE_DEVTYPE_BREDR:
+          s = "bredr";
+          break;
+        case BT_DEVICE_DEVTYPE_BLE:
+          s = "ble";
+          break;
+        case BT_DEVICE_DEVTYPE_DUAL:
+          s = "dual";
+          break;
+        defaut:
+          unknown = true;
+          break;
+        }
+        if (unknown) {
+          break;
+        }
+        ALOGV("  prop #%d: BT_PROPERTY_TYPE_OF_DEVICE: %s (%d)", i, s, typeOfDevice);
+      }
+      break;
+    case BT_PROPERTY_REMOTE_RSSI:
+      if (prop.len == sizeof(int8_t)) {
+        const auto rssi = *(int8_t *) prop.val;
+        ALOGV("  prop #%d: BT_PROPERTY_REMOTE_RSSI: %d", i, rssi);
+        unknown = false;
+      }
+      break;
+    default:
+      break;
+    }
+    if (unknown) {
+      ALOGV("  prop #%d: (unknown) type=%d len=%d", i, prop.type, prop.len);
+    }
+  }
 }
 
 void bt_discovery_state_changed_cb(bt_discovery_state_t state) {
   Tracer trc("bt_discovery_state_changed_cb");
-  ALOGE("bt_discovery_state_changed_cb. state=%d", state);
+
+  const char *s;
+  bt_scan_mode_t scanMode = BT_SCAN_MODE_CONNECTABLE;
+
+  switch (state) {
+  case BT_DISCOVERY_STOPPED:
+    scanMode = BT_SCAN_MODE_CONNECTABLE;
+    s = "stopped";
+    break;
+  case BT_DISCOVERY_STARTED:
+    scanMode = BT_SCAN_MODE_CONNECTABLE_DISCOVERABLE;
+    s = "started";
+    break;
+  default:
+    ALOGV("bt_discovery_state_changed_cb: Invalid state: %d", state);
+    return;
+  }
+  ALOGD("bt_discovery_state_changed_cb. %s (%d)", s, state);
+
+  // While this device is in discovery mode, permit other devices to see it as
+  // well.
+  {
+    const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
+    const bt_interface_t *bt = bt_device->get_bluetooth_interface();
+    if (bt == nullptr) {
+      ALOGE("null bt!");
+    } else {
+      bt_property_t prop = {
+        .type = BT_PROPERTY_ADAPTER_SCAN_MODE,
+        .len = sizeof(scanMode),
+        .val = &scanMode,
+      };
+      auto err = bt->set_adapter_property(&prop);
+      if (err) {
+        ALOGW("bt set_adapter_property(BT_PROPERTY_ADAPTER_SCAN_MODE) failed: %d", err);
+      }
+    }
+  }
+
+  // TODO: Emit the current discovery state
 }
 
 
@@ -895,7 +1121,7 @@ void bt_pin_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
 #endif
   ) {
   Tracer trc("bt_pin_request_callback");
-  ALOGE("bt_pin_request_callback");
+  ALOGW("bt_pin_request_callback");
 }
 
 /**
@@ -904,7 +1130,33 @@ void bt_pin_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
 void bt_ssp_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
     uint32_t cod, bt_ssp_variant_t pairing_variant, uint32_t pass_key) {
   Tracer trc("bt_ssp_request_callback");
-  ALOGE("bt_ssp_request_callback");
+
+  char address[18];
+  addr_to_str(*remote_bd_addr, address);
+
+  ALOGE("bt_ssp_request_callback: %s (%s): cod=%d, pairing_variant=%d, pass_key=%u",
+    bd_name->name,
+    address,
+    cod,
+    pairing_variant,
+    pass_key
+  );
+
+  if (pairing_variant != BT_SSP_VARIANT_PASSKEY_CONFIRMATION) {
+    ALOGW("Unsupported pairing_variant: %d", pairing_variant);
+    return;
+  }
+
+  // Always accept.  TODO: Surface the pairing request and let somebody else
+  // accept.
+  const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
+  const bt_interface_t *bt = bt_device->get_bluetooth_interface();
+  if (bt == nullptr) {
+    ALOGW("null bt!");
+    return;
+  }
+  auto err = bt->ssp_reply(remote_bd_addr, pairing_variant, true, /*unused*/ 0);
+  ALOGW("ssp_reply result: %d", err);
 }
 
 /**
@@ -914,7 +1166,27 @@ void bt_ssp_request_callback(bt_bdaddr_t *remote_bd_addr, bt_bdname_t *bd_name,
 void bt_bond_state_changed_callback(bt_status_t status,
     bt_bdaddr_t *remote_bd_addr, bt_bond_state_t state) {
   Tracer trc("bt_bond_state_changed_callback");
-  ALOGE("bt_bond_state_changed_callback: state=%d", state);
+
+  char address[18];
+  addr_to_str(*remote_bd_addr, address);
+
+  const char *s;
+  switch (state) {
+  default:
+    ALOGW("Unknown bonding state: %d", state);
+    //fallthrough
+  case BT_BOND_STATE_NONE:
+    s = "none";
+    break;
+  case BT_BOND_STATE_BONDING:
+    s = "bonding";
+    break;
+  case BT_BOND_STATE_BONDED:
+    s = "bonded";
+    break;
+  }
+
+  ALOGD("bt_bond_state_changed_callback: %s: %s", address, s);
 }
 
 /**
@@ -2357,6 +2629,45 @@ btgatt_callbacks_t gatt_callbacks = {
   .server = &bt_gatt_server_callbacks
 };
 
+#ifdef TARGET_GE_MARSHMALLOW
+void av_connection_state_callback(btav_connection_state_t state,
+                                  bt_bdaddr_t *bd_addr) {
+  char address[18];
+  addr_to_str(*bd_addr, address);
+  const auto connected = state == BTAV_CONNECTION_STATE_CONNECTED;
+  ALOGD("av_connection_state_callback: %s: state=%d (connected=%d)",
+    address, state, connected);
+}
+
+void av_audio_state_callback(btav_audio_state_t state,
+                             bt_bdaddr_t *bd_addr) {
+
+  char address[18];
+  addr_to_str(*bd_addr, address);
+  const auto playing = state == BTAV_AUDIO_STATE_STARTED;
+  ALOGI("av_audio_state_callback: %s: state=%d (playing=%d)",
+    address, state, playing);
+}
+
+void av_audio_focus_request_callback(bt_bdaddr_t *bd_addr) {
+  char address[18];
+  addr_to_str(*bd_addr, address);
+  ALOGE("av_audio_focus_request_callback: %s granted", address);
+  avsink->audio_focus_state(/*BTIF_MEIDA_FOCUS_GRANTED =*/ 3);
+}
+
+btav_callbacks_t avsink_callbacks = {
+  .size = sizeof(avsink_callbacks),
+  .connection_state_cb = av_connection_state_callback,
+  .audio_state_cb = av_audio_state_callback,
+  .audio_config_cb = nullptr,
+  .connection_priority_cb = nullptr,
+  .multicast_state_cb = nullptr,
+  .audio_focus_request_cb = av_audio_focus_request_callback,
+};
+
+#endif
+
 int bt_convert_args(char *&saveptr, int &connectionId) {
   const char *token = strtok_r(NULL, " \n", &saveptr);
   LOG_ERROR(!token, "Malformed (no connectionId)");
@@ -2502,7 +2813,15 @@ void bt_cleanup() {
       ALOGW("unregister_client beacon failed");
     }
     gatt->cleanup();
+    gatt = nullptr;
   }
+
+#ifdef TARGET_GE_MARSHMALLOW
+  if (avsink) {
+    avsink->cleanup();
+    avsink = nullptr;
+  }
+#endif
 
   if (device) {
     const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
@@ -2524,6 +2843,7 @@ void bt_cleanup() {
       ALOGE("bt_device->get_bluetooth_interface failed");
     }
     device->close(device);
+    device = nullptr;
   }
 
   adapter_state = BT_STATE_OFF;
@@ -2532,8 +2852,6 @@ void bt_cleanup() {
   gatt_client_beacon_if = -1;
   desired_listen_state = false;
   gatt_client_scanning = false;
-  gatt = nullptr;
-  device = nullptr;
   connection_id_during_register_for_notification = -1;
   address_during_rssi_update = kInvalidAddr;
   gatt_client_connection_count = 0;
@@ -2602,9 +2920,7 @@ int bt_init() {
   property_get("ro.silk.bt.name", name, "Silk");
   ALOGV("Using bluetooth adapter name '%s'", name);
 
-  const int name_len = int(strlen(name));
-  LOG_ERROR(!name_len, "Empty bluetooth adapter name");
-
+  const int name_len = int(strlen(name) + 1);
   bt_property_t name_prop = {
     .type = BT_PROPERTY_BDNAME,
     .len = name_len,
@@ -2635,6 +2951,36 @@ int bt_init() {
                 WaitRegisterClient);
   LOG_ERROR(gatt_client_beacon_if == -1,
             "Failed to register beacon client");
+
+#ifdef TARGET_GE_MARSHMALLOW
+  if (property_get_bool("persist.silk.bledroid.avsink", 0)) {
+    // Setup basic A2DP Profile
+    avsink = static_cast<btav_interface_t const *>(bt->get_profile_interface(
+        BT_PROFILE_ADVANCED_AUDIO_SINK_ID));
+    LOG_ERROR(!avsink, "Unable to get " BT_PROFILE_ADVANCED_AUDIO_SINK_ID);
+
+    err = avsink->init(
+      &avsink_callbacks,
+      /*max_a2dp_connections = */ 1,
+      /*a2dp_multicast_state = */ 0
+    );
+    LOG_ERROR(err, "bt avsink->init failed: %d", err);
+
+    {
+      // Connectable but not discoverable by default.
+      bt_scan_mode_t scanMode = BT_SCAN_MODE_CONNECTABLE;
+      bt_property_t prop = {
+        .type = BT_PROPERTY_ADAPTER_SCAN_MODE,
+        .len = sizeof(scanMode),
+        .val = &scanMode,
+      };
+      auto err = bt->set_adapter_property(&prop);
+      if (err) {
+        ALOGE("bt set_adapter_property(BT_PROPERTY_ADAPTER_SCAN_MODE) failed: %d", err);
+      }
+    }
+  }
+#endif
 
   return BT_STATUS_SUCCESS;
 }
@@ -3516,14 +3862,30 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     }
   }
 
+
   if (0 == strcmp(argv[1], "initialize")) {
-    err = bt_init();
-    if (err != BT_STATUS_SUCCESS) {
-      ALOGE("Failed to initialize bluetooth (%d)", err);
-      bt_cleanup();
-      return 1;
+    if (device == nullptr) {
+      err = bt_init();
+      if (err != BT_STATUS_SUCCESS) {
+        ALOGE("Failed to initialize bluetooth (%d)", err);
+        bt_cleanup();
+        return 1;
+      }
     }
-  } else if (0 == strcmp(cmd, "getAdapterState")) {
+    return 0;
+  }
+  if (0 == strcmp(cmd, "exit")) {
+    bt_cleanup();
+    return 0;
+  }
+
+  if (device == nullptr) {
+    ALOGW("BT not initialized, refusing command");
+    bledroid.sendEvent("!unknownCommand %s", argv[1]);
+    return 0;
+  }
+
+  if (0 == strcmp(cmd, "getAdapterState")) {
       bledroid.sendEvent("!adapterState powered%s",
                          adapter_state == BT_STATE_OFF ? "Off" : "On");
   } else if (0 == strcmp(cmd, "startAdvertising")) {
@@ -3694,6 +4056,11 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   } else if (0 == strcmp(cmd, "disconnect")) {
     err = bt_disconnect(saveptr);
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to disconnect");
+  } else if (0 == strcmp(cmd, "setDiscoverable")) {
+    const bluetooth_device_t *bt_device = (bluetooth_device_t *) device;
+    const bt_interface_t *bt = bt_device->get_bluetooth_interface();
+    err = bt->start_discovery();
+    LOG_ERROR(err != BT_STATUS_SUCCESS, "Start discovery failed");
   } else if (0 == strcmp(cmd, "updateRssi")) {
     err = bt_update_rssi(saveptr);
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to update rssi");
@@ -3731,8 +4098,6 @@ int BleCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   } else if (0 == strcmp(cmd, "sendNotify")) {
     err = bt_send_notify(saveptr);
     LOG_ERROR(err != BT_STATUS_SUCCESS, "Failed to notify");
-  } else if (0 == strcmp(cmd, "exit")) {
-    bt_cleanup();
   } else {
     bledroid.sendEvent("!unknownCommand %s", argv[1]);
   }

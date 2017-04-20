@@ -1,7 +1,6 @@
 language: objective-c
-osx_image: xcode8.2
-os:
-  - osx
+os: osx
+osx_image: xcode8.3
 
 install: source ./travis/install
 script: ../../ci-artifacts/logger ./travis/script

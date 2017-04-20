@@ -1,3 +1,5 @@
+import /init.silk.dev.rc
+
 on init
     # Can't augment existing env vars, so set everything here
     export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin:/system/silk/bin

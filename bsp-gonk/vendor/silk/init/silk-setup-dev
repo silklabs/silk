@@ -1,0 +1,32 @@
+#!/system/bin/sh
+
+if [ "$(getprop ro.debuggable)" != "1" ]; then
+  echo Device is not debuggable
+  exit 1
+fi
+
+if [ "$(getprop service.adb.root)" != "1" ]; then
+  echo Restarting adb as root
+  (
+    set -x
+    setprop service.adb.root 1
+    stop adbd
+    start adbd
+  )
+fi
+
+(
+  set -x
+  adb wait-for-device
+)
+
+if [ "$(getprop partition.system.verified)" = "1" ]; then
+  set -x
+  adb disable-verity
+  reboot
+  exit 0
+fi
+set -x
+adb remount
+adb kill-server
+exit 0

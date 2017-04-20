@@ -1,0 +1,14 @@
+#
+# When persist.silk.dev is true, automatically enable root adb access and make
+# /system writable
+#
+
+on property:persist.silk.dev=1
+    start silk-setup-dev
+
+service silk-setup-dev /system/bin/logwrapper /system/silk/bin/silk-setup-dev
+    user root
+    group root
+    disabled
+    oneshot
+

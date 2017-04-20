@@ -42,10 +42,10 @@ try {
 /**
  * Throws an exception to the top level process exception handler, escaping any
  * Promises that might otherwise consume the exception.
- * @param {string} e Error string
+ * @param {Error} e Error object
  * @memberof silk-sysutils
  */
-export function processthrow(e: Error | string) {
+export function processthrow(e: Error) {
   process.emit('uncaughtException', e);
 }
 

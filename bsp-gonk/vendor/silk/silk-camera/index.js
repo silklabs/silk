@@ -666,7 +666,7 @@ export default class Camera extends EventEmitter {
       this.emit(eventName, ...args);
     } catch (err) {
       process.nextTick(() => {
-        util.processthrow(err.stack || err);
+        util.processthrow(err);
       });
     }
   }

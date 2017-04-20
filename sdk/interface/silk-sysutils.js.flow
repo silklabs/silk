@@ -10,7 +10,7 @@ type ExecOutput = {
   stderr: string;
 };
 
-declare function processthrow(e: string): void;
+declare function processthrow(e: Error): void;
 declare function exec(cmd: string, args: Array<string>): Promise<Object>;
 declare function execRetry(cmd: string, args: Array<string>, retries: number, delayMs: number): Promise<ExecOutput>;
 declare function getstrprop(prop: string, defaultValue?: string): string;

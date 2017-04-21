@@ -146,7 +146,7 @@ export class Light extends events.EventEmitter {
    */
   set color(val: LightColor) {
     if (val < 0 || val > this._colorMax) {
-      throw new Error('Invalid color: ' + val);
+      throw new Error(`${this._id}: invalid color: ${val}`);
     }
     if (this._color !== val) {
       this._color = val;
@@ -287,11 +287,15 @@ export class Light extends events.EventEmitter {
         this._brightnessMode === brightnessMode) {
       return Promise.resolve();
     }
-    this._color = color;
+    if (color < 0 || color > this._colorMax) {
+      const msg = `${this._id}: invalid color: ${color}`;
+      return Promise.reject(new Error(msg));
+    }
     this._flashMode = flashMode;
     this._flashOnMS = flashOnMS;
     this._flashOffMS = flashOffMS;
     this._brightnessMode = brightnessMode;
+    this._color = color;
     return this._update();
   }
 }

@@ -1,4 +1,6 @@
 {
+  'conditions': [
+    [ 'OS=="linux"', {
       'targets': [
         {
           "target_name": "action_after_build",
@@ -12,4 +14,6 @@
           ],
         },
       ]
+    }],
+  ],
 }

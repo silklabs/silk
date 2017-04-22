@@ -8,21 +8,11 @@
         'NNPACK_ROOT' : '<!(echo $ANDROID_BUILD_TOP/external/NNPACK)',
       },
     }],
-    [ 'OS=="linux"', {
-      'targets': [
-        {
-          "target_name": "action_after_build",
-          "type": "none",
-          "dependencies": [ "nnpack" ],
-          "copies": [
-            {
-              "files": [ "<(NNPACK_ROOT)/lib/libnnpack.so" ],
-              "destination": "<(PRODUCT_DIR)",
-            },
-          ],
-        },
+    [ '"<!(echo ${NNPACK_STATIC})"!="true"', {
+      'includes': [
+        './copy_libnnpack.gypi',
       ],
-   }],
+    }],
   ],
   'targets': [
     {

@@ -1,4 +1,5 @@
 /build/
 *.swp
 /caffe/
+/opencv/
 

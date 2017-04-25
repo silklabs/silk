@@ -5,7 +5,7 @@ if [[ -z $CI ]]; then
   J="-j6"
 fi
 
-# Insatall and build OpenCV-3.1.0
+# Install and build OpenCV from source
 function install_opencv {
   git clone --branch '3.1.0' git@github.com:Itseez/opencv.git
   pushd opencv
@@ -26,9 +26,72 @@ function install_opencv {
   popd
 }
 
+function install_package_osx {
+  local problem=$(brew ls --versions $1 | grep $1 || true)
+  echo Checking for $1: $problem
+  if [ "" == "$problem" ]; then
+    echo "Not $1 found; setting it up"
+    set -x
+    brew install -vd $1
+  fi
+}
+
+function install_package_linux {
+  local problem=$(dpkg -s $1 | grep installed || true)
+  echo Checking for $1: $problem
+  if [ "" == "$problem" ]; then
+    echo "Not $1 found; setting it up"
+    set -x
+    sudo apt-get --force-yes --yes install $1
+  fi
+}
+
+function install_dependencies {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    (
+      install_package_osx snappy
+      install_package_osx gflags
+      install_package_osx szip
+      install_package_osx libtool
+      install_package_osx protobuf
+      install_package_osx glog
+      install_package_osx hdf5
+      install_package_osx openblas
+      brew link --force --overwrite openblas
+      install_package_osx boost
+      install_package_osx webp # OpenCV3 wants libwebp
+    )
+
+    # Install OpenCV
+    install_package_osx opencv3
+    cp /usr/local/Cellar/opencv3/3.1.0_*/share/OpenCV/3rdparty/lib/libippicv.a /usr/local/Cellar/opencv3/3.1.0_*/lib/
+    brew link --force --overwrite opencv3
+
+  elif [[ "$(uname)" == "Linux" ]]; then
+    install_package_linux libsnappy-dev
+    install_package_linux libatlas-base-dev
+    install_package_linux libboost-all-dev
+    install_package_linux libgflags-dev
+    install_package_linux libprotobuf-dev
+    install_package_linux protobuf-compiler
+    install_package_linux libgoogle-glog-dev
+    install_package_linux libhdf5-serial-dev
+
+    # Install OpenCV from source as opencv PPA on Linux doesn't seem to have
+    # IPP libraries that caffe needs
+    if [[ ! -d "opencv" ]]; then
+      echo "Building OpenCV"
+      install_opencv
+    fi
+  fi
+}
+
 # Install and build Caffe
 if [ -z "$CAFFE_ROOT" ]; then
   pushd $(dirname $0)
+
+  echo "Installing dependencies"
+  install_dependencies
 
   # Download caffe
   SHA=24d2f67173db3344141dce24b1008efffbfe1c7d
@@ -39,12 +102,6 @@ if [ -z "$CAFFE_ROOT" ]; then
     pushd caffe
     git am ../patch/0001-Fix-veclib-path-for-OSX-sierra.patch
     popd
-  fi
-
-  # Install OpenCV
-  if [[ ! -d "opencv" ]]; then
-    echo "Building OpenCV-3.1.0"
-    install_opencv
   fi
 
   # Check for NVIDIA GPU. If NVIDIA GPU is unavailable

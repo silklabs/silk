@@ -1,6 +1,6 @@
 FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu14.04
 
-MAINTAINER mvine@silklabs.com
+LABEL maintainer mvine@silklabs.com
 
 RUN apt-get update -qq && \
     apt-get install -y software-properties-common python-software-properties && \
@@ -19,23 +19,36 @@ RUN apt-get update -qq && \
         apt-file \
         autoconf \
         bc \
+        build-essential \
+        bsdmainutils \
         ccache \
         chrpath \
         cmake \
+        curl \
         diffstat \
         g++ \
         g++-4.8 \
         g++-4.8-multilib \
         g++-5 \
         gawk \
+        gfortran \
         git \
+        gnuplot \
         jq \
         lib32stdc++6 \
         lib32z1 \
         libatlas-base-dev \
+        libboost-all-dev \
         libc6-dev \
         libc6-dev-i386 \
+        libgflags-dev \
+        libgoogle-glog-dev \
+        libhdf5-serial-dev \
+        libleveldb-dev \
+        liblmdb-dev \
         libopencv3-dev \
+        libprotobuf-dev \
+        libsnappy-dev \
         libtool \
         libxml2-utils \
         linux-libc-dev  \
@@ -43,11 +56,17 @@ RUN apt-get update -qq && \
         mkisofs \
         openjdk-7-jdk \
         openssh-server \
+        protobuf-compiler \
+        python-dev \
         python-pip \
         python-virtualenv \
         texinfo \
+        unzip \
+        vim \
+        wget \
         xmlstarlet \
-        zip
+        zip && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install node v6.9.1
 RUN wget -q https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz && \
@@ -61,6 +80,10 @@ RUN wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-
     mv ninja /usr/bin && \
     chmod +x /usr/bin/ninja && \
     pip install ninja-syntax
+
+# Install python packages
+RUN pip install --upgrade pip && \
+    pip install matplotlib numpy scipy
 
 ENV JAVA_HOME /usr
 RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \
@@ -90,4 +113,3 @@ RUN ccache -M 10GB && \
     ssh-keyscan -H localhost >> ~/.ssh/known_hosts && \
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts && \
     cp /home/silk/.ssh/id_rsa.pub /home/silk/.ssh/authorized_keys
-

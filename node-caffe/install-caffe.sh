@@ -19,7 +19,7 @@ function install_opencv {
     -DWITH_OPENEXR=false \
     -DBUILD_PERF_TESTS=false \
     -DBUILD_opencv_java=false \
-    -DWITH_IPP=OFF \
+    -DWITH_IPP=ON \
     -DCMAKE_INSTALL_PREFIX=/usr/ \
     ..
   make -j4

@@ -658,6 +658,7 @@ status_t CaptureCommand::initThreadCamera1() {
       ALOGW("Error %d: Unable to set focus mode", err);
     }
 
+    ALOGW("Initial camera parameters:");
     params = mCamera->getParameters();
     params.dump();
   }
@@ -906,7 +907,6 @@ int CaptureCommand::capture_setParameter(Value& name, Value& value) {
   LOG_ERROR((value.isNull()), "value not specified");
   LOG_ERROR(sUseCamera2, "TODO: port setParameter to camera2 API");
   LOG_ERROR((mCamera.get() == NULL), "camera not initialized");
-  CHECK_EQ(mCameraSource->stop(), OK);
 
   CameraParameters params = mCamera->getParameters();
   params.set(name.asCString(), value.asCString());
@@ -915,7 +915,6 @@ int CaptureCommand::capture_setParameter(Value& name, Value& value) {
     ALOGW("Error %d: Failed to set '%s' to '%s'", err,
       name.asCString(), value.asCString());
   }
-  CHECK_EQ(mCameraSource->start(), OK);
   return 0;
 }
 

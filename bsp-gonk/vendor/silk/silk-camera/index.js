@@ -421,7 +421,7 @@ export default class Camera extends EventEmitter {
   height: number;
 
   _cameraParameters: {[key: string]: string} = {};
-  _cameraParametersDirty: boolean = false;
+  _pendingCameraParameters: {[key: string]: string} = {};
 
   constructor(config: $Shape<CameraConfig> = {}) {
     super();
@@ -613,13 +613,12 @@ export default class Camera extends EventEmitter {
 
     this._ready = true;
 
-    // Resend parameters since something changed since the 'init' command
-    if (this._cameraParametersDirty) {
-      this._cameraParametersDirty = false;
-      for (let name in this._cameraParameters) {
-        const value = this._cameraParameters[name];
-        this._command({cmdName: 'setParameter', name, value});
-      }
+    // Send any new parameters queued during init
+    const cameraParameters = this._pendingCameraParameters;
+    this._pendingCameraParameters = {};
+    for (let name in cameraParameters) {
+      const value = cameraParameters[name];
+      this.setParameter(name, value);
     }
 
     /**
@@ -724,6 +723,11 @@ export default class Camera extends EventEmitter {
       }
 
       this._buffer = '';
+      this._cameraParameters = Object.assign(
+        this._cameraParameters,
+        this._pendingCameraParameters
+      );
+      this._pendingCameraParameters = {};
       const cmdData = {
         frames: CAMERA_HW_ENABLED,
         video: CAMERA_VIDEO_ENABLED,
@@ -739,7 +743,6 @@ export default class Camera extends EventEmitter {
         audioChannels: this._config.deviceMic.numChannels,
         cameraParameters: this._cameraParameters,
       };
-      this._cameraParametersDirty = false;
       this._command({cmdName: 'init', cmdData});
     });
     const ctlSocket = this._ctlSocket;
@@ -1365,20 +1368,22 @@ export default class Camera extends EventEmitter {
     if (this._cameraParameters[name] === value) {
       return;
     }
-    this._cameraParametersDirty = true;
-    this._cameraParameters[name] = value;
-    if (this._ready) {
-      if (name === 'preview-size') {
-        if (this._setResolution(value)) {
-          util.setprop('persist.silk.camera.resolution', value);
-
-          // TODO: One day support resolution change without a restart
-          this._stopCamera();
-          return;
-        }
-      }
-      this._command({cmdName: 'setParameter', name, value});
+    if (!this._ready) {
+      this._pendingCameraParameters[name] = value;
+      return;
     }
+
+    this._cameraParameters[name] = value;
+    if (name === 'preview-size') {
+      if (this._setResolution(value)) {
+        util.setprop('persist.silk.camera.resolution', value);
+
+        // TODO: One day support resolution change without a restart
+        this._stopCamera();
+        return;
+      }
+    }
+    this._command({cmdName: 'setParameter', name, value});
   }
 
   /**

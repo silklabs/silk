@@ -81,7 +81,7 @@ if [ -z "$CAFFE_ROOT" ]; then
       -DUSE_LEVELDB=OFF \
       -DUSE_LMDB=OFF \
       -DBUILD_docs=OFF \
-      -DOpenCV_DIR=opencv \
+      -DOpenCV_DIR=$(pwd)/../../opencv/build \
       ..
 
     make all $J

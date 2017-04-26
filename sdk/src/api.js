@@ -168,52 +168,60 @@ export default class API {
     let iface = stdout.replace(/\r?\n$/, '');
     let result = false;
 
-    if (iface) {
-      // Generate wifi setup script
-      try {
-        let data = `#!/system/bin/sh
-        run() {
-          echo "$ wpa_cli -i${iface} IFNAME=${iface} $@"
-          result=$(wpa_cli -i${iface} IFNAME=${iface} $@)
-          if [[ ! $result = @(OK) ]] && [[ ! $result = @([0-9]) ]]; then
-            echo "Error: '$result' received for '$@'"
-            exit 1
-          fi
-        }\n`;
-        if (!keepExistingNetworks) {
-          data += `run remove_network all\n`;
-          data += `run save_config\n`;
-          data += `run disconnect\n`;
-        }
-        data += `run add_network\n`;
-        data += `id=$result\n`;
-        data += `run set_network $id ssid '"${ssid}"'\n`;
-        if (password) {
-          data += `run set_network $id psk '"${password}"'\n`;
-        } else {
-          data += `run set_network $id key_mgmt NONE\n`;
-        }
-        data += `run enable_network $id\n`;
-        data += `run save_config\n`;
-        data += `run reconnect\n`;
-        data += `exit 0\n`;
-        await fs.writeFile(WIFI_SETUP_SCRIPT, data);
-        await fs.chmod(WIFI_SETUP_SCRIPT, '400');
-
-        // Push the script on the device
-        await this.adb('root');
-        await this.adb('wait-for-device');
-        await this.adb(`push ${WIFI_SETUP_SCRIPT} /data/`);
-
-        // Run the script on the device or simulator
-        let [stdout] = await this.adb(`shell system/bin/sh /data/${WIFI_SETUP_SCRIPT}`);
-        console.log(stdout);
-        result = true;
-      } catch (err) {
-        console.log(`Failed to configure wifi ${err}`);
-      }
+    let ifaceArgs = '';
+    if (!iface) {
+      console.log('Using default wifi interface');
+      // TODO: Use |wpa_cli ifname| to get the default name instead of hard coding wlan0
+      iface = 'wlan0'
+      ifaceArgs = `-i${iface}`;  // Don't add IFNAME=, it's only needed for gonk wpa_cli
     } else {
-      console.log('No wifi interface, skipping Wi-Fi configuration');
+      ifaceArgs = `-i${iface} IFNAME=${iface}`;
+    }
+    console.log(`wifi interface: ${iface}`);
+
+    // Generate wifi setup script
+    try {
+      let data = `
+      run() {
+        echo "$ wpa_cli ${ifaceArgs} $@"
+        result=$(wpa_cli ${ifaceArgs} $@ || echo FAIL)
+        if [ "$result" = "FAIL" ]; then
+          echo "FAIL"
+          exit 1
+        fi
+      }\n`;
+      data += `run update_config 1\n`;
+      if (!keepExistingNetworks) {
+        data += `run remove_network all\n`;
+        data += `run save_config\n`;
+        data += `run disconnect\n`;
+      }
+      data += `run add_network\n`;
+      data += `id=$result\n`;
+      data += `run set_network $id ssid '"${ssid}"'\n`;
+      if (password) {
+        data += `run set_network $id psk '"${password}"'\n`;
+      } else {
+        data += `run set_network $id key_mgmt NONE\n`;
+      }
+      data += `run enable_network $id\n`;
+      data += `run save_config\n`;
+      data += `run reconnect\n`;
+      data += `exit 0\n`;
+      await fs.writeFile(WIFI_SETUP_SCRIPT, data);
+      await fs.chmod(WIFI_SETUP_SCRIPT, '400');
+
+      // Push the script on the device
+      await this.adb('root');
+      await this.adb('wait-for-device');
+      await this.adb(`push ${WIFI_SETUP_SCRIPT} /data/`);
+
+      // Run the script on the device or simulator
+      let [stdout] = await this.adb(`shell sh /data/${WIFI_SETUP_SCRIPT}`);
+      console.log(stdout);
+      result = true;
+    } catch (err) {
+      console.log(`Failed to configure wifi ${err}`);
     }
 
     // Delete the script

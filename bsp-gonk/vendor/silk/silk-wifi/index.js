@@ -358,7 +358,7 @@ class WpaMonitor extends EventEmitter {
     let socket = this._socket = net.connect({path: '/dev/socket/wpad'}, () => {
       this._buffer = '';
       this._ready = true;
-      log.info(`connected to wpad`);
+      this.emit('wpad_connected');
     });
     socket.on('data', data => this._onData(data));
     socket.on('error', err => {
@@ -500,8 +500,7 @@ class WpaMonitor extends EventEmitter {
 
 function wpaCli(...args: Array<string>): Promise<string> {
   if (!monitor.ready()) {
-    log.info('wpaCli: supplicant not ready, waiting');
-    return util.timeout(1000).then(() => wpaCli(...args));
+    throw new Error(`wpaCli: supplicant not ready for command: ${args.join(' ')}`);
   }
 
   const bin = 'wpa_cli';
@@ -620,15 +619,12 @@ async function wpaCliGetCurrentNetworkRSSI(): Promise<?number> {
  * });
  */
 export class Wifi extends EventEmitter {
-
-  // Always start as offline until proven otherwise...
+  _associated: boolean = false;
   _online: boolean = false;
   _shutdown: boolean = false;
+  _networkCleanupRunning: boolean = false;
   _scanTimer: ?number = null;
   _state: WifiState = 'disconnected';
-
-  // Set when dhcp request is outstanding.
-  _dhcpPromise: ?Promise<void> = null;
 
   // Used to cancel dhcp request.
   _dhcpAbortFunction: ?(() => void) = null;
@@ -659,17 +655,18 @@ export class Wifi extends EventEmitter {
   }
 
   async _networkCleanup(): Promise<void> {
-    // No longer "online".
-    this._online = false;
+    if (this._networkCleanupRunning) {
+      log.warn('network cleanup already running');
+      return;
+    }
+    this._networkCleanupRunning = true;
+    this._associated = this._online = false;
 
     // Abort any async work that might be happening for dhcp.
     if (this._dhcpAbortFunction) {
       this._dhcpAbortFunction();
+      invariant(!this._dhcpAbortFunction);
     }
-
-    // Cleanup.
-    this._dhcpPromise = null;
-    this._dhcpAbortFunction = null;
 
     try {
       await execWarnOnNonZeroCode('dhcputil', [iface, 'dhcp_stop']);
@@ -681,9 +678,20 @@ export class Wifi extends EventEmitter {
     } catch (error) {
       log.warn(`Network cleanup failed`, error);
     }
+
+    this._networkCleanupRunning = false;
+    if (this._associated) {
+      this._requestDhcp();
+    }
   }
 
   async _requestDhcp(): Promise<void> {
+    invariant(this._associated);
+    if (this._networkCleanupRunning) {
+      log.warn('Unable to initiate dhcp during network cleanup');
+      return;
+    }
+
     // This promise never resolves, it only rejects if _dhcpAbortFunction is
     // called by _networkCleanup.
     const abortPromise = new Promise((_, reject) => {
@@ -769,17 +777,35 @@ export class Wifi extends EventEmitter {
 
   _startWpaMonitor(): Promise<void> {
     monitor = new WpaMonitor(iface);
+    monitor.on('wpad_connected', async () => {
+      log.info(`connected to wpad`);
+
+      await this._networkCleanup();
+
+      try {
+        if (util.getboolprop('persist.silk.wifi.excessivelog')) {
+          await wpaCliExpectOk('log_level', 'excessive');
+        }
+        await wpaCli('scan');
+        await wpaCli('status');
+      } catch (err) {
+        // This could happen if wpad crashes/exits, but there's not much to do
+        // about it
+        log.warn(err.message);
+      }
+    });
     monitor.on('connected', () => {
       log.info('Wifi Connected.');
-
-      invariant(!this._dhcpPromise);
-      this._dhcpPromise = this._requestDhcp();
+      if (this._shutdown) {
+        log.warn('(wifi is shutdown)');
+        return;
+      }
+      this._associated = true;
+      this._requestDhcp();
     });
-    monitor.on('disconnected', (reason) => {
+    monitor.on('disconnected', async (reason) => {
       log.info(`==> Wifi offline (${reason})`);
-
       this._networkCleanup();
-      invariant(!this._dhcpPromise);
 
       // Send error unless leaving under normal circumstances
       if (reason !== 'deauth_leaving') {
@@ -803,6 +829,7 @@ export class Wifi extends EventEmitter {
        * @instance
        */
       this.emit('offline');
+
       this.scan();
     });
     monitor.on('stateChange', (state) => {
@@ -853,21 +880,13 @@ export class Wifi extends EventEmitter {
    * @instance
    */
   async init(): Promise<void> {
-    log.info('WiFi initializing');
-
     // Set the device hostname to something that is probably unique
     util.setprop('net.hostname', 'silk-' + util.getstrprop('ro.serialno'));
 
     // add 'error' listener in case no one else is, else node throws exception
     this.on('error', () => {});
 
-    await this._networkCleanup();
     await this._startWpaMonitor();
-    await wpaCli('scan');
-    await wpaCli('status');
-    if (util.getboolprop('persist.silk.wifi.excessivelog')) {
-      await wpaCliExpectOk('log_level', 'excessive');
-    }
     log.info('WiFi initialization complete');
   }
 

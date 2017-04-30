@@ -143,6 +143,8 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
   uint8_t *encodedFrame;
   int encodedFrameMaxLength;
 
+  int64_t lastCaptureTimeMs;
+
   android::sp<android::ALooper> looper;
   android::sp<android::MediaCodecSource> mediaCodecSource;
   android::sp<SingleBufferMediaSource> frameQueue;
@@ -193,7 +195,8 @@ SimpleH264EncoderImpl::SimpleH264EncoderImpl(int width,
       codecConfig(nullptr),
       codecConfigLength(0),
       encodedFrame(nullptr),
-      encodedFrameMaxLength(0) {
+      encodedFrameMaxLength(0),
+      lastCaptureTimeMs(-1) {
 
   frameQueue = new SingleBufferMediaSource(width, height);
   looper = new ALooper;
@@ -382,6 +385,12 @@ bool SimpleH264EncoderImpl::threadLoop() {
     int64_t timeMicro = 0;
     buffer->meta_data()->findInt64(kKeyTime, &timeMicro);
     info.input.captureTimeMs = timeMicro / 1000;
+
+    if (lastCaptureTimeMs > -1) {
+      auto frameDiff = info.input.captureTimeMs - lastCaptureTimeMs;
+      ALOGV("Frame. iframe=%d delay=%lldms", isIFrame, frameDiff);
+    }
+    lastCaptureTimeMs = info.input.captureTimeMs;
 
     {
       Mutex::Autolock autolock(mutex);

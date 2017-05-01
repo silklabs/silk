@@ -371,10 +371,10 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
     if (frameformat == FRAMEFORMAT_YVU420SP) {
       // TODO: Update consumers to handle unpacked YVU frames.  For now just
       //       move the VU plane (yuck) to avoid full buffer copy
-      void *packedDataCr = (char *)(img.data) + width * height;
+      void *packedDataCr = (char *)(img.data) + img.width * img.height;
       if (packedDataCr != img.dataCr) {
         ALOGV("YVU frame is not packed! Off by %d bytes", (int) packedDataCr - (int) img.dataCr);
-        memcpy(packedDataCr, img.dataCr, width * height / 2);
+        memcpy(packedDataCr, img.dataCr, img.width * img.height / 2);
       }
     }
 

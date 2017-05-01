@@ -654,6 +654,14 @@ export class Wifi extends EventEmitter {
     return this._state;
   }
 
+  _abortDhcp() {
+    // Abort any async work that might be happening for dhcp.
+    if (this._dhcpAbortFunction) {
+      this._dhcpAbortFunction();
+      invariant(!this._dhcpAbortFunction);
+    }
+  }
+
   async _networkCleanup(): Promise<void> {
     if (this._networkCleanupRunning) {
       log.warn('network cleanup already running');
@@ -661,12 +669,7 @@ export class Wifi extends EventEmitter {
     }
     this._networkCleanupRunning = true;
     this._associated = this._online = false;
-
-    // Abort any async work that might be happening for dhcp.
-    if (this._dhcpAbortFunction) {
-      this._dhcpAbortFunction();
-      invariant(!this._dhcpAbortFunction);
-    }
+    this._abortDhcp();
 
     try {
       await execWarnOnNonZeroCode('dhcputil', [iface, 'dhcp_stop']);
@@ -694,6 +697,7 @@ export class Wifi extends EventEmitter {
 
     // This promise never resolves, it only rejects if _dhcpAbortFunction is
     // called by _networkCleanup.
+    this._abortDhcp();
     const abortPromise = new Promise((_, reject) => {
       const abortFunction = () => {
         invariant(this._dhcpAbortFunction === abortFunction);

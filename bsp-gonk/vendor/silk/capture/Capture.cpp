@@ -102,8 +102,14 @@ public:
       mCaptureListener(captureListener),
       mHardwareActive(false),
       mStopped(false),
+      mCamera(nullptr),
+      mSegmenter(nullptr),
+      mVideoLooper(nullptr),
+      mCameraSource(nullptr),
+      mAudioMutter(nullptr),
       mMicChannel(micChannel),
-      mVidChannel(vidChannel) {
+      mVidChannel(vidChannel),
+      mCameraDeviceUser(nullptr) {
   }
 
   virtual ~CaptureCommand() {}
@@ -173,6 +179,11 @@ public:
   int start() {
     ALOGD("Starting CaptureListener");
     return FrameworkListener1::startListener();
+  }
+
+  int stop() {
+    ALOGD("Stopping CaptureListener");
+    return FrameworkListener1::stopListener();
   }
 
   /**
@@ -596,15 +607,15 @@ status_t CaptureCommand::initThreadAudioOnly() {
     sAudioChannels
   );
   mAudioMutter = new AudioMutter(audioSourceEmitter, sAudioMute);
-
-  // Notify that audio is initialized
-  notifyCameraEvent("initialized");
-  mHardwareActive = true;
-
-  // Start the audio source and pull out buffers as fast as they come.  The
-  // TAG_MIC data will will sent as a side effect
   CHECK_EQ(mAudioMutter->start(), OK);
   MediaSourceNullPuller audioPuller(mAudioMutter, "audio");
+
+  // Notify that audio is initialized
+  mHardwareActive = true;
+  notifyCameraEvent("initialized");
+
+  // Pull out buffers as fast as they come.  The TAG_MIC data will will sent as
+  // a side effect
   if (!audioPuller.loop()) {
     notifyCameraEventError();
   }
@@ -732,6 +743,9 @@ status_t CaptureCommand::initThreadCamera1() {
     // Block this thread while camera is running
     mSegmenter->join();
   } else {
+    CHECK_EQ(mCameraSource->start(), OK);
+    MediaSourceNullPuller cameraPuller(mCameraSource, "camera");
+
     if (sInitAudio) {
       pthread_create(&mAudioThread, NULL, initThreadAudioOnlyWrapper, this);
     } else {
@@ -739,8 +753,6 @@ status_t CaptureCommand::initThreadCamera1() {
       notifyCameraEvent("initialized");
     }
 
-    CHECK_EQ(mCameraSource->start(), OK);
-    MediaSourceNullPuller cameraPuller(mCameraSource, "camera");
     // Block this thread while camera is running
     if (!cameraPuller.loop()) {
       notifyCameraEventError();
@@ -873,29 +885,37 @@ status_t CaptureCommand::initThreadCamera2() {
  */
 int CaptureCommand::capture_stop() {
   mStopped = true;
+  mCaptureListener->stop();
 
   LOG_ERROR(sUseCamera2, "TODO: port stop to camera2 API");
   sOpenCVCameraCapture->setPreviewProducerListener(NULL);
   sOpenCVCameraCapture->closeCamera();
 
   if (mHardwareActive) {
-    if (mCamera != nullptr) {
-      if (mVideoLooper != nullptr) {
+    mHardwareActive = false;
+    if (mCamera.get() != nullptr) {
+      if (mVideoLooper.get() != nullptr) {
         mVideoLooper->stop();
       }
-      if (mAudioMutter != nullptr) {
+      if (mAudioMutter.get() != nullptr) {
         mAudioMutter->stop();
       }
 
-      mCameraSource->stop();
-      mCameraSource = nullptr;
+      if (mCameraSource.get() != nullptr) {
+        mCameraSource->stop();
+      }
 
-      mCamera->disconnect();
+      if (mCamera.get() != nullptr) {
+        mCamera->disconnect();
+      }
     }
-    mHardwareActive = false;
   }
 
-  notifyCameraEvent("stopped");
+  // Exit rather than trying to deal with restarting, as on a "stopped" event
+  // the process gets resarted anyway.
+  ALOGI("Exit");
+  exit(0);
+  //notifyCameraEvent("stopped");
   return 0;
 }
 

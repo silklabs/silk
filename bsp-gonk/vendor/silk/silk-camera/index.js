@@ -421,7 +421,7 @@ export default class Camera extends EventEmitter {
   height: number;
 
   _cameraParameters: {[key: string]: string} = {};
-  _pendingCameraParameters: {[key: string]: string} = {};
+  _pendingCameraParameters: null | {[key: string]: string} = {};
 
   constructor(config: $Shape<CameraConfig> = {}) {
     super();
@@ -546,6 +546,10 @@ export default class Camera extends EventEmitter {
     this._throwyEmit('restart', why, restartCaptureProcess);
     this._ready = false;
 
+    if (this._pendingCameraParameters === null) {
+      this._pendingCameraParameters = {};
+    }
+
     if (this._initTimeout) {
       clearTimeout(this._initTimeout);
       this._initTimeout = null;
@@ -615,10 +619,13 @@ export default class Camera extends EventEmitter {
 
     // Send any new parameters queued during init
     const cameraParameters = this._pendingCameraParameters;
-    this._pendingCameraParameters = {};
-    for (let name in cameraParameters) {
-      const value = cameraParameters[name];
-      this.setParameter(name, value);
+    if (cameraParameters !== null) {
+      log.debug('Sending pending parameters', cameraParameters);
+      this._pendingCameraParameters = null;
+      for (let name in cameraParameters) {
+        const value = cameraParameters[name];
+        this.setParameter(name, value);
+      }
     }
 
     /**
@@ -723,10 +730,12 @@ export default class Camera extends EventEmitter {
       }
 
       this._buffer = '';
-      this._cameraParameters = Object.assign(
-        this._cameraParameters,
-        this._pendingCameraParameters
-      );
+      if (this._pendingCameraParameters !== null) {
+        this._cameraParameters = Object.assign(
+          this._cameraParameters,
+          this._pendingCameraParameters
+        );
+      }
       this._pendingCameraParameters = {};
       const cmdData = {
         frames: CAMERA_HW_ENABLED,
@@ -1365,20 +1374,25 @@ export default class Camera extends EventEmitter {
    * @instance
    */
   setParameter(name: string, value: string) {
-    if (this._cameraParameters[name] === value) {
-      return;
-    }
-    if (!this._ready) {
+    if (this._pendingCameraParameters !== null) {
       this._pendingCameraParameters[name] = value;
+      log.info('setParameter pending', name, value);
       return;
     }
 
+    if (this._cameraParameters[name] === value) {
+      log.info('setParameter already current:', name, value);
+      return;
+    }
+
+    log.info('setParameter now', name, value);
     this._cameraParameters[name] = value;
     if (name === 'preview-size') {
       if (this._setResolution(value)) {
         util.setprop('persist.silk.camera.resolution', value);
 
         // TODO: One day support resolution change without a restart
+        log.info('setParameter stopping camera');
         this._stopCamera();
         return;
       }

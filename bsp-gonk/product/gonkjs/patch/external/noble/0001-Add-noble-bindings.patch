@@ -1,14 +1,14 @@
-From 5d63e11f42f5ddaaf1c48e93c6216934918227dd Mon Sep 17 00:00:00 2001
+From 76959bb2c1b9890dd09a7c8e69a91efc49c96df0 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:46:53 -0700
 Subject: [PATCH] Android bindings
 
 ---
  Android.mk              |    6 +
- lib/android/bindings.js | 2880 +++++++++++++++++++++++++++++++++++++++++++++++
+ lib/android/bindings.js | 2888 +++++++++++++++++++++++++++++++++++++++++++++++
  lib/resolve-bindings.js |    2 +
  package.json            |    6 +-
- 4 files changed, 2892 insertions(+), 2 deletions(-)
+ 4 files changed, 2900 insertions(+), 2 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
 
@@ -26,10 +26,10 @@ index 0000000..39c5a58
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..efb1f36
+index 0000000..ffc4eb6
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,2880 @@
+@@ -0,0 +1,2888 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -217,6 +217,8 @@ index 0000000..efb1f36
 +  // Extra data needed by the currently executing command. Reset before the next
 +  // command runs.
 +  this.currentCommandInfo = null;
++
++  this.nextCommandScheduled = false;
 +};
 +
 +util.inherits(NobleBindings, events.EventEmitter);
@@ -322,8 +324,14 @@ index 0000000..efb1f36
 +NobleBindings.prototype.scheduleNextCommand = function() {
 +  log.debug('scheduleNextCommand()');
 +  assert(this.commandQueue.length);
++  if (this.nextCommandScheduled) {
++    log.info('Next command already scheduled, ignoring');
++    return;
++  }
++  this.nextCommandScheduled = true;
 +
 +  process.nextTick(function() {
++    this.nextCommandScheduled = false;
 +    assert(this.commandQueue.length);
 +    this.commandQueue.shift();
 +    this.runCurrentCommand();
@@ -2959,5 +2967,5 @@ index 46baeca..f2fa9d4 100644
      "./mac/bindings": false,
      "./hci-socket/bindings": false
 -- 
-2.11.0
+2.11.0 (Apple Git-81)
 

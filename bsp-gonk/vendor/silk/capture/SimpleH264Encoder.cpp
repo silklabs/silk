@@ -387,8 +387,9 @@ bool SimpleH264EncoderImpl::threadLoop() {
     info.input.captureTimeMs = timeMicro / 1000;
 
     if (lastCaptureTimeMs > -1) {
-      int frameDiff = static_cast<int>(info.input.captureTimeMs - lastCaptureTimeMs);
-      ALOGE("Frame. iframe=%d delay=%dms", isIFrame, frameDiff);
+      auto timeSinceLastFrameMs = static_cast<int>(info.input.captureTimeMs - lastCaptureTimeMs);
+      ALOGE("Frame. iframe=%d timeSinceLastFrameMs=%dms captureTimeMs=%llums",
+        isIFrame, timeSinceLastFrameMs, info.input.captureTimeMs);
     }
     lastCaptureTimeMs = info.input.captureTimeMs;
 

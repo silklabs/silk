@@ -48,10 +48,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE       := silk-kmsg
 LOCAL_MODULE_STEM  := kmsg
 LOCAL_MODULE_TAGS  := optional
-LOCAL_MODULE_CLASS := EXECUTABLES
-LOCAL_SRC_FILES    := $(LOCAL_MODULE_STEM)
-LOCAL_MODULE_PATH  := $(TARGET_OUT_SILK_EXECUTABLES)
-include $(BUILD_PREBUILT)
+LOCAL_SRC_FILES    := kmsg.cpp
+LOCAL_CFLAGS += -Werror -Wextra -std=c++11
+LOCAL_SHARED_LIBRARIES := liblog
+include $(BUILD_SILK_EXECUTABLE)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE       := silk-debug-wrapper

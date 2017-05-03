@@ -72,7 +72,7 @@ service silk-capture /system/silk/bin/debug-wrapper /system/silk/bin/capture
 
 
 # Tee kernel logs to logcat main
-service silk-kmsg /system/bin/logwrapper /system/silk/bin/kmsg
+service silk-kmsg /system/silk/bin/kmsg
     class late_start
     user root
     group system

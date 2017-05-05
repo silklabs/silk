@@ -1,4 +1,4 @@
-From 06bdad4d5d33e4f3f1309393675923c4945e0cff Mon Sep 17 00:00:00 2001
+From eca2ad409d887df83946d8b74518c81c3a32405a Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
@@ -6,12 +6,12 @@ Subject: [PATCH] Android Bluedroid bindings
 ---
  Android.mk                              |   7 +
  lib/android/bindings.js                 | 866 ++++++++++++++++++++++++++++++++
- lib/android/ccc-descriptor.js           | 196 ++++++++
+ lib/android/ccc-descriptor.js           | 203 ++++++++
  lib/android/descriptor-event-emitter.js |  89 ++++
  lib/bleno.js                            |  20 +-
  lib/characteristic.js                   |   2 +
  package.json                            |   6 +-
- 7 files changed, 1175 insertions(+), 11 deletions(-)
+ 7 files changed, 1182 insertions(+), 11 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
  create mode 100644 lib/android/ccc-descriptor.js
@@ -904,10 +904,10 @@ index 0000000..a598689
 +module.exports = new BlenoBindings();
 diff --git a/lib/android/ccc-descriptor.js b/lib/android/ccc-descriptor.js
 new file mode 100644
-index 0000000..66ac767
+index 0000000..e08b66b
 --- /dev/null
 +++ b/lib/android/ccc-descriptor.js
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,203 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -959,7 +959,7 @@ index 0000000..66ac767
 +  this.on('readRequest', this.onReadRequest.bind(this));
 +  this.on('writeRequest', this.onWriteRequest.bind(this));
 +
-+  bindings.on('disconnect', this.unsubscribe.bind(this));
++  this._unsubscribeBound = this.unsubscribe.bind(this);
 +}
 +
 +util.inherits(CCCDescriptor, events.EventEmitter);
@@ -1085,22 +1085,29 @@ index 0000000..66ac767
 +                             address);
 +  }.bind(this));
 +
++  if (!this.subscriptions.size) {
++    this.bindings.on('disconnect', this._unsubscribeBound);
++  }
 +  this.subscriptions.set(address, newValue);
 +  callback(Characteristic.RESULT_SUCCESS);
 +};
 +
 +CCCDescriptor.prototype.unsubscribe = function(address) {
-+  log.debug('unsubscribe', address);
-+
 +  if (!this.subscriptions.has(address)) {
++    log.debug('not subscribed to', address);
 +    return;
 +  }
++  log.debug('unsubscribe', address);
 +
 +  process.nextTick(function() {
 +    this.characteristic.emit('unsubscribe', address);
 +  }.bind(this));
 +
 +  this.subscriptions.delete(address);
++  if (!this.subscriptions.size) {
++    log.debug('No more subscriptions, removing disconnect listener');
++    this.bindings.removeListener('disconnect', this._unsubscribeBound);
++  }
 +};
 +
 +module.exports = CCCDescriptor;
@@ -1304,5 +1311,5 @@ index c585abc..360e603 100644
      "bplist-parser": "0.0.6",
      "xpc-connection": "~0.1.4"
 -- 
-2.11.1
+2.11.0
 

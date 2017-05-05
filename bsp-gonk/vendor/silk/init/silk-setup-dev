@@ -15,18 +15,19 @@ if [ "$(getprop service.adb.root)" != "1" ]; then
   )
 fi
 
-(
-  set -x
-  adb wait-for-device
-)
-
 if [ "$(getprop partition.system.verified)" = "1" ]; then
-  set -x
-  adb disable-verity
-  reboot
-  exit 0
+  if [ ! -x /system/bin/adb ]; then
+    # M+ doesn't include adb on device, so currently there's no way to disable
+    # verity here.
+    echo "/system/bin/adb not found.  Unable to disable verity."
+  else
+    set -x
+    echo Disabling verity
+    adb wait-for-device
+    adb disable-verity
+    reboot
+  fi
 fi
-set -x
-adb remount
-adb kill-server
-exit 0
+
+echo Remounting /system as rw
+mount -o remount,rw /system

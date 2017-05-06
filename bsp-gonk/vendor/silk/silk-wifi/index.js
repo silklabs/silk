@@ -734,8 +734,8 @@ export class Wifi extends EventEmitter {
         }
 
         log.warn(
-          `DHCP request failed, retrying in ${String(DHCP_TIMEOUT_MS)} ms`,
-          error,
+          `DHCP request failed, retrying in ${String(DHCP_TIMEOUT_MS)} ms:`,
+          error.message,
         );
       }
 

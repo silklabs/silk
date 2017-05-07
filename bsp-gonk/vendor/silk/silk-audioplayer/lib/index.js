@@ -333,16 +333,13 @@ export default class Player extends events.EventEmitter {
    * @instance
    */
   stop(): Promise<void> {
+    if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
+      return Promise.resolve();
+    }
+    if (this._stopPromiseAccept || this._stopPromiseReject) {
+      return Promise.reject(new Error(`Stop request already pending`));
+    }
     return new Promise((resolve, reject) => {
-      if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
-        resolve();
-        return;
-      }
-
-      if (this._stopPromiseAccept || this._stopPromiseReject) {
-        throw new Error(`Another stop request is currently pending`);
-      }
-
       this._stopPromiseAccept = resolve;
       this._stopPromiseReject = reject;
       this._player.stop();

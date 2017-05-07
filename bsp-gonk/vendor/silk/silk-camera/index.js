@@ -589,12 +589,20 @@ export default class Camera extends EventEmitter {
   }
 
   /**
+   * Restarts the camera subsystem
+   */
+  async restart() {
+    this._restart('External restart request', true);
+  }
+
+  /**
    * @private
    */
   _initCVVideoCapture() {
     if (!this._cvVideoCapture) {
       this._cvVideoCaptureBusy = false;
       try {
+        this._noFrameCount = 0;
         this._cvVideoCapture = new silkcapture.VideoCapture(0,
           this.FRAME_SIZE.normal.width, this.FRAME_SIZE.normal.height);
       } catch (err) {
@@ -1178,7 +1186,7 @@ export default class Camera extends EventEmitter {
 
             if (this._recording) {
               /**
-               * This event is emitted when a MPEG4 video segement is available
+               * This event is emitted when a MPEG4 video segment is available
                *
                * @event video-segment
                * @memberof silk-camera

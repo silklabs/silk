@@ -1,8 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-libpreview"
 
-#include <atomic>
-
 #include <binder/IMemory.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
@@ -103,13 +101,13 @@ class CaptureFrameGrabber: public ConsumerBase::FrameAvailableListener {
   };
   void binderDied();
 
-  std::atomic_bool mDead;
   sp<CpuConsumer> mCpuConsumer;
   sp<IGraphicBufferProducer> mProducer;
   sp<IOpenCVCameraCapture> mCapture;
   sp<DeathRecipient> mDeathRecipient;
   static wp<CaptureFrameGrabber> sCaptureFrameGrabber;
-  // Acquire before using sCaptureFrameGrabber
+  bool mDead;
+  // Acquire before using sCaptureFrameGrabber or mDead
   static Mutex sCaptureFrameGrabberMutex;
 };
 
@@ -260,7 +258,7 @@ CaptureFrameGrabber::CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture)
   consumer->setDefaultBufferSize(width, height);
   consumer->setDefaultBufferFormat(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
 
-  mDead = false;
+  mDead = false; // aleady holding sCaptureFrameGrabberMutex in ::create()
   mCpuConsumer = new CpuConsumer(consumer, MAX_UNLOCKED_FRAMES + 1, true);
   mCpuConsumer->setName(String8("LibPreviewCpuConsumer"));
   mCpuConsumer->setFrameAvailableListener(this);
@@ -277,14 +275,17 @@ CaptureFrameGrabber::CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture)
 CaptureFrameGrabber::~CaptureFrameGrabber() {
   ALOGV("~CaptureFrameGrabber");
 
-  if (!mDead) {
-    mCapture->closeCamera();
-  }
 #ifdef TARGET_GE_MARSHMALLOW
   IInterface::asBinder(mCapture)->unlinkToDeath(mDeathRecipient);
 #else
   mCapture->asBinder()->unlinkToDeath(mDeathRecipient);
 #endif
+  {
+    Mutex::Autolock autolock(mClientsMutex);
+    if (!mDead) {
+      mCapture->closeCamera();
+    }
+  }
   binderDied();
 }
 
@@ -293,12 +294,18 @@ void CaptureFrameGrabber::binderDied()
 {
   ALOGV("CaptureFrameGrabber::binderDied");
   mCpuConsumer->abandon();
-  
-  if (!mDead) {
+
+  bool dead;
+  {
+    Mutex::Autolock autolock(mClientsMutex);
+    dead = mDead;
+    mDead = true;
+  }
+
+  if (!dead) {
     Mutex::Autolock autolock(sCaptureFrameGrabberMutex);
     sCaptureFrameGrabber = nullptr;
   }
-  mDead = true;
 
   {
     Mutex::Autolock autolock(mClientsMutex);

@@ -813,7 +813,7 @@ export default class Camera extends EventEmitter {
 
       let captureEvent = JSON.parse(line);
       if (captureEvent.eventName === 'error') {
-        log.warn('Camera command errored out'); // Not much to do here really
+        this._restart('Camera command errored out', true);
       } else if (captureEvent.eventName === 'initialized') {
         this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
         this._initComplete();

@@ -14,7 +14,6 @@ LOCAL_SRC_FILES := \
 	AudioSourceEmitter.cpp \
 	Capture.cpp \
 	Channel.cpp \
-	FaceDetection.cpp \
 	IOpenCVCameraCapture.cpp \
 	MPEG4SegmentDASHWriter.cpp \
 	MPEG4SegmenterDASH.cpp \

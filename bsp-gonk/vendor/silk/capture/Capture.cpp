@@ -30,7 +30,6 @@
 #include "json/json.h"
 
 #include "Channel.h"
-#include "FaceDetection.h"
 #include "MPEG4SegmenterDASH.h"
 #include "OpenCVCameraCapture.h"
 #include "FrameworkListener1.h"
@@ -69,6 +68,8 @@ sp<OpenCVCameraCapture> sOpenCVCameraCapture = nullptr;
 bool sUseCamera2 = false;
 sp<ICameraService> sCameraService = nullptr;
 
+bool sStopped = false;
+
 //
 // Helper macros
 //
@@ -101,7 +102,6 @@ public:
       FrameworkCommand(CAPTURE_COMMAND_NAME),
       mCaptureListener(captureListener),
       mHardwareActive(false),
-      mStopped(false),
       mCamera(nullptr),
       mSegmenter(nullptr),
       mVideoLooper(nullptr),
@@ -141,7 +141,6 @@ private:
   pthread_t mAudioThread;
 
   bool mHardwareActive;
-  bool mStopped;
   sp<ICameraService> mCameraService;
 
  // Camera1:
@@ -196,8 +195,76 @@ public:
     ALOGV("Broadcasting %s", jsonMessage.c_str());
     FrameworkListener1::sendBroadcast(200, jsonMessage.c_str(), false);
   }
+
+  void sendErrorEvent() {
+    if (sStopped) {
+      ALOGD("Stopped. Camera error notification suppressed");
+      return;
+    }
+    Value jsonMsg;
+    jsonMsg["eventName"] = "error";
+    sendEvent(jsonMsg);
+  }
 };
 
+
+/**
+ * Listens for Camera 1 events
+ */
+class CaptureCameraListener: public CameraListener {
+ public:
+  CaptureCameraListener(CaptureListener *captureListener, Channel *vidChannel)
+      : mCaptureListener(captureListener),
+        mVidChannel(vidChannel),
+        focusMoving(false) {
+  }
+
+  void notify(int32_t msgType, int32_t ext1, int32_t ext2) {
+    if (msgType == CAMERA_MSG_FOCUS_MOVE) {
+      if ( (ext1 == 1) != focusMoving) {
+        focusMoving = ext1 == 1;
+        ALOGW("Camera focus moving: %d", focusMoving);
+      }
+    } else if (msgType == CAMERA_MSG_FOCUS) {
+      ALOGD("Camera focus result: %d", ext1);
+    } else if (msgType == CAMERA_MSG_ERROR) {
+      ALOGW("Camera error %d", ext1);
+      mCaptureListener->sendErrorEvent();
+    } else {
+      ALOGD("notify: msgType=0x%x ext1=%d ext2=%d", msgType, ext1, ext2);
+    }
+  }
+
+  void postData(int32_t msgType, const sp<IMemory>& dataPtr,
+      camera_frame_metadata_t *metadata) {
+    (void) dataPtr;
+    if ((CAMERA_MSG_PREVIEW_METADATA & msgType) && metadata) {
+      size_t size = sizeof(camera_face_t) * metadata->number_of_faces;
+      void *faceData = malloc(size);
+      if (faceData != nullptr) {
+        memcpy(faceData, metadata->faces, size);
+        mVidChannel->send(TAG_FACES, faceData, size, free, faceData);
+      }
+    } else {
+      ALOGD("postData: msgType=0x%x", msgType);
+    }
+  }
+
+  void postDataTimestamp(nsecs_t timestamp, int32_t msgType,
+      const sp<IMemory>& dataPtr) {
+    (void) timestamp;
+    (void) dataPtr;
+    ALOGD("postDataTimestamp: msgType=0x%x", msgType);
+  }
+ private:
+  CaptureListener *mCaptureListener;
+  Channel *mVidChannel;
+  bool focusMoving;
+};
+
+/**
+ * Listens for Camera 2 events
+ */
 class CameraDeviceCallbacks: public BinderService<CameraDeviceCallbacks>,
                              public BnCameraDeviceCallbacks,
                              public IBinder::DeathRecipient {
@@ -259,7 +326,7 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   (void) argc;
   ALOGD("Received command %s", argv[0]);
 
-  if (mStopped) {
+  if (sStopped) {
     ALOGI("Stopped, command ignored");
     return 0;
   }
@@ -643,8 +710,8 @@ status_t CaptureCommand::initThreadCamera1() {
   }
   ALOGI("Connected to camera service");
 
-  FaceDetection faces(&mVidChannel);
-  mCamera->setListener(&faces);
+  sp<CaptureCameraListener> listener = new CaptureCameraListener(mCaptureListener, &mVidChannel);
+  mCamera->setListener(listener);
 
   {
     status_t err;
@@ -884,7 +951,7 @@ status_t CaptureCommand::initThreadCamera2() {
  * Clean up and stop camera module
  */
 int CaptureCommand::capture_stop() {
-  mStopped = true;
+  sStopped = true;
   mCaptureListener->stop();
 
   LOG_ERROR(sUseCamera2, "TODO: port stop to camera2 API");
@@ -986,13 +1053,7 @@ void CaptureCommand::notifyCameraEvent(const char* eventName) {
 }
 
 void CaptureCommand::notifyCameraEventError() {
-  if (mStopped) {
-    ALOGD("Stopped. Camera error notification suppressed");
-    return;
-  }
-  Value jsonMsg;
-  jsonMsg["eventName"] = "error";
-  mCaptureListener->sendEvent(jsonMsg);
+  mCaptureListener->sendErrorEvent();
 }
 
 /**

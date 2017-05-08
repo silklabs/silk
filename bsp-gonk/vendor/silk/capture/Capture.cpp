@@ -638,7 +638,7 @@ status_t CaptureCommand::initThreadCamera1() {
       ALOGE("Too many failed attempts to connect to camera");
       return -1;
     }
-    ALOGI("Unable to connect to camera #%d", attempts);
+    ALOGI("Unable to connect to camera, attempt #%d", attempts);
     poll(NULL, 0, 500 /*ms*/);
   }
   ALOGI("Connected to camera service");

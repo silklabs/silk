@@ -1,6 +1,8 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-libpreview"
 
+#include <atomic>
+
 #include <binder/IMemory.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
@@ -101,11 +103,14 @@ class CaptureFrameGrabber: public ConsumerBase::FrameAvailableListener {
   };
   void binderDied();
 
+  std::atomic_bool mDead;
   sp<CpuConsumer> mCpuConsumer;
   sp<IGraphicBufferProducer> mProducer;
   sp<IOpenCVCameraCapture> mCapture;
   sp<DeathRecipient> mDeathRecipient;
   static wp<CaptureFrameGrabber> sCaptureFrameGrabber;
+  // Acquire before using sCaptureFrameGrabber
+  static Mutex sCaptureFrameGrabberMutex;
 };
 
 
@@ -193,11 +198,14 @@ class ClientImpl : public Client {
 
 sp<CaptureFrameGrabber> CaptureFrameGrabber::create()
 {
+  Mutex::Autolock autolock(sCaptureFrameGrabberMutex);
+
   sp<ProcessState> ps = ProcessState::self();
   ps->startThreadPool();
 
   sp<CaptureFrameGrabber> grabber = sCaptureFrameGrabber.promote();
   if (grabber == NULL) {
+    ALOGI("creating new CaptureFrameGrabber");
     sp<IServiceManager> sm = defaultServiceManager();
     sp<IBinder> binder = sm->getService(
       String16(OpenCVCameraCapture::getServiceName()));
@@ -218,6 +226,8 @@ sp<CaptureFrameGrabber> CaptureFrameGrabber::create()
     }
 
     sCaptureFrameGrabber = grabber;
+  } else {
+    ALOGI("Reusing existing CaptureFrameGrabber");
   }
   return grabber;
 }
@@ -243,11 +253,14 @@ CaptureFrameGrabber::CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture)
     }
   }
 
+  ALOGI("CaptureFrameGrabber initializing at %dx%d", width, height);
+
   sp<IGraphicBufferConsumer> consumer;
   BufferQueue::createBufferQueue(&mProducer, &consumer);
   consumer->setDefaultBufferSize(width, height);
   consumer->setDefaultBufferFormat(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
 
+  mDead = false;
   mCpuConsumer = new CpuConsumer(consumer, MAX_UNLOCKED_FRAMES + 1, true);
   mCpuConsumer->setName(String8("LibPreviewCpuConsumer"));
   mCpuConsumer->setFrameAvailableListener(this);
@@ -262,13 +275,17 @@ CaptureFrameGrabber::CaptureFrameGrabber(sp<IOpenCVCameraCapture> capture)
 
 
 CaptureFrameGrabber::~CaptureFrameGrabber() {
-  binderDied();
+  ALOGV("~CaptureFrameGrabber");
+
+  if (!mDead) {
+    mCapture->closeCamera();
+  }
 #ifdef TARGET_GE_MARSHMALLOW
   IInterface::asBinder(mCapture)->unlinkToDeath(mDeathRecipient);
 #else
   mCapture->asBinder()->unlinkToDeath(mDeathRecipient);
 #endif
-  mCapture->closeCamera();
+  binderDied();
 }
 
 
@@ -276,6 +293,12 @@ void CaptureFrameGrabber::binderDied()
 {
   ALOGV("CaptureFrameGrabber::binderDied");
   mCpuConsumer->abandon();
+  
+  if (!mDead) {
+    Mutex::Autolock autolock(sCaptureFrameGrabberMutex);
+    sCaptureFrameGrabber = nullptr;
+  }
+  mDead = true;
 
   {
     Mutex::Autolock autolock(mClientsMutex);
@@ -397,6 +420,7 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
 }
 
 wp<CaptureFrameGrabber> CaptureFrameGrabber::sCaptureFrameGrabber = NULL;
+Mutex CaptureFrameGrabber::sCaptureFrameGrabberMutex;
 
 Client::~Client() {};
 }

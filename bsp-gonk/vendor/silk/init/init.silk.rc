@@ -6,15 +6,19 @@ on init
     export NODE_PATH /system/silk/node_modules
     mkdir /mnt/system_ab 0700 root root
 
-service silk-gonksched /system/silk/bin/gonksched
+service gonksched /system/silk/bin/gonksched
     class late_start
     user root
 
-service silk-fakeappops /system/silk/bin/fakeappops
+service fakeappops /system/silk/bin/fakeappops
     class late_start
     user root
 
-service silk-fakeperm /system/silk/bin/fakeperm
+service fakeperm /system/silk/bin/fakeperm
+    class late_start
+    user root
+
+service fakeprocessinfo /system/silk/bin/fakeprocessinfo
     class late_start
     user root
 

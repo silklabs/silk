@@ -43,6 +43,16 @@ endif
 LOCAL_SHARED_LIBRARIES := libbinder libutils liblog
 include $(BUILD_SILK_EXECUTABLE)
 
+ifneq ($(TARGET_GE_MARSHMALLOW),)
+include $(CLEAR_VARS)
+LOCAL_MODULE       := fakeprocessinfo
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := fakeprocessinfo.cpp
+LOCAL_SHARED_LIBRARIES := libbinder liblog libutils
+include $(BUILD_SILK_EXECUTABLE)
+endif
+
 ifneq ($(wildcard frameworks/av/services/audioflinger),)
 include $(CLEAR_VARS)
 

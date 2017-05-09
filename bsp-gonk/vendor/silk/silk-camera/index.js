@@ -546,6 +546,12 @@ export default class Camera extends EventEmitter {
     this._throwyEmit('restart', why, restartCaptureProcess);
     this._ready = false;
 
+    this._restartTimeout = setTimeout(() => {
+      log.debug('restart timeout expired, trying to initialize');
+      this._restartTimeout = null;
+      this._init();
+    }, CAPTURE_RESTART_DELAY_MS);
+
     if (this._pendingCameraParameters === null) {
       this._pendingCameraParameters = {};
     }
@@ -578,14 +584,34 @@ export default class Camera extends EventEmitter {
     }
 
     if (restartCaptureProcess) {
-      util.setprop('ctl.restart', 'silk-capture');
-    }
+      const timeoutMs = CAPTURE_RESTART_DELAY_MS / 4;
+      // Try to restart the camera pipeline in a reasonable manner:
+      //   1. Stop capture
+      //   2. Stop camera server
+      //   3. Start camera server
+      //   4. Start capture
+      util.setprop('ctl.stop', 'silk-capture');
+      await Promise.race([
+        util.waitprop('init.svc.silk-capture', 'stopped'),
+        util.timeout(timeoutMs),
+      ]);
 
-    this._restartTimeout = setTimeout(() => {
-      log.debug('restart timeout expired, trying to initialize');
-      this._restartTimeout = null;
-      this._init();
-    }, CAPTURE_RESTART_DELAY_MS);
+      util.setprop('ctl.stop', 'qcamerasvr');
+      await Promise.race([
+        util.waitprop('init.svc.qcamerasvr', 'stopped'),
+        util.timeout(timeoutMs),
+      ]);
+
+      util.setprop('ctl.start', 'qcamerasvr');
+      await Promise.race([
+        util.waitprop('init.svc.qcamerasvr', 'running'),
+        util.timeout(timeoutMs),
+      ]);
+    } else {
+      // Failsafe to ensure the camera subsystem is actually running
+      util.setprop('ctl.start', 'qcamerasrv');
+      util.setprop('ctl.start', 'silk-capture');
+    }
   }
 
   /**
@@ -1274,7 +1300,7 @@ export default class Camera extends EventEmitter {
    * @instance
    */
   async init(): Promise<void> {
-    this._init();
+    this._restart('initializing camera');
     return Promise.resolve();
   }
 

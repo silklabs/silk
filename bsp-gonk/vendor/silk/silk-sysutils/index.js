@@ -264,6 +264,27 @@ class PropWatcher extends EventEmitter {
 
 export let propWatcher = new PropWatcher();
 
+
+/**
+ * Waits for a property to change to a given value
+ *
+ * @param {string} prop Name of the property to wait for
+ * @param {string | boolean | number} value Desired property value
+ * @return {Promise}
+ * @memberof silk-sysutils
+ */
+export async function waitprop(name: string, value: PropTypes): Promise<void> {
+  return new Promise(resolve => {
+    propWatcher.once(name, newValue => {
+      log.verbose('waitprop observed', name, '=', value);
+      if (newValue === value) {
+        resolve();
+      }
+    });
+  });
+}
+
+
 /**
  * Returns a promise that expires after the specified interval
  *
@@ -274,6 +295,7 @@ export let propWatcher = new PropWatcher();
 export function timeout(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
 
 /**
  * Wrapper around process.uptime that returns the time in total milliseconds

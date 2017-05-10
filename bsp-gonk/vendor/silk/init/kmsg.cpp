@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
       if (0 == fork()) {
         // Figure the name of the process that was killed
         char *name = msgStart + sizeof(LMK_MESSAGE_PREFIX) - 1;
-        for (char *c = name; *c == '\0'; c++) {
+        for (char *c = name; *c != '\0'; c++) {
           if (*c == '\'') {
             *c = '\0';
             break;

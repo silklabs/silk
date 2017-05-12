@@ -626,11 +626,20 @@ export default class Camera extends EventEmitter {
    */
   _initCVVideoCapture() {
     if (!this._cvVideoCapture) {
-      this._cvVideoCaptureBusy = false;
+      this._cvVideoCaptureBusy = true;
+      this._noFrameCount = 0;
       try {
-        this._noFrameCount = 0;
-        this._cvVideoCapture = new silkcapture.VideoCapture(0,
-          this.FRAME_SIZE.normal.width, this.FRAME_SIZE.normal.height);
+        this._cvVideoCapture = new silkcapture.VideoCapture(
+          0,
+          this.FRAME_SIZE.normal.width,
+          this.FRAME_SIZE.normal.height,
+          err => {
+            this._cvVideoCaptureBusy = false;
+            if (err) {
+              throw err;
+            }
+          }
+        );
       } catch (err) {
         throw err;
       }

@@ -47,6 +47,10 @@ using std::string;
 // Holds the current state of a VideoCapture session
 class State {
 public:
+  int deviceId;
+  int scaledWidth;
+  int scaledHeight;
+  bool busy;
 #ifdef ANDROID
   libpreview::Client *client;
   libpreview::FrameFormat frameFormat;
@@ -58,28 +62,45 @@ public:
 #else
   cv::VideoCapture cap;
 #endif
-  int scaledWidth;
-  int scaledHeight;
-  bool busy;
 
-  static State *Create(int deviceId, int scaledWidth, int scaledHeight) {
-    bool ok = false;
-    State *newState = new State(scaledWidth, scaledHeight);
+  State(int deviceId, int scaledWidth, int scaledHeight)
+    : deviceId(deviceId),
+      scaledWidth(scaledWidth),
+      scaledHeight(scaledHeight),
+      busy(true),
 #ifdef ANDROID
-    uv_mutex_init(&newState->frameDataLock);
-    newState->frameWidth = newState->frameHeight = 0;
-    newState->frameBuffer = NULL;
-    newState->client = libpreview::open(OnFrameCallback, OnAbandonedCallback, newState);
-    ok = newState->client != NULL;
-#else
-    newState->cap.open(deviceId);
-    ok = newState->cap.isOpened();
+      frameWidth(0),
+      frameHeight(0),
+      frameBuffer(nullptr),
 #endif
-    if (!ok) {
-      delete newState;
-      newState = NULL;
+      opened(false) {
+#ifdef ANDROID
+    uv_mutex_init(&frameDataLock);
+#endif
+  }
+
+  bool open() {
+    if (opened) {
+      ALOGE("State already open");
+      return true;
     }
-    return newState;
+
+    if (!busy) {
+      ALOGE("State should be busy during open");
+      return true;
+    }
+
+#ifdef ANDROID
+    client = libpreview::open(OnFrameCallback, OnAbandonedCallback, this);
+    opened = client != NULL;
+#else
+    cap.open(deviceId);
+    opened = cap.isOpened();
+#endif
+    if (opened) {
+      busy = false;
+    }
+    return opened;
   }
 
   ~State() {
@@ -124,10 +145,7 @@ public:
   }
 
 private:
-  State(int scaledWidth, int scaledHeight)
-    : scaledWidth(scaledWidth),
-      scaledHeight(scaledHeight),
-      busy(false) {}
+  bool opened;
 
 #ifdef ANDROID
   static void OnAbandonedCallback(void *userData);
@@ -161,6 +179,29 @@ private:
 
   std::shared_ptr<State> state;
 };
+
+
+class VideoCaptureOpenWorker : public Nan::AsyncWorker {
+ public:
+  explicit VideoCaptureOpenWorker(std::weak_ptr<State> weakState,
+                                  Nan::Callback *callback)
+    : Nan::AsyncWorker(callback),
+      weakState(weakState) {}
+  virtual ~VideoCaptureOpenWorker() {}
+
+  void Execute() {
+    auto state = weakState.lock();
+    if (state) {
+      if (!state->open()) {
+        SetErrorMessage("Unable to open camera");
+      }
+    }
+  }
+
+ private:
+  std::weak_ptr<State> weakState;
+};
+
 
 /*
  * Async worker used to process the next frame
@@ -501,33 +542,36 @@ void VideoCapture::Init(v8::Local<v8::Object> exports) {
 NAN_METHOD(VideoCapture::New) {
   if (!info.IsConstructCall()) {
     // Invoked as plain function `VideoCapture(...)`, turn into construct call.
-    const int argc = 3;
-    v8::Local<v8::Value> argv[argc] = { info[0], info[1], info[2] };
+    const int argc = 4;
+    v8::Local<v8::Value> argv[argc] = { info[0], info[1], info[2], info[3] };
     v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
     info.GetReturnValue().Set(cons->NewInstance(argc, argv));
     return;
   }
 
-  // Invoked as constructor: `new VideoCapture(deviceId)`
+  // Invoked as constructor: `new VideoCapture(deviceId,  )`
 
-  if (info.Length() < 3 || !info[0]->IsInt32()) {
-    Nan::ThrowTypeError("VideoCapture expects three arguments: "
-      "deviceId, scaledWidth, scaledHeight");
+  if (info.Length() < 4 ||
+      !info[0]->IsInt32() ||
+      !info[1]->IsInt32() ||
+      !info[2]->IsInt32() ||
+      !info[3]->IsFunction()) {
+    Nan::ThrowTypeError("VideoCapture expects four arguments: "
+      "deviceId, scaledWidth, scaledHeight, callback");
     return;
   }
 
   int deviceId = info[0]->ToInt32()->Value();
   int scaledWidth = info[1]->ToInt32()->Value();
   int scaledHeight = info[2]->ToInt32()->Value();
+  Nan::Callback *callback = NULL;
+  callback = new Nan::Callback(info[3].As<v8::Function>());
 
-  State *state = State::Create(deviceId, scaledWidth, scaledHeight);
-  if (state == NULL) {
-    Nan::ThrowError("Camera could not be opened");
-    return;
-  }
-
+  State *state = new State(deviceId, scaledWidth, scaledHeight);
   VideoCapture* self = new VideoCapture(state);
   self->Wrap(info.This());
+
+  Nan::AsyncQueueWorker(new VideoCaptureOpenWorker(self->state, callback));
   info.GetReturnValue().Set(info.This());
 }
 

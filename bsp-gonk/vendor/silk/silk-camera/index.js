@@ -249,13 +249,10 @@ const CAPTURE_MIC_DATA_SOCKET_NAME = '/dev/socket/capturemic';
 const CAPTURE_VID_DATA_SOCKET_NAME = '/dev/socket/capturevid';
 
 
-// When trying to reestablish contact with the capture process first delay by
-// this amount to permit:
-// * multiple restart commands to collect - each of the capture socket
-// disconnects can cause an independent restart request.
-// * the capture process a little bit of time to recover itself if it
-// just crashed before attempting to reestablish contact.
-const CAPTURE_RESTART_DELAY_MS = 1000;
+// Max amount of time to wait for the capture process to initialize up to the
+// point that we can talk to it before trying anyway (and probably failing and
+// restarting again)
+const CAPTURE_MAX_RESTART_DELAY_MS = 10000;
 
 // Amount of time to give the capture process to initialize before declaring
 // the attempt as failed and triggering a retry
@@ -519,19 +516,15 @@ export default class Camera extends EventEmitter {
   /**
    * Restarts communication with the capture process.
    *
-   * In certain error conditions, it can also be beneficial to restart the
-   * capture process (such as when it is not providing the expected video data)
-   * an attempt to recover the system.
    * @private
    */
-  async _restart(why: string, restartCaptureProcess: boolean = false) {
+  async _restart(why: string) {
     if (this._restartTimeout) {
       log.info(`camera restart pending (ignored "${String(why)}")`);
       return;
     }
 
-    log.warn(
-      `camera restart: ${why} captureRestart=${String(restartCaptureProcess)}`);
+    log.warn(`camera restart: ${why}`);
 
     /**
      * This event is emitted when camera service is restarting
@@ -543,24 +536,22 @@ export default class Camera extends EventEmitter {
      * @property {boolean} restartCaptureProcess whether to restart capture
      *                     process or not
      */
-    this._throwyEmit('restart', why, restartCaptureProcess);
+    this._throwyEmit('restart', why, true);
     this._ready = false;
 
     this._restartTimeout = setTimeout(() => {
-      log.debug('restart timeout expired, trying to initialize');
+      log.debug('restart timeout expired, trying to initialize anyway');
       this._restartTimeout = null;
       this._init();
-    }, CAPTURE_RESTART_DELAY_MS);
+    }, CAPTURE_MAX_RESTART_DELAY_MS);
 
     if (this._pendingCameraParameters === null) {
       this._pendingCameraParameters = {};
     }
-
     if (this._initTimeout) {
       clearTimeout(this._initTimeout);
       this._initTimeout = null;
     }
-
     if (this._frameTimeout) {
       clearTimeout(this._frameTimeout);
       this._frameTimeout = null;
@@ -569,7 +560,6 @@ export default class Camera extends EventEmitter {
       clearTimeout(this._tagMonitorTimeout);
       this._tagMonitorTimeout = null;
     }
-    await this._closeCVVideoCapture();
     if (this._ctlSocket) {
       this._ctlSocket.destroy();
       this._ctlSocket = null;
@@ -583,34 +573,72 @@ export default class Camera extends EventEmitter {
       this._vidDataSocket = null;
     }
 
-    if (restartCaptureProcess) {
-      const timeoutMs = CAPTURE_RESTART_DELAY_MS / 4;
-      // Try to restart the camera pipeline in a reasonable manner:
-      //   1. Stop capture
-      //   2. Stop camera server
-      //   3. Start camera server
-      //   4. Start capture
-      util.setprop('ctl.stop', 'silk-capture');
-      await Promise.race([
-        util.waitprop('init.svc.silk-capture', 'stopped'),
-        util.timeout(timeoutMs),
-      ]);
+    // A reasonable timeout for most things...
+    const timeoutMs = 500;
 
-      util.setprop('ctl.stop', 'qcamerasvr');
-      await Promise.race([
-        util.waitprop('init.svc.qcamerasvr', 'stopped'),
-        util.timeout(timeoutMs),
-      ]);
+    // Try to restart the camera pipeline in a reasonable manner:
+    //   0. Stop video capture, allow any live capture to flush if possible
+    //   1. Stop capture
+    //   2. Stop camera server
+    //   3. Start camera server
+    //   4. Start capture
+    //   5. Wait until the capture control socket is open
+    //
+    // Note that during this process _restartTimeout could trigger and charge
+    // ahead anyway.  This prevents us from getting stuck here if there's some
+    // kind of unforseen exception/error in the below async code.
+    await Promise.race([
+      this._closeCVVideoCapture(),
+      util.timeout(timeoutMs),
+    ]);
 
-      util.setprop('ctl.start', 'qcamerasvr');
-      await Promise.race([
-        util.waitprop('init.svc.qcamerasvr', 'running'),
-        util.timeout(timeoutMs),
-      ]);
-    } else {
-      // Failsafe to ensure the camera subsystem is actually running
-      util.setprop('ctl.start', 'qcamerasrv');
-      util.setprop('ctl.start', 'silk-capture');
+    util.setprop('ctl.stop', 'silk-capture');
+    await Promise.race([
+      util.waitprop('init.svc.silk-capture', 'stopped'),
+      util.timeout(timeoutMs),
+    ]);
+
+    util.setprop('ctl.stop', 'qcamerasvr');
+    await Promise.race([
+      util.waitprop('init.svc.qcamerasvr', 'stopped'),
+      util.timeout(timeoutMs),
+    ]);
+
+    util.setprop('ctl.start', 'qcamerasvr');
+    await Promise.race([
+      util.waitprop('init.svc.qcamerasvr', 'running'),
+      util.timeout(timeoutMs),
+    ]);
+    util.setprop('ctl.start', 'silk-capture');
+
+    if (!this._restartTimeout) {
+      log.warn('Danger: camera restart timeout beat async restart');
+    }
+
+    while (this._restartTimeout !== null) {
+      // Wait a pinch for the capture process to finish starting before trying
+      // to talk to it
+      await util.timeout(timeoutMs);
+
+      try {
+        log.debug('Connecting to', CAPTURE_CTL_SOCKET_NAME);
+        await Promise.race([
+          new Promise((resolve, reject) => {
+            const socket = net.createConnection(CAPTURE_CTL_SOCKET_NAME, resolve);
+            socket.once('error', reject);
+          }),
+          util.timeout(timeoutMs),
+        ]);
+
+        log.info('Capture process is running');
+        if (this._restartTimeout !== null) {
+          clearTimeout(this._restartTimeout);
+          this._restartTimeout = null;
+          this._init();
+        }
+      } catch (err) {
+        log.info('Unable to connecting to', CAPTURE_CTL_SOCKET_NAME, ':', err.message);
+      }
     }
   }
 
@@ -618,7 +646,7 @@ export default class Camera extends EventEmitter {
    * Restarts the camera subsystem
    */
   async restart() {
-    this._restart('External restart request', true);
+    this._restart('External restart request');
   }
 
   /**
@@ -734,7 +762,7 @@ export default class Camera extends EventEmitter {
     }
     this._initTimeout = setTimeout(() => {
       this._initTimeout = null;
-      this._restart('failed to initialize in a timely fashion', true);
+      this._restart('failed to initialize in a timely fashion');
     }, CAPTURE_INIT_TIMEOUT_MS);
 
     if (this._frameReplacer) {
@@ -848,7 +876,7 @@ export default class Camera extends EventEmitter {
 
       let captureEvent = JSON.parse(line);
       if (captureEvent.eventName === 'error') {
-        this._restart('Camera command errored out', true);
+        this._restart('Camera command errored out');
       } else if (captureEvent.eventName === 'initialized') {
         this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
         this._initComplete();
@@ -862,7 +890,7 @@ export default class Camera extends EventEmitter {
           this._getParameterCallback = null;
         }
       } else if (captureEvent.eventName === 'stopped') {
-        this._restart('stopped', true);
+        this._restart('stopped');
       } else {
         log.warn(`Error: Unknown capture event ${line}`);
       }
@@ -989,7 +1017,7 @@ export default class Camera extends EventEmitter {
     log.warn(`Waiting for camera frame: ` +
              `${this._noFrameCount}/${CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS}`);
     if (this._noFrameCount > CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS) {
-      this._restart(`Camera frame timeout`, true);
+      this._restart(`Camera frame timeout`);
     }
   }
 
@@ -1270,7 +1298,7 @@ export default class Camera extends EventEmitter {
         default:
           // Flush the buffer and restart the socket
           _dataBuffer = null;
-          this._restart('Invalid capture tag', true);
+          this._restart('Invalid capture tag');
           throw new Error(`Invalid capture tag #${tag}`, tagInfo);
         }
         pos += HEADER_NR_BYTES + size;

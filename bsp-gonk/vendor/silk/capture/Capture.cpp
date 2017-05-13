@@ -228,7 +228,7 @@ class CaptureCameraListener: public CameraListener {
     } else if (msgType == CAMERA_MSG_FOCUS) {
       ALOGD("Camera focus result: %d", ext1);
     } else if (msgType == CAMERA_MSG_ERROR) {
-      ALOGW("Camera error %d", ext1);
+      ALOGW("Camera error #%d", ext1);
       mCaptureListener->sendErrorEvent();
     } else {
       ALOGD("notify: msgType=0x%x ext1=%d ext2=%d", msgType, ext1, ext2);
@@ -1064,6 +1064,8 @@ int main(int argc, char **argv) {
   (void) argv;
 
   status_t err;
+
+  ALOGI("Capture starting");
 
   sp<ProcessState> proc(ProcessState::self());
   ProcessState::self()->startThreadPool();

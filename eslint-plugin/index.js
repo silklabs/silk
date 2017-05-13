@@ -10,6 +10,7 @@ module.exports = {
           devDependencies: [
             'test/**/*.js',
             'tools/**/*.js',
+            'bin/**/*.js',
             '**/webpack.config.js',
           ],
           optionalDependencies: true,

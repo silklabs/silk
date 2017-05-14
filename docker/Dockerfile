@@ -11,6 +11,8 @@ RUN apt-get update -qq && \
     add-apt-repository -y ppa:phablet-team/tools && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/ppa && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927 && \
+    echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive \
       apt-get install -y \
@@ -54,6 +56,11 @@ RUN apt-get update -qq && \
         linux-libc-dev  \
         m4 \
         mkisofs \
+        mongodb-org \
+        mongodb-org-server \
+        mongodb-org-shell \
+        mongodb-org-mongos \
+        mongodb-org-tools \
         openjdk-7-jdk \
         openssh-server \
         protobuf-compiler \

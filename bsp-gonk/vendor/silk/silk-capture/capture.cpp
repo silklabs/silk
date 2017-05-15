@@ -504,21 +504,18 @@ private:
 
 class VideoCaptureCloseWorker : public Nan::AsyncWorker {
  public:
-  explicit VideoCaptureCloseWorker(std::weak_ptr<State> weakState,
+  explicit VideoCaptureCloseWorker(std::shared_ptr<State> state,
                                    Nan::Callback *callback)
     : Nan::AsyncWorker(callback),
-      weakState(weakState) {}
+      state(state) {}
   virtual ~VideoCaptureCloseWorker() {}
 
   void Execute() {
-    auto state = weakState.lock();
-    if (state) {
-      state->shutdown();
-    }
+    state->shutdown();
   }
 
  private:
-  std::weak_ptr<State> weakState;
+  std::shared_ptr<State> state;
 };
 
 Nan::Persistent<v8::Function> VideoCapture::constructor;
@@ -667,13 +664,11 @@ NAN_METHOD(VideoCapture::Close) {
   Nan::Callback *callback = NULL;
   callback = new Nan::Callback(info[0].As<v8::Function>());
 
-  Nan::AsyncQueueWorker(
-    new VideoCaptureCloseWorker(
-      self->state,
-      callback
-    )
-  );
+  auto closeWorker = new VideoCaptureCloseWorker(self->state, callback);
+  // Release our reference *after* closeWorker holds a reference, to prevent the
+  // state from getting destructed on this thread (the main node thread)
   self->state = nullptr;
+  Nan::AsyncQueueWorker(closeWorker);
 }
 
 #ifdef ANDROID

@@ -395,7 +395,6 @@ export default class Camera extends EventEmitter {
   _cvVideoCapture: ?VideoCapture = null;
   _cvVideoCaptureBusy: boolean = false;
   _ctlSocket: ?Socket = null;
-  _dataSocket: ?Socket = null;
   _micDataSocket: ?Socket = null;
   _vidDataSocket: ?Socket = null;
   _previewFrameRequests: Array<PreviewFrameQueueType> = [];
@@ -785,10 +784,12 @@ export default class Camera extends EventEmitter {
 
     // Connect to data sockets
     if (AUDIO_HW_ENABLED) {
-      this._connectDataSocket(this._micDataSocket, CAPTURE_MIC_DATA_SOCKET_NAME);
+      invariant(this._micDataSocket === null);
+      this._micDataSocket = this._connectDataSocket(CAPTURE_MIC_DATA_SOCKET_NAME);
     }
     if (CAMERA_VIDEO_ENABLED) {
-      this._connectDataSocket(this._vidDataSocket, CAPTURE_VID_DATA_SOCKET_NAME);
+      invariant(this._vidDataSocket === null);
+      this._vidDataSocket = this._connectDataSocket(CAPTURE_VID_DATA_SOCKET_NAME);
     }
 
     // Connect to control socket
@@ -1190,14 +1191,13 @@ export default class Camera extends EventEmitter {
   /**
    * @private
    */
-  _connectDataSocket(_dataSocket: ?Socket, socketName: string) {
+  _connectDataSocket(socketName: string): Socket {
     let _dataBuffer = null;
     log.debug(`connecting to ${socketName} socket`);
-    this._dataSocket = net.createConnection(socketName, () => {
+    const dataSocket = net.createConnection(socketName, () => {
       log.debug(`connected to ${socketName} socket`);
       _dataBuffer = null;
     });
-    const dataSocket = this._dataSocket;
     invariant(dataSocket);
 
     dataSocket.on('error', err => {
@@ -1309,6 +1309,7 @@ export default class Camera extends EventEmitter {
         _dataBuffer = null;
       }
     });
+    return dataSocket;
   }
 
   /**

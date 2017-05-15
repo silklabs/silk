@@ -109,6 +109,7 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
                          void (*deallocator)(void *),
                          InputFrameInfo& inputFrameInfo);
   virtual void stop();
+  virtual bool error();
 
  private:
   class FramePuller: public android::Thread {
@@ -137,6 +138,7 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
   int maxBitrateK;
   FrameOutCallback frameOutCallback;
   void *frameOutUserData;
+  bool encoderError;
   uint8_t *codecConfig;
   int codecConfigLength;
 
@@ -192,6 +194,7 @@ SimpleH264EncoderImpl::SimpleH264EncoderImpl(int width,
       maxBitrateK(maxBitrateK),
       frameOutCallback(frameOutCallback),
       frameOutUserData(frameOutUserData),
+      encoderError(false),
       codecConfig(nullptr),
       codecConfigLength(0),
       encodedFrame(nullptr),
@@ -340,17 +343,23 @@ void SimpleH264EncoderImpl::stop() {
   encodedFrameMaxLength = 0;
 }
 
+bool SimpleH264EncoderImpl::error() {
+  return encoderError;
+}
+
 bool SimpleH264EncoderImpl::threadLoop() {
   MediaBuffer *buffer;
 
   status_t err = mediaCodecSource->read(&buffer);
   if (err != OK) {
     ALOGE("Error reading from source: %d", err);
+    encoderError = true;
     return false;
   }
 
   if (buffer == NULL) {
     ALOGE("Failed to get buffer from source");
+    encoderError = true;
     return false;
   }
 
@@ -360,6 +369,7 @@ bool SimpleH264EncoderImpl::threadLoop() {
 
   if (buffer->meta_data() == NULL) {
     ALOGE("Failed to get buffer meta_data()");
+    encoderError = true;
     return false;
   }
 

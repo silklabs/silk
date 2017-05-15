@@ -28,13 +28,13 @@ class EncoderPool {
   bool isPrimary(SharedSimpleH264EncoderImpl *who);
 
   std::unique_ptr<SimpleH264Encoder> encoder; // The real encoder
+  bool resetEncoder();
 
   ~EncoderPool() {}
  private:
   EncoderPool(int width, int height, int maxBitrateK, int targetFps)
     : width(width), height(height), maxBitrateK(maxBitrateK), targetFps(targetFps) {
   }
-  bool init();
 
   static void frameOutCallback(SimpleH264Encoder::EncodedFrameInfo& info);
   void dispatchFrameOutCallbacks(SimpleH264Encoder::EncodedFrameInfo& info);
@@ -69,6 +69,10 @@ class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
 
   virtual void stop() {
     encoderPool->detach(this);
+  }
+
+  virtual bool error() {
+    return encoderPool->encoder->error();
   }
 
   virtual void setBitRate(int newBitrateK) {
@@ -119,13 +123,19 @@ std::shared_ptr<EncoderPool> EncoderPool::Create(int width,
         (*i)->maxBitrateK == maxBitrateK &&
         (*i)->targetFps == targetFps) {
       encoderPool = *i;
+      if (encoderPool->encoder->error()) {
+        ALOGI("Encoder in error state, resetting");
+        if (!encoderPool->resetEncoder()) {
+          return nullptr;
+        }
+      }
       break;
     }
   }
 
   if (encoderPool == nullptr) {
     encoderPool.reset(new EncoderPool(width, height, maxBitrateK, targetFps));
-    if (!encoderPool->init()) {
+    if (!encoderPool->resetEncoder()) {
       return nullptr;
     }
   }
@@ -134,7 +144,7 @@ std::shared_ptr<EncoderPool> EncoderPool::Create(int width,
   return encoderPool;
 }
 
-bool EncoderPool::init() {
+bool EncoderPool::resetEncoder() {
   encoder.reset(
     SimpleH264Encoder::Create(
       width,
@@ -203,7 +213,6 @@ void EncoderPool::detach(SharedSimpleH264EncoderImpl *who) {
       ),
       availablePools.end()
     );
-    return;
   }
 }
 

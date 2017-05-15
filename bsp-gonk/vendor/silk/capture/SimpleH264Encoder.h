@@ -38,6 +38,7 @@ class SimpleH264Encoder {
                          void (*deallocator)(void *),
                          InputFrameInfo& inputFrameInfo) = 0;
   virtual void stop() = 0;
+  virtual bool error() = 0;
 };
 
 #endif

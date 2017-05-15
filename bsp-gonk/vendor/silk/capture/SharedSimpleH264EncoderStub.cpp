@@ -27,6 +27,10 @@ class SharedSimpleH264EncoderStub: public SharedSimpleH264Encoder {
     encoder->stop();
   }
 
+  virtual bool error() {
+    return encoder->error();
+  }
+
   virtual bool isPrimary() {
     return true;
   }

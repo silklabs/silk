@@ -28,6 +28,7 @@ RUN apt-get update -qq && \
         cmake \
         curl \
         diffstat \
+        dos2unix \
         g++ \
         g++-4.8 \
         g++-4.8-multilib \

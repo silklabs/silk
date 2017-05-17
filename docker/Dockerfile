@@ -92,7 +92,7 @@ RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \
     -DWITH_OPENEXR=false \
     -DBUILD_PERF_TESTS=false \
     -DBUILD_opencv_java=false \
-    -DWITH_IPP=ON \
+    -DWITH_IPP=OFF \
     -DCMAKE_INSTALL_PREFIX=/usr/ \
     .. && \
   make -j$(nproc) install && \

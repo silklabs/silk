@@ -43,12 +43,13 @@ RUN apt-get update -qq && \
         libboost-all-dev \
         libc6-dev \
         libc6-dev-i386 \
+        libfreetype6-dev \
         libgflags-dev \
         libgoogle-glog-dev \
         libhdf5-serial-dev \
         libleveldb-dev \
         liblmdb-dev \
-        libopencv3-dev \
+        libpng12-dev \
         libprotobuf-dev \
         libsnappy-dev \
         libtool \
@@ -64,6 +65,7 @@ RUN apt-get update -qq && \
         openjdk-7-jdk \
         openssh-server \
         protobuf-compiler \
+        pkg-config \
         python-dev \
         python-pip \
         python-virtualenv \
@@ -74,6 +76,27 @@ RUN apt-get update -qq && \
         xmlstarlet \
         zip && \
     rm -rf /var/lib/apt/lists/*
+
+# Build/install opencv3
+RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \
+  cd opencv && \
+  mkdir build && \
+  cd build && \
+  cmake -Wno-dev \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DBUILD_TESTS=false \
+    -DWITH_TIFF=false \
+    -DWITH_CUDA=false \
+    -DBUILD_ANDROID_EXAMPLES=false \
+    -DWITH_OPENEXR=false \
+    -DBUILD_PERF_TESTS=false \
+    -DBUILD_opencv_java=false \
+    -DWITH_IPP=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    .. && \
+  make -j$(nproc) install && \
+  cd ../.. && \
+  rm -rf opencv
 
 # Install node v6.9.1
 RUN wget -q https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz && \

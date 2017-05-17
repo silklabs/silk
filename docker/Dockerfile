@@ -64,11 +64,12 @@ RUN apt-get update -qq && \
         mongodb-org-tools \
         openjdk-7-jdk \
         openssh-server \
-        protobuf-compiler \
         pkg-config \
+        protobuf-compiler \
         python-dev \
         python-pip \
         python-virtualenv \
+        rsync \
         texinfo \
         unzip \
         vim \

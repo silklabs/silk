@@ -3,7 +3,10 @@ FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu14.04
 LABEL maintainer mvine@silklabs.com
 
 RUN apt-get update -qq && \
-    apt-get install -y software-properties-common python-software-properties && \
+    apt-get install -y \
+      apt-transport-https \
+      python-software-properties \
+      software-properties-common && \
     add-apt-repository -y ppa:amarburg/opencv3 && \
     add-apt-repository -y ppa:george-edison55/cmake-3.x && \
     add-apt-repository -y ppa:git-core/ppa && \
@@ -13,6 +16,8 @@ RUN apt-get update -qq && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927 && \
     echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 32A37959C2FA5C3C99EFBC32A79206696452D198 && \
+    echo "deb https://apt.buildkite.com/buildkite-agent stable main" > /etc/apt/sources.list.d/buildkite-agent.list && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive \
       apt-get install -y \
@@ -22,6 +27,7 @@ RUN apt-get update -qq && \
         autoconf \
         bc \
         build-essential \
+        buildkite-agent \
         bsdmainutils \
         ccache \
         chrpath \

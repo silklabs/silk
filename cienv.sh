@@ -33,5 +33,7 @@ if ${CI:-false}; then
     export CI_PULL_REQUEST=false
     export CI_REPO_SLUG="$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME"
   fi
+else
+  export CI=false
+  export CI_PULL_REQUEST=false
 fi
-

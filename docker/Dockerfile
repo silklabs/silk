@@ -35,6 +35,7 @@ RUN apt-get update -qq && \
         curl \
         diffstat \
         dos2unix \
+        fonts-freefont-ttf \
         g++ \
         g++-4.8 \
         g++-4.8-multilib \

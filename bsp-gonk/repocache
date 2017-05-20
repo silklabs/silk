@@ -59,7 +59,7 @@ fetch)
     for repocache_urlsuffix in $repocache_urlsuffixes; do
       set -ex
       if curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix --output /dev/null --head --fail --silent; then
-        if [[ -n $CI ]]; then
+        if [[ ${CI:-false} = true ]] && [[ -z $CI_DEBUG ]]; then
           # No progress indication when running in CI to be
           # mindful of log length limits
           PROGRESS="-q"

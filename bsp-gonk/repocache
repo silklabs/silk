@@ -75,7 +75,7 @@ fetch)
     done
   fi
   ;;
-build|buildfull)
+build)
   [[ -n $2 ]] || usage
   board=$2
 
@@ -94,13 +94,10 @@ build|buildfull)
   #
   # Upload the resulting repocache-*.tgz somewhere
   #
-  if [[ $command = "buildfull" ]]; then
-    maybefull="-f"
-  fi
   [[ ! -d .repo ]] || usage Please run from completely clean workspace
   (
     export REPOCACHE_URLPREFIX=
-    $LOCAL_PATH/sync $maybefull -n $board $product
+    $LOCAL_PATH/sync -n $board $product
   )
   if [[ ! -d .repo/project-objects ]] || [[ ! -d .repo/projects ]]; then
     usage "repo projects don't exist, need to sync?"

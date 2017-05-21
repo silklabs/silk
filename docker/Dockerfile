@@ -66,6 +66,7 @@ RUN apt-get update -qq && \
         m4 \
         mkisofs \
         mongodb-org \
+        mplayer \
         mongodb-org-server \
         mongodb-org-shell \
         mongodb-org-mongos \
@@ -134,9 +135,11 @@ RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 10 && \
     addgroup silk && \
     adduser -ingroup silk --gecos "" --disabled-password silk && \
+    adduser silk audio && \
+    adduser silk adbuser && \
     echo 'silk ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/silk && \
-    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0666", GROUP="silk"' >> /etc/udev/rules.d/51-android.rules && \
-    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1004", MODE="0666", GROUP="silk"' >> /etc/udev/rules.d/51-android.rules && \
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0666", GROUP="adbuser"' >> /etc/udev/rules.d/51-android.rules && \
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1004", MODE="0666", GROUP="adbuser"' >> /etc/udev/rules.d/51-android.rules && \
     sed 's#session\s*required\s*pam_loginuid.so#session optional pam_loginuid.so#g' -i /etc/pam.d/sshd && \
     udevadm trigger && \
     rm -rf /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_rsa_key && \

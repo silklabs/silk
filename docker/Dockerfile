@@ -134,6 +134,7 @@ RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20 && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 10 && \
     addgroup silk && \
+    addgroup adbuser && \
     adduser -ingroup silk --gecos "" --disabled-password silk && \
     adduser silk audio && \
     adduser silk adbuser && \

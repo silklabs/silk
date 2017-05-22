@@ -61,6 +61,7 @@ RUN apt-get update -qq && \
         libprotobuf-dev \
         libsnappy-dev \
         libtool \
+        libusb-1.0-0-dev \
         libxml2-utils \
         linux-libc-dev  \
         m4 \
@@ -79,6 +80,7 @@ RUN apt-get update -qq && \
         python-pip \
         python-virtualenv \
         rsync \
+        silversearcher-ag \
         texinfo \
         unzip \
         vim \
@@ -112,6 +114,9 @@ RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \
 RUN wget -q https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz && \
     tar -x -C /usr/local --strip-components 1 -f node-v6.9.1-linux-x64.tar.gz && \
     rm node-v6.9.1-linux-x64.tar.gz
+
+# Useful npm packages
+RUN npm install -g mvines/relay
 
 # Install ninja
 RUN wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip && \

@@ -116,7 +116,7 @@ export default class API {
     // around files between pushes which is a common source of bugs.
     console.log('Updating', dest);
     await this.adb(`shell rm -rf ${dest}`);
-    await this.adb(`push ${directory} ${dest}`, /*timeout = */ 60 * 1000);
+    await this.adb(`push ${directory} ${dest}`, /*timeout = */ 300 * 1000);
     this.setprop(MODULE_PUSH_PROP, dest);
   }
 

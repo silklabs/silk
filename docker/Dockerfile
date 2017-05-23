@@ -131,7 +131,7 @@ RUN pip install --upgrade pip && \
 # Platform tools
 RUN wget -q https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip && \
     unzip platform-tools_r23-linux.zip \
-          platform-tools/{adb,fastboot} && \
+          platform-tools/adb platform-tools/fastboot && \
     cp platform-tools/* /usr/bin/ && \
     rm -rf platform-tools*
 

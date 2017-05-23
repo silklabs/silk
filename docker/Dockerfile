@@ -21,8 +21,6 @@ RUN apt-get update -qq && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive \
       apt-get install -y \
-        android-tools-adb \
-        android-tools-fastboot \
         apt-file \
         autoconf \
         bc \
@@ -129,6 +127,13 @@ RUN wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-
 # Install python packages
 RUN pip install --upgrade pip && \
     pip install matplotlib numpy scipy
+
+# Platform tools
+RUN wget -q wget https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip && \
+    unzip platform-tools_r23-linux.zip \
+          platform-tools/{adb,fastboot} && \
+    cp platform-tools/* /usr/bin/ && \
+    rm -rf platform-tools*
 
 ENV JAVA_HOME /usr
 RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \

@@ -129,7 +129,7 @@ RUN pip install --upgrade pip && \
     pip install matplotlib numpy scipy
 
 # Platform tools
-RUN wget -q wget https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip && \
+RUN wget -q https://dl-ssl.google.com/android/repository/platform-tools_r23-linux.zip && \
     unzip platform-tools_r23-linux.zip \
           platform-tools/{adb,fastboot} && \
     cp platform-tools/* /usr/bin/ && \

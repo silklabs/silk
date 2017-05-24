@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+
+cd $(dirname $0)/..
+docker build -t silklabs/silk .
+
+docker login -u=stooge -p="$STOOGE_DOCKER_PASSWORD"
+if [[ "$CI_PULL_REQUEST" = "false" ]]; then
+  docker push silklabs/silk
+fi
+

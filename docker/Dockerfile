@@ -82,6 +82,7 @@ RUN apt-get update -qq && \
         texinfo \
         unzip \
         vim \
+        vnc4server \
         wget \
         xmlstarlet \
         zip && \

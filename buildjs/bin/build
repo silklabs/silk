@@ -33,7 +33,7 @@ help() {
 
 SILK_BUILDJS_SOURCE=
 SILK_BUILDJS_DEST=
-SILK_BUILDJS_UGLY=true
+: ${SILK_BUILDJS_UGLY:=true} # Permit environment to override default value
 SILK_BUILDJS_TARGET=node
 SILK_BUILDJS_EXTERNALS=true
 native=true

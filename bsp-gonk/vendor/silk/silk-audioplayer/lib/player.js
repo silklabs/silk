@@ -58,31 +58,31 @@ if (process.platform === 'android') {
         playOnHost(fileName)
         .then(() => this.listener('done'))
         .catch(err => this.listener('error', err));
-        log.warn(`setVolume is not supported on this platform`);
+        log.debug(`setVolume is not supported on this platform`);
       };
       this.stop = function() {
-        log.warn(`stop is not supported on this platform`);
+        log.debug(`stop is not supported on this platform`);
       };
       this.pause = function() {
-        log.warn(`pause is not supported on this platform`);
+        log.debug(`pause is not supported on this platform`);
       };
       this.resume = function() {
-        log.warn(`resume is not supported on this platform`);
+        log.debug(`resume is not supported on this platform`);
       };
       this.getState = function() {
-        log.warn(`getState is not supported on this platform`);
+        log.debug(`getState is not supported on this platform`);
       };
       this.getCurrentPosition = function() {
-        log.warn(`getCurrentPosition is not supported on this platform`);
+        log.debug(`getCurrentPosition is not supported on this platform`);
       };
       this.getDuration = function() {
-        log.warn(`getDuration is not supported on this platform`);
+        log.debug(`getDuration is not supported on this platform`);
       };
       this.getInfo = function() {
-        log.warn(`getInfo is not supported on this platform`);
+        log.debug(`getInfo is not supported on this platform`);
       };
       this.endOfStream = function() {
-        log.warn(`endOfStream is not supported on this platform`);
+        log.debug(`endOfStream is not supported on this platform`);
       };
       this.addEventListener = function(listener) {
         this.listener = listener;

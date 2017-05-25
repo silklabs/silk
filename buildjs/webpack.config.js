@@ -179,6 +179,7 @@ const config = {
   devtool: 'source-map',
   entry,
   output: {
+    sourcePrefix: '',
     path: path.join(destination),
     libraryTarget: target === 'web' ? 'var' : 'commonjs2',
     filename: `[name]`,

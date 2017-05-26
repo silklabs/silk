@@ -12,6 +12,7 @@ if ${CI:-false}; then
     export CI_PROJECT_DIR=$TRAVIS_BUILD_DIR
     export CI_PULL_REQUEST=$TRAVIS_PULL_REQUEST
     export CI_REPO_SLUG=$TRAVIS_REPO_SLUG
+    export CI_CACHE_DIR=~/ci-cache
   fi
   if ${BUILDKITE:-false}; then
     export CI_BRANCH=$BUILDKITE_BRANCH
@@ -22,6 +23,7 @@ if ${CI:-false}; then
     export CI_PROJECT_DIR=/ci # TODO...
     export CI_PULL_REQUEST=$BUILDKITE_PULL_REQUEST
     export CI_REPO_SLUG="$BUILDKITE_ORGANIZATION_SLUG/$BUILDKITE_PIPELINE_SLUG"
+    export CI_CACHE_DIR=/ci-cache
   fi
   if ${GITLAB_CI:-false}; then
     export CI_BRANCH=$CI_COMMIT_REF_NAME
@@ -32,6 +34,7 @@ if ${CI:-false}; then
     #CI_PROJECT_DIR set natively
     export CI_PULL_REQUEST=false
     export CI_REPO_SLUG="$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME"
+    export CI_CACHE_DIR=~/ci-cache
   fi
 else
   export CI=false
@@ -46,3 +49,4 @@ echo CI_OS_NAME=$CI_OS_NAME
 echo CI_PROJECT_DIR=$CI_PROJECT_DIR
 echo CI_PULL_REQUEST=$CI_PULL_REQUEST
 echo CI_REPO_SLUG=$CI_REPO_SLUG
+echo CI_CACHE_DIR=$CI_CACHE_DIR

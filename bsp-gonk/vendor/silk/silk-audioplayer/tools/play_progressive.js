@@ -1,5 +1,5 @@
 /**
- * @noflow
+ * @flow
  */
 
 import Player from 'silk-audioplayer';
@@ -13,8 +13,12 @@ let URL2 = 'http://iheart.stream.publicradio.org/rockthecradle-iheart.aac';
 const player = new Player();
 
 function playUrl(url) {
+  log.info(`Playing ${url}`);
   return new Promise((resolve, reject) => {
-    player.on('done', () => resolve());
+    player.on('done', () => {
+      log.info(`Playback done`);
+      resolve();
+    });
     let request = http.get(url, (res) => {
       res.once('error', (err) => reject(err));
       res.on('data', data => player.write(data));

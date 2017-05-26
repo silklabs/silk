@@ -1,5 +1,5 @@
 /**
- * @noflow
+ * @flow
  */
 
 import Player from 'silk-audioplayer';
@@ -7,7 +7,7 @@ import icy from 'icy';
 import createLog from 'silk-log';
 const log = createLog('test');
 
-let url = 'http://firewall.pulsradio.com';
+let url = 'http://kidspublicradio2.got.net:8000/lullaby?lang=en-US%2cen%3bq%3d0.8';
 
 let player = new Player();
 
@@ -28,7 +28,6 @@ icy.get(url, function (res) {
       log.error(error.message);
     }
     log.info(`Shoutcast stream ended`);
-    player = null;
   };
 
   res.once('error', onEnd);

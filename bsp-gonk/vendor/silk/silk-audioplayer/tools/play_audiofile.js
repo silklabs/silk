@@ -1,5 +1,5 @@
 /**
- * @noflow
+ * @flow
  */
 
 import Player from 'silk-audioplayer';
@@ -7,14 +7,11 @@ import createLog from 'silk-log';
 const log = createLog('test');
 
 let player = new Player();
+player.setVolume(1.0);
 
-player.play(__dirname + '/../media/mpthreetest.mp3')
+player.play(process.argv[2])
 .then(() => {
-  log.info(`Done playing 1`);
-  return player.play(__dirname + '/../media/mpthreetest.mp3');
-})
-.then(() => {
-  log.info(`Done playing 2`);
+  log.info(`Done playing`);
 })
 .catch((err) => log.error(err));
 

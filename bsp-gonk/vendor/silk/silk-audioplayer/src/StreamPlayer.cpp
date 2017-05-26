@@ -78,6 +78,25 @@
 
 namespace android {
 
+/**
+ * Handle end of stream event
+ */
+static void audioCallback(int event, void* user, void *info) {
+  StreamPlayer *player = (StreamPlayer*) user;
+  switch (event) {
+    case AudioTrack::EVENT_MARKER: {
+      ALOGD("Received event EVENT_MARKER");
+      if (player != NULL) {
+        player->reset();
+      }
+      break;
+    }
+    default:
+      ALOGV("Received unknown event %d", event);
+      break;
+  }
+}
+
 StreamPlayer::StreamPlayer() :
     mState(UNPREPARED),
     mDoMoreStuffGeneration(0),
@@ -458,7 +477,7 @@ status_t StreamPlayer::onDoMoreStuff() {
 
     if (err == OK) {
       ALOGV("dequeued output buffer");
-
+      mCodecState.mBytesToPlay = mCodecState.mBytesToPlay + info.mSize;
       mCodecState.mAvailOutputBufferInfos.push_back(info);
     } else if (err == INFO_FORMAT_CHANGED) {
       err = onOutputFormatChanged();
@@ -477,8 +496,15 @@ status_t StreamPlayer::onDoMoreStuff() {
     status_t err = mExtractor->getSampleTrackIndex(&trackIndex);
 
     if (err == ERROR_END_OF_STREAM) {
-      ALOGI("encountered input EOS.");
-      reset();
+      ALOGI("encountered input EOS, total Size %llu", mCodecState.mBytesToPlay);
+      if (mCodecState.mAudioTrack != NULL) {
+        ALOGV("Frame size %d", mCodecState.mAudioTrack->frameSize());
+        uint32_t numSamples =
+          mCodecState.mBytesToPlay /
+          mCodecState.mAudioTrack->frameSize();
+        ALOGV("Setting marker position to %d", numSamples);
+        mCodecState.mAudioTrack->setMarkerPosition(numSamples);
+      }
       break;
     } else if (err != OK) {
       ALOGE("error %d", err);
@@ -598,14 +624,28 @@ status_t StreamPlayer::onOutputFormatChanged() {
     }
 
     ALOGD("format %d", format);
-    mCodecState.mAudioTrack = new AudioTrack(
-        AUDIO_STREAM_MUSIC,
-        sampleRate,
-        format,
-        audio_channel_out_mask_from_count(channelCount),
-        0);
-
+    mCodecState.mAudioTrack = new AudioTrack();
+    mCodecState.mAudioTrack->set(
+      AUDIO_STREAM_DEFAULT,
+      sampleRate,
+      format,
+      audio_channel_out_mask_from_count(channelCount),
+      0,
+      AUDIO_OUTPUT_FLAG_NONE,
+      audioCallback,
+      this,
+      0,
+      0,
+      false,
+      AUDIO_SESSION_ALLOCATE,
+      AudioTrack::TRANSFER_SYNC,
+      NULL,
+      -1,
+      -1,
+      NULL
+    );
     mCodecState.mNumFramesWritten = 0;
+    mCodecState.mBytesToPlay = 0;
   }
 
   return OK;

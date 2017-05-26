@@ -89,6 +89,7 @@ private:
 
     sp<AudioTrack> mAudioTrack;
     uint32_t mNumFramesWritten;
+    uint64_t mBytesToPlay;
   };
 
   State mState;

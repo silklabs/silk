@@ -1,5 +1,5 @@
 /**
- * @noflow
+ * @flow
  */
 
 import Player from 'silk-audioplayer';

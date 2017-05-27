@@ -102,7 +102,8 @@ StreamPlayer::StreamPlayer() :
     mDoMoreStuffGeneration(0),
     mListener(NULL),
     mDurationUs(-1),
-    mGain(1.0) {
+    mGain(1.0),
+    mAudioTrackFormat(NULL) {
   ALOGV("Finished initializing StreamPlayer");
 }
 
@@ -309,18 +310,17 @@ status_t StreamPlayer::onPrepare() {
 
   bool haveAudio = false;
   for (size_t i = 0; i < mExtractor->countTracks(); ++i) {
-    sp<AMessage> format;
-    status_t err = mExtractor->getTrackFormat(i, &format);
+    status_t err = mExtractor->getTrackFormat(i, &mAudioTrackFormat);
     CHECK_EQ(err, (status_t)OK, "Failed to get track format");
-    ALOGD("Track format is '%s'", format->debugString(0).c_str());
+    ALOGD("Track format is '%s'", mAudioTrackFormat->debugString(0).c_str());
 
     int64_t duration;
-    if (format->findInt64("durationUs", &duration)) {
+    if (mAudioTrackFormat->findInt64("durationUs", &duration)) {
       mDurationUs = duration;
     }
 
     AString mime;
-    CHECK(format->findString("mime", &mime), "Failed to get mime type");
+    CHECK(mAudioTrackFormat->findString("mime", &mime), "Failed to get mime type");
 
     if (!haveAudio && !strncasecmp(mime.c_str(), "audio/", 6)) {
       haveAudio = true;
@@ -328,7 +328,6 @@ status_t StreamPlayer::onPrepare() {
       continue;
     }
 
-    mAudioTrackFormat = format;
     err = mExtractor->selectTrack(i);
     CHECK_EQ(err, (status_t)OK, "Failed to select track");
 
@@ -339,7 +338,7 @@ status_t StreamPlayer::onPrepare() {
     CHECK((mCodecState.mCodec != NULL), "Failed to create media codec");
 
     err = mCodecState.mCodec->configure(
-        format,
+        mAudioTrackFormat,
         NULL,
         NULL /* crypto */,
         0 /* flags */);
@@ -348,7 +347,7 @@ status_t StreamPlayer::onPrepare() {
 
     size_t j = 0;
     sp<ABuffer> buffer;
-    while (format->findBuffer(AStringPrintf("csd-%d", j).c_str(), &buffer)) {
+    while (mAudioTrackFormat->findBuffer(AStringPrintf("csd-%d", j).c_str(), &buffer)) {
       mCodecState.mCSD.push_back(buffer);
       ++j;
     }
@@ -392,6 +391,7 @@ status_t StreamPlayer::onPrepare() {
   if (mBufferedDataSource != NULL) {
     mBufferedDataSource->doneSniffing();
   }
+
   notify(MEDIA_PREPARED, 0);
   return OK;
 }
@@ -446,6 +446,10 @@ status_t StreamPlayer::onReset() {
     mExtractor.clear();
   }
 
+  if (mAudioTrackFormat != NULL) {
+    mAudioTrackFormat.clear();
+  }
+
   mGain = 1.0;
   return OK;
 }
@@ -496,7 +500,7 @@ status_t StreamPlayer::onDoMoreStuff() {
     status_t err = mExtractor->getSampleTrackIndex(&trackIndex);
 
     if (err == ERROR_END_OF_STREAM) {
-      ALOGI("encountered input EOS, total Size %llu", mCodecState.mBytesToPlay);
+      ALOGV("encountered input EOS, total Size %llu", mCodecState.mBytesToPlay);
       if (mCodecState.mAudioTrack != NULL) {
         ALOGV("Frame size %d", mCodecState.mAudioTrack->frameSize());
         uint32_t numSamples =

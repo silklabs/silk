@@ -23,15 +23,17 @@ let bindings = null;
  */
 function playOnHost(fileName: string): Promise<void> {
   let BINARY;
+  let options = [];
   if (process.platform === 'darwin') {
     BINARY = 'afplay'; // Default player on OSX
   } else if (process.platform === 'linux') {
-    BINARY = 'mplayer'; // Run apt-get install mplayer first
+    BINARY = 'ffplay'; // `sudo apt-get install ffmpeg`
+    options = ['-nodisp', '-autoexit', '-loglevel', 'quiet'];
   } else {
     return Promise.reject('Unsupported OS');
   }
 
-  return util.exec(BINARY, [fileName])
+  return util.exec(BINARY, [fileName, ...options])
   .catch(err => {
     let msg = `Failed to exec '${BINARY}': ${err}`;
     log.error(msg);

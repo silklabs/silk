@@ -14,6 +14,7 @@ RUN apt-get update -qq && \
     add-apt-repository -y ppa:phablet-team/tools && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/ppa && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
+    add-apt-repository -y ppa:mc3man/trusty-media && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927 && \
     echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 32A37959C2FA5C3C99EFBC32A79206696452D198 && \
@@ -85,7 +86,8 @@ RUN apt-get update -qq && \
         vnc4server \
         wget \
         xmlstarlet \
-        zip && \
+        zip \
+        ffmpeg && \
     rm -rf /var/lib/apt/lists/*
 
 # Build/install opencv3

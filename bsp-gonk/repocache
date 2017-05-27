@@ -64,12 +64,28 @@ fetch)
           # mindful of log length limits
           PROGRESS="-q"
         fi
-        wget --continue \
-             $PROGRESS \
-             --retry-connrefused \
-             --read-timeout=60 \
-             $REPOCACHE_URLPREFIX$repocache_urlsuffix -O - \
-          | tar zx
+        if [[ -n $CI_CACHE_DIR ]] && [[ -r $CI_CACHE_DIR ]]; then
+          # If CI_CACHE_DIR exists, download and save the tarball there, and
+          # try to reuse it next time around.
+          mkdir -p $CI_CACHE_DIR/repocache
+          tarball=$CI_CACHE_DIR/repocache/$repocache_urlsuffix
+          if [[ ! -r $tarball ]]; then
+            wget --continue \
+                 $PROGRESS \
+                 --retry-connrefused \
+                 --read-timeout=60 \
+                 $REPOCACHE_URLPREFIX$repocache_urlsuffix \
+                 -O $tarball
+          fi
+          tar zxf $tarball
+        else
+          wget --continue \
+               $PROGRESS \
+               --retry-connrefused \
+               --read-timeout=60 \
+               $REPOCACHE_URLPREFIX$repocache_urlsuffix -O - \
+            | tar zx
+        fi
         exit 0
       fi
     done

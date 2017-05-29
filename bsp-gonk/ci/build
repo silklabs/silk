@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+cd $(dirname $0)/..
+
+source build/envsetup.sh
+make -j$(nproc)
+
+exit 0

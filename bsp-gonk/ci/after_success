@@ -1,0 +1,32 @@
+#!/bin/bash -ex
+
+source build/envsetup.sh
+if [[ -z $SILK_BOARD ]]; then
+  echo "Must be run after : source build/envsetup.sh"
+  exit 1
+fi
+
+if [[ -z $CI_BRANCH ]]; then
+  echo "Please set CI_BRANCH"
+  exit 1
+fi
+
+channel=${SILK_CHANNEL:-nightly}
+branch=$CI_BRANCH
+os=$(uname | tr '[:upper:]' '[:lower:]')
+version=$(node -p 'require("../version").semver')
+target_upload_path=$channel/$SILK_BOARD/$os/$version
+
+echo --- target tarball
+./archive dist
+mkdir -p sos_release
+tar czvf sos_release/target.tar.gz dist
+
+if [[ $CI_PULL_REQUEST = false ]]; then
+  echo --- upload target tarball
+  ../../s3-artifacts/bin/upload \
+    silk-sos-release \
+    $target_upload_path \
+    $PWD/sos_release \
+    --credentials sos_release
+fi

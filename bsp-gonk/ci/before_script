@@ -1,0 +1,57 @@
+# |source| me
+
+set -e
+
+if [[ $CI_OS_NAME == osx ]]; then
+  export CI_IGNORE_CASE_INSENSITIVE_FS=please
+fi
+
+source ../../setup
+ARTIFACT_USE_BUILDKITE_AGENT=true
+source ../../ci-artifacts/setup
+
+if [[ -n $CI_CACHE_DIR ]]; then
+  export CCACHE_ARTIFACT_PATH="ccache/bsp-gonk/$BOARD-$PRODUCT"
+  export CCACHE_DIR=$CI_CACHE_DIR/$CCACHE_ARTIFACT_PATH
+  mkdir -p $CCACHE_DIR
+fi
+
+echo --- sync
+(
+  set -x
+  time ./sync $BOARD $PRODUCT
+)
+
+echo --- ccache setup
+if [[ $CI_OS_NAME == osx ]]; then
+  export PREBUILT_CCACHE=prebuilts/misc/darwin-x86/ccache/ccache
+else
+  export PREBUILT_CCACHE=prebuilts/misc/linux-x86/ccache/ccache
+fi
+
+echo CCACHE_DIR: $CCACHE_DIR
+export CCACHE_COMPRESS=true
+(
+  set -x
+  $PREBUILT_CCACHE -M 1G
+
+  # Clear the stats before this build...
+  $PREBUILT_CCACHE -z
+  # Dump info about ccache (how much is in the cache/etc...)
+  $PREBUILT_CCACHE -s
+)
+
+echo --- build/envsetup.sh
+(
+  set -e
+  CI_PATCHTREE_FORCE=force
+  source build/envsetup.sh
+)
+
+if ${CI_DEBUG:-false}; then
+  df -h
+  du -hs * .repo
+  du -hs .
+fi
+
+set +e

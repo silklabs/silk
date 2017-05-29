@@ -2,8 +2,6 @@ steps:
   - command: "pub/docker/ci/script"
     agents:
       - "docker=true"
-    timeout: 60
     env:
       NODOCKER: 1
-    agents:
-      - "docker=true"
+    timeout: 60

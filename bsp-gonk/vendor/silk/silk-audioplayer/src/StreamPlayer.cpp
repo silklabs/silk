@@ -429,13 +429,19 @@ status_t StreamPlayer::onReset() {
     mCodecState.mCodec.clear();
   }
 
-  if (mBufferedDataSource != NULL) {
-    mBufferedDataSource->reset();
-    mBufferedDataSource.clear();
-  }
+  mCodecState.mCSD.clear();
+  mCodecState.mBuffers[0].clear();
+  mCodecState.mBuffers[1].clear();
+  mCodecState.mAvailInputBufferIndices.clear();
+  mCodecState.mAvailOutputBufferInfos.clear();
 
   if (mCodecState.mAudioTrack != NULL) {
     mCodecState.mAudioTrack.clear();
+  }
+
+  if (mBufferedDataSource != NULL) {
+    mBufferedDataSource->reset();
+    mBufferedDataSource.clear();
   }
 
   if (mCodecLooper != NULL) {

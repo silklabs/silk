@@ -1,0 +1,6 @@
+steps:
+  - command: "pub/node-caffe/ci/script"
+    agents:
+      - "docker=true"
+    timeout: 15
+

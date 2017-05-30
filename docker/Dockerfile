@@ -19,7 +19,7 @@ RUN apt-get update -qq && \
     echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 32A37959C2FA5C3C99EFBC32A79206696452D198 && \
     echo "deb https://apt.buildkite.com/buildkite-agent stable main" > /etc/apt/sources.list.d/buildkite-agent.list && \
-    apt-get update && \
+    apt-get update -qq && \
     DEBIAN_FRONTEND=noninteractive \
       apt-get install -y \
         apt-file \
@@ -66,11 +66,11 @@ RUN apt-get update -qq && \
         m4 \
         mkisofs \
         mongodb-org \
-        mplayer \
+        mongodb-org-mongos \
         mongodb-org-server \
         mongodb-org-shell \
-        mongodb-org-mongos \
         mongodb-org-tools \
+        mplayer \
         openjdk-7-jdk \
         openssh-server \
         pkg-config \
@@ -89,6 +89,14 @@ RUN apt-get update -qq && \
         zip \
         ffmpeg && \
     rm -rf /var/lib/apt/lists/*
+
+# JDK 1.8
+RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openjdk-8/openjdk-8-jre-headless_8u45-b14-1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openjdk-8/openjdk-8-jre_8u45-b14-1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openjdk-8/openjdk-8-jdk_8u45-b14-1_amd64.deb && \
+    sudo apt-get update -qq && \
+    sudo dpkg -i *.deb && \
+    rm *.deb
 
 # Build/install opencv3
 RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \

@@ -1,6 +1,7 @@
 FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu14.04
 
-LABEL maintainer mvine@silklabs.com
+LABEL maintainer mvines@silklabs.com
+
 
 RUN apt-get update -qq && \
     apt-get install -y \
@@ -15,6 +16,8 @@ RUN apt-get update -qq && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/ppa && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     add-apt-repository -y ppa:mc3man/trusty-media && \
+    add-apt-repository "deb https://cli-assets.heroku.com/branches/stable/apt ./" && \
+    curl -L https://cli-assets.heroku.com/apt/release.key | apt-key add - && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927 && \
     echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 32A37959C2FA5C3C99EFBC32A79206696452D198 && \
@@ -43,6 +46,7 @@ RUN apt-get update -qq && \
         gfortran \
         git \
         gnuplot \
+        heroku \
         jq \
         lib32stdc++6 \
         lib32z1 \
@@ -88,6 +92,7 @@ RUN apt-get update -qq && \
         xmlstarlet \
         zip \
         ffmpeg && \
+    heroku plugins:install heroku-builds && \
     rm -rf /var/lib/apt/lists/*
 
 # JDK 1.8

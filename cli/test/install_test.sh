@@ -1,8 +1,18 @@
-#! /bin/bash -e
+#!/bin/bash -ex
 
 # Simulate a global npm install and run help (just to ensure we can boot).
+cd $(dirname $0)/..
 
-npm install -g .
+# Pull down dev dependencies before 'install -g'
+npm install .
+
+MAYBE_SUDO=
+if ${BUILDKITE:-false}; then
+  MAYBE_SUDO=sudo
+fi
+$MAYBE_SUDO npm install -g .
+
+which silk
 out=$(silk --help)
 
 echo $out

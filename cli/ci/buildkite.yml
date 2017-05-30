@@ -1,0 +1,7 @@
+steps:
+  - command: "cd pub/cli; ./test/install_test.sh && npm test"
+    label: "npm test"
+    agents:
+      - "docker=true"
+    timeout: 10
+

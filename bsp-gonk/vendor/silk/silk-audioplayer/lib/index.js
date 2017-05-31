@@ -342,6 +342,7 @@ export default class Player extends events.EventEmitter {
     return new Promise((resolve, reject) => {
       this._stopPromiseAccept = resolve;
       this._stopPromiseReject = reject;
+      this._player.endOfStream();
       this._player.stop();
     });
   }

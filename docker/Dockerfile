@@ -2,7 +2,6 @@ FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu14.04
 
 LABEL maintainer mvines@silklabs.com
 
-
 RUN apt-get update -qq && \
     apt-get install -y \
       apt-transport-https \
@@ -92,8 +91,8 @@ RUN apt-get update -qq && \
         xmlstarlet \
         zip \
         ffmpeg && \
-    heroku plugins:install heroku-builds && \
     rm -rf /var/lib/apt/lists/*
+
 
 # JDK 1.8
 RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openjdk-8/openjdk-8-jre-headless_8u45-b14-1_amd64.deb && \
@@ -102,19 +101,6 @@ RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openjdk-8/openjdk-8-jr
     sudo apt-get update -qq && \
     sudo dpkg -i *.deb && \
     rm *.deb
-
-# There's no Ubuntu 14.04 package for tar 1.29, so build/install manually.
-# Heroku wants the '--exclude-vcs-ignores' tar option, which does not exist in
-# tar 1.27
-RUN curl http://ftp.gnu.org/gnu/tar/tar-1.29.tar.gz -o tar-1.29.tgz && \
-    tar zxf tar-1.29.tgz && \
-    cd tar-1.29/ && \
-    ./configure && \
-    make -j$(nproc) && \
-    sudo make install && \
-    hash tar && \
-    tar --version && \
-    rm -rf tar-1.29 tar-1.29.tgz \
 
 # Build/install opencv3
 RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \

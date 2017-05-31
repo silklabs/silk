@@ -6,7 +6,7 @@ These instructions have only been tested on *Ubuntu 14.04 LTS*. (Ubuntu 16.04 LT
 ```bash
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
 source ~/.nvm/nvm.sh
-nvm install 6.9.1
+nvm install 6.10.3
 ```
 
 cmake 3.x is required, add a PPA for it since Ubuntu 14.04 doesn't have it out of the box:

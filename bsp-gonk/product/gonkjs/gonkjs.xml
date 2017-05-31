@@ -10,7 +10,7 @@
   <project name="nodejs/node"
            path="external/node"
            remote="github"
-           revision="refs/tags/v6.9.1" clone-depth="1"/>
+           revision="refs/tags/v6.10.3" clone-depth="1"/>
 
   <project name="platform/external/busybox"
            path="external/busybox"

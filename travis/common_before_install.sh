@@ -38,7 +38,7 @@ if [ -n ${TRAVIS:-false} ]; then
   fi
 fi
 
-NODE_VERSION=6.9.1
+NODE_VERSION=6.10.3
 if [[ $(node --version) != v${NODE_VERSION} ]]; then
   nvm install $NODE_VERSION
   nvm use $NODE_VERSION

@@ -24,9 +24,9 @@ var path = require('path');
 var util = require('util');
 
 // 6.x LTS.
-var RELEASE_PATH = 'v6.9.1';
+var RELEASE_PATH = 'v6.10.3';
 var RELEASE_BASE_URL = 'https://nodejs.org/download/release/';
-var RELEASE_VERSION = 'v6.9.1';
+var RELEASE_VERSION = 'v6.10.3';
 
 var MIN_NODE_MAJOR_VER = 6;
 

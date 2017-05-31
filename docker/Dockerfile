@@ -130,10 +130,10 @@ RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \
   cd ../.. && \
   rm -rf opencv
 
-# Install node v6.9.1
-RUN wget -q https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz && \
-    tar -x -C /usr/local --strip-components 1 -f node-v6.9.1-linux-x64.tar.gz && \
-    rm node-v6.9.1-linux-x64.tar.gz
+# Install node v6.10.3
+RUN wget -q https://nodejs.org/dist/v6.10.3/node-v6.10.3-linux-x64.tar.gz && \
+    tar -x -C /usr/local --strip-components 1 -f node-v6.10.3-linux-x64.tar.gz && \
+    rm node-v6.10.3-linux-x64.tar.gz
 
 # Useful npm packages
 RUN npm install -g mvines/relay

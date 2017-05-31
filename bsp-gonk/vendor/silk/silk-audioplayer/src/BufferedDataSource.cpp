@@ -61,6 +61,11 @@ status_t BufferedDataSource::deleteUpTo(off64_t offset) {
   off64_t newOffset = offset - mOffset;
   ALOGV("new offset %lld", newOffset);
 
+  if (newOffset < 0) {
+    ALOGE("new offset can't be negative");
+    return ERROR_END_OF_STREAM;
+  }
+
   if (waitForData(0, newOffset) != OK) {
     if (newOffset >= mLength) {
       return ERROR_END_OF_STREAM;

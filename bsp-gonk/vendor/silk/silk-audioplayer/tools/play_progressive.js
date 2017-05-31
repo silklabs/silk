@@ -14,6 +14,8 @@ const player = new Player();
 
 function playUrl(url) {
   log.info(`Playing ${url}`);
+  player.removeAllListeners('done');
+
   return new Promise((resolve, reject) => {
     player.on('done', () => {
       log.info(`Playback done`);

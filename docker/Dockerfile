@@ -103,6 +103,19 @@ RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openjdk-8/openjdk-8-jr
     sudo dpkg -i *.deb && \
     rm *.deb
 
+# There's no Ubuntu 14.04 package for tar 1.29, so build/install manually.
+# Heroku wants the '--exclude-vcs-ignores' tar option, which does not exist in
+# tar 1.27
+RUN curl http://ftp.gnu.org/gnu/tar/tar-1.29.tar.gz -o tar-1.29.tgz && \
+    tar zxf tar-1.29.tgz && \
+    cd tar-1.29/ && \
+    ./configure && \
+    make -j$(nproc) && \
+    sudo make install && \
+    hash tar && \
+    tar --version && \
+    rm -rf tar-1.29 tar-1.29.tgz \
+
 # Build/install opencv3
 RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \
   cd opencv && \

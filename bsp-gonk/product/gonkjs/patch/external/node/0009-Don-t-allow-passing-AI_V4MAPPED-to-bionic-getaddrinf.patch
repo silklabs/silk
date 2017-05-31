@@ -1,7 +1,7 @@
-From 7cb7c04b36dd1d110462ae1d7ec68c7039c2f8a1 Mon Sep 17 00:00:00 2001
+From e900db51ffa07f9a9bf9ad1d728d24a00100df6e Mon Sep 17 00:00:00 2001
 From: Chris Jones <cjones.bugs@gmail.com>
 Date: Mon, 25 May 2015 17:03:17 -0700
-Subject: [PATCH 2/2] Don't allow passing AI_V4MAPPED to bionic
+Subject: [PATCH 09/11] Don't allow passing AI_V4MAPPED to bionic
  |getaddrinfo()|.
 
 ---
@@ -9,10 +9,10 @@ Subject: [PATCH 2/2] Don't allow passing AI_V4MAPPED to bionic
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/src/cares_wrap.cc b/src/cares_wrap.cc
-index 1764374..2f5cf34 100644
+index 0a0aff95e2..a71aa7da06 100644
 --- a/src/cares_wrap.cc
 +++ b/src/cares_wrap.cc
-@@ -1302,7 +1302,16 @@ static void Initialize(Handle<Object> target,
+@@ -1367,7 +1367,16 @@ static void Initialize(Local<Object> target,
    target->Set(FIXED_ONE_BYTE_STRING(env->isolate(), "AI_ADDRCONFIG"),
                Integer::New(env->isolate(), AI_ADDRCONFIG));
    target->Set(FIXED_ONE_BYTE_STRING(env->isolate(), "AI_V4MAPPED"),
@@ -31,5 +31,5 @@ index 1764374..2f5cf34 100644
    Local<FunctionTemplate> aiw =
        FunctionTemplate::New(env->isolate(), NewGetAddrInfoReqWrap);
 -- 
-2.3.2 (Apple Git-55)
+2.12.3
 

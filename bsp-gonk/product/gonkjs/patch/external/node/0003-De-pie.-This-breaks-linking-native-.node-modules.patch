@@ -1,14 +1,14 @@
-From 3597303e8aceb556809e542b4cb6fc305721c865 Mon Sep 17 00:00:00 2001
+From b242c0bc8d273bbc1f18fa050c052ddc4c03f1b6 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Wed, 26 Oct 2016 17:28:29 -0700
-Subject: [PATCH] De-pie. This breaks linking native .node modules
+Subject: [PATCH 03/11] De-pie. This breaks linking native .node modules
 
 ---
  common.gypi | 8 --------
  1 file changed, 8 deletions(-)
 
 diff --git a/common.gypi b/common.gypi
-index 204c1c6..afd9db4 100644
+index af9c6bafb0..795624ee8e 100644
 --- a/common.gypi
 +++ b/common.gypi
 @@ -76,10 +76,6 @@
@@ -34,5 +34,5 @@ index 204c1c6..afd9db4 100644
              'msvs_settings': {
               'VCCLCompilerTool': {
 -- 
-2.10.0
+2.12.3
 

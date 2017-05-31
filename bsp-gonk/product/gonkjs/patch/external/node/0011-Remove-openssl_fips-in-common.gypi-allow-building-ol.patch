@@ -1,18 +1,18 @@
-From d757185f05186da3cea5f83d16c4666637451962 Mon Sep 17 00:00:00 2001
+From 7312b4f60d62d8985a49b5d85c2f0d7fab22a25f Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Wed, 7 Oct 2015 12:51:03 -0700
-Subject: [PATCH] Remove openssl_fips in common.gypi (allow building older
- native modules)
+Subject: [PATCH 11/11] Remove openssl_fips in common.gypi (allow building
+ older native modules)
 
 ---
  common.gypi | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/common.gypi b/common.gypi
-index c6bd04d..ce914c4 100644
+index afcc8acfaf..c0d10a9bfe 100644
 --- a/common.gypi
 +++ b/common.gypi
-@@ -38,7 +38,7 @@
+@@ -46,7 +46,7 @@
          'OBJ_DIR': '<(PRODUCT_DIR)/obj.target',
          'V8_BASE': '<(PRODUCT_DIR)/obj.target/deps/v8/tools/gyp/libv8_base.a',
        }],
@@ -22,5 +22,5 @@ index c6bd04d..ce914c4 100644
        }, {
          'OPENSSL_PRODUCT': 'libopenssl.a',
 -- 
-2.4.5
+2.12.3
 

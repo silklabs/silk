@@ -1,17 +1,17 @@
-From 6cb5224e9f4372c3d2cd56902a1b73716b952d4e Mon Sep 17 00:00:00 2001
+From 0610de6bef61593e84fca0a4c19adfc2f2449607 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Wed, 12 Apr 2017 09:49:08 -0700
-Subject: [PATCH] Enable process user/group methods
+Subject: [PATCH 05/11] Enable process user/group methods
 
 ---
  src/node.cc | 9 +++++----
  1 file changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/src/node.cc b/src/node.cc
-index 77bb7b4..a4356e1 100644
+index 6ca8ee95e2..6a7b97ff37 100644
 --- a/src/node.cc
 +++ b/src/node.cc
-@@ -82,7 +82,7 @@ typedef int mode_t;
+@@ -83,7 +83,7 @@ typedef int mode_t;
  #include <unistd.h>  // setuid, getuid
  #endif
  
@@ -20,7 +20,7 @@ index 77bb7b4..a4356e1 100644
  #include <pwd.h>  // getpwnam()
  #include <grp.h>  // getgrnam()
  #endif
-@@ -1919,7 +1919,7 @@ static void Umask(const FunctionCallbackInfo<Value>& args) {
+@@ -1922,7 +1922,7 @@ static void Umask(const FunctionCallbackInfo<Value>& args) {
  }
  
  
@@ -29,7 +29,7 @@ index 77bb7b4..a4356e1 100644
  
  static const uid_t uid_not_found = static_cast<uid_t>(-1);
  static const gid_t gid_not_found = static_cast<gid_t>(-1);
-@@ -1971,7 +1971,8 @@ static gid_t gid_by_name(const char* name) {
+@@ -1974,7 +1974,8 @@ static gid_t gid_by_name(const char* name) {
    errno = 0;
    pp = nullptr;
  
@@ -39,7 +39,7 @@ index 77bb7b4..a4356e1 100644
      return pp->gr_gid;
    }
  
-@@ -3366,7 +3367,7 @@ void SetupProcessObject(Environment* env,
+@@ -3398,7 +3399,7 @@ void SetupProcessObject(Environment* env,
  
    env->SetMethod(process, "umask", Umask);
  
@@ -49,5 +49,5 @@ index 77bb7b4..a4356e1 100644
    env->SetMethod(process, "geteuid", GetEUid);
    env->SetMethod(process, "setuid", SetUid);
 -- 
-2.10.1 (Apple Git-78)
+2.12.3
 

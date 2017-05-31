@@ -1,8 +1,8 @@
-From c2ece82d41eb53d1245c35ac3c1d7479103bb100 Mon Sep 17 00:00:00 2001
+From c8c813355e00beb9a0609dbfd234e7e6f3e07cd3 Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Wed, 3 Aug 2016 13:23:37 -0700
-Subject: [PATCH] Add ro.silk.node.sysprop.netinfo to avoid suspected netlink
- kernel bug
+Subject: [PATCH 01/11] Add ro.silk.node.sysprop.netinfo to avoid suspected
+ netlink kernel bug
 
 https://github.com/nodejs/node-v0.x-archive/issues/7180
 ---
@@ -10,11 +10,11 @@ https://github.com/nodejs/node-v0.x-archive/issues/7180
  1 file changed, 71 insertions(+)
 
 diff --git a/src/node_os.cc b/src/node_os.cc
-index 9a995b3..295a812 100644
+index 211ac3d01d..219b97b042 100644
 --- a/src/node_os.cc
 +++ b/src/node_os.cc
-@@ -185,9 +185,80 @@ static void GetLoadAvg(const FunctionCallbackInfo<Value>& args) {
-   args.GetReturnValue().Set(loads);
+@@ -192,9 +192,80 @@ static void GetLoadAvg(const FunctionCallbackInfo<Value>& args) {
+   uv_loadavg(loadavg);
  }
  
 +#ifdef ANDROID
@@ -95,5 +95,5 @@ index 9a995b3..295a812 100644
    int count, i;
    char ip[INET6_ADDRSTRLEN];
 -- 
-2.7.4 (Apple Git-66)
+2.12.3
 

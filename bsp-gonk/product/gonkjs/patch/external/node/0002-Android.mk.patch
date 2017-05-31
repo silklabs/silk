@@ -1,7 +1,7 @@
-From 4609351a24075e9c3c9dcc4ebc1be59c42299420 Mon Sep 17 00:00:00 2001
+From 0a1b375aa1a6bd76c6b708d977ec12742b13851d Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
-Subject: [PATCH] Android.mk
+Subject: [PATCH 02/11] Android.mk
 
 ---
  Android.mk | 122 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -10,7 +10,7 @@ Subject: [PATCH] Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 00000000..14d24ab9
+index 0000000000..14d24ab999
 --- /dev/null
 +++ b/Android.mk
 @@ -0,0 +1,122 @@
@@ -137,5 +137,5 @@ index 00000000..14d24ab9
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-2.11.0
+2.12.3
 

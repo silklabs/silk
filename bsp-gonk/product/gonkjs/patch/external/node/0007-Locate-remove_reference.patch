@@ -1,14 +1,14 @@
-From 2ba12d487c24852c087add346ab211d054c36de8 Mon Sep 17 00:00:00 2001
+From aee337a1ccfc9c58a05bf1d9cabbdd657bcbd94f Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Wed, 26 Oct 2016 14:42:01 -0700
-Subject: [PATCH] Locate remove_reference
+Subject: [PATCH 07/11] Locate remove_reference
 
 ---
  src/util.h | 4 ++++
  1 file changed, 4 insertions(+)
 
 diff --git a/src/util.h b/src/util.h
-index ecd5b12..f5b23e9 100644
+index ecd5b128c8..f5b23e9c5b 100644
 --- a/src/util.h
 +++ b/src/util.h
 @@ -22,6 +22,10 @@
@@ -23,5 +23,5 @@ index ecd5b12..f5b23e9 100644
  
  // These should be used in our code as opposed to the native
 -- 
-2.10.0
+2.12.3
 

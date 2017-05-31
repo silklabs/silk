@@ -1,7 +1,7 @@
-From f29161f88497dbec30afe0380e621f2ae9c4cd33 Mon Sep 17 00:00:00 2001
+From 7e620abd37feb3256b320023488fe22bd907cfc1 Mon Sep 17 00:00:00 2001
 From: James Lal <james@silklabs.com>
 Date: Fri, 9 Oct 2015 09:54:08 -0700
-Subject: [PATCH] Don't block tombstone signals
+Subject: [PATCH 06/11] Don't block tombstone signals
 
 ---
  deps/uv/src/unix/signal.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
@@ -9,7 +9,7 @@ Subject: [PATCH] Don't block tombstone signals
  2 files changed, 75 insertions(+)
 
 diff --git a/deps/uv/src/unix/signal.c b/deps/uv/src/unix/signal.c
-index 0b7a405..e306736 100644
+index d82b9b7cf8..316febfed8 100644
 --- a/deps/uv/src/unix/signal.c
 +++ b/deps/uv/src/unix/signal.c
 @@ -99,9 +99,26 @@ static void uv__signal_block_and_lock(sigset_t* saved_sigmask) {
@@ -89,10 +89,10 @@ index 0b7a405..e306736 100644
    if (sigaction(signum, &sa, NULL))
      return -errno;
 diff --git a/src/node.cc b/src/node.cc
-index b6acc9d..f9acae2 100644
+index 6a7b97ff37..6a958dfc4a 100644
 --- a/src/node.cc
 +++ b/src/node.cc
-@@ -3348,6 +3348,15 @@ static void RegisterSignalHandler(int signal,
+@@ -4000,6 +4000,15 @@ void RegisterSignalHandler(int signal,
    sa.sa_flags = reset_handler ? SA_RESETHAND : 0;
  #endif
    sigfillset(&sa.sa_mask);
@@ -108,7 +108,7 @@ index b6acc9d..f9acae2 100644
    CHECK_EQ(sigaction(signal, &sa, nullptr), 0);
  }
  
-@@ -3576,6 +3585,23 @@ inline void PlatformInit() {
+@@ -4271,6 +4280,23 @@ inline void PlatformInit() {
    for (unsigned nr = 1; nr < kMaxSignal; nr += 1) {
      if (nr == SIGKILL || nr == SIGSTOP)
        continue;
@@ -132,7 +132,7 @@ index b6acc9d..f9acae2 100644
      act.sa_handler = (nr == SIGPIPE) ? SIG_IGN : SIG_DFL;
      CHECK_EQ(0, sigaction(nr, &act, nullptr));
    }
-@@ -3930,6 +3956,9 @@ static void StartNodeInstance(void* arg) {
+@@ -4658,6 +4684,9 @@ static void StartNodeInstance(void* arg) {
      if (instance_data->use_debug_agent())
        EnableDebug(env);
  
@@ -143,5 +143,5 @@ index b6acc9d..f9acae2 100644
        SealHandleScope seal(isolate);
        bool more;
 -- 
-1.9.1
+2.12.3
 

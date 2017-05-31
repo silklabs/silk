@@ -1,17 +1,18 @@
-From 5cb2d5f371e0dd4696e26aa1c2831b5c6140e90b Mon Sep 17 00:00:00 2001
+From 73afaf9e8dc460286c6ff902c875e32593e28e1e Mon Sep 17 00:00:00 2001
 From: Michael Vines <mvines@silklabs.com>
 Date: Wed, 26 Oct 2016 14:43:08 -0700
-Subject: [PATCH] <type_traits> in some gonks need help finding std::size_t
+Subject: [PATCH 08/11] <type_traits> in some gonks need help finding
+ std::size_t
 
 ---
  src/util.h | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/src/util.h b/src/util.h
-index 7efe168..2425899 100644
+index f5b23e9c5b..f984695f33 100644
 --- a/src/util.h
 +++ b/src/util.h
-@@ -23,6 +23,7 @@
+@@ -19,6 +19,7 @@
  #ifdef USE_TR1_TYPE_TRAITS
  #include <tr1/type_traits>  // NOLINT(build/c++tr1)
  #else
@@ -20,5 +21,5 @@ index 7efe168..2425899 100644
  #endif
  
 -- 
-2.10.0
+2.12.3
 

@@ -308,6 +308,11 @@ export default class Player extends events.EventEmitter {
    * @instance
    */
   write(chunk: Buffer) {
+    if (this._stopPromiseAccept !== null) {
+      log.warn(`Stop playback requested; ignoring write request`);
+      return;
+    }
+
     // Prepare stream player with BufferedDataSource
     if ((this._mediaState === 'idle') || (this._mediaState === 'stopped')) {
       this._mediaState = 'preparing';

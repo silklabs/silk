@@ -148,7 +148,7 @@ int StreamPlayer::write(const void* bytes, size_t size) {
   }
 
   sp<ABuffer> abuffer = ABuffer::CreateAsCopy(bytes, size);
-  if (abuffer != NULL) {
+  if ((abuffer != NULL) && (mBufferedDataSource != NULL)) {
     mBufferedDataSource->queueBuffer(abuffer);
     return size;
   }

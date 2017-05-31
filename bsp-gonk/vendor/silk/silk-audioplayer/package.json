@@ -23,7 +23,8 @@
   "symlinkDependencies": {
     "silk-buildjs": "../../../../buildjs",
     "silk-log": "../../../../log",
-    "silk-sysutils": "../silk-sysutils"
+    "silk-sysutils": "../silk-sysutils",
+    "silk-async-utils": "/async-utils"
   },
   "gypfile": true,
   "private": true

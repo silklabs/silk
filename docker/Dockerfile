@@ -6,6 +6,7 @@ LABEL maintainer mvines@silklabs.com
 RUN apt-get update -qq && \
     apt-get install -y \
       apt-transport-https \
+      curl \
       python-software-properties \
       software-properties-common && \
     add-apt-repository -y ppa:amarburg/opencv3 && \
@@ -34,7 +35,6 @@ RUN apt-get update -qq && \
         ccache \
         chrpath \
         cmake \
-        curl \
         diffstat \
         dos2unix \
         fonts-freefont-ttf \

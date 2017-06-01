@@ -17,7 +17,9 @@ RUN apt-get update -qq && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     add-apt-repository -y ppa:mc3man/trusty-media && \
     add-apt-repository "deb https://cli-assets.heroku.com/branches/stable/apt ./" && \
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu trusty stable" && \
     curl -L https://cli-assets.heroku.com/apt/release.key | apt-key add - && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927 && \
     echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 32A37959C2FA5C3C99EFBC32A79206696452D198 && \
@@ -35,6 +37,7 @@ RUN apt-get update -qq && \
         chrpath \
         cmake \
         diffstat \
+        docker-ce \
         dos2unix \
         fonts-freefont-ttf \
         g++ \

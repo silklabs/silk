@@ -95,6 +95,9 @@ RUN addgroup --gid 999 docker && \
         xmlstarlet \
         zip \
         ffmpeg && \
+    wget https://download.docker.com/linux/ubuntu/dists/trusty/pool/edge/amd64/docker-ce_17.05.0~ce-0~ubuntu-trusty_amd64.deb && \
+    sudo dpkg -i docker-ce_17.05.0~ce-0~ubuntu-trusty_amd64.deb && \
+    rm -f docker-ce_17.05.0~ce-0~ubuntu-trusty_amd64.deb && \
     rm -rf /var/lib/apt/lists/*
 
 

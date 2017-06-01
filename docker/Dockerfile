@@ -2,7 +2,8 @@ FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu14.04
 
 LABEL maintainer mvines@silklabs.com
 
-RUN apt-get update -qq && \
+RUN addgroup --gid 999 docker && \
+    apt-get update -qq && \
     apt-get install -y \
       apt-transport-https \
       curl \
@@ -161,9 +162,9 @@ RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 10 && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20 && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 10 && \
-    addgroup silk && \
-    addgroup adbuser && \
-    adduser -ingroup silk --gecos "" --disabled-password silk && \
+    addgroup silk --gid 1000 && \
+    addgroup adbuser --gid 1002 && \
+    adduser --uid 1000 --ingroup silk --gecos "" --disabled-password silk && \
     adduser silk audio && \
     adduser silk adbuser && \
     echo 'silk ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/silk && \

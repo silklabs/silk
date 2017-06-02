@@ -9,16 +9,9 @@ module.exports = function generate(overrides) {
   const branch = branchContent.match(/BRANCH=(.*)/)[1];
   const buildtime = Date.now();
   const semver = require('./package.json').version;
-  let bsp_api_id = '';
-  try {
-    bsp_api_id = require('silk-bsp-version').bsp_api_id;
-  } catch (e) {
-    // ignore
-  };
 
   const version = Object.assign({
     branch,
-    bsp_api_id,
     buildtime,
     official: false,
     semver,

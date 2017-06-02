@@ -102,7 +102,7 @@ fi
 
 PROG=${SYMDIR}${DEBUG_BIN}
 if [ ! -f $PROG ]; then
-  PROG=${SYMDIR}/system/silk/bin/${DEBUG_BIN}
+  PROG=${SYMDIR}/silk/bin/${DEBUG_BIN}
   if [ ! -f $PROG ]; then
     PROG=${SYMDIR}/system/bin/${DEBUG_BIN}
     if [ ! -f $PROG ]; then
@@ -137,8 +137,8 @@ else
 fi
 
 
-NODE_SEARCH_PATH=$SYMDIR/system/silk/node_modules:$SYMDIR/system/silk/node_modules/build
-NODE_SEARCH_PATH=$NODE_SEARCH_PATH:$SYMDIR/system/silk/lib
+NODE_SEARCH_PATH=$SYMDIR/silk/node_modules:$SYMDIR/silk/node_modules/build
+NODE_SEARCH_PATH=$NODE_SEARCH_PATH:$SYMDIR/silk/lib
 
 sleep 1
 echo "set solib-absolute-prefix $SYMDIR" > $GDBINIT

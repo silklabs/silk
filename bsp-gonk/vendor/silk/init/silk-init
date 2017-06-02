@@ -3,7 +3,7 @@
 export DEBUG=$(getprop persist.silk.debug)
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors true)
 export UV_THREADPOOL_SIZE=32
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/silk/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/silk/lib
 
 if [ "$(getprop ro.debuggable)" = "1" ]; then
   export NODE_ENV="development"
@@ -98,7 +98,7 @@ if [ -z $1 ]; then
   # listen on it.
   setprop sys.boot_completed 1
 
-  exec system/silk/bin/node $NODE_ARGS system/silk/silk-init.js
+  exec silk/bin/node $NODE_ARGS silk/silk-init.js
   exit 1
 fi
 

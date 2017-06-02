@@ -45,7 +45,7 @@ static __inline Client *open(FrameCallback frameCallback,
   static void *handle = NULL;
 
   if (handle == NULL) {
-    handle = dlopen("/system/silk/lib/libpreview.so", RTLD_NOW);
+    handle = dlopen("/silk/lib/libpreview.so", RTLD_NOW);
     if (handle == NULL) {
       printf("libpreview.so open failed: %s\n", dlerror());
       return NULL;

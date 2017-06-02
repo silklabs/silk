@@ -1,28 +1,35 @@
 import /init.silk.dev.rc
 
 on init
-    # Can't augment existing env vars, so set everything here
-    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin:/system/silk/bin
-    export NODE_PATH /system/silk/node_modules
+    # Can't augment existing env vars, so re-set the entire PATH here
+    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin:/silk/bin
+
+    symlink /silk/node_modules /node_modules
+
+    # silk.root defaults to /system/silk
+    symlink /system/silk /silk
     mkdir /mnt/system_ab 0700 root root
 
-service gonksched /system/silk/bin/gonksched
+on post-fs-data
+    mkdir /data/silk 0755 root shell
+
+service gonksched /silk/bin/gonksched
     class late_start
     user root
 
-service fakeappops /system/silk/bin/fakeappops
+service fakeappops /silk/bin/fakeappops
     class late_start
     user root
 
-service fakeperm /system/silk/bin/fakeperm
+service fakeperm /silk/bin/fakeperm
     class late_start
     user root
 
-service fakeprocessinfo /system/silk/bin/fakeprocessinfo
+service fakeprocessinfo /silk/bin/fakeprocessinfo
     class late_start
     user root
 
-service silk /system/silk/bin/debug-wrapper /system/silk/bin/silk-init
+service silk /silk/bin/debug-wrapper /silk/bin/silk-init
     class late_start
     user root
     # The bledroid and silk-sensors services are useless without the
@@ -33,7 +40,7 @@ service silk /system/silk/bin/debug-wrapper /system/silk/bin/silk-init
     onrestart restart silk-bledroid
     onrestart restart silk-sensors
 
-service silk-volume /system/silk/bin/volume
+service silk-volume /silk/bin/volume
     class late_start
     user audio
     group audio
@@ -45,7 +52,7 @@ on property:persist.silk.volume.mute=*
 on property:persist.silk.volume.level=*
     start silk-volume
 
-service silk-wpad /system/silk/bin/debug-wrapper /system/silk/bin/wpad
+service silk-wpad /silk/bin/debug-wrapper /silk/bin/wpad
     class late_start
     user root
     group root
@@ -53,20 +60,20 @@ service silk-wpad /system/silk/bin/debug-wrapper /system/silk/bin/wpad
     # driver, which requires root
     socket wpad stream 0600 root root
 
-service silk-bledroid /system/silk/bin/debug-wrapper /system/silk/bin/bledroid
+service silk-bledroid /silk/bin/debug-wrapper /silk/bin/bledroid
     class late_start
     user root
     group root
     # bledroid will switch to the bluetooth user
     socket bledroid stream 0660 bluetooth bluetooth
 
-service silk-sensors /system/silk/bin/debug-wrapper /system/silk/bin/silk-sensors
+service silk-sensors /silk/bin/debug-wrapper /silk/bin/silk-sensors
     class late_start
     user root
     group root
     socket sensors stream 0600 root root
 
-service silk-capture /system/silk/bin/debug-wrapper /system/silk/bin/capture
+service silk-capture /silk/bin/debug-wrapper /silk/bin/capture
     class late_start
     user camera
     group camera
@@ -76,12 +83,12 @@ service silk-capture /system/silk/bin/debug-wrapper /system/silk/bin/capture
 
 
 # Tee kernel logs to logcat main
-service silk-kmsg /system/silk/bin/kmsg
+service silk-kmsg /silk/bin/kmsg
     class late_start
     user root
     group system
 
-service silk-tts /system/silk/bin/debug-wrapper /system/silk/bin/tts
+service silk-tts /silk/bin/debug-wrapper /silk/bin/tts
     class late_start
     user audio
     group audio

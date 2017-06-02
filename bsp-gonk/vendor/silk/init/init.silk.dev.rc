@@ -6,9 +6,19 @@
 on property:persist.silk.dev=1
     start silk-setup-dev
 
-service silk-setup-dev /system/bin/logwrapper /system/silk/bin/silk-setup-dev
+service silk-setup-dev /system/bin/logwrapper /silk/bin/silk-setup-dev
     user root
     group root
     disabled
     oneshot
+
+on property:silk.root=system
+  mount rootfs rootfs / rw remount
+  rm /silk
+  symlink /system/silk /silk
+
+on property:silk.root=data
+  mount rootfs rootfs / rw remount
+  rm /silk
+  symlink /data/silk /silk
 

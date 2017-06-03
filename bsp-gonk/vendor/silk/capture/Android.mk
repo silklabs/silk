@@ -155,7 +155,7 @@ LOCAL_SRC_FILES += SharedSimpleH264EncoderStub.cpp
 include external/stlport/libstlport.mk
 endif
 
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_SILK_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)

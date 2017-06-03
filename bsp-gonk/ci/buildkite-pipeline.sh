@@ -26,7 +26,13 @@ build qemu
 if [[ $BRANCH == master ]] && [[ $CI_PULL_REQUEST = false ]]; then
   build mako
   build kenzo
-  build aries
+
+  # TODO: Build the secondary boards periodically
+#  build aospkeno
+#  build aries
+#  build hammerhead
+#  build oneplus3
+#  build shamu
 fi
 
 exit 0

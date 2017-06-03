@@ -139,9 +139,6 @@ PRODUCT_PACKAGES += bleno noble
 # external/wpa_supplicant*
 PRODUCT_PACKAGES += wpa_cli
 
-# external/i2c-tools
-PRODUCT_PACKAGES += i2cdetect i2cdump i2cget i2cget
-
 # external/node-lame/
 PRODUCT_PACKAGES += lame
 

@@ -98,8 +98,8 @@ if [ -z $1 ]; then
   # listen on it.
   setprop sys.boot_completed 1
 
-  exec node $NODE_ARGS silk/silk-init.js
+  exec system/bin/node $NODE_ARGS silk/silk-init.js
   exit 1
 fi
 
-exec node $NODE_ARGS "$@"
+exec system/bin/node $NODE_ARGS "$@"

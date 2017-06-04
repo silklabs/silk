@@ -1,2 +1,3 @@
-import /system/silk/debug.prop
-import /system/silk/build.prop
+import /system/silk/board.prop
+import /silk/debug.prop
+import /silk/build.prop

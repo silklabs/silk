@@ -6,19 +6,22 @@
 on property:persist.silk.dev=1
     start silk-setup-dev
 
-service silk-setup-dev /system/bin/logwrapper /silk/bin/silk-setup-dev
+service silk-setup-dev /system/bin/logwrapper /system/silk/bin/silk-setup-dev
     user root
     group root
     disabled
     oneshot
 
-on property:silk.root=system
-  mount rootfs rootfs / rw remount
-  rm /silk
-  symlink /system/silk /silk
+on property:persist.silk.root=*
+  start silk-chroot
 
-on property:silk.root=data
-  mount rootfs rootfs / rw remount
-  rm /silk
-  symlink /data/silk /silk
+service silk-chroot /system/bin/logwrapper /system/silk/bin/silk-chroot
+  user root
+  group root
+  disabled
+  oneshot
+
+on property:silk.root=*
+  # Refresh /silk/build.prop and /silk/debug.prop
+  load_all_props
 

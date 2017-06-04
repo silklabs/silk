@@ -1,6 +1,7 @@
 #!/system/bin/sh
 
 export DEBUG=$(getprop persist.silk.debug)
+export ROOT=$(getprop persist.silk.root system)
 export DEBUG_COLORS=$(getprop persist.silk.debug.colors true)
 export UV_THREADPOOL_SIZE=32
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/silk/lib
@@ -66,7 +67,7 @@ export SILKLOG_NOCONSOLE=1
 if [ -z $1 ]; then
   bootAttempt=$((1 + $(getprop silk.boot_attempt 0)))
   setprop silk.boot_attempt $bootAttempt
-  info Starting Silk [attempt $bootAttempt]
+  info Starting /$ROOT/silk [attempt $bootAttempt]
 
   if [ "$(getprop ro.silk.update.ab false)" = "true" ]; then
     bootSlot=$(bootctl get-current-slot)

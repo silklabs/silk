@@ -6,7 +6,7 @@ on init
 
     symlink /silk/node_modules /node_modules
 
-    # silk.root defaults to /system/silk
+    # persist.silk.root defaults to /system/silk
     symlink /system/silk /silk
     mkdir /mnt/system_ab 0700 root root
 

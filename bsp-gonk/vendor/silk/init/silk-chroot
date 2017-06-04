@@ -1,0 +1,53 @@
+#!/system/bin/sh
+
+if [ "$(getprop ro.debuggable)" != "1" ]; then
+  echo Device is not debuggable
+  exit 1
+fi
+
+PSR="$(getprop persist.silk.root system)"
+SR="$(getprop silk.root)"
+
+if [ "$PSR" = system ] && [ -z "$SR" ]; then
+  # Nothing to do, default is system
+  exit 0
+fi
+
+if [ "$PSR" = "$SR" ]; then
+  echo Property reload complete, starting framework
+  start
+  exit 0
+fi
+
+if [ "$PSR" != "system" ] && [ "$PSR" != "data" ]; then
+  echo Invalid persist.silk.root: $PSR
+  exit 1
+fi
+
+echo Changing silk root to /$PSR/silk
+set -x
+
+# Stop framework
+stop
+
+mount -o remount,rw /
+
+# Adjust /silk symlink
+rm /silk
+ln -s /$PSR/silk /silk
+
+# Ensure permissions are correct on .prop files or the property service will
+# reject them
+for prop in /silk/{build,debug}.prop; do
+  if [ -f $prop ]; then
+    chown root:system $prop
+    chmod 640 $prop
+  fi
+done
+
+mount -o remount,ro /
+
+# Trigger a reload of the property service by /init.silk.dev.rc
+setprop silk.root $PSR
+
+exit 0

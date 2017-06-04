@@ -8,6 +8,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.build.product=$(SILK_PRODUCT) \
  ro.silk.build.board=$(SILK_BOARD) \
 
+PRODUCT_PACKAGES += silk-board-prop
+
 # Services to start/stop with |adb shell start| and |adb shell stop|
 PRODUCT_PROPERTY_OVERRIDES += \
  ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \

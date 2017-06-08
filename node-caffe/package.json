@@ -8,7 +8,6 @@
     "install": "node-gyp rebuild",
     "lint": "eslint --fix .",
     "mocha": "mocha $(find test -name '*_test.js')",
-    "preinstall": "./install-caffe.sh",
     "test": "npm run mocha"
   },
   "keywords": [

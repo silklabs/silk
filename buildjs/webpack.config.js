@@ -78,6 +78,7 @@ const externals = {
   ],
   node: [
     // TODO: auto generate these ...
+    'ab-neuter',
     'bleno',
     'lame',
     'mic',

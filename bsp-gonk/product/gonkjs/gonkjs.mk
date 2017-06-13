@@ -80,6 +80,9 @@ PRODUCT_PACKAGES += silk-capture
 # vendor/silk/silk-core-version
 PRODUCT_PACKAGES += silk-core-version
 
+# vendor/silk/ab-neuter
+PRODUCT_PACKAGES += ab-neuter
+
 # vendor/silk/silk-input/
 PRODUCT_PACKAGES += silk-input
 

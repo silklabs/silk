@@ -1,0 +1,22 @@
+{
+  "name": "ab-neuter",
+  "version": "0.1.3",
+  "description": "Neuter any Typed Array or ArrayBuffer",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "buffer",
+    "arraybuffer",
+    "neuter"
+  ],
+  "author": "NodeSource <npm@nodesource.com> (https://nodesource.com)",
+  "contributors": [
+    "Trevor Norris <trev.norris@gmail.com>"
+  ],
+  "license": "MIT",
+  "bugs": {},
+  "homepage": ""
+}

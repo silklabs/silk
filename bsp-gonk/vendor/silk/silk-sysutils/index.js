@@ -222,7 +222,7 @@ class PropWatcher extends EventEmitter {
       options.uid = options.gid = 9999; // AID_NOBODY
     }
 
-    const cmd = spawn('watchprops', [], options);
+    const cmd = spawn('system/bin/watchprops', [], options);
     cmd.stderr.on('data', data => {
       const line = data.toString();
       let match = line.match(/^\d+ ([^ ]+) = '(.*)'/);

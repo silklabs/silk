@@ -1,0 +1,26 @@
+From 13485671e50c5c04d032b33f73cd5f5f6232ec50 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 16 Jun 2017 17:50:41 -0700
+Subject: [PATCH] Disable androidboot.mode=charger
+
+---
+ init/init.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 8ea42ca..04d6de5 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -1136,7 +1136,8 @@ int main(int argc, char** argv) {
+     if (((property_get("ro.bootmode", bootmode) > 0 && strcmp(bootmode, "charger") == 0) ||
+          strcmp(battchg_pause, BOARD_CHARGING_CMDLINE_VALUE) == 0)
+                || charging_mode_booting()) {
+-        action_for_each_trigger("charger", action_add_queue_tail);
++        // Charger mode is not desired, just reboot into normal mode
++        android_reboot(ANDROID_RB_RESTART, 0, 0);
+     } else if (strncmp(bootmode, "ffbm", 4) == 0) {
+         KLOG_ERROR("Booting into ffbm mode\n");
+         action_for_each_trigger("ffbm", action_add_queue_tail);
+-- 
+2.11.0
+

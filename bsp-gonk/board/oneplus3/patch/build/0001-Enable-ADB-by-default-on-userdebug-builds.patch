@@ -1,0 +1,31 @@
+From f3c4d74f5e8fde5400310f6cc0fd5946f06bc057 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 17 Jun 2017 13:00:51 -0700
+Subject: [PATCH] Enable ADB by default on userdebug builds
+
+This reverts commit 9e5f07715ccffd289686c27fc8a1620867aa30f3.
+This reverts commit 0fdfb4649631bdc5d86bfe821b89c4b7a06bffd0.
+---
+ tools/post_process_props.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tools/post_process_props.py b/tools/post_process_props.py
+index 64af01db3..585fd8f41 100755
+--- a/tools/post_process_props.py
++++ b/tools/post_process_props.py
+@@ -47,9 +47,9 @@ def mangle_build_prop(prop, overrides):
+ # Put the modifications that you need to make into the /default.prop into this
+ # function. The prop object has get(name) and put(name,value) methods.
+ def mangle_default_prop(prop):
+-  # If ro.adb.secure is not 1, then enable adb on USB by default
+-  # (this is for eng builds)
+-  if prop.get("ro.adb.secure") != "1":
++  # If ro.debuggable is 1, then enable adb on USB by default
++  # (this is for userdebug builds)
++  if prop.get("ro.debuggable") == "1":
+     val = prop.get("persist.sys.usb.config")
+     if val == "":
+       val = "adb"
+-- 
+2.11.0
+

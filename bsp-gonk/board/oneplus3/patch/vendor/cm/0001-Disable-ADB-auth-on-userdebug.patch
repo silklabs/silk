@@ -1,0 +1,25 @@
+From e578f09e4475a6b66f3303b26c506ba698d5983e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 17 Jun 2017 13:21:00 -0700
+Subject: [PATCH] Disable ADB auth on -userdebug
+
+---
+ config/common.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 1cd245a..e8df69c 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -65,7 +65,7 @@ ifneq ($(TARGET_BUILD_VARIANT),user)
+ PRODUCT_PROPERTY_OVERRIDES += persist.sys.dun.override=0
+ endif
+ 
+-ifneq ($(TARGET_BUILD_VARIANT),eng)
++ifeq ($(TARGET_BUILD_VARIANT),user)
+ # Enable ADB authentication
+ ADDITIONAL_DEFAULT_PROPERTIES += ro.adb.secure=1
+ endif
+-- 
+2.11.0
+

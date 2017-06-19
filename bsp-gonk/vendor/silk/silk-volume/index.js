@@ -46,7 +46,7 @@ class Volume extends EventEmitter {
    */
   set level(newlevel: number): void {
     if (newlevel < 0 || newlevel > 100) {
-      throw new Error('Invalid volume level', newlevel);
+      throw new Error(`Invalid volume level: ${newlevel}`);
     }
     this._level = newlevel;
     util.setprop('persist.silk.volume.level', newlevel);

@@ -1299,7 +1299,7 @@ export default class Camera extends EventEmitter {
           // Flush the buffer and restart the socket
           _dataBuffer = null;
           this._restart('Invalid capture tag');
-          throw new Error(`Invalid capture tag #${tag}`, tagInfo);
+          throw new Error(`Invalid capture tag #${tag}, ${tagInfo}`);
         }
         pos += HEADER_NR_BYTES + size;
       }

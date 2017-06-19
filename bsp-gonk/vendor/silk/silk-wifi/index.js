@@ -139,7 +139,7 @@ const WIFI_DISCONNECT_REASONS: Array<WifiDisconnectReason> = [
 // See https://github.com/silklabs/silk-core/issues/357.
 const CTRL_CHARS_REGEX = /[\x00-\x1f\x80-\xff]/;
 
-let iface = util.getstrprop('wifi.interface');
+const iface = util.getstrprop('wifi.interface');
 let monitor;
 
 /**
@@ -780,7 +780,7 @@ export class Wifi extends EventEmitter {
   }
 
   _startWpaMonitor(): Promise<void> {
-    monitor = new WpaMonitor(iface);
+    monitor = new WpaMonitor();
     monitor.on('wpad_connected', async () => {
       log.info(`connected to wpad`);
 

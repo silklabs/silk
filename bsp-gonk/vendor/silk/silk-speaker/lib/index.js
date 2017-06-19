@@ -41,15 +41,15 @@ const GAIN_MAX = 1.0;
 export default class Speaker extends events.EventEmitter {
 
   _speaker: SpeakerType;
-  _closed: boolean = false;
   _options: ConfigDeviceMic;
+  _closed: boolean = false;
   _frameSize: number = 0;
-  _pcmBuffer: Buffer;
+  _pcmBuffer: Buffer = Buffer.alloc(0);
   _totalBufferLen: number = 0;
   _writing: boolean = false;
 
   constructor(options: ?ConfigDeviceMic) {
-    super(options); // Calls the stream.Writable() constructor
+    super();
     this._options = {
       numChannels: 2,
       sampleRate: 44100,
@@ -62,7 +62,6 @@ export default class Speaker extends events.EventEmitter {
       throw new Error('invalid PCM format specified');
     }
 
-    this._pcmBuffer = new Buffer(0);
     this._open();
   }
 
@@ -72,8 +71,11 @@ export default class Speaker extends events.EventEmitter {
   _open() {
     // Open native bindings
     this._speaker = new bindings.Speaker();
-    this._speaker.open(this._options.numChannels, this._options.sampleRate,
-        this.getFormat());
+    this._speaker.open(
+      this._options.numChannels,
+      this._options.sampleRate,
+      this.getFormat(),
+    );
 
     // Calculate the frame size
     this._frameSize = this._speaker.getFrameSize();
@@ -278,9 +280,9 @@ export default class Speaker extends events.EventEmitter {
     this._closed = true;
 
     /**
-     * This event is fired after end() is called on the speaker and speaker is
-     * done playing the entire audio stream. This speaker instance is essentially
-     * finished after this point
+     * This event is fired after end() is called on the speaker and speaker
+     * is done playing the entire audio stream. This speaker instance is
+     * essentially finished after this point
      *
      * @event close
      * @memberof silk-speaker

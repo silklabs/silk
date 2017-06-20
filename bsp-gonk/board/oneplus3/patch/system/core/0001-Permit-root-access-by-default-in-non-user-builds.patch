@@ -1,0 +1,35 @@
+From 3953791fca3e14238d98325e0c1539aa496356aa Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 19 Jun 2017 19:27:02 -0700
+Subject: [PATCH] Permit root access by default in non-user builds
+
+---
+ adb/services.cpp | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/adb/services.cpp b/adb/services.cpp
+index ef2fa56d8..a60837496 100644
+--- a/adb/services.cpp
++++ b/adb/services.cpp
+@@ -76,18 +76,6 @@ void restart_root_service(int fd, void *cookie) {
+             return;
+         }
+ 
+-        char build_type[PROPERTY_VALUE_MAX];
+-        char cm_version[PROPERTY_VALUE_MAX];
+-        property_get("persist.sys.root_access", value, "0");
+-        property_get("ro.build.type", build_type, "");
+-        property_get("ro.cm.version", cm_version, "");
+-
+-        if (strlen(cm_version) > 0 && strcmp(build_type, "eng") != 0 && (atoi(value) & 2) != 2) {
+-            WriteFdExactly(fd, "root access is disabled by system setting - enable in settings -> development options\n");
+-            adb_close(fd);
+-            return;
+-        }
+-
+         property_set("service.adb.root", "1");
+         WriteFdExactly(fd, "restarting adbd as root\n");
+         adb_close(fd);
+-- 
+2.11.0
+

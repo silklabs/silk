@@ -41,7 +41,7 @@ async function execWithPaths(
   }
 }
 
-export default class API {
+export class SDKApi {
   device = null;
   additionalPaths = [];
   _adbPath = null;

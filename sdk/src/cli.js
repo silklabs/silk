@@ -1,11 +1,9 @@
-import fs from 'fs';
-import path from 'path';
-import { spawn } from 'child_process';
-
-import { exec } from 'mz/child_process';
 import eventToPromise from 'event-to-promise';
+import fs from 'fs';
+import {exec, spawn} from 'mz/child_process';
+import path from 'path';
 
-import API from './api';
+import {SDKApi} from './api';
 
 const SILK_SCRIPT_BUILD = 'silk-build';
 
@@ -101,7 +99,7 @@ function ensureSetup(argv) {
   const main = argv.main;
   argv.main = function (args) {
     const {device} = args;
-    const api = new API({
+    const api = new SDKApi({
       device: device,
       additionalPaths: additionalPaths,
     });

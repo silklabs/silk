@@ -1,1 +1,1 @@
---require ../babel-run/mocha
+--require test/setup.js

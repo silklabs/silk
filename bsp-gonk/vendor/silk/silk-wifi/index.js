@@ -5,6 +5,7 @@
 
 import invariant from 'assert';
 import EventEmitter from 'events';
+import eventToPromise from 'event-to-promise';
 import * as net from 'net';
 import {Netmask} from 'netmask';
 import createLog from 'silk-log';
@@ -852,7 +853,7 @@ export class Wifi extends EventEmitter {
       this.emit('ssidReenabled', ssid);
     });
 
-    return Promise.resolve();
+    return eventToPromise(monitor, 'wpad_connected');
   }
 
   _scheduleScan() {

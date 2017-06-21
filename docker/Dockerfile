@@ -179,33 +179,31 @@ RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \
     ssh-keygen -q -N "" -t dsa -f /etc/ssh/ssh_host_dsa_key && \
     ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key
 
-RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    mkdir -p /opt/conda && \
+RUN mkdir -p /opt/conda && \
     chown silk /opt/conda
 
 USER silk
 
 # Install minicoda and Python 3.6
-RUN cd ~/ && \
+RUN cd ~ && \
     wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.3.21-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -f -p /opt/conda && \
     rm ~/miniconda.sh
-ENV PATH /opt/conda/bin:$PATH
 
 # Install TensorFlow GPU version in its own env
-RUN cd ~/ && \
-    conda create -v --name tensorflow_gpu python=3.6 && \
+RUN cd ~ && \
+    /opt/conda/bin/conda create -v --name tensorflow_gpu python=3.6 && \
     /bin/bash -c " \
-      source activate tensorflow_gpu; \
+      source /opt/conda/bin/activate tensorflow_gpu; \
       pip install https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.2.0-cp36-cp36m-linux_x86_64.whl; \
       source deactivate tensorflow_gpu\
     "
 
 # Install TensorFlow CPU version in its own env
-RUN cd ~/ && \
-    conda create -v --name tensorflow_cpu python=3.6 && \
+RUN cd ~ && \
+    /opt/conda/bin/conda create -v --name tensorflow_cpu python=3.6 && \
     /bin/bash -c " \
-      source activate tensorflow_cpu; \
+      source /opt/conda/bin/activate tensorflow_cpu; \
       pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.2.0-cp36-cp36m-linux_x86_64.whl; \
       source deactivate tensorflow_cpu\
     "

@@ -1,0 +1,63 @@
+From f7613af222ef1eb21b991164dc622b4308cc91fc Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 21 Jun 2017 20:07:29 -0700
+Subject: [PATCH] Enable verity
+
+---
+ cm.mk                    | 3 +++
+ rootdir/etc/fstab.qcom   | 2 +-
+ rootdir/etc/init.qcom.rc | 7 +++++++
+ 3 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/cm.mk b/cm.mk
+index 52e4a05..27d5780 100644
+--- a/cm.mk
++++ b/cm.mk
+@@ -40,3 +40,6 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
+ PRODUCT_SYSTEM_PROPERTY_BLACKLIST += ro.product.model
+ 
+ TARGET_VENDOR := oneplus
++
++PRODUCT_SYSTEM_VERITY_PARTITION=/dev/block/bootdevice/by-name/system
++$(call inherit-product, build/target/product/verity.mk)
+diff --git a/rootdir/etc/fstab.qcom b/rootdir/etc/fstab.qcom
+index 55e2669..460f180 100644
+--- a/rootdir/etc/fstab.qcom
++++ b/rootdir/etc/fstab.qcom
+@@ -8,7 +8,7 @@
+ #<src>                                                       <mnt_point>       <type>  <mnt_flags and options>                                                                                         <fs_mgr_flags>
+ /dev/block/bootdevice/by-name/boot                           /boot             emmc    defaults                                                                                                        defaults
+ /dev/block/bootdevice/by-name/recovery                       /recovery         emmc    defaults                                                                                                        defaults
+-/dev/block/bootdevice/by-name/system                         /system           ext4    ro,barrier=1,discard                                                                                            wait
++/dev/block/bootdevice/by-name/system                         /system           ext4    ro,barrier=1,discard                                                                                            wait,verify
+ /dev/block/bootdevice/by-name/userdata                       /data             f2fs    nosuid,nodev,noatime,nodiratime,inline_xattr,data_flush                                                         wait,check,encryptable=footer,formattable,length=-16384
+ /dev/block/bootdevice/by-name/userdata                       /data             ext4    nosuid,nodev,noatime,nodiratime,barrier=1,noauto_da_alloc                                                       wait,check,encryptable=footer,formattable,length=-16384
+ /dev/block/bootdevice/by-name/cache                          /cache            f2fs    nosuid,nodev,noatime,nodiratime,inline_xattr,flush_merge,data_flush                                             wait,check,formattable
+diff --git a/rootdir/etc/init.qcom.rc b/rootdir/etc/init.qcom.rc
+index bf5a526..dd9b979 100644
+--- a/rootdir/etc/init.qcom.rc
++++ b/rootdir/etc/init.qcom.rc
+@@ -44,6 +44,8 @@ on init
+     # Support legacy paths
+     symlink /sdcard /storage/sdcard0
+ 
++    verity_load_state
++
+ on early-boot
+     # set RLIMIT_MEMLOCK to 64MB
+     setrlimit 8 67108864 67108864
+@@ -65,6 +67,11 @@ on fs
+     wait /dev/block/bootdevice
+     mount_all fstab.qcom
+ 
++    # Adjust parameters for dm-verity device
++    write /sys/block/dm-0/queue/read_ahead_kb 2048
++    # Update dm-verity state and set partition.*.verified properties
++    verity_update_state
++
+ on boot
+     # Secure touch
+     chmod 0660 /sys/devices/soc/75ba000.i2c/i2c-12/12-004a/secure_touch_enable
+-- 
+2.11.0
+

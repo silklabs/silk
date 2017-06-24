@@ -15,7 +15,7 @@ if [ "$(getprop service.adb.root)" != "1" ]; then
   )
 fi
 
-if [ "$(getprop partition.system.verified)" = "1" ]; then
+if [ "$(getprop partition.system.verified)" != "" ]; then
   if [ ! -x /system/bin/adb ]; then
     # M+ doesn't include adb on device, so currently there's no way to disable
     # verity here.

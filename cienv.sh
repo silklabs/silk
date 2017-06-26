@@ -17,7 +17,9 @@ if ${CI:-false}; then
   if ${BUILDKITE:-false}; then
     export CI_BRANCH=$BUILDKITE_BRANCH
     export CI_BUILD_ID=$BUILDKITE_BUILD_ID
-    export CI_COMMIT=$BUILDKITE_COMMIT
+    # Don't use $BUILDKITE_COMMIT as it can be literally "HEAD" sometimes and we
+    # always want the SHA1
+    export CI_COMMIT=$(git rev-parse HEAD)
     export CI_JOB_ID=$BUILDKITE_JOB_ID
     export CI_OS_NAME=${BUILDKITE_AGENT_META_DATA_OS:-msdos}
     export CI_PROJECT_DIR=/ci # TODO...

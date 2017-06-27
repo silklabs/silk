@@ -853,8 +853,7 @@ export default class Camera extends EventEmitter {
     this._restart(
       `Expected Tags not received from capture promptly. ` +
       `video=${String(this._videoTagReceived)}, ` +
-      `mic=${String(this._micTagReceived)}`,
-      true
+      `mic=${String(this._micTagReceived)}`
    );
   };
 

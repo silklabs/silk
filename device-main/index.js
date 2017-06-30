@@ -12,6 +12,7 @@ const Camera = require('silk-camera').default;
 const Input = require('silk-input').default;
 const Movie = require('silk-movie').Movie;
 const Vibrator = require('silk-vibrator').default;
+const bledroid = require('silk-bledroid')();
 
 function bail(reason, err) {
   log.error('Exiting process due to ' + reason);
@@ -86,12 +87,26 @@ function shutdown() {
   util.setprop('sys.powerctl', 'shutdown');
 }
 
-let camera = new Camera();
+const camera = new Camera();
 camera.init()
 .then(() => {
   camera.startRecording();
 });
 camera.on('frame', (when, image) => {
   log.info('Received a frame at timestamp' + when + '-' + image);
+});
+
+
+log.info(`bledroid state: ${bledroid.adapterState}`);
+bledroid.on('stateChange', state => {
+  log.info(`bledroid stateChange: ${state}`);
+  if (state === 'poweredOn') {
+    // Make the device discoverable for a short time.
+    // Once discovery times out setDiscoverable() must be called again. however
+    // at the moment the discovery state is not currently surfaced
+    // (see bt_discovery_state_changed_cb in bledroid/main.cpp).
+    log.info('Making device discoverable over BT');
+    bledroid.setDiscoverable();
+  }
 });
 

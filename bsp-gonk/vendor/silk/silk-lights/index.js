@@ -19,7 +19,7 @@
 
 import events from 'events';
 import invariant from 'assert';
-import {exec} from 'silk-sysutils';
+import {getstrprop, exec} from 'silk-sysutils';
 import createLog from 'silk-log';
 
 const log = createLog('lights');
@@ -345,18 +345,17 @@ class Lights {
       }
     default:
       {
-        let CustomLight = null;
-        try {
-          // $FlowFixMe$ Could not resolve name: __non_webpack_require__
-          const moduleRequire = __non_webpack_require__ || require; //eslint-disable-line
-          CustomLight = moduleRequire(`silk-lights-custom`).default;
-        } catch (err) {
-          // Ignore require errors
-        }
-
-        if (CustomLight) {
-          const light = this._lights[lightId] = new CustomLight(lightId);
-          return light;
+        const moduleName = getstrprop('ro.silk.lights.custom.module', '');
+        if (moduleName !== '') {
+          try {
+            // $FlowFixMe$ Could not resolve name: __non_webpack_require__
+            const moduleRequire = __non_webpack_require__ || require; //eslint-disable-line
+            const CustomLight = moduleRequire(moduleName).default;
+            const light = this._lights[lightId] = new CustomLight(lightId);
+            return light;
+          } catch (err) {
+            log.warn(`Unable to load ${moduleName}: ${err.message}`);
+          }
         }
         return null;
       }

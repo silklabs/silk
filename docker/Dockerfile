@@ -195,6 +195,8 @@ RUN cd ~ && \
     /opt/conda/bin/conda create -v --name tensorflow_gpu python=3.6 && \
     /bin/bash -c " \
       source /opt/conda/bin/activate tensorflow_gpu; \
+      # Dependencies required for tensorflow
+      pip install pytz \
       pip install https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.2.0-cp36-cp36m-linux_x86_64.whl; \
       source deactivate tensorflow_gpu\
     "
@@ -204,6 +206,8 @@ RUN cd ~ && \
     /opt/conda/bin/conda create -v --name tensorflow_cpu python=3.6 && \
     /bin/bash -c " \
       source /opt/conda/bin/activate tensorflow_cpu; \
+      # Dependencies required for tensorflow
+      pip install pytz \
       pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.2.0-cp36-cp36m-linux_x86_64.whl; \
       source deactivate tensorflow_cpu\
     "

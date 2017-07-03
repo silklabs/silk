@@ -68,16 +68,17 @@ fetch)
           # If CI_CACHE_DIR exists, download and save the tarball there, and
           # try to reuse it next time around.
           mkdir -p $CI_CACHE_DIR/repocache
-          tarball=$CI_CACHE_DIR/repocache/$repocache_urlsuffix
+          tarball=$CI_CACHE_DIR/repocache/${repocache_urlsuffix%.tgz}.tar
           if [[ ! -r $tarball ]]; then
             wget --continue \
                  $PROGRESS \
                  --retry-connrefused \
                  --read-timeout=60 \
                  $REPOCACHE_URLPREFIX$repocache_urlsuffix \
-                 -O $tarball
+                 -O - \
+              | gunzip > $tarball
           fi
-          tar zxf $tarball
+          tar xf $tarball
         else
           wget --continue \
                $PROGRESS \

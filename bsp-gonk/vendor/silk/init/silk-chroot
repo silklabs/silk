@@ -1,4 +1,12 @@
 #!/system/bin/sh
+#
+# Redirects /silk based on the current value of persist.silk.root:
+# * 'system' - Symlink to /system/silk
+# * 'data' - Symlink to /data/silk
+# * 'silk.img' - Setup a loopback mount to /data/silk.img
+#
+# Upon completion silk.root will be set to reflect the current state of /silk.
+#
 
 if [ "$(getprop ro.debuggable)" != "1" ]; then
   echo Device is not debuggable
@@ -19,31 +27,61 @@ if [ "$PSR" = "$SR" ]; then
   exit 0
 fi
 
-if [ "$PSR" != "system" ] && [ "$PSR" != "data" ]; then
+if [ "$PSR" != "system" ] && [ "$PSR" != "data" ] && [ "$PSR" != "silk.img" ]; then
   echo Invalid persist.silk.root: $PSR
   exit 1
 fi
 
-echo Changing silk root to /$PSR/silk
 set -x
 
 # Stop framework
 stop
 
 mount -o remount,rw /
-
-# Adjust /silk symlink
 rm /silk
-ln -s /$PSR/silk /silk
 
-# Ensure permissions are correct on .prop files or the property service will
-# reject them
-for prop in /silk/{build,debug}.prop; do
-  if [ -f $prop ]; then
-    chown root:system $prop
-    chmod 640 $prop
+if [ "$PSR" = "silk.img" ]; then
+  echo Using /data/silk.img as silk root
+
+  test -f /data/silk.img
+  ERR=$?
+  if [ $ERR = 0 ]; then
+    busybox losetup -d /dev/block/loop0
+    busybox losetup -r /dev/block/loop0 /data/silk.img
+    ERR=$?
   fi
-done
+
+  if [ $ERR = 0 ]; then
+    umount /mnt/silk
+    mkdir -p /mnt/silk
+    mount -o ro -t ext4 /dev/block/loop0 /mnt/silk
+    ERR=$?
+  fi
+
+  if [ $ERR = 0 ]; then
+    ln -s /mnt/silk /silk
+    ERR=$?
+  fi
+
+  if [ $ERR != 0 ]; then
+    echo "Failed.  Falling back to /system/silk"
+    ln -s /system/silk /silk
+  fi
+
+else
+  echo Changing silk root to /$PSR/silk
+  # Adjust /silk symlink
+  ln -s /$PSR/silk /silk
+
+  # Ensure permissions are correct on .prop files or the property service will
+  # reject them
+  for prop in /silk/{build,debug}.prop; do
+    if [ -f $prop ]; then
+      chown root:system $prop
+      chmod 640 $prop
+    fi
+  done
+fi
 
 mount -o remount,ro /
 

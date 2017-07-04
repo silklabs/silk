@@ -13,15 +13,15 @@ service silk-setup-dev /system/bin/logwrapper /system/silk/bin/silk-setup-dev
     oneshot
 
 on property:persist.silk.root=*
-  start silk-chroot
+    start silk-chroot
 
 service silk-chroot /system/bin/logwrapper /system/silk/bin/silk-chroot
-  user root
-  group root
-  disabled
-  oneshot
+    user root
+    group root
+    disabled
+    oneshot
 
 on property:silk.root=*
-  # Refresh /silk/build.prop and /silk/debug.prop
-  load_all_props
+    # Refresh /silk/build.prop and /silk/debug.prop
+    load_all_props
 

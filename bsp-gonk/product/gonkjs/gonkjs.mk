@@ -12,7 +12,7 @@ PRODUCT_PACKAGES += silk-board-prop
 
 # Services to start/stop with |adb shell start| and |adb shell stop|
 PRODUCT_PROPERTY_OVERRIDES += \
- ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk \
+ ro.silk.services=silk-bledroid,silk-sensors,silk-capture,silk-tts,silk \
 
 # 'import.prop' gets built into /system/build.prop, making it easier to add
 # silk-specific system properties without having to deal with manipulating

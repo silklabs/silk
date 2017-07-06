@@ -963,7 +963,7 @@ void bt_remote_device_properties_callback(bt_status_t status,
         case BT_DEVICE_DEVTYPE_DUAL:
           s = "dual";
           break;
-        defaut:
+        default:
           unknown = true;
           break;
         }
@@ -1037,7 +1037,7 @@ void bt_device_found_callback(int num_properties, bt_property_t *properties) {
         case BT_DEVICE_DEVTYPE_DUAL:
           s = "dual";
           break;
-        defaut:
+        default:
           unknown = true;
           break;
         }

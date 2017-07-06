@@ -56,6 +56,20 @@ fetch)
       repocache_urlsuffixes="$uname_lc-$board-$product.tgz $repocache_urlsuffixes"
     fi
 
+    # Search CI_CACHE_DIR for a tarball before hitting the network
+    if [[ -n $CI_CACHE_DIR ]] && [[ -r $CI_CACHE_DIR ]]; then
+      for repocache_urlsuffix in $repocache_urlsuffixes; do
+        tarball=$CI_CACHE_DIR/repocache/${repocache_urlsuffix%.tgz}.tar
+        if [[ -r $tarball ]]; then
+          (
+            set -x
+            tar xf $tarball
+          )
+          exit 0
+        fi
+      done
+    fi
+
     for repocache_urlsuffix in $repocache_urlsuffixes; do
       set -ex
       if curl -L $REPOCACHE_URLPREFIX$repocache_urlsuffix --output /dev/null --head --fail --silent; then

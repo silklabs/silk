@@ -1196,8 +1196,10 @@ void bt_acl_state_changed_callback(bt_status_t status,
     bt_bdaddr_t *remote_bd_addr, bt_acl_state_t state) {
   Tracer trc("bt_acl_state_changed_callback");
   bt_bdaddr_t *bda = remote_bd_addr;
-  ALOGV("bt_acl_state_changed_callback. status=%d state=%d remote=%02X:%02X:%02X:%02X:%02X:%02X",
-    status, state,
+  ALOGV("bt_acl_state_changed_callback. status=%d state=%sconnected(%d) remote=%02X:%02X:%02X:%02X:%02X:%02X",
+    status,
+    state == BT_ACL_STATE_DISCONNECTED ? "dis" : "",
+    state,
     bda->address[0],
     bda->address[1],
     bda->address[2],

@@ -3,12 +3,16 @@
  * @private
  */
 
-import assert from 'assert';
+import invariant from 'assert';
 import EventEmitter from 'events';
 import net from 'net';
 import parseAdvertising from './advertisingDataParser';
 import {getstrprop} from 'silk-sysutils';
 import createLog from 'silk-log';
+
+import type {Socket} from 'net';
+
+type AdapterState = 'unknown' | 'resetting' | 'poweredOn' | 'poweredOff';
 
 const log = createLog('bledroid');
 const BLE_SOCKET_PATH = '/dev/socket/bledroid';
@@ -39,6 +43,12 @@ function hexStringToUuid(hexString) {
 }
 
 export class Bledroid extends EventEmitter {
+  socket: ?Socket;
+  adapterState: AdapterState;
+  socketEventListenersInstalled: ?Array<string>;
+  commandBuffer: ?{data: string};
+  messageMap: Object; // TODO: Flow this field harder
+
   constructor() {
     log.debug('Created');
 
@@ -50,7 +60,7 @@ export class Bledroid extends EventEmitter {
 
     // Do this only once at startup just to make sure the message map is sane.
     for (const mapEntry of this.messageMap) {
-      assert(mapEntry.regex);
+      invariant(mapEntry.regex);
 
       let actionCount = 0;
       if ('emit' in mapEntry) {
@@ -62,11 +72,11 @@ export class Bledroid extends EventEmitter {
       if ('function' in mapEntry) {
         actionCount++;
       }
-      assert(actionCount === 1);
+      invariant(actionCount === 1);
 
       if ('transform' in mapEntry) {
         if (typeof mapEntry.transform !== 'function') {
-          assert(Array.isArray(mapEntry.transform));
+          invariant(Array.isArray(mapEntry.transform));
         }
       }
     }
@@ -131,18 +141,18 @@ export class Bledroid extends EventEmitter {
     return null;
   }
 
-  onSocketConnectionError(err) {
-    assert(!this.socket);
-    assert(!this.socketEventListenersInstalled);
+  onSocketConnectionError(err: Error) {
+    invariant(!this.socket);
+    invariant(!this.socketEventListenersInstalled);
 
-    log.warn(`Failed to connect to '${BLE_SOCKET_PATH}' socket: ${err}`);
+    log.warn(`Failed to connect to '${BLE_SOCKET_PATH}' socket: ${err.message}`);
 
     setTimeout(() => this.init(), SOCKET_RETRY_DELAY_MS);
   }
 
-  onSocketConnected(socket) {
-    assert(!this.socket);
-    assert(!this.socketEventListenersInstalled);
+  onSocketConnected(socket: Socket) {
+    invariant(!this.socket);
+    invariant(!this.socketEventListenersInstalled);
 
     log.info(`Connected to '${BLE_SOCKET_PATH}' socket`);
 
@@ -161,6 +171,7 @@ export class Bledroid extends EventEmitter {
 
     if (bufferedCommandData) {
       log.debug('Sending buffered commands');
+      invariant(this.socket);
       if (!this.socket.write(bufferedCommandData)) {
         // TODO: Someday need to start buffering if the socket gets full.
         log.warn('Socket full');
@@ -168,37 +179,47 @@ export class Bledroid extends EventEmitter {
     }
   }
 
-  addSocketEventListener(eventName, eventListener) {
-    assert(this.socket);
+  addSocketEventListener(eventName: string, eventListener: Function) {
 
     this.socketEventListenersInstalled =
-      this.socketEventListenersInstalled || [ ];
+      this.socketEventListenersInstalled || [];
 
-    assert(this.socketEventListenersInstalled.indexOf(eventName) === -1);
+    invariant(this.socketEventListenersInstalled.indexOf(eventName) === -1);
 
+    invariant(this.socket);
     this.socket.on(eventName, eventListener);
+    invariant(this.socketEventListenersInstalled);
     this.socketEventListenersInstalled.push(eventName);
   }
 
-  onSocketError(err) {
-    log.warn(`Socket 'error' event: ${err}`);
+  onSocketError(err: Error) {
+    log.warn(`Socket 'error' event: ${err.message}`);
 
     // Buffer any further commands while we wait for the socket to close.
     this.startBufferingCommands();
 
     // Ending the socket should trigger a 'close' event that will reopen the
     // socket.
+    invariant(this.socket);
     this.socket.end();
   }
 
-  onSocketClose(hadError) {
-    log.info(`Socket 'close' event: ${hadError}`);
+  onSocketClose(hadError: boolean) {
+    log.info(`Socket 'close' event: ${String(hadError)}`);
 
     // Remove all socket event listeners to make sure we don't get additional
     // events from the closed socket.
-    this.socketEventListenersInstalled.forEach(eventName => {
-      this.socket.removeAllListeners(eventName);
-    });
+    {
+      const {
+        socket,
+        socketEventListenersInstalled,
+      } = this;
+      invariant(socket);
+      invariant(socketEventListenersInstalled);
+      socketEventListenersInstalled.forEach(eventName => {
+        socket.removeAllListeners(eventName);
+      });
+    }
 
     this.socket = null;
     this.socketEventListenersInstalled = null;
@@ -232,7 +253,7 @@ export class Bledroid extends EventEmitter {
     messages.forEach(message => this.onMessage(message));
   }
 
-  onMessage(message) {
+  onMessage(message: string) {
     function transformArg(transform, arg, index) {
       if (typeof transform === 'function') {
         return transform(arg);
@@ -294,7 +315,7 @@ export class Bledroid extends EventEmitter {
     }
   }
 
-  command(commandStr) {
+  command(commandStr: string) {
     // bledroid socket expects the command data in the following format:
     let data = `${BLE_COMMAND_NAME} "${commandStr}"\0`;
     if (data.length > 1024) {
@@ -313,13 +334,14 @@ export class Bledroid extends EventEmitter {
     }
 
     log.debug(`Sending command: '${commandStr}'`);
+    invariant(this.socket);
     if (!this.socket.write(data)) {
       // TODO: Someday need to start buffering if the socket gets full.
       log.warn('Socket full');
     }
   }
 
-  onStateChange(state) {
+  onStateChange(state: AdapterState) {
     if (this.adapterState !== state) {
       log.debug(`onStateChange(${state})`);
       this.adapterState = state;
@@ -328,7 +350,7 @@ export class Bledroid extends EventEmitter {
     }
   }
 
-  onUnknownCommand(command) {
+  onUnknownCommand(command: string) {
     log.warn(`Unknown command '${command}'`);
   }
 }
@@ -581,9 +603,10 @@ Bledroid.prototype.messageMap = [
 ];
 
 export class BledroidConnection extends EventEmitter {
+
   constructor() {
-    assert(bledroid);
-    assert(bledroid instanceof Bledroid);
+    invariant(bledroid);
+    invariant(bledroid instanceof Bledroid);
 
     super();
 
@@ -598,12 +621,14 @@ export class BledroidConnection extends EventEmitter {
 
   _forwardAddListener() {
     this.on('newListener', (event, listener) => {
+      invariant(bledroid);
       bledroid.addListener(event, listener);
     });
   }
 
   _forwardRemoveListener() {
     this.on('removeListener', (event, listener) => {
+      invariant(bledroid);
       bledroid.removeListener(event, listener);
     });
   }
@@ -622,22 +647,25 @@ export class BledroidConnection extends EventEmitter {
     }
   }
 
-  command(commandStr) {
+  command(commandStr: string) {
+    invariant(bledroid);
     return bledroid.command(commandStr);
   }
 
-  get adapterState() {
+  get adapterState(): AdapterState {
+    invariant(bledroid);
     return bledroid.adapterState;
   }
 
   setDiscoverable() {
+    invariant(bledroid);
     bledroid.command('setDiscoverable');
   }
 }
 
-module.exports = function() {
+export default function makeBledroid() {
   // Create our single instance if it has not yet been created.
   bledroid = bledroid || new Bledroid();
 
   return new BledroidConnection();
-};
+}

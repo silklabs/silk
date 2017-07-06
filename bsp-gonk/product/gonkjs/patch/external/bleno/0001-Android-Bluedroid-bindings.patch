@@ -43,7 +43,7 @@ index 0000000..a598689
 +const os = require('os');
 +const util = require('util');
 +
-+const makeBledroidConnection = require('silk-bledroid');
++const makeBledroidConnection = require('silk-bledroid').default;
 +
 +const Characteristic = require('../characteristic');
 +const CCCDescriptor = require('./ccc-descriptor');

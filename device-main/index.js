@@ -12,7 +12,7 @@ const Camera = require('silk-camera').default;
 const Input = require('silk-input').default;
 const Movie = require('silk-movie').Movie;
 const Vibrator = require('silk-vibrator').default;
-const bledroid = require('silk-bledroid')();
+const makeBledroidConnection = require('silk-bledroid').default;
 
 function bail(reason, err) {
   log.error('Exiting process due to ' + reason);
@@ -97,6 +97,7 @@ camera.on('frame', (when, image) => {
 });
 
 
+const bledroid = makeBledroidConnection();
 log.info(`bledroid state: ${bledroid.adapterState}`);
 bledroid.on('stateChange', state => {
   log.info(`bledroid stateChange: ${state}`);

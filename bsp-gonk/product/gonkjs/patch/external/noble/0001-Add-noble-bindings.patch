@@ -37,7 +37,7 @@ index 0000000..ffc4eb6
 +const util = require('util');
 +const uuid = require('uuid');
 +
-+const makeBledroidConnection = require('silk-bledroid');
++const makeBledroidConnection = require('silk-bledroid').default;
 +
 +const debug = require('debug');
 +

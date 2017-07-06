@@ -3,9 +3,7 @@
  * @private
  */
 
-/* eslint-disable indent, object-curly-spacing */
-
-import assert from 'assert';
+import invariant from 'assert';
 import makeLog from 'silk-log';
 import uuid from 'uuid';
 
@@ -22,7 +20,7 @@ function reverseBuffer(buffer) {
 
 function bufferToString(buffer) {
   if (!buffer.length) {
-    log('Empty buffer calling bufferToString()');
+    log.info('Empty buffer calling bufferToString()');
     return undefined;
   }
   return buffer.toString('utf8');
@@ -30,7 +28,7 @@ function bufferToString(buffer) {
 
 function bufferToHexString(buffer) {
   if (!buffer.length) {
-    log('Empty buffer calling bufferToHexString()');
+    log.info('Empty buffer calling bufferToHexString()');
     return undefined;
   }
   return buffer.toString('hex');
@@ -38,7 +36,7 @@ function bufferToHexString(buffer) {
 
 function bufferToInt8(buffer) {
   if (!buffer.length) {
-    log('Empty buffer calling bufferToInt8()');
+    log.info('Empty buffer calling bufferToInt8()');
     return undefined;
   }
   return buffer.readInt8(0, /* noAssert */ true);
@@ -50,12 +48,12 @@ function bufferToUUID(uuidLength, buffer) {
   }
 
   if (!buffer.length) {
-    log('Empty buffer calling bufferToUUID()');
+    log.info('Empty buffer calling bufferToUUID()');
     return undefined;
   }
 
   if (buffer.length < uuidLength) {
-    log('Incomplete buffer calling bufferToUUID()');
+    log.info('Incomplete buffer calling bufferToUUID()');
     return undefined;
   }
 
@@ -71,11 +69,12 @@ function bufferToUUID(uuidLength, buffer) {
   } else {
     uuidString = bufferToHexString(buffer);
   }
+  invariant(typeof uuidString === 'string');
 
   if (uuidString.length !== 36 &&
       uuidString.length !== 8 &&
       uuidString.length !== 4) {
-    log(`Constructed an invalid uuid: '${uuidString}'`);
+    log.info(`Constructed an invalid uuid: '${uuidString}'`);
     return undefined;
   }
 
@@ -88,17 +87,17 @@ function bufferToUUIDArray(uuidLength, buffer) {
   }
 
   if (!buffer.length) {
-    log('Empty buffer calling bufferToUUIDArray()');
+    log.info('Empty buffer calling bufferToUUIDArray()');
     return undefined;
   }
 
   if (buffer.length < uuidLength) {
-    log('Incomplete buffer calling bufferToUUIDArray()');
+    log.info('Incomplete buffer calling bufferToUUIDArray()');
     return undefined;
   }
 
   if (buffer.length % uuidLength) {
-    log(`Buffer is not an even multiple of ${uuidLength}-lengh uuids`);
+    log.info(`Buffer is not an even multiple of ${uuidLength}-lengh uuids`);
     return undefined;
   }
 
@@ -128,7 +127,7 @@ function parseFlags(buffer) {
       if (flag & octet) {
         const flagInfo = flagMap.get(flag);
         if (!flagInfo) {
-          log(`Unknown flag set: octet ${offset}, bit ${shiftCount + 1}`);
+          log.info(`Unknown flag set: octet ${offset}, bit ${shiftCount + 1}`);
           continue;
         }
         flags.push(flagInfo);
@@ -145,12 +144,12 @@ function parseServiceData(uuidLength, buffer) {
   }
 
   if (!buffer.length) {
-    log('Empty buffer calling parseServiceData()');
+    log.info('Empty buffer calling parseServiceData()');
     return undefined;
   }
 
   if (buffer.length < uuidLength) {
-    log('Incomplete buffer calling parseServiceData()');
+    log.info('Incomplete buffer calling parseServiceData()');
     return undefined;
   }
 
@@ -176,7 +175,7 @@ function parseServiceData(uuidLength, buffer) {
 
 function parseManufacturerData(buffer) {
   if (!buffer.length) {
-    log('Empty buffer calling parseManufacturerData()');
+    log.info('Empty buffer calling parseManufacturerData()');
     return undefined;
   }
 
@@ -198,11 +197,11 @@ function parseManufacturerData(buffer) {
   };
 }
 
-export default function(buffer) {
-  assert(buffer instanceof Buffer);
+export default function(buffer: Buffer) {
+  invariant(buffer instanceof Buffer);
 
   if (!buffer.length) {
-    log('Empty advertising data buffer');
+    log.info('Empty advertising data buffer');
     return undefined;
   }
 
@@ -212,7 +211,7 @@ export default function(buffer) {
 
   for ( ; ; ) {
     if (bufferOffset === buffer.length) {
-      log('Missing final 0');
+      log.info('Missing final 0');
       break;
     }
 
@@ -225,7 +224,7 @@ export default function(buffer) {
     }
 
     if (buffer.length < bufferOffset + dataLength) {
-      log('Incomplete advertising data buffer');
+      log.info('Incomplete advertising data buffer');
       return undefined;
     }
 
@@ -253,12 +252,12 @@ export default function(buffer) {
         });
         successfulParse = true;
       } else {
-        log('Failed to parse data type 0x%s with length 0x%s',
+        log.info('Failed to parse data type 0x%s with length 0x%s',
             dataType.toString(16),
             payloadLength.toString(16));
       }
     } else {
-      log('Unknown advertising data type 0x%s with length 0x%s',
+      log.info('Unknown advertising data type 0x%s with length 0x%s',
           dataType.toString(16),
           payloadLength.toString(16));
     }
@@ -284,6 +283,7 @@ const MAPS = Object.defineProperties({ }, {
     get() {
       delete this.types;
       this.types = new Map([
+/* eslint-disable indent, object-curly-spacing */
         [ 0x01, { description: 'Flags',
                   type: 'flags',
                   parse: parseFlags } ],
@@ -389,6 +389,7 @@ const MAPS = Object.defineProperties({ }, {
         [ 0xff, { description: 'Manufacturer Specific Data',
                   type: 'manufacturer-data',
                   parse: parseManufacturerData } ],
+/* eslint-enable indent, object-curly-spacing */
       ]);
       return this.types;
     },
@@ -401,16 +402,26 @@ const MAPS = Object.defineProperties({ }, {
       delete this.flags;
       this.flags = new Map([
         [ 0, new Map([
-          [ 1 << 0, { description: 'LE Limited Discoverable Mode',
-                      value: '0x' + ((1 << 0) << 0).toString(16) }],
-          [ 1 << 1, { description: 'LE General Discoverable Mode',
-                      value: '0x' + ((1 << 1) << 0).toString(16) }],
-          [ 1 << 2, { description: 'BR/EDR Not Supported',
-                      value: '0x' + ((1 << 2) << 0).toString(16) }],
-          [ 1 << 3, { description: 'Simultaneous LE and BR/EDR to Same Device Capable (Controller)',
-                      value: '0x' + ((1 << 3) << 0).toString(16) }],
-          [ 1 << 4, { description: 'Simultaneous LE and BR/EDR to Same Device Capable (Host)',
-                      value: '0x' + ((1 << 4) << 0).toString(16) }],
+          [ 1 << 0, {
+            description: 'LE Limited Discoverable Mode',
+            value: '0x' + ((1 << 0) << 0).toString(16),
+          }],
+          [ 1 << 1, {
+            description: 'LE General Discoverable Mode',
+            value: '0x' + ((1 << 1) << 0).toString(16),
+          }],
+          [ 1 << 2, {
+            description: 'BR/EDR Not Supported',
+            value: '0x' + ((1 << 2) << 0).toString(16),
+          }],
+          [ 1 << 3, {
+            description: 'Simultaneous LE and BR/EDR to Same Device Capable (Controller)',
+            value: '0x' + ((1 << 3) << 0).toString(16),
+          }],
+          [ 1 << 4, {
+            description: 'Simultaneous LE and BR/EDR to Same Device Capable (Host)',
+            value: '0x' + ((1 << 4) << 0).toString(16),
+          }],
         ]) ],
       ]);
       return this.flags;

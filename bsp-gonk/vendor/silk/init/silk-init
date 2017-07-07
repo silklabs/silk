@@ -22,36 +22,42 @@ warn() {
 
 maybe_enable_static_eth0() {
   ETH0_STATIC_ENABLE=$(getprop persist.silk.eth0.static.enable 0)
+  if [ $ETH0_STATIC_ENABLE -ne 1 ]; then
+    return
+  fi
+
+  ETH0_CONFIGURED=$(getprop eth0.static.configured 0)
+  if [ $ETH0_STATIC_ENABLE -ne 0 ]; then
+    return
+  fi
+
   ETH0_STATIC_IP=$(getprop persist.silk.eth0.static.ip)
   ETH0_BASEMASK=$(getprop persist.silk.eth0.basemask)
   ETH0_DNS_GW_IP=$(getprop persist.silk.eth0.dns.gw.ip)
-  ETH0_CONFIGURED=$(getprop eth0.static.configured 0)
 
-  if [ $ETH0_STATIC_ENABLE -eq 1 ] && [ $ETH0_CONFIGURED -eq 0 ] ; then
-    info "Wait for some reason (else eth0 no workie), yes this sucks ..."
-    sleep 7
-    info "Enabling static eth0:"
-    info "  ip       : $ETH0_STATIC_IP"
-    info "  basemask : $ETH0_BASEMASK"
-    info "  dns & gw : $ETH0_DNS_GW_IP"
-    info `busybox ifconfig eth0 $ETH0_STATIC_IP up`
-    info `ndc network destroy 101`
-    info `ndc network create 101`
-    info `ndc network interface add 101 eth0`
-    info `ndc network route add 101 eth0 0.0.0.0/0 $ETH0_DNS_GW_IP`
-    info `ndc network route add 101 eth0 $ETH0_BASEMASK 0.0.0.0`
-    info `ndc network default set 101`
-    info `ndc resolver setnetdns 101 localdomain $ETH0_DNS_GW_IP`
-    info `ndc resolver setnetdns 101 localdomain 8.8.8.8`
+  info "Wait for eth0 kernel module to be loaded..."
+  sleep 7 # TODO: fix race
+  info "Enabling static eth0:"
+  info "  ip       : $ETH0_STATIC_IP"
+  info "  basemask : $ETH0_BASEMASK"
+  info "  dns & gw : $ETH0_DNS_GW_IP"
+  info `busybox ifconfig eth0 $ETH0_STATIC_IP up`
+  info `ndc network destroy 101`
+  info `ndc network create 101`
+  info `ndc network interface add 101 eth0`
+  info `ndc network route add 101 eth0 0.0.0.0/0 $ETH0_DNS_GW_IP`
+  info `ndc network route add 101 eth0 $ETH0_BASEMASK 0.0.0.0`
+  info `ndc network default set 101`
+  info `ndc resolver setnetdns 101 localdomain $ETH0_DNS_GW_IP`
+  info `ndc resolver setnetdns 101 localdomain 8.8.8.8`
 
-    info "Marking eth0 static as configured"
-    setprop eth0.static.configured 1
-  fi
+  info "Marking eth0 static as configured"
+  setprop eth0.static.configured 1
 }
 
 maybe_enable_static_eth0
 
-if [ -f /init ]; then
+if [ -z $SILK_NOCD ]; then
   cd /
 fi
 
@@ -67,7 +73,7 @@ export SILKLOG_NOCONSOLE=1
 if [ -z $1 ]; then
   bootAttempt=$((1 + $(getprop silk.boot_attempt 0)))
   setprop silk.boot_attempt $bootAttempt
-  info Starting /$ROOT/silk [attempt $bootAttempt]
+  info Starting $ROOT/silk [attempt $bootAttempt]
 
   if [ "$(getprop ro.silk.update.ab false)" = "true" ]; then
     bootSlot=$(bootctl get-current-slot)
@@ -97,7 +103,7 @@ if [ -z $1 ]; then
     NODE_ARGS="$NODE_ARGS --trace_gc_verbose" # Uncomment for more GC info
   fi
 
-  # Feign sys.boot_completed for the benefit of other Gonk components that
+  # Feign sys.boot_completed for the benefit of other components that
   # listen on it.
   setprop sys.boot_completed 1
 

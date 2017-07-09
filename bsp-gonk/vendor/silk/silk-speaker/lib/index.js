@@ -193,7 +193,7 @@ export default class Speaker extends events.EventEmitter {
     let buffer = this._pcmBuffer.slice(0, chunkSize);
     this._pcmBuffer = this._pcmBuffer.slice(chunkSize);
 
-    let onwrite = written => {
+    let onwrite = (written) => {
       if (written <= 0) {
         this._done(new Error(`write() failed: ${written}`));
       } else if (written !== buffer.length) {

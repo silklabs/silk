@@ -92,11 +92,11 @@ export class Sensors extends events.EventEmitter {
       this._ready = true;
       this._command({cmdName: 'ready'});
     });
-    socket.on('data', data => this._onData(data));
-    socket.on('error', err => {
+    socket.on('data', (data) => this._onData(data));
+    socket.on('error', (err) => {
       this._restart(`sensors error, reason=${err}`);
     });
-    socket.on('close', hadError => {
+    socket.on('close', (hadError) => {
       if (!hadError) {
         this._restart(`sensors close`);
       }

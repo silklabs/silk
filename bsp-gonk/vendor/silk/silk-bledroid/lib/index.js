@@ -216,7 +216,7 @@ export class Bledroid extends EventEmitter {
       } = this;
       invariant(socket);
       invariant(socketEventListenersInstalled);
-      socketEventListenersInstalled.forEach(eventName => {
+      socketEventListenersInstalled.forEach((eventName) => {
         socket.removeAllListeners(eventName);
       });
     }
@@ -250,7 +250,7 @@ export class Bledroid extends EventEmitter {
     // Update the buffer with any leftover data.
     messageBuffer.data = messages.pop();
 
-    messages.forEach(message => this.onMessage(message));
+    messages.forEach((message) => this.onMessage(message));
   }
 
   onMessage(message: string) {
@@ -416,7 +416,7 @@ Bledroid.prototype.messageMap = [
   }, {
     regex: /^!serverConnect ([\dA-F:]{17}) (\d+)$/,
     emit: 'serverConnect',
-    transform: [ str => str.toUpperCase(), parseInt ],
+    transform: [ (str) => str.toUpperCase(), parseInt ],
   }, {
     regex: /^!serverDisconnect ([\dA-F:]{17}) (\d+)$/,
     emit: 'serverDisconnect',
@@ -462,7 +462,7 @@ Bledroid.prototype.messageMap = [
       undefined,
       parseInt,
       parseInt,
-      str => str === '1',
+      (str) => str === '1',
     ],
   }, {
     regex: /^!writeAttribute (\d+) (\d+) ([\dA-F:]{17}) (\d+) (\d+) (0|1) (0|1) ([\da-f]*)$/,
@@ -473,22 +473,22 @@ Bledroid.prototype.messageMap = [
       undefined,
       parseInt,
       parseInt,
-      str => str === '1',
-      str => str === '1',
+      (str) => str === '1',
+      (str) => str === '1',
       hexStringToBuffer,
     ],
   }, {
     regex: /^!discover ([\dA-F:]{17}) (-\d+) ([\da-fA-F]+)$/,
     emit: 'discover',
     transform: [
-      str => str.toUpperCase(),
+      (str) => str.toUpperCase(),
       parseInt,
-      data => parseAdvertising(hexStringToBuffer(data)),
+      (data) => parseAdvertising(hexStringToBuffer(data)),
     ],
   }, {
     regex: /^!serviceDiscover (\d+) ([\da-f]+) (\d+) (0|1)$/,
     emit: 'serviceDiscover',
-    transform: [ parseInt, hexStringToUuid, parseInt, str => str === '1' ],
+    transform: [ parseInt, hexStringToUuid, parseInt, (str) => str === '1' ],
   }, {
     regex: /^!serviceDiscoverComplete (\d+) (\d+)$/,
     emit: 'serviceDiscoverComplete',
@@ -501,7 +501,7 @@ Bledroid.prototype.messageMap = [
       hexStringToUuid,
       hexStringToUuid,
       parseInt,
-      str => str === '1',
+      (str) => str === '1',
     ],
   }, {
     regex: /^!includedServiceDiscoverComplete (\d+) ([\da-f]+)$/,
@@ -555,7 +555,7 @@ Bledroid.prototype.messageMap = [
     emit: 'notifyEnable',
     transform: [
       parseInt,
-      str => str === '1',
+      (str) => str === '1',
       parseInt,
       hexStringToUuid,
       hexStringToUuid,

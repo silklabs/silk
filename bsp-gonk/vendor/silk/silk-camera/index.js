@@ -304,7 +304,7 @@ function rawFaceArrayToFaces(buf: Buffer): Array<RawHalFaceType> {
   let i32a = new Int32Array(new Uint8Array(buf).buffer);
   let faces = [ ];
   let faceIndex;
-  let a = offset => i32a[faceIndex + offset];
+  let a = (offset) => i32a[faceIndex + offset];
   for (let i = 0; i < nrFaces; ++i) {
     let face = { };
     faceIndex = i * (SIZEOF_CAMERA_FACE_T / 4);
@@ -660,7 +660,7 @@ export default class Camera extends EventEmitter {
           0,
           this.FRAME_SIZE.normal.width,
           this.FRAME_SIZE.normal.height,
-          err => {
+          (err) => {
             this._cvVideoCaptureBusy = false;
             if (err) {
               throw err;
@@ -677,7 +677,7 @@ export default class Camera extends EventEmitter {
     const cvVideoCapture = this._cvVideoCapture;
     if (cvVideoCapture) {
       this._cvVideoCapture = null;
-      await new Promise(resolve => cvVideoCapture.close(resolve));
+      await new Promise((resolve) => cvVideoCapture.close(resolve));
     }
   }
 
@@ -829,11 +829,11 @@ export default class Camera extends EventEmitter {
     const ctlSocket = this._ctlSocket;
     invariant(ctlSocket);
 
-    ctlSocket.on('data', data => this._onCtlSocketRead(data));
-    ctlSocket.on('error', err => {
+    ctlSocket.on('data', (data) => this._onCtlSocketRead(data));
+    ctlSocket.on('error', (err) => {
       this._restart(`camera control socket error, reason=${err}`);
     });
-    ctlSocket.on('close', hadError => {
+    ctlSocket.on('close', (hadError) => {
       if (!hadError) {
         this._restart(`camera control socket close`);
       }
@@ -918,7 +918,7 @@ export default class Camera extends EventEmitter {
 
       let err = null;
 
-      let frames = formats.map(format => { //eslint-disable-line no-loop-func
+      let frames = formats.map((format) => { //eslint-disable-line no-loop-func
         switch (format) {
         case 'fullrgb':
           return image.fullrgb;
@@ -1199,10 +1199,10 @@ export default class Camera extends EventEmitter {
     });
     invariant(dataSocket);
 
-    dataSocket.on('error', err => {
+    dataSocket.on('error', (err) => {
       this._restart(`camera data socket error, reason=${err}`);
     });
-    dataSocket.on('close', hadError => {
+    dataSocket.on('close', (hadError) => {
       if (!hadError) {
         this._restart(`camera data socket close`);
       }
@@ -1267,7 +1267,7 @@ export default class Camera extends EventEmitter {
           log.debug(`TAG_FACES ${when}`, tagInfo);
           if (this._recording) {
             this.faces = rawFaceArrayToFaces(pkt).map(
-              face => {
+              (face) => {
                 return normalizeFace(
                   face,
                   this.FRAME_SIZE.normal.width,
@@ -1354,7 +1354,7 @@ export default class Camera extends EventEmitter {
     if (this._ready) {
       return Promise.resolve();
     }
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.once('ready', resolve);
     });
   }
@@ -1608,7 +1608,7 @@ export default class Camera extends EventEmitter {
    */
   normalRectsTo(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
     const scale = this.getFrameSize(frameSize).width / this.FRAME_SIZE.normal.width;
-    return rects.map(rect => Camera._scaleRect(rect, scale));
+    return rects.map((rect) => Camera._scaleRect(rect, scale));
   }
 
   /**
@@ -1622,7 +1622,7 @@ export default class Camera extends EventEmitter {
    */
   normalRectsFrom(rects: Array<Rect>, frameSize: CameraFrameSize): Array<Rect> {
     const scale = this.FRAME_SIZE.normal.width / this.getFrameSize(frameSize).width;
-    return rects.map(rect => Camera._scaleRect(rect, scale));
+    return rects.map((rect) => Camera._scaleRect(rect, scale));
   }
 
 

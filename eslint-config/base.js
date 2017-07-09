@@ -63,6 +63,7 @@ module.exports = {
     "no-use-before-define": 0,
     "no-var": 2,
     "no-with": 2,
+    "arrow-parens": 2,
     "arrow-spacing": [2, {"before": true, "after": true}],
     "brace-style": 2,
     "camelcase": 2,

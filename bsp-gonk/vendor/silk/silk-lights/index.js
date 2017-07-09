@@ -107,12 +107,12 @@ export class Light extends events.EventEmitter {
     ];
 
     return exec(binary, args)
-    .catch(err => {
+    .catch((err) => {
       let msg = `Failed to exec '${binary}': ${err}`;
       log.error(msg);
       throw new Error(msg);
     })
-    .then(result => {
+    .then((result) => {
       if (result.code !== 0) {
         let msg = `'${binary}' returned error code ${result.code}: ` +
                   result.stderr;

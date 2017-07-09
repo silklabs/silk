@@ -24,7 +24,7 @@ suite('wav', () => {
     let samples = 10;
     let channels = 2;
     let data = makeTestData(channels, samples);
-    await Promise.all([8, 16, 24, 32, '32f'].map(bitDepth => new Promise((resolve, reject) => {
+    await Promise.all([8, 16, 24, 32, '32f'].map((bitDepth) => new Promise((resolve, reject) => {
       let floatingPoint = false;
       if (bitDepth === '32f') {
         bitDepth = 32;
@@ -40,11 +40,11 @@ suite('wav', () => {
         float: floatingPoint,
         bitDepth: bitDepth,
       };
-      encoder.encode(audioData, opts).then(buffer => {
+      encoder.encode(audioData, opts).then((buffer) => {
         let encoded = wav.encode(audioData.channelData, opts);
         assert.equal(new Buffer(buffer).toString('hex'), encoded.toString('hex'), 'our encoder should match wav-encoder');
         let decoded = wav.decode(buffer);
-        decoder.decode(buffer).then(reference => {
+        decoder.decode(buffer).then((reference) => {
           assert.equal(reference.length, decoded.channelData[0].length, 'number of samples should match');
           assert.equal(reference.numberOfChannels, decoded.channelData.length, 'number of channels should match');
           assert.equal(reference.sampleRate, decoded.sampleRate, 'sample rate should match');

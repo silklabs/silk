@@ -23,7 +23,7 @@ function playUrl(url) {
     });
     let request = http.get(url, (res) => {
       res.once('error', (err) => reject(err));
-      res.on('data', data => player.write(data));
+      res.on('data', (data) => player.write(data));
       res.once('end', () => {
         if (res.statusCode !== 200) {
           log.info(`status code ${res.statusCode}, error \'${res.statusMessage}\'`);
@@ -44,4 +44,4 @@ function playUrl(url) {
 
 playUrl(URL1)
 .then(() => playUrl(URL2))
-.catch(err => log.error(err));
+.catch((err) => log.error(err));

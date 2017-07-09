@@ -51,7 +51,7 @@ function playShoutcast() {
         resolve();
       });
 
-      res.on('data', data => {
+      res.on('data', (data) => {
         player.write(data);
       });
       res.once('error', onEnd);

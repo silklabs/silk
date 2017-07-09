@@ -34,12 +34,12 @@ function playOnHost(fileName: string): Promise<void> {
   }
 
   return util.exec(BINARY, [fileName, ...options])
-  .catch(err => {
+  .catch((err) => {
     let msg = `Failed to exec '${BINARY}': ${err}`;
     log.error(msg);
     throw new Error(msg);
   })
-  .then(result => {
+  .then((result) => {
     if (result.code !== 0) {
       let msg = `'${BINARY}' returned error code ${result.code}: ` +
       result.stderr;
@@ -59,7 +59,7 @@ if (process.platform === 'android') {
       this.setDataSource = function(dataSource, fileName) {
         playOnHost(fileName)
         .then(() => this.listener('done'))
-        .catch(err => this.listener('error', err));
+        .catch((err) => this.listener('error', err));
         log.debug(`setVolume is not supported on this platform`);
       };
       this.stop = function() {

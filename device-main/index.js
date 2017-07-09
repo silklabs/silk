@@ -20,8 +20,8 @@ function bail(reason, err) {
   process.abort();
 }
 
-['unhandledRejection', 'uncaughtException'].forEach(reason => {
-  process.on(reason, err => bail(reason, err));
+['unhandledRejection', 'uncaughtException'].forEach((reason) => {
+  process.on(reason, (err) => bail(reason, err));
 });
 
 const productName = util.getstrprop('ro.product.name', '(unknown?)');
@@ -64,7 +64,7 @@ ntp.on('time', () => log.verbose('NTP time acquired'));
 
 // Power key handling
 let input = new Input();
-input.on('down', e => {
+input.on('down', (e) => {
   vib.pattern(100);
   switch (e.keyId) {
   case 'power':
@@ -99,7 +99,7 @@ camera.on('frame', (when, image) => {
 
 const bledroid = makeBledroidConnection();
 log.info(`bledroid state: ${bledroid.adapterState}`);
-bledroid.on('stateChange', state => {
+bledroid.on('stateChange', (state) => {
   log.info(`bledroid stateChange: ${state}`);
   if (state === 'poweredOn') {
     // Make the device discoverable for a short time.

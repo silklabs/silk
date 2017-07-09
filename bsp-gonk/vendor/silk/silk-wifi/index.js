@@ -361,11 +361,11 @@ class WpaMonitor extends EventEmitter {
       this._ready = true;
       this.emit('wpad_connected');
     });
-    socket.on('data', data => this._onData(data));
-    socket.on('error', err => {
+    socket.on('data', (data) => this._onData(data));
+    socket.on('error', (err) => {
       this._reconnect(err);
     });
-    socket.on('close', hadError => {
+    socket.on('close', (hadError) => {
       if (!hadError) {
         this._reconnect(`wpad close`);
       }
@@ -846,10 +846,10 @@ export class Wifi extends EventEmitter {
         this._scheduleScan();
       });
     });
-    monitor.on('ssidTempDisabled', ssid => {
+    monitor.on('ssidTempDisabled', (ssid) => {
       this.emit('ssidTempDisabled', ssid);
     });
-    monitor.on('ssidReenabled', ssid => {
+    monitor.on('ssidReenabled', (ssid) => {
       this.emit('ssidReenabled', ssid);
     });
 
@@ -928,7 +928,7 @@ export class Wifi extends EventEmitter {
     if (this._online) {
       return Promise.resolve();
     }
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.once('online', resolve);
     });
   }

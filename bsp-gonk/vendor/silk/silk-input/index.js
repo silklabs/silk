@@ -186,13 +186,13 @@ export default class Input extends events.EventEmitter {
           log.warn(`Unable to enumerate input devices: ${err.toString()}`);
           return;
         }
-        this._open(availDevices.filter(i => i.substring(0, 5) === 'event'));
+        this._open(availDevices.filter((i) => i.substring(0, 5) === 'event'));
       });
     }
   }
 
   _open(devices: Array<string>) {
-    this._inputDevices = devices.map(device => {
+    this._inputDevices = devices.map((device) => {
       const devicePath = `/dev/input/${device}`;
       let d;
       d = inputDevices[devicePath];
@@ -209,7 +209,7 @@ export default class Input extends events.EventEmitter {
        * @instance
        * @property {InputEventKey} e
        */
-      d.on('keyup', e => this.emit('up', e));
+      d.on('keyup', (e) => this.emit('up', e));
 
       /**
        * This event is emitted when a key is pressed
@@ -219,7 +219,7 @@ export default class Input extends events.EventEmitter {
        * @instance
        * @property {InputEventKey} e
        */
-      d.on('keydown', e => this.emit('down', e));
+      d.on('keydown', (e) => this.emit('down', e));
 
       /**
        * This event is emitted when key is pressed and held down
@@ -229,7 +229,7 @@ export default class Input extends events.EventEmitter {
        * @instance
        * @property {InputEventKey} e
        */
-      d.on('keyrepeat', e => this.emit('repeat', e));
+      d.on('keyrepeat', (e) => this.emit('repeat', e));
 
       /**
        * This event is emitted on a miscellaneous input
@@ -239,7 +239,7 @@ export default class Input extends events.EventEmitter {
        * @instance
        * @property {InputEventMisc} e
        */
-      d.on('misc', e => this.emit('misc', e));
+      d.on('misc', (e) => this.emit('misc', e));
 
       return d;
     });

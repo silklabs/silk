@@ -108,7 +108,7 @@ export function execRetry(
   retries: number,
   delayMs: number
 ): Promise<ExecOutput> {
-  return exec(cmd, args).then(result => {
+  return exec(cmd, args).then((result) => {
     if (0 === result.code) {
       return result;
     }
@@ -223,7 +223,7 @@ class PropWatcher extends EventEmitter {
     }
 
     const cmd = spawn('system/bin/watchprops', [], options);
-    cmd.stderr.on('data', data => {
+    cmd.stderr.on('data', (data) => {
       const line = data.toString();
       let match = line.match(/^\d+ ([^ ]+) = '(.*)'/);
       if (match && match[1]) {
@@ -274,8 +274,8 @@ export let propWatcher = new PropWatcher();
  * @memberof silk-sysutils
  */
 export async function waitprop(name: string, value: PropTypes): Promise<void> {
-  return new Promise(resolve => {
-    propWatcher.once(name, newValue => {
+  return new Promise((resolve) => {
+    propWatcher.once(name, (newValue) => {
       log.verbose('waitprop observed', name, '=', value);
       if (newValue === value) {
         resolve();
@@ -293,7 +293,7 @@ export async function waitprop(name: string, value: PropTypes): Promise<void> {
  * @memberof silk-sysutils
  */
 export function timeout(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 

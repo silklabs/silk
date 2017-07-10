@@ -18,11 +18,16 @@ const TARGET = path.join(__dirname, '..');
 const PKG_PATH = path.join(TARGET, 'package.json');
 const DEST = path.join(TARGET, 'staging/index.js');
 
-const DEFAULT_BABEL_VERSION = '6.22.0';
+const DEFAULT_BABEL_VERSION = '6.24.1';
 const PLUGIN_VERSION_OVERRIDES = {
   // Add any version overrides here if a plugin isn't availabe as
   // version DEFAULT_BABEL_VERSION.
   'syntax-flow': '6.18.0',
+  'syntax-trailing-function-commas': '6.22.0',
+  'transform-es2015-destructuring': '6.22.0',
+  'transform-export-extensions': '6.22.0',
+  'transform-flow-strip-types': '6.22.0',
+  'transform-object-rest-spread': '6.22.0',
 };
 
 const PLUGIN_SKIP = new Set([

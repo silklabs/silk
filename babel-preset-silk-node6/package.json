@@ -5,12 +5,12 @@
   "repository": "silklabs/silk",
   "main": "index.js",
   "dependencies": {
-    "babel-features": "2.0.1",
+    "babel-features": "2.0.2",
     "json-loader": "0.5.4",
     "webpack": "1.14.0"
   },
   "devDependencies": {
-    "babel-cli": "6.18.0",
+    "babel-cli": "6.24.1",
     "mocha": "2.4.5"
   },
   "scripts": {

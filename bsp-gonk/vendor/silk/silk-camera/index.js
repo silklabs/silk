@@ -572,6 +572,13 @@ export default class Camera extends EventEmitter {
       this._vidDataSocket = null;
     }
 
+    if (process.platform !== 'android') {
+      clearTimeout(this._restartTimeout);
+      this._restartTimeout = null;
+      this._init();
+      return;
+    }
+
     // A reasonable timeout for most things...
     const timeoutMs = 500;
 
@@ -619,6 +626,10 @@ export default class Camera extends EventEmitter {
       // to talk to it
       await util.timeout(timeoutMs);
 
+      if (this._restartTimeout === null) {
+        break;
+      }
+
       try {
         log.debug('Connecting to', CAPTURE_CTL_SOCKET_NAME);
         await Promise.race([
@@ -636,7 +647,7 @@ export default class Camera extends EventEmitter {
           this._init();
         }
       } catch (err) {
-        log.info('Unable to connecting to', CAPTURE_CTL_SOCKET_NAME, ':', err.message);
+        log.info('Unable to connect to', CAPTURE_CTL_SOCKET_NAME, ':', err.message);
       }
     }
   }
@@ -709,23 +720,27 @@ export default class Camera extends EventEmitter {
   }
 
   _startMicCapture() {
-    const mic = require('mic');         // eslint-disable-line import/no-require
-    let simMic = mic({
-      bitwidth: 8 * this._config.deviceMic.bytesPerSample,
-      channels: this._config.deviceMic.numChannels,
-      encoding: this._config.deviceMic.encoding,
-      endian: this._config.deviceMic.endian,
-      rate: this._config.deviceMic.sampleRate,
-    });
-    let micInput = simMic.getAudioStream();
-    micInput.on('data', (data) => {
-      this._throwyEmit('mic-data', {when: Date.now(), frames: data});
-    });
-    micInput.on('error', (error) => {
-      // TODO: what should we do on errors ...
-      log.error(`Sim mic error: ${error}`);
-    });
-    simMic.start();
+    try {
+      const mic = require('mic');         // eslint-disable-line import/no-require
+      let simMic = mic({
+        bitwidth: 8 * this._config.deviceMic.bytesPerSample,
+        channels: this._config.deviceMic.numChannels,
+        encoding: this._config.deviceMic.encoding,
+        endian: this._config.deviceMic.endian,
+        rate: this._config.deviceMic.sampleRate,
+      });
+      let micInput = simMic.getAudioStream();
+      micInput.on('data', (data) => {
+        this._throwyEmit('mic-data', {when: Date.now(), frames: data});
+      });
+      micInput.on('error', (error) => {
+        // TODO: what should we do on errors ...
+        log.error(`Sim mic error: ${error}`);
+      });
+      simMic.start();
+    } catch (err) {
+      log.warn(`Unable to start mic capture: ${err.message}`);
+    }
   }
 
   /**
@@ -772,7 +787,9 @@ export default class Camera extends EventEmitter {
       // The capture process is currently gonk only.  For other platforms only initialize
       // OpenCV video capture.
       process.nextTick(() => {
-        this._startMicCapture();
+        if (AUDIO_HW_ENABLED) {
+          this._startMicCapture();
+        }
         this._initComplete();
         if (CAMERA_HW_ENABLED) {
           this._initCVVideoCapture();

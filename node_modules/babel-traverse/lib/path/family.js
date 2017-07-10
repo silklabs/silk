@@ -2,6 +2,10 @@
 
 exports.__esModule = true;
 
+var _create = require("babel-runtime/core-js/object/create");
+
+var _create2 = _interopRequireDefault(_create);
+
 var _getIterator2 = require("babel-runtime/core-js/get-iterator");
 
 var _getIterator3 = _interopRequireDefault(_getIterator2);
@@ -10,11 +14,17 @@ exports.getStatementParent = getStatementParent;
 exports.getOpposite = getOpposite;
 exports.getCompletionRecords = getCompletionRecords;
 exports.getSibling = getSibling;
+exports.getPrevSibling = getPrevSibling;
+exports.getNextSibling = getNextSibling;
+exports.getAllNextSiblings = getAllNextSiblings;
+exports.getAllPrevSiblings = getAllPrevSiblings;
 exports.get = get;
 exports._getKey = _getKey;
 exports._getPattern = _getPattern;
 exports.getBindingIdentifiers = getBindingIdentifiers;
 exports.getOuterBindingIdentifiers = getOuterBindingIdentifiers;
+exports.getBindingIdentifierPaths = getBindingIdentifierPaths;
+exports.getOuterBindingIdentifierPaths = getOuterBindingIdentifierPaths;
 
 var _index = require("./index");
 
@@ -91,6 +101,36 @@ function getSibling(key) {
   });
 }
 
+function getPrevSibling() {
+  return this.getSibling(this.key - 1);
+}
+
+function getNextSibling() {
+  return this.getSibling(this.key + 1);
+}
+
+function getAllNextSiblings() {
+  var _key = this.key;
+  var sibling = this.getSibling(++_key);
+  var siblings = [];
+  while (sibling.node) {
+    siblings.push(sibling);
+    sibling = this.getSibling(++_key);
+  }
+  return siblings;
+}
+
+function getAllPrevSiblings() {
+  var _key = this.key;
+  var sibling = this.getSibling(--_key);
+  var siblings = [];
+  while (sibling.node) {
+    siblings.push(sibling);
+    sibling = this.getSibling(--_key);
+  }
+  return siblings;
+}
+
 function get(key, context) {
   if (context === true) context = this.context;
   var parts = key.split(".");
@@ -162,4 +202,65 @@ function getBindingIdentifiers(duplicates) {
 
 function getOuterBindingIdentifiers(duplicates) {
   return t.getOuterBindingIdentifiers(this.node, duplicates);
+}
+
+function getBindingIdentifierPaths() {
+  var duplicates = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+  var outerOnly = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+  var path = this;
+  var search = [].concat(path);
+  var ids = (0, _create2.default)(null);
+
+  while (search.length) {
+    var id = search.shift();
+    if (!id) continue;
+    if (!id.node) continue;
+
+    var keys = t.getBindingIdentifiers.keys[id.node.type];
+
+    if (id.isIdentifier()) {
+      if (duplicates) {
+        var _ids = ids[id.node.name] = ids[id.node.name] || [];
+        _ids.push(id);
+      } else {
+        ids[id.node.name] = id;
+      }
+      continue;
+    }
+
+    if (id.isExportDeclaration()) {
+      var declaration = id.get("declaration");
+      if (declaration.isDeclaration()) {
+        search.push(declaration);
+      }
+      continue;
+    }
+
+    if (outerOnly) {
+      if (id.isFunctionDeclaration()) {
+        search.push(id.get("id"));
+        continue;
+      }
+      if (id.isFunctionExpression()) {
+        continue;
+      }
+    }
+
+    if (keys) {
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var child = id.get(key);
+        if (Array.isArray(child) || child.node) {
+          search = search.concat(child);
+        }
+      }
+    }
+  }
+
+  return ids;
+}
+
+function getOuterBindingIdentifierPaths(duplicates) {
+  return this.getBindingIdentifierPaths(duplicates, true);
 }

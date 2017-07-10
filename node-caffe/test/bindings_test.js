@@ -41,7 +41,7 @@ suite('bindings', () => {
       'data should have the right size'
     );
     assert.ok(
-      !Array.from(data).some(x => x !== 0.0),
+      !Array.from(data).some((x) => x !== 0.0),
       'make sure data is all zeros'
     );
     data[1] = 47;
@@ -160,7 +160,7 @@ suite('bindings', () => {
       'BufferedDataLayer',
       'the input layer should be a buffered data layer'
     );
-    net.layers.filter(layer => layer.type !== 'BufferedDataLayer').forEach(layer => {
+    net.layers.filter((layer) => layer.type !== 'BufferedDataLayer').forEach((layer) => {
       assert.throws(
         () => layer.queueLength && layer.enqueue(),
         'every other layer than BufferedDataLayer should throw if' +
@@ -195,7 +195,7 @@ suite('bindings', () => {
           0,
           'input blob should be unchanged before we call forward'
         );
-        net.forward(loss => {
+        net.forward((loss) => {
           assert.equal(
             input.queueLength,
             0,

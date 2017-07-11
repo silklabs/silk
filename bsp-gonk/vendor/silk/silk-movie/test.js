@@ -1,9 +1,9 @@
-'use strict'
+'use strict';
 
 let Movie = require('.').Movie;
 
 exports['sanity'] = function(test) {
-  test.expect(2)
+  test.expect(2);
 
   let movie = new Movie();
 

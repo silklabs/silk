@@ -9,9 +9,13 @@
 #define LOG_TAG "silk-capture"
 #ifdef ANDROID
 #include <utils/Log.h>
-#include <libpreview.h>
 #else
-#define ALOGE(fmt, args...) printf(LOG_TAG fmt, ##args)
+#define ALOGE(fmt, args...) printf(LOG_TAG ":E " fmt, ##args)
+#define ALOGI(fmt, args...) printf(LOG_TAG ":I " fmt, ##args)
+#endif
+
+#ifdef USE_LIBPREVIEW
+#include <libpreview.h>
 #endif
 
 #include <memory>
@@ -51,7 +55,7 @@ public:
   int scaledWidth;
   int scaledHeight;
   bool busy;
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
   libpreview::Client *client;
   libpreview::FrameFormat frameFormat;
   uv_mutex_t frameDataLock;
@@ -68,13 +72,13 @@ public:
       scaledWidth(scaledWidth),
       scaledHeight(scaledHeight),
       busy(true),
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
       frameWidth(0),
       frameHeight(0),
       frameBuffer(nullptr),
 #endif
       opened(false) {
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
     uv_mutex_init(&frameDataLock);
 #endif
   }
@@ -90,7 +94,7 @@ public:
       return true;
     }
 
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
     client = libpreview::open(OnFrameCallback, OnAbandonedCallback, this);
     opened = client != NULL;
 #else
@@ -105,13 +109,13 @@ public:
 
   ~State() {
     shutdown();
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
     uv_mutex_destroy(&frameDataLock);
 #endif
   }
 
   void shutdown() {
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
     if (client != NULL) {
       client->stopFrameCallback();
 
@@ -147,7 +151,7 @@ public:
 private:
   bool opened;
 
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
   static void OnAbandonedCallback(void *userData);
   static void OnFrameCallback(void *userData,
                               void* buffer,
@@ -232,7 +236,7 @@ public:
       return;
     }
 
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
     if (state->frameBuffer == NULL) {
       SetErrorMessage("no frame yet");
       return;
@@ -399,7 +403,7 @@ public:
       return;
     }
 
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
     if (state->frameBuffer == NULL) {
       SetErrorMessage("no frame yet");
       return;
@@ -671,7 +675,7 @@ NAN_METHOD(VideoCapture::Close) {
   Nan::AsyncQueueWorker(closeWorker);
 }
 
-#ifdef ANDROID
+#ifdef USE_LIBPREVIEW
 void State::OnAbandonedCallback(void *userData) {
   State *state = static_cast<State*>(userData);
   uv_mutex_lock(&state->frameDataLock);

@@ -14,7 +14,7 @@
       ],
 
       "conditions": [
-        [ "OS==\"android\"", {
+        [ "OS=='android'", {
           "include_dirs": [
             "<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")",
             "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
@@ -26,22 +26,25 @@
           "cflags": [
             "-Wall",
             "-Wstrict-aliasing",
+            "-DUSE_LIBPREVIEW",
           ],
         }],
-        [ "OS==\"linux\"", {
+        [ "OS=='linux'", {
           "include_dirs": [
             "<!@(pkg-config --cflags opencv)",
             "<!(node -e \"require('opencv/include_dirs')\")",
+            '<!(test -z "$BSP_LE" || echo "../capture")',
           ],
           "libraries": [
             "<!@(pkg-config --libs opencv)",
           ],
           "cflags": [
-            "<!@(pkg-config --cflags \"opencv >= 2.3.1\" )",
-            "-Wall"
+            '<!@(pkg-config --cflags "opencv >= 2.3.1" )',
+            '<!(test -z "$BSP_LE" || echo "-DUSE_LIBPREVIEW")',
+            "-Wall",
           ],
         }],
-        [ "OS==\"mac\"", {
+        [ "OS=='mac'", {
             "include_dirs": [
               "<!(node -e \"require('opencv/include_dirs')\")",
             ],

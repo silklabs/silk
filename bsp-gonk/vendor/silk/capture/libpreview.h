@@ -2,6 +2,7 @@
 #define LIBPREVIEW_H
 
 #include <dlfcn.h>
+#include <stdio.h>
 
 namespace libpreview {
 

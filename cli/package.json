@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "argparse": "1.0.7",
-    "babel-runtime": "6.22.0",
+    "babel-runtime": "6.23.0",
     "cli-color": "1.1.0",
     "debug": "2.2.0",
     "json5": "0.4.0",

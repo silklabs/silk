@@ -572,13 +572,6 @@ export default class Camera extends EventEmitter {
       this._vidDataSocket = null;
     }
 
-    if (process.platform !== 'android') {
-      clearTimeout(this._restartTimeout);
-      this._restartTimeout = null;
-      this._init();
-      return;
-    }
-
     // A reasonable timeout for most things...
     const timeoutMs = 500;
 
@@ -597,6 +590,13 @@ export default class Camera extends EventEmitter {
       this._closeCVVideoCapture(),
       util.timeout(timeoutMs),
     ]);
+
+    if (process.platform !== 'android') {
+      clearTimeout(this._restartTimeout);
+      this._restartTimeout = null;
+      this._init();
+      return;
+    }
 
     util.setprop('ctl.stop', 'silk-capture');
     await Promise.race([

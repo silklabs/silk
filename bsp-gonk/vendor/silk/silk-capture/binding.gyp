@@ -27,6 +27,7 @@
             "-Wall",
             "-Wstrict-aliasing",
             "-DUSE_LIBPREVIEW",
+            "-DUSE_ALOG",
           ],
         }],
         [ "OS=='linux'", {
@@ -37,10 +38,12 @@
           ],
           "libraries": [
             "<!@(pkg-config --libs opencv)",
+            '<!(test -z "$BSP_LE" || echo "-llog")',
           ],
           "cflags": [
             '<!@(pkg-config --cflags "opencv >= 2.3.1" )',
             '<!(test -z "$BSP_LE" || echo "-DUSE_LIBPREVIEW")',
+            '<!(test -z "$BSP_LE" || echo "-DUSE_ALOG")',
             "-Wall",
           ],
         }],

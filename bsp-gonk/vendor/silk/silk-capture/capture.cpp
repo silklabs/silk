@@ -7,7 +7,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-capture"
-#ifdef ANDROID
+#ifdef USE_ALOG
 #include <utils/Log.h>
 #else
 #define ALOGE(fmt, args...) printf(LOG_TAG ":E " fmt, ##args)

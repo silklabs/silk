@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		357AF00F1D20BE510075394A /* SLKBlobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 357AF00E1D20BE510075394A /* SLKBlobManager.m */; };
-		357AF01F1D20D90E0075394A /* SLKWebSocketModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 357AF01E1D20D90E0075394A /* SLKWebSocketModule.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,8 +25,6 @@
 /* Begin PBXFileReference section */
 		357AF00D1D20BE510075394A /* SLKBlobManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKBlobManager.h; sourceTree = "<group>"; };
 		357AF00E1D20BE510075394A /* SLKBlobManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKBlobManager.m; sourceTree = "<group>"; };
-		357AF01D1D20D90E0075394A /* SLKWebSocketModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKWebSocketModule.h; sourceTree = "<group>"; };
-		357AF01E1D20D90E0075394A /* SLKWebSocketModule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKWebSocketModule.m; sourceTree = "<group>"; };
 		358F4ED71D1E81A9004DF814 /* libSLKBlobs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSLKBlobs.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -63,8 +60,6 @@
 			children = (
 				357AF00D1D20BE510075394A /* SLKBlobManager.h */,
 				357AF00E1D20BE510075394A /* SLKBlobManager.m */,
-				357AF01D1D20D90E0075394A /* SLKWebSocketModule.h */,
-				357AF01E1D20D90E0075394A /* SLKWebSocketModule.m */,
 			);
 			path = SLKBlobs;
 			sourceTree = "<group>";
@@ -125,7 +120,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				357AF01F1D20D90E0075394A /* SLKWebSocketModule.m in Sources */,
 				357AF00F1D20BE510075394A /* SLKBlobManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -218,13 +212,6 @@
 		358F4EE11D1E81A9004DF814 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/../../../node_modules/react-native/React/**",
-					"$(SRCROOT)/../../../node_modules/react-native/Libraries/WebSocket",
-					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRCROOT)/../../react-native/Libraries/WebSocket",
-				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -234,13 +221,6 @@
 		358F4EE21D1E81A9004DF814 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/../../../node_modules/react-native/React/**",
-					"$(SRCROOT)/../../../node_modules/react-native/Libraries/WebSocket",
-					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRCROOT)/../../react-native/Libraries/WebSocket",
-				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

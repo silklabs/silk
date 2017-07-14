@@ -1,6 +1,10 @@
-#import "RCTBridge.h"
-#import "RCTBridgeModule.h"
-#import "RCTURLRequestHandler.h"
+/**
+ * Copyright (c) 2015-2017 Silk Labs, Inc.
+ * All Rights Reserved.
+ */
+#import <React/RCTBridge.h>
+#import <React/RCTBridgeModule.h>
+#import <React/RCTURLRequestHandler.h>
 
 @interface SLKBlobManager : NSObject <RCTBridgeModule, RCTURLRequestHandler>
 

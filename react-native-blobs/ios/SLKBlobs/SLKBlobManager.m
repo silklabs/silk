@@ -4,7 +4,8 @@
  */
 
 #import "SLKBlobManager.h"
-#import "RCTConvert.h"
+
+#import <React/RCTConvert.h>
 
 static NSString *const kBlobUriScheme = @"blob";
 

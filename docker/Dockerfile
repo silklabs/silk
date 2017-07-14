@@ -25,11 +25,14 @@ RUN addgroup --gid 999 docker && \
     echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 32A37959C2FA5C3C99EFBC32A79206696452D198 && \
     echo "deb https://apt.buildkite.com/buildkite-agent stable main" > /etc/apt/sources.list.d/buildkite-agent.list && \
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" > /etc/apt/sources.list.d/azure-cli.list && \
+    apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893  && \
     apt-get update -qq && \
     DEBIAN_FRONTEND=noninteractive \
       apt-get install -y \
         apt-file \
         autoconf \
+        azure-cli \
         bc \
         build-essential \
         buildkite-agent \

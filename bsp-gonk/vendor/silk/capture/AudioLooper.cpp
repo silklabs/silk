@@ -2,7 +2,7 @@
 #define LOG_TAG "capture"
 
 #include <media/stagefright/MediaBuffer.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include "AudioLooper.h"
 
 using namespace android;

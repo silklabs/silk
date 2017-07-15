@@ -3,7 +3,7 @@
 #ifdef ANDROID
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-movie"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include <binder/ProcessState.h>
 #include "BootAnimation.h"

@@ -5,7 +5,7 @@
 
 // #define LOG_NDEBUG 0
 #define LOG_TAG "BufferedDataSource"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include "BufferedDataSource.h"
 

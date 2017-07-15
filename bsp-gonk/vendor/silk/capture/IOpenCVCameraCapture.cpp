@@ -5,7 +5,7 @@
 #include <binder/Parcel.h>
 #include <gui/IGraphicBufferProducer.h>
 #include <stdint.h>
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include "IOpenCVCameraCapture.h"
 

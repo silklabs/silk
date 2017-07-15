@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-capture-segmenter"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include "MPEG4SegmenterDASH.h"
 

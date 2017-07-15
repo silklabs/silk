@@ -8,7 +8,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-capture"
 #ifdef USE_ALOG
-#include <utils/Log.h>
+#include <log/log.h>
 #else
 #define ALOGE(fmt, args...) printf(LOG_TAG ":E " fmt, ##args)
 #define ALOGI(fmt, args...) printf(LOG_TAG ":I " fmt, ##args)

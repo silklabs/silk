@@ -6,7 +6,7 @@
 #include <linux/rtc.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include "time_genoff.h"
 
 extern "C" {

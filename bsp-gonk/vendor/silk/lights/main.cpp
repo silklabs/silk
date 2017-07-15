@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <hardware/lights.h>
 
 #define LOG_ERROR(_msg, ...)                                                   \

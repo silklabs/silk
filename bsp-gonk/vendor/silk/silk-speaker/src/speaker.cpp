@@ -5,7 +5,7 @@
 #define LOG_TAG "silk-speaker"
 #ifdef ANDROID
 // #define LOG_NDEBUG 0
-#include <utils/Log.h>
+#include <log/log.h>
 #else
 #define ALOGV(fmt, args...) fprintf(stderr, LOG_TAG ": " fmt, ##args); fprintf(stderr, "\n");
 #define ALOGE ALOGV

@@ -2,7 +2,7 @@
 #define LOG_TAG "bledroid"
 // Uncomment to use systrace
 //#define ATRACE_TAG ATRACE_TAG_ALWAYS
-#include <utils/Log.h>
+#include <log/log.h>
 #include <cutils/properties.h>
 #include <cutils/trace.h>
 

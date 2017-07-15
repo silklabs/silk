@@ -1,7 +1,7 @@
 #ifndef OPENCVCAMERACAPTURE_H
 #define OPENCVCAMERACAPTURE_H
 
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include <binder/ProcessState.h>
 #include <binder/BinderService.h>

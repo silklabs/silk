@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-capture"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/MetaData.h>

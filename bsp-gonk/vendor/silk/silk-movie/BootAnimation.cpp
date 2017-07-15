@@ -30,7 +30,7 @@
 #include <binder/IPCThreadState.h>
 #include <utils/Atomic.h>
 #include <utils/Errors.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <utils/threads.h>
 
 #include <ui/PixelFormat.h>

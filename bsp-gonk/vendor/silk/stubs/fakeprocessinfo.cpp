@@ -3,7 +3,7 @@
 
 #undef LOG_TAG
 #define LOG_TAG "fakeprocessinfo"
-#include <utils/Log.h>
+#include <log/log.h>
 
 using namespace android;
 

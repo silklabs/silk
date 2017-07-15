@@ -5,7 +5,7 @@
 #include <binder/ProcessState.h>
 #include <binder/IServiceManager.h>
 #include <system/camera.h>
-#include <utils/Log.h>
+#include <log/log.h>
 
 
 #include "OpenCVCameraCapture.h"

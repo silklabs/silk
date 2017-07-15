@@ -5,7 +5,7 @@
 
 #include <utils/Thread.h>
 #include <utils/SystemClock.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <media/stagefright/MediaBuffer.h>
 
 using namespace android;

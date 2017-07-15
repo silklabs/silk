@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-Channel"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include "Channel.h"
 #include <sys/time.h>

@@ -23,7 +23,7 @@
 
 #undef LOG_TAG
 #define LOG_TAG "fakeperm"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #ifndef ALOGE
 #define ALOGE LOGE

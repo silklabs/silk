@@ -16,7 +16,7 @@
 
 // #define LOG_NDEBUG 0
 #define LOG_TAG "StreamPlayer"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include "StreamPlayer.h"
 #include <fcntl.h>

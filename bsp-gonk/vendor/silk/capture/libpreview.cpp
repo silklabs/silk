@@ -10,7 +10,7 @@
 #include <system/camera.h>
 #include <cutils/atomic.h>
 #include <cutils/properties.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <utils/Vector.h>
 #include <utils/String16.h>
 

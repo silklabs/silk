@@ -4,7 +4,7 @@
 
 // #define LOG_NDEBUG 0
 #define LOG_TAG "silk-speaker"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include <media/IAudioPolicyService.h>
 #include "audioPlayer.h"

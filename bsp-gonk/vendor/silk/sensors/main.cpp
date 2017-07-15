@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "silk-sensors"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <utils/Timers.h>

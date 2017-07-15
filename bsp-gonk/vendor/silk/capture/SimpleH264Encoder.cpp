@@ -14,7 +14,7 @@
 #include <media/stagefright/foundation/AMessage.h>
 #include <utils/Thread.h>
 #include <utils/SystemClock.h>
-#include <utils/Log.h>
+#include <log/log.h>
 
 using namespace android;
 

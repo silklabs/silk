@@ -4,7 +4,7 @@
 */
 
 #define LOG_TAG "silk-wpad"
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include <cutils/properties.h>
 #include <hardware_legacy/wifi.h>

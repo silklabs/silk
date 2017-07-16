@@ -229,6 +229,7 @@ type DecodeReturnType = {
   channels: number;
   bitDepth: number;
   channelData: Array<Float32Array>;
+  float: boolean;
 };
 
 function decode(buffer: ArrayBuffer | $TypedArray): DecodeReturnType {
@@ -267,6 +268,7 @@ function decode(buffer: ArrayBuffer | $TypedArray): DecodeReturnType {
     sampleRate: fmt.sampleRate,
     channels: fmt.channels,
     bitDepth: fmt.bitDepth,
+    float: fmt.floatingPoint,
     channelData,
   };
 }
@@ -276,6 +278,7 @@ type DecodeRawReturnType = {
   channels: number;
   bitDepth: number;
   channelData: Buffer;
+  float: boolean;
 };
 
 function decodeRaw(buffer: ArrayBuffer | $TypedArray): DecodeRawReturnType {
@@ -306,6 +309,7 @@ function decodeRaw(buffer: ArrayBuffer | $TypedArray): DecodeRawReturnType {
     sampleRate: fmt.sampleRate,
     channels: fmt.channels,
     bitDepth: fmt.bitDepth,
+    float: fmt.floatingPoint,
     channelData: Buffer.from(buffer, pos),
   };
 }

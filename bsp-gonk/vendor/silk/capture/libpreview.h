@@ -13,6 +13,7 @@ typedef enum {
   FRAMEFORMAT_INVALID,
   FRAMEFORMAT_RGB,
   FRAMEFORMAT_YVU420SP,
+  FRAMEFORMAT_YUV420SP,
 } FrameFormat;
 
 typedef void *FrameOwner;

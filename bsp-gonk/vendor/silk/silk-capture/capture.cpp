@@ -207,6 +207,23 @@ class VideoCaptureOpenWorker : public Nan::AsyncWorker {
 };
 
 
+static void ConvertYUVsptoYVUsp(int width, int height, const cv::Mat& yuv, cv::Mat& yvu) {
+  yvu = yuv.clone();
+
+  const size_t yPlaneSize = width * height;
+  const size_t uvPlaneSize = yPlaneSize / 2;
+
+  // Copy/convert UV plane into VU plane, 32bits at a time.
+  // (TODO: Use 64bits at a time if this is a arm64 build and/or just use neon)
+  const uint32_t *s = static_cast<const uint32_t *>((void *)(yuv.ptr(0) + yPlaneSize));
+  uint32_t *d = static_cast<uint32_t *>((void *)(yvu.ptr(0) + yPlaneSize));
+  for (uint32_t *dEnd = d + uvPlaneSize / 4; d < dEnd; s++, d++) {
+    const uint32_t v = *s;
+    *d = (v << 8) | (v >> 24);
+  }
+}
+
+
 /*
  * Async worker used to process the next frame
  */
@@ -247,6 +264,30 @@ public:
         // Porting error.  Nothing to do but soldier on...
         ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
         //fall through
+      case libpreview::FRAMEFORMAT_YUV420SP: {
+        // Setup a Matrix object to store the remote image using the
+        // height/width that OpenCV expects for a YVU420 semi-planar format
+        cv::Mat remote(
+            state->frameHeight * 3 / 2,
+            state->frameWidth,
+            CV_8UC1,
+            state->frameBuffer
+        );
+
+        ConvertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
+        if (grabAll) {
+          cv::cvtColor(remote, rgb, CV_YUV420sp2RGB, 0);
+
+          cv::Mat remoteGray(
+              state->frameHeight,
+              state->frameWidth,
+              CV_8UC1,
+              state->frameBuffer
+          );
+          gray = remoteGray.clone();
+        }
+        break;
+      }
       case libpreview::FRAMEFORMAT_YVU420SP: {
         // Setup a Matrix object to store the remote image using the
         // height/width that OpenCV expects for a YVU420 semi-planar format
@@ -371,6 +412,7 @@ private:
   bool grabAll;
 };
 
+
 /*
  * Async worker used to process the next custom frame
  */
@@ -414,9 +456,22 @@ public:
         // Porting error.  Nothing to do but soldier on...
         ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
         //fall through
+      case libpreview::FRAMEFORMAT_YUV420SP: {
+        cv::Mat remote(
+            state->frameHeight * 3 / 2,
+            state->frameWidth,
+            CV_8UC1,
+            state->frameBuffer
+        );
+
+        if (format == "yvu420sp") {
+          ConvertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
+        } else if (format == "rgb") {
+          cv::cvtColor(remote, im, CV_YUV420sp2RGB, 0);
+        }
+        break;
+      }
       case libpreview::FRAMEFORMAT_YVU420SP: {
-        // Setup a Matrix object to store the remote image using the
-        // height/width that OpenCV expects for a YVU420 semi-planar format
         cv::Mat remote(
             state->frameHeight * 3 / 2,
             state->frameWidth,
@@ -427,6 +482,8 @@ public:
         if (format == "yvu420sp") {
           im = remote.clone();
         } else if (format == "rgb") {
+          // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
+          //                 ^^      ^ ^             ^^      ^ ^
           cv::cvtColor(remote, im, CV_YUV420sp2BGR, 0);
         }
         break;

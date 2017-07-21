@@ -1,0 +1,25 @@
+From 6bf3549a550dbf34ddfbfc48d2e2afe447a3b70e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 21 Jul 2017 10:08:22 -0700
+Subject: [PATCH] Increase qemu system partition size
+
+---
+ target/board/generic/BoardConfig.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/target/board/generic/BoardConfig.mk b/target/board/generic/BoardConfig.mk
+index 3ae5860..dd8ca49 100644
+--- a/target/board/generic/BoardConfig.mk
++++ b/target/board/generic/BoardConfig.mk
+@@ -68,7 +68,7 @@ USE_OPENGL_RENDERER := true
+ VSYNC_EVENT_PHASE_OFFSET_NS := 0
+ 
+ TARGET_USERIMAGES_USE_EXT4 := true
+-BOARD_SYSTEMIMAGE_PARTITION_SIZE := 576716800
++BOARD_SYSTEMIMAGE_PARTITION_SIZE := 671088640
+ BOARD_USERDATAIMAGE_PARTITION_SIZE := 576716800
+ BOARD_CACHEIMAGE_PARTITION_SIZE := 69206016
+ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
+-- 
+2.11.0
+

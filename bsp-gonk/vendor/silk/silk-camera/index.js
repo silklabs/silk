@@ -654,6 +654,9 @@ export default class Camera extends EventEmitter {
 
   /**
    * Restarts the camera subsystem
+   *
+   * @memberof silk-camera
+   * @instance
    */
   async restart() {
     this._restart('External restart request');

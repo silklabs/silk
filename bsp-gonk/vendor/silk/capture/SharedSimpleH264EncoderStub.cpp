@@ -9,29 +9,32 @@ class SharedSimpleH264EncoderStub: public SharedSimpleH264Encoder {
     delete encoder;
   }
 
-  virtual void setBitRate(int newBitrateK) {
+  virtual void setBitRate(int newBitrateK) override {
     encoder->setBitRate(newBitrateK);
   }
 
-  virtual void requestKeyFrame() {
+  virtual void requestKeyFrame() override {
     encoder->requestKeyFrame();
   }
 
-  virtual void nextFrame(void *yuv420SemiPlanarFrame,
-                         void (*deallocator)(void *),
-                         InputFrameInfo& inputFrameInfo) {
-    encoder->nextFrame(yuv420SemiPlanarFrame, deallocator, inputFrameInfo);
+  virtual bool getInputFrame(InputFrame& inputFrame) override {
+    return encoder->getInputFrame(inputFrame);
   }
 
-  virtual void stop() {
+  virtual void nextFrame(InputFrame& inputFrame,
+                         InputFrameInfo& inputFrameInfo) override {
+    encoder->nextFrame(inputFrame, inputFrameInfo);
+  }
+
+  virtual void stop() override {
     encoder->stop();
   }
 
-  virtual bool error() {
+  virtual bool error() override {
     return encoder->error();
   }
 
-  virtual bool isPrimary() {
+  virtual bool isPrimary() override {
     return true;
   }
 

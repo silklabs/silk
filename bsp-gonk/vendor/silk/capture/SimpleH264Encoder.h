@@ -7,6 +7,12 @@
 
 class SimpleH264Encoder {
  public:
+  struct InputFrame {
+    void *data;  // format: yuv420sp (aka, nv12)
+    size_t size;
+    void (*deallocator)(void *);
+  };
+
   struct InputFrameInfo {
     int64_t captureTimeMs;
     int64_t ntpTimeMs;
@@ -34,8 +40,9 @@ class SimpleH264Encoder {
   virtual ~SimpleH264Encoder() {};
   virtual void setBitRate(int bitrateK) = 0;
   virtual void requestKeyFrame() = 0;
-  virtual void nextFrame(void *yuv420SemiPlanarFrame,
-                         void (*deallocator)(void *),
+
+  virtual bool getInputFrame(InputFrame& inputFrame) = 0;
+  virtual void nextFrame(InputFrame& inputFrame,
                          InputFrameInfo& inputFrameInfo) = 0;
   virtual void stop() = 0;
   virtual bool error() = 0;

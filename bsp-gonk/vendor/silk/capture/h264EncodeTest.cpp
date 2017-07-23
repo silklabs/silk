@@ -29,48 +29,45 @@ void libpreview_FrameCallback(void *userData,
     return;
   }
 
+  SimpleH264Encoder::InputFrame inputFrame;
+  SimpleH264Encoder::InputFrameInfo inputFrameInfo;
+  inputFrameInfo.captureTimeMs = android::elapsedRealtime();
+  if (!simpleH264Encoder->getInputFrame(inputFrame)) {
+    printf("Unable to get input frame\n");
+    return;
+  }
+  const size_t size = height * width * 3 / 2;
+  if (size != inputFrame.size) {
+    printf("frame size mismatch: %d != %d\n", size, inputFrame.size);
+    return;
+  }
+
   switch (format) {
   case libpreview::FRAMEFORMAT_YVU420SP:
+    // Copy Y plane
+    memcpy(inputFrame.data, frame, width * height);
+
+    // Copy UV plane while converting from YVU420SemiPlaner to YUV420SemiPlaner
     {
-      const size_t size = height * width * 3 / 2;
-
-      uint8_t *data = (uint8_t *) malloc(size);
-      memcpy(data, frame, width * height);
-
-      // Convert from YVU420SemiPlaner to YUV420SemiPlaner
       uint8_t *s = static_cast<uint8_t *>(frame) + width * height;
-      uint8_t *d = data + width * height;
+      uint8_t *d = static_cast<uint8_t *>(inputFrame.data) + width * height;
       uint8_t *dEnd = d + width * height / 2;
       for (; d < dEnd; s += 2, d += 2) {
         d[0] = s[1];
         d[1] = s[0];
       }
-
-      libpreviewClient->releaseFrame(owner);
-      SimpleH264Encoder::InputFrameInfo info;
-      info.captureTimeMs = android::elapsedRealtime();
-      simpleH264Encoder->nextFrame(data, free, info);
-      break;
     }
+    break;
   case libpreview::FRAMEFORMAT_YUV420SP:
-    {
-      const size_t size = height * width * 3 / 2;
-
-      // TODO: Avoid memcpy and just reuse the existing |frame| buffer
-      uint8_t *data = (uint8_t *) malloc(size);
-      memcpy(data, frame, size);
-
-      libpreviewClient->releaseFrame(owner);
-      SimpleH264Encoder::InputFrameInfo info;
-      info.captureTimeMs = android::elapsedRealtime();
-      simpleH264Encoder->nextFrame(data, free, info);
-      break;
-    }
+    memcpy(inputFrame.data, frame, size);
+    break;
   default:
     printf("Unsupported format: %d\n", format);
-    libpreviewClient->releaseFrame(owner);
     return;
   }
+
+  simpleH264Encoder->nextFrame(inputFrame, inputFrameInfo);
+  libpreviewClient->releaseFrame(owner);
 }
 
 void libpreview_AbandonedCallback(void *userData)

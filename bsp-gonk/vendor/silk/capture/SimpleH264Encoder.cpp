@@ -103,13 +103,13 @@ class SimpleH264EncoderImpl: public SimpleH264Encoder {
   virtual ~SimpleH264EncoderImpl() {
     stop();
   }
-  virtual void setBitRate(int bitrateK);
-  virtual void requestKeyFrame();
-  virtual void nextFrame(void *yuv420SemiPlanarFrame,
-                         void (*deallocator)(void *),
-                         InputFrameInfo& inputFrameInfo);
-  virtual void stop();
-  virtual bool error();
+  virtual void setBitRate(int bitrateK) override;
+  virtual void requestKeyFrame() override;
+  virtual bool getInputFrame(InputFrame& inputFrame) override;
+  virtual void nextFrame(InputFrame& inputFrame,
+                         InputFrameInfo& inputFrameInfo) override;
+  virtual void stop() override;
+  virtual bool error() override;
 
  private:
   class FramePuller: public android::Thread {
@@ -277,9 +277,9 @@ void SimpleH264EncoderImpl::requestKeyFrame() {
 
 class UserMediaBuffer: public android::MediaBuffer {
  public:
-  UserMediaBuffer(void *data, size_t size, void (*deallocator)(void *))
-    : MediaBuffer(data, size),
-      deallocator(deallocator) {}
+  UserMediaBuffer(SimpleH264Encoder::InputFrame& inputFrame)
+    : MediaBuffer(inputFrame.data, inputFrame.size),
+      deallocator(inputFrame.deallocator) {}
 
  protected:
   ~UserMediaBuffer() {
@@ -289,8 +289,15 @@ class UserMediaBuffer: public android::MediaBuffer {
   void (*deallocator)(void *);
 };
 
-void SimpleH264EncoderImpl::nextFrame(void *yuv420SemiPlanarFrame,
-                                      void (*deallocator)(void *),
+
+bool SimpleH264EncoderImpl::getInputFrame(InputFrame& inputFrame) {
+  inputFrame.size = height * width * 3 / 2;
+  inputFrame.data = malloc(inputFrame.size);
+  inputFrame.deallocator = free;
+  return true;
+}
+
+void SimpleH264EncoderImpl::nextFrame(InputFrame& inputFrame,
                                       InputFrameInfo& inputFrameInfo) {
   Mutex::Autolock autolock(mutex);
   if (frameQueue == nullptr) {
@@ -298,11 +305,7 @@ void SimpleH264EncoderImpl::nextFrame(void *yuv420SemiPlanarFrame,
     return;
   }
 
-  auto buffer = new UserMediaBuffer(
-    yuv420SemiPlanarFrame,
-    height * width * 3 / 2,
-    deallocator
-  );
+  auto buffer = new UserMediaBuffer(inputFrame);
   buffer->meta_data()->setInt64(kKeyTime, inputFrameInfo.captureTimeMs * 1000);
   frameInfo.push(inputFrameInfo);
   frameQueue->nextFrame(buffer);

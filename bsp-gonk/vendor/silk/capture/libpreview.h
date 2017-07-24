@@ -11,10 +11,40 @@ namespace libpreview {
 
 typedef enum {
   FRAMEFORMAT_INVALID,
+
+  // 32bit RGB
   FRAMEFORMAT_RGB,
+
+  // Packed NV21.
+  // Stride == Width, VU plane immediately follows Y plane
   FRAMEFORMAT_YVU420SP,
+
+  // Packed NV12.
+  // Stride == Width, UV plane immediately follows Y plane
   FRAMEFORMAT_YUV420SP,
+
+  // Venus NV21.
+  // Stride == Width aligned to 128.
+  // VU plane starts at Stride * (Height aligned to 32)
+  // (use VENUS_C_PLANE_OFFSET to locate VU plane offset)
+  FRAMEFORMAT_YVU420SP_VENUS,
+
+  // Venus NV12.
+  // Stride == Width aligned to 128.
+  // UV plane starts at Stride * (Height aligned to 32)
+  // (use VENUS_C_PLANE_OFFSET to locate UV plane offset)
+  FRAMEFORMAT_YUV420SP_VENUS,
 } FrameFormat;
+
+static __inline__ int VENUS_ALIGN(int value, int align) {
+  return (value + (align-1)) & ~(align-1);
+}
+
+static __inline__ int VENUS_C_PLANE_OFFSET(int width, int height) {
+  auto stride = VENUS_ALIGN(width, 128);
+  auto scanlines = VENUS_ALIGN(height, 32);
+  return stride * scanlines;
+}
 
 typedef void *FrameOwner;
 

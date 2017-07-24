@@ -399,12 +399,19 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
     }
 
     if (frameformat == FRAMEFORMAT_YVU420SP) {
-      // TODO: Update consumers to handle unpacked YVU frames.  For now just
-      //       move the VU plane (yuck) to avoid full buffer copy
       void *packedDataCr = (char *)(img.data) + img.width * img.height;
       if (packedDataCr != img.dataCr) {
-        ALOGV("YVU frame is not packed! Off by %d bytes", (int) packedDataCr - (int) img.dataCr);
-        memcpy(packedDataCr, img.dataCr, img.width * img.height / 2);
+        void *venusDataCr = (char *)(img.data) + VENUS_C_PLANE_OFFSET(img.width, img.height);
+        if (venusDataCr == img.dataCr) {
+          frameformat = FRAMEFORMAT_YVU420SP_VENUS;
+        } else {
+          // TODO: Some other YVU variant.  Update consumers to handle unpacked
+          //       YVU frames, maybe by adding a new frameFormat type.
+          //       For now just move the VU plane (yuck) to avoid full buffer
+          //       copy.
+          ALOGV("YVU frame is not packed! Off by %d bytes", (int) packedDataCr - (int) img.dataCr);
+          memcpy(packedDataCr, img.dataCr, img.width * img.height / 2);
+        }
       }
     }
 

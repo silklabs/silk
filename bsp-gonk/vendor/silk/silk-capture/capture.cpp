@@ -207,7 +207,7 @@ class VideoCaptureOpenWorker : public Nan::AsyncWorker {
 };
 
 
-static void ConvertYUVsptoYVUsp(int width, int height, const cv::Mat& yuv, cv::Mat& yvu) {
+static void convertYUVsptoYVUsp(int width, int height, const cv::Mat& yuv, cv::Mat& yvu) {
   yvu = yuv.clone();
 
   const size_t yPlaneSize = width * height;
@@ -223,6 +223,27 @@ static void ConvertYUVsptoYVUsp(int width, int height, const cv::Mat& yuv, cv::M
   }
 }
 
+#ifdef USE_LIBPREVIEW
+static void *packVenusBuffer(void *buffer, int width, int height) {
+  auto yPlaneSize = width * height;
+
+  // TODO: This extra buffer copy for Venus buffers is not super
+  auto packedBuffer = malloc(yPlaneSize * 3 / 2);
+
+  // Y plane is unmodified
+  memcpy(packedBuffer, buffer, yPlaneSize);
+
+  // pack the VU plane
+  memcpy(
+    static_cast<char *>(packedBuffer) + yPlaneSize,
+    static_cast<char *>(buffer) +
+      libpreview::VENUS_C_PLANE_OFFSET(width, height),
+    yPlaneSize / 2
+  );
+
+  return packedBuffer;
+}
+#endif
 
 /*
  * Async worker used to process the next frame
@@ -259,43 +280,54 @@ public:
       return;
     }
     uv_mutex_lock(&state->frameDataLock);
+    auto frameBuffer = state->frameBuffer;
+
+    if (state->frameFormat == libpreview::FRAMEFORMAT_YUV420SP_VENUS ||
+        state->frameFormat == libpreview::FRAMEFORMAT_YVU420SP_VENUS) {
+      frameBuffer = packVenusBuffer(
+        state->frameBuffer,
+        state->frameWidth,
+        state->frameHeight
+      );
+    }
+
     switch (state->frameFormat) {
-      default:
-        // Porting error.  Nothing to do but soldier on...
-        ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
-        //fall through
-      case libpreview::FRAMEFORMAT_YUV420SP: {
+    case libpreview::FRAMEFORMAT_YUV420SP_VENUS:
+    case libpreview::FRAMEFORMAT_YUV420SP:
+      {
         // Setup a Matrix object to store the remote image using the
         // height/width that OpenCV expects for a YVU420 semi-planar format
         cv::Mat remote(
-            state->frameHeight * 3 / 2,
-            state->frameWidth,
-            CV_8UC1,
-            state->frameBuffer
+          state->frameHeight * 3 / 2,
+          state->frameWidth,
+          CV_8UC1,
+          frameBuffer
         );
 
-        ConvertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
+        convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
         if (grabAll) {
           cv::cvtColor(remote, rgb, CV_YUV420sp2RGB, 0);
 
           cv::Mat remoteGray(
-              state->frameHeight,
-              state->frameWidth,
-              CV_8UC1,
-              state->frameBuffer
+            state->frameHeight,
+            state->frameWidth,
+            CV_8UC1,
+            frameBuffer
           );
           gray = remoteGray.clone();
         }
         break;
       }
-      case libpreview::FRAMEFORMAT_YVU420SP: {
+    case libpreview::FRAMEFORMAT_YVU420SP_VENUS:
+    case libpreview::FRAMEFORMAT_YVU420SP:
+      {
         // Setup a Matrix object to store the remote image using the
         // height/width that OpenCV expects for a YVU420 semi-planar format
         cv::Mat remote(
-            state->frameHeight * 3 / 2,
-            state->frameWidth,
-            CV_8UC1,
-            state->frameBuffer
+          state->frameHeight * 3 / 2,
+          state->frameWidth,
+          CV_8UC1,
+          frameBuffer
         );
 
         im = remote.clone();
@@ -305,21 +337,22 @@ public:
           cv::cvtColor(remote, rgb, CV_YUV420sp2BGR, 0);
 
           cv::Mat remoteGray(
-              state->frameHeight,
-              state->frameWidth,
-              CV_8UC1,
-              state->frameBuffer
+            state->frameHeight,
+            state->frameWidth,
+            CV_8UC1,
+            frameBuffer
           );
           gray = remoteGray.clone();
         }
         break;
       }
-      case libpreview::FRAMEFORMAT_RGB: {
+    case libpreview::FRAMEFORMAT_RGB:
+      {
         cv::Mat remote(
-            state->frameHeight,
-            state->frameWidth,
-            CV_8UC3,
-            state->frameBuffer
+          state->frameHeight,
+          state->frameWidth,
+          CV_8UC3,
+          frameBuffer
         );
         im = remote.clone();
         if (grabAll) {
@@ -328,6 +361,12 @@ public:
         }
         break;
       }
+    default:
+      ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
+      break;
+    }
+    if (frameBuffer != state->frameBuffer) {
+      free(frameBuffer);
     }
     uv_mutex_unlock(&state->frameDataLock);
 #else
@@ -451,32 +490,44 @@ public:
       return;
     }
     uv_mutex_lock(&state->frameDataLock);
+    auto frameBuffer = state->frameBuffer;
+
+    if (state->frameFormat == libpreview::FRAMEFORMAT_YUV420SP_VENUS ||
+        state->frameFormat == libpreview::FRAMEFORMAT_YVU420SP_VENUS) {
+      frameBuffer = packVenusBuffer(
+        state->frameBuffer,
+        state->frameWidth,
+        state->frameHeight
+      );
+    }
+
     switch (state->frameFormat) {
-      default:
-        // Porting error.  Nothing to do but soldier on...
-        ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
-        //fall through
-      case libpreview::FRAMEFORMAT_YUV420SP: {
+    case libpreview::FRAMEFORMAT_YUV420SP_VENUS:
+    case libpreview::FRAMEFORMAT_YUV420SP:
+      {
         cv::Mat remote(
-            state->frameHeight * 3 / 2,
-            state->frameWidth,
-            CV_8UC1,
-            state->frameBuffer
+          state->frameHeight * 3 / 2,
+          state->frameWidth,
+          CV_8UC1,
+          frameBuffer
         );
 
         if (format == "yvu420sp") {
-          ConvertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
+          convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
         } else if (format == "rgb") {
           cv::cvtColor(remote, im, CV_YUV420sp2RGB, 0);
         }
         break;
       }
-      case libpreview::FRAMEFORMAT_YVU420SP: {
+
+    case libpreview::FRAMEFORMAT_YVU420SP_VENUS:
+    case libpreview::FRAMEFORMAT_YVU420SP:
+      {
         cv::Mat remote(
-            state->frameHeight * 3 / 2,
-            state->frameWidth,
-            CV_8UC1,
-            state->frameBuffer
+          state->frameHeight * 3 / 2,
+          state->frameWidth,
+          CV_8UC1,
+          frameBuffer
         );
 
         if (format == "yvu420sp") {
@@ -488,7 +539,8 @@ public:
         }
         break;
       }
-      case libpreview::FRAMEFORMAT_RGB: {
+    case libpreview::FRAMEFORMAT_RGB:
+      {
         if (format != "rgb") {
           SetErrorMessage("Only rgb preview format is supported");
           return;
@@ -503,6 +555,12 @@ public:
         im = remote.clone();
         break;
       }
+    default:
+      ALOGE("Warning: Unknown frame format: %d\n", state->frameFormat);
+      break;
+    }
+    if (frameBuffer != state->frameBuffer) {
+      free(frameBuffer);
     }
     uv_mutex_unlock(&state->frameDataLock);
 #else

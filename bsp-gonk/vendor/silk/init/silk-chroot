@@ -22,8 +22,10 @@ if [ "$PSR" = system ] && [ -z "$SR" ]; then
 fi
 
 if [ "$PSR" = "$SR" ]; then
-  echo Property reload complete, starting framework
-  start
+  if [ -f /init.silk.rc ]; then
+    echo Property reload complete, starting framework
+    start
+  fi
   exit 0
 fi
 
@@ -34,8 +36,10 @@ fi
 
 set -x
 
-# Stop framework
-stop
+if [ -f /init.silk.rc ]; then
+  echo Stopping framework
+  stop
+fi
 
 mount -o remount,rw /
 rm /silk

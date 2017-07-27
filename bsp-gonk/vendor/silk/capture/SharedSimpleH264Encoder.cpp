@@ -103,7 +103,7 @@ class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
       inputFrame.deallocator(inputFrame.data);
       return;
     }
-    encoderPool->encoder->nextFrame(inputFrame, frameInfo);
+    encoderPool->encoder->nextFrame(inputFrame, inputFrameInfo);
   }
 
   int bitrateK;

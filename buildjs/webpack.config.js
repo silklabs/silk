@@ -206,10 +206,6 @@ const config = {
     ],
   },
   module: {
-    // protobufjs has some AMD-style module checks that trip up webpack,
-    // workaround by preventing webpack from parsing these files and instead
-    // directly inline them into the output.
-    noParse: /node_modules\/protobufjs/,
     loaders: [
       {test: /\.json$/, loader: require.resolve('json-loader')},
       {

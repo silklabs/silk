@@ -1,12 +1,13 @@
 #define LOG_TAG "silk-sharedh264-enc"
 #include "SharedSimpleH264Encoder.h"
 
+#include <algorithm>
+#include <memory>
 #include <vector>
 
 #include <utils/Thread.h>
 #include <utils/SystemClock.h>
 #include <log/log.h>
-#include <media/stagefright/MediaBuffer.h>
 
 using namespace android;
 

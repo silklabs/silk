@@ -4,6 +4,7 @@
  * An H264 encoder with as few user-serviceable parts as possible
  */
 #include <stdint.h>
+#include <stddef.h>
 
 class SimpleH264Encoder {
  public:

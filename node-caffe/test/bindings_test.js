@@ -1,11 +1,9 @@
 /**
- * @noflow
+ * @flow
  */
 
-'use strict'; // Enable block-scoped declarations in node4
-
-const caffe = require('../');
-const assert = require('assert');
+import caffe from '..';
+import assert from 'assert';
 
 suite('bindings', () => {
   test('test exports', () => {
@@ -26,7 +24,8 @@ suite('bindings', () => {
     let blob = new Blob(shape);
     assert.equal(
       Object.prototype.toString.call(blob),
-      '[object ' + Blob.name + ']', 'Blob class name should be as expected'
+      '[object ' + Blob.name + ']',
+      'Blob class name should be as expected',
     );
     let data = blob.data;
     assert.ok(
@@ -37,8 +36,9 @@ suite('bindings', () => {
     assert.ok(blob.diff instanceof FloatArray, 'diff should be a typed array');
     assert.deepEqual(shape, blob.shape);
     assert.equal(
-      data.length, shape[0] * shape[1] * shape[2] * shape[3],
-      'data should have the right size'
+      data.length,
+      shape[0] * shape[1] * shape[2] * shape[3],
+      'data should have the right size',
     );
     assert.ok(
       !Array.from(data).some((x) => x !== 0.0),
@@ -160,7 +160,9 @@ suite('bindings', () => {
       'BufferedDataLayer',
       'the input layer should be a buffered data layer'
     );
-    net.layers.filter((layer) => layer.type !== 'BufferedDataLayer').forEach((layer) => {
+    net.layers.filter(
+      (layer) => layer.type !== 'BufferedDataLayer'
+    ).forEach((layer) => {
       assert.throws(
         () => layer.queueLength && layer.enqueue(),
         'every other layer than BufferedDataLayer should throw if' +
@@ -177,8 +179,10 @@ suite('bindings', () => {
         ];
         for (let i = 0; i < blobs.length; ++i) {
           assert.equal(
-            net.blobs[i].data.length, blobs[i].data.length,
-            'blob ' + i +
+            net.blobs[i].data.length,
+            blobs[i].data.length,
+            'blob ' +
+            i +
             ' length should match after copy initialization with shape'
           );
         }

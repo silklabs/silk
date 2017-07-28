@@ -151,3 +151,5 @@ if [ -z "$CAFFE_ROOT" ]; then
 else
   echo "Using caffe from $CAFFE_ROOT"
 fi
+
+JOBS=max npm run rebuild

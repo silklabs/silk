@@ -31,7 +31,9 @@ void libpreview_FrameCallback(void *userData,
 
   SimpleH264Encoder::InputFrame inputFrame;
   SimpleH264Encoder::InputFrameInfo inputFrameInfo;
+#ifdef ANDROID
   inputFrameInfo.captureTimeMs = android::elapsedRealtime();
+#endif
   if (!simpleH264Encoder->getInputFrame(inputFrame)) {
     printf("Unable to get input frame\n");
     return;
@@ -93,8 +95,10 @@ int main(int argc, char **argv)
 {
   (void) argc;
   (void) argv;
+#ifdef ANDROID
   android::sp<android::ProcessState> ps = android::ProcessState::self();
   ps->startThreadPool();
+#endif
 
   libpreviewClient = libpreview::open(libpreview_FrameCallback, libpreview_AbandonedCallback, 0);
   if (!libpreviewClient) {

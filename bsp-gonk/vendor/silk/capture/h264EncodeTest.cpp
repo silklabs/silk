@@ -3,6 +3,7 @@
 #include <cutils/properties.h>
 #include <utils/SystemClock.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include "libpreview.h"
 #include "SimpleH264Encoder.h"
@@ -33,6 +34,10 @@ void libpreview_FrameCallback(void *userData,
   SimpleH264Encoder::InputFrameInfo inputFrameInfo;
 #ifdef ANDROID
   inputFrameInfo.captureTimeMs = android::elapsedRealtime();
+#else
+  timespec now;
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  inputFrameInfo.captureTimeMs = (int64_t)now.tv_sec * 1e3 + (int64_t)now.tv_nsec / 1e6;
 #endif
   if (!simpleH264Encoder->getInputFrame(inputFrame)) {
     printf("Unable to get input frame\n");

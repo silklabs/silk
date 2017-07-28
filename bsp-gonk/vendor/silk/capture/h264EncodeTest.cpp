@@ -38,14 +38,14 @@ void libpreview_FrameCallback(void *userData,
     printf("Unable to get input frame\n");
     return;
   }
-  const size_t size = height * width * 3 / 2;
-  if (size != inputFrame.size) {
-    printf("frame size mismatch: %d != %d\n", size, inputFrame.size);
-    return;
-  }
 
   switch (format) {
   case libpreview::FRAMEFORMAT_YVU420SP:
+    if (inputFrame.format != libpreview::FRAMEFORMAT_YVU420SP) {
+      printf("Unsupported encoder format: %d\n", inputFrame.format);
+      return;
+    }
+
     // Copy Y plane
     memcpy(inputFrame.data, frame, width * height);
 
@@ -60,9 +60,40 @@ void libpreview_FrameCallback(void *userData,
       }
     }
     break;
+
   case libpreview::FRAMEFORMAT_YUV420SP:
-    memcpy(inputFrame.data, frame, size);
+    if (inputFrame.format != format) {
+      printf("Unsupported encoder format: %d\n", inputFrame.format);
+      return;
+    }
+    memcpy(inputFrame.data, frame, inputFrame.size);
     break;
+
+  case libpreview::FRAMEFORMAT_YUV420SP_VENUS:
+    if (inputFrame.format != format) {
+      printf("Unsupported encoder format: %d\n", inputFrame.format);
+      return;
+    }
+    switch (inputFrame.format) {
+    case libpreview::FRAMEFORMAT_YUV420SP_VENUS:
+      memcpy(inputFrame.data, frame, inputFrame.size);
+      break;
+    case libpreview::FRAMEFORMAT_YUV420SP:
+      // Copy Y plane
+      memcpy(inputFrame.data, frame, width * height);
+
+      // Pack and copy UV plane
+      memcpy(
+        static_cast<uint8_t *>(inputFrame.data) + width * height,
+        static_cast<uint8_t *>(frame) + libpreview::VENUS_C_PLANE_OFFSET(width, height),
+        width * height / 2
+      );
+      break;
+    default:
+      break;
+    }
+    break;
+
   default:
     printf("Unsupported format: %d\n", format);
     return;

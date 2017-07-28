@@ -20,6 +20,7 @@ using namespace android;
 
 static const char* kMimeTypeAvc = "video/avc";
 static const uint32_t kColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+static const auto kLibPreviewFrameFormat = libpreview::FRAMEFORMAT_YUV420SP;
 static const int32_t kIFrameInterval = 60;
 
 class SingleBufferMediaSource: public MediaSource {
@@ -291,6 +292,7 @@ class UserMediaBuffer: public android::MediaBuffer {
 
 
 bool SimpleH264EncoderImpl::getInputFrame(InputFrame& inputFrame) {
+  inputFrame.format = kLibPreviewFrameFormat;
   inputFrame.size = height * width * 3 / 2;
   inputFrame.data = malloc(inputFrame.size);
   inputFrame.deallocator = free;

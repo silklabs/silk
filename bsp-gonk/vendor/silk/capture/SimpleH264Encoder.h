@@ -6,11 +6,14 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "libpreview.h"
+
 class SimpleH264Encoder {
  public:
   struct InputFrame {
-    void *data;  // format: yuv420sp (aka, nv12)
+    void *data;
     size_t size;
+    libpreview::FrameFormat format;
     void (*deallocator)(void *);
   };
 

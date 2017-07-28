@@ -5,6 +5,9 @@
       'sources': [
         'src/caffe.cpp'
       ],
+      'variables': {
+        'has_gpu': '<!(if which nvidia-smi; then echo true; else echo false; fi)',
+      },
       'include_dirs': [
         '<!(node -e "require(\'nan\')")',
         '<!(echo $CAFFE_ROOT/include)',
@@ -16,16 +19,16 @@
       'libraries': [
         '-L<!(echo "$CAFFE_ROOT/lib")',
         '-L<!(pwd)/caffe/build/lib',
-        '<!(if [ -d /usr/local/cuda/lib ]; then echo "-L/usr/local/cuda/lib"; fi)',
-        '<!(if [ -d /usr/local/cuda/lib64 ]; then echo "-L/usr/local/cuda/lib64"; fi)',
-        '<!(if [ -d /usr/local/cuda ]; then echo "-lcudart"; fi)',
+        '<!(if [ "$has_gpu" = true ] && [ -d /usr/local/cuda/lib ]; then echo "-L/usr/local/cuda/lib"; fi)',
+        '<!(if [ "$has_gpu" = true ] && [ -d /usr/local/cuda/lib64 ]; then echo "-L/usr/local/cuda/lib64"; fi)',
+        '<!(if [ "$has_gpu" = true ] && [ -d /usr/local/cuda ]; then echo "-lcudart"; fi)',
         '-lcaffe',
       ],
       'ldflags': [
         '-Wl,-rpath,<!(echo $CAFFE_ROOT/lib)',
         '-Wl,-rpath,<!(pwd)/caffe/build/lib',
-        '<!(if [ -d /usr/local/cuda/lib ]; then echo "-Wl,-rpath,/usr/local/cuda/lib"; fi)',
-        '<!(if [ -d /usr/local/cuda/lib64 ]; then echo "-Wl,-rpath,/usr/local/cuda/lib64"; fi)',
+        '<!(if [ "$has_gpu" = true ] && [ -d /usr/local/cuda/lib ]; then echo "-Wl,-rpath,/usr/local/cuda/lib"; fi)',
+        '<!(if [ "$has_gpu" = true ] && [ -d /usr/local/cuda/lib64 ]; then echo "-Wl,-rpath,/usr/local/cuda/lib64"; fi)',
       ],
       'cflags_cc': [
         '-std=c++11',
@@ -33,9 +36,7 @@
         '-Wno-ignored-qualifiers',
       ],
       'defines': [
-        '<!(if [ -d /usr/local/cuda ]; then echo "HAVE_CUDA"; else echo "CPU_ONLY"; fi)',
-      ],
-      'dependencies': [
+        '<!(if [ "$has_gpu" = true ]; then echo "HAVE_CUDA"; else echo "CPU_ONLY"; fi)',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -44,7 +45,7 @@
         }],
         ['OS=="mac"', {
           'defines': [
-            '<!(if [ -d /usr/local/cuda ]; then echo "HAVE_CUDA"; else echo "CPU_ONLY"; fi)',
+            '<!(if [ "$has_gpu" = true ]; then echo "HAVE_CUDA"; else echo "CPU_ONLY"; fi)',
           ],
           'include_dirs': [
             '<!(brew --prefix openblas)' + '/include',
@@ -65,11 +66,9 @@
             'OTHER_LDFLAGS': [
               '-Wl,-rpath,<!(echo $CAFFE_ROOT/lib)',
               '-Wl,-rpath,<!(pwd)/caffe/build/lib',
-              '<!(if [ -d /usr/local/cuda/lib ]; then echo "-Wl,-rpath,/usr/local/cuda/lib"; fi)',
-              '<!(if [ -d /usr/local/cuda/lib64 ]; then echo "-Wl,-rpath,/usr/local/cuda/lib64"; fi)',
+              '<!(if [ "$has_gpu" = true ] && [ -d /usr/local/cuda/lib ]; then echo "-Wl,-rpath,/usr/local/cuda/lib"; fi)',
+              '<!(if [ "$has_gpu" = true ] && [ -d /usr/local/cuda/lib64 ]; then echo "-Wl,-rpath,/usr/local/cuda/lib64"; fi)',
             ],
-            'OTHER_CFLAGS': [
-            ]
           },
           'libraries': [
           ],

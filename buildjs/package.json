@@ -22,7 +22,7 @@
   "dependencies": {
     "babel-eslint": "7.1.1",
     "babel-loader": "6.2.0",
-    "babel-preset-react": "6.22.0",
+    "babel-preset-react": "6.24.1",
     "babel-preset-silk-node6": "^1.5.0",
     "copy-webpack-plugin": "2.1.5",
     "eslint": "3.11.1",

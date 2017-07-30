@@ -17,6 +17,6 @@
     "blob"
   ],
   "peerDependencies": {
-    "react-native": "0.38.0"
+    "react-native": "0.42.3"
   }
 }

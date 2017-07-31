@@ -37,6 +37,7 @@ SILK_BUILDJS_DEST=
 SILK_BUILDJS_TARGET=node
 SILK_BUILDJS_EXTERNALS=true
 native=true
+ndk=false
 dev_server=false
 
 for arg in "$@"; do
@@ -49,6 +50,9 @@ for arg in "$@"; do
     ;;
   --dev-server)
     dev_server=true
+    ;;
+  --ndk)
+    ndk=true
     ;;
   --no-native)
     native=false
@@ -85,17 +89,98 @@ export SILK_BUILDJS_UGLY
 export SILK_BUILDJS_TARGET
 export SILK_BUILDJS_EXTERNALS
 
+if $native && $ndk; then
+  [[ -n $ANDROID_NDK ]] || help Please set ANDROID_NDK to the NDK root directory
+  [[ -d $ANDROID_NDK ]] || help ANDROID_NDK not a directory: $ANDROID_NDK
+
+  # TODO: Add command-line argument to select device architecture
+  ARCH=arm
+  #ARCH=arm64
+
+  # TODO: Add command-line argument to select STL
+  STL=gnustl
+#  STL=libc++
+#  STL=stlport
+
+  case $ARCH in
+  arm)
+    TRIPLE=arm-linux-androideabi
+    CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon -fPIC"
+    CXXFLAGS="$CFLAGS"
+    LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
+    ;;
+  arm64)
+    TRIPLE=aarch64-linux-android
+    CFLAGS=
+    CXXFLAGS="$CFLAGS"
+    LDFLAGS=
+    ;;
+  *)
+    help Unknown arch: $ARCH
+    ;;
+  esac
+
+  NDK_TOOLCHAIN=$ROOT/ndk-toolchain-$STL
+
+  if [[ ! -d $NDK_TOOLCHAIN ]]; then
+    echo Creating standalone toolchain at $NDK_TOOLCHAIN
+    (
+      set -x
+      $ANDROID_NDK/build/tools/make-standalone-toolchain.sh \
+        --arch=$ARCH \
+        --stl=$STL \
+        --install-dir=$NDK_TOOLCHAIN \
+        --platform=android-21
+    )
+  fi
+
+  # Get node-gyp to use the NDK toolchain
+  CC="$NDK_TOOLCHAIN/bin/$TRIPLE-clang"
+  CXX="$NDK_TOOLCHAIN/bin/$TRIPLE-clang++"
+  LINK="$NDK_TOOLCHAIN/bin/$TRIPLE-clang"
+  for tool in $CC $CXX $LINK; do
+    [[ -x $tool ]] || help $tool does not exist
+  done
+  export CC="$CC $CFLAGS"
+  export CXX="$CXX $CXXFLAGS"
+  export LINK="$LINK $LDFLAGS"
+
+  # Setup node-gyp flags
+  SILK_GYP_FLAGS="-f make-android -DOS=android -Darch=$ARCH"
+  SILK_NODE_GYP_FLAGS="--arch=$ARCH"
+fi
+
 if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   ## Exports for the node-gyp build system ...
   export builddir_name=$SILK_BUILDJS_DEST/build
   export srcdir=$SILK_BUILDJS_SOURCE
-  node_gyp_flags=${SILK_NODE_GYP_FLAGS:-}
-  gyp_flags=${SILK_GYP_FLAGS:-}
 
-  pushd $SILK_BUILDJS_SOURCE
-  $ROOT/../node_modules/.bin/node-gyp configure $node_gyp_flags -- $gyp_flags
-  $ROOT/../node_modules/.bin/node-gyp build
-  popd
+  (
+    pushd $SILK_BUILDJS_SOURCE
+    (
+      set -x
+      $ROOT/../node_modules/.bin/node-gyp configure $SILK_NODE_GYP_FLAGS -- $SILK_GYP_FLAGS
+    )
+
+    if $ndk; then
+      SED=sed
+      if which gsed > /dev/null 2>&1; then
+        SED=gsed # Darwin!
+      fi
+      # The stock node-gyp that gets picked up in the $ndk builds incorrectly
+      # add -fPIE/-pie to CFLAGS/LDFLAGS.  |sed| them out.
+      echo and you shall have no pie
+      (
+        set -x
+        $SED -i 's/-fPIE\|-pie//' build/*.mk
+      )
+    fi
+
+    (
+      set -x
+      $ROOT/../node_modules/.bin/node-gyp build
+    )
+  )
 fi
 
 if [[ $SILK_BUILDJS_TARGET != web ]]; then

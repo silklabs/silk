@@ -101,7 +101,9 @@ class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
                          InputFrameInfo& inputFrameInfo) {
     if (!encoderPool->isPrimary(this)) {
       ALOGI("Not primary, ignoring nextFrame");
-      inputFrame.deallocator(inputFrame.data);
+      if (inputFrame.deallocator) {
+        inputFrame.deallocator(inputFrame.data);
+      }
       return;
     }
     encoderPool->encoder->nextFrame(inputFrame, inputFrameInfo);

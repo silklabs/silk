@@ -26,24 +26,38 @@ typedef enum {
   // Venus NV21.
   // Stride == Width aligned to 128.
   // VU plane starts at Stride * (Height aligned to 32)
-  // (use VENUS_C_PLANE_OFFSET to locate VU plane offset)
+  //
+  // Macros:
+  // * VENUS_Y_STRIDE to compute Y stride
+  // * VENUS_C_STRIDE to compute VU/UV stride
+  // * VENUS_C_PLANE_OFFSET to locate VU plane offset from start of Y plane
   FRAMEFORMAT_YVU420SP_VENUS,
 
   // Venus NV12.
   // Stride == Width aligned to 128.
   // UV plane starts at Stride * (Height aligned to 32)
-  // (use VENUS_C_PLANE_OFFSET to locate UV plane offset)
+  //
+  // Macros: same as Venus NV21
   FRAMEFORMAT_YUV420SP_VENUS,
 } FrameFormat;
 
-static __inline__ int VENUS_ALIGN(int value, int align) {
+static __inline__ int __VENUS_ALIGN(int value, int align) {
   return (value + (align-1)) & ~(align-1);
 }
 
+static __inline__ int VENUS_Y_STRIDE(int width) {
+  auto stride = __VENUS_ALIGN(width, 128);
+  return stride;
+}
+
 static __inline__ int VENUS_C_PLANE_OFFSET(int width, int height) {
-  auto stride = VENUS_ALIGN(width, 128);
-  auto scanlines = VENUS_ALIGN(height, 32);
+  auto stride = VENUS_Y_STRIDE(width);
+  auto scanlines = __VENUS_ALIGN(height, 32);
   return stride * scanlines;
+}
+
+static __inline__ int VENUS_C_STRIDE(int width) {
+  return VENUS_Y_STRIDE(width);
 }
 
 typedef void *FrameOwner;

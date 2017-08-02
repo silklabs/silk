@@ -50,7 +50,11 @@ void libpreview_FrameCallback(void *userData,
   switch (format) {
   case libpreview::FRAMEFORMAT_YVU420SP:
     if (inputFrame.format != libpreview::FRAMEFORMAT_YVU420SP) {
-      printf("Unsupported encoder format: %d\n", inputFrame.format);
+      printf(
+        "Unsupported encoder format: %d = %d\n",
+        inputFrame.format,
+        libpreview::FRAMEFORMAT_YVU420SP
+      );
       return;
     }
 
@@ -71,15 +75,24 @@ void libpreview_FrameCallback(void *userData,
 
   case libpreview::FRAMEFORMAT_YUV420SP:
     if (inputFrame.format != format) {
-      printf("Unsupported encoder format: %d\n", inputFrame.format);
-      return;
+      if (inputFrame.format == libpreview::FRAMEFORMAT_YUV420SP_VENUS &&
+          libpreview::VENUS_Y_STRIDE(width) == width &&
+          libpreview::VENUS_C_PLANE_OFFSET(width, height) == width * height) {
+
+        // FRAMEFORMAT_YUV420SP_VENUS == FRAMEFORMAT_YUV420SP in this case so
+        // don't abort
+
+      } else {
+        printf("Unsupported encoder formaT: %d != %d\n", inputFrame.format, format);
+        return;
+      }
     }
     memcpy(inputFrame.data, frame, inputFrame.size);
     break;
 
   case libpreview::FRAMEFORMAT_YUV420SP_VENUS:
     if (inputFrame.format != format) {
-      printf("Unsupported encoder format: %d\n", inputFrame.format);
+      printf("Unsupported encoder format: %d != %d\n", inputFrame.format, format);
       return;
     }
     switch (inputFrame.format) {

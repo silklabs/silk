@@ -13,7 +13,10 @@ player.play(process.argv[2])
 .then(() => {
   log.info(`Done playing`);
 })
-.catch((err) => log.error(err));
+.catch((err) => {
+  log.error(err);
+  process.exit(1); // eslint-disable-line no-process-exit
+});
 
 player.on('started', () => {
   log.info(`getState ${player.getState()}`);

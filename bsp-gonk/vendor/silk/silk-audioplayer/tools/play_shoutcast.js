@@ -8,13 +8,11 @@ import createLog from 'silk-log';
 import {sleep, createDeferred} from 'silk-async-utils';
 const log = createLog('test');
 
-let url = 'http://kidspublicradio2.got.net:8000/lullaby?lang=en-US%2cen%3bq%3d0.8';
-
 let player = new Player();
 let shoutcastResponse = null;
 let deferred = null;
 
-function playShoutcast() {
+function playShoutcast(url: string) {
   const onEnd = (error) => {
     if (error) {
       log.error(error.message);
@@ -76,14 +74,11 @@ function stopShoutcast() {
   });
 }
 
-async function test() {
-  for (;;) {
-    await playShoutcast();
-    await sleep(2000);
-    await stopShoutcast();
-  }
-}
-
-test()
+playShoutcast(process.argv[2])
+.then(() => sleep(2000))
+.then(() => stopShoutcast())
 .then(() => log.info(`done`))
-.catch((err) => log.error(`Error: `, err));
+.catch((err) => {
+  log.error(err);
+  process.exit(1); // eslint-disable-line no-process-exit
+});

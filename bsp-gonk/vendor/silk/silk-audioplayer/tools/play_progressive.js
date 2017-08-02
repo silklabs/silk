@@ -7,9 +7,6 @@ import createLog from 'silk-log';
 import http from 'http';
 const log = createLog('test');
 
-let URL1 = 'http://www.hrupin.com/wp-content/uploads/mp3/testsong_20_sec.mp3';
-let URL2 = 'http://iheart.stream.publicradio.org/rockthecradle-iheart.aac';
-
 const player = new Player();
 
 function playUrl(url) {
@@ -37,11 +34,13 @@ function playUrl(url) {
         res.removeAllListeners('data');
         player.stop();
         request.abort();
-      }, 5000);
+      }, 10000);
     });
   });
 }
 
-playUrl(URL1)
-.then(() => playUrl(URL2))
-.catch((err) => log.error(err));
+playUrl(process.argv[2])
+.catch((err) => {
+  log.error(err);
+  process.exit(1); // eslint-disable-line no-process-exit
+});

@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <time.h>
 
+#include <vector>
+
 #include "libpreview.h"
 #include "SimpleH264Encoder.h"
 
@@ -14,6 +16,7 @@ libpreview::Client *libpreviewClient;
 SimpleH264Encoder *simpleH264Encoder;
 Mutex simpleH264EncoderLock;
 int fd;
+std::vector<int> outputFrameSize;
 
 void libpreview_FrameCallback(void *userData,
                               void *frame,
@@ -116,8 +119,20 @@ void libpreview_AbandonedCallback(void *userData)
 }
 
 void frameOutCallback(SimpleH264Encoder::EncodedFrameInfo& info) {
-  printf("Frame %lld size=%8d keyframe=%d\n",
-    info.input.captureTimeMs, info.encodedFrameLength, info.keyFrame);
+  outputFrameSize.erase(outputFrameSize.begin());
+  outputFrameSize.push_back(info.encodedFrameLength);
+  int64_t bitrate = 0;
+  for (auto i = 0; i < outputFrameSize.size(); i++) {
+    bitrate += outputFrameSize[i] * 8;
+  }
+
+  printf("Frame %lld size=%8d keyframe=%d (bitrate: %lld)\n",
+    info.input.captureTimeMs,
+    info.encodedFrameLength,
+    info.keyFrame,
+    bitrate
+  );
+
   TEMP_FAILURE_RETRY(
     write(
       fd,
@@ -148,7 +163,12 @@ int main(int argc, char **argv)
   int vbr = property_get_int32("ro.silk.camera.vbr", 1024);
   int fps = property_get_int32("ro.silk.camera.fps", 24);
 
-  for (int i = 0; i < 5; i++) {
+  outputFrameSize.resize(fps);
+  for (auto i = 0; i < fps; i++) {
+    outputFrameSize.push_back(0);
+  }
+
+  for (auto i = 0; i < 1; i++) {
     char filename[32];
     snprintf(filename, sizeof(filename) - 1, "/data/vid_%d.h264", i);
     fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0440);

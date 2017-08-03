@@ -1,4 +1,4 @@
-var path = require('path');
+const path = require('path');
 
 module.exports = [
   {
@@ -9,7 +9,7 @@ module.exports = [
       path: path.join(__dirname, '..'),
       filename: 'babel-register.js',
     },
-    module : {
+    module: {
       loaders: [
         { test: /\.json$/, loader: 'json' },
       ]

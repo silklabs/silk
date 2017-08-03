@@ -9,7 +9,7 @@
     "babel-core": "6.24.1",
     "babel-loader": "6.2.7",
     "babel-register": "6.24.1",
-    "json-loader": "0.5.4",
+    "json-loader": "0.5.7",
     "webpack": "1.14.0"
   }
 }

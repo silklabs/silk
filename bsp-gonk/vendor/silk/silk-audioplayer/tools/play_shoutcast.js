@@ -6,9 +6,10 @@ import Player from 'silk-audioplayer';
 import icy from 'icy';
 import createLog from 'silk-log';
 import {sleep, createDeferred} from 'silk-async-utils';
+
 const log = createLog('test');
 
-let player = new Player();
+const player = new Player();
 let shoutcastResponse = null;
 let deferred = null;
 
@@ -19,7 +20,7 @@ function playShoutcast(url: string) {
     }
     log.info(`Shoutcast stream ended`);
     if (deferred) {
-      deferred.accept();
+      deferred.resolve();
     }
     if (player) {
       player.removeAllListeners('error');

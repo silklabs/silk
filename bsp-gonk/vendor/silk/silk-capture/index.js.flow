@@ -1,0 +1,36 @@
+/**
+ * @flow
+ */
+
+import type {Matrix as OpencvMatrix} from 'opencv';
+
+export type ReadCallback = (err: ?Error) => void;
+export type CloseCallback = () => void;
+export type ImageFormat = 'yvu420sp' | 'rgb';
+
+declare export class VideoCapture {
+  constructor(
+    deviceId: number,
+    scaledWidth: number,
+    scaledHeight: number,
+    callback: (err?: Error) => mixed,
+  ): void;
+
+  read(
+    im: OpencvMatrix,
+    imRGB?: OpencvMatrix,
+    imGray?: OpencvMatrix,
+    imScaledGray?: OpencvMatrix,
+    callback?: ReadCallback,
+  ): void;
+
+  readCustom(
+    im: OpencvMatrix,
+    format: ImageFormat,
+    width: number,
+    height: number,
+    callback: ReadCallback,
+  ): void;
+
+  close(callback: CloseCallback): void;
+};

@@ -2,7 +2,7 @@
   "name": "silk-capture",
   "version": "1.0.0",
   "description": "VideoCapture",
-  "main": "build/Release/silk-capture.node",
+  "main": "index.js",
   "license": "MIT",
   "dependencies": {
     "nan": "2.4.0",

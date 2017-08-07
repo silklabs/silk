@@ -104,6 +104,9 @@ PRODUCT_PACKAGES += fakeappops fakeperm fakeprocessinfo gonksched
 # vendor/silk/time_genoff/
 PRODUCT_PACKAGES += silk-time_genoff
 
+# vendor/silk/updater/
+PRODUCT_PACKAGES += silk-updater
+
 # vendor/silk/volume/
 PRODUCT_PACKAGES += silk-volume
 
@@ -136,7 +139,6 @@ PRODUCT_PACKAGES += busybox
 
 # external/librecovery/
 ENABLE_LIBRECOVERY := true
-PRODUCT_PACKAGES += librecovery_test
 
 # external/{bleno,noble}/
 PRODUCT_PACKAGES += bleno noble

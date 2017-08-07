@@ -1,4 +1,4 @@
-var path = require('path');
+const path = require('path');
 
 module.exports = {
   target: 'node',
@@ -7,10 +7,5 @@ module.exports = {
     libraryTarget: 'commonjs2',
     path: __dirname,
     filename: 'index.js'
-  },
-  module : {
-    loaders: [
-      { test: /\.json$/, loader: 'json' },
-    ]
   },
 };

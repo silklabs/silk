@@ -1,5 +1,5 @@
 {
   "restrict": {
-    "bsp-gonk": ["package.json"]
+    "bsp-gonk": ["vendor"]
   }
 }

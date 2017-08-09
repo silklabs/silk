@@ -17,16 +17,24 @@ const RESTRICTED_DIRNAMES = [
   'node_modules',
 ];
 
-function lookup(root, file) {
+function lookup(root, file, findFirst = false) {
   let basedir = root;
+  let filePath = null;
   do {
-    const filePath = path.join(basedir, file);
-    if (fs.existsSync(filePath)) {
-      return filePath;
+    const filePathCandidate = path.join(basedir, file);
+    if (fs.existsSync(filePathCandidate)) {
+      filePath = filePathCandidate;
+      if (findFirst) {
+        break;
+      }
     }
     basedir = path.dirname(basedir);
-  } while(basedir !== '/');
-  throw new Error(`Cannot find ${file} from ${root}`);
+  } while (basedir !== '/');
+
+  if (!filePath) {
+    throw new Error(`Cannot find ${file} from ${root}`);
+  }
+  return filePath;
 }
 
 function formatConfig(config, basedir) {

@@ -3,6 +3,9 @@
   "version": "0.1.3",
   "description": "Neuter any Typed Array or ArrayBuffer",
   "main": "main.js",
+  "scripts": {
+    "silk-build": "silk-buildjs --ndk ."
+  },
   "repository": {
     "type": "git",
     "url": ""

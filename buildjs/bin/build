@@ -155,11 +155,16 @@ if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
   export builddir_name=$SILK_BUILDJS_DEST/build
   export srcdir=$SILK_BUILDJS_SOURCE
 
+  NODE_GYP="env \
+    PATH=$PATH:$ROOT/../node_modules/.bin/node-gyp:$ROOT/../../.bin/node-gyp \
+    node-gyp \
+  "
+
   (
     pushd $SILK_BUILDJS_SOURCE
     (
       set -x
-      $ROOT/../node_modules/.bin/node-gyp configure $SILK_NODE_GYP_FLAGS -- $SILK_GYP_FLAGS
+      $NODE_GYP configure $SILK_NODE_GYP_FLAGS -- $SILK_GYP_FLAGS
     )
 
     if $ndk; then
@@ -178,7 +183,7 @@ if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
 
     (
       set -x
-      $ROOT/../node_modules/.bin/node-gyp build
+      $NODE_GYP build
     )
   )
 fi

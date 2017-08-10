@@ -135,18 +135,24 @@ if $native && $ndk; then
   fi
 
   # Get node-gyp to use the NDK toolchain
-  CC="$NDK_TOOLCHAIN/bin/$TRIPLE-clang"
-  CXX="$NDK_TOOLCHAIN/bin/$TRIPLE-clang++"
-  LINK="$NDK_TOOLCHAIN/bin/$TRIPLE-clang"
-  for tool in $CC $CXX $LINK; do
+  export AR="$NDK_TOOLCHAIN/bin/$TRIPLE-ar"
+  export AS="$NDK_TOOLCHAIN/bin/$TRIPLE-as"
+  export CC="$NDK_TOOLCHAIN/bin/$TRIPLE-gcc"
+  export CXX="$NDK_TOOLCHAIN/bin/$TRIPLE-g++"
+  export LINK="$NDK_TOOLCHAIN/bin/$TRIPLE-g++"
+  export RANLIB="$NDK_TOOLCHAIN/bin/$TRIPLE-ranlib"
+  export STRIP="$NDK_TOOLCHAIN/bin/$TRIPLE-strip"
+
+  for tool in $AR $AS $CC $CXX $LINK $RANLIB $STRIP; do
     [[ -x $tool ]] || help $tool does not exist
   done
+
   export CC="$CC $CFLAGS"
   export CXX="$CXX $CXXFLAGS"
   export LINK="$LINK $LDFLAGS"
 
   # Setup node-gyp flags
-  SILK_GYP_FLAGS="-f make-android -DOS=android -Darch=$ARCH"
+  SILK_GYP_FLAGS="-f make-android -DOS=android -Darch=$ARCH -Dandroid_ndk=$ANDROID_NDK"
   SILK_NODE_GYP_FLAGS="--arch=$ARCH"
 fi
 

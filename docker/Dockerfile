@@ -49,6 +49,7 @@ RUN addgroup --gid 999 docker && \
         g++-4.8-multilib \
         g++-5 \
         gawk \
+        gettext \
         gfortran \
         git \
         gnuplot \

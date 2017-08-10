@@ -1,9 +1,10 @@
 {
   'variables' : {
     'NNPACK_ROOT' : '<!(echo ${NNPACK_ROOT:-$(pwd)/NNPACK})',
+    'android_ndk%' : '',
   },
   'conditions': [
-    [ 'OS=="android"', {
+    [ 'OS=="android" and android_ndk==""', {
       'variables' : {
         'NNPACK_ROOT' : '<!(echo $ANDROID_BUILD_TOP/external/NNPACK)',
       },
@@ -30,12 +31,24 @@
         '-fexceptions',
       ],
       'conditions': [
-        [ 'OS=="android"', {
+        [ 'OS=="android" and android_ndk==""', {
           'include_dirs': [
             '<!(echo \" -I $ANDROID_BUILD_TOP/external/pthreadpool/include \")',
           ],
           'libraries': [
             '<!(echo $Android_mk__LIBRARIES)',
+          ],
+        }],
+        [ 'OS=="android" and android_ndk!=""', {
+          'libraries': [
+            '-lnnpack',
+            '-lnnpack_ukernels',
+            '-lnnpack_reference',
+            '-lpthreadpool',
+            '-lcpufeatures',
+          ],
+          'ldflags': [
+            '-L<(NNPACK_ROOT)/obj/local/armeabi-v7a',
           ],
         }],
         [ 'OS=="linux"', {

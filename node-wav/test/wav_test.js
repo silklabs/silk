@@ -13,7 +13,7 @@ function makeTestData(channels, samples) {
   for (let ch = 0; ch < channels; ++ch) {
     data[ch] = new Float32Array(samples);
     for (let n = 0; n < samples; ++n) {
-      data[ch][n] = Math.random();
+      data[ch][n] = Math.random() * 2 - 1; // use [-1, 1] range
     }
   }
   return data;

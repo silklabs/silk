@@ -74,7 +74,7 @@ const dataEncoders = {
     for (let i = 0; i < samples; ++i) {
       for (let ch = 0; ch < channels; ++ch) {
         let v = Math.max(-1, Math.min(input[ch][i], 1));
-        v = ((v * 0.5 + 0.5) * 255) | 0;
+        v = ((v * 0.5 + 0.5) * 255 + 0.5) | 0;
         output[pos++] = v;
       }
     }
@@ -85,7 +85,7 @@ const dataEncoders = {
     for (let i = 0; i < samples; ++i) {
       for (let ch = 0; ch < channels; ++ch) {
         let v = Math.max(-1, Math.min(input[ch][i], 1));
-        v = ((v < 0) ? v * 32768 : v * 32767) | 0;
+        v = ((v < 0) ? v * 32768 - 0.5 : v * 32767 + 0.5) | 0;
         output[pos++] = v;
       }
     }
@@ -96,7 +96,7 @@ const dataEncoders = {
     for (let i = 0; i < samples; ++i) {
       for (let ch = 0; ch < channels; ++ch) {
         let v = Math.max(-1, Math.min(input[ch][i], 1));
-        v = ((v < 0) ? 0x1000000 + v * 8388608 : v * 8388607) | 0;
+        v = ((v < 0) ? 0x1000000 + v * 8388608 + 0.5 : v * 8388607 + 0.5) | 0;
         output[pos++] = (v >> 0) & 0xff;
         output[pos++] = (v >> 8) & 0xff;
         output[pos++] = (v >> 16) & 0xff;
@@ -109,7 +109,7 @@ const dataEncoders = {
     for (let i = 0; i < samples; ++i) {
       for (let ch = 0; ch < channels; ++ch) {
         let v = Math.max(-1, Math.min(input[ch][i], 1));
-        v = ((v < 0) ? v * 2147483648 : v * 2147483647) | 0;
+        v = ((v < 0) ? v * 2147483648 - 0.5 : v * 2147483647 + 0.5) | 0;
         output[pos++] = v;
       }
     }

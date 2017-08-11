@@ -8,8 +8,15 @@
 # Upon completion silk.root will be set to reflect the current state of /silk.
 #
 
+info() {
+  log -p i -t silk-chroot $@
+}
+warn() {
+  log -p w -t silk-chroot $@
+}
+
 if [ "$(getprop ro.debuggable)" != "1" ]; then
-  echo Device is not debuggable
+  info Device is not debuggable
   exit 1
 fi
 
@@ -23,21 +30,21 @@ fi
 
 if [ "$PSR" = "$SR" ]; then
   if [ -f /init.silk.rc ]; then
-    echo Property reload complete, starting framework
+    info Property reload complete, starting framework
     start
   fi
   exit 0
 fi
 
 if [ "$PSR" != "system" ] && [ "$PSR" != "data" ] && [ "$PSR" != "silk.img" ]; then
-  echo Invalid persist.silk.root: $PSR
+  warn Invalid persist.silk.root: $PSR
   exit 1
 fi
 
 set -x
 
 if [ -f /init.silk.rc ]; then
-  echo Stopping framework
+  info Stopping framework
   stop
 fi
 
@@ -45,20 +52,28 @@ mount -o remount,rw /
 rm /silk
 
 if [ "$PSR" = "silk.img" ]; then
-  echo Using /data/silk.img as silk root
+  info Using /data/silk.img as silk root
 
   test -f /data/silk.img
+
+  LOOPDEV=$(busybox losetup -f)
+  if [ ! -r $LOOPDEV ]; then
+    # Fallback for some broken gonks
+    LOOPDEV=/dev/block/loop0
+  fi
+
+  info selected $LOOPDEV
   ERR=$?
   if [ $ERR = 0 ]; then
-    busybox losetup -d /dev/block/loop0
-    busybox losetup -r /dev/block/loop0 /data/silk.img
+    busybox losetup -d $LOOPDEV
+    busybox losetup -r $LOOPDEV /data/silk.img
     ERR=$?
   fi
 
   if [ $ERR = 0 ]; then
     umount /mnt/silk
     mkdir -p /mnt/silk
-    mount -o ro -t ext4 /dev/block/loop0 /mnt/silk
+    mount -o ro -t ext4  $LOOPDEV /mnt/silk
     ERR=$?
   fi
 
@@ -68,12 +83,12 @@ if [ "$PSR" = "silk.img" ]; then
   fi
 
   if [ $ERR != 0 ]; then
-    echo "Failed.  Falling back to /system/silk"
+    warn "Failed.  Falling back to /system/silk"
     ln -s /system/silk /silk
   fi
 
 else
-  echo Changing silk root to /$PSR/silk
+  info Changing silk root to /$PSR/silk
   # Adjust /silk symlink
   ln -s /$PSR/silk /silk
 

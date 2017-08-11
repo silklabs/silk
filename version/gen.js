@@ -15,7 +15,7 @@ module.exports = function generate(overrides) {
     buildtime,
     official: false,
     semver,
-    sha: '',
+    sha: 'HEAD',
   }, overrides);
 
   let string = version.branch + ' ' + version.semver;

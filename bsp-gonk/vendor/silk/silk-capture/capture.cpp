@@ -103,6 +103,8 @@ public:
 #endif
     if (opened) {
       busy = false;
+    } else {
+      ALOGE("Failed to open capture source");
     }
     return opened;
   }

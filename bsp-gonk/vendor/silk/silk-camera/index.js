@@ -671,17 +671,19 @@ export default class Camera extends EventEmitter {
       this._noFrameCount = 0;
       try {
         this._cvVideoCapture = new silkcapture.VideoCapture(
-          0,
+          CAMERA_ID,
           this.FRAME_SIZE.normal.width,
           this.FRAME_SIZE.normal.height,
           (err) => {
-            this._cvVideoCaptureBusy = false;
             if (err) {
+              log.warn('Capture init failed:', err.message);
               throw err;
             }
+            this._cvVideoCaptureBusy = false;
           }
         );
       } catch (err) {
+        log.warn('Capture init failed:', err.message);
         throw err;
       }
     }

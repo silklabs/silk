@@ -5,6 +5,8 @@ const debug = require('debug');
 const os = require('os');
 const util = require('util');
 
+let currentStalenessCounter = 0;
+
 let alog;
 
 if (typeof process !== 'undefined') {
@@ -50,6 +52,25 @@ function createLogger(libraryName, consoleFuncName, level) {
   const consoleFunc = console[consoleFuncName];
   const func = debug(prefix);
 
+  let currentlyEnabled = func.enabled;
+  let lastCheckedStalenessCounter = currentStalenessCounter;
+
+  Object.defineProperty(func, `enabled`, {
+    configurable: true,
+    enumerable: true,
+    get: function() {
+      if (lastCheckedStalenessCounter !== currentStalenessCounter) {
+        currentlyEnabled = debug.enabled(prefix);
+        lastCheckedStalenessCounter = currentStalenessCounter;
+      }
+      return currentlyEnabled;
+    },
+    set: function (val) {
+      currentlyEnabled = !!val;
+      lastCheckedStalenessCounter = currentStalenessCounter;
+    },
+  });
+
   if (alog) {
     const alogFunc = alog[level];
     func.log = function() {
@@ -78,7 +99,6 @@ module.exports = function createLog(libraryName) {
 };
 
 module.exports.configureLog = function configureLog() {
-  debug.skips = [];
-  debug.names = [];
-  debug.enable.apply(null, arguments);
+  currentStalenessCounter++;
+  return debug.enable.apply(null, arguments);
 };

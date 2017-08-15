@@ -26,13 +26,13 @@ if (typeof process !== 'undefined') {
   }
 }
 
-debug.formatArgs = function() {
-  const args = Array.prototype.slice.call(arguments);
+debug.formatArgs = function(args) {
   const diff = debug.humanize(this.diff);
 
   // Mimic console.* functions by treating additional arguments as
   // printf-style arguments.
-  let msg = util.format.apply(this, args);
+  let msg = util.format.apply(util, args);
+  args.length = 1;
 
   const format = `(+${diff}) ${msg}`;
   if (this.useColors) {
@@ -41,7 +41,7 @@ debug.formatArgs = function() {
     msg = format;
   }
 
-  return [msg];
+  args[0] = msg;
 };
 
 function createLogger(libraryName, consoleFuncName, level) {

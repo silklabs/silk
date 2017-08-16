@@ -2,7 +2,7 @@
   "name": "node-nnpack",
   "version": "1.15.0",
   "description": "Node bindings for NNPACK",
-  "main": "build/Release/nnpack.node",
+  "main": "index.js",
   "scripts": {
     "silk-build": "./install.sh --ndk && silk-buildjs --ndk .",
     "install": "node-gyp configure && node-gyp rebuild",

@@ -1,0 +1,59 @@
+/**
+ * @flow
+ */
+
+declare module.exports: {
+
+  convolution(
+    input_channels: number,
+    output_channels: number,
+    input_width: number,
+    input_height: number,
+    padding_top: number,
+    padding_right: number,
+    padding_bottom: number,
+    padding_left: number,
+    kernel_width: number,
+    kernel_height: number,
+    stride_width: number,
+    stride_height: number,
+    input: Float32Array,
+    kernel: Float32Array,
+    bias: ?Float32Array,
+    output: Float32Array,
+  ): void;
+
+  fullyConnected(
+    input_channels: number,
+    output_channels: number,
+    input: Float32Array,
+    kernel: Float32Array,
+    output: Float32Array,
+  ): void;
+
+  relu(
+    batch_size: number,
+    channels: number,
+    input: Float32Array,
+    output: Float32Array,
+    negative_slope: number,
+  ): void;
+
+  maxPooling(
+    batch_size: number,
+    channels: number,
+    input_width: number,
+    input_height: number,
+    padding_top: number,
+    padding_right: number,
+    padding_bottom: number,
+    padding_left: number,
+    kernel_width: number,
+    kernel_height: number,
+    stride_width: number,
+    stride_height: number,
+    input: Float32Array,
+    output: Float32Array,
+  ): void;
+
+};

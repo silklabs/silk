@@ -85,6 +85,7 @@ const externals = {
     'noble',
     'node-hid',
     'node-wav',
+    'node-nnpack',
     'opencv',
     'segfault-handler',
     'silk-alog',

@@ -178,8 +178,8 @@ async function execCommon(
     if (warning === null) {
       const prettyOutput =
         typeof output === `object` ?
-        JSON.stringify(output) :
-        output;
+          JSON.stringify(output) :
+          output;
       throw new Error(`${message} ${prettyOutput}`);
     }
     log.warn(message, output);
@@ -1085,8 +1085,8 @@ export class Wifi extends EventEmitter {
   forgetNetwork() {
     log.info('forget networks...');
     return wpaCliRemoveAllNetworks()
-      .then(() => wpaCliExpectOk('disconnect'))
-      .then(() => this._networkCleanup());
+    .then(() => wpaCliExpectOk('disconnect'))
+    .then(() => this._networkCleanup());
   }
 
   /**

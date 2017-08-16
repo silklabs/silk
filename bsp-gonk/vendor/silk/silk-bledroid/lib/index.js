@@ -163,7 +163,7 @@ export class Bledroid extends EventEmitter {
 
     let messageBuffer = {data: ''};
     this.addSocketEventListener('data',
-                                this.onSocketData.bind(this, messageBuffer));
+      this.onSocketData.bind(this, messageBuffer));
 
     const bufferedCommandData = this.stopBufferingCommands();
 

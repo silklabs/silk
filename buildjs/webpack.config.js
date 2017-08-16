@@ -197,14 +197,14 @@ const config = {
   babel: {
     cacheDirectory: babelCache,
     presets: target === 'web' ?
-    [
-      require('babel-preset-silk-node6'),
-      require('babel-preset-react'),
-    ]
-    :
-    [
-      require('babel-preset-silk-node6'),
-    ],
+      [
+        require('babel-preset-silk-node6'),
+        require('babel-preset-react'),
+      ]
+      :
+      [
+        require('babel-preset-silk-node6'),
+      ],
   },
   module: {
     loaders: [

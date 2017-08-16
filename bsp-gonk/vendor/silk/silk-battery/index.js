@@ -44,7 +44,7 @@ export default class Battery extends events.EventEmitter {
 
   _readCapacity(): Promise<number> {
     return fs.readFile('/sys/class/power_supply/battery/capacity')
-      .then((data) => Number(data.toString()));
+    .then((data) => Number(data.toString()));
   }
 
   _peroidicBatteryCapacityCheck(resolveInitPromise: ?Function) {
@@ -82,7 +82,7 @@ export default class Battery extends events.EventEmitter {
         }
       }
       util.timeout(60 * 1000)
-        .then(() => this._peroidicBatteryCapacityCheck(resolveInitPromise));
+      .then(() => this._peroidicBatteryCapacityCheck(resolveInitPromise));
     }).catch(util.processthrow);
   }
 

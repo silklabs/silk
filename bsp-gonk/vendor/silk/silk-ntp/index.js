@@ -42,8 +42,8 @@ function setSystemDate(date: Date) {
    * @instance
    */
   util.exec('time_genoff', [date.getTime().toString()])
-    .then(() => emitter.emit('time'))
-    .catch((err) => log.warn(`Error: unable to set system time: ${err}`));
+  .then(() => emitter.emit('time'))
+  .catch((err) => log.warn(`Error: unable to set system time: ${err}`));
 }
 
 function getNetworkTime() {

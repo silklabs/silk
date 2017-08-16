@@ -114,7 +114,7 @@ export function execRetry(
     }
     if (retries > 0) {
       return timeout(delayMs)
-        .then(() => execRetry(cmd, args, retries - 1, delayMs));
+      .then(() => execRetry(cmd, args, retries - 1, delayMs));
     }
     return Promise.reject(result);
   });
@@ -131,7 +131,7 @@ function getprop(prop: string, defaultValue?: PropTypes): PropTypes {
   let value = props.get(prop);
   if (value === '') {
     return (defaultValue === null || defaultValue === undefined) ? '' :
-        defaultValue;
+    defaultValue;
   }
   return value;
 }

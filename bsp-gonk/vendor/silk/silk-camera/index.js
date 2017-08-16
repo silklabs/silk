@@ -876,7 +876,7 @@ export default class Camera extends EventEmitter {
       `Expected Tags not received from capture promptly. ` +
       `video=${String(this._videoTagReceived)}, ` +
       `mic=${String(this._micTagReceived)}`
-   );
+    );
   };
 
   /**

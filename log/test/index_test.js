@@ -96,9 +96,9 @@ suite(`log`, () => {
   test(`single printf object no color`, () => {
     log.debug.useColors = false;
     testDebugOutput(noColorRegExp,
-                    `Hi({ foo: 'bar' })`,
-                    `Hi(%o)`,
-                    {foo: 'bar'});
+      `Hi({ foo: 'bar' })`,
+      `Hi(%o)`,
+      {foo: 'bar'});
   });
 
   test(`multiple printf object color`, () => {
@@ -107,19 +107,19 @@ suite(`log`, () => {
       `Hi\\(\\{ foo\\: ` + colorRegExpTemplate(`'bar'`) + ` \\}, ` +
       `\\{ bar\\: ` + colorRegExpTemplate(`10`) + ` \\}\\)`;
     testDebugOutput(colorRegExp,
-                    new RegExp(expected),
-                    `Hi(%o, %o)`,
-                    {foo: 'bar'},
-                    {bar: 10});
+      new RegExp(expected),
+      `Hi(%o, %o)`,
+      {foo: 'bar'},
+      {bar: 10});
   });
 
   test(`multiple printf object no color`, () => {
     log.debug.useColors = false;
     testDebugOutput(noColorRegExp,
-                    `Hi({ foo: 'bar' }, { bar: 10 })`,
-                    `Hi(%o, %o)`,
-                    {foo: 'bar'},
-                    {bar: 10});
+      `Hi({ foo: 'bar' }, { bar: 10 })`,
+      `Hi(%o, %o)`,
+      {foo: 'bar'},
+      {bar: 10});
   });
 
 });

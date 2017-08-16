@@ -109,15 +109,15 @@ class InputDevice extends events.EventEmitter {
 
     switch (eventType) {
     case 0 /*EV_SYN*/:
-      {
-        const event = this.event;
-        this.event = null;
-        if (event) {
-          log.debug('Input event:', event);
-          this.emit(event.type, event);
-        }
-        break;
+    {
+      const event = this.event;
+      this.event = null;
+      if (event) {
+        log.debug('Input event:', event);
+        this.emit(event.type, event);
       }
+      break;
+    }
     case 1 /*EV_KEY*/:
       this.event = {
         type: ['keyup', 'keydown', 'keyrepeat'][eventValue],

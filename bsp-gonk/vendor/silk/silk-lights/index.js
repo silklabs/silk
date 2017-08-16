@@ -34,7 +34,7 @@ type FlashMode = 'none' |     // No flash.
                               // the number of milliseconds to turn the light
                               // off.
                  'hardware';  // To flash the light using hardware assist, set
-                              // flashMode to the hardware mode.
+// flashMode to the hardware mode.
 
 type BrightnessMode = 'user' |  // brightness is managed by user setting
                       'sensor'; // brightness is managed by light sensor
@@ -339,26 +339,26 @@ class Lights {
     case 'attention':
     case 'bluetooth':
     case 'wifi':
-      {
-        const light = this._lights[lightId] = new Light(lightId);
-        return light;
-      }
+    {
+      const light = this._lights[lightId] = new Light(lightId);
+      return light;
+    }
     default:
-      {
-        const moduleName = getstrprop('ro.silk.lights.custom.module', '');
-        if (moduleName !== '') {
-          try {
-            // $FlowFixMe$ Could not resolve name: __non_webpack_require__
+    {
+      const moduleName = getstrprop('ro.silk.lights.custom.module', '');
+      if (moduleName !== '') {
+        try {
+          // $FlowFixMe$ Could not resolve name: __non_webpack_require__
             const moduleRequire = __non_webpack_require__ || require; //eslint-disable-line
-            const CustomLight = moduleRequire(moduleName).default;
-            const light = this._lights[lightId] = new CustomLight(lightId);
-            return light;
-          } catch (err) {
-            log.warn(`Unable to load ${moduleName}: ${err.message}`);
-          }
+          const CustomLight = moduleRequire(moduleName).default;
+          const light = this._lights[lightId] = new CustomLight(lightId);
+          return light;
+        } catch (err) {
+          log.warn(`Unable to load ${moduleName}: ${err.message}`);
         }
-        return null;
       }
+      return null;
+    }
     }
   }
 

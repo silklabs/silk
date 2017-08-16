@@ -253,13 +253,13 @@ export default function(buffer: Buffer) {
         successfulParse = true;
       } else {
         log.info('Failed to parse data type 0x%s with length 0x%s',
-            dataType.toString(16),
-            payloadLength.toString(16));
+          dataType.toString(16),
+          payloadLength.toString(16));
       }
     } else {
       log.info('Unknown advertising data type 0x%s with length 0x%s',
-          dataType.toString(16),
-          payloadLength.toString(16));
+        dataType.toString(16),
+        payloadLength.toString(16));
     }
 
     if (!successfulParse) {

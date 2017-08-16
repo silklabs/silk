@@ -21,9 +21,9 @@
     "iot"
   ],
   "devDependencies": {
-    "babel-eslint": "7.1.1",
+    "babel-eslint": "7.2.3",
     "babel-cli": "6.18.0",
-    "eslint": "3.11.1"
+    "eslint": "4.4.1"
   },
   "dependencies": {
     "event-to-promise": "0.7.0",

@@ -12,12 +12,12 @@
     "url": "https://github.com/silklabs/silk/issues"
   },
   "dependencies": {
-    "eslint-plugin-import": "2.2.0",
+    "eslint-plugin-import": "2.7.0",
     "minimatch": "3.0.3",
     "read-pkg-up": "1.0.1"
   },
   "peerDependencies": {
-    "babel-eslint": "7.1.1",
-    "eslint": "3.11.1"
+    "babel-eslint": "7.2.3",
+    "eslint": "4.4.1"
   }
 }

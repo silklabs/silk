@@ -1,0 +1,47 @@
+#!/system/bin/sh
+
+info() {
+  log -p i -t silk-updater $@
+}
+
+warn() {
+  log -p w -t silk-updater $@
+}
+
+UPDATE_ZIP=$1
+if [ -z $UPDATE_ZIP ]; then
+  warn update .zip not supplied
+  exit 1
+fi
+
+if [ ! -r $UPDATE_ZIP ]; then
+  warn update .zip not readable: $UPDATE_ZIP
+  exit 1
+fi
+
+rm -rf /data/silk/update
+mkdir /data/silk/update
+cd /data/silk/update
+if [ "$PWD" != "/data/silk/update" ]; then
+  warn Unable to prepare /data/silk/update
+  exit 1
+fi
+info Unzipping $UPDATE_ZIP to $PWD
+busybox unzip $UPDATE_ZIP silk.img
+if [ ! -r silk.img ]; then
+  warn silk.img not found in $UPDATE_ZIP
+  exit 1
+fi
+
+echo Applying update
+# https://youtu.be/-W6as8oVcuM
+mv -f silk.img /data/silk.img
+setprop persist.silk.root silk.img
+
+echo Syncing disk
+sync
+
+echo Rebooting
+echo b > /proc/sysrq-trigger
+
+exit 0

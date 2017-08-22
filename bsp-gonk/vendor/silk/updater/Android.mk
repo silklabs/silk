@@ -11,7 +11,7 @@ include $(BUILD_SILK_EXECUTABLE)
 endif
 
 include $(CLEAR_VARS)
-LOCAL_MODULE:= silk-updater-loopback
+LOCAL_MODULE := silk-updater-loopback
 LOCAL_MODULE_TAGS := debug eng # Do not install for -user builds
 LOCAL_MODULE_STEM := silk-updater-loopback
 LOCAL_MODULE_CLASS := EXECUTABLES

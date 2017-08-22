@@ -105,7 +105,7 @@ PRODUCT_PACKAGES += fakeappops fakeperm fakeprocessinfo gonksched
 PRODUCT_PACKAGES += silk-time_genoff
 
 # vendor/silk/updater/
-PRODUCT_PACKAGES += silk-updater-loopback
+PRODUCT_PACKAGES += silk-updater-recovery
 
 # vendor/silk/volume/
 PRODUCT_PACKAGES += silk-volume

@@ -76,8 +76,8 @@ void libpreview_FrameCallback(void *userData,
   case libpreview::FRAMEFORMAT_YUV420SP:
     if (inputFrame.format != format) {
       if (inputFrame.format == libpreview::FRAMEFORMAT_YUV420SP_VENUS &&
-          libpreview::VENUS_Y_STRIDE(width) == width &&
-          libpreview::VENUS_C_PLANE_OFFSET(width, height) == width * height) {
+          libpreview::VENUS_Y_STRIDE(width) == static_cast<int>(width) &&
+          libpreview::VENUS_C_PLANE_OFFSET(width, height) == static_cast<int>(width * height)) {
 
         // FRAMEFORMAT_YUV420SP_VENUS == FRAMEFORMAT_YUV420SP in this case so
         // don't abort
@@ -135,7 +135,7 @@ void frameOutCallback(SimpleH264Encoder::EncodedFrameInfo& info) {
   outputFrameSize.erase(outputFrameSize.begin());
   outputFrameSize.push_back(info.encodedFrameLength);
   int64_t bitrate = 0;
-  for (auto i = 0; i < outputFrameSize.size(); i++) {
+  for (auto i = 0u; i < outputFrameSize.size(); i++) {
     bitrate += outputFrameSize[i] * 8;
   }
 

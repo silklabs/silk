@@ -42,6 +42,6 @@ echo Syncing disk
 sync
 
 echo Rebooting
-echo b > /proc/sysrq-trigger
+reboot
 
-exit 0
+exit 1

@@ -27,7 +27,8 @@ function install_opencv {
 }
 
 function install_package_osx {
-  local problem=$(brew ls --versions $1 | grep $1 || true)
+  local problem
+  problem=$(brew ls --versions $1 | grep $1 || true)
   echo Checking for $1: $problem
   if [ "" == "$problem" ]; then
     echo "Not $1 found; setting it up"
@@ -37,7 +38,8 @@ function install_package_osx {
 }
 
 function install_package_linux {
-  local problem=$(dpkg -s $1 | grep installed || true)
+  local problem
+  problem=$(dpkg -s $1 | grep installed || true)
   echo Checking for $1: $problem
   if [ "" == "$problem" ]; then
     echo "Not $1 found; setting it up"

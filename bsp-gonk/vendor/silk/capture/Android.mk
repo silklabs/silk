@@ -158,9 +158,10 @@ endif
 include $(BUILD_SILK_SHARED_LIBRARY)
 
 
+ifneq ($(TARGET_GE_MARSHMALLOW),)
 include $(CLEAR_VARS)
 LOCAL_MODULE       := h264EncodeTest
-LOCAL_MODULE_TAGS  := eng
+LOCAL_MODULE_TAGS  := debug
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := h264EncodeTest.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
@@ -175,10 +176,9 @@ LOCAL_SHARED_LIBRARIES := \
 
 include $(BUILD_SILK_EXECUTABLE)
 
-ifneq ($(TARGET_GE_MARSHMALLOW),)
 include $(CLEAR_VARS)
 LOCAL_MODULE       := h264SharedEncodeTest
-LOCAL_MODULE_TAGS  := eng
+LOCAL_MODULE_TAGS  := debug
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := h264SharedEncodeTest.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11

@@ -23,5 +23,10 @@ service silk-chroot /system/bin/logwrapper /system/silk/bin/silk-chroot
 
 on property:silk.root=*
     # Refresh /silk/build.prop and /silk/debug.prop
+
+    # L-style
     load_all_props
 
+    # M-style
+    load_system_props
+    load_persist_props

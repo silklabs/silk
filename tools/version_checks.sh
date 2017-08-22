@@ -2,7 +2,7 @@
 
 fail()
 {
-  echo $0: $@ >&2
+  echo $0: "$@" >&2
   exit 1
 }
 
@@ -18,7 +18,6 @@ cmake_version_check()
   if [[ $v =~ ^cmake\ version\ ([0-9]*)\.([0-9]*).([0-9]*) ]]; then
     local major=${BASH_REMATCH[1]}
     local minor=${BASH_REMATCH[2]}
-    local patch=${BASH_REMATCH[3]}
 
     [[ $major -eq 3 ]] && [[ $minor -ge 2 ]] && return
   fi

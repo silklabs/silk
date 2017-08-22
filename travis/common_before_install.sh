@@ -6,7 +6,7 @@ git --version
 git config --global user.email "stooge@silklabs.com"
 git config --global user.name "Stooge"
 git config --global color.ui false
-if [ -n ${TRAVIS:-false} ]; then
+if [[ -n ${TRAVIS:-false} ]]; then
   if [ $CI_OS_NAME == linux ]; then
     # Install ninja
     wget -q https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip

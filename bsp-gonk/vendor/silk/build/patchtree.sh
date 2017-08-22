@@ -40,7 +40,7 @@ __tree_md5sum()
 {
    (
       export LANG=C
-      FILELIST="$(find -L $@ -type f ! -path "*/.*" 2>/dev/null | sort -fs) ${B2G_HASHED_FILES}"
+      FILELIST="$(find -L "$@" -type f ! -path "*/.*" 2>/dev/null | sort -fs) ${B2G_HASHED_FILES}"
       cat ${FILELIST}
    ) | openssl dgst -md5
 }
@@ -170,7 +170,7 @@ __patch_tree()
                PATCHES=$(find -L $TREE -name \*.patch | sort -fs)
                for P in ${PATCHES}; do
                  PRJ=$(dirname ${P#${TREE}})
-                 PRJ=`echo $PRJ | sed -e 's%^/%%'`
+                 PRJ=$(echo $PRJ | sed -e 's%^/%%')
                  echo $PRJ
                done
              done
@@ -217,7 +217,7 @@ __patch_tree()
              else
                PATCH_LIST+=" ${TREE}:${PATCH_WO_TREE} "
              fi
-           done  
+           done
          done
 
          #
@@ -225,12 +225,12 @@ __patch_tree()
          #
          echo Patching...
          for P in ${PATCH_LIST}; do
-           TREE=`echo $P | cut -d \: -f 1`
-           PATCH_WO_TREE=`echo $P | cut -d \: -f 2`
+           TREE=$(echo $P | cut -d : -f 1)
+           PATCH_WO_TREE=$(echo $P | cut -d : -f 2)
            PATCH=$TREE$PATCH_WO_TREE
 
            PRJ=$(dirname ${PATCH#${TREE}})
-           PRJ=`echo $PRJ | sed -e 's%^/%%'`
+           PRJ=$(echo $PRJ | sed -e 's%^/%%')
            if [[ ! -d $PRJ ]]; then
              continue
            fi
@@ -242,7 +242,7 @@ __patch_tree()
            ( set -x ; git -C $PRJ am $PATCH_FLAGS --quiet ${ROOT_DIR}/$PATCH )
          done
 
-         echo $(__tree_md5sum ${PATCH_TREE}) > out/lastpatch.md5sum
+         __tree_md5sum ${PATCH_TREE} > out/lastpatch.md5sum
       fi
    )
    ERR=$?

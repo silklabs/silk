@@ -1,3 +1,5 @@
+# shellcheck disable=SC2034 # Unused variable
+
 export USE_CCACHE=1 # Yes please!
 export CCACHE_HASHDIR=true
 
@@ -9,7 +11,7 @@ fi
 poison_their_lunch()
 {
   SILK_ENVSETUP=
-  echo Error: $@ >&2
+  echo Error: "$@" >&2
   lunch() { echo Error: lunch has been disabled due to an envsetup failure;  return 1; }
   choosecombo() { lunch; }
   return 1
@@ -37,8 +39,7 @@ if [[ "$(pwd)" != "$path" ]]; then
   return
 fi
 
-../tools/version_checks.sh
-if [[ $? -ne 0 ]]; then
+if ! ../tools/version_checks.sh; then
   poison_their_lunch Host tools are incorrect.
   return
 fi
@@ -133,8 +134,7 @@ done
 # Generate manifest dependency file
 echo .repo/lastsync: $MANIFEST_DEPS > .repo/manifest.deps
 
-source $(dirname ${BASH_SOURCE[0]})/patchtree.sh $@
-[[ $? -eq 0 ]] || return
+source $(dirname ${BASH_SOURCE[0]})/patchtree.sh "$@" || return
 
 #
 # |lunch| automatically

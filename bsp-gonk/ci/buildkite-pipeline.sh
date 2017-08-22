@@ -21,7 +21,7 @@ cat <<EOF
 EOF
 }
 
-build qemu 
+build qemu
 
 if [[ $BRANCH == master ]] && [[ $CI_PULL_REQUEST = false ]]; then
   build mako

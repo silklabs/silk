@@ -42,6 +42,6 @@ echo Syncing disk
 sync
 
 echo Rebooting
-reboot
+exec reboot
 
 exit 1

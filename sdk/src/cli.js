@@ -1,6 +1,10 @@
+/* @noflow */
+/*eslint-disable no-console*/
+/*eslint-disable no-process-exit*/
+
 import eventToPromise from 'event-to-promise';
 import fs from 'fs';
-import {exec, spawn} from 'mz/child_process';
+import {spawn} from 'mz/child_process';
 import path from 'path';
 
 import {SDKApi} from './api';
@@ -91,7 +95,7 @@ function ensureSetup(argv) {
   argv.arguments = argv.arguments || [];
   argv.arguments = [
     [['--device', '-d'], {
-      help: 'Specific device to operate under.'
+      help: 'Specific device to operate under.',
     }],
     ...argv.arguments,
   ];
@@ -193,7 +197,7 @@ export let build = ensureSetup({
   main: async (api, args) => {
     const pkg = require(path.join(findPackageRoot(), 'package.json'));
     await silkBuild(pkg, args.source);
-  }
+  },
 });
 
 export let push = ensureSetup({
@@ -206,7 +210,7 @@ export let push = ensureSetup({
     await checkDevices(api, args.device);
     const pkg = require(path.join(findPackageRoot(), 'package.json'));
     await api.pushModule(pkg.name, args.source, args.system);
-  }
+  },
 });
 
 export let activate = ensureSetup({
@@ -214,8 +218,8 @@ export let activate = ensureSetup({
   arguments: [
     [['--clear', '-c'], {
       action: 'storeTrue',
-      help: `Activate the default main module instead of the current package`
-    }]
+      help: `Activate the default main module instead of the current package`,
+    }],
   ],
   main: async (api, args) => {
     await checkDevices(api, args.device);
@@ -229,7 +233,7 @@ export let activate = ensureSetup({
       main = '(device default)';
     }
     console.log(`Activated main program: ${main}`);
-  }
+  },
 });
 
 
@@ -237,21 +241,21 @@ export let restart = ensureSetup({
   help: `Restart the main module`,
   main: async (api, args) => {
     await api.restart();
-  }
+  },
 });
 
 export let start = ensureSetup({
   help: `Start the main module (only useful after using stop)`,
   main: async (api, args) => {
     await api.start();
-  }
+  },
 });
 
 export let stop = ensureSetup({
   help: `Stop the main module (until the device reboots)`,
   main: async (api, args) => {
     await api.stop();
-  }
+  },
 });
 
 export let log = ensureSetup({
@@ -259,8 +263,8 @@ export let log = ensureSetup({
   arguments: [
     [['--recent', '-r'], {
       action: 'storeTrue',
-      help: `Start tailing from current place in log`
-    }]
+      help: `Start tailing from current place in log`,
+    }],
   ],
   main: async (api, args) => {
     const logcatArgs = [];
@@ -271,7 +275,7 @@ export let log = ensureSetup({
     const logcat = api.logcat(logcatArgs);
     logcat.stdout.pipe(process.stdout);
     logcat.stderr.pipe(process.stdout);
-  }
+  },
 });
 
 export let setupwifi = ensureSetup({
@@ -285,10 +289,10 @@ export let setupwifi = ensureSetup({
     }],
     [['--keep', '-k'], {
       action: 'storeTrue',
-      help: `Keep existing networks`
-    }]
+      help: `Keep existing networks`,
+    }],
   ],
   main: async (api, args) => {
     await api.setupWifi(args.ssid, args.password, args.keep);
-  }
+  },
 });

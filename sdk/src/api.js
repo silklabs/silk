@@ -1,11 +1,13 @@
 /**
  * API used by the cli to push and manage files.
+ * @noflow
  */
+/*eslint-disable no-console*/
 
 import path from 'path';
 
-import { exec } from 'mz/child_process';
-import { spawn } from 'child_process';
+import {exec} from 'mz/child_process';
+import {spawn} from 'child_process';
 import which from 'which';
 import fs from 'mz/fs';
 
@@ -34,7 +36,7 @@ async function execWithPaths(
     return await exec(cmd, {
       env: cmdEnv,
       maxBuffer: 1024 * 1024 * 10, // 10MB - |adb push| can be verbose
-      timeout
+      timeout,
     });
   } catch (err) {
     throw new Error(`An error occured while running: ${cmd} ${err.stack}`);
@@ -95,7 +97,7 @@ export class SDKApi {
 
     return spawn(this._adbPath, args, {
       // XXX: May be better to use inherit.
-      stdio: 'pipe'
+      stdio: 'pipe',
     });
   }
 
@@ -153,7 +155,7 @@ export class SDKApi {
         extra[name] = value;
       }
 
-      devices.push({ serial, state, extra });
+      devices.push({serial, state, extra});
     }
     return devices;
   }
@@ -172,7 +174,7 @@ export class SDKApi {
     if (!iface) {
       console.log('Using default wifi interface');
       // TODO: Use |wpa_cli ifname| to get the default name instead of hard coding wlan0
-      iface = 'wlan0'
+      iface = 'wlan0';
       ifaceArgs = `-i${iface}`;  // Don't add IFNAME=, it's only needed for gonk wpa_cli
     } else {
       ifaceArgs = `-i${iface} IFNAME=${iface}`;

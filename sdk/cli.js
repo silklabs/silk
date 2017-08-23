@@ -2,6 +2,8 @@
  * Note that this might be run with babel-node OR inside a production
  * environment with babel assets compiled so we detect this and run
  * the appropriate steps.
+ *
+ * @noflow
  */
 
 const fs = require('fs');
@@ -11,8 +13,8 @@ const CONFIG_PATH = path.join(__dirname, 'babelconfig.js');
 const COMPILE_ROOT = path.join(__dirname, 'src');
 
 if (fs.existsSync(CONFIG_PATH)) {
-  var config = require('./babelconfig')();
-  var preset = require(config.preset);
+  let config = require('./babelconfig')();
+  let preset = require(config.preset);
   require(config.register)({
     presets: [preset],
     // Be strict! We only want to include what is in our own src/*. For

@@ -1,4 +1,5 @@
+/* @noflow */
 module.exports = {
-  "extends": "eslint-config-silk/base",
-  "rules": {}
+  'extends': 'eslint-config-silk/base',
+  'rules': {},
 };

@@ -20,6 +20,7 @@
  *   "throwForNonStringLiteral": true,
  * }
  *
+ * @noflow
  */
 
 'use strict';

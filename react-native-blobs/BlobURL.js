@@ -4,7 +4,7 @@
  */
 'use strict';
 
-const {NativeModules, Platform} = require('react-native');
+const {NativeModules} = require('react-native');
 const {SLKBlobManager} = NativeModules;
 
 import type Blob from './Blob';

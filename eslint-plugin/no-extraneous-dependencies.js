@@ -2,6 +2,8 @@
  * eslint rule that ensures every require()'d and imported package is declared
  * in package.json. It is based on import/no-extraneous-dependencies, but has
  * been extended to understand `symlinkDependencies`.
+ *
+ * @noflow
  */
 
 const fs = require('fs');
@@ -56,10 +58,6 @@ function reportIfMissing(context, pkg, depsOptions, node, name) {
   const inWhichDeps = findPackageInDependencies(packageName, pkg.pkg);
   const deps = getDependencies(pkg.pkg);
   const isInDeps = deps.dependencies[packageName] !== undefined;
-  const isInDevDeps = deps.devDependencies[packageName] !== undefined;
-  const isInOptDeps = deps.optionalDependencies[packageName] !== undefined;
-  const isInPeerDeps = deps.peerDependencies[packageName] !== undefined;
-  const isInSymlinkDeps = deps.symlinkDependencies[packageName] !== undefined;
 
   if (isInDeps ||
     (depsOptions.allowSelf && isSelf) ||
@@ -136,7 +134,7 @@ function testConfig(config, filename) {
     return config;
   }
   // Array of globs.
-  return config.some(c => (
+  return config.some((c) => (
     minimatch(filename, c) ||
     minimatch(filename, path.join(process.cwd(), c))
   ));
@@ -150,11 +148,11 @@ module.exports = {
       {
         'type': 'object',
         'properties': {
-          'allowSelf': { 'type': 'boolean' },
-          'devDependencies': { 'type': ['boolean', 'array'] },
-          'optionalDependencies': { 'type': ['boolean', 'array'] },
-          'peerDependencies': { 'type': ['boolean', 'array'] },
-          'symlinkDependencies': { 'type': ['boolean', 'array'] },
+          'allowSelf': {'type': 'boolean'},
+          'devDependencies': {'type': ['boolean', 'array']},
+          'optionalDependencies': {'type': ['boolean', 'array']},
+          'peerDependencies': {'type': ['boolean', 'array']},
+          'symlinkDependencies': {'type': ['boolean', 'array']},
         },
         'additionalProperties': false,
       },

@@ -1,3 +1,4 @@
+/* @noflow */
 module.exports = {
   rules: {
     'no-extraneous-dependencies': require('./no-extraneous-dependencies'),

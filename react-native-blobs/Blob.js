@@ -71,7 +71,7 @@ class Blob {
    * "Public" constructor for JS consumers. Currently we only support
    * creating Blobs from other Blobs.
    */
-  constructor(parts: Array<Blob>, options: any) {
+  constructor(parts: Array<Blob>, options: any) { //eslint-disable-line flowtype/no-weak-types
     let blobId = createUUID();
     let size = 0;
     parts.forEach((part) => {

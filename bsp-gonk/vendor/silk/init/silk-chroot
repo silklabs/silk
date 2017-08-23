@@ -24,8 +24,10 @@ PSR="$(getprop persist.silk.root system)"
 SR="$(getprop silk.root)"
 
 if [ "$PSR" = system ] && [ -z "$SR" ]; then
-  # Nothing to do, default is system
-  exit 0
+  if [ "$(busybox readlink -f /silk)" = "/system/silk" ]; then
+    # Nothing to do, default is system
+    exit 0
+  fi
 fi
 
 if [ "$PSR" = "$SR" ]; then

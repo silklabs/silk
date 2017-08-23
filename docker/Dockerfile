@@ -37,6 +37,7 @@ RUN addgroup --gid 999 docker && \
         build-essential \
         buildkite-agent \
         bsdmainutils \
+        cabal-install \
         ccache \
         chrpath \
         cmake \
@@ -113,6 +114,16 @@ RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openjdk-8/openjdk-8-jr
     sudo apt-get update -qq && \
     sudo dpkg -i *.deb && \
     rm *.deb
+
+# Build/install Shellcheck (bash linter)
+RUN cabal update && \
+    git clone https://github.com/koalaman/shellcheck.git && \
+    git -C shellcheck checkout 6c068e7d29a835139517fa7345d9d450ef57b170 && \
+    cd shellcheck && \
+    cabal install && \
+    sudo cp ~/.cabal/bin/shellcheck /usr/bin && \
+    cd .. && \
+    rm -rf shellcheck
 
 # Build/install opencv3
 RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \

@@ -86,6 +86,7 @@ RUN addgroup --gid 999 docker && \
         openssh-server \
         pkg-config \
         protobuf-compiler \
+        psmisc \
         python-dev \
         python-pip \
         python-virtualenv \

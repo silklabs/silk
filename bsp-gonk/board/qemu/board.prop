@@ -3,5 +3,6 @@ ro.silk.camera.resolution=320x240
 ro.silk.camera.fps=5
 ro.silk.camera.preview_scale=1
 ro.silk.camera.preview_skip_cnt=5
+ro.silk.camera.video=false
 ro.silk.bt.hw.enabled=false
 ro.silk.audio.hw.enabled=false

@@ -2092,7 +2092,12 @@ size_t MPEG4SegmentDASHWriter::raw_write_mem(
     return size;
 }
 
-status_t MPEG4SegmentDASHWriter::addSource(const sp<MediaSource>&) {
+#ifdef TARGET_GE_NOUGAT
+status_t MPEG4SegmentDASHWriter::addSource(const sp<IMediaSource>&)
+#else
+status_t MPEG4SegmentDASHWriter::addSource(const sp<MediaSource>&)
+#endif
+{
     return ERROR_UNSUPPORTED;
 }
 

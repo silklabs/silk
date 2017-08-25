@@ -1242,7 +1242,12 @@ void bt_le_test_mode_callback(bt_status_t status, uint16_t num_packets) {
  * Energy used-Value as returned by the controller
  * Status-Provides the status of the read_energy_info API call
  */
-void bt_energy_info_callback(bt_activity_energy_info *energy_info) {
+void bt_energy_info_callback(
+  bt_activity_energy_info *energy_info
+#ifdef TARGET_GE_NOUGAT
+  , bt_uid_traffic_t *uid_data
+#endif
+) {
   ALOGE("bt_energy_info_callback");
 }
 

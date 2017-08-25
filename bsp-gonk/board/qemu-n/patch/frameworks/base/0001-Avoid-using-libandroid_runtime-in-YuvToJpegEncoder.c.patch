@@ -1,0 +1,33 @@
+From 61341da64b453eea6cd985d2115f585a7735e631 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 17:40:15 -0700
+Subject: [PATCH] Avoid using libandroid_runtime in YuvToJpegEncoder.cpp, for
+ goldfish
+
+---
+ core/jni/android/graphics/YuvToJpegEncoder.cpp | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/core/jni/android/graphics/YuvToJpegEncoder.cpp b/core/jni/android/graphics/YuvToJpegEncoder.cpp
+index 7d0c39cc..91d847d7 100644
+--- a/core/jni/android/graphics/YuvToJpegEncoder.cpp
++++ b/core/jni/android/graphics/YuvToJpegEncoder.cpp
+@@ -4,7 +4,6 @@
+ #include <ui/PixelFormat.h>
+ #include <hardware/hardware.h>
+ 
+-#include "core_jni_helpers.h"
+ 
+ #include <jni.h>
+ 
+@@ -250,6 +249,5 @@ static const JNINativeMethod gYuvImageMethods[] = {
+ 
+ int register_android_graphics_YuvImage(JNIEnv* env)
+ {
+-    return android::RegisterMethodsOrDie(env, "android/graphics/YuvImage", gYuvImageMethods,
+-                                         NELEM(gYuvImageMethods));
++    return 0;
+ }
+-- 
+2.11.0
+

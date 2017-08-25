@@ -1,0 +1,38 @@
+From c180c3c744e3fd865d5b463bb74908e97ab77274 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 17:23:42 -0700
+Subject: [PATCH] Only grant camera access to the capture process (AID_CAMERA)
+
+---
+ services/camera/libcameraservice/CameraService.cpp | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/services/camera/libcameraservice/CameraService.cpp b/services/camera/libcameraservice/CameraService.cpp
+index d0df6d109..0434fc007 100644
+--- a/services/camera/libcameraservice/CameraService.cpp
++++ b/services/camera/libcameraservice/CameraService.cpp
+@@ -983,6 +983,12 @@ Status CameraService::validateConnectLocked(const String8& cameraId,
+ 
+     userid_t clientUserId = multiuser_get_user_id(clientUid);
+ 
++    if (clientUid != 1006 /*AID_CAMERA*/) {
++      return STATUS_ERROR_FMT(ERROR_PERMISSION_DENIED,
++              "Callers from device user %d are not currently allowed to connect to camera \"%s\"",
++              clientUserId, cameraId.string());
++    }
++#if 0
+     // Only allow clients who are being used by the current foreground device user, unless calling
+     // from our own process.
+     if (callingPid != getpid() && (mAllowedUsers.find(clientUserId) == mAllowedUsers.end())) {
+@@ -993,7 +999,7 @@ Status CameraService::validateConnectLocked(const String8& cameraId,
+                 "Callers from device user %d are not currently allowed to connect to camera \"%s\"",
+                 clientUserId, cameraId.string());
+     }
+-
++#endif
+     status_t err = checkIfDeviceIsUsable(cameraId);
+     if (err != NO_ERROR) {
+         switch(err) {
+-- 
+2.11.0
+

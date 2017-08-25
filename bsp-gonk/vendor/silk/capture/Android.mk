@@ -19,15 +19,25 @@ LOCAL_SRC_FILES := \
 	MPEG4SegmenterDASH.cpp \
 	OpenCVCameraCapture.cpp \
 
-ifneq ($(TARGET_GE_MARSHMALLOW),)
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_SRC_FILES += 7.x/MediaCodecSource.cpp
+else ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_SRC_FILES += 6.x/MediaCodecSource.cpp
 else
 LOCAL_SRC_FILES += 5.1.1_r6/MediaCodecSource.cpp
 endif
 
 LOCAL_SHARED_LIBRARIES := \
-  libstagefright libstagefright_foundation libutils liblog libbinder \
-  libgui libcamera_client libcutils libsysutils libmedia
+  libbinder \
+  libcamera_client \
+  libcutils \
+  libgui \
+  liblog \
+  libmedia \
+  libstagefright \
+  libstagefright_foundation \
+  libsysutils \
+  libutils \
 
 LOCAL_C_INCLUDES := \
   frameworks/av/media/libstagefright \
@@ -38,7 +48,10 @@ LOCAL_C_INCLUDES := \
   vendor/silk/jsoncpp \
   vendor/silk/SocketListener \
 
-ifneq ($(TARGET_GE_MARSHMALLOW),)
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/7.x
+LOCAL_C_INCLUDES += frameworks/native/include/media/hardware
+else ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/6.x
 ifneq (,$(wildcard frameworks/av/media/libavextensions))
 LOCAL_C_INCLUDES += frameworks/av/media/libavextensions
@@ -56,6 +69,9 @@ LOCAL_CFLAGS += -DTARGET_USE_CAMERA2
 LOCAL_CFLAGS += -Wno-mismatched-tags # |struct CaptureRequest| is forward declared as a |class|
 endif
 
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_CFLAGS += -DTARGET_GE_NOUGAT
+endif
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 LOCAL_CFLAGS += -DIGNORE_UNWANTED_IFRAME_AT_FRAME2
@@ -95,6 +111,9 @@ ifeq ($(TARGET_CPUCONSUMER_ONFRAMEAVAILABLE__NOITEM), true)
 # Select the (older) CAF version of the CpuConsumer interface
 LOCAL_CFLAGS += -DCAF_CPUCONSUMER
 endif
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_CFLAGS += -DTARGET_GE_NOUGAT
+endif
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 endif
@@ -108,10 +127,21 @@ LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := mic.cpp AudioSourceEmitter.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_CFLAGS += -DTARGET_GE_NOUGAT
+endif
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 endif
-LOCAL_SHARED_LIBRARIES := liblog libmedia libcutils libstagefright libutils
+LOCAL_SHARED_LIBRARIES := \
+  libbinder \
+  libcutils \
+  liblog \
+  libmedia \
+  libstagefright \
+  libstagefright_foundation \
+  libutils \
+
 LOCAL_C_INCLUDES := frameworks/av/include
 include $(BUILD_SILK_EXECUTABLE)
 
@@ -132,15 +162,22 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := SimpleH264Encoder.cpp
 LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 LOCAL_SHARED_LIBRARIES := \
+  libbinder \
   liblog \
-  libutils \
+  libmedia \
   libstagefright \
   libstagefright_foundation \
+  libutils \
 
 LOCAL_C_INCLUDES := . \
   frameworks/native/include/media/openmax \
 
-ifneq ($(TARGET_GE_MARSHMALLOW),)
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_CFLAGS += -DTARGET_GE_NOUGAT
+LOCAL_SRC_FILES += SharedSimpleH264Encoder.cpp
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/7.x
+LOCAL_SRC_FILES += 7.x/MediaCodecSource.cpp
+else ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/6.x
 LOCAL_SRC_FILES += 6.x/MediaCodecSource.cpp
 LOCAL_SRC_FILES += SharedSimpleH264Encoder.cpp

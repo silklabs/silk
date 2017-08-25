@@ -1,0 +1,71 @@
+From 5b4619e370637dd3b98db57fdd8dd61dd3ffd648 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 16:06:01 -0700
+Subject: [PATCH] Introduce LOCAL_CUSTOM_{BUILT,INSTALLED}_MODULE macros
+
+These enable a component using BUILD_PREBUILT to avoid a Make complaint when
+intentionally overriding the LOCAL_BUILT and/or LOCAL_INSTALLED targets
+---
+ core/base_rules.mk        | 4 ++++
+ core/clear_vars.mk        | 2 ++
+ core/prebuilt_internal.mk | 4 ++++
+ 3 files changed, 10 insertions(+)
+
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index 6722af4f2..82217474a 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -306,6 +306,9 @@ ifneq ($(strip $(HOST_ACP_UNAVAILABLE)),)
+   LOCAL_ACP_UNAVAILABLE := $(strip $(HOST_ACP_UNAVAILABLE))
+ endif
+ 
++ifdef LOCAL_CUSTOM_INSTALLED_MODULE
++# Android.mk is expected to provide the $(LOCAL_INSTALLED_MODULE) target
++else
+ ifneq (true,$(LOCAL_UNINSTALLABLE_MODULE))
+   # Define a copy rule to install the module.
+   # acp and libraries that it uses can't use acp for
+@@ -341,6 +344,7 @@ $(my_init_rc_installed) : $(my_init_rc_src) | $(ACP)
+ $(my_register_name) : $(my_init_rc_installed)
+ endif # my_init_rc
+ endif # !LOCAL_UNINSTALLABLE_MODULE
++endif # !LOCAL_CUSTOM_INSTALLED_MODULE
+ 
+ ###########################################################
+ ## CHECK_BUILD goals
+diff --git a/core/clear_vars.mk b/core/clear_vars.mk
+index 588661058..e43825954 100644
+--- a/core/clear_vars.mk
++++ b/core/clear_vars.mk
+@@ -8,6 +8,8 @@ LOCAL_MODULE_RELATIVE_PATH :=
+ LOCAL_MODULE_STEM:=
+ LOCAL_DONT_CHECK_MODULE:=
+ LOCAL_CHECKED_MODULE:=
++LOCAL_CUSTOM_BUILT_MODULE:=
++LOCAL_CUSTOM_INSTALLED_MODULE:=
+ LOCAL_BUILT_MODULE:=
+ LOCAL_BUILT_MODULE_STEM:=
+ OVERRIDE_BUILT_MODULE_PATH:=
+diff --git a/core/prebuilt_internal.mk b/core/prebuilt_internal.mk
+index b6727fa63..cc412a3c4 100644
+--- a/core/prebuilt_internal.mk
++++ b/core/prebuilt_internal.mk
+@@ -367,11 +367,15 @@ ifeq ($(LOCAL_MODULE_CLASS),EXECUTABLES)
+ 	$(hide) chmod +x $@
+ endif
+ else ifneq ($(LOCAL_ACP_UNAVAILABLE),true)
++ifdef LOCAL_CUSTOM_BUILT_MODULE
++# Android.mk is expected to provide the $(LOCAL_BUILT_MODULE) target
++else
+ $(built_module) : $(my_prebuilt_src_file) | $(ACP)
+ 	$(transform-prebuilt-to-target)
+ ifeq ($(LOCAL_MODULE_CLASS),EXECUTABLES)
+ 	$(hide) chmod +x $@
+ endif
++endif # !LOCAL_CUSTOM_BUILT_MODULE
+ else
+ $(built_module) : $(my_prebuilt_src_file)
+ 	$(copy-file-to-target-with-cp)
+-- 
+2.11.0
+

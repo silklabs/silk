@@ -1,0 +1,138 @@
+From 346a7b0babb79c8c89f71d16bb89173331cae2eb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 21:05:58 -0700
+Subject: [PATCH] Remove libandroid_runtime dependency
+
+---
+ src/Android.mk                           |  1 -
+ src/android/AudioPlayer_to_android.cpp   |  2 ++
+ src/android/AudioRecorder_to_android.cpp |  2 ++
+ src/itf/IAndroidConfiguration.c          | 14 ++++++--------
+ 4 files changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/src/Android.mk b/src/Android.mk
+index 4f3f665..1bc4e03 100644
+--- a/src/Android.mk
++++ b/src/Android.mk
+@@ -188,7 +188,6 @@ LOCAL_SHARED_LIBRARIES :=         \
+         libcutils                 \
+         libgui                    \
+         libdl                     \
+-        libandroid_runtime
+ 
+ # For Brillo, we do not want this dependency as it significantly increases the
+ # size of the checkout. Also, the library is dependent on Java (which is not
+diff --git a/src/android/AudioPlayer_to_android.cpp b/src/android/AudioPlayer_to_android.cpp
+index d188c45..8b2c681 100644
+--- a/src/android/AudioPlayer_to_android.cpp
++++ b/src/android/AudioPlayer_to_android.cpp
+@@ -1672,6 +1672,7 @@ SLresult android_audioPlayer_realize(CAudioPlayer *pAudioPlayer, SLboolean async
+         // This use case does not have a separate "prepare" step
+         pAudioPlayer->mAndroidObjState = ANDROID_READY;
+ 
++#if 0
+         // If there is a JavaAudioRoutingProxy associated with this player, hook it up...
+         JNIEnv* j_env = NULL;
+         jclass clsAudioTrack = NULL;
+@@ -1692,6 +1693,7 @@ SLresult android_audioPlayer_realize(CAudioPlayer *pAudioPlayer, SLboolean async
+                 return result;
+             }
+         }
++#endif
+     }
+         break;
+ 
+diff --git a/src/android/AudioRecorder_to_android.cpp b/src/android/AudioRecorder_to_android.cpp
+index 361499d..b93acca 100644
+--- a/src/android/AudioRecorder_to_android.cpp
++++ b/src/android/AudioRecorder_to_android.cpp
+@@ -714,6 +714,7 @@ SLresult android_audioRecorder_realize(CAudioRecorder* ar, SLboolean async) {
+     // update performance mode according to actual flags granted to AudioRecord
+     checkAndSetPerformanceModePost(ar);
+ 
++#if 0
+     // If there is a JavaAudioRoutingProxy associated with this recorder, hook it up...
+     JNIEnv* j_env = NULL;
+     jclass clsAudioRecord = NULL;
+@@ -734,6 +735,7 @@ SLresult android_audioRecorder_realize(CAudioRecorder* ar, SLboolean async) {
+             return result;
+         }
+    }
++#endif
+ 
+     if (ar->mPerformanceMode != ANDROID_PERFORMANCE_MODE_LATENCY) {
+         audio_session_t sessionId = ar->mAudioRecord->getSessionId();
+diff --git a/src/itf/IAndroidConfiguration.c b/src/itf/IAndroidConfiguration.c
+index 8046663..b055179 100644
+--- a/src/itf/IAndroidConfiguration.c
++++ b/src/itf/IAndroidConfiguration.c
+@@ -141,6 +141,7 @@ static SLresult ValidatePlayerConfig(IAndroidConfiguration* iConfig) {
+     return result;
+ }
+ 
++#if 0
+ static SLresult AllocPlayerRoutingProxy(IAndroidConfiguration* iConfig, jobject* proxyObj) {
+     SLresult result;
+ 
+@@ -175,6 +176,7 @@ static SLresult AllocPlayerRoutingProxy(IAndroidConfiguration* iConfig, jobject*
+ 
+     return result;
+ }
++#endif
+ 
+ static SLresult ValidateRecorderConfig(IAndroidConfiguration* iConfig) {
+     SLresult result;
+@@ -216,6 +218,7 @@ static SLresult ValidateRecorderConfig(IAndroidConfiguration* iConfig) {
+     return result;
+ }
+ 
++#if 0
+ static SLresult AllocRecorderRoutingProxy(IAndroidConfiguration* iConfig, jobject* proxyObj) {
+     SLresult result;
+ 
+@@ -248,7 +251,7 @@ static SLresult AllocRecorderRoutingProxy(IAndroidConfiguration* iConfig, jobjec
+ 
+     return result;
+ }
+-
++#endif
+ /*
+  * Acquires a Java proxy object, such as AudioRouting object which can be used to control
+  * aspects of the associated native player or recorder.
+@@ -281,16 +284,10 @@ static SLresult IAndroidConfiguration_AcquireJavaProxy(SLAndroidConfigurationItf
+         switch (objID) {
+         case SL_OBJECTID_AUDIOPLAYER:
+             result = ValidatePlayerConfig(iConfig);
+-            if (result == SL_RESULT_SUCCESS) {
+-                result = AllocPlayerRoutingProxy(iConfig, proxyObj);
+-            }
+             break;
+ 
+         case SL_OBJECTID_AUDIORECORDER:
+             result = ValidateRecorderConfig(iConfig);
+-            if (result == SL_RESULT_SUCCESS) {
+-                result = AllocRecorderRoutingProxy(iConfig, proxyObj);
+-            }
+             break;
+ 
+         default:
+@@ -324,6 +321,7 @@ static SLresult IAndroidConfiguration_ReleaseJavaProxy(SLAndroidConfigurationItf
+             iConfig->mRoutingProxy == NULL) {
+         result =  SL_RESULT_PARAMETER_INVALID;
+     } else {
++#if 0
+         int objID = IObjectToObjectID(InterfaceToIObject(iConfig));
+         switch (objID) {
+         case SL_OBJECTID_AUDIOPLAYER:
+@@ -368,7 +366,7 @@ static SLresult IAndroidConfiguration_ReleaseJavaProxy(SLAndroidConfigurationItf
+             }
+             break;
+         }
+-
++#endif
+         result = SL_RESULT_SUCCESS;
+     }
+ 
+-- 
+2.11.0
+

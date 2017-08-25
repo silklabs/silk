@@ -13,4 +13,7 @@ LOCAL_SHARED_LIBRARIES := \
   libmedia \
   libstagefright_foundation \
 
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_NODE_MODULE_NO_SDK_VERSION := true
+endif
 include $(BUILD_NODE_MODULE)

@@ -1,0 +1,65 @@
+From 2759b0718c53140bc713f44be3f0e08898bd21fc Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 26 Aug 2017 15:36:21 -0700
+Subject: [PATCH] Stub Android.mk
+
+---
+ Android.mk | 46 ----------------------------------------------
+ 1 file changed, 46 deletions(-)
+ delete mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+deleted file mode 100644
+index 17bd4a6..0000000
+--- a/Android.mk
++++ /dev/null
+@@ -1,46 +0,0 @@
+-# -*- mode: makefile -*-
+-# Copyright (C) 2009 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-LOCAL_PATH := $(call my-dir)
+-
+-#
+-# Subprojects with separate makefiles
+-#
+-
+-subdirs := benchmarks tzdata ojluni
+-subdir_makefiles := $(call all-named-subdir-makefiles,$(subdirs))
+-
+-#
+-# Include the definitions to build the Java code.
+-#
+-
+-include $(LOCAL_PATH)/JavaLibrary.mk
+-
+-#
+-# Include the definitions to build the native code.
+-#
+-
+-include $(LOCAL_PATH)/NativeCode.mk
+-
+-# Disable test modules if LIBCORE_SKIP_TESTS environment variable is set.
+-#
+-
+-ifneq ($(LIBCORE_SKIP_TESTS),)
+-$(info ********************************************************************************)
+-$(info * libcore tests are skipped because environment variable LIBCORE_SKIP_TESTS=$(LIBCORE_SKIP_TESTS))
+-$(info ********************************************************************************)
+-endif
+-
+-include $(subdir_makefiles)
+-- 
+2.11.0
+

@@ -15,7 +15,11 @@
 #include <media/stagefright/foundation/AMessage.h>
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/MetaData.h>
+#ifdef TARGET_GE_NOUGAT
+#include <media/stagefright/SimpleDecodingSource.h>
+#else
 #include <media/stagefright/OMXCodec.h>
+#endif
 
 #include "MPEG4SegmentDASHWriter.h"
 

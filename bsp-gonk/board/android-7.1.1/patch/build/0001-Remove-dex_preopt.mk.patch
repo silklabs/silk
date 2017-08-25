@@ -1,0 +1,27 @@
+From cb93de7d719788aebf21b7916755efc7e632a503 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 11 Feb 2016 18:08:53 -0800
+Subject: [PATCH] Remove dex_preopt.mk
+
+Change-Id: Ic55e2a91c5b9ad8f5319dfb4468b40cb03a6a5a7
+---
+ core/main.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index 5b6e1e9..5f7bc20 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -244,9 +244,6 @@ endif
+ # Bring in standard build system definitions.
+ include $(BUILD_SYSTEM)/definitions.mk
+ 
+-# Bring in dex_preopt.mk
+-include $(BUILD_SYSTEM)/dex_preopt.mk
+-
+ ifneq ($(filter user userdebug eng,$(MAKECMDGOALS)),)
+ $(info ***************************************************************)
+ $(info ***************************************************************)
+-- 
+2.7.0
+

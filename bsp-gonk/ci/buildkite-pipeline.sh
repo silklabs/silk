@@ -26,6 +26,7 @@ build qemu
 if [[ $BRANCH == master ]] && [[ $CI_PULL_REQUEST = false ]]; then
   build mako
   build kenzo
+  build qemu-n
 
   # TODO: Build the secondary boards periodically
 #  build aospkeno

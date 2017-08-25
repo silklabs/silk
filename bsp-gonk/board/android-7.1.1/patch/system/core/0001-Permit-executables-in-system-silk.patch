@@ -1,0 +1,34 @@
+From 3d11ba3952a66c8d04e1b5251629c9e754f933bd Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 16:27:19 -0700
+Subject: [PATCH] Permit executables in /system/silk
+
+---
+ libcutils/fs_config.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/libcutils/fs_config.c b/libcutils/fs_config.c
+index 9acfa58bb..9d3960be2 100644
+--- a/libcutils/fs_config.c
++++ b/libcutils/fs_config.c
+@@ -99,6 +99,8 @@ static const struct fs_path_config android_dirs[] = {
+     { 00751, AID_ROOT,   AID_SDCARD_R, 0, "storage" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/bin" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/vendor" },
++    { 00755, AID_ROOT,   AID_SHELL,  0, "system/silk" },
++    { 00755, AID_ROOT,   AID_SHELL,  0, "data/silk" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/xbin" },
+     { 00755, AID_ROOT,   AID_ROOT,   0, "system/etc/ppp" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "vendor" },
+@@ -156,6 +158,8 @@ static const struct fs_path_config android_files[] = {
+     { 00755, AID_ROOT,      AID_SHELL,     0, "system/vendor/xbin/*" },
+     { 00755, AID_ROOT,      AID_SHELL,     0, "vendor/bin/*" },
+     { 00755, AID_ROOT,      AID_SHELL,     0, "vendor/xbin/*" },
++    { 00755, AID_ROOT,      AID_SHELL,     0, "system/silk/*" },
++    { 00755, AID_ROOT,      AID_SHELL,     0, "data/silk/*" },
+     { 00750, AID_ROOT,      AID_SHELL,     0, "sbin/*" },
+     { 00755, AID_ROOT,      AID_ROOT,      0, "bin/*" },
+     { 00750, AID_ROOT,      AID_SHELL,     0, "init*" },
+-- 
+2.11.0
+

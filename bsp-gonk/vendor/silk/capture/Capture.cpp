@@ -8,17 +8,33 @@
 #include <gui/Surface.h>
 #include <gui/SurfaceComposerClient.h>
 #include <media/openmax/OMX_IVCommon.h>
+#ifdef TARGET_GE_NOUGAT
+#include <media/openmax/OMX_Audio.h>
+#include <media/openmax/OMX_Video.h>
+#endif
 #include <media/stagefright/AudioSource.h>
 #include <media/stagefright/CameraSource.h>
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/AMessage.h>
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/MetaData.h>
+#ifdef TARGET_GE_NOUGAT
+#include <media/stagefright/SimpleDecodingSource.h>
+#else
 #include <media/stagefright/OMXCodec.h>
+#endif
 #include <system/audio.h>
 #include <utils/Thread.h>
+#include <camera/Camera.h>
+#ifdef TARGET_GE_NOUGAT
+#include <android/hardware/camera2/ICameraDeviceUser.h>
+#include <android/hardware/camera2/ICameraDeviceCallbacks.h>
+#include <android/hardware/camera2/BnCameraDeviceCallbacks.h>
+#include <android/hardware/ICameraService.h>
+#else
 #include <camera/camera2/ICameraDeviceUser.h>
 #include <camera/camera2/ICameraDeviceCallbacks.h>
+#endif
 #include <camera/camera2/CaptureRequest.h>
 #ifdef TARGET_GE_MARSHMALLOW
 #include <camera/camera2/OutputConfiguration.h>
@@ -38,6 +54,10 @@
 #define TEMPLATE_RECORD 3
 
 using namespace android;
+#ifdef TARGET_GE_NOUGAT
+using namespace android::hardware;
+using namespace android::hardware::camera2;
+#endif
 using namespace Json;
 using namespace std;
 
@@ -256,6 +276,17 @@ class CaptureCameraListener: public CameraListener {
     (void) dataPtr;
     ALOGD("postDataTimestamp: msgType=0x%x", msgType);
   }
+
+#ifdef TARGET_GE_NOUGAT
+  void postRecordingFrameHandleTimestamp(
+    nsecs_t timestamp,
+    native_handle_t* handle
+  ) {
+    (void) timestamp;
+    (void) handle;
+    ALOGV("postRecordingFrameHandleTimestamp");
+  }
+#endif
  private:
   CaptureListener *mCaptureListener;
   Channel *mVidChannel;
@@ -277,17 +308,33 @@ class CameraDeviceCallbacks: public BinderService<CameraDeviceCallbacks>,
     ALOGI("CameraDeviceCallbacks::binderDied");
   }
 
-  void onDeviceError(CameraErrorCode errorCode,
-                     const CaptureResultExtras& resultExtras) {
+#ifdef TARGET_GE_NOUGAT
+  typedef int32_t CameraErrorCode;
+  typedef binder::Status status;
+  #define STATUS_OK return binder::Status()
+#else
+  typedef void status;
+  #define STATUS_OK
+#endif
+
+  status onDeviceError(
+    CameraErrorCode errorCode,
+    const CaptureResultExtras& resultExtras
+  ) {
     (void) resultExtras;
     ALOGW("CameraDeviceCallbacks::onDeviceError: errorCode=%d", errorCode);
-  }
-  void onDeviceIdle() {
-    ALOGI("CameraDeviceCallbacks::onDeviceIdle");
+    STATUS_OK;
   }
 
-  void onCaptureStarted(const CaptureResultExtras& resultExtras,
-                        int64_t timestamp) {
+  status onDeviceIdle() {
+    ALOGI("CameraDeviceCallbacks::onDeviceIdle");
+    STATUS_OK;
+  }
+
+  status onCaptureStarted(
+    const CaptureResultExtras& resultExtras,
+    int64_t timestamp
+  ) {
     (void) resultExtras;
     (void) timestamp;
     ALOGV("CameraDeviceCallbacks::onCaptureStarted: %lld requestId=%d frameNumber=%lld",
@@ -301,18 +348,32 @@ class CameraDeviceCallbacks: public BinderService<CameraDeviceCallbacks>,
       jsonMsg["eventName"] = "initialized";
       mCaptureListener->sendEvent(jsonMsg);
     }
+    STATUS_OK;
   }
 
-  void onResultReceived(const CameraMetadata& metadata,
-                        const CaptureResultExtras& resultExtras) {
+  status onResultReceived(
+    const CameraMetadata& metadata,
+    const CaptureResultExtras& resultExtras
+  ) {
     (void) metadata;
     (void) resultExtras;
     ALOGV("CameraDeviceCallbacks::onResultReceived");
+    STATUS_OK;
   }
 
-  void onPrepared(int streamId) {
+  status onPrepared(int streamId) {
     ALOGV("CameraDeviceCallbacks::onPrepared: %d", streamId);
+    STATUS_OK;
   }
+
+#ifdef TARGET_GE_NOUGAT
+  status onRepeatingRequestError(int64_t lastFrameNumber) {
+    ALOGV("CameraDeviceCallbacks::onRepeatingRequestError: %lld", lastFrameNumber);
+    STATUS_OK;
+  }
+#endif
+
+#undef STATUS_OK
  private:
   CaptureListener* mCaptureListener;
 };
@@ -598,7 +659,11 @@ sp<MediaSource> prepareVideoEncoder(const sp<ALooper>& looper,
 #ifdef TARGET_GE_MARSHMALLOW
     NULL,
 #endif
+#ifdef TARGET_GE_NOUGAT
+    0
+#else
     sUseMetaDataMode ? MediaCodecSource::FLAG_USE_METADATA_INPUT : 0
+#endif
   );
 }
 
@@ -696,8 +761,15 @@ status_t CaptureCommand::initThreadCamera1() {
   // Make several attempts to connect with the camera.  Reconnects in particular
   // can fail a couple times as the camera subsystem recovers.
   for (int attempts = 0; ; ++attempts) {
-    mCamera = Camera::connect(sCameraId, String16(CAMERA_NAME),
-        Camera::USE_CALLING_UID);
+    mCamera = Camera::connect(
+      sCameraId,
+      String16(CAMERA_NAME),
+      Camera::USE_CALLING_UID
+#ifdef TARGET_GE_NOUGAT
+      ,
+      Camera::USE_CALLING_PID
+#endif
+    );
     if (mCamera != NULL) {
       break;
     }
@@ -753,6 +825,9 @@ status_t CaptureCommand::initThreadCamera1() {
     sCameraId,
     String16(CAMERA_NAME, strlen(CAMERA_NAME)),
     Camera::USE_CALLING_UID,
+#ifdef TARGET_GE_NOUGAT
+    Camera::USE_CALLING_PID,
+#endif
     sVideoSize,
     sFPS,
     NULL,
@@ -802,7 +877,7 @@ status_t CaptureCommand::initThreadCamera1() {
       &mVidChannel,
       sAudioMute
     );
-    mSegmenter->run();
+    mSegmenter->run("MPEG4SegmenterDASH");
 
     mHardwareActive = true;
     notifyCameraEvent("initialized");
@@ -837,24 +912,41 @@ status_t CaptureCommand::initThreadCamera2() {
 
   sp<CameraDeviceCallbacks> cameraDeviceCallbacks =
     new CameraDeviceCallbacks(mCaptureListener);
+
+#ifdef TARGET_GE_NOUGAT
+  #define ISOK(status) (status.isOk())
+#else
+  #define ISOK(status) (status == 0)
+#endif
   auto err = sCameraService->connectDevice(
     cameraDeviceCallbacks,
     sCameraId,
     String16(CAMERA_NAME),
     ICameraService::USE_CALLING_UID,
+#ifdef TARGET_GE_NOUGAT
+    &mCameraDeviceUser
+#else
     mCameraDeviceUser
+#endif
   );
 
-  if (err != 0) {
+  if (!ISOK(err)) {
+#ifdef TARGET_GE_NOUGAT
+    ALOGE(
+      "Unable to connect to camera: %s",
+      static_cast<const char *>(err.toString8())
+    );
+#else
     ALOGE("Unable to connect to camera: error=%d", err);
+#endif
     CHECK(false);
   }
 
   err = mCameraDeviceUser->waitUntilIdle();
-  CHECK(err == 0);
+  CHECK(ISOK(err));
 
   err = mCameraDeviceUser->beginConfigure();
-  CHECK(err == 0);
+  CHECK(ISOK(err));
 
   sOpenCVCameraCapture->setPreviewProducerListener(this);
 
@@ -884,8 +976,11 @@ status_t CaptureCommand::initThreadCamera2() {
   surface = new Surface(previewProducer, /*controlledByApp*/false);
 #endif
 
-  status_t streamId;
-#ifdef TARGET_GE_MARSHMALLOW
+  status_t streamId = -1;
+#ifdef TARGET_GE_NOUGAT
+  OutputConfiguration outputConfig(previewProducer, 0);
+  (void) mCameraDeviceUser->createStream(outputConfig, &streamId);
+#elif TARGET_GE_MARSHMALLOW
   OutputConfiguration outputConfig(previewProducer, 0);
   streamId = mCameraDeviceUser->createStream(outputConfig);
 #else
@@ -901,22 +996,48 @@ status_t CaptureCommand::initThreadCamera2() {
     CHECK(false);
   }
 
-  err = mCameraDeviceUser->endConfigure();
-  CHECK(err == 0);
+  err = mCameraDeviceUser->endConfigure(
+#ifdef TARGET_GE_NOUGAT
+  /*isConstrainedHighSpeed = */ false
+#endif
+  );
+  CHECK(ISOK(err));
 
   CameraMetadata requestTemplate;
   err = mCameraDeviceUser->createDefaultRequest(TEMPLATE_RECORD, &requestTemplate);
-  CHECK(err == 0);
+  CHECK(ISOK(err));
 
+  int64_t lastFrameNumber = 0;
+
+  int requestId = -1;
+#ifdef TARGET_GE_NOUGAT
+  ::android::CaptureRequest request;
+  request.mIsReprocess = false;
+  request.mMetadata = requestTemplate;
+  request.mSurfaceList.add(surface);
+
+  utils::SubmitInfo si;
+  (void) mCameraDeviceUser->submitRequest(
+    request,
+    /*streaming = */ true,
+    &si
+  );
+  requestId = si.mRequestId;
+  lastFrameNumber = si.mLastFrameNumber;
+#else
   sp<CaptureRequest> request(new CaptureRequest());
-  request->mMetadata = requestTemplate;
-  request->mSurfaceList.add(surface);
 #ifdef TARGET_GE_MARSHMALLOW
   request->mIsReprocess = false;
 #endif
-  int64_t lastFrameNumber = 0;
+  request->mMetadata = requestTemplate;
+  request->mSurfaceList.add(surface);
 
-  int requestId = mCameraDeviceUser->submitRequest(request, /*streaming*/true, /*out*/&lastFrameNumber);
+  requestId = mCameraDeviceUser->submitRequest(
+    request,
+    /*streaming = */ true,
+    &lastFrameNumber
+  );
+#endif
   ALOGE("Camera submitRequest: %d, lastFrameNumber: %lld", requestId, lastFrameNumber);
   if (requestId < 0) {
     ALOGE("submitRequest failed, error=%d", requestId);
@@ -945,6 +1066,7 @@ status_t CaptureCommand::initThreadCamera2() {
   }
 
   return 0;
+#undef ISOK
 }
 
 /**
@@ -1081,11 +1203,25 @@ int main(int argc, char **argv) {
     }
   }
 
+#ifndef TARGET_GE_NOUGAT
   auto numCameras = sCameraService->getNumberOfCameras();
   ALOGI("%d cameras found", numCameras);
+#endif
 
+  bool camera2Supported = false;
+#ifdef TARGET_GE_NOUGAT
+  (void) sCameraService->supportsCameraApi(
+    /*cameraId=*/ 0,
+    ICameraService::API_VERSION_2,
+    &camera2Supported
+  );
+#else
   err = sCameraService->supportsCameraApi(/*cameraId=*/ 0, ICameraService::API_VERSION_2);
   if (err == 0) {
+    camera2Supported = true;
+  }
+#endif
+  if (camera2Supported) {
     ALOGI("camera2 API supported on this device.");
 #ifdef TARGET_USE_CAMERA2
     sUseCamera2 = true;

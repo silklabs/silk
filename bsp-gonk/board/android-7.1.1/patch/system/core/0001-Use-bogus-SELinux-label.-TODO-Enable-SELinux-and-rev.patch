@@ -1,0 +1,30 @@
+From f7724ad1c0471d8ff7d2f03637b4680fb9e8796e Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 21:26:10 -0700
+Subject: [PATCH] Use bogus SELinux label. TODO: Enable SELinux and revert this
+
+---
+ init/service.cpp | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index 3149f8e64..76de326c1 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -373,9 +373,10 @@ bool Service::Start() {
+         }
+         if (rc == 0 && scon == mycon) {
+             ERROR("Service %s does not have a SELinux domain defined.\n", name_.c_str());
+-            free(mycon);
+-            free(fcon);
+-            return false;
++            scon = "u:r:adbd:s0";
++            //free(mycon);
++            //free(fcon);
++            //return false;
+         }
+         free(mycon);
+         free(fcon);
+-- 
+2.11.0
+

@@ -139,7 +139,7 @@ public:
    * Start sensors poll thread
    */
   void start() {
-    run();
+    run("SensorsPoll");
   }
 
   /**

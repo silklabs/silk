@@ -2,6 +2,9 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_CFLAGS += -DTARGET_GE_NOUGAT
+endif
 ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 else
@@ -39,4 +42,8 @@ LOCAL_REQUIRED_MODULES := bluetooth.default
 -include external/stlport/libstlport.mk
 LOCAL_CFLAGS += -std=c++11
 
+ifneq ($(TARGET_GE_NOUGAT),)
+$(warning ========== TODO: complete N port =========)
+else
 include $(BUILD_SILK_EXECUTABLE)
+endif

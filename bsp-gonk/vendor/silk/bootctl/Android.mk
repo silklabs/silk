@@ -1,3 +1,4 @@
+ifeq ($(TARGET_GE_NOUGAT),)
 # Copyright 2015 The Android Open Source Project
 
 LOCAL_PATH := $(call my-dir)
@@ -12,3 +13,4 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
 endif
 
 include $(BUILD_EXECUTABLE)
+endif

@@ -50,6 +50,9 @@ LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES    := fakeprocessinfo.cpp
 LOCAL_SHARED_LIBRARIES := libbinder liblog libutils
+ifneq ($(TARGET_GE_NOUGAT),)
+LOCAL_CFLAGS += -DTARGET_GE_NOUGAT
+endif
 include $(BUILD_SILK_EXECUTABLE)
 endif
 

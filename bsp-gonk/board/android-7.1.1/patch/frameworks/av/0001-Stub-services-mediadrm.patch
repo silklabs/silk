@@ -1,0 +1,62 @@
+From 3987d0f315507ba377e181fc34ef6726b4843b34 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 21:00:23 -0700
+Subject: [PATCH] Stub services/mediadrm
+
+---
+ services/mediadrm/Android.mk | 45 --------------------------------------------
+ 1 file changed, 45 deletions(-)
+
+diff --git a/services/mediadrm/Android.mk b/services/mediadrm/Android.mk
+index 8baaf13..e69de29 100644
+--- a/services/mediadrm/Android.mk
++++ b/services/mediadrm/Android.mk
+@@ -1,45 +0,0 @@
+-# Copyright 2014 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-LOCAL_PATH:= $(call my-dir)
+-
+-include $(CLEAR_VARS)
+-
+-
+-LOCAL_SRC_FILES:= \
+-    MediaDrmService.cpp \
+-    main_mediadrmserver.cpp
+-
+-LOCAL_SHARED_LIBRARIES:= \
+-    libbinder \
+-    libcutils \
+-    liblog \
+-    libmedia \
+-    libmediadrm \
+-    libmediaplayerservice \
+-    libstagefright \
+-    libui \
+-    libutils \
+-
+-LOCAL_C_INCLUDES := \
+-    frameworks/av/media/libmediaplayerservice \
+-
+-LOCAL_CFLAGS += -Wall -Wextra -Werror
+-
+-LOCAL_MODULE:= mediadrmserver
+-LOCAL_32_BIT_ONLY := true
+-
+-LOCAL_INIT_RC := mediadrmserver.rc
+-
+-include $(BUILD_EXECUTABLE)
+-- 
+2.11.0
+

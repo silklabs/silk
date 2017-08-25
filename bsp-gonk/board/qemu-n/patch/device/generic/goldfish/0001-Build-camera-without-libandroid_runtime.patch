@@ -1,0 +1,32 @@
+From 0e4a6ac5ecfca5a6972802d52b983248425d2872 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 17:36:47 -0700
+Subject: [PATCH] Build camera without libandroid_runtime
+
+---
+ camera/Android.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/camera/Android.mk b/camera/Android.mk
+index 269b7fa..07e1819 100644
+--- a/camera/Android.mk
++++ b/camera/Android.mk
+@@ -112,12 +112,14 @@ jpeg_shared_libraries := \
+     libcutils \
+     liblog \
+     libskia \
+-    libandroid_runtime
++    libjpeg
+ jpeg_c_includes := external/libjpeg-turbo \
+                    external/skia/include/core/ \
++                   external/skia/src/images/ \
+                    frameworks/base/core/jni/android/graphics \
+                    frameworks/native/include
+ jpeg_src := JpegStub.cpp
++jpeg_src += ../../../../frameworks/base/core/jni/android/graphics/YuvToJpegEncoder.cpp
+ 
+ # JPEG stub - goldfish build####################################################
+ 
+-- 
+2.11.0
+

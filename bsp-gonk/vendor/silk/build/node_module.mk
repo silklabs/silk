@@ -20,7 +20,9 @@
 #              LOCAL_SDK_VERSION := 19
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
-
+#    Alternatively define LOCAL_NODE_MODULE_NO_SDK_VERSION to request no NDK
+#    STL, which can be useful when a module uses in non-NDK system libraries
+#
 
 node_modules_mk_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
@@ -57,7 +59,9 @@ ifeq (,$(strip $(LOCAL_NODE_MODULE_MAIN)))
 $(error $(LOCAL_PATH)/package.json is missing a "main" attribute)
 endif
 
-ifneq ($(TARGET_GE_MARSHMALLOW),)
+ifneq ($(LOCAL_NODE_MODULE_NO_SDK_VERSION),)
+# Don't fiddle with LOCAL_SDK_VERSION/LOCAL_NDK_STL_VARIANT
+else ifneq ($(TARGET_GE_MARSHMALLOW),)
 # M-era default STL handling
 ifeq (,$(strip $(LOCAL_SDK_VERSION)))
 LOCAL_SDK_VERSION := 21

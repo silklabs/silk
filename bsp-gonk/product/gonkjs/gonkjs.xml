@@ -15,7 +15,7 @@
   <project name="platform/external/busybox"
            path="external/busybox"
            remote="linaro"
-           revision="linaro-marshmallow"
+           revision="linaro-android"
            clone-depth="1"/>
 
   <project name="mozilla-b2g/librecovery"

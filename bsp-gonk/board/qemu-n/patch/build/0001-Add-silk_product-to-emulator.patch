@@ -1,0 +1,25 @@
+From 39ad6a6fb1735c1df5db60ae187b9ef5083c25eb Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 17:31:34 -0700
+Subject: [PATCH] Add silk_product to emulator
+
+---
+ target/product/emulator.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/target/product/emulator.mk b/target/product/emulator.mk
+index b08a28a2a..f4c9097b7 100644
+--- a/target/product/emulator.mk
++++ b/target/product/emulator.mk
+@@ -53,6 +53,8 @@ PRODUCT_PACKAGES += \
+     fingerprintd \
+     sensors.ranchu
+ 
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
++
+ PRODUCT_COPY_FILES += \
+     device/generic/goldfish/fstab.goldfish:root/fstab.goldfish \
+     device/generic/goldfish/init.goldfish.rc:root/init.goldfish.rc \
+-- 
+2.11.0
+

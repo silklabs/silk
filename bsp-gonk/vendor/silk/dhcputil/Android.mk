@@ -14,4 +14,8 @@ ifneq ($(TARGET_GE_MARSHMALLOW),)
 LOCAL_CFLAGS += -DTARGET_GE_MARSHMALLOW
 endif
 
+ifneq ($(TARGET_GE_NOUGAT),)
+$(warning ========== TODO: complete N port =========)
+else
 include $(BUILD_SILK_EXECUTABLE)
+endif

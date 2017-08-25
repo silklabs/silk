@@ -1,0 +1,26 @@
+From 0c63eef233e5a9eeb6b570106ece011ebcfe0f6d Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 17:02:31 -0700
+Subject: [PATCH] Include icu-data
+
+---
+ icu4c/source/common/Android.mk | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/icu4c/source/common/Android.mk b/icu4c/source/common/Android.mk
+index 8e5f757..c665bad 100644
+--- a/icu4c/source/common/Android.mk
++++ b/icu4c/source/common/Android.mk
+@@ -236,9 +236,7 @@ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE := libicuuc
+ LOCAL_RTTI_FLAG := -frtti
+ LOCAL_ADDITIONAL_DEPENDENCIES += $(LOCAL_PATH)/Android.mk
+-ifndef BRILLO
+ LOCAL_REQUIRED_MODULES += icu-data
+-endif
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
+ ifneq ($(TARGET_ARCH),mips64)
+ LOCAL_CLANG := true
+-- 
+2.11.0
+

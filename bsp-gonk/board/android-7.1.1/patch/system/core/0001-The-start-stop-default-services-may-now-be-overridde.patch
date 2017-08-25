@@ -1,0 +1,41 @@
+From 5d892a60b15dc5143e6d61c199fe360fa6fbea39 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 16:33:06 -0700
+Subject: [PATCH] The start/stop default services may now be overridden
+
+---
+ toolbox/start_stop.cpp | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/toolbox/start_stop.cpp b/toolbox/start_stop.cpp
+index dc48c0c0c..ae90e9353 100644
+--- a/toolbox/start_stop.cpp
++++ b/toolbox/start_stop.cpp
+@@ -21,6 +21,24 @@ static int start_stop(bool start, int argc, char* argv[]) {
+   } else if (argc == 2) {
+     property_set(property, argv[1]);
+   } else {
++    {
++      char services[PROPERTY_VALUE_MAX];
++      if (property_get("ro.silk.services", services, NULL) > 0) {
++          char *saveptr;
++          char *token = strtok_r(services, ",", &saveptr);
++          while (token != NULL) {
++            if (start) {
++              printf("Starting %s\n", token);
++              property_set("ctl.start", token);
++            } else {
++              printf("Stopping %s\n", token);
++              property_set("ctl.stop", token);
++            }
++            token = strtok_r(NULL, ",", &saveptr);
++          }
++          return 0;
++      }
++    }
+     if (start) {
+       for (size_t i = 0; i < sizeof(services)/sizeof(services[0]); ++i) {
+         property_set(property, services[i]);
+-- 
+2.11.0
+

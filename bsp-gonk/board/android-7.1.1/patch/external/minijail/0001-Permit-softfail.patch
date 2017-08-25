@@ -1,0 +1,28 @@
+From a623ff3a3826c9e28081fd292c52ced18848bcca Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 16:42:51 -0700
+Subject: [PATCH] Permit softfail
+
+---
+ Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 7fec11f..ded1038 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -31,9 +31,9 @@ minijailCommonLibraries := libcap
+ # support seccomp. Brillo devices must support seccomp regardless of
+ # kernel version.
+ # TODO: remove when no longer supporting kernel versions < 3.8.
+-ifndef BRILLO
++#ifndef BRILLO
+ minijailCommonCFlags += -DUSE_SECCOMP_SOFTFAIL
+-endif
++#endif
+ 
+ 
+ # Static library for generated code.
+-- 
+2.11.0
+

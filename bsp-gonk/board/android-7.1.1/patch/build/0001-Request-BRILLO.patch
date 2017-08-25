@@ -1,0 +1,26 @@
+From ec9b47c974da0b6f4c926cdf0bf2fb54f5b16817 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 16:59:31 -0700
+Subject: [PATCH] Request BRILLO
+
+---
+ core/main.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index 8f8dd34f9..cffddec03 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -58,7 +58,8 @@ TOPDIR :=
+ BUILD_SYSTEM := $(TOPDIR)build/core
+ 
+ # Ensure JAVA_NOT_REQUIRED is not set externally.
+-JAVA_NOT_REQUIRED := false
++JAVA_NOT_REQUIRED := true
++BRILLO := true
+ 
+ # This is the default target.  It must be the first declared target.
+ .PHONY: droid
+-- 
+2.11.0
+

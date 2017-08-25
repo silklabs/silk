@@ -1,0 +1,16 @@
+From 24da6eeded9d48a484acbf4490c46baed4c09132 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 1 Oct 2016 22:51:23 -0700
+Subject: [PATCH] Stub out data/
+
+---
+ data/Android.mk | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 data/Android.mk
+
+diff --git a/data/Android.mk b/data/Android.mk
+new file mode 100644
+index 0000000..e69de29
+-- 
+2.8.4 (Apple Git-73)
+

@@ -1,0 +1,38 @@
+From c12d6d8c53c4f2de2d84105a2f5bf517450d8898 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 3 Sep 2015 09:14:46 -0700
+Subject: [PATCH] Remove {system,userdata}-qemu.img when rebuilding
+ {system,usedata}.img
+
+The -qemu.img partitions are created automatically by the emulator when it first
+starts up as the original partitions are considered read-only.  This means that
+incremental changes to {system,usedata}.img will not be actually visible in the
+emulator so long is the -qemu.img partitions exist, which can be quite
+error-prone to developers.
+---
+ core/Makefile | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 15c7f02..755bbb5 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -998,6 +998,7 @@ $(INSTALLED_SYSTEMIMAGE): $(BUILT_SYSTEMIMAGE) $(RECOVERY_FROM_BOOT_PATCH) | $(A
+ 	@echo "Install system fs image: $@"
+ 	$(copy-file-to-target)
+ 	$(hide) $(call assert-max-image-size,$@ $(RECOVERY_FROM_BOOT_PATCH),$(BOARD_SYSTEMIMAGE_PARTITION_SIZE))
++	rm -f $(INSTALLED_SYSTEMIMAGE:.img=-qemu.img)
+ 
+ systemimage: $(INSTALLED_SYSTEMIMAGE)
+ 
+@@ -1142,6 +1143,7 @@ INSTALLED_USERDATAIMAGE_TARGET := $(BUILT_USERDATAIMAGE_TARGET)
+ $(INSTALLED_USERDATAIMAGE_TARGET): $(INTERNAL_USERIMAGES_DEPS) \
+                                    $(INTERNAL_USERDATAIMAGE_FILES)
+ 	$(build-userdataimage-target)
++	rm -f $(INSTALLED_USERDATAIMAGE_TARGET:.img=-qemu.img)
+ 
+ .PHONY: userdataimage-nodeps
+ userdataimage-nodeps: | $(INTERNAL_USERIMAGES_DEPS)
+-- 
+1.9.1
+

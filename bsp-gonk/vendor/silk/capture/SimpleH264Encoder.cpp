@@ -9,7 +9,12 @@
 // so we can trigger key frames and adjust bitrate
 #include "MediaCodecSource.h"
 #include <media/openmax/OMX_IVCommon.h>
+#ifdef TARGET_GE_NOUGAT
+#include <media/stagefright/SimpleDecodingSource.h>
+#include <media/openmax/OMX_Video.h>
+#else
 #include <media/stagefright/OMXCodec.h>
+#endif
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/AMessage.h>
 #include <utils/Thread.h>
@@ -251,7 +256,7 @@ bool SimpleH264EncoderImpl::init(int targetFps) {
     ALOGE("Unable to start encoder");
     return false;
   }
-  err = framePuller->run();
+  err = framePuller->run("SimpleH264EncoderImpl::FramePuller");
   if (err != 0) {
     ALOGE("Unable to start puller thread");
     return false;

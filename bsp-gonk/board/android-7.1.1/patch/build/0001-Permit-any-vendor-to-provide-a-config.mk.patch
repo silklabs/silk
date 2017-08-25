@@ -1,0 +1,27 @@
+From ccb0c5c949feb3ec372cbfc3100ddf697ed10a95 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sun, 2 Aug 2015 18:11:56 -0700
+Subject: [PATCH] Permit any vendor to provide a config.mk
+
+---
+ core/main.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index a796117..784c9d1 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -108,8 +108,8 @@ include $(BUILD_SYSTEM)/config.mk
+ # be generated correctly
+ include $(BUILD_SYSTEM)/cleanbuild.mk
+ 
+-# Include the google-specific config
+--include vendor/google/build/config.mk
++# Include vendor-specific config
++-include $(sort $(wildcard vendor/*/build/config.mk))
+ 
+ VERSION_CHECK_SEQUENCE_NUMBER := 6
+ -include $(OUT_DIR)/versions_checked.mk
+-- 
+1.9.1
+

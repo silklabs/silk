@@ -1,0 +1,27 @@
+From b45e4ce2b0d496ceb4196d0b81daa1e04ccdbc1b Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Fri, 25 Aug 2017 16:30:06 -0700
+Subject: [PATCH]  Engrave logs from all processes, not just the crasher
+
+Also limit logs to avoid massive tombstones if some process is spewing logging
+faster than they can be engraved.
+---
+ debuggerd/tombstone.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/debuggerd/tombstone.cpp b/debuggerd/tombstone.cpp
+index dfdf29cdf..865607a73 100644
+--- a/debuggerd/tombstone.cpp
++++ b/debuggerd/tombstone.cpp
+@@ -628,7 +628,7 @@ static void dump_crash(log_t* log, BacktraceMap* map, pid_t pid, pid_t tid,
+   }
+ 
+   if (want_logs) {
+-    dump_logs(log, pid, 0);
++    dump_logs(log, 0, 65535);
+   }
+ }
+ 
+-- 
+2.11.0
+

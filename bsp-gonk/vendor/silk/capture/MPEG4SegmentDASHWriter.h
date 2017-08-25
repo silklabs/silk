@@ -103,7 +103,11 @@ private:
     size_t raw_write_mem(int32_t bufferPos, const void* ptr, size_t size);
 
     // Disabled.  Use init() instead.
+#ifdef TARGET_GE_NOUGAT
+    virtual status_t addSource(const sp<IMediaSource>&);
+#else
     virtual status_t addSource(const sp<MediaSource>&);
+#endif
     DISALLOW_EVIL_CONSTRUCTORS(MPEG4SegmentDASHWriter);
 };
 

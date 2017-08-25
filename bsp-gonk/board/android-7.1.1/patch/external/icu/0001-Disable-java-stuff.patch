@@ -1,0 +1,270 @@
+From f161fdc037f0886a2b36325c4304e9a928d538e8 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 26 Aug 2017 15:05:35 -0700
+Subject: [PATCH] Disable java stuff
+
+---
+ android_icu4j/Android.mk |  91 ----------------------------
+ icu4j/Android.mk         | 152 -----------------------------------------------
+ 2 files changed, 243 deletions(-)
+ delete mode 100644 android_icu4j/Android.mk
+ delete mode 100644 icu4j/Android.mk
+
+diff --git a/android_icu4j/Android.mk b/android_icu4j/Android.mk
+deleted file mode 100644
+index c3860f9..0000000
+--- a/android_icu4j/Android.mk
++++ /dev/null
+@@ -1,91 +0,0 @@
+-#
+-# Copyright (C) 2016 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+-
+-LOCAL_PATH := $(call my-dir)
+-
+-#==========================================================
+-# build repackaged ICU for target
+-#
+-# This is done in the libcore/JavaLibraries.mk file as there are circular
+-# dependencies between ICU and libcore
+-#==========================================================
+-
+-#==========================================================
+-# build repackaged ICU tests for target
+-#
+-# Builds against core-libart and core-oj so that it can access all the
+-# repackaged android.icu classes and methods and not just the ones available
+-# through the Android API.
+-#==========================================================
+-include $(CLEAR_VARS)
+-
+-# Don't include this package in any target
+-LOCAL_MODULE_TAGS := tests
+-LOCAL_SRC_FILES := \
+-    $(call all-java-files-under,src/main/tests) \
+-    $(call all-java-files-under,cts-coverage/src/main/tests) \
+-    $(call all-java-files-under,runner/src/main/java)
+-LOCAL_JAVA_RESOURCE_DIRS := src/main/tests runner/src/main/java
+-LOCAL_STATIC_JAVA_LIBRARIES := \
+-    android-support-test
+-LOCAL_JAVA_LIBRARIES := \
+-        core-oj \
+-        core-libart
+-LOCAL_NO_STANDARD_LIBRARIES := true
+-LOCAL_MODULE := android-icu4j-tests
+-include $(BUILD_STATIC_JAVA_LIBRARY)
+-
+-#==========================================================
+-# build repackaged ICU for host for testing purposes
+-#
+-# Uses the repackaged versions of the data jars
+-#==========================================================
+-include $(CLEAR_VARS)
+-
+-# Don't include this package in any target
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_SRC_FILES := $(call all-java-files-under,src/main/java)
+-LOCAL_STATIC_JAVA_LIBRARIES := \
+-    icu4j-icudata-host-jarjar \
+-    icu4j-icutzdata-host-jarjar
+-LOCAL_JAVA_RESOURCE_DIRS := resources
+-LOCAL_MODULE := android-icu4j-host
+-include $(BUILD_HOST_JAVA_LIBRARY)
+-
+-#==========================================================
+-# build repackaged ICU tests for host for testing purposes
+-#
+-# Run the tests using junit with the following command:
+-#   java -cp ${ANDROID_BUILD_TOP}/out/host/linux-x86/framework/android-icu4j-tests-host.jar org.junit.runner.JUnitCore android.icu.dev.test.TestAll
+-#
+-# Run the tests using the ICU4J test framework with the following command:
+-#   java -cp ${ANDROID_BUILD_TOP}/out/host/linux-x86/framework/android-icu4j-tests-host.jar android.icu.dev.test.TestAll
+-#==========================================================
+-include $(CLEAR_VARS)
+-
+-# Don't include this package in any target
+-LOCAL_MODULE_TAGS := tests
+-LOCAL_SRC_FILES := \
+-    $(call all-java-files-under,src/main/tests) \
+-    $(call all-java-files-under,runner/src/main/java) \
+-    $(call all-java-files-under,cts-coverage/src/main/tests) \
+-    $(call all-java-files-under,runner/src/host/java)
+-LOCAL_JAVA_RESOURCE_DIRS := src/main/tests
+-LOCAL_STATIC_JAVA_LIBRARIES := \
+-    android-icu4j-host \
+-    junit
+-LOCAL_MODULE := android-icu4j-tests-host
+-include $(BUILD_HOST_JAVA_LIBRARY)
+diff --git a/icu4j/Android.mk b/icu4j/Android.mk
+deleted file mode 100644
+index d1ab3d5..0000000
+--- a/icu4j/Android.mk
++++ /dev/null
+@@ -1,152 +0,0 @@
+-#
+-# Copyright (C) 2014 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+-
+-LOCAL_PATH := $(call my-dir)
+-
+-# User-supplied locale service providers (using the java.text.spi or
+-# java.util.spi mechanisms) are not supported in Android:
+-#
+-# http://developer.android.com/reference/java/util/Locale.html
+-
+-icu4j_src_files := \
+-    $(filter-out main/classes/localespi/%, \
+-    $(call all-java-files-under,main/classes))
+-
+-icu4j_test_src_files := \
+-    $(filter-out main/tests/localespi/%, \
+-    $(call all-java-files-under,main/tests))
+-
+-# Not all src dirs contain resources, some instead contain other random files
+-# that should not be included as resources. The ones that should be included
+-# can be identifed by the fact that they contain particular subdir trees.
+-
+-define all-subdir-with-subdir
+-$(patsubst $(LOCAL_PATH)/%/$(2),%,$(wildcard $(LOCAL_PATH)/$(1)/$(2)))
+-endef
+-
+-icu4j_resource_dirs := \
+-    $(filter-out main/classes/localespi/%, \
+-    $(call all-subdir-with-subdir,main/classes/*/src,com/ibm/icu))
+-
+-icu4j_test_resource_dirs := \
+-    $(filter-out main/tests/localespi/%, \
+-    $(call all-subdir-with-subdir,main/tests/*/src,com/ibm/icu/dev))
+-
+-# For each data *.jar file, define a corresponding icu4j-* target.
+-icu4j_data_jars := \
+-    $(shell find $(LOCAL_PATH)/main/shared/data -name "*.jar" \
+-    | sed "s,^$(LOCAL_PATH)/\(.*/\(.*\)\.jar\)$$,icu4j-\2:\1,")
+-
+-include $(CLEAR_VARS)
+-LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := $(icu4j_data_jars)
+-include $(BUILD_MULTI_PREBUILT)
+-
+-include $(CLEAR_VARS)
+-LOCAL_IS_HOST_MODULE := true
+-LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := $(subst :,-host:,$(icu4j_data_jars))
+-include $(BUILD_MULTI_PREBUILT)
+-
+-include $(CLEAR_VARS)
+-LOCAL_SRC_FILES := $(icu4j_src_files)
+-LOCAL_JAVA_RESOURCE_DIRS := $(icu4j_resource_dirs)
+-LOCAL_DONT_DELETE_JAR_DIRS := true
+-LOCAL_MODULE := icu4j
+-include $(BUILD_STATIC_JAVA_LIBRARY)
+-
+-# Path to the ICU4C data files in the Android device file system:
+-icu4c_data := /system/usr/icu
+-icu4j_config_root := $(LOCAL_PATH)/main/classes/core/src
+-include external/icu/icu4j/adjust_icudt_path.mk
+-
+-include $(CLEAR_VARS)
+-LOCAL_SRC_FILES := $(icu4j_src_files)
+-LOCAL_JAVA_RESOURCE_DIRS := $(icu4j_resource_dirs)
+-LOCAL_STATIC_JAVA_LIBRARIES := icu4j-icudata-host icu4j-icutzdata-host
+-LOCAL_DONT_DELETE_JAR_DIRS := true
+-LOCAL_MODULE := icu4j-host
+-include $(BUILD_HOST_JAVA_LIBRARY)
+-
+-ifeq ($(HOST_OS),linux)
+-include $(CLEAR_VARS)
+-LOCAL_SRC_FILES := $(icu4j_src_files)
+-LOCAL_JAVA_RESOURCE_DIRS := $(icu4j_resource_dirs)
+-LOCAL_STATIC_JAVA_LIBRARIES := icu4j-icudata-host icu4j-icutzdata-host
+-LOCAL_DONT_DELETE_JAR_DIRS := true
+-LOCAL_MODULE := icu4j-hostdex
+-include $(BUILD_HOST_DALVIK_JAVA_LIBRARY)
+-endif  # HOST_OS == linux
+-
+-include $(CLEAR_VARS)
+-LOCAL_SRC_FILES := $(icu4j_test_src_files)
+-LOCAL_JAVA_RESOURCE_DIRS := $(icu4j_test_resource_dirs)
+-LOCAL_STATIC_JAVA_LIBRARIES := icu4j-testdata
+-LOCAL_DONT_DELETE_JAR_DIRS := true
+-LOCAL_JAVA_LIBRARIES := icu4j
+-LOCAL_MODULE := icu4j-tests
+-include $(BUILD_STATIC_JAVA_LIBRARY)
+-
+-$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_EXTRA_JAR_ARGS += \
+-    -C "$(LOCAL_PATH)/main/tests/core/src" \
+-    "com/ibm/icu/dev/test/serializable/data"
+-
+-#==========================================================
+-# build ICU tests for host for testing purposes
+-#
+-# Run the tests using the ICU4J test framework with the following command:
+-#   java -cp ${ANDROID_BUILD_TOP}/out/host/linux-x86/framework/icu4j-host.jar:${ANDROID_BUILD_TOP}/out/host/linux-x86/framework/icu4j-tests-host.jar com.ibm.icu.dev.test.TestAll
+-#==========================================================
+-include $(CLEAR_VARS)
+-LOCAL_SRC_FILES := $(icu4j_test_src_files)
+-LOCAL_JAVA_RESOURCE_DIRS := $(icu4j_test_resource_dirs)
+-LOCAL_STATIC_JAVA_LIBRARIES := icu4j-testdata-host
+-LOCAL_DONT_DELETE_JAR_DIRS := true
+-LOCAL_JAVA_LIBRARIES := icu4j-host
+-LOCAL_MODULE := icu4j-tests-host
+-include $(BUILD_HOST_JAVA_LIBRARY)
+-
+-$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_EXTRA_JAR_ARGS += \
+-    -C "$(LOCAL_PATH)/main/tests/core/src" \
+-    "com/ibm/icu/dev/test/serializable/data"
+-
+-ifeq ($(HOST_OS),linux)
+-include $(CLEAR_VARS)
+-LOCAL_SRC_FILES := $(icu4j_test_src_files)
+-LOCAL_JAVA_RESOURCE_DIRS := $(icu4j_test_resource_dirs)
+-LOCAL_STATIC_JAVA_LIBRARIES := icu4j-testdata-host
+-LOCAL_DONT_DELETE_JAR_DIRS := true
+-LOCAL_JAVA_LIBRARIES := icu4j-hostdex
+-LOCAL_MODULE := icu4j-tests-hostdex
+-include $(BUILD_HOST_DALVIK_JAVA_LIBRARY)
+-
+-$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_EXTRA_JAR_ARGS += \
+-    -C "$(LOCAL_PATH)/main/tests/core/src" \
+-    "com/ibm/icu/dev/test/serializable/data"
+-
+-endif  # HOST_OS == linux
+-
+-# LayoutLib (frameworks/base/tools/layoutlib) needs JarJar'd versions of the
+-# icudata and icutzdata, so add rules for it.
+-include $(CLEAR_VARS)
+-LOCAL_STATIC_JAVA_LIBRARIES := icu4j-icudata-host
+-LOCAL_JARJAR_RULES := $(LOCAL_PATH)/liblayout-jarjar-rules.txt
+-LOCAL_MODULE := icu4j-icudata-host-jarjar
+-include $(BUILD_HOST_JAVA_LIBRARY)
+-
+-include $(CLEAR_VARS)
+-LOCAL_STATIC_JAVA_LIBRARIES := icu4j-icutzdata-host
+-LOCAL_JARJAR_RULES := $(LOCAL_PATH)/liblayout-jarjar-rules.txt
+-LOCAL_MODULE := icu4j-icutzdata-host-jarjar
+-include $(BUILD_HOST_JAVA_LIBRARY)
+-- 
+2.11.0
+

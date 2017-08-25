@@ -1,0 +1,115 @@
+From 42009f8cfab59130f142a1b8b70c7bd1f611451a Mon Sep 17 00:00:00 2001
+From: Baji Patthan <bpatth@codeaurora.org>
+Date: Mon, 10 Aug 2015 12:20:05 -0700
+Subject: [PATCH] system:core:rootdir: redundent services
+
+Change-Id: Iad4cb6eff8b8c4adaf43b3f0f82607c57661b383
+Signed-off-by: Baji Patthan <bpatth@codeaurora.org>
+---
+ rootdir/init.rc    | 30 ++++++++++++++++++++++++------
+ rootdir/ueventd.rc |  2 +-
+ 2 files changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index ea2b009..a48fc5e 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -334,7 +334,7 @@ on boot
+ 
+     # set RLIMIT_NICE to allow priorities from 19 to -20
+     setrlimit 13 40 40
+-
++    su 0 setenforce 0
+     # Memory management.  Basic kernel parameters, and allow the high
+     # level system server to be able to adjust the kernel OOM driver
+     # parameters to match how it is managing things.
+@@ -363,7 +363,7 @@ on boot
+     chmod 0660 /sys/power/state
+     chmod 0660 /sys/power/wake_lock
+     chmod 0660 /sys/power/wake_unlock
+-
++    chmod 0777 /system/bin/wfdservice
+     chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+     chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_slack
+@@ -498,8 +498,8 @@ service console /system/bin/sh
+     group shell log
+     seclabel u:r:shell:s0
+ 
+-on property:ro.debuggable=1
+-    start console
++#on property:ro.debuggable=1
++#    start console
+ 
+ # adbd is controlled via property triggers in init.<platform>.usb.rc
+ service adbd /sbin/adbd --root_seclabel=u:r:su:s0
+@@ -509,8 +509,8 @@ service adbd /sbin/adbd --root_seclabel=u:r:su:s0
+     seclabel u:r:adbd:s0
+ 
+ # adbd on at boot in emulator
+-on property:ro.kernel.qemu=1
+-    start adbd
++#on property:ro.kernel.qemu=1
++#    start adbd
+ 
+ service lmkd /system/bin/lmkd
+     class core
+@@ -552,6 +552,7 @@ service ril-daemon /system/bin/rild
+     socket rild-debug stream 660 radio system
+     user root
+     group radio cache inet misc audio log qcom_diag
++    disabled
+ 
+ service surfaceflinger /system/bin/surfaceflinger
+     class core
+@@ -563,6 +564,7 @@ service drm /system/bin/drmserver
+     class main
+     user drm
+     group drm system inet drmrpc sdcard_r sdcard_rw media_rw
++    disabled
+ 
+ service media /system/bin/mediaserver
+     class main
+@@ -627,6 +629,10 @@ service dumpstate /system/bin/dumpstate -s
+     disabled
+     oneshot
+ 
++service netcfg /system/bin/netcfg eth0 up
++	 class main
++	 disabled
++	 oneshot
+ service mdnsd /system/bin/mdnsd
+     class main
+     user mdnsr
+@@ -639,3 +645,15 @@ service pre-recovery /system/bin/uncrypt
+     class main
+     disabled
+     oneshot
++on property:sys.boot_completed=1
++    start ril-daemon
++    start drm
++service dhcpcd_eth0 /system/bin/dhcpcd -ABKLG
++    class late_start
++    disabled
++    oneshot
++
++service iprenew_eth0 /system/bin/dhcpcd -n
++    class late_start
++    disabled
++    oneshot
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 49c5204..0f99ca0 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -12,7 +12,7 @@ subsystem adf
+ /dev/hw_random            0440   root       system
+ /dev/ashmem               0666   root       root
+ /dev/binder               0666   root       root
+-
++/dev/i2c-0		  0777	 system     system
+ # Anyone can read the logs, but if they're not in the "logs"
+ # group, then they'll only see log entries for their UID.
+ /dev/log/*                0666   root       log
+-- 
+1.8.2.1
+

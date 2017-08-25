@@ -1,0 +1,26 @@
+From 92c4871d49c1abb0511297bdd07b36389dc32812 Mon Sep 17 00:00:00 2001
+From: Baji Patthan <PATCH_116497_LA.BR.1.2.4-01810-8x16.0_410C_Aug.tar.gz>
+Date: Wed, 26 Aug 2015 14:35:01 -0700
+Subject: [PATCH] usbcamera patch
+
+Change-Id: I04a1e716f1b6c22c31bb1263e51d20b2c6cf5ca7
+---
+ rootdir/etc/ueventd.qcom.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rootdir/etc/ueventd.qcom.rc b/rootdir/etc/ueventd.qcom.rc
+index b7cd5ea..17844eb 100644
+--- a/rootdir/etc/ueventd.qcom.rc
++++ b/rootdir/etc/ueventd.qcom.rc
+@@ -103,7 +103,7 @@
+ /dev/mhi_pipe_14          0640   radio      radio
+ /dev/mhi_pipe_16          0640   radio      radio
+ /dev/mhi_pipe_32          0640   radio      radio
+-/dev/video*               0660   system     camera
++/dev/video*               0777   system     camera
+ /dev/media*               0660   system     camera
+ /dev/v4l-subdev*          0660   system     camera
+ /dev/qseecom              0660   system     drmrpc
+-- 
+1.8.2.1
+

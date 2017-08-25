@@ -1,0 +1,26 @@
+From 8c28d742ec9b718ba7d2c9d5e5415a343497a0c2 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 1 Dec 2015 14:03:19 -0800
+Subject: [PATCH] Remove SELinux-isms from /firmware mount
+
+Change-Id: I3a74558f266f0c6dc03103673fca3693ed234e3d
+---
+ init.target.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init.target.rc b/init.target.rc
+index 8fcbe74..4f0b0f0 100644
+--- a/init.target.rc
++++ b/init.target.rc
+@@ -50,7 +50,7 @@ on fs
+     restorecon_recursive /persist
+ 
+     wait /dev/block/bootdevice/by-name/modem
+-    mount vfat /dev/block/bootdevice/by-name/modem /firmware ro context=u:object_r:firmware_file:s0,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337
++    mount vfat /dev/block/bootdevice/by-name/modem /firmware ro shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337
+     write /sys/kernel/boot_adsp/boot 1
+ 
+ on post-fs-data
+-- 
+1.9.1
+

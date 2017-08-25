@@ -1,0 +1,27 @@
+From e43eda7ac4d0a84a0d011fa679b05f77fd1e7227 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Thu, 20 Aug 2015 00:04:06 -0700
+Subject: [PATCH] Add missing AUDIO_STREAM_PUBLIC_CNT
+
+Change-Id: I9851ab89244b0f1c7f4991029458cec036bca134
+---
+ include/system/audio.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/system/audio.h b/include/system/audio.h
+index 40f28b3..b7df78d 100644
+--- a/include/system/audio.h
++++ b/include/system/audio.h
+@@ -72,7 +72,8 @@ typedef enum {
+     AUDIO_STREAM_PATCH            = 12, /* For internal audio flinger tracks. Fixed volume */
+     AUDIO_STREAM_INCALL_MUSIC     = 13,
+     AUDIO_STREAM_PUBLIC_CNT       = AUDIO_STREAM_TTS + 1,
+-    AUDIO_STREAM_CNT              = AUDIO_STREAM_INCALL_MUSIC + 1
++    AUDIO_STREAM_CNT              = AUDIO_STREAM_INCALL_MUSIC + 1,
++    AUDIO_STREAM_MAX              = AUDIO_STREAM_CNT - 1
+ } audio_stream_type_t;
+ 
+ /* Do not change these values without updating their counterparts
+-- 
+1.9.1
+

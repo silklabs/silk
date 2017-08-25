@@ -1,0 +1,81 @@
+From 5245c6d568a168983e12f897175a78db1d41c652 Mon Sep 17 00:00:00 2001
+From: Baji Patthan <bpatth@codeaurora.org>
+Date: Fri, 7 Aug 2015 18:55:12 -0700
+Subject: [PATCH] lk/aboot:device unlocked patch for fastboot flashing
+
+Change-Id: I664c7fdf63b78d84e28defe32babeb378ff6ebfc
+Signed-off-by: Baji Patthan <bpatth@codeaurora.org>
+---
+ app/aboot/aboot.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/app/aboot/aboot.c b/app/aboot/aboot.c
+index 078baaf..19be4c1 100644
+--- a/app/aboot/aboot.c
++++ b/app/aboot/aboot.c
+@@ -277,8 +277,8 @@ unsigned char *update_cmdline(const char * cmdline)
+ 		cmdline_len += strlen(loglevel);
+ 	} else if (boot_reason_alarm) {
+ 		cmdline_len += strlen(alarmboot_cmdline);
+-	} else if (device.charger_screen_enabled &&
+-			target_pause_for_battery_charge()) {
++	} else if ((target_build_variant_user() || device.charger_screen_enabled)
++			&& target_pause_for_battery_charge()) {
+ 		pause_at_bootup = 1;
+ 		cmdline_len += strlen(battchg_pause);
+ 	}
+@@ -629,7 +629,7 @@ void boot_linux(void *kernel, unsigned *tags,
+ 
+ #if VERIFIED_BOOT
+ 	/* Write protect the device info */
+-	if (target_build_variant_user() && devinfo_present && mmc_write_protect("devinfo", 1))
++	if (!boot_into_recovery && target_build_variant_user() && devinfo_present && mmc_write_protect("devinfo", 1))
+ 	{
+ 		dprintf(INFO, "Failed to write protect dev info\n");
+ 		ASSERT(0);
+@@ -1788,7 +1788,7 @@ void cmd_boot(const char *arg, void *data, unsigned sz)
+ 
+ 
+ #if VERIFIED_BOOT
+-	if(!device.is_unlocked)
++	if(target_build_variant_user() && !device.is_unlocked)
+ 	{
+ 		fastboot_fail("unlock device to use this command");
+ 		return;
+@@ -2018,6 +2018,8 @@ void cmd_erase_mmc(const char *arg, void *data, unsigned sz)
+ void cmd_erase(const char *arg, void *data, unsigned sz)
+ {
+ #if VERIFIED_BOOT
++	if (target_build_variant_user())
++	{
+ 	if(!device.is_unlocked && !device.is_verified)
+ 	{
+ 		fastboot_fail("device is locked. Cannot erase");
+@@ -2029,6 +2031,7 @@ void cmd_erase(const char *arg, void *data, unsigned sz)
+ 		{
+ 			fastboot_fail("cannot flash this partition in verified state");
+ 			return;
++			}
+ 		}
+ 	}
+ #endif
+@@ -2409,6 +2412,8 @@ void cmd_flash_mmc(const char *arg, void *data, unsigned sz)
+ #endif /* SSD_ENABLE */
+ 
+ #if VERIFIED_BOOT
++	if (target_build_variant_user())
++	{
+ 	if(!device.is_unlocked)
+ 	{
+ 		fastboot_fail("device is locked. Cannot flash images");
+@@ -2422,6 +2427,7 @@ void cmd_flash_mmc(const char *arg, void *data, unsigned sz)
+ 			return;
+ 		}
+ 	}
++	}
+ #endif
+ 
+ 	sparse_header = (sparse_header_t *) data;
+-- 
+1.8.2.1
+

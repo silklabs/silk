@@ -1,0 +1,36 @@
+From e353c4d003e34c5b696c126a5182237b23db6f7c Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 24 Aug 2017 17:03:16 -0700
+Subject: [PATCH] Avoid crash: CHECK(timestampUs > mLastFrameTimestampUs)
+
+Buggy Camera HALs can sometimes return frame timestamps from the past.  Drop
+these frames instead of crashing
+
+Change-Id: Ie4987d0d30e6e4c49699ba2b7d840e4ea26c39ad
+---
+ media/libstagefright/CameraSource.cpp | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
+index a1eb83ae9..021eeb1d2 100644
+--- a/media/libstagefright/CameraSource.cpp
++++ b/media/libstagefright/CameraSource.cpp
+@@ -923,7 +923,14 @@ void CameraSource::dataCallbackTimestamp(int64_t timestampUs,
+     ALOGV("dataCallbackTimestamp: AdjTimestamp %lld us", timestampUs);
+ 
+     if (mNumFramesReceived > 0) {
+-        CHECK(timestampUs > mLastFrameTimestampUs);
++        // Buggy Camera HALs can sometimes return frame timestamps from the
++        // past.  Drop these frames instead of crashing
++        if (timestampUs <= mLastFrameTimestampUs) {
++          ALOGW("Drop frame at %lld us, which arrived %lld us sooner(?!) than last frame",
++            timestampUs, mLastFrameTimestampUs - timestampUs);
++          releaseOneRecordingFrame(data);
++          return;
++        }
+         if (timestampUs - mLastFrameTimestampUs > mGlitchDurationThresholdUs) {
+             ++mNumGlitches;
+         }
+-- 
+2.11.0
+

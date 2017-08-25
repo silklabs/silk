@@ -1,0 +1,77 @@
+From dfe8b0674e9bcab3f3b2a04d653ee94a8d1ef40f Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Sun, 16 Aug 2015 23:07:12 -0700
+Subject: [PATCH] Disable app_process
+
+Change-Id: I672a2d7a30b28496bd6f3810c39d4907f5c32b39
+---
+ cmds/app_process/Android.mk | 59 ---------------------------------------------
+ 1 file changed, 59 deletions(-)
+
+diff --git a/cmds/app_process/Android.mk b/cmds/app_process/Android.mk
+index 397a7d1..e69de29 100644
+--- a/cmds/app_process/Android.mk
++++ b/cmds/app_process/Android.mk
+@@ -1,59 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-	app_main.cpp
+-
+-LOCAL_LDFLAGS := -Wl,--version-script,art/sigchainlib/version-script.txt -Wl,--export-dynamic
+-
+-LOCAL_SHARED_LIBRARIES := \
+-	libdl \
+-	libcutils \
+-	libutils \
+-	liblog \
+-	libbinder \
+-	libandroid_runtime
+-
+-LOCAL_WHOLE_STATIC_LIBRARIES := libsigchain
+-
+-LOCAL_MODULE:= app_process
+-LOCAL_MULTILIB := both
+-LOCAL_MODULE_STEM_32 := app_process32
+-LOCAL_MODULE_STEM_64 := app_process64
+-include $(BUILD_EXECUTABLE)
+-
+-# Create a symlink from app_process to app_process32 or 64
+-# depending on the target configuration.
+-include  $(BUILD_SYSTEM)/executable_prefer_symlink.mk
+-
+-# Build a variant of app_process binary linked with ASan runtime.
+-# ARM-only at the moment.
+-ifeq ($(TARGET_ARCH),arm)
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-	app_main.cpp
+-
+-LOCAL_SHARED_LIBRARIES := \
+-	libcutils \
+-	libutils \
+-	liblog \
+-	libbinder \
+-	libandroid_runtime
+-
+-LOCAL_WHOLE_STATIC_LIBRARIES := libsigchain
+-
+-LOCAL_LDFLAGS := -ldl -Wl,--version-script,art/sigchainlib/version-script.txt -Wl,--export-dynamic
+-LOCAL_CPPFLAGS := -std=c++11
+-
+-LOCAL_MODULE := app_process__asan
+-LOCAL_MODULE_TAGS := eng
+-LOCAL_MODULE_PATH := $(TARGET_OUT_EXECUTABLES)/asan
+-LOCAL_MODULE_STEM := app_process
+-LOCAL_ADDRESS_SANITIZER := true
+-
+-include $(BUILD_EXECUTABLE)
+-
+-endif # ifeq($(TARGET_ARCH),arm)
+-- 
+1.9.1
+

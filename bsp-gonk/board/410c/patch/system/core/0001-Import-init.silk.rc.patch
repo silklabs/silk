@@ -1,0 +1,25 @@
+From b775c5e36a9eac996427ed351e827aacb7d016ad Mon Sep 17 00:00:00 2001
+From: Chris Jones <chris@silklabs.com>
+Date: Sat, 23 May 2015 16:20:21 -0700
+Subject: [PATCH] Import init.silk.rc
+
+---
+ rootdir/init.rc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index a48fc5e..be206a8 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -641,6 +641,8 @@ service mdnsd /system/bin/mdnsd
+     disabled
+     oneshot
+ 
++import /init.silk.rc
++
+ service pre-recovery /system/bin/uncrypt
+     class main
+     disabled
+-- 
+1.9.1
+

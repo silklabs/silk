@@ -1,0 +1,102 @@
+From 20f6c90056ab1d97049fa2e6d1dc8d1222704831 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <waynelee@silklabs.com>
+Date: Sun, 11 Oct 2015 14:40:29 -0700
+Subject: [PATCH] Workaround for OSX: Fails with:
+ libnativehelper/JNIHelp.cpp:28:10: fatal error: string file not found
+
+---
+ Android.mk       | 24 ++++++++++++++++++++++--
+ tests/Android.mk |  8 ++++++++
+ 2 files changed, 30 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index e4fba5c..eb1d95e 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -32,8 +32,16 @@ LOCAL_SRC_FILES := \
+ LOCAL_SHARED_LIBRARIES := liblog
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE := libnativehelper
++
++# Only use local clang on !darwin...
++# Fails with: libnativehelper/JNIHelp.cpp:28:10: fatal error: 'string' file not found
++ifneq ($(HOST_OS),darwin)
+ LOCAL_CLANG := true
+ LOCAL_CFLAGS := -Werror -fvisibility=protected
++endif
++
++LOCAL_CFLAGS := -fvisibility=protected
++
+ LOCAL_C_INCLUDES := external/stlport/stlport bionic/ bionic/libstdc++/include libcore/include
+ LOCAL_SHARED_LIBRARIES += libcutils libstlport libdl
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+@@ -49,12 +57,18 @@ include $(BUILD_SHARED_LIBRARY)
+ include $(CLEAR_VARS)
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE := libnativehelper_compat_libc++
++
++# Only use local clang on !darwin...
++# Fails with: libnativehelper/JNIHelp.cpp:28:10: fatal error: 'string' file not found
++ifneq ($(HOST_OS),darwin)
+ LOCAL_CLANG := true
++endif
++
+ LOCAL_C_INCLUDES := \
+     $(LOCAL_PATH)/include/nativehelper
+ LOCAL_EXPORT_C_INCLUDE_DIRS := \
+     $(LOCAL_PATH)/include/nativehelper
+-LOCAL_CFLAGS := -Werror
++LOCAL_CFLAGS :=
+ LOCAL_SRC_FILES := $(local_src_files)
+ LOCAL_LDFLAGS := -llog -ldl
+ LOCAL_SDK_VERSION := 19
+@@ -70,11 +84,17 @@ include $(BUILD_SHARED_LIBRARY)
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := libnativehelper
+ LOCAL_MODULE_TAGS := optional
++
++# Only use local clang on !darwin...
++# Fails with: libnativehelper/JNIHelp.cpp:28:10: fatal error: 'string' file not found
++ifneq ($(HOST_OS),darwin)
+ LOCAL_CLANG := true
++endif
++
+ LOCAL_SRC_FILES := \
+     $(local_src_files) \
+     JniInvocation.cpp
+-LOCAL_CFLAGS := -Werror -fvisibility=protected
++LOCAL_CFLAGS := -Werror #-fvisibility=protected
+ LOCAL_C_INCLUDES := libcore/include
+ LOCAL_SHARED_LIBRARIES := liblog
+ LOCAL_LDFLAGS := -ldl
+diff --git a/tests/Android.mk b/tests/Android.mk
+index b40bdf8..0f60f42 100644
+--- a/tests/Android.mk
++++ b/tests/Android.mk
+@@ -6,7 +6,11 @@ include $(CLEAR_VARS)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := JniInvocation_test
++# Only use local clang on !darwin...
++# Fails with: libnativehelper/JNIHelp.cpp:28:10: fatal error: 'string' file not found
++ifneq ($(HOST_OS),darwin)
+ LOCAL_CLANG := true
++endif
+ LOCAL_SRC_FILES := JniInvocation_test.cpp
+ LOCAL_SHARED_LIBRARIES := libnativehelper
+ include $(BUILD_NATIVE_TEST)
+@@ -15,7 +19,11 @@ include $(BUILD_NATIVE_TEST)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := JniInvocation_test
++# Only use local clang on !darwin...
++# Fails with: libnativehelper/JNIHelp.cpp:28:10: fatal error: 'string' file not found
++ifneq ($(HOST_OS),darwin)
+ LOCAL_CLANG := true
++endif
+ LOCAL_SRC_FILES := JniInvocation_test.cpp
+ LOCAL_SHARED_LIBRARIES := libnativehelper
+ include $(BUILD_HOST_NATIVE_TEST)
+-- 
+1.9.1
+

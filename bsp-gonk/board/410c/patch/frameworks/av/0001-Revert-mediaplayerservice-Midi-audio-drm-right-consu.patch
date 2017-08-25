@@ -1,0 +1,105 @@
+From c13bce8f836b00e0602cd13445921615bbfc46a2 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 1 Dec 2015 12:15:31 -0800
+Subject: [PATCH] Revert "mediaplayerservice : Midi audio drm right
+ consumption"
+
+This reverts commit 091f90751888b7e1085b3f7fef389d7864a68cff.
+---
+ media/libmediaplayerservice/MidiFile.cpp | 36 +-------------------------------
+ media/libmediaplayerservice/MidiFile.h   |  4 ----
+ 2 files changed, 1 insertion(+), 39 deletions(-)
+
+diff --git a/media/libmediaplayerservice/MidiFile.cpp b/media/libmediaplayerservice/MidiFile.cpp
+index a6a8394..8cb0a5e 100644
+--- a/media/libmediaplayerservice/MidiFile.cpp
++++ b/media/libmediaplayerservice/MidiFile.cpp
+@@ -56,8 +56,7 @@ MidiFile::MidiFile() :
+     mEasData(NULL), mEasHandle(NULL), mAudioBuffer(NULL),
+     mPlayTime(-1), mDuration(-1), mState(EAS_STATE_ERROR),
+     mStreamType(AUDIO_STREAM_MUSIC), mLoop(false), mExit(false),
+-    mPaused(false), mRender(false), mTid(-1),
+-    mDrmManagerClient(NULL), mDecryptHandle(NULL)
++    mPaused(false), mRender(false), mTid(-1)
+ {
+     ALOGV("constructor");
+ 
+@@ -131,17 +130,6 @@ status_t MidiFile::setDataSource(
+     mFileLocator.fd = -1;
+     mFileLocator.offset = 0;
+     mFileLocator.length = 0;
+-
+-    if (mDrmManagerClient == NULL) {
+-        mDrmManagerClient = new DrmManagerClient();
+-    }
+-    if (mDrmManagerClient != NULL && mDecryptHandle == NULL) {
+-        int fd = open(path, O_RDONLY);
+-        if (fd >= 0) {
+-            mDecryptHandle = mDrmManagerClient->openDecryptSession(fd, 0, 1, NULL);
+-        }
+-    }
+-
+     EAS_RESULT result = EAS_OpenFile(mEasData, &mFileLocator, &mEasHandle);
+     if (result == EAS_SUCCESS) {
+         updateState();
+@@ -172,15 +160,6 @@ status_t MidiFile::setDataSource(int fd, int64_t offset, int64_t length)
+     mFileLocator.fd = dup(fd);
+     mFileLocator.offset = offset;
+     mFileLocator.length = length;
+-
+-    if (mDrmManagerClient == NULL) {
+-        mDrmManagerClient = new DrmManagerClient();
+-    }
+-    if (mDrmManagerClient != NULL && mDecryptHandle == NULL) {
+-        if (fd >= 0) {
+-            mDecryptHandle = mDrmManagerClient->openDecryptSession(fd, 0, 1, NULL);
+-        }
+-    }
+     EAS_RESULT result = EAS_OpenFile(mEasData, &mFileLocator, &mEasHandle);
+     updateState();
+ 
+@@ -411,19 +390,6 @@ status_t MidiFile::release()
+         EAS_Shutdown(mEasData);
+         mEasData = NULL;
+     }
+-
+-    if (mDecryptHandle != NULL && mDrmManagerClient != NULL) {
+-        if(mState > EAS_STATE_READY && mState < EAS_STATE_OPEN) {
+-            mDrmManagerClient->consumeRights(mDecryptHandle, Action::PLAY, true);
+-        }
+-        mDrmManagerClient->closeDecryptSession(mDecryptHandle);
+-        mDecryptHandle = NULL;
+-    }
+-    if (mDrmManagerClient != NULL) {
+-        delete mDrmManagerClient;
+-        mDrmManagerClient = NULL;
+-    }
+-
+     return NO_ERROR;
+ }
+ 
+diff --git a/media/libmediaplayerservice/MidiFile.h b/media/libmediaplayerservice/MidiFile.h
+index bd7b0f4..82e4e88 100644
+--- a/media/libmediaplayerservice/MidiFile.h
++++ b/media/libmediaplayerservice/MidiFile.h
+@@ -20,7 +20,6 @@
+ 
+ #include <media/MediaPlayerInterface.h>
+ #include <libsonivox/eas.h>
+-#include <drm/DrmManagerClient.h>
+ 
+ namespace android {
+ 
+@@ -87,9 +86,6 @@ private:
+     volatile bool       mRender;
+     pid_t               mTid;
+ 
+-    DrmManagerClient*   mDrmManagerClient;
+-    sp<DecryptHandle>   mDecryptHandle;
+-
+     class MidiFileThread : public Thread {
+     public:
+         MidiFileThread(MidiFile *midiPlayer) : mMidiFile(midiPlayer) {
+-- 
+1.9.1
+

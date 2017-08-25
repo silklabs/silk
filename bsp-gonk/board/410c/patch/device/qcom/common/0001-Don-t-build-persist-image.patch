@@ -1,0 +1,26 @@
+From 8379d9011af762e6e82dd8956aa4ee5040ec4502 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <waynelee@silklabs.com>
+Date: Sun, 11 Oct 2015 18:19:58 -0700
+Subject: [PATCH] Don't build persist image
+
+---
+ build/tasks/generate_extra_images.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/build/tasks/generate_extra_images.mk b/build/tasks/generate_extra_images.mk
+index fb3df55..159409c 100644
+--- a/build/tasks/generate_extra_images.mk
++++ b/build/tasks/generate_extra_images.mk
+@@ -74,9 +74,6 @@ endef
+ $(INSTALLED_PERSISTIMAGE_TARGET): $(MKEXTUSERIMG) $(MAKE_EXT4FS) $(INTERNAL_PERSISTIMAGE_FILES)
+ 	$(build-persistimage-target)
+ 
+-ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_PERSISTIMAGE_TARGET)
+-ALL_MODULES.$(LOCAL_MODULE).INSTALLED += $(INSTALLED_PERSISTIMAGE_TARGET)
+-
+ endif
+ 
+ #----------------------------------------------------------------------
+-- 
+2.5.0
+

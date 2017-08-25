@@ -1,0 +1,36 @@
+From dcc7d9753ecca10f5668c701818b39b99df697be Mon Sep 17 00:00:00 2001
+From: Baji Patthan <bpatth@codeaurora.org>
+Date: Mon, 10 Aug 2015 12:06:18 -0700
+Subject: [PATCH] packages:apps:Settings: Rotation patch
+
+Change-Id: I32ea01ac4252fd0bbe0f97c44220b9e430c088c9
+Signed-off-by: Baji Patthan <bpatth@codeaurora.org>
+---
+ src/com/android/settings/DisplaySettings.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/com/android/settings/DisplaySettings.java b/src/com/android/settings/DisplaySettings.java
+index 57fb6e3..5cd0c08 100644
+--- a/src/com/android/settings/DisplaySettings.java
++++ b/src/com/android/settings/DisplaySettings.java
+@@ -176,8 +176,6 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
+         if (RotationPolicy.isRotationLockToggleVisible(activity)) {
+             DropDownPreference rotatePreference =
+                     (DropDownPreference) findPreference(KEY_AUTO_ROTATE);
+-            rotatePreference.addItem(activity.getString(R.string.display_auto_rotate_rotate),
+-                    false);
+             int rotateLockedResourceId;
+             // The following block sets the string used when rotation is locked.
+             // If the device locks specifically to portrait or landscape (rather than current
+@@ -195,6 +193,8 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
+                 }
+             }
+             rotatePreference.addItem(activity.getString(rotateLockedResourceId), true);
++            rotatePreference.addItem(activity.getString(R.string.display_auto_rotate_rotate),
++                    false);
+             rotatePreference.setSelectedItem(RotationPolicy.isRotationLocked(activity) ?
+                     1 : 0);
+             rotatePreference.setCallback(new Callback() {
+-- 
+1.8.2.1
+

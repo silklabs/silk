@@ -1,0 +1,26 @@
+From d87068e4a7506f2fa1ab911ea9d3e29f79dada96 Mon Sep 17 00:00:00 2001
+From: Wayne Lee <wayne@silklabs.com>
+Date: Mon, 17 Aug 2015 16:52:42 -0700
+Subject: [PATCH] Add silk product
+
+Change-Id: I374322d5b098eb5b1a83885e9253ac20870bb9bb
+---
+ msm8916_32.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/msm8916_32.mk b/msm8916_32.mk
+index d2efb95..bc2a2cc 100755
+--- a/msm8916_32.mk
++++ b/msm8916_32.mk
+@@ -68,6 +68,8 @@ PRODUCT_PACKAGES += \
+     libantradio \
+     antradio_app
+ 
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
++
+ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+     camera2.portability.force_api=1
+ 
+-- 
+1.9.1
+

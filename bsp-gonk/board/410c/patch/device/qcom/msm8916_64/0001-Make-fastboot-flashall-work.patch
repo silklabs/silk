@@ -1,0 +1,21 @@
+From 13f9292b02c8b9b8944f4ba323b29dd3adc05392 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 1 Dec 2015 14:01:54 -0800
+Subject: [PATCH] Make fastboot flashall work
+
+Change-Id: I282b3ae57b4ddbe44e7efab507852b3dc09fcb63
+---
+ board-info.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 board-info.txt
+
+diff --git a/board-info.txt b/board-info.txt
+new file mode 100644
+index 0000000..d20a044
+--- /dev/null
++++ b/board-info.txt
+@@ -0,0 +1 @@
++board=MSM8916
+-- 
+1.9.1
+

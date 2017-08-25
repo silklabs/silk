@@ -1,0 +1,27 @@
+From 58cbc1b2835696fa3086a17323eb5262b3db3724 Mon Sep 17 00:00:00 2001
+From: Baji Patthan <bpatth@codeaurora.org>
+Date: Mon, 10 Aug 2015 11:56:18 -0700
+Subject: [PATCH] frameworks/base: battery ICON patch
+
+Change-Id: I7f860b8c9c88098a740417d82b00486ffdb7f675
+Signed-off-by: Baji Patthan <bpatth@codeaurora.org>
+---
+ packages/SystemUI/res/layout/system_icons.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/res/layout/system_icons.xml b/packages/SystemUI/res/layout/system_icons.xml
+index 5eabf8d..5e27842 100644
+--- a/packages/SystemUI/res/layout/system_icons.xml
++++ b/packages/SystemUI/res/layout/system_icons.xml
+@@ -33,7 +33,7 @@
+         android:layout_marginStart="2.5dp"/>
+ 
+     <!-- battery must be padded below to match assets -->
+-    <com.android.systemui.BatteryMeterView android:id="@+id/battery"
++    <com.android.systemui.BatteryMeterView android:visibility="gone" android:id="@+id/battery"
+         android:layout_height="14.5dp"
+         android:layout_width="9.5dp"
+         android:layout_marginBottom="@dimen/battery_margin_bottom"/>
+-- 
+1.8.2.1
+

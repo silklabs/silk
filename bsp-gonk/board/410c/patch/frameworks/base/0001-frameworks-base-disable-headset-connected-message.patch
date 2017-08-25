@@ -1,0 +1,34 @@
+From cd15f74d8c2bafd386f315aa93472583884dd77b Mon Sep 17 00:00:00 2001
+From: Baji Patthan <bpatth@codeaurora.org>
+Date: Tue, 16 Jun 2015 11:47:18 -0700
+Subject: [PATCH] frameworks:base: disable headset connected message
+
+Change-Id: I4fac80e87d7e1761f81b24f7688b171db52fe603
+Signed-off-by: Baji Patthan <bpatth@codeaurora.org>
+---
+ media/java/android/media/AudioService.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/media/java/android/media/AudioService.java b/media/java/android/media/AudioService.java
+index 5c38495..cf39ec4 100644
+--- a/media/java/android/media/AudioService.java
++++ b/media/java/android/media/AudioService.java
+@@ -4879,13 +4879,13 @@ public class AudioService extends IAudioService.Stub {
+ 
+         if (device == AudioSystem.DEVICE_OUT_WIRED_HEADSET) {
+             connType = AudioRoutesInfo.MAIN_HEADSET;
+-            intent.setAction(Intent.ACTION_HEADSET_PLUG);
++            //intent.setAction(Intent.ACTION_HEADSET_PLUG);
+             intent.putExtra("microphone", 1);
+         } else if (device == AudioSystem.DEVICE_OUT_WIRED_HEADPHONE ||
+                    device == AudioSystem.DEVICE_OUT_LINE) {
+             /*do apps care about line-out vs headphones?*/
+             connType = AudioRoutesInfo.MAIN_HEADPHONES;
+-            intent.setAction(Intent.ACTION_HEADSET_PLUG);
++            //intent.setAction(Intent.ACTION_HEADSET_PLUG);
+             intent.putExtra("microphone", 0);
+         } else if (device == AudioSystem.DEVICE_OUT_ANLG_DOCK_HEADSET) {
+             connType = AudioRoutesInfo.MAIN_DOCK_SPEAKERS;
+-- 
+1.8.2.1
+

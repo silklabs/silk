@@ -1,0 +1,25 @@
+From 70a283e6d8a1eea290b54ff009d7f5fcb6c1bfa7 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 1 Dec 2015 10:24:46 -0800
+Subject: [PATCH] More DRM removal
+
+Change-Id: I3cb3be8e2d75199e061cd1a2e7ba880c0ac8a537
+---
+ media/libmediaplayerservice/Android.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/media/libmediaplayerservice/Android.mk b/media/libmediaplayerservice/Android.mk
+index 10ac9a2..e119ba2 100644
+--- a/media/libmediaplayerservice/Android.mk
++++ b/media/libmediaplayerservice/Android.mk
+@@ -41,7 +41,6 @@ LOCAL_SHARED_LIBRARIES :=       \
+     libstagefright_wfd          \
+     libutils                    \
+     libvorbisidec               \
+-    libdrmframework             \
+ 
+ LOCAL_STATIC_LIBRARIES :=       \
+     libstagefright_nuplayer     \
+-- 
+1.9.1
+

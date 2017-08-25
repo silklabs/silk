@@ -1,0 +1,90 @@
+From 189718b29998eb46cbf1933765cdeec3166e6ed4 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 1 Dec 2015 10:20:58 -0800
+Subject: [PATCH 1/2] Revert "Sonivox : Music app hangs when large drm audio
+ playing."
+
+This reverts commit 6d8156b186b7c71d5c23cd3142346bfb4245586f.
+---
+ arm-wt-22k/host_src/eas_hostmm.cpp | 44 +-------------------------------------
+ 1 file changed, 1 insertion(+), 43 deletions(-)
+
+diff --git a/arm-wt-22k/host_src/eas_hostmm.cpp b/arm-wt-22k/host_src/eas_hostmm.cpp
+index 80ac33e..0a68491 100644
+--- a/arm-wt-22k/host_src/eas_hostmm.cpp
++++ b/arm-wt-22k/host_src/eas_hostmm.cpp
+@@ -57,7 +57,6 @@
+ #include <pthread.h>
+ #include <media/MediaPlayerInterface.h>
+ #include <drm/DrmManagerClient.h>
+-#include <utils/String8.h>
+ #endif
+ 
+ #include "eas_host.h"
+@@ -78,24 +77,6 @@
+ #endif
+ 
+ /*
+- * DRM supported audio Mimetypes for sonivox.
+- */
+-static const char* const DRM_FILE_MIME_TYPES[] = { "audio/mid",
+-                                                "audio/midi",
+-                                                "audio/x-mid",
+-                                                "audio/x-midi",
+-                                                "audio/sp-mid",
+-                                                "audio/sp-midi",
+-                                                "audio/smf",
+-                                                "audio/xmf",
+-                                                "audio/mxmf",
+-                                                "audio/imy",
+-                                                "audio/imelody"
+-                                                "audio/rtttl",
+-                                                "audio/rtx",
+-                                                "audio/ota" };
+-
+-/*
+  * this structure and the related function are here
+  * to support the ability to create duplicate handles
+  * and buffering it in memory. If your system uses
+@@ -262,10 +243,6 @@ EAS_RESULT EAS_HWOpenFile (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_LOCATOR locat
+     EAS_HW_FILE *file;
+     int fd;
+     int i, temp;
+-    bool isSupportedMimeType = false;
+-    String8 path;
+-    String8 mimeType;
+-    int mimeSize = 0;
+ 
+     /* set return value to NULL */
+     *pFile = NULL;
+@@ -295,26 +272,7 @@ EAS_RESULT EAS_HWOpenFile (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_LOCATOR locat
+             sp<DecryptHandle> decryptHandle = NULL;
+ 
+             if(drmManagerClient != NULL) {
+-                if(locator->path) {
+-                    path = String8(locator->path);
+-                } else {
+-                    path = String8("fake_file_name.dm");
+-                }
+-                mimeType = drmManagerClient->getOriginalMimeType(path, fd);
+-                mimeSize = sizeof(DRM_FILE_MIME_TYPES) / sizeof(DRM_FILE_MIME_TYPES[0]);
+-                if(mimeType){
+-                    for (int i = 0; i < mimeSize; i++) {
+-                        if (mimeType == String8(DRM_FILE_MIME_TYPES[i])) {
+-                            isSupportedMimeType = true;
+-                            break;
+-                        }
+-                    }
+-                }
+-
+-                if(isSupportedMimeType){
+-                    decryptHandle = drmManagerClient->openDecryptSession(fd,0,1, NULL);
+-                }
+-
++                decryptHandle = drmManagerClient->openDecryptSession(fd,0,1, NULL);
+                 if (decryptHandle != NULL) {
+                     char* data = new char[4096];
+                     const char* tmpFile = "/data/local/.Drm/svtemp";
+-- 
+1.9.1
+

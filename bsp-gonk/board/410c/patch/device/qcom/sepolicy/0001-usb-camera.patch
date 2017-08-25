@@ -1,0 +1,24 @@
+From d50ef0dc7325734a200ac08e2ac9e6fc026a72ad Mon Sep 17 00:00:00 2001
+From: Baji Patthan <PATCH_116497_LA.BR.1.2.4-01810-8x16.0_410C_Aug.tar.gz>
+Date: Wed, 26 Aug 2015 13:28:58 -0700
+Subject: [PATCH] usb camera
+
+Change-Id: I30de143dcf0beda13285d525c94b9af6b86735aa
+Signed-off-by: Baji Patthan <PATCH_116497_LA.BR.1.2.4-01810-8x16.0_410C_Aug.tar.gz>
+---
+ common/app.te | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/app.te b/common/app.te
+index 8aed226..f56cf57 100644
+--- a/common/app.te
++++ b/common/app.te
+@@ -7,4 +7,4 @@ unix_socket_connect(appdomain, dpmwrapper, dpmd)
+ unix_socket_connect(appdomain, qlogd, qlogd)
+ #Allow all apps to open and send ioctl to qdsp device
+ allow appdomain qdsp_device:chr_file r_file_perms;
+-
++allow appdomain video_device:chr_file rw_file_perms;
+-- 
+1.8.2.1
+

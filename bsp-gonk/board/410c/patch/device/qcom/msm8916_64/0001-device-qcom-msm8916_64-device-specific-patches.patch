@@ -1,0 +1,130 @@
+From d08110f24577c53515090f7edb20f6798380fba0 Mon Sep 17 00:00:00 2001
+From: Baji Patthan <bpatth@codeaurora.org>
+Date: Mon, 10 Aug 2015 12:11:19 -0700
+Subject: [PATCH] device:qcom:msm8916_64: device specific patches
+
+Change-Id: Iafd732c298bd5c6ef4cc4d3cf6be677e2acf2c64
+Signed-off-by: Baji Patthan <bpatth@codeaurora.org>
+---
+ BoardConfig.mk    |   5 +++--
+ init.target.rc    |  22 +++++++++++++++++-----
+ msm8916_64.mk     |   6 +++++-
+ 4 files changed, 25 insertions(+), 8 deletions(-)
+ create mode 100644 bootanimation.zip
+ mode change 100755 => 100644 init.target.rc
+ mode change 100755 => 100644 msm8916_64.mk
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 3f77c67..eebf0c8 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -39,7 +39,7 @@ TARGET_USERIMAGES_USE_EXT4 := true
+ BOARD_BOOTIMAGE_PARTITION_SIZE := 0x02000000
+ BOARD_RECOVERYIMAGE_PARTITION_SIZE := 0x02000000
+ BOARD_SYSTEMIMAGE_PARTITION_SIZE := 1288491008
+-BOARD_USERDATAIMAGE_PARTITION_SIZE := 1860648960
++BOARD_USERDATAIMAGE_PARTITION_SIZE := 5368709120
+ BOARD_CACHEIMAGE_PARTITION_SIZE := 268435456
+ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
+ BOARD_PERSISTIMAGE_PARTITION_SIZE := 33554432
+@@ -57,7 +57,7 @@ TARGET_NO_RPC := true
+ # Enable CSVT
+ TARGET_USES_CSVT := true
+ 
+-BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1 earlyprintk
++BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1 earlyprintk androidboot.selinux=permissive
+ BOARD_KERNEL_SEPARATED_DT := true
+ 
+ BOARD_KERNEL_BASE        := 0x80000000
+@@ -70,6 +70,7 @@ TARGET_KERNEL_HEADER_ARCH := arm64
+ TARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-linux-android-
+ 
+ 
++
+ # Shader cache config options
+ # Maximum size of the  GLES Shaders that can be cached for reuse.
+ # Increase the size if shaders of size greater than 12KB are used.
+
+diff --git a/init.target.rc b/init.target.rc
+old mode 100755
+new mode 100644
+index ab71235..00478ca
+--- a/init.target.rc
++++ b/init.target.rc
+@@ -73,6 +73,7 @@ service qcamerasvr /system/bin/mm-qcamera-daemon
+     class late_start
+     user camera
+     group camera system inet input graphics
++    disabled
+ 
+ on init
+    write /sys/module/qpnp_rtc/parameters/poweron_alarm 1
+@@ -93,6 +94,7 @@ service qrngd /system/bin/qrngd -f
+    class main
+    user root
+    group root
++   disabled
+ 
+ service qrngp /system/bin/qrngp -f
+    class main
+@@ -108,6 +110,7 @@ service qseecomd /system/bin/qseecomd
+    class core
+    user root
+    group root
++   disabled
+ 
+ #service aostlmd /system/bin/aostlmd
+ #   class late_start
+@@ -155,12 +158,14 @@ service wcnss-service /system/bin/wcnss_service
+     user system
+     group system wifi radio
+     oneshot
++    disabled
+ 
+ service imsqmidaemon /system/bin/imsqmidaemon
+     class main
+     user system
+     socket ims_qmid stream 0660 system radio
+     group radio net_raw log qcom_diag
++    disabled
+ 
+ service imsdatadaemon /system/bin/imsdatadaemon
+     class main
+@@ -169,8 +174,8 @@ service imsdatadaemon /system/bin/imsdatadaemon
+     group system wifi radio inet net_raw log qcom_diag net_admin
+     disabled
+ 
+-on property:sys.ims.QMI_DAEMON_STATUS=1
+-    start imsdatadaemon
++#on property:sys.ims.QMI_DAEMON_STATUS=1
++#    start imsdatadaemon
+ 
+ service ims_rtp_daemon /system/bin/ims_rtp_daemon
+    class main
+@@ -185,9 +190,9 @@ service imscmservice /system/bin/imscmservice
+    group radio net_raw diag qcom_diag log
+    disabled
+ 
+-on property:sys.ims.DATA_DAEMON_STATUS=1
+-    start ims_rtp_daemon
+-    start imscmservice
++#on property:sys.ims.DATA_DAEMON_STATUS=1
++#    start ims_rtp_daemon
++#    start imscmservice
+ 
+ service ppd /system/bin/mm-pp-daemon
+     class late_start
+@@ -224,3 +229,10 @@ service dts_configurator /system/bin/dts_configurator
+     user system
+     group system
+     oneshot
++on property:sys.boot_completed=1
++    start qrngd
++    start qseecomd
++    start imsqmidaemon
++    start imsdatadaemon
++    start ims_rtp_daemon
++    start wcnss-service
+-- 
+1.8.2.1
+

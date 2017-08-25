@@ -1,0 +1,29 @@
+From 78c5601999a8cad7697a2af62bcb32ff996f448d Mon Sep 17 00:00:00 2001
+From: Wayne Lee <waynelee@silklabs.com>
+Date: Thu, 1 Oct 2015 15:07:33 -0700
+Subject: [PATCH] Change audio record buffer back to 2048 bytes
+
+Qualcomm significantly increased the audio buffers to
+optimize buffers for 48KHz.  Since we are doing audio
+recording at 8KHz, the larger buffers introduces too much
+delay in the media pipeline. Revert this change
+---
+ include/media/stagefright/AudioSource.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/media/stagefright/AudioSource.h b/include/media/stagefright/AudioSource.h
+index 7674826..bcc254b 100644
+--- a/include/media/stagefright/AudioSource.h
++++ b/include/media/stagefright/AudioSource.h
+@@ -63,7 +63,7 @@ private:
+     enum {
+         //This max buffer size is derived from aggregation of audio
+         //buffers for max duration 80 msec with 48K sampling rate.
+-        kMaxBufferSize = 30720,
++        kMaxBufferSize = 2048,
+ 
+         // After the initial mute, we raise the volume linearly
+         // over kAutoRampDurationUs.
+-- 
+2.5.0
+

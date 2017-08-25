@@ -1,0 +1,6 @@
+ro.silk.audio.hw.enabled=false
+ro.silk.battery.present=false
+ro.silk.camera.hw.enabled=false
+ro.silk.camera.video=false
+ro.silk.ui.display=false
+ro.silk.ui.inputevents=event2,event3

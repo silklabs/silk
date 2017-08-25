@@ -1,0 +1,21 @@
+From 9132c66a36b5be34ceb602850560af55b0dc0726 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Thu, 24 Dec 2015 01:12:29 -0800
+Subject: [PATCH] Stub generate_extra_images.mk
+
+Change-Id: I7d3552fdc55d1accf7ce2fcfb5479147d66acbe7
+---
+ generate_extra_images.mk | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 generate_extra_images.mk
+
+diff --git a/generate_extra_images.mk b/generate_extra_images.mk
+new file mode 100644
+index 0000000..6ad30ff
+--- /dev/null
++++ b/generate_extra_images.mk
+@@ -0,0 +1 @@
++include device/qcom/common/build/tasks/generate_extra_images.mk
+-- 
+1.9.1
+

@@ -123,11 +123,6 @@ endif
 my_target_libatomic := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_LIBATOMIC)
 my_target_libgcc := $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_LIBGCC)
 
-define abs_import_includes
-  $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
-endef
-
-
 LOCAL_BUILT_MODULE_MAIN_PATH := $(LOCAL_BUILT_MODULE)/$(LOCAL_NODE_MODULE_MAIN)
 
 $(LOCAL_BUILT_MODULE_MAIN_PATH): LOCAL_2ND_ARCH_VAR_PREFIX := $(LOCAL_2ND_ARCH_VAR_PREFIX)
@@ -166,7 +161,7 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
 	$(hide) cd $(LOCAL_PATH) &&  \
     C_INCLUDES="\
       $(addprefix -I ,$(abspath $(PRIVATE_C_INCLUDES))) \
-      $(call abs_import_includes,$(shell cat $(PRIVATE_IMPORT_INCLUDES))) \
+      $$(sed -e 's#^-I #-I $(ANDROID_BUILD_TOP)/#' $(ANDROID_BUILD_TOP)/$(PRIVATE_IMPORT_INCLUDES) | tr '\r\n' '  ') \
       $(addprefix -isystem ,\
           $(abspath $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
               $(filter-out $(PRIVATE_C_INCLUDES), \

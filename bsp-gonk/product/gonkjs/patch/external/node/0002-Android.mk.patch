@@ -1,19 +1,19 @@
-From 0a1b375aa1a6bd76c6b708d977ec12742b13851d Mon Sep 17 00:00:00 2001
+From c1a74830058d4164fa95b64a882ec9bba7e7e09e Mon Sep 17 00:00:00 2001
 From: Chris Jones <chris@silklabs.com>
 Date: Sat, 16 May 2015 22:38:54 -0700
-Subject: [PATCH 02/11] Android.mk
+Subject: [PATCH] Android.mk
 
 ---
- Android.mk | 122 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 122 insertions(+)
+ Android.mk | 118 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 118 insertions(+)
  create mode 100644 Android.mk
 
 diff --git a/Android.mk b/Android.mk
 new file mode 100644
-index 0000000000..14d24ab999
+index 00000000..1095e37a
 --- /dev/null
 +++ b/Android.mk
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,118 @@
 +LOCAL_PATH := $(call my-dir)
 +
 +include $(CLEAR_VARS)
@@ -53,17 +53,13 @@ index 0000000000..14d24ab999
 +$(LOCAL_BUILT_MODULE): export builddir_name=.
 +$(LOCAL_BUILT_MODULE): export node_BUILD_DIR := $(abspath $(dir $(LOCAL_BUILT_MODULE)))
 +
-+define __external_node_abs_import_includes
-+  $(foreach i,$(1),$(if $(filter -I,$(i)),$(i),$(abspath $(i))))
-+endef
-+
 +$(dir $(LOCAL_BUILT_MODULE))/Release/node: $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk $(all_libraries)
 +$(dir $(LOCAL_BUILT_MODULE))/Release/node:
 +	@echo Building: $@
 +	$(hide) set -e$(if $(SHOW_COMMANDS),x); cd $(<D) && \
 +    _C_INCLUDES="\
 +      $(addprefix -I ,$(abspath $(PRIVATE_C_INCLUDES))) \
-+      $(call __external_node_abs_import_includes,$(shell cat $(PRIVATE_IMPORT_INCLUDES))) \
++      $$(sed -e 's#^-I #-I $(ANDROID_BUILD_TOP)/#' $(ANDROID_BUILD_TOP)/$(PRIVATE_IMPORT_INCLUDES) | tr '\r\n' '  ') \
 +      $(addprefix -isystem ,\
 +          $(abspath $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
 +              $(filter-out $(PRIVATE_C_INCLUDES), \
@@ -137,5 +133,5 @@ index 0000000000..14d24ab999
 +
 +LOCAL_2ND_ARCH_VAR_PREFIX :=
 -- 
-2.12.3
+2.11.0
 

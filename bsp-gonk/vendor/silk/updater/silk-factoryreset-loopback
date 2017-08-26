@@ -1,0 +1,30 @@
+#!/system/bin/sh
+
+info() {
+  log -p i -t silk-factoryreset $@
+}
+
+log Stopping framework
+stop
+
+log Clearing /data
+mount -o remount,rw /
+rm -rf \
+  /data/core \
+  /data/node_modules \
+  /data/silk \
+  /data/silk.img \
+  /data/tombstones \
+  /silk \
+
+log Resetting /silk symlink
+setprop persist.silk.root system
+ln -sf -T /system/silk /silk
+
+log Syncing disk
+sync
+
+log Rebooting
+exec reboot
+
+exit 1

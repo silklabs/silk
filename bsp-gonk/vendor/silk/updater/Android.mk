@@ -8,6 +8,14 @@ LOCAL_SRC_FILES := silk-updater-recovery.c
 LOCAL_C_INCLUDES := external/librecovery
 LOCAL_SHARED_LIBRARIES := libcutils liblog librecovery
 include $(BUILD_SILK_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := silk-factoryreset-recovery
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := silk-factoryreset-recovery.c
+LOCAL_C_INCLUDES := external/librecovery
+LOCAL_SHARED_LIBRARIES := libcutils liblog librecovery
+include $(BUILD_SILK_EXECUTABLE)
 endif
 
 include $(CLEAR_VARS)

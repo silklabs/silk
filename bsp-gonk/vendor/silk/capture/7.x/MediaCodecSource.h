@@ -67,6 +67,9 @@ struct MediaCodecSource : public MediaSource,
     // for AHandlerReflector
     void onMessageReceived(const sp<AMessage> &msg);
 
+    status_t requestIDRFrame();
+    status_t videoBitRate(uint32_t bitRate);
+
 protected:
     virtual ~MediaCodecSource();
 

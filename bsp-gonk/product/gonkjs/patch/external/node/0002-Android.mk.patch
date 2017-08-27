@@ -51,7 +51,7 @@ index 00000000..1095e37a
 +# builddir_name trips up the fixup_dep macro in ./out/Makefile producing
 +# invalid dependency files in ./out/Release/.deps/
 +$(LOCAL_BUILT_MODULE): export builddir_name=.
-+$(LOCAL_BUILT_MODULE): export node_BUILD_DIR := $(abspath $(dir $(LOCAL_BUILT_MODULE)))
++$(LOCAL_BUILT_MODULE): node_BUILD_DIR := $(abspath $(dir $(LOCAL_BUILT_MODULE)))
 +
 +$(dir $(LOCAL_BUILT_MODULE))/Release/node: $(LOCAL_PATH)/configure $(LOCAL_PATH)/Android.mk $(all_libraries)
 +$(dir $(LOCAL_BUILT_MODULE))/Release/node:

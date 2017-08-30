@@ -1,0 +1,26 @@
+From 296c4032534f0346ddb4635dff37351f0abc5ac3 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 09:03:30 -0700
+Subject: [PATCH] Disable AUDIO_FEATURE_ENABLED_PM_SUPPORT
+
+Change-Id: I196d92ad6768ecdd689b5a4beaca1c0c55529c5e
+---
+ configs/msm8909/msm8909.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configs/msm8909/msm8909.mk b/configs/msm8909/msm8909.mk
+index f7f3788..af5f7a1 100755
+--- a/configs/msm8909/msm8909.mk
++++ b/configs/msm8909/msm8909.mk
+@@ -38,7 +38,7 @@ AUDIO_FEATURE_ENABLED_VOICE_CONCURRENCY := true
+ AUDIO_FEATURE_ENABLED_RECORD_PLAY_CONCURRENCY := true
+ ifneq ($(TARGET_SUPPORTS_WEARABLES),true)
+ AUDIO_FEATURE_ENABLED_KPI_OPTIMIZE := true
+-AUDIO_FEATURE_ENABLED_PM_SUPPORT := true
++#AUDIO_FEATURE_ENABLED_PM_SUPPORT := true
+ endif
+ ifneq ($(TARGET_SUPPORTS_WEARABLES),true)
+ #BOARD_USES_SRS_TRUEMEDIA := true
+-- 
+2.11.0
+

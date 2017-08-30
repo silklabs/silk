@@ -1,0 +1,23 @@
+From 98c2557fe48388e3d7982a3af4e7f97e5d694714 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Wed, 10 Feb 2016 09:51:45 -0800
+Subject: [PATCH] Add Silk project
+
+Change-Id: Ib6811d1261d8978df2773f80fccbffa2620b94b5
+---
+ base.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/base.mk b/base.mk
+index 883eac2..bf89c85 100644
+--- a/base.mk
++++ b/base.mk
+@@ -855,3 +855,5 @@ ifeq ($(TARGET_BUILD_VARIANT),user)
+ PRODUCT_DEFAULT_PROPERTY_OVERRIDES+= \
+     ro.adb.secure=1
+ endif
++
++$(call inherit-product, product/$(SILK_PRODUCT)/$(SILK_PRODUCT).mk)
+-- 
+2.7.0
+

@@ -1,0 +1,26 @@
+From efda5cb5e5291dc41419cc125c48783ec70328a0 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 08:52:11 -0700
+Subject: [PATCH] Be permissive
+
+Change-Id: Ibe60150417546992202246340e0e07a9d6270c20
+---
+ BoardConfig.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 5c0a2e2..ef454f5 100755
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -95,7 +95,7 @@ TARGET_USERIMAGES_USE_EXT4 := true
+ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
+ BOARD_PERSISTIMAGE_FILE_SYSTEM_TYPE := ext4
+ 
+-BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1 earlyprintk
++BOARD_KERNEL_CMDLINE := androidboot.selinux=permissive console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1 earlyprintk
+ 
+ BOARD_EGL_CFG := device/qcom/msm8909/egl.cfg
+ 
+-- 
+2.11.0
+

@@ -1,0 +1,743 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <!--
+    Pick up android-7.1.1 patches:
+      <include name="android-7.1.1.xml" />
+   -->
+
+  <!--
+    https://source.codeaurora.org/quic/la/platform/manifest/plain/LA.BR.1.2.9-02310-8x09.0.xml?h=release
+  -->
+  <remote fetch="https://source.codeaurora.org/quic/la/" name="caf" review="codeaurora.org"/>
+  <default remote="caf" revision="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="device/common" revision="ae0d194de6c50014772541ab5dbfebb279ae1c01" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/arm64" revision="d3591759da5ebcde86571ef31cb801e4c628d72a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/armv7-a-neon" revision="1ebf1a0a8e7417c4826647f30d1dc66aedb2f9f3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/common" revision="11c092a6cbfcf6207f07a9a8e3398e747e7f5461" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/goldfish" revision="8203533e0c3023fbd56be0b8bbed0ab2ec5c3da3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/goldfish-opengl" revision="3855dfbf428269d3c79dd7ba4b257ec5e9b917ff" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/mini-emulator-arm64" revision="98b20c14af8ab0ca62dfae4843b864d2adc68a1e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/mini-emulator-armv7-a-neon" revision="5e4db513d2d3b01588471d86d4a423cf840e8f47" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/mini-emulator-x86" revision="65d59e2be2cfd713513a05d80a0f75794ab60579" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/mini-emulator-x86_64" revision="230d102eb9d3486d9adbfeb164c4cf60fb8620f6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/qemu" revision="17f0fbd45efaeac0e7af666b135a2e9a71fd0c31" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/x86" revision="15ef9eff16ccbc06715e35fb267e29487e0e3312" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/generic/x86_64" revision="001d21423d3530db17db29a5b9b4c4b45b1fe4f2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="device,pdk" name="device/google/accessory/arduino" revision="abc5159a3ca9dbb5c7e364a1eab99901a4440ac5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="device,pdk" name="device/google/accessory/demokit" revision="7dfe7f89a3b174709c773fe319531006e46440d9" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="device,fugu,broadcom_pdk,generic_fs,pdk" name="device/google/atv" revision="c7fb0790d0503ffd902d720cfe9b44acf7f2a5bb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="device,marlin" name="device/google/contexthub" revision="2ef3bf7156c158231933b0eeea6a2c46606a637f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="device/qcom/common" revision="824c8cd4376344d94e473c4e5e1acf0c8de4f413" upstream="LA.BR.1.2.9_rb1.15">
+    <copyfile dest="build.sh" src="build.sh"/>
+    <copyfile dest="vendor/qcom/build/tasks/generate_extra_images.mk" src="generate_extra_images.mk"/>
+  </project>
+  <project name="device/qcom/sepolicy" revision="86c8329163dee01e0da3eda21091b640de623c96" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="device/sample" revision="6b3cc4bca54cb3af77d04d4dd13148bf9d8251ba" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="kernel/lk" path="bootable/bootloader/lk" revision="29196494eac3db4efcc645b37c2444600cd763c8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="kernel/msm-3.10" path="kernel" revision="a2dce67908243ba78c7d983247308f3a733766d1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/abi/cpp" path="abi/cpp" revision="36b381298a4efb7c293d394d8b1acbda68230989" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/art" path="art" revision="5c91f029f7805d86cecd7ea5114ce7e9ea18e015" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/bionic" path="bionic" revision="93ce7b981516b481b0c0265a6af7de359c828667" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/bootable/recovery" path="bootable/recovery" revision="4cb339e0c7f53b937bab8262d2413d162157fa14" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/build" path="build" revision="d330d740d51f4e5d74a5d7c4f27dbfcaa00fa35d" upstream="LA.BR.1.2.9_rb1.15">
+    <copyfile dest="Makefile" src="core/root.mk"/>
+  </project>
+  <project groups="pdk,tradefed" name="platform/build/blueprint" path="build/blueprint" revision="41a4f8811495a0a3e260ac7342cf255c33c2005b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,tradefed" name="platform/build/kati" path="build/kati" revision="0d8f6ef0c3652de4a4b18dfa8f9b012781140ba4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,tradefed" name="platform/build/soong" path="build/soong" revision="41c706e42812e6562cea600849b1c12f86c77809" upstream="LA.BR.1.2.9_rb1.15">
+    <linkfile dest="Android.bp" src="root.bp"/>
+    <linkfile dest="bootstrap.bash" src="bootstrap.bash"/>
+  </project>
+  <project groups="cts,pdk-cw-fs,pdk-fs" name="platform/cts" path="cts" revision="6779dfdd048a96aa1a57932525d2bb917f9bc6dc" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/dalvik" path="dalvik" revision="11018af48c0df63654cdac0bf262c868586887c7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/developers/build" path="developers/build" revision="1c8522f54fc401fdda2f46fb9dd714d7088b5848" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/developers/demos" path="developers/demos" revision="95d49d216223e3431647abd79f5e376958353c95" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/developers/samples/android" path="developers/samples/android" revision="02234fb3aee0083a65fb382050500c60d08e6462" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/development" path="development" revision="861014c6cd1a1acd738313d4817f5df6f333783d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/docs/source.android.com" path="docs/source.android.com" revision="863bfdb06901d674b3d53376d8dbcd9266496e51" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ImageMagick" path="external/ImageMagick" revision="0c7808f09d2a6ba242197f9914eff3fc320f9d09" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/aac" path="external/aac" revision="acbe346dd9546ecd4623103ea14c6a6abbf2ea3f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/android-clat" path="external/android-clat" revision="fbc7e056ed22ce3eb3924293733571a12eee7363" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/androidplot" path="external/androidplot" revision="c66727ebf001607cee14521c35bc852b55fd9845" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ant-glob" path="external/ant-glob" revision="a73228afa9540b9c5518d360c5ae630bb634f975" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/external/ant-wireless/ant_native" path="external/ant-wireless/ant_native" revision="97fd7b8901527a2d14c024f152487f7a3640fd8f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/external/ant-wireless/ant_service" path="external/ant-wireless/ant_service" revision="b616838fc8c89085742a542d528e2fd55d679ef9" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/antlr" path="external/antlr" revision="dd5fa6d48b827c5d98b625adbc209f4a05567534" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/apache-commons-math" path="external/apache-commons-math" revision="25a2b6cb1b4a2e40a23c73e4f825c9a3f77d2064" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/apache-harmony" path="external/apache-harmony" revision="bd373e2536ad2b8deb000dc4075690c3b4043ac5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/apache-http" path="external/apache-http" revision="aa664a2aaad429bb773fa553ffcfcc54dc5d72cc" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/apache-xml" path="external/apache-xml" revision="caaafddddf67b9fe5a98a702f986cb928743fa1a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/archive-patcher" path="external/archive-patcher" revision="68d4a898721a6558a0aa3d8c54b27023bf4b10c6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/external/autotest" path="external/autotest" revision="e2d0d861d762713c879cf8edc024b2629e95d8f8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/avahi" path="external/avahi" revision="12ce02de01c916843946c9918fb00439789e5ff0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/bison" path="external/bison" revision="7467d52af437dd3dfea237a6865ab84bf258dee0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/blktrace" path="external/blktrace" revision="d345431f16b8f76f30a58193ff2b26d5853e1109" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/boringssl" path="external/boringssl" revision="486134276d6b1dad7a7ed047b3739b9701899480" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/bouncycastle" path="external/bouncycastle" revision="1693bc49305851d9b6d35dbfc120b7d04d8dd0ea" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/external/brctl" path="external/brctl" revision="85130b403dea07b2230efed3287236fa0caefb1c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/bsdiff" path="external/bsdiff" revision="a34db5178f9be9f402373536abc521874267f363" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/bzip2" path="external/bzip2" revision="769544af4d0085c21c949e43c8f959be5a192434" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/c-ares" path="external/c-ares" revision="de2cd886042f484dc8694e614c3ac16298f93514" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/caliper" path="external/caliper" revision="6a66412ab9c544ca7e099f81e764d2c01671ea70" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/cblas" path="external/cblas" revision="611764050a3af0bb030ff49a5a5b15779ff254c6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ceres-solver" path="external/ceres-solver" revision="233e18458eeb29bf5e4f2b69c5334728c47a6d13" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/chromium-libpac" path="external/chromium-libpac" revision="9e8c0df476c169fca0cbae52f5fe2fd882e15fd0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/chromium-trace" path="external/chromium-trace" revision="eb7891aae130125ac08a2b1b591ffe13e2186eca" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/chromium-webview" path="external/chromium-webview" revision="04308ba48aa7d480b5b7bae5cf30f001aaf6dff0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/clang" path="external/clang" revision="af1dacacb12f2732169a7276e0f4f90822ddd21f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/cmockery" path="external/cmockery" revision="9199c7bfafefea32d1884182fa655b6e4578c1c4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/compiler-rt" path="external/compiler-rt" revision="fa6e8d21528c9d085d1565cef2cea204fe9d6a2d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/conscrypt" path="external/conscrypt" revision="3517da0d24be3533e0c4c44122f420e6e0c6db5c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/crcalc" path="external/crcalc" revision="9666c57ab247046b716e9c1e56f0dcc7d4a1545f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/cros/system_api" path="external/cros/system_api" revision="5b7db9896c9277fbcca420e385a78502c5ae069c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/curl" path="external/curl" revision="ec091c9357dab0c63e86c076fa1959931f3d366d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dagger2" path="external/dagger2" revision="07bcdbf2e0a9ce721565b536de34ec11aaf614e7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dbus" path="external/dbus" revision="de7189fb20f316076b4f33c273bb1ab45e489f99" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dbus-binding-generator" path="external/dbus-binding-generator" revision="71fde8e0b8a85fe729da5351aacfee4d354fddc5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/external/deqp" path="external/deqp" revision="295cb07398dfae9b4c2d00f03bc133c94a38cdb2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dexmaker" path="external/dexmaker" revision="8e77f1890450085d4aa635c86dfd91160572631e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dhcpcd-6.8.2" path="external/dhcpcd-6.8.2" revision="cf067c8f0115c49b7ce3f046ef23c0d26c4df2b2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dlmalloc" path="external/dlmalloc" revision="6661f3ca66b55d8f5a57b96fec97efaf8f3897a5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dng_sdk" path="external/dng_sdk" revision="16536429c0cdc1e5530ed847872d452e74aef553" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/dnsmasq" path="external/dnsmasq" revision="3979d8f69d1e647b322c46ff36f08e234c05806f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/doclava" path="external/doclava" revision="f47989aba57d98fd82dba3d5beed11bec6036358" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/donuts" path="external/donuts" revision="005389fb31a67841b5de42f0d25fbfab843e208c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="drm_gralloc" name="platform/external/drm_gralloc" path="external/drm_gralloc" revision="cda66b80878c0c0f0799a145b41895c1149da88a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="drm_hwcomposer" name="platform/external/drm_hwcomposer" path="external/drm_hwcomposer" revision="44e8e0a47694ba5075c9c3e4d1a1b961a772a55f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/droiddriver" path="external/droiddriver" revision="675040fd1a83ee2505e1109489adcc0d666f61ea" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/e2fsprogs" path="external/e2fsprogs" revision="4be2b9d40f9be0da59c3f85db1ee4d656c49c95c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/easymock" path="external/easymock" revision="8bc2748f2850c88ab6b86c6ceed1ce65bed5ee16" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/external/ebtables" path="external/ebtables" revision="b070104dcb72b99825d645e9e41a5362bd4ff735" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/external/eclipse-basebuilder" path="external/eclipse-basebuilder" revision="076f46888ed346775b8efc564d7694063ef5eea7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/eclipse-windowbuilder" path="external/eclipse-windowbuilder" revision="c533332008088ee5f61745b724361fbde5b7e770" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/eigen" path="external/eigen" revision="8d09b45ff989856326c07914bd5233c21a74a903" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/elfutils" path="external/elfutils" revision="3e38084ad2aa64dbd0c2c607556aae076ffe2e7f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/emma" path="external/emma" revision="deb5711b2635ee9d332605e2e00b63b32bed6777" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/esd" path="external/esd" revision="943c42b6f8e9afe821744aa4c039f4943ebf29f5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/expat" path="external/expat" revision="8348e8e029dd7c573d5cff1cdf72826bbdb84d48" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/eyes-free" path="external/eyes-free" revision="16bd4c7a4d1bfe229068b637614dad7c48dd2ceb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/f2fs-tools" path="external/f2fs-tools" revision="5bd943d50d103eb6f48a72f199a49dce4feeb61a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/fdlibm" path="external/fdlibm" revision="eb6c9fcfe52e665917ff5a9670c909f9e3c92fa5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/fec" path="external/fec" revision="791afbe58ff9f55145c4adf632ab8cc9ca6e5686" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/fio" path="external/fio" revision="1aec78b2e6aaf90d45b8e3f9b3d2f07dd9334827" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/flac" path="external/flac" revision="3c74c11c30cdae95914c0b6a9228a3906b238c73" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/fonttools" path="external/fonttools" revision="fede58680958e96e6e8f61c3cc6282f798452c53" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/freetype" path="external/freetype" revision="6d49203181f28d4c42ee417ece4506faafdc25a2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/fsck_msdos" path="external/fsck_msdos" revision="17a1471db8c528cd9d44ec4385d2eb3614138856" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/gemmlowp" path="external/gemmlowp" revision="1d9a91cfbbcedc6085dd7bffaa21a6a250d4a659" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,qcom_msm8x26" name="platform/external/giflib" path="external/giflib" revision="a57aff106d30e39c782e681f8e4aa3aa612f81c3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/glide" path="external/glide" revision="31e64acd1e65045471124267a06241eff1f55d26" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/gmock" path="external/gmock" revision="6b779c8891d41dee34a3a0307d024f6f861b46eb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/google-benchmark" path="external/google-benchmark" revision="39352b58f8d274b240dbf0f9a4917c3c61b21b7b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="dragon,pdk-fs" name="platform/external/google-breakpad" path="external/google-breakpad" revision="e37b6d963f9938c5245d1f19fc91e5fad74f8cdb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/google-fonts/carrois-gothic-sc" path="external/google-fonts/carrois-gothic-sc" revision="0062a10458d4c357f3082d66bcb129d11913aaae" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/google-fonts/coming-soon" path="external/google-fonts/coming-soon" revision="2c5cb418c690815545bbb0316eae5fd33b9fc859" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/google-fonts/cutive-mono" path="external/google-fonts/cutive-mono" revision="bce2136662854076023066602526ba299e6556b2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/google-fonts/dancing-script" path="external/google-fonts/dancing-script" revision="7b6623bd54cee3e48ae8a4f477f616366643cc78" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/google-tv-pairing-protocol" path="external/google-tv-pairing-protocol" revision="9726a938070e2f281219ef3187f54ef758e6a075" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/gptfdisk" path="external/gptfdisk" revision="437bfb5dd4dc917a8cdf02baf4bf06b80dd918ae" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/gtest" path="external/gtest" revision="81cb746e0ba7ce98a77b175139c7425fd41021c6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/guava" path="external/guava" revision="00d2a356b6f333177999ee9f723b9bdfa3fb9183" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/guice" path="external/guice" revision="83b7ddb6a7b4db66d57c35ceb51fdbbb8a922aff" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/hamcrest" path="external/hamcrest" revision="f31b2fcfcfba4a5c6d13a4a2147567c08c72b034" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,qcom_msm8x26" name="platform/external/harfbuzz_ng" path="external/harfbuzz_ng" revision="7cdecf8d7297242ac91de8c708d5f487a84b5e69" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/hyphenation-patterns" path="external/hyphenation-patterns" revision="d7759006d2d024a83fca1a14d665633edf926ff0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/icu" path="external/icu" revision="222f0bd8ea45531ffed1e02af5f18473bd4667f6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ims" path="external/ims" revision="fc377f6f26bcd9cdaa703b7c51bdb99bfa3ab094" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/iproute2" path="external/iproute2" revision="beb108369a03e245033baa5bd4c2eaad0097c8d3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ipsec-tools" path="external/ipsec-tools" revision="8116a3ddb08abf5f996a12c11b389dc814714f84" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/iptables" path="external/iptables" revision="ab25355e52f24fb3f40d131592ae364438ae1721" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/iputils" path="external/iputils" revision="a981f9ac361e58e9b16db467b740861917f136fd" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/iw" path="external/iw" revision="2af129ead0104bc925504169300945e26bd6ccb9" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jacoco" path="external/jacoco" revision="588f83972fca9499caf8cda3da819d22336c2441" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jarjar" path="external/jarjar" revision="8795f34e379f7d29be2ee6cc0b9377106a1d96d7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/javasqlite" path="external/javasqlite" revision="48af768916393316db5df2742d5c143fababbf36" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/javassist" path="external/javassist" revision="f7c4b954072e563b75f6910c25bb689bbf38a3d1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jcommander" path="external/jcommander" revision="498658ddd712085b8ecf228171efd67d44648633" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jdiff" path="external/jdiff" revision="a08e6466dfa20761a164a6ede0875aa4a3d96035" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jemalloc" path="external/jemalloc" revision="f409bf55120e6eee97381478d9ce215bf64a4d15" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jetty" path="external/jetty" revision="a9f2cdb3bee47e31289e3acc5554fc6e704c2add" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jhead" path="external/jhead" revision="e6a8aef61971dc6121e6d44e0d3c8cfa335f3247" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jmdns" path="external/jmdns" revision="0c71647deb7f7835c473fd3dfb45943083e47794" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jsilver" path="external/jsilver" revision="b9b84920ba47ddf7f15baa01c56b28e3d3f951ea" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jsmn" path="external/jsmn" revision="cbfa1a02b28b588e16ec221519c6ec17b1c14568" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jsoncpp" path="external/jsoncpp" revision="90c81b9c9aef09ef4ffb8de1779301734336d897" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jsr305" path="external/jsr305" revision="91467ca5be4e876415f9f6bc4ef4a0f716c68fa4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/jsr330" path="external/jsr330" revision="57916beef7b9401b594906d26833e0867bf60829" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/junit" path="external/junit" revision="a2b475b739f1295eeaee79489c2c7441e4448f7b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/kernel-headers" path="external/kernel-headers" revision="54495e7569aeb1f571f1e39ca67532cd3f4eace5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ksoap2" path="external/ksoap2" revision="f13853ff0fa5eb65afc847176e55ca6db293eb3c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libavc" path="external/libavc" revision="1d62d4b21e8708c87174c461af9374cf5abf76a7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libbrillo" path="external/libbrillo" revision="c0cec5851ede86529698263a226024eb07974be0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libcap" path="external/libcap" revision="5fc5a50a942e6f863189b52d2a831730b36c3331" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libcap-ng" path="external/libcap-ng" revision="fd9ec1ca0febeb1e6947c2fb374d8de00fd81e6e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libchrome" path="external/libchrome" revision="34caaaae89645bf2f71061280eb1b1b5b31546bf" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libcxx" path="external/libcxx" revision="8fd719529a85a9379dfe0095bf193e76481bb805" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libcxxabi" path="external/libcxxabi" revision="ee6e479d12ee68d10102042e46f9599757e37e63" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libdaemon" path="external/libdaemon" revision="e2f604066d97431c95856c73d7b9ee46b348d37e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libdivsufsort" path="external/libdivsufsort" revision="ae4cb1345c1db6584e7492930f1dac565ad9cfad" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libdrm" path="external/libdrm" revision="495045970e9a0818950d26f2bc58c96b76c052b5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libedit" path="external/libedit" revision="67e14dfc833aafa400a3aad8cb329cbaec503445" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libevent" path="external/libevent" revision="0485e9429476b35deaa16fec293598f5ce70ac18" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libexif" path="external/libexif" revision="bcbfc5e831a8eb5a121752f3151c039cd13ff721" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libgdx" path="external/libgdx" revision="ad93eb286ee6c24d75c7b830dc9a5f2497068609" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libgsm" path="external/libgsm" revision="2f66c771f18317147e446fab5a95082d18a6db20" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libhevc" path="external/libhevc" revision="90aec6cd2469a64d64bb8caf1f3e10134fa739d4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libjpeg-turbo" path="external/libjpeg-turbo" revision="0141f11c240da93c012a9ed4bb35308d86d77454" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/liblzf" path="external/liblzf" revision="a88b9629447deabe8697d2f8fd4cc70aa6e1b563" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libmicrohttpd" path="external/libmicrohttpd" revision="1e68f5d827a859ba3b7ab6a70a60247e0b96afa5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libmpeg2" path="external/libmpeg2" revision="3797243d64acc4532622af3d82e71827e63af67c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libmtp" path="external/libmtp" revision="7ed2065db3ab9851f47426f3a35ba7045ce528b2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libnfc-nci" path="external/libnfc-nci" revision="3d32488be0175b18e33ff1ea0a4ff24164730837" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libnfc-nxp" path="external/libnfc-nxp" revision="76f8fa7177767cb377f9212e207e3ac16f9b8d48" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libnl" path="external/libnl" revision="e239a2d31e801b840b8bd745dbd1120a0a43c9ab" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libogg" path="external/libogg" revision="6dba790f3372d03eee07c693789166ca9fa07b0a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libopus" path="external/libopus" revision="255d818c739653e328794896102ccdb9dc51bb6f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libpcap" path="external/libpcap" revision="ae8393dd9704bf3f666affebf731042c0b62a37b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libphonenumber" path="external/libphonenumber" revision="7e6b96f1d9c646b7058e09340a35d8dfae24e6b0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libpng" path="external/libpng" revision="d1e54779bfa697826f7a6de0ea35fa2ae3f1e2fe" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libselinux" path="external/libselinux" revision="5370349cd4ffe065c160cc7f3c76a0c256e76372" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libunwind" path="external/libunwind" revision="1a56ae831e44d0a66eba1312e41aa9a4a6f67f34" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libunwind_llvm" path="external/libunwind_llvm" revision="f171e7279d7fa8977bbe25e19019380ee493e885" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libusb" path="external/libusb" revision="dc5d19652007b3ea00631f6753afa9e04aea9960" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libusb-compat" path="external/libusb-compat" revision="759481ae400d02fe99488dcdcd653b4f8139a39c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libutf" path="external/libutf" revision="853ef375ba2ce430f5b13b556812b2d83ccc82e1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libvncserver" path="external/libvncserver" revision="bec50fdbf6ec2d61edda4f69913f8a8331b8b364" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libvorbis" path="external/libvorbis" revision="dee2e0a12822ec62c89c2d7582f1a7d32cd0875b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libvpx" path="external/libvpx" revision="974e3ff3e3811e65e4de860480f31ddaa7042d35" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libvterm" path="external/libvterm" revision="6d78f36633063dad0689ca42be1ad8d0313ebfab" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/libweave" path="external/libweave" revision="e3c7df698e780a6f8d3ff6ffd519f256603421b9" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,libxml2" name="platform/external/libxml2" path="external/libxml2" revision="e4095a442581a214a1922ec0c077e7c08062c6c3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,libyuv" name="platform/external/libyuv" path="external/libyuv" revision="49236cda304a43f860ba9916f28bda4d72d81971" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/littlemock" path="external/littlemock" revision="a3ea6bf9e6fcf63b69f5635b2ecc1fbd9a9a4dfc" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/lld" path="external/lld" revision="26c9bb3b51a7ac4bc45f73d532a03cfd9982043a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/llvm" path="external/llvm" revision="12b2a1296614019a9950bf51f9193e6286071453" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ltrace" path="external/ltrace" revision="c3cdf801ca7315321914a07569f5379af2955058" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/lz4" path="external/lz4" revision="74ba70e09305e588c3841e0f73f6b3a16703d8a5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/lzma" path="external/lzma" revision="26b927f9aae35767f9fff824765d48ea98a282a7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/markdown" path="external/markdown" revision="06a8f8b914d477183f68b84424bce8ff4dae7e84" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mdnsresponder" path="external/mdnsresponder" revision="380b5f782131195a2b4a44abfc3432bfaba79604" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/external/mesa3d" path="external/mesa3d" revision="586cfa78861e71160d5a3dbeaff09554829a1027" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/messageformat" path="external/messageformat" revision="ff217fd086ecac137321c1265d0cc1a15194decf" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/minijail" path="external/minijail" revision="d2f8c212790e50be23cfc7d68a03c1e9fdd5916a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mksh" path="external/mksh" revision="b394f11bc41d75abb6fc623dd9e15eef626eb380" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/external/mm-dash" path="external/mm-dash" revision="576968dc61f170c05cd7056883a48cb28c4ddb6e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mmc-utils" path="external/mmc-utils" revision="c98bb9fb3feb860b5ad7f0ffee25e7cdd7a26c87" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs" name="platform/external/mobicore" path="external/mobicore" revision="37dc06411e5ac257e6f7bbce73d61f0a67102290" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mockftpserver" path="external/mockftpserver" revision="56527f4f9cf6e19136c55e8e6f18fd56da628d86" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mockito" path="external/mockito" revision="21722bdc457b129f0d4f12fdbbc59ad576e09ff4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mockwebserver" path="external/mockwebserver" revision="fd8e017e99ca9a35a0e97d2b78fc35d57fe9515f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/modp_b64" path="external/modp_b64" revision="ea22d9747f6dac0f3f972ce3cae96bcb4c401fc5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mp4parser" path="external/mp4parser" revision="37d85ea1f71bf0bfdea15dd5bfa8785ece1a15d2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/mtpd" path="external/mtpd" revision="46998029d80d5e486940c3c6b641569229349641" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/nanohttpd" path="external/nanohttpd" revision="c6783c32331b3fe78ffd5077e7f180995d0e268e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/nanopb-c" path="external/nanopb-c" revision="b225eb267957f24ca2aa2469bc78d418b2e9b795" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/naver-fonts" path="external/naver-fonts" revision="91e6e9f94d1d769a8f742649674149ba98ce7d45" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/netcat" path="external/netcat" revision="b023a43765b15f0b0fd5b52b7d8021f515c59c23" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/netperf" path="external/netperf" revision="236149a19f5d5c4c0068170127f50797d59e6e55" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/neven" path="external/neven" revision="42fbf500f0de56407e2a2fcade9a5e4e869089aa" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/nfacct" path="external/nfacct" revision="833985690db54f9ad3ee7e8f3147a67da8c04760" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/nist-pkits" path="external/nist-pkits" revision="d2e40622e78d36904ae2ee0ebc99a5b05970d0b8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/nist-sip" path="external/nist-sip" revision="e091a345b250b1ce4212d4c9d13649fe9c625bbe" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/noto-fonts" path="external/noto-fonts" revision="aa0619bd951d5a50104b73cb427e473d3e80018d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/oauth" path="external/oauth" revision="49f3624a6d3307b640a012f15b94d04174473501" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/objenesis" path="external/objenesis" revision="027386d6375a3cb34d9934fd952039254831cbc6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/okhttp" path="external/okhttp" revision="ecce09ec65231e9491fe34e2eec7db155f73b989" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/external/opencv" path="external/opencv" revision="3b08021e73ae94cbb5a180cf6861011c2083e3ea" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/opencv3" path="external/opencv3" revision="ae320ad446d754d85adafdbabc34a3898009701e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/owasp/sanitizer" path="external/owasp/sanitizer" revision="bbfb25464ff30c5a62dce351d719a8c533afb2a3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/parameter-framework" path="external/parameter-framework" revision="c599aa5fada664c56f4330a0e05af4e54971534f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/pcre" path="external/pcre" revision="222bbf4b3fb8e13c21686803e47e31aa3e4ad130" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/pdfium" path="external/pdfium" revision="ac3d58cff7c80b0ef56bf55130d91da17cbaa3c4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/piex" path="external/piex" revision="af0a8f55e9effc973f6e1a0ebb62155ff5c33987" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/external/powertop" path="external/powertop" revision="1a7c0759e37b63661ea64d6b6a0d39140b36921a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/ppp" path="external/ppp" revision="d9aeba443abce801cd696b3921a559cab88e1e74" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/proguard" path="external/proguard" revision="af893cdc1242e4cfbeeb10e2323f9a689a825177" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/protobuf" path="external/protobuf" revision="90d8bcab5c06347e294fb7076361301f761899d4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/regex-re2" path="external/regex-re2" revision="13ad88f183dc229720220244ba16213327fed644" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/replicaisland" path="external/replicaisland" revision="374426a588bfffc7d0657bffe05b65660b438007" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/rmi4utils" path="external/rmi4utils" revision="40eb2d785d3e367c01fc2a3d53820550e7f66739" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/external/robolectric" path="external/robolectric" revision="f522a207e60af3e8cf895e681fb25278219dc11c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/roboto-fonts" path="external/roboto-fonts" revision="bd702d2aedaf548ebc9ca66f8db115a8c908a9d8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/rootdev" path="external/rootdev" revision="9d44d9dd53bd3da3b01445a52b5d2420dc40f9b2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/safe-iop" path="external/safe-iop" revision="cd76f998688d145235de78ecd5b340d0eac9239d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/scrypt" path="external/scrypt" revision="72691396f9fa84fd39cb72d031750e580e648aa3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/selinux" path="external/selinux" revision="05ad9c95047da92684f2a0955441669e326867b0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,qcom_msm8x26" name="platform/external/sfntly" path="external/sfntly" revision="61657b2d87b88576ab1b7d7fb5768b0e315c9216" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/shflags" path="external/shflags" revision="c4876e01829b8cf110ee33267bb1bad1f8ebb51d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,qcom_msm8x26" name="platform/external/skia" path="external/skia" revision="2ba6b181c23fe5252a6403e874d759761145583b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/sl4a" path="external/sl4a" revision="cd73fa000359c5b302e949c84d14a42060b4ce2b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/slf4j" path="external/slf4j" revision="037a293cd09178f946d5df43e8dff1ad8758c163" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/smali" path="external/smali" revision="edc88aff44ff80f969df61725a992680cd0c464c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/snakeyaml" path="external/snakeyaml" revision="05152a01decfcca5cef87e3768852a751e2c67b3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/sonic" path="external/sonic" revision="0227d834966b304525869d88fd20b2ac835df878" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/sonivox" path="external/sonivox" revision="3ac8a169d43dd2c5581f694ff785238560bac7c1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/speex" path="external/speex" revision="468d5f08801712615c39321b1f22f04c63b1277d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/sqlite" path="external/sqlite" revision="76f85c8ceb1ba99077372b71fdc9057db9e8e4f0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/squashfs-tools" path="external/squashfs-tools" revision="e9577e0662ca188d1bca3c083ed05986b6fcbd50" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/srtp" path="external/srtp" revision="ab8d27c7566de29e3a0af3f2324036e8d5646d76" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/strace" path="external/strace" revision="372fd474dea063e08f8faf9abdf0a2bad06a7955" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/svox" path="external/svox" revision="0c1111aa38fee3f077f9fe515feee5fc211da564" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tagsoup" path="external/tagsoup" revision="9c02d9f506855965ec513685788890dfc856a5bc" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tcpdump" path="external/tcpdump" revision="dbb0163636b74b580abcf7d1de8d834163ca0a3a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/testng" path="external/testng" revision="d3bb4c37e9b45ca9511da099247f231293a2b14e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/timezonepicker-support" path="external/timezonepicker-support" revision="99e91a76fd74bad10266623d67cdb98d011f709e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tinyalsa" path="external/tinyalsa" revision="1af9bbe552a3b39978ed70985ed53b3e99f1b042" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tinycompress" path="external/tinycompress" revision="d1eb60dfa90aa730d98ac7ed26d19dd9ad8a498c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tinyxml" path="external/tinyxml" revision="b162e864bd02bb79423b4ef01d0e5e5840aa416b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tinyxml2" path="external/tinyxml2" revision="41e0f655ec890e9bfdd5b3470dc6cc5614c224d8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tlsdate" path="external/tlsdate" revision="5277834396f52a760bb237044d5539fc4aaa87bb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/toybox" path="external/toybox" revision="23d612861802dc7cdfa65c3a74df7aba66307c71" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tpm2" path="external/tpm2" revision="d704926273cf17498c95ff0dc50b4b17e523c109" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/tremolo" path="external/tremolo" revision="0d32f25713e129e59f778129365eecc91408afe1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/unicode" path="external/unicode" revision="fd64562191a0b997318473fffb8c85aa77d24dc2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/external/universal-tween-engine" path="external/universal-tween-engine" revision="fdc20ba6040e08858275612d111ce2f23a7502e4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/v8" path="external/v8" revision="a32470e4f8021fc119db56d456fdf6cf06aa23a8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/valgrind" path="external/valgrind" revision="add683d5f374b40576458fa386c7d75369014e11" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="vboot,pdk-fs" name="platform/external/vboot_reference" path="external/vboot_reference" revision="2f4974d1d84a816e6f687e946ecca928c0f3c535" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/vixl" path="external/vixl" revision="206cdf4d381b5169a91b20d413d1516625313c45" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/vogar" path="external/vogar" revision="91809e2d1bf3ac51f1cf98dec3aff071d1abc07b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/vulkan-validation-layers" path="external/vulkan-validation-layers" revision="b28e0a84424002b35cda53c177cd88e84f39675f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,qcom_msm8x26" name="platform/external/webp" path="external/webp" revision="6d2d4a29a7aa2b38eda7c26ed45c7bfcb06da77a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/webrtc" path="external/webrtc" revision="b3cb8ab4ede8bb77f0bdef2715efc2c1e6267072" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/wpa_supplicant_8" path="external/wpa_supplicant_8" revision="577c461714e762488ee28e57a73cfb2433f7b013" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/xmlrpcpp" path="external/xmlrpcpp" revision="1d7192fe0d2f788f8f150899c58b86c5ff10456a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/xmlwriter" path="external/xmlwriter" revision="e95d92246ee35273dde2bee8b00485cc14c12be5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/xmp_toolkit" path="external/xmp_toolkit" revision="42ea4dc6d1fc2206a7778029070ed9213e3b0fbf" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/zlib" path="external/zlib" revision="cec8538e6162907d587c5229b81fc6a025cc1236" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/zopfli" path="external/zopfli" revision="d467682cabdaff41673db87ccabc9dcd06977241" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/external/zxing" path="external/zxing" revision="fedf8f2d8099bf7bb85dc3db8699343d56617deb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/av" path="frameworks/av" revision="8653e22a1266b57783aecff3f4b216ffc390a626" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/base" path="frameworks/base" revision="57b3eb13ca3444edc25adc50c6108327ab0e3b5b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/compile/libbcc" path="frameworks/compile/libbcc" revision="4cb66fc782f5ddd803b3d58f3a6601766c8bbd3d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/compile/mclinker" path="frameworks/compile/mclinker" revision="119bb9b550f139ace5f69075390937c7f1222761" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/compile/slang" path="frameworks/compile/slang" revision="a1353a3b1919325944c23a19de834fcc89611b58" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/data-binding" path="frameworks/data-binding" revision="6f8746a3188fbce1d1f8c9619636a466e5d9c764" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/ex" path="frameworks/ex" revision="2b1aec58f3c1724c05ec5df5b1fd35f1eec62d9b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/minikin" path="frameworks/minikin" revision="c99e4b1330cb874b4af98b947a057bd2a8c6390c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/ml" path="frameworks/ml" revision="13223cca22c388bf9c4941fca3c92c5acfe73650" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/multidex" path="frameworks/multidex" revision="75c371d34b82a9523a60409f6454af5bb823b71e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/native" path="frameworks/native" revision="a620724085b62bf82994e4630781d4d22466f125" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/frameworks/opt/bitmap" path="frameworks/opt/bitmap" revision="a0d4e3108663202564a6833b76770075b8e5b767" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/bluetooth" path="frameworks/opt/bluetooth" revision="5a05db5fc8cce0ed7ef06f997465ed0aa704e645" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/calendar" path="frameworks/opt/calendar" revision="03b18577f8f8f799e87a62b8e03889ddacf6daa2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/chips" path="frameworks/opt/chips" revision="31237abec912843e83e45b0eb67c30afa3c673a0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/colorpicker" path="frameworks/opt/colorpicker" revision="c33b834030798db132a61f30c6f70433df76e368" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/datetimepicker" path="frameworks/opt/datetimepicker" revision="db59d045a5bc08b95900e4f3beafaca8b836b267" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/emoji" path="frameworks/opt/emoji" revision="92eede13edbf22b501edb9aeb92366f91eab9781" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/frameworks/opt/inputconnectioncommon" path="frameworks/opt/inputconnectioncommon" revision="3baece9b20fa480da46d860acd7320fd9eee3386" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/inputmethodcommon" path="frameworks/opt/inputmethodcommon" revision="990fcb1a6dbb5d1204cc8ec86e4bc3f691f4aeeb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/frameworks/opt/net/ethernet" path="frameworks/opt/net/ethernet" revision="091e32fe263ddb23cc1fd108c07464913a86cb5e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="frameworks_ims,pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/net/ims" path="frameworks/opt/net/ims" revision="3a91d5dab80bb467e4f16126351ba723bedf849a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/net/voip" path="frameworks/opt/net/voip" revision="6a9d43c0ed118b5de52e4bb42c0db3350e13b472" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/opt/net/wifi" path="frameworks/opt/net/wifi" revision="89b1e4c59f86432218cc4b64ab195f0379655c86" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/photoviewer" path="frameworks/opt/photoviewer" revision="d7e700d84227f493d7dbad3c7086c04848782eb4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/setupwizard" path="frameworks/opt/setupwizard" revision="8d0e423f3f887dddc1da97da2b522f3e9c583e32" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/opt/telephony" path="frameworks/opt/telephony" revision="9288a13eec655a04a20366c768b2f1d0909ceeb3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/timezonepicker" path="frameworks/opt/timezonepicker" revision="ee4e57e4a44f509e874c584ff2b3d4de829cb946" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/opt/vcard" path="frameworks/opt/vcard" revision="f92110d4a8671cf20255ca12e11fdd0f50b229ee" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/frameworks/rs" path="frameworks/rs" revision="a6563ddd6127fae2015ce399f4a6a64584ed9cde" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/support" path="frameworks/support" revision="8cb161cbbe5f863f2ef608397d613a7d37df9d07" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/volley" path="frameworks/volley" revision="20b215734ff1964013caa19e3c9aa44f3922611f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/webview" path="frameworks/webview" revision="ad75a55a161c28a96c3cf1a2ad6bda28ea5e9799" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/frameworks/wilhelm" path="frameworks/wilhelm" revision="b65e7cf94507d7a77cfe0c689189f9504739bec2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/hardware/akm" path="hardware/akm" revision="85837c2e77e032a834121ec3b9b6128f691d68a8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/hardware/broadcom/libbt" path="hardware/broadcom/libbt" revision="15aa3439adb1ba33262b82479618815e875d16de" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,broadcom_wlan" name="platform/hardware/broadcom/wlan" path="hardware/broadcom/wlan" revision="a1677fdb044d12be3ee109e6e80965af30c19dd7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/hardware/google/apf" path="hardware/google/apf" revision="d1edc21a85a43dc8a8eedcf5327bdf53c61e7f5f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="nvensense,pdk" name="platform/hardware/invensense" path="hardware/invensense" revision="1cd2b91506d2398677c4cb110266132ebcc8384c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/hardware/libhardware" path="hardware/libhardware" revision="1349f64bfd38aef3b1daa82bdbf238d4e2d942b8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/hardware/libhardware_legacy" path="hardware/libhardware_legacy" revision="99b98a291a13f93e3167e1df2f99b88498ab1e00" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/audio" path="hardware/qcom/audio" revision="96c5ec5e7d26d3b3624657f5cab9dcfd43035ec5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom" name="platform/hardware/qcom/bt" path="hardware/qcom/bt" revision="93873646dce041b54f230a53280b8953d87dd222" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/camera" path="hardware/qcom/camera" revision="cb6e1c76853cef2b4b03dc37f36bfcdb5e308512" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom,qcom_display" name="platform/hardware/qcom/display" path="hardware/qcom/display" revision="f5fccd5f86bc40a7321f69c1e2320427601d0a1f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom,qcom_gps" name="platform/hardware/qcom/gps" path="hardware/qcom/gps" revision="adb3855611a50ba17ed19c351f0ae5340103ae43" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom" name="platform/hardware/qcom/keymaster" path="hardware/qcom/keymaster" revision="3c67d8ee56a92c64f3fe8a3779a937d6b5e164df" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/media" path="hardware/qcom/media" revision="cd8d6d104b75fcc2a99f01e8f70c9145bb6dd82b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom,default" name="platform/hardware/qcom/sensors" path="hardware/qcom/sensors" revision="d79ce6c7b7feb39959c46001d31cb1b381811d15" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom_wlan" name="platform/hardware/qcom/wlan" path="hardware/qcom/wlan" revision="b7a8d163b4e2af11f1a1b8b5e5589ea2e56446ff" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/hardware/ril" path="hardware/ril" revision="8827ce9e5da761926a72f110814cf95323b56436" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/libcore" path="libcore" revision="63aa7258c6d0442689877fdaa8611074520185ff" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/libnativehelper" path="libnativehelper" revision="27155ef2b0d1341ecd69e0c05159393497545a6e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="generic_fs" name="platform/ndk" path="ndk" revision="f255acd92116b49634093282def8801e7b5e3261" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/apps/BasicSmsReceiver" path="packages/apps/BasicSmsReceiver" revision="b1c350315d75290de6c91c4b0fcf92428a776d3c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/apps/Bluetooth" path="packages/apps/Bluetooth" revision="d51ffb9205118f3c81416b75cfda13f0c776b5a0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Browser2" path="packages/apps/Browser2" revision="1e260500cae91e4651769b9eb861f65c4db1a901" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/CMFileManager" path="packages/apps/CMFileManager" revision="a0e60cc94b47cde1fdd3be81ed8e8fd856f6df82" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Calculator" path="packages/apps/Calculator" revision="f28667fd66f4b85572a6ab9cf1d119c2f55a82f6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Calendar" path="packages/apps/Calendar" revision="5cc0c0f006268b9a700507f210b4d3a1860612ff" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Camera" path="packages/apps/Camera" revision="33c59af04ab44eff0e3806f140d472252300646a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Camera2" path="packages/apps/Camera2" revision="c186ef2ff88e36012500422f1118b620e48dca0a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/apps/CarrierConfig" path="packages/apps/CarrierConfig" revision="cffc7bc8c73fe4ed40c983e46647414392c06e98" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/apps/CellBroadcastReceiver" path="packages/apps/CellBroadcastReceiver" revision="760a79b72e404c0c42cf3bded91d1e40dfdd01d2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/apps/CertInstaller" path="packages/apps/CertInstaller" revision="0fa6ecf2e6c7b751f1e3b92c85d8f8ebe11aac33" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Contacts" path="packages/apps/Contacts" revision="fb2148707f3f2287ba5354c4d073db171dbd13b4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/ContactsCommon" path="packages/apps/ContactsCommon" revision="5f6aa698f24cb2987b524c6643d231ba1140ca12" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/DeskClock" path="packages/apps/DeskClock" revision="d64a48c1cc44ba4429ab4699ffb301a40f2f7421" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/DevCamera" path="packages/apps/DevCamera" revision="e0fe95b40f19b43777b268e607e7580bf546cbfa" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Dialer" path="packages/apps/Dialer" revision="96ef213bf4879335f3c6bbe42eb1a62090094539" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Email" path="packages/apps/Email" revision="920f69856414337c3671a802f7313a654b7c3e18" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/EmergencyInfo" path="packages/apps/EmergencyInfo" revision="b24138eec783556355b7a1d5563b3c621e71121a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/ExactCalculator" path="packages/apps/ExactCalculator" revision="e44c06d581d9b79ea637d25705b394354ec7312b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/Exchange" path="packages/apps/Exchange" revision="9e2d7c47751ac34310c493443dea58ae65863406" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/FMRadio" path="packages/apps/FMRadio" revision="0ac2bfca003769e26fde841c9b7f03085a148ff9" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Gallery" path="packages/apps/Gallery" revision="e4ccd94c320d06e7877f49e0574fca898cf6c291" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Gallery2" path="packages/apps/Gallery2" revision="d2570faf36d67057b7954d426364ab174709c637" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/HTMLViewer" path="packages/apps/HTMLViewer" revision="aeb4fff160e1b8d3ce545590ae674cbb5412dc5b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/KeyChain" path="packages/apps/KeyChain" revision="12fe36ae4edef696c7a81e72b147706a74bb22fc" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Launcher2" path="packages/apps/Launcher2" revision="3ab72be120ab1fa73652aa4da59b858df57491c0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Launcher3" path="packages/apps/Launcher3" revision="cc2321f3b184fbf158d649bf25bdeca7fd27c99e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/LegacyCamera" path="packages/apps/LegacyCamera" revision="d0ff064cddaa6abe0fe26eb69c3977cba0d42346" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/ManagedProvisioning" path="packages/apps/ManagedProvisioning" revision="6b4e8a549adfd1361beabea3171c4e5c9286ba81" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Messaging" path="packages/apps/Messaging" revision="c2cd9cf392e3135e4ecf55ab32c1e026f0b31ef4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/Mms" path="packages/apps/Mms" revision="761d91264a8185f0ba011c425a8aece4d73a7357" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Music" path="packages/apps/Music" revision="e81a6d459ba0ea402af28343518d90b00a482d2b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/MusicFX" path="packages/apps/MusicFX" revision="51830fc147aa8190b015f9bbdb8154a9b1b17a3d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="apps_nfc,pdk-fs" name="platform/packages/apps/Nfc" path="packages/apps/Nfc" revision="b516b5681783ea38a834d77fc02926737472076f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/OneTimeInitializer" path="packages/apps/OneTimeInitializer" revision="01e429c08e51291315890de9677151a7e0b6ad35" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/apps/PackageInstaller" path="packages/apps/PackageInstaller" revision="3d1ecace225f930a80cc5f499adbc1f6da98469e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Phone" path="packages/apps/Phone" revision="79731f02b7009206a01182d2cca15dfc8491da09" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/apps/PhoneCommon" path="packages/apps/PhoneCommon" revision="fcc628cc1d5db8603f02cd47130b8b92dd2ef406" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Protips" path="packages/apps/Protips" revision="c38d4954d0676b9e2dd2e373273bddc2ef3e3502" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Provision" path="packages/apps/Provision" revision="61ae50d2a3139775eabc080d6121e207942df2b8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/QuickSearchBox" path="packages/apps/QuickSearchBox" revision="abcc2240bdd805c06d1a93390b52fb64cca24fd0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/SafetyRegulatoryInfo" path="packages/apps/SafetyRegulatoryInfo" revision="b1da14d3684714d43b0dcb9463c0c495e3d6ffa3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Settings" path="packages/apps/Settings" revision="029b1f81a7540935040ef501c2b8f45ac4ee99e8" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/SmartCardService" path="packages/apps/SmartCardService" revision="29eae320a4bd222b5ff1c092f84f1aebba88d0b7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/SnapdragonCamera" path="packages/apps/SnapdragonCamera" revision="ccae907388327f08d228c2d0027095b10d18e771" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/SnapdragonGallery" path="packages/apps/SnapdragonGallery" revision="e64d26f3e3708b492835f514ba17110e0a0f5b0c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/SnapdragonLauncher" path="packages/apps/SnapdragonLauncher" revision="512b272a13706fca47fcc5d29b1bd96e257795e7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/SnapdragonMusic" path="packages/apps/SnapdragonMusic" revision="89ffd1fafb07b75217d8b4a9979fa946c7d2cd48" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/SoundRecorder" path="packages/apps/SoundRecorder" revision="8b7d4b3a3419227740e50ba1cc0ecd739a078f91" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/SpareParts" path="packages/apps/SpareParts" revision="4db997871e3f4c3f84660815096e5276b47c5c91" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/SpeechRecorder" path="packages/apps/SpeechRecorder" revision="51cc8462c082a26810f5d7c5a2648232a77e795c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="apps_stk,pdk-fs" name="platform/packages/apps/Stk" path="packages/apps/Stk" revision="a1b7ed9707de1a39ffa82abdda5040929d13d20d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/StorageManager" path="packages/apps/StorageManager" revision="a83242b2c5f653c1cc956bda59410b84d5a89a7e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/TV" path="packages/apps/TV" revision="5c1f85c569aea9f6f830fb7b4dfd9a6e34645256" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Tag" path="packages/apps/Tag" revision="f3ce53a7c6b6bfcc7ec77e360b7fcd100860d53f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/Terminal" path="packages/apps/Terminal" revision="5b68e8ad082625206492ca9baf889f8c5427eb01" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/packages/apps/Test/connectivity" path="packages/apps/Test/connectivity" revision="16f4d5d5e4ce3307b9856ece583c953c2bc4389d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/TvSettings" path="packages/apps/TvSettings" revision="6f50259bf10f7f2fc47dbdde6a39c27b13738b5e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/apps/UnifiedEmail" path="packages/apps/UnifiedEmail" revision="834c9bcba3a31c35f794b7db314183ff26f0e442" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/apps/WallpaperPicker" path="packages/apps/WallpaperPicker" revision="b3b43923bd4340108b5f166ebc5dd6ff3380cfae" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/packages/experimental" path="packages/experimental" revision="6a615b6edb3352162e75e5957fb89149ce063869" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/inputmethods/LatinIME" path="packages/inputmethods/LatinIME" revision="c4093289d3b811a033a35dec8ecdbf3599652496" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/inputmethods/OpenWnn" path="packages/inputmethods/OpenWnn" revision="fee4ddccbb98c6d2454d5759ca5c9d7fe5119a5b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/providers/ApplicationsProvider" path="packages/providers/ApplicationsProvider" revision="33d26f5eedb3d3011762ce5b2de66e931bf64b35" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/providers/BlockedNumberProvider" path="packages/providers/BlockedNumberProvider" revision="c644e7780cd969abeb72d090419b600f4299772a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/providers/BookmarkProvider" path="packages/providers/BookmarkProvider" revision="6ec4bb392332b12162c5a8a1eaba1ee34d389c5c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/providers/CalendarProvider" path="packages/providers/CalendarProvider" revision="b6bd94db77f1dd721188a1a23b465433e6647300" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/providers/CallLogProvider" path="packages/providers/CallLogProvider" revision="76520bff016fdcef5ff384c780b0cdfb9c8b2578" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/providers/ContactsProvider" path="packages/providers/ContactsProvider" revision="7057fa3e04d1d002f4effe424fc3dbbd9081d0e6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/providers/DownloadProvider" path="packages/providers/DownloadProvider" revision="eb9f593866a03e575f1f8d161a35143a2e91d1bd" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/providers/MediaProvider" path="packages/providers/MediaProvider" revision="a3717164be7df193ca76a92620a75e45ff5d6fd4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/providers/PartnerBookmarksProvider" path="packages/providers/PartnerBookmarksProvider" revision="96d0a80af45923767baf449fc8c735c2f71d64ae" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/providers/TelephonyProvider" path="packages/providers/TelephonyProvider" revision="554b3e196885f5c78b66daad92ec7cddf0d92987" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/providers/TvProvider" path="packages/providers/TvProvider" revision="f8a42d053d316fdcb0926f1556e6bc072898e152" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/providers/UserDictionaryProvider" path="packages/providers/UserDictionaryProvider" revision="42cab3f3a8e6fddd5ab3651fd02cf7a85f9b670a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/screensavers/Basic" path="packages/screensavers/Basic" revision="0ad1e2501af14c34275b925de361533a23713365" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/screensavers/PhotoTable" path="packages/screensavers/PhotoTable" revision="11f2137494e0afeff3c6cca7b0528d92a45a00d4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/screensavers/WebView" path="packages/screensavers/WebView" revision="6e0a80f6faed6191acc8ce1b6c79eada09e9e042" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="adp8064,pdk-cw-fs,pdk-fs" name="platform/packages/services/Car" path="packages/services/Car" revision="e9c93156879c6ddb0c21124826a6cca2d548deaa" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/services/Mms" path="packages/services/Mms" revision="d97cc4b37a74eeeedcceb3395b3b0b02aa7414ac" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/services/Telecomm" path="packages/services/Telecomm" revision="4149e84993d1ec59f67148cc6aa06eb998bc6318" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/packages/services/Telephony" path="packages/services/Telephony" revision="6828d9b35f10d985d0ea0273e301af1c661c9ffd" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/packages/wallpapers/LivePicker" path="packages/wallpapers/LivePicker" revision="175dea0b52ecd4686dceea0192bc75ebf9983e57" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/pdk" path="pdk" revision="708589163e790eb3a7fec09f4832a0f78999bdf3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs,pdk-cw-fs,cts" name="platform/platform_testing" path="platform_testing" revision="2a5866138faf2a88a6f4f74ef8d57e8f8f82b3ec" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/prebuilts/android-emulator" path="prebuilts/android-emulator" revision="4cfa2f2b82149b4d196c22f4518bef4d1d089118" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/prebuilts/clang/host/linux-x86" path="prebuilts/clang/host/linux-x86" revision="173b98fbb3d1a68241f17de1129c4842c9d1e5dd" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/host/3.6" path="prebuilts/clang/linux-x86/host/3.6" revision="b660e8f76f1543abf50ebfbdb8d10112d93fec3d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/prebuilts/deqp" path="prebuilts/deqp" revision="79ee2a5edf22b3d80c41a6234a835d18ba62d6e2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/prebuilts/devtools" path="prebuilts/devtools" revision="d054448a1147fc5294089b6ac7aa3abe92202761" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/prebuilts/eclipse" path="prebuilts/eclipse" revision="cf9f78f8cf41b16edf9f712598a42743d5cea4af" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,darwin,arm" name="platform/prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" revision="6d08ca9f45ff685648fd13c75bf5cac4b11c19bb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" revision="6ca6746f5fafd7d1b162451dce2ae40741529e9e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" path="prebuilts/gcc/linux-x86/arm/arm-eabi-4.8" revision="26e93f6af47f7bd3a9beb5c102a5f45e19bfa38a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9" path="prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9" revision="0390252b6bcc6217966ade31d07f8b12f6f78f89" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" revision="1273431a189717842f033573eb8c777e13dd88b7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.15-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.15-4.8" revision="73ca99196723f810dad42390d154654354f57c16" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-fs" name="platform/prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" path="prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" revision="c795eed743bc6cee4ead5407cc237c43abf6fa26" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,linux,x86" name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" revision="54c4ed4b1a910bcc8e37196acb7fa85e872de9e4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="linux" name="platform/prebuilts/gdb/linux-x86" path="prebuilts/gdb/linux-x86" revision="a127511ea115778e9eb92f473a8649146b8de4f3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="linux,tradefed" name="platform/prebuilts/go/linux-x86" path="prebuilts/go/linux-x86" revision="da62ef48b4a290a5b058574b4fa89c30e7afa9ca" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/prebuilts/gradle-plugin" path="prebuilts/gradle-plugin" revision="5009db75c8c6b928fe89eb68992713a54e4409bb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/prebuilts/libs/libedit" path="prebuilts/libs/libedit" revision="d32685dba4011664b590b94ad156bc734c2c9bb5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/prebuilts/maven_repo/android" path="prebuilts/maven_repo/android" revision="4b04d11739fb283b97f4bd45f609d593ebee4e47" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/prebuilts/misc" path="prebuilts/misc" revision="ef3295a94b55e766d5a4e08235a6a731beb326c2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="309df12dbc3d1b79ad4e31ba7acc489b210da954" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="linux,pdk,tradefed" name="platform/prebuilts/ninja/linux-x86" path="prebuilts/ninja/linux-x86" revision="e06773d2a6d3add662276276d14477ddad82c805" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="linux,pdk,pdk-cw-fs,pdk-fs" name="platform/prebuilts/python/linux-x86/2.7.5" path="prebuilts/python/linux-x86/2.7.5" revision="74e4f93e81205ac85f74eaf5fd4c86515779aee1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/prebuilts/qemu-kernel" path="prebuilts/qemu-kernel" revision="cf60687853face8091fe3f8da94f5c69ff44c308" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/prebuilts/sdk" path="prebuilts/sdk" revision="dfc07d28b280238284dfdbb4f5c94b55708af230" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk,tools" name="platform/prebuilts/tools" path="prebuilts/tools" revision="0643d4d5293a81cff9f23435d26c1606c7b676a7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk-cw-fs,pdk-fs" name="platform/sdk" path="sdk" revision="317031cb0035803f54c21cc78ea7cf830a247865" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/bt" path="system/bt" revision="958ce4ef621a3ed071139fc5f186edf29cd14cad" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/ca-certificates" path="system/ca-certificates" revision="d1759b4fb3e309a892020fce79907f3bb0763f86" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/connectivity/apmanager" path="system/connectivity/apmanager" revision="091f291b5a1c6bf3f88257525766b5ca52adc5c1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/connectivity/dhcp_client" path="system/connectivity/dhcp_client" revision="c67e5219a3efb284d87109ab7f92afaeeb7533a4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/connectivity/shill" path="system/connectivity/shill" revision="269d710ded3ced0d1857430bf2da5a670629afe1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/core" path="system/core" revision="1f069017a8ed0c4cf20a396d97641ac648d970ea" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/extras" path="system/extras" revision="c94f9b6dfa871f3418e73090618c1246026467fc" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/firewalld" path="system/firewalld" revision="cf719c0fcdc0430d7fc1f1bc561780ac3059257b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/gatekeeper" path="system/gatekeeper" revision="e3fab37e2aec7e09a1956ffaa0c05a63a6f539e7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/keymaster" path="system/keymaster" revision="30a84ce22ffc3b0912cd632d5510f33316aac65e" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/media" path="system/media" revision="839926e944ee0a53178cb3ea22dace6891d5fdbb" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/nativepower" path="system/nativepower" revision="70d55adbe30ccab9ce54ee782aa80724ad27862b" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/netd" path="system/netd" revision="d0c26c36af5de6ecade2145e0a933706edf21dd1" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/nvram" path="system/nvram" revision="c8e2b037667539ddbde0a0a782b8258964ca4fce" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/qcom" path="vendor/qcom/opensource/softap" revision="f4e6d190704cdcdf3b864efd764a164cac0c3c28" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/security" path="system/security" revision="22f2a4f8e0d0b9808a51032069c2df7d6a9baba3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/sepolicy" path="system/sepolicy" revision="809123cdcbbf443355efd5924c0ca36796c3963c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/tools/aidl" path="system/tools/aidl" revision="66f336d4e3d3418f89316b1eec3e25e9933a7e3d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/tpm" path="system/tpm" revision="8e9be04bfdf8501018518989a56f588e136deaf0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/update_engine" path="system/update_engine" revision="822060e4896ffb920cdd8336e1d5f18255773115" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/system/vold" path="system/vold" revision="581f6b88060ca5284ad89b3fe2686a58dc0f3748" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/weaved" path="system/weaved" revision="4d47bad5657b91bf56d0bde1e329fa8d9be4fdc4" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/system/webservd" path="system/webservd" revision="205bca472f0b8434fdeefa0d02852f48610448a5" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="tools" name="platform/tools/external/fat32lib" path="tools/external/fat32lib" revision="3880776e41ff7def06e351720f2d162f88b58a03" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="tools" name="platform/tools/external/gradle" path="tools/external/gradle" revision="4bc4361809f110e82cb714f2b0efe3491a0f76b2" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="pdk" name="platform/tools/test/connectivity" path="tools/test/connectivity" revision="29ff5d40039e070e19fdc472fc2eeb995cd1be69" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/codeaurora/telephony" path="vendor/codeaurora/telephony" revision="854e9fa12b3c6531dfbf6f088853285768392a91" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/nxp/opensource/external/libnfc-nci" path="vendor/nxp/opensource/external/libnfc-nci" revision="ae554a05eb88f08df34ee5421d86f59b954ea916" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/nxp/opensource/frameworks" path="vendor/nxp/opensource/frameworks" revision="2bbcb56b09eef00e66bafcca4aab9a6e2f3c9b70" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/nxp/opensource/packages/apps/Nfc" path="vendor/nxp/opensource/packages/apps/Nfc" revision="8eb1a0dee336510ba1768c9b55fbd8ab53497f4c" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project groups="qcom" name="platform/vendor/qcom-opensource/bluetooth" path="vendor/qcom/opensource/bluetooth" revision="86c50af4ef7d4623715372789ec419cbb9d0a370" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/dataservices" path="vendor/qcom/opensource/dataservices" revision="6ed645ba533dde0b2150992134f185983c81bd0d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/display-frameworks" path="vendor/qcom/opensource/display-frameworks" revision="ff2c56a3832e41024eef9da4e070f68ff2ff7318" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/dpm" path="vendor/qcom/opensource/dpm" revision="e17a0e7f08d03ee49769f810a032bafaaf5311b3" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/fm" path="vendor/qcom/opensource/fm" revision="2a47ed6713214628d7de468d3b47577adadd2418" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/kernel/kernel-tests" path="vendor/qcom/opensource/kernel-tests" revision="dba326ca31f84e1ce1cb44d3a6d1e753d2b459fc" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/location" path="vendor/qcom/opensource/location" revision="3eb284ba29407fc91920a0055c5485e5caaed24f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/rcs-service" path="vendor/qcom/opensource/rcs-service" revision="5dccbab946b999207ff3ceb3ac5f3afea6669775" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/time-services" path="vendor/qcom/opensource/time-services" revision="dfab2a8b0418966421160512bfb18ec57b20159f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/wlan/prima" path="vendor/qcom/opensource/wlan/prima" revision="0c46c754fd87407fee88c266e4c8b5f3df56df25" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom-opensource/wlan/utils/sigma-dut" path="vendor/qcom/opensource/wlan/utils/sigma-dut" revision="7aaa0e304a2ea67aa08bfd6e2884f1e77b093f1a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/ferrum" path="device/qcom/msm8909" revision="35e16771b5a452d6f8dfe62cd6bbe98e90552011" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/ferrum_512" path="device/qcom/msm8909_512" revision="7f8a2f0cd2fd7464e1bb5635d9363ced0cdd4326" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/ferrum_LMT" path="device/qcom/msm8909_LMT" revision="d53ae37971992b5195203d4227fef2f4ccf04235" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8909w" path="device/qcom/msm8909w" revision="760d6efd87f73c635efa6a694d781a1238f7a85d" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8916" path="device/qcom/msm8916" revision="36cfe69cc1f172561f68d3e89e93246d6f22ea6a" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8916_32" path="device/qcom/msm8916_32" revision="47f3c704f8690af39a3c567a06fcfddf73f0fd76" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8916_32_512" path="device/qcom/msm8916_32_512" revision="c2d99dbf11942f458949a55a597dd078e7ce632f" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8916_32_LMT" path="device/qcom/msm8916_32_LMT" revision="4318bf841a1030b37dea14fe66d1b395c05a3930" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8916_32_k64" path="device/qcom/msm8916_32_k64" revision="78c4f720355351580b6e474f46f4fbf0673d25b0" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8916_64" path="device/qcom/msm8916_64" revision="616f8465e7e1a44ae01b402e845b101bf4ae9ce6" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/msm8916_64_LMT" path="device/qcom/msm8916_64_LMT" revision="35d5936246426a1e79b55cb6752a901d9aaacdca" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="platform/vendor/qcom/plutonium" path="device/qcom/msm8994" revision="c91eac4fc31c25619877c75e93bc10d1dca281d7" upstream="LA.BR.1.2.9_rb1.15"/>
+  <project name="toolchain/binutils" revision="edd2dff23373691ae99fe7b0643ec9632bcfe692" upstream="LA.BR.1.2.9_rb1.15"/>
+  <!-- END OF CAF MANIFEST -->
+
+  <!-- Remove unwanted Android things -->
+  <remove-project name="platform/art" />
+  <remove-project name="platform/cts" />
+  <remove-project name="platform/dalvik" />
+  <remove-project name="platform/developers/build" />
+  <remove-project name="platform/developers/demos" />
+  <remove-project name="platform/developers/samples/android" />
+  <remove-project name="platform/development" />
+  <remove-project name="platform/docs/source.android.com" />
+  <remove-project name="platform/external/ant-glob" />
+  <remove-project name="platform/external/antlr" />
+  <remove-project name="platform/external/apache-commons-math" />
+  <remove-project name="platform/external/apache-harmony" />
+  <remove-project name="platform/external/apache-http" />
+  <remove-project name="platform/external/apache-xml" />
+  <remove-project name="platform/external/cblas" />
+  <remove-project name="platform/external/ceres-solver" />
+  <remove-project name="platform/external/chromium-libpac" />
+  <remove-project name="platform/external/chromium-trace" />
+  <remove-project name="platform/external/chromium-webview" />
+  <remove-project name="platform/external/cmockery" />
+  <remove-project name="platform/external/conscrypt" />
+  <remove-project name="platform/external/deqp" />
+  <remove-project name="platform/external/dexmaker" />
+  <remove-project name="platform/external/doclava" />
+  <remove-project name="platform/external/droiddriver" />
+  <remove-project name="platform/external/easymock" />
+  <remove-project name="platform/external/eclipse-basebuilder" />
+  <remove-project name="platform/external/eclipse-windowbuilder" />
+  <remove-project name="platform/external/eigen" />
+  <remove-project name="platform/external/emma" />
+  <remove-project name="platform/external/fio" />
+  <remove-project name="platform/external/glide" />
+  <remove-project name="platform/external/google-fonts/carrois-gothic-sc" />
+  <remove-project name="platform/external/google-fonts/coming-soon" />
+  <remove-project name="platform/external/google-fonts/cutive-mono" />
+  <remove-project name="platform/external/google-fonts/dancing-script" />
+  <remove-project name="platform/external/google-tv-pairing-protocol" />
+  <remove-project name="platform/external/guava" />
+  <remove-project name="platform/external/hamcrest" />
+  <remove-project name="platform/external/hyphenation-patterns" />
+  <remove-project name="platform/external/jarjar" />
+  <remove-project name="platform/external/javasqlite" />
+  <remove-project name="platform/external/javassist" />
+  <remove-project name="platform/external/jsilver" />
+  <remove-project name="platform/external/jsr305" />
+  <remove-project name="platform/external/junit" />
+  <remove-project name="platform/external/libedit" />
+  <remove-project name="platform/external/libexif" />
+  <remove-project name="platform/external/libhevc" />
+  <remove-project name="platform/external/libnfc-nci" />
+  <remove-project name="platform/external/libnfc-nxp" />
+  <remove-project name="platform/external/libphonenumber" />
+  <remove-project name="platform/external/markdown" />
+  <remove-project name="platform/external/mesa3d" />
+  <remove-project name="platform/external/mockito" />
+  <remove-project name="platform/external/mockwebserver" />
+  <remove-project name="platform/external/nanohttpd" />
+  <remove-project name="platform/external/naver-fonts" />
+  <remove-project name="platform/external/neven" />
+  <remove-project name="platform/external/nist-pkits" />
+  <remove-project name="platform/external/nist-sip" />
+  <remove-project name="platform/external/noto-fonts" />
+  <remove-project name="platform/external/objenesis" />
+  <remove-project name="platform/external/okhttp" />
+  <remove-project name="platform/external/opencv" />
+  <remove-project name="platform/external/opencv3" />
+  <remove-project name="platform/external/owasp/sanitizer" />
+  <remove-project name="platform/external/pdfium" />
+  <remove-project name="platform/external/ppp" />
+  <remove-project name="platform/external/proguard" />
+  <remove-project name="platform/external/replicaisland" />
+  <remove-project name="platform/external/robolectric" />
+  <remove-project name="platform/external/roboto-fonts" />
+  <remove-project name="platform/external/smali" />
+  <remove-project name="platform/external/srtp" />
+  <remove-project name="platform/external/tagsoup" />
+  <remove-project name="platform/external/timezonepicker-support" />
+  <remove-project name="platform/external/vixl" />
+  <remove-project name="platform/external/webrtc" />
+  <remove-project name="platform/external/xmp_toolkit" />
+  <remove-project name="platform/frameworks/compile/libbcc" />
+  <remove-project name="platform/frameworks/compile/mclinker" />
+  <remove-project name="platform/frameworks/compile/slang" />
+  <remove-project name="platform/frameworks/data-binding" />
+  <remove-project name="platform/frameworks/minikin" />
+  <remove-project name="platform/frameworks/ml" />
+  <remove-project name="platform/frameworks/multidex" />
+  <remove-project name="platform/frameworks/opt/bitmap" />
+  <remove-project name="platform/frameworks/opt/bluetooth" />
+  <remove-project name="platform/frameworks/opt/calendar" />
+  <remove-project name="platform/frameworks/opt/chips" />
+  <remove-project name="platform/frameworks/opt/colorpicker" />
+  <remove-project name="platform/frameworks/opt/datetimepicker" />
+  <remove-project name="platform/frameworks/opt/emoji" />
+  <remove-project name="platform/frameworks/opt/inputconnectioncommon" />
+  <remove-project name="platform/frameworks/opt/inputmethodcommon" />
+  <remove-project name="platform/frameworks/opt/net/ethernet" />
+  <remove-project name="platform/frameworks/opt/net/ims" />
+  <remove-project name="platform/frameworks/opt/net/voip" />
+  <remove-project name="platform/frameworks/opt/net/wifi" />
+  <remove-project name="platform/frameworks/opt/photoviewer" />
+  <remove-project name="platform/frameworks/opt/setupwizard" />
+  <remove-project name="platform/frameworks/opt/telephony" />
+  <remove-project name="platform/frameworks/opt/timezonepicker" />
+  <remove-project name="platform/frameworks/opt/vcard" />
+  <remove-project name="platform/frameworks/rs" />
+  <remove-project name="platform/frameworks/support" />
+  <remove-project name="platform/frameworks/volley" />
+  <remove-project name="platform/frameworks/webview" />
+  <remove-project name="platform/packages/apps/BasicSmsReceiver" />
+  <remove-project name="platform/packages/apps/Bluetooth" />
+  <remove-project name="platform/packages/apps/Browser2" />
+  <remove-project name="platform/packages/apps/Calculator" />
+  <remove-project name="platform/packages/apps/Calendar" />
+  <remove-project name="platform/packages/apps/Camera" />
+  <remove-project name="platform/packages/apps/Camera2" />
+  <remove-project name="platform/packages/apps/CarrierConfig" />
+  <remove-project name="platform/packages/apps/CellBroadcastReceiver" />
+  <remove-project name="platform/packages/apps/CertInstaller" />
+  <remove-project name="platform/packages/apps/CMFileManager" />
+  <remove-project name="platform/packages/apps/Contacts" />
+  <remove-project name="platform/packages/apps/ContactsCommon" />
+  <remove-project name="platform/packages/apps/DeskClock" />
+  <remove-project name="platform/packages/apps/DevCamera" />
+  <remove-project name="platform/packages/apps/Dialer" />
+  <remove-project name="platform/packages/apps/Email" />
+  <remove-project name="platform/packages/apps/EmergencyInfo" />
+  <remove-project name="platform/packages/apps/ExactCalculator" />
+  <remove-project name="platform/packages/apps/Exchange" />
+  <remove-project name="platform/packages/apps/FMRadio" />
+  <remove-project name="platform/packages/apps/Gallery" />
+  <remove-project name="platform/packages/apps/Gallery2" />
+  <remove-project name="platform/packages/apps/HTMLViewer" />
+  <remove-project name="platform/packages/apps/KeyChain" />
+  <remove-project name="platform/packages/apps/Launcher2" />
+  <remove-project name="platform/packages/apps/Launcher3" />
+  <remove-project name="platform/packages/apps/LegacyCamera" />
+  <remove-project name="platform/packages/apps/ManagedProvisioning" />
+  <remove-project name="platform/packages/apps/Messaging" />
+  <remove-project name="platform/packages/apps/Mms" />
+  <remove-project name="platform/packages/apps/Music" />
+  <remove-project name="platform/packages/apps/MusicFX" />
+  <remove-project name="platform/packages/apps/Nfc" />
+  <remove-project name="platform/packages/apps/OneTimeInitializer" />
+  <remove-project name="platform/packages/apps/PackageInstaller" />
+  <remove-project name="platform/packages/apps/Phone" />
+  <remove-project name="platform/packages/apps/PhoneCommon" />
+  <remove-project name="platform/packages/apps/Protips" />
+  <remove-project name="platform/packages/apps/Provision" />
+  <remove-project name="platform/packages/apps/QuickSearchBox" />
+  <remove-project name="platform/packages/apps/SafetyRegulatoryInfo" />
+  <remove-project name="platform/packages/apps/Settings" />
+  <remove-project name="platform/packages/apps/SmartCardService" />
+  <remove-project name="platform/packages/apps/SnapdragonCamera" />
+  <remove-project name="platform/packages/apps/SnapdragonGallery" />
+  <remove-project name="platform/packages/apps/SnapdragonLauncher" />
+  <remove-project name="platform/packages/apps/SnapdragonMusic" />
+  <remove-project name="platform/packages/apps/SoundRecorder" />
+  <remove-project name="platform/packages/apps/SpareParts" />
+  <remove-project name="platform/packages/apps/SpeechRecorder" />
+  <remove-project name="platform/packages/apps/Stk" />
+  <remove-project name="platform/packages/apps/StorageManager" />
+  <remove-project name="platform/packages/apps/TV" />
+  <remove-project name="platform/packages/apps/Tag" />
+  <remove-project name="platform/packages/apps/Terminal" />
+  <remove-project name="platform/packages/apps/Test/connectivity" />
+  <remove-project name="platform/packages/apps/TvSettings" />
+  <remove-project name="platform/packages/apps/UnifiedEmail" />
+  <remove-project name="platform/packages/apps/WallpaperPicker" />
+  <remove-project name="platform/packages/experimental" />
+  <remove-project name="platform/packages/inputmethods/LatinIME" />
+  <remove-project name="platform/packages/inputmethods/OpenWnn" />
+  <remove-project name="platform/packages/providers/ApplicationsProvider" />
+  <remove-project name="platform/packages/providers/BlockedNumberProvider" />
+  <remove-project name="platform/packages/providers/BookmarkProvider" />
+  <remove-project name="platform/packages/providers/CalendarProvider" />
+  <remove-project name="platform/packages/providers/CallLogProvider" />
+  <remove-project name="platform/packages/providers/ContactsProvider" />
+  <remove-project name="platform/packages/providers/DownloadProvider" />
+  <remove-project name="platform/packages/providers/MediaProvider" />
+  <remove-project name="platform/packages/providers/PartnerBookmarksProvider" />
+  <remove-project name="platform/packages/providers/TelephonyProvider" />
+  <remove-project name="platform/packages/providers/TvProvider" />
+  <remove-project name="platform/packages/providers/UserDictionaryProvider" />
+  <remove-project name="platform/packages/screensavers/Basic" />
+  <remove-project name="platform/packages/screensavers/PhotoTable" />
+  <remove-project name="platform/packages/screensavers/WebView" />
+  <remove-project name="platform/packages/services/Car" />
+  <remove-project name="platform/packages/services/Mms" />
+  <remove-project name="platform/packages/services/Telecomm" />
+  <remove-project name="platform/packages/services/Telephony" />
+  <remove-project name="platform/packages/wallpapers/LivePicker" />
+  <remove-project name="platform/pdk" />
+  <remove-project name="platform/platform_testing" />
+  <remove-project name="platform/prebuilts/devtools" />
+  <remove-project name="platform/prebuilts/eclipse" />
+  <remove-project name="platform/prebuilts/gcc/darwin-x86/arm/arm-eabi-4.8" />
+  <remove-project name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" />
+  <remove-project name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.8" />
+  <remove-project name="platform/prebuilts/gcc/linux-x86/host/x86_64-w64-mingw32-4.8" />
+  <remove-project name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" />
+  <remove-project name="platform/prebuilts/gradle-plugin" />
+  <remove-project name="platform/prebuilts/maven_repo/android" />
+  <remove-project name="platform/prebuilts/tools" />
+  <remove-project name="platform/vendor/nxp/opensource/packages/apps/Nfc" />
+  <remove-project name="platform/vendor/qcom-opensource/fm" />
+  <remove-project name="platform/tools/external/fat32lib" />
+  <remove-project name="platform/tools/external/gradle" />
+  <remove-project name="platform/tools/test/connectivity" />
+
+</manifest>

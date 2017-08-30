@@ -1,0 +1,29 @@
+From 7c250cc9037613d866e7444ed58345818d62cfae Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 1 Aug 2016 20:13:37 -0700
+Subject: [PATCH] dtbtool now works on XFS/Centos
+
+Change-Id: I897815bf057fbd0c64daf6dcb8314332d51b173e
+---
+ dtbtool/dtbtool.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/dtbtool/dtbtool.c b/dtbtool/dtbtool.c
+index af219ca..6d843cf 100644
+--- a/dtbtool/dtbtool.c
++++ b/dtbtool/dtbtool.c
+@@ -758,7 +758,10 @@ int main(int argc, char **argv)
+        extract "qcom,msm-id" parameter
+      */
+     while ((dp = readdir(dir)) != NULL) {
+-        if ((dp->d_type == DT_REG)) {
++        // Permit DT_UNKNOWN, which is returned by an xfs filesystem.
++        // Techncially the code should then use lstat to determine the type but
++        // that's not necessary to make this particular code work on Centos
++        if ((dp->d_type == DT_REG) || (dp->d_type == DT_UNKNOWN)) {
+             flen = strlen(dp->d_name);
+             if ((flen > 4) &&
+                 (strncmp(&dp->d_name[flen-4], ".dtb", 4) == 0)) {
+-- 
+2.9.2
+

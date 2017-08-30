@@ -1,0 +1,27 @@
+From fad9fecb3741b20b121570a1f20bd0f8bdfa5ef9 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Mon, 6 Mar 2017 07:50:54 -0800
+Subject: [PATCH] Remove Flatland
+
+Change-Id: Iad2f66b56ff5e84298698256c72abd094c4e2c15
+---
+ base.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/base.mk b/base.mk
+index 0081f53..1a7cabc 100644
+--- a/base.mk
++++ b/base.mk
+@@ -752,9 +752,6 @@ PRODUCT_PACKAGES += \
+ # Qcril configuration file
+ PRODUCT_PACKAGES += qcril.db
+ 
+-# Flatland
+-PRODUCT_PACKAGES += flatland
+-
+ # MSM updater library
+ PRODUCT_PACKAGES += librecovery_updater_msm
+ 
+-- 
+2.11.0
+

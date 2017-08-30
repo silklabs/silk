@@ -1,0 +1,25 @@
+From 6e163072858221168f363254b3b8f2db10732c59 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 08:49:24 -0700
+Subject: [PATCH] Include BT
+
+Change-Id: I2befb3f37a67ba0b908f874a6773e3a1274f4153
+---
+ base.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/base.mk b/base.mk
+index 2f98bbb..2b9e40c 100644
+--- a/base.mk
++++ b/base.mk
+@@ -132,6 +132,7 @@ BT += libattrib_static
+ BT += hcidump.sh
+ BT += libbt-vendor
+ BT += libbthost_if
++BT += bluetooth.default
+ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/qcom/common
+ 
+ #C2DColorConvert
+-- 
+2.11.0
+

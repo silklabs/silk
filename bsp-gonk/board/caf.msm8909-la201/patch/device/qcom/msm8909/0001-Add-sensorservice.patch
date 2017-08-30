@@ -1,0 +1,27 @@
+From 7eac0a39d4cf9126c4ae332fc987af3509d825a5 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 08:50:41 -0700
+Subject: [PATCH] Add sensorservice
+
+Change-Id: I3ce4a862bf42e66b129315893d57583816a145f1
+---
+ init.target.rc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/init.target.rc b/init.target.rc
+index 74d85ae..eca15ce 100755
+--- a/init.target.rc
++++ b/init.target.rc
+@@ -180,6 +180,9 @@ service imsqmidaemon /system/bin/imsqmidaemon
+     group radio log qcom_diag
+     disabled
+ 
++service sensorservice /system/bin/sensorservice
++    class main
++
+ on property:service.qti.ims.enabled=1
+     start imsqmidaemon
+ 
+-- 
+2.11.0
+

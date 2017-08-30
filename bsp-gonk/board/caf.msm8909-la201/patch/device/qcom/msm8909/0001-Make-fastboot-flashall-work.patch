@@ -1,0 +1,26 @@
+From b50a4f6db4618201be811fea7e65876d229b8855 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 08:54:26 -0700
+Subject: [PATCH] Make |fastboot flashall| work
+
+Change-Id: I4c2aaae12984ec139556306f968b91ee0b97fb41
+---
+ BoardConfig.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index ef454f5..a37bae1 100755
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -63,7 +63,7 @@ ARCH_ARM_HAVE_TLS_REGISTER := true
+ 
+ TARGET_HARDWARE_3D := false
+ TARGET_BOARD_PLATFORM := msm8909
+-TARGET_BOOTLOADER_BOARD_NAME := msm8909
++TARGET_BOOTLOADER_BOARD_NAME := MSM8909
+ 
+ BOARD_SECCOMP_POLICY := device/qcom/$(TARGET_BOARD_PLATFORM)/seccomp
+ 
+-- 
+2.11.0
+

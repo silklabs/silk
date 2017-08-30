@@ -1,0 +1,60 @@
+From f9295b7d097389a26ac735ece58848bd6613746a Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 08:21:26 -0700
+Subject: [PATCH] Disable bootanimation
+
+Change-Id: I67ce2e45e96ef580ed8036b5cee0c265e52e67bc
+---
+ cmds/bootanimation/Android.mk | 40 ----------------------------------------
+ 1 file changed, 40 deletions(-)
+ delete mode 100644 cmds/bootanimation/Android.mk
+
+diff --git a/cmds/bootanimation/Android.mk b/cmds/bootanimation/Android.mk
+deleted file mode 100644
+index 0b211fcb..00000000
+--- a/cmds/bootanimation/Android.mk
++++ /dev/null
+@@ -1,40 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-    bootanimation_main.cpp \
+-    audioplay.cpp \
+-    BootAnimation.cpp
+-
+-LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
+-
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
+-
+-LOCAL_C_INCLUDES += \
+-    external/tinyalsa/include \
+-    frameworks/wilhelm/include
+-
+-LOCAL_SHARED_LIBRARIES := \
+-    libcutils \
+-    liblog \
+-    libandroidfw \
+-    libutils \
+-    libbinder \
+-    libui \
+-    libskia \
+-    libEGL \
+-    libGLESv1_CM \
+-    libgui \
+-    libOpenSLES \
+-    libtinyalsa \
+-    libregionalization
+-
+-LOCAL_MODULE:= bootanimation
+-
+-LOCAL_INIT_RC := bootanim.rc
+-
+-ifdef TARGET_32_BIT_SURFACEFLINGER
+-LOCAL_32_BIT_ONLY := true
+-endif
+-
+-include $(BUILD_EXECUTABLE)
+-- 
+2.11.0
+

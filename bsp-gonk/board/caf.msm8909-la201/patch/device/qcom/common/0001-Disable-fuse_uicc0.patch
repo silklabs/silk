@@ -1,0 +1,25 @@
+From 42fe60d89d3929637a2f4155f73d200962884aec Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Sat, 11 Jun 2016 18:48:07 -0700
+Subject: [PATCH] Disable fuse_uicc0
+
+Change-Id: I5cfa026c986dbfa4c3062c130c39913709bf12d4
+---
+ rootdir/etc/init.qcom.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rootdir/etc/init.qcom.rc b/rootdir/etc/init.qcom.rc
+index e4d50e0..97f36c5 100644
+--- a/rootdir/etc/init.qcom.rc
++++ b/rootdir/etc/init.qcom.rc
+@@ -870,6 +870,7 @@ service fuse_sdcard1 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw
+ 
+ service fuse_uicc0 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/uicc0 /storage/uicc0
+     class late_start
++    disabled
+ 
+ service fuse_uicc1 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/uicc1 /storage/uicc1
+     class late_start
+-- 
+2.7.0
+

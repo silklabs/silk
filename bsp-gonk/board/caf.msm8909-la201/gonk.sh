@@ -1,0 +1,3 @@
+export TARGET_PRODUCT=msm8909
+export TARGET_BUILD_VARIANT=userdebug
+export TARGET_BUILD_TYPE=release

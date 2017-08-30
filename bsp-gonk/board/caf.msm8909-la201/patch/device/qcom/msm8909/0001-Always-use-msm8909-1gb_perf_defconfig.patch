@@ -1,0 +1,26 @@
+From b82af6bf1dee39df24ca3034d34b30445ecfa204 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 4 Oct 2016 13:01:39 -0700
+Subject: [PATCH] Always use msm8909-1gb-perf_defconfig
+
+Change-Id: I74857af767c6f6f9afa21c822f0c28fbbd2b2454
+---
+ AndroidBoard.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/AndroidBoard.mk b/AndroidBoard.mk
+index 2f4bf7a..fd09591 100644
+--- a/AndroidBoard.mk
++++ b/AndroidBoard.mk
+@@ -37,7 +37,7 @@ ifeq ($(KERNEL_DEFCONFIG),)
+     ifeq ($(TARGET_BUILD_VARIANT),user)
+       KERNEL_DEFCONFIG := msm8909-1gb-perf_defconfig
+     else
+-      KERNEL_DEFCONFIG := msm8909-1gb_defconfig
++      KERNEL_DEFCONFIG := msm8909-1gb-perf_defconfig
+     endif
+ endif
+ 
+-- 
+2.9.2
+

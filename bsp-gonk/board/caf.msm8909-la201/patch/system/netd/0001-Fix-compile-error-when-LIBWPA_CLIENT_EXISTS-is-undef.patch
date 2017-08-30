@@ -1,0 +1,27 @@
+From 423789e063360d3c433edd5184a97fb4fc7bb405 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 09:40:03 -0700
+Subject: [PATCH] Fix compile error when LIBWPA_CLIENT_EXISTS is undefined
+
+Change-Id: I2e6ed7914b6771dce194d50cd49f3a4edd695e5f
+---
+ server/SoftapController.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/server/SoftapController.cpp b/server/SoftapController.cpp
+index b0bce42..3c71211 100755
+--- a/server/SoftapController.cpp
++++ b/server/SoftapController.cpp
+@@ -154,6 +154,9 @@ void *SoftapController::threadStart(void *obj){
+ 
+ int SoftapController::startSoftap(bool global_ctrl_iface = false, SocketClient *socketClient = NULL,
+     const char *ifname = NULL) {
++#ifndef LIBWPA_CLIENT_EXISTS
++    (void) ifname;
++#endif
+     pid_t pid = 1;
+     DIR *dir = NULL;
+     int ret;
+-- 
+2.11.0
+

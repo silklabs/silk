@@ -1,0 +1,37 @@
+From 7a4c60cfd9a452a64a572b2da1f8c241dc52728c Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 09:52:12 -0700
+Subject: [PATCH] Disable features requiring vqp when vqp is not present
+
+Change-Id: I2d545e8e94a17ce6b0bb21dc48c6f3b6dcb51e96
+---
+ configs/msm8909/msm8909.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/configs/msm8909/msm8909.mk b/configs/msm8909/msm8909.mk
+index af5f7a1..6dce8da 100755
+--- a/configs/msm8909/msm8909.mk
++++ b/configs/msm8909/msm8909.mk
+@@ -1,7 +1,9 @@
+ #AUDIO_FEATURE_FLAGS
+ USE_CUSTOM_AUDIO_POLICY := 1
+ BOARD_USES_ALSA_AUDIO := true
++ifneq (,$(wildcard vendor/qcom/proprietary))
+ BOARD_SUPPORTS_SOUND_TRIGGER := true
++endif
+ 
+ AUDIO_FEATURE_ENABLED_SOURCE_TRACKING:= true
+ #AUDIO_FEATURE_ENABLED_ANC_HEADSET := true
+@@ -28,7 +30,9 @@ AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
+ ifneq ($(TARGET_SUPPORTS_WEARABLES),true)
+ AUDIO_FEATURE_ENABLED_PROXY_DEVICE := true
+ endif
++ifneq (,$(wildcard vendor/qcom/proprietary))
+ AUDIO_FEATURE_ENABLED_SSR := true
++endif
+ ifneq ($(TARGET_SUPPORTS_WEARABLES),true)
+ AUDIO_FEATURE_NON_WEARABLE_TARGET := true
+ endif
+-- 
+2.11.0
+

@@ -1,0 +1,26 @@
+From add83ed4a11aaf29d419d1602427f92ec029d381 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 09:07:08 -0700
+Subject: [PATCH] Disable libextmedia_jni
+
+Change-Id: Iae023eb11d8f13430a359bd657d0546e03bb3c8d
+---
+ base.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/base.mk b/base.mk
+index 4bd1b2e..1f5243a 100644
+--- a/base.mk
++++ b/base.mk
+@@ -165,7 +165,7 @@ DELAUN := Launcher3
+ DASH := libdashplayer
+ DASH += libqcmediaplayer
+ DASH += qcmediaplayer
+-DASH += libextmedia_jni
++#DASH += libextmedia_jni
+ 
+ #EXTENDEDMEDIA_EXT
+ EXTENDEDMEDIA_EXT := libextendedmediaextractor
+-- 
+2.11.0
+

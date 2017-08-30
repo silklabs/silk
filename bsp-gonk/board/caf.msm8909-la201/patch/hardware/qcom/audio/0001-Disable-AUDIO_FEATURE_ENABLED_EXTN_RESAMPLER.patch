@@ -1,0 +1,26 @@
+From cdb307cb8a92e169bb4b6959ad2c0b8b9fa5b214 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@silklabs.com>
+Date: Tue, 29 Aug 2017 09:01:11 -0700
+Subject: [PATCH] Disable AUDIO_FEATURE_ENABLED_EXTN_RESAMPLER
+
+Change-Id: I871c8a4fef4f87a41534f7e06878f5c14b62ac65
+---
+ configs/msm8909/msm8909.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configs/msm8909/msm8909.mk b/configs/msm8909/msm8909.mk
+index 62446dc..f7f3788 100755
+--- a/configs/msm8909/msm8909.mk
++++ b/configs/msm8909/msm8909.mk
+@@ -17,7 +17,7 @@ AUDIO_FEATURE_ENABLED_EXTN_FLAC_DECODER := true
+ endif
+ 
+ ifneq ($(TARGET_SUPPORTS_WEARABLES),true)
+-AUDIO_FEATURE_ENABLED_EXTN_RESAMPLER := true
++#AUDIO_FEATURE_ENABLED_EXTN_RESAMPLER := true
+ endif
+ AUDIO_FEATURE_ENABLED_FM_POWER_OPT := true
+ AUDIO_FEATURE_ENABLED_FLUENCE := true
+-- 
+2.11.0
+

@@ -17,7 +17,7 @@
 #
 # 5. stlport_shared is the default STL if an alternate STL is not
 #    selected via Android.mk:
-#              LOCAL_SDK_VERSION := 19
+#              LOCAL_SDK_VERSION := 21
 #              LOCAL_NDK_STL_VARIANT := gnustl_static
 #
 #    Alternatively define LOCAL_NODE_MODULE_NO_SDK_VERSION to request no NDK

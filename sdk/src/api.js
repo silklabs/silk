@@ -166,50 +166,48 @@ export class SDKApi {
     }
 
     console.log(`Setup Wi-Fi network: ${ssid} ${password} ...`);
-    let [stdout] = await this.adb(`shell getprop wifi.interface`);
-    let iface = stdout.replace(/\r?\n$/, '');
     let result = false;
-
-    let ifaceArgs = '';
-    if (!iface) {
-      console.log('Using default wifi interface');
-      // TODO: Use |wpa_cli ifname| to get the default name instead of hard coding wlan0
-      iface = 'wlan0';
-      ifaceArgs = `-i${iface}`;  // Don't add IFNAME=, it's only needed for gonk wpa_cli
-    } else {
-      ifaceArgs = `-i${iface} IFNAME=${iface}`;
-    }
-    console.log(`wifi interface: ${iface}`);
 
     // Generate wifi setup script
     try {
-      let data = `
-      run() {
-        echo "$ wpa_cli ${ifaceArgs} $@"
-        result=$(wpa_cli ${ifaceArgs} $@ || echo FAIL)
-        if [ "$result" = "FAIL" ]; then
-          echo "FAIL"
-          exit 1
+      const data = `
+        set -ex
+        iface=$(wpa_cli ifname | busybox tail -n1)
+        if [ "$iface" = "UNKNOWN COMMAND" ]; then
+          iface="$(getprop wifi.interface)";
+          # gonks older than N need an additional IFNAME=
+          ifaceArgs="-i$iface IFNAME=$iface";
+        else
+          ifaceArgs="-i$iface";
         fi
-      }\n`;
-      data += `run update_config 1\n`;
-      if (!keepExistingNetworks) {
-        data += `run remove_network all\n`;
-        data += `run save_config\n`;
-        data += `run disconnect\n`;
-      }
-      data += `run add_network\n`;
-      data += `id=$result\n`;
-      data += `run set_network $id ssid '"${ssid}"'\n`;
-      if (password) {
-        data += `run set_network $id psk '"${password}"'\n`;
-      } else {
-        data += `run set_network $id key_mgmt NONE\n`;
-      }
-      data += `run enable_network $id\n`;
-      data += `run save_config\n`;
-      data += `run reconnect\n`;
-      data += `exit 0\n`;
+        echo "wifi interface: $iface"
+        w="wpa_cli $ifaceArgs"
+        set -x
+        $w ping
+        # Ok if this next command fails, it is only needed by a few devices
+        $w update_config 1 || true
+
+        if [ ${keepExistingNetworks} != true ]; then
+          $w remove_network all
+          $w save_config
+          $w disconnect
+        fi
+
+        id=$($w add_network)
+        $w set_network $id ssid '"${ssid}"'
+
+        if [ -n "${password}" ]; then
+          $w set_network $id psk '"${password}"'
+        else
+          $w set_network $id key_mgmt NONE
+        fi
+
+        $w enable_network $id
+        $w save_config
+        $w reconnect
+        $w status
+      `;
+
       await fs.writeFile(WIFI_SETUP_SCRIPT, data);
       await fs.chmod(WIFI_SETUP_SCRIPT, '400');
 

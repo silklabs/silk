@@ -141,6 +141,10 @@ const WIFI_DISCONNECT_REASONS: Array<WifiDisconnectReason> = [
 const CTRL_CHARS_REGEX = /[\x00-\x1f\x80-\xff]/;
 
 const iface = util.getstrprop('wifi.interface');
+const roBuildVersionSdk = util.getintprop('ro.build.version.sdk', 0);
+const wpaCliBaseArgs = roBuildVersionSdk < 25 ?
+  [`-i${iface}`, `IFNAME=${iface}` ] : [`-i${iface}`];
+
 let monitor;
 
 /**
@@ -272,7 +276,7 @@ async function requestDhcp(abortPromise: Promise<void>): Promise<void> {
     throw new Error(`dhcpd has not given us an address yet`);
   }
 
-  const block = new Netmask(ipaddress + '/' + mask);
+  const block = new Netmask(ipaddress, mask);
   const baseMask = block.base + '/' + block.bitmask;
 
   log.info(`base: ${baseMask}`);
@@ -505,7 +509,7 @@ function wpaCli(...args: Array<string>): Promise<string> {
   }
 
   const bin = 'wpa_cli';
-  const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, ...args];
+  const fullArgs = [...wpaCliBaseArgs, ...args];
 
   return util.exec(bin, fullArgs).then((r) => {
     if (r.code !== 0) {
@@ -524,7 +528,7 @@ function wpaCliExpectOk(...args: Array<string>): Promise<void> {
       return;
     }
     const bin = 'wpa_cli';
-    const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, ...args];
+    const fullArgs = [...wpaCliBaseArgs, ...args];
     throw new Error(
       `'${bin} ${fullArgs.join(' ')}': '${ok.replace(/\n/g, '')}'`
     );
@@ -552,7 +556,7 @@ function wpaCliAddNetwork(): Promise<string> {
     }
 
     const bin = 'wpa_cli';
-    const fullArgs = [`-i${iface}`, `IFNAME=${iface}`, `add_network`];
+    const fullArgs = [...wpaCliBaseArgs, 'add_network'];
     throw new Error(
       `'${bin} ${fullArgs.join(' ')}': '${id.replace(/\n/g, '')}'`
     );

@@ -848,7 +848,6 @@ status_t Track::threadEntry() {
         int32_t isCodecConfig;
         if (buffer->meta_data()->findInt32(kKeyIsCodecConfig, &isCodecConfig)
                 && isCodecConfig) {
-            CHECK(!mGotAllCodecSpecificData);
 
             if (mIsAvc) {
                 status_t err = makeAVCCodecSpecificData(
@@ -858,6 +857,9 @@ status_t Track::threadEntry() {
                 CHECK_EQ((status_t)OK, err);
             } else if (mIsMPEG4) {
                 mCodecSpecificDataSize = buffer->range_length();
+                if (mCodecSpecificData) {
+                  free(mCodecSpecificData);
+                }
                 mCodecSpecificData = malloc(mCodecSpecificDataSize);
                 memcpy(mCodecSpecificData,
                         (const uint8_t *)buffer->data()

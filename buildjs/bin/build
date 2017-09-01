@@ -19,7 +19,7 @@ fi
 
 help() {
   if [[ -n $1 ]]; then
-    echo Error: $@
+    echo "Error: $*"
     echo
   fi
 
@@ -174,9 +174,9 @@ if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then
     )
 
     if $ndk; then
-      SED=sed
+      SED="sed"
       if which gsed > /dev/null 2>&1; then
-        SED=gsed # Darwin!
+        SED="gsed" # Darwin!
       fi
       # The stock node-gyp that gets picked up in the $ndk builds incorrectly
       # add -fPIE/-pie to CFLAGS/LDFLAGS.  |sed| them out.

@@ -21,7 +21,7 @@ fi
 echo --- After build
 if ${CI_DEBUG:-false}; then
   df -h
-  du -h -d 1 * .repo
+  du -h -d 1 -- * .repo
   du -h -d 2 out/target/product/
   du -h -d 1 ..
   du -hs .

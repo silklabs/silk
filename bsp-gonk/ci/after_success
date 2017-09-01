@@ -12,7 +12,6 @@ if [[ -z $CI_BRANCH ]]; then
 fi
 
 channel=${SILK_CHANNEL:-nightly}
-branch=$CI_BRANCH
 os=$(uname | tr '[:upper:]' '[:lower:]')
 version=$(node -p 'require("../version").semver')
 target_upload_path=$channel/$SILK_BOARD/$os/$version

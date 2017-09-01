@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2031 # var was modified in a subshell
+# shellcheck disable=SC2030 # Modification of var is local to subshell
 
 LOCAL_PATH=$(dirname $0)
 
@@ -6,7 +8,7 @@ usage () {
   local exitcode=0
   if [[ -n ${1:-} ]]; then
     exitcode=1
-    echo Error: $@
+    echo "Error: $*"
     echo
   fi
   echo "usage: $0 [fetch|build] board product"
@@ -40,7 +42,7 @@ done
 
 
 command=$1
-uname_lc=$(uname | tr A-Z a-z)
+uname_lc=$(uname | tr '[:upper:]' '[:lower:]')
 
 
 case $command in

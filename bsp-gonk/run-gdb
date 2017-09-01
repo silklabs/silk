@@ -22,27 +22,28 @@ if [[ ! -d $ANDROID_PRODUCT_OUT ]] ; then
 fi
 
 get_pid_by_name() {
-    echo $($ADB shell "toolbox ps '$1' | \
-      ( read header; \
-        while read user pid ppid vsize rrs wchan pc state name _rest; do \
-          if [ \$state != 'Z' ]; then \
-            echo -n \$pid; \
-            return; \
-          fi; \
-        done; \
-      )")
+  $ADB shell "toolbox ps '$1' | \
+    ( read header; \
+      while read user pid ppid vsize rrs wchan pc state name _rest; do \
+        if [ \$state != 'Z' ]; then \
+          echo -n \$pid; \
+          return; \
+        fi; \
+      done; \
+    )"
 }
 
 ADB=${ADB:-adb}
-if [ ! -f "`which \"$ADB\"`" ]; then
-	ADB=out/host/`uname -s | tr "[[:upper:]]" "[[:lower:]]"`-x86/bin/adb
+if [ ! -f "$(which \"$ADB\")" ]; then
+	ADB=out/host/$(uname -s | tr '[:upper:]' '[:lower:]')-x86/bin/adb
 fi
 echo "ADB Location: " $ADB
 
+# shellcheck disable=SC2034 # Unused variable
 TARGET_ARCH=arm
 TARGET_TRIPLE=arm-linux-androideabi
 
-HOST_OS=$(uname -s | tr "[[:upper:]]" "[[:lower:]]")-x86
+HOST_OS=$(uname -s | tr '[:upper:]' '[:lower:]')-x86
 
 if [ -z "${GDB}" ]; then
    if [ -d ${ANDROID_BUILD_TOP}/prebuilts ]; then
@@ -82,7 +83,7 @@ if [ "$1" = "attach" ] ; then
       fi
       echo "Found $ATTACH_TARGET PID: $DEBUG_PID"
    fi
-   GDB_PORT=$((10000 + ($DEBUG_PID + $(id -u)) % 50000))
+   GDB_PORT=$((10000 + (DEBUG_PID + $(id -u)) % 50000))
    # cmdline is null separated
    DEBUG_BIN=$($ADB shell cat /proc/$DEBUG_PID/cmdline | tr '\0' '\n' | head -1)
 else
@@ -133,7 +134,7 @@ else
 
    [ -n "$DEBUG_PID" ] && $ADB shell kill $DEBUG_PID
 
-   $ADB shell $GDBSERVER_ENV gdbserver --multi :$GDB_PORT $DEBUG_BIN $@ &
+   $ADB shell $GDBSERVER_ENV gdbserver --multi :$GDB_PORT $DEBUG_BIN "$@" &
 fi
 
 
@@ -141,11 +142,12 @@ NODE_SEARCH_PATH=$SYMDIR/silk/node_modules:$SYMDIR/silk/node_modules/build
 NODE_SEARCH_PATH=$NODE_SEARCH_PATH:$SYMDIR/silk/lib
 
 sleep 1
-echo "set solib-absolute-prefix $SYMDIR" > $GDBINIT
-echo "handle SIGPIPE nostop" >> $GDBINIT
-echo "set solib-search-path $SYMDIR/system/lib/:$ANDROID_PRODUCT_OUT/system/lib/:$SYMDIR/system/vendor/lib/:$ANDROID_PRODUCT_OUT/system/vendor/lib/:$SYMDIR/system/lib/hw:$ANDROID_PRODUCT_OUT/system/lib/hw:$NODE_SEARCH_PATH" >> $GDBINIT
-echo "target extended-remote :$GDB_PORT" >> $GDBINIT
-
+{
+  echo "set solib-absolute-prefix $SYMDIR"
+  echo "handle SIGPIPE nostop"
+  echo "set solib-search-path $SYMDIR/system/lib/:$ANDROID_PRODUCT_OUT/system/lib/:$SYMDIR/system/vendor/lib/:$ANDROID_PRODUCT_OUT/system/vendor/lib/:$SYMDIR/system/lib/hw:$ANDROID_PRODUCT_OUT/system/lib/hw:$NODE_SEARCH_PATH"
+  echo "target extended-remote :$GDB_PORT"
+} > $GDBINIT
 
 if [[ "$-" == *x* ]]; then
     # Since we got here, set -x was enabled near the top of the file. print

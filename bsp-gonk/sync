@@ -1,4 +1,5 @@
 #!/bin/bash
+#shellcheck disable=SC2103 #Use a ( subshell ) to avoid having to cd back
 
 cd $(dirname $0)
 
@@ -11,7 +12,7 @@ usage () {
   local exitcode=0
   if [[ -n ${1:-} ]]; then
     exitcode=1
-    echo Error: $@
+    echo "Error: $*"
     echo
   fi
   echo "usage: $0 [board] [product]"
@@ -55,7 +56,7 @@ usage () {
 }
 
 repo=${REPO:-./repo}
-repo_init_host=$(uname | tr A-Z a-z)
+repo_init_host=$(uname | tr '[:upper:]' '[:lower:]')
 repo_init_version="--repo-url=git://codeaurora.org/tools/repo.git --repo-branch=caf-stable"
 repo_init_depth="--depth=1"
 repo_sync_j=-j4
@@ -89,7 +90,7 @@ while getopts "h?nlif" opt; do
   esac
 done
 
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 
 [[ $# -le 2 ]] || usage
 
@@ -126,7 +127,7 @@ product=${product:-$default_product}
 [[ -d product/$product ]] || usage product directory missing: product/$product/
 [[ -r board/$board/$board.xml ]] || usage board manifest missing: board/$board/$board.xml
 [[ -r product/$product/$product.xml ]] || usage product manifest missing: product/$product/$product.xml
-    
+
 
 # Hack for some board manifests that can't handle a shallow clone
 if [[ -e board/$board/.sync.f ]]; then
@@ -170,7 +171,7 @@ allmanifests=({board,product}/*/*.xml)
 mkdir -p .repo/manifest_upstream
 cd .repo/manifest_upstream
 git init --quiet .
-for f in ${allmanifests[@]}; do
+for f in "${allmanifests[@]}"; do
   ln -sf ../../$f .
 done
 
@@ -183,7 +184,7 @@ cat >> default.xml <<MANIFEST
 </manifest>
 MANIFEST
 
-git add *
+git add -- *
 git commit -q -m '301 Moved Permanently'
 cd ../..
 pwd

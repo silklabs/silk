@@ -23,4 +23,4 @@ trap cleanup EXIT
 trap exit SIGINT
 trap cleanup SIGHUP
 
-node_modules/.bin/node-inspector $@
+node_modules/.bin/node-inspector "$@"

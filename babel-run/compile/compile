@@ -30,7 +30,7 @@ function npm_update {
 #
 function patch_modules {
   patches=( patches/*.patch )
-  for file in ${patches[@]};
+  for file in "${patches[@]}";
   do
     patch -N -p0 -i $file || echo
   done

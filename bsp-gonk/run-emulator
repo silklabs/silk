@@ -29,15 +29,15 @@ cleanly_close_emulator() {
   for pid in $(get_children $current_pid); do
     # second level children this contains the real emulator.
     for child_pid in $(get_children $pid); do
-      pids_to_kill+=($child_pid)
+      pids_to_kill+=("$child_pid")
     done
   done
-  if [[ ! -z "$pids_to_kill" ]]; then
-    ( set -x; kill $pids_to_kill )
+  if [[ ! -z "${pids_to_kill[*]}" ]]; then
+    ( set -x; kill "${pids_to_kill[*]}" )
   fi
 }
 
-trap cleanly_close_emulator HUP INT QUIT KILL TERM
+trap cleanly_close_emulator HUP INT QUIT TERM
 emulator -verbose -selinux permissive -show-kernel -no-skin -no-audio -no-window -memory 512 &
 wait
 exit 0

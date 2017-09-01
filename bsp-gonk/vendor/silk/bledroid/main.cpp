@@ -192,7 +192,11 @@ static const int kConnectionIntervalMax = 40; // 24 * 1.25 = 50ms
 static const int kConnectionSlaveLatency = 0; // # of skipped packets allowed
 static const int kConnectionSupervisionTimeout = 500; // 500 * 10 = 5000ms
 
+#ifdef TARGET_GE_NOUGAT
+static const char kWakeLockId[] = "bluetooth_timer";
+#else
 static const char kWakeLockId[] = "bluedroid_timer";
+#endif
 
 static const bt_bdaddr_t kInvalidAddr = {{
   0xff, 0xff, 0xff, 0xff, 0xff, 0xff
@@ -1603,7 +1607,12 @@ void gatt_client_get_characteristic_callback(int conn_id,
                      char_id->inst_id,
                      char_prop);
 
+#ifdef TARGET_GE_NOUGAT
+  int err = BT_STATUS_FAIL;
+#pragma message "TODO: Port get_characteristic"
+#else
   int err = gatt->client->get_characteristic(conn_id, srvc_id, char_id);
+#endif
   if (err != BT_STATUS_SUCCESS) {
     ALOGE("Failed to discover next characteristic: %d", err);
   }
@@ -1673,7 +1682,12 @@ void gatt_client_get_descriptor_callback(int conn_id,
                      descriptorUuid,
                      descr_id->inst_id);
 
+#ifdef TARGET_GE_NOUGAT
+  int err = BT_STATUS_FAIL;
+#pragma message "TODO: Port get_descriptor"
+#else
   int err = gatt->client->get_descriptor(conn_id, srvc_id, char_id, descr_id);
+#endif
   if (err != BT_STATUS_SUCCESS) {
     ALOGE("Failed to discover next descriptor: %d", err);
   }
@@ -1728,12 +1742,25 @@ void gatt_client_get_included_service_callback(int conn_id,
                      incl_srvc_id->id.inst_id,
                      incl_srvc_id->is_primary ? 1 : 0);
 
+#ifdef TARGET_GE_NOUGAT
+  int err = BT_STATUS_FAIL;
+#pragma message "TODO: Port get_included_service"
+#else
   int err = gatt->client->get_included_service(conn_id, srvc_id, incl_srvc_id);
+#endif
   if (err != BT_STATUS_SUCCESS) {
     ALOGE("Failed to discover next included service: %d", err);
   }
 }
 
+#ifdef TARGET_GE_NOUGAT
+void gatt_client_register_for_notification_callback(int /* conn_id */,
+                                                    int registered,
+                                                    int status,
+                                                    uint16_t handle) {
+#pragma message "TODO: Implement gatt_client_register_for_notification_callback"
+}
+#else
 void gatt_client_register_for_notification_callback(int /* conn_id */,
                                                     int registered,
                                                     int status,
@@ -1771,7 +1798,7 @@ void gatt_client_register_for_notification_callback(int /* conn_id */,
                      serviceUuid,
                      characteristicUuid);
 }
-
+#endif
 bool bt_convert_value(const uint8_t *value,
                       uint16_t valueLength,
                       char *buffer,
@@ -1800,6 +1827,9 @@ bool bt_convert_value(const uint8_t *value,
 void gatt_client_notify_callback(int conn_id, btgatt_notify_params_t *p_data) {
   Tracer trc("gatt_client_notify_callback");
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port gatt_client_notify_callback"
+#else
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
     ALOGE("Failed to convert serviceUuid!");
@@ -1841,6 +1871,7 @@ void gatt_client_notify_callback(int conn_id, btgatt_notify_params_t *p_data) {
                      conn_id,
                      serviceUuid,
                      characteristicUuid);
+#endif
 }
 
 void gatt_client_read_characteristic_callback(int conn_id,
@@ -1849,6 +1880,9 @@ void gatt_client_read_characteristic_callback(int conn_id,
   Tracer trc("gatt_client_read_characteristic_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitReadCharacteristic);
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port gatt_client_read_characteristic_callback"
+#else
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
     ALOGE("Failed to convert serviceUuid!");
@@ -1895,8 +1929,16 @@ void gatt_client_read_characteristic_callback(int conn_id,
                      status,
                      serviceUuid,
                      characteristicUuid);
+#endif
 }
 
+#ifdef TARGET_GE_NOUGAT
+void gatt_client_write_characteristic_callback(int conn_id,
+                                               int status,
+                                               uint16_t handle) {
+#pragma message "TODO: Implement gatt_client_read_characteristic_callback()"
+}
+#else
 void gatt_client_write_characteristic_callback(int conn_id,
                                                int status,
                                                btgatt_write_params_t *p_data) {
@@ -1930,7 +1972,7 @@ void gatt_client_write_characteristic_callback(int conn_id,
                      serviceUuid,
                      characteristicUuid);
 }
-
+#endif
 
 void gatt_client_read_descriptor_callback(int conn_id,
                                           int status,
@@ -1938,6 +1980,9 @@ void gatt_client_read_descriptor_callback(int conn_id,
   Tracer trc("gatt_client_read_descriptor_callback");
   auto signal = mainThreadWaiter.autoSignal(WaitReadDescriptor);
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port gatt_client_read_descriptor_callback"
+#else
   char serviceUuid[33];
   if (!uuid_to_str(p_data->srvc_id.id.uuid, serviceUuid, sizeof(serviceUuid))) {
     ALOGE("Failed to convert serviceUuid!");
@@ -1995,8 +2040,16 @@ void gatt_client_read_descriptor_callback(int conn_id,
                      serviceUuid,
                      characteristicUuid,
                      descriptorUuid);
+#endif
 }
 
+#ifdef TARGET_GE_NOUGAT
+void gatt_client_write_descriptor_callback(int conn_id,
+                                           int status,
+                                           uint16_t handle) {
+#pragma message "TODO: Port gatt_client_write_descriptor_callback"
+}
+#else
 void gatt_client_write_descriptor_callback(int conn_id,
                                            int status,
                                            btgatt_write_params_t *p_data) {
@@ -2040,6 +2093,7 @@ void gatt_client_write_descriptor_callback(int conn_id,
                      characteristicUuid,
                      descriptorUuid);
 }
+#endif
 
 void gatt_client_read_remote_rssi_callback(int client_if,
                                            bt_bdaddr_t* bda,
@@ -2211,11 +2265,26 @@ void gatt_client_congestion_callback(int conn_id, bool congested) {
 }
 
 #ifdef TARGET_GE_MARSHMALLOW
-void gatt_scan_parameter_setup_completed_callback(int client_if,
+void gatt_client_scan_parameter_setup_completed_callback(int client_if,
                                                   btgattc_error_t status) {
-  Tracer trc("gatt_scan_parameter_setup_completed_callback");
-  ALOGV("gatt_scan_parameter_setup_completed_callback: client_if=%d status=%d",
+  Tracer trc("gatt_client_scan_parameter_setup_completed_callback");
+  ALOGV("gatt_client_scan_parameter_setup_completed_callback: client_if=%d status=%d",
         client_if, status);
+}
+#endif
+
+#ifdef TARGET_GE_NOUGAT
+void gatt_client_db_callback(int conn_id, btgatt_db_element_t *db, int count) {
+  ALOGE("gatt_client_db_callback: %d elements", count);
+}
+/** GATT services between start_handle and end_handle were removed */
+void gatt_client_services_removed_callback(int conn_id, uint16_t start_handle, uint16_t end_handle) {
+  ALOGE("gatt_client_services_removed_callback: %d to %d", start_handle, end_handle);
+}
+
+/** GATT services were added */
+void gatt_client_services_added_callback(int conn_id, btgatt_db_element_t *added, int added_count) {
+  ALOGE("gatt_client_services_added_callback: %d added", added_count);
 }
 #endif
 
@@ -2225,10 +2294,12 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   gatt_client_connect_callback,
   gatt_client_disconnect_callback,
   gatt_client_search_complete_callback,
+#ifndef TARGET_GE_NOUGAT
   gatt_client_search_result_callback,
   gatt_client_get_characteristic_callback,
   gatt_client_get_descriptor_callback,
   gatt_client_get_included_service_callback,
+#endif
   gatt_client_register_for_notification_callback,
   gatt_client_notify_callback,
   gatt_client_read_characteristic_callback,
@@ -2253,7 +2324,14 @@ btgatt_client_callbacks_t bt_gatt_client_callbacks = {
   NULL, // batchscan_threshold_callback
   NULL  // track_adv_event_callback
 #ifdef TARGET_GE_MARSHMALLOW
- ,gatt_scan_parameter_setup_completed_callback
+  ,
+  gatt_client_scan_parameter_setup_completed_callback
+#endif
+#ifdef TARGET_GE_NOUGAT
+  ,
+  gatt_client_db_callback,
+  gatt_client_services_removed_callback,
+  gatt_client_services_added_callback,
 #endif
 };
 
@@ -2656,12 +2734,14 @@ void av_audio_state_callback(btav_audio_state_t state,
     address, state, playing);
 }
 
+#ifndef TARGET_GE_NOUGAT
 void av_audio_focus_request_callback(bt_bdaddr_t *bd_addr) {
   char address[18];
   addr_to_str(*bd_addr, address);
   ALOGE("av_audio_focus_request_callback: %s granted", address);
   avsink->audio_focus_state(/*BTIF_MEIDA_FOCUS_GRANTED =*/ 3);
 }
+#endif
 
 btav_callbacks_t avsink_callbacks = {
   .size = sizeof(avsink_callbacks),
@@ -2670,7 +2750,11 @@ btav_callbacks_t avsink_callbacks = {
   .audio_config_cb = nullptr,
   .connection_priority_cb = nullptr,
   .multicast_state_cb = nullptr,
+#ifdef TARGET_GE_NOUGAT
+  .reconfig_a2dp_trigger_cb = nullptr,
+#else
   .audio_focus_request_cb = av_audio_focus_request_callback,
+#endif
 };
 
 #endif
@@ -2970,6 +3054,10 @@ int bt_init() {
       &avsink_callbacks,
       /*max_a2dp_connections = */ 1,
       /*a2dp_multicast_state = */ 0
+#ifdef TARGET_GE_NOUGAT
+      ,
+      /*offload_cap*/ nullptr
+#endif
     );
     LOG_ERROR(err, "bt avsink->init failed: %d", err);
 
@@ -3568,10 +3656,14 @@ int bt_discover_included_services(char *&saveptr) {
   int err = bt_convert_args(saveptr, connectionId, parentService);
   LOG_ERROR(err != BT_STATUS_SUCCESS, "Could not convert");
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port get_included_service"
+#else
   CALL_AND_WAIT(gatt->client->get_included_service(connectionId,
                                                    &parentService,
                                                    nullptr),
                 WaitGetIncludedService);
+#endif
   return BT_STATUS_SUCCESS;
 }
 
@@ -3582,10 +3674,14 @@ int bt_discover_characteristics(char *&saveptr) {
   int err = bt_convert_args(saveptr, connectionId, service);
   LOG_ERROR(err != BT_STATUS_SUCCESS, "Could not convert");
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port get_characteristic"
+#else
   CALL_AND_WAIT(gatt->client->get_characteristic(connectionId,
                                                  &service,
                                                  nullptr),
                 WaitGetCharacteristic);
+#endif
   return BT_STATUS_SUCCESS;
 }
 
@@ -3597,11 +3693,15 @@ int bt_discover_descriptors(char *&saveptr) {
   int err = bt_convert_args(saveptr, connectionId, service, characteristic);
   LOG_ERROR(err != BT_STATUS_SUCCESS, "Could not convert");
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port get_descriptor"
+#else
   CALL_AND_WAIT(gatt->client->get_descriptor(connectionId,
                                              &service,
                                              &characteristic,
                                              nullptr),
                 WaitGetDescriptor);
+#endif
   return BT_STATUS_SUCCESS;
 }
 
@@ -3618,11 +3718,15 @@ int bt_read_characteristic(char *&saveptr) {
                             authenticationRequested);
   LOG_ERROR(err != BT_STATUS_SUCCESS, "Could not convert");
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port read_characteristic"
+#else
   CALL_AND_WAIT(gatt->client->read_characteristic(connectionId,
                                                   &service,
                                                   &characteristic,
                                                   authenticationRequested),
                 WaitReadCharacteristic);
+#endif
   return BT_STATUS_SUCCESS;
 }
 
@@ -3658,6 +3762,10 @@ int bt_write_characteristic(char *&saveptr) {
               "Could not convert data");
   }
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port write_characteristic"
+  (void) writeType;
+#else
   CALL_AND_WAIT(gatt->client->write_characteristic(connectionId,
                                                    &service,
                                                    &characteristic,
@@ -3666,6 +3774,7 @@ int bt_write_characteristic(char *&saveptr) {
                                                    authenticationRequested,
                                                    data),
                 WaitWriteCharacteristic);
+#endif
   return BT_STATUS_SUCCESS;
 }
 
@@ -3695,6 +3804,10 @@ int bt_enable_notify(char *&saveptr) {
 
   connection_id_during_register_for_notification = connectionId;
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port register_for_notification/deregister_for_notification"
+  (void) enable;
+#else
   if (enable) {
     CALL_AND_WAIT(gatt->client->register_for_notification(clientIf,
                                                           &addr,
@@ -3708,7 +3821,7 @@ int bt_enable_notify(char *&saveptr) {
                                                             &characteristic),
                   WaitRegisterForNotification);
   }
-
+#endif
   connection_id_during_register_for_notification = -1;
 
   return BT_STATUS_SUCCESS;
@@ -3729,12 +3842,16 @@ int bt_read_descriptor(char *&saveptr) {
                             authenticationRequested);
   LOG_ERROR(err != BT_STATUS_SUCCESS, "Could not convert");
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port read_descriptor"
+#else
   CALL_AND_WAIT(gatt->client->read_descriptor(connectionId,
                                               &service,
                                               &characteristic,
                                               &descriptor,
                                               authenticationRequested),
                 WaitReadDescriptor);
+#endif
   return BT_STATUS_SUCCESS;
 }
 
@@ -3767,6 +3884,9 @@ int bt_write_descriptor(char *&saveptr) {
               "Could not convert data");
   }
 
+#ifdef TARGET_GE_NOUGAT
+#pragma message "TODO: Port write_descriptor"
+#else
   CALL_AND_WAIT(gatt->client->write_descriptor(connectionId,
                                                &service,
                                                &characteristic,
@@ -3776,6 +3896,7 @@ int bt_write_descriptor(char *&saveptr) {
                                                authenticationRequested,
                                                data),
                 WaitWriteDescriptor);
+#endif
   return BT_STATUS_SUCCESS;
 }
 
@@ -4152,6 +4273,12 @@ int main(int argc, char *argv[]) {
     // This capability is required to use wake locks.
     data[CAP_TO_INDEX(CAP_BLOCK_SUSPEND)].effective |= CAP_TO_MASK(CAP_BLOCK_SUSPEND);
     data[CAP_TO_INDEX(CAP_BLOCK_SUSPEND)].permitted |= CAP_TO_MASK(CAP_BLOCK_SUSPEND);
+
+#ifdef TARGET_GE_NOUGAT
+    // Bluedroid fails to initialize without this capability
+    data[CAP_TO_INDEX(CAP_WAKE_ALARM)].effective |= CAP_TO_MASK(CAP_WAKE_ALARM);
+    data[CAP_TO_INDEX(CAP_WAKE_ALARM)].permitted |= CAP_TO_MASK(CAP_WAKE_ALARM);
+#endif
 
     if (capset(&header, &data[0]) == -1) {
       ALOGE("capset failed: %s", strerror(errno));

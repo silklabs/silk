@@ -42,8 +42,4 @@ LOCAL_REQUIRED_MODULES := bluetooth.default
 -include external/stlport/libstlport.mk
 LOCAL_CFLAGS += -std=c++11
 
-ifneq ($(TARGET_GE_NOUGAT),)
-$(warning ========== TODO: complete N port =========)
-else
 include $(BUILD_SILK_EXECUTABLE)
-endif

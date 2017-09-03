@@ -32,8 +32,8 @@ cleanly_close_emulator() {
       pids_to_kill+=("$child_pid")
     done
   done
-  if [[ ! -z "${pids_to_kill[*]}" ]]; then
-    ( set -x; kill "${pids_to_kill[*]}" )
+  if [[ -n "${pids_to_kill[*]}" ]]; then
+    ( set -x; kill ${pids_to_kill[*]} )
   fi
 }
 

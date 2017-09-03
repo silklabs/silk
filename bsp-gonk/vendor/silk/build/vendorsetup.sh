@@ -134,7 +134,8 @@ done
 # Generate manifest dependency file
 echo .repo/lastsync: $MANIFEST_DEPS > .repo/manifest.deps
 
-source $(dirname ${BASH_SOURCE[0]})/patchtree.sh "$@" || return
+source $(dirname ${BASH_SOURCE[0]})/patchtree.sh "$@"
+test $? -eq 0 || return
 
 #
 # |lunch| automatically

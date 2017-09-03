@@ -2748,11 +2748,14 @@ btav_callbacks_t avsink_callbacks = {
   .connection_state_cb = av_connection_state_callback,
   .audio_state_cb = av_audio_state_callback,
   .audio_config_cb = nullptr,
+#ifdef QBLUETOOTH_A2DP_SOFT_HANDOFF
   .connection_priority_cb = nullptr,
   .multicast_state_cb = nullptr,
 #ifdef TARGET_GE_NOUGAT
   .reconfig_a2dp_trigger_cb = nullptr,
-#else
+#endif
+#endif
+#ifdef QBLUETOOTH_A2DP_AUDIO_FOCUS_REQUEST
   .audio_focus_request_cb = av_audio_focus_request_callback,
 #endif
 };
@@ -3051,12 +3054,13 @@ int bt_init() {
     LOG_ERROR(!avsink, "Unable to get " BT_PROFILE_ADVANCED_AUDIO_SINK_ID);
 
     err = avsink->init(
-      &avsink_callbacks,
-      /*max_a2dp_connections = */ 1,
-      /*a2dp_multicast_state = */ 0
+      &avsink_callbacks
+#ifdef QBLUETOOTH_A2DP_SOFT_HANDOFF
+      , /*max_a2dp_connections = */ 1
+      , /*a2dp_multicast_state = */ 0
 #ifdef TARGET_GE_NOUGAT
-      ,
-      /*offload_cap*/ nullptr
+      , /*offload_cap*/ nullptr
+#endif
 #endif
     );
     LOG_ERROR(err, "bt avsink->init failed: %d", err);

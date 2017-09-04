@@ -4,9 +4,8 @@
   "description": "wrapper for wifi",
   "main": "index.js",
   "scripts": {
-    "build": "silk-buildjs",
     "lint": "eslint lib test",
-    "postinstall": "silk-buildjs"
+    "silk-build": "silk-buildjs ."
   },
   "license": "MIT",
   "dependencies": {

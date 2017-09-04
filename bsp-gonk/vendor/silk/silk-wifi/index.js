@@ -141,6 +141,8 @@ const WIFI_DISCONNECT_REASONS: Array<WifiDisconnectReason> = [
 const CTRL_CHARS_REGEX = /[\x00-\x1f\x80-\xff]/;
 
 const iface = util.getstrprop('wifi.interface');
+const ifacePrefix = `dhcp.${iface}`;
+
 const roBuildVersionSdk = util.getintprop('ro.build.version.sdk', 0);
 const wpaCliBaseArgs = roBuildVersionSdk < 25 ?
   [`-i${iface}`, `IFNAME=${iface}` ] : [`-i${iface}`];
@@ -248,8 +250,6 @@ async function requestDhcp(abortPromise: Promise<void>): Promise<void> {
     [iface, 'dhcp_request'],
     abortPromise,
   );
-
-  const ifacePrefix = `dhcp.${iface}`;
 
   // dhcpd provides its output in system properties.
   const dns = [];
@@ -626,6 +626,7 @@ async function wpaCliGetCurrentNetworkRSSI(): Promise<?number> {
 export class Wifi extends EventEmitter {
   _associated: boolean = false;
   _online: boolean = false;
+  _ipaddress: string = '';
   _shutdown: boolean = false;
   _networkCleanupRunning: boolean = false;
   _scanTimer: ?number = null;
@@ -659,12 +660,60 @@ export class Wifi extends EventEmitter {
     return this._state;
   }
 
+  /*
+   * This listener is only active after an IP address has been leased to
+   * the device.
+   * @private
+   */
+  _dhcpResultListener: (() => void) = () => {
+    const result = util.getstrprop(`${ifacePrefix}.result`);
+    log.debug(`_dhcpResultListener: ${result}`);
+    if (result !== '' && result !== 'ok') {
+      // The device is still associated to the network but dhcpd seems to be
+      // having a hard time obtaining or renewing a lease.  Jump back into the
+      // normal DHCP request procedure to be a little more forceful/verbose
+      // until an IP address is obtained.
+      log.warn(`Observed dhcp error result: ${result}`);
+      if (this._associated) {
+        log.info('Still associated, requesting dhcp');
+        this._requestDhcp();
+      }
+    }
+  };
+
+  /*
+   * This listener is only active after an IP address has been leased to
+   * the device.
+   * @private
+   */
+  _dhcpIpAddressListener: (() => void) = () => {
+    const ipaddress = util.getstrprop(`${ifacePrefix}.ipaddress`);
+    log.debug(`_dhcpIpAddressListener: ${ipaddress}`);
+    if (ipaddress !== this._ipaddress) {
+      log.info('Unusual ip address change, requesting dhcp renewal');
+      // IP address appears to have changed externally.  This could happen if
+      // the dhcpd daemon restarts and is unable to renew the current lease.  In
+      // this case it's possible that the netd network configuration has not been
+      // updated, however running through the normal DHCP request procedure
+      // should harmlessly renew the lease while ensuring netd is setup correctly.
+      this._requestDhcp();
+    }
+  };
+
   _abortDhcp() {
     // Abort any async work that might be happening for dhcp.
     if (this._dhcpAbortFunction) {
       this._dhcpAbortFunction();
       invariant(!this._dhcpAbortFunction);
     }
+    util.propWatcher.removeListener(
+      `${ifacePrefix}.result`,
+      this._dhcpResultListener
+    );
+    util.propWatcher.removeListener(
+      `${ifacePrefix}.ipaddress`,
+      this._dhcpIpAddressListener
+    );
   }
 
   async _networkCleanup(): Promise<void> {
@@ -700,9 +749,10 @@ export class Wifi extends EventEmitter {
       return;
     }
 
+    this._abortDhcp();
+
     // This promise never resolves, it only rejects if _dhcpAbortFunction is
     // called by _networkCleanup.
-    this._abortDhcp();
     const abortPromise = new Promise((_, reject) => {
       const abortFunction = () => {
         invariant(this._dhcpAbortFunction === abortFunction);
@@ -773,6 +823,16 @@ export class Wifi extends EventEmitter {
 
     log.info('==> Wifi online');
     this._online = true;
+
+    this._ipaddress = util.getstrprop(`${ifacePrefix}.ipaddress`);
+    util.propWatcher.on(
+      `${ifacePrefix}.result`,
+      this._dhcpResultListener
+    );
+    util.propWatcher.on(
+      `${ifacePrefix}.ipaddress`,
+      this._dhcpIpAddressListener
+    );
 
     /**
      * This event is emitted when the device is connected to the network

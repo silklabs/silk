@@ -165,7 +165,7 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
 	$(hide) cd $(LOCAL_PATH) &&  \
     C_INCLUDES="\
       $(addprefix -I ,$(abspath $(PRIVATE_C_INCLUDES))) \
-      $$(sed -e 's#^-I #-I $(ANDROID_BUILD_TOP)/#' $(ANDROID_BUILD_TOP)/$(PRIVATE_IMPORT_INCLUDES) | tr '\r\n' '  ') \
+      $$(sed -e 's#^-I \([^/]\)#-I $(ANDROID_BUILD_TOP)/\1#' $(abspath $(PRIVATE_IMPORT_INCLUDES)) | tr '\r\n' '  ') \
       $(addprefix -isystem ,\
           $(abspath $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
               $(filter-out $(PRIVATE_C_INCLUDES), \

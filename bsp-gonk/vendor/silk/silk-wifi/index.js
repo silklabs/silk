@@ -146,6 +146,7 @@ const ifacePrefix = `dhcp.${iface}`;
 const roBuildVersionSdk = util.getintprop('ro.build.version.sdk', 0);
 const wpaCliBaseArgs = roBuildVersionSdk < 25 ?
   [`-i${iface}`, `IFNAME=${iface}` ] : [`-i${iface}`];
+const runDhcpLeaseTimer = roBuildVersionSdk >= 25;
 
 let monitor;
 
@@ -631,6 +632,7 @@ export class Wifi extends EventEmitter {
   _networkCleanupRunning: boolean = false;
   _scanTimer: ?number = null;
   _state: WifiState = 'disconnected';
+  _dhcpLeaseTimer: ?number = null;
 
   // Used to cancel dhcp request.
   _dhcpAbortFunction: ?(() => void) = null;
@@ -714,6 +716,11 @@ export class Wifi extends EventEmitter {
       `${ifacePrefix}.ipaddress`,
       this._dhcpIpAddressListener
     );
+
+    if (this._dhcpLeaseTimer) {
+      clearTimeout(this._dhcpLeaseTimer);
+      this._dhcpLeaseTimer = null;
+    }
   }
 
   async _networkCleanup(): Promise<void> {
@@ -821,9 +828,6 @@ export class Wifi extends EventEmitter {
       // Try again.
     }
 
-    log.info('==> Wifi online');
-    this._online = true;
-
     this._ipaddress = util.getstrprop(`${ifacePrefix}.ipaddress`);
     util.propWatcher.on(
       `${ifacePrefix}.result`,
@@ -833,6 +837,28 @@ export class Wifi extends EventEmitter {
       `${ifacePrefix}.ipaddress`,
       this._dhcpIpAddressListener
     );
+
+    if (runDhcpLeaseTimer) {
+      invariant(this._dhcpLeaseTimer === null, 'bug: _dhcpLeaseTimer not null');
+      const leasetimeMs =
+        util.getintprop(`${ifacePrefix}.leasetime`, 0) * 1000 * 0.80;
+      if (leasetimeMs <= 0) {
+        log.warn(`Invalid dhcp lease time: ${leasetimeMs}ms`);
+      } else {
+        log.warn(`Scheduling dhcp lease renewal for T+${leasetimeMs}ms`);
+        this._dhcpLeaseTimer = setTimeout(
+          () => {
+            this._dhcpLeaseTimer = null;
+            log.info('Dhcp lease timer expired, refreshing dhcp');
+            this._requestDhcp();
+          },
+          leasetimeMs
+        );
+      }
+    }
+
+    log.info('==> Wifi online');
+    this._online = true;
 
     /**
      * This event is emitted when the device is connected to the network

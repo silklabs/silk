@@ -57,7 +57,6 @@ int main(int argc, char **argv)
     int err = ifc_init();
     if (err != 0) {
       printf("ifc_init() failed\n");
-      return 1;
     } else {
       err = do_dhcp(ifname);
       // Fill out the same system properties that older gonks set automatically

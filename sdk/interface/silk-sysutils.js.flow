@@ -11,10 +11,12 @@ type ExecOutput = {
 };
 
 declare function processthrow(e: Error): void;
-declare function exec(cmd: string, args: Array<string>): Promise<Object>;
+declare function exec(cmd: string, args: Array<string>): Promise<ExecOutput>;
 declare function execRetry(cmd: string, args: Array<string>, retries: number, delayMs: number): Promise<ExecOutput>;
 declare function getstrprop(prop: string, defaultValue?: string): string;
 declare function getboolprop(prop: string, defaultValue?: boolean): boolean;
 declare function getintprop(prop: string, defaultValue?: number): number;
 declare function setprop(prop: string, value: PropTypes): ?Error;
-declare function timeout(ms: number): Promise;
+declare function timeout(ms: number): Promise<void>;
+declare function uptime(start?: number): number;
+declare function randBetween(min: number, max: number): number;

@@ -5,7 +5,7 @@
   "main": "build/Release/silk-movie.node",
   "scripts": {
     "test": "./node_modules/nodeunit/bin/nodeunit test.js",
-    "install": "node-gyp rebuild"
+    "silk-build": "silk-buildjs ."
   },
   "author": {
     "name": "Chris Jones",

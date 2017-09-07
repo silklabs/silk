@@ -8,7 +8,7 @@
   },
   "scripts": {
     "silk-build-gonk": "./build $@",
-    "postinstall": "./build",
+    "silk-build": "./build $@",
     "test": "./test.sh"
   },
   "license": "MIT",

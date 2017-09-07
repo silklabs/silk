@@ -5,8 +5,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "lint": "eslint .",
-    "postinstall": "silk-buildjs",
-    "build": "silk-buildjs"
+    "silk-build": "silk-buildjs ."
   },
   "author": {
     "name": "Ben Turner",

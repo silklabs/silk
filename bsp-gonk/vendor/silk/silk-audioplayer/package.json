@@ -5,8 +5,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "lint": "eslint .",
-    "silk-build": "silk-buildjs .",
-    "install": "node-gyp rebuild"
+    "silk-build": "silk-buildjs ."
   },
   "license": "proprietary",
   "dependencies": {

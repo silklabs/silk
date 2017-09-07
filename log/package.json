@@ -4,6 +4,7 @@
   "description": "Logger conventions built around debug",
   "main": "index.js",
   "scripts": {
+    "silk-build": "silk-buildjs .",
     "test": "DEBUG=silk-log* mocha --ui tdd --timeout 45000 test/index_test.js"
   },
   "author": "Silk Labs Inc.",

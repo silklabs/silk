@@ -4,9 +4,8 @@
   "description": "vibrator",
   "main": "index.js",
   "scripts": {
-    "postinstall": "silk-buildjs",
     "lint": "eslint .",
-    "build": "silk-buildjs"
+    "silk-build": "silk-buildjs ."
   },
   "license": "MIT",
   "devDependencies": {

@@ -4,6 +4,9 @@
   "description": "VideoCapture",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "silk-build": "silk-buildjs ."
+  },
   "dependencies": {
     "nan": "2.4.0",
     "opencv": "silklabs/node-opencv#silk-v6.0.0-1"

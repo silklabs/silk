@@ -17,7 +17,7 @@ warn() {
 
 if [ "$(getprop ro.debuggable)" != "1" ]; then
   info Device is not debuggable
-  exit 1
+  exit 0
 fi
 
 PSR="$(getprop persist.silk.root system)"

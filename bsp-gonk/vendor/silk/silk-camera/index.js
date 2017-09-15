@@ -244,9 +244,9 @@ const CAMERA_VIDEO_ENABLED = CAMERA_HW_ENABLED && util.getboolprop('ro.silk.came
 //
 // Constants
 //
-const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/capturectl';
-const CAPTURE_MIC_DATA_SOCKET_NAME = '/dev/socket/capturemic';
-const CAPTURE_VID_DATA_SOCKET_NAME = '/dev/socket/capturevid';
+const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/silk-capture-ctl';
+const CAPTURE_PCM_DATA_SOCKET_NAME = '/dev/socket/silk-capture-pcm';
+const CAPTURE_MP4_DATA_SOCKET_NAME = '/dev/socket/silk-capture-mp4';
 
 
 // Max amount of time to wait for the capture process to initialize up to the
@@ -258,7 +258,7 @@ const CAPTURE_MAX_RESTART_DELAY_MS = 10000;
 // the attempt as failed and triggering a retry
 const CAPTURE_INIT_TIMEOUT_MS = 30 * 1000;
 
-// If TAG_VIDEO or TAG_MIC is not received in this amount of time assume the
+// If TAG_MP4 or TAG_PCM is not received in this amount of time assume the
 // capture process is wedged and restart it.
 const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
 
@@ -268,9 +268,9 @@ const CAPTURE_PREVIEW_GRAB_MAX_ATTEMPTS = 10 * (1000 / FRAME_DELAY_MS);
 
 // These constants must match those in Channel.h
 const HEADER_NR_BYTES = 20; // sizeof(Channel::Header)
-const TAG_VIDEO = 0;
+const TAG_MP4 = 0;
 const TAG_FACES = 1;
-const TAG_MIC = 2;
+const TAG_PCM = 2;
 
 const NUM_IMAGES_TO_CACHE = 10;
 
@@ -807,11 +807,11 @@ export default class Camera extends EventEmitter {
     // Connect to data sockets
     if (AUDIO_HW_ENABLED) {
       invariant(this._micDataSocket === null);
-      this._micDataSocket = this._connectDataSocket(CAPTURE_MIC_DATA_SOCKET_NAME);
+      this._micDataSocket = this._connectDataSocket(CAPTURE_PCM_DATA_SOCKET_NAME);
     }
     if (CAMERA_VIDEO_ENABLED) {
       invariant(this._vidDataSocket === null);
-      this._vidDataSocket = this._connectDataSocket(CAPTURE_VID_DATA_SOCKET_NAME);
+      this._vidDataSocket = this._connectDataSocket(CAPTURE_MP4_DATA_SOCKET_NAME);
     }
 
     // Connect to control socket
@@ -1245,7 +1245,7 @@ export default class Camera extends EventEmitter {
           break; // Incomplete packet received
         }
         let tag = buf.readInt32LE(pos + 4);
-        let now = tag === TAG_VIDEO ? Date.now() : null;
+        let now = tag === TAG_MP4 ? Date.now() : null;
         let sec = buf.readInt32LE(pos + 8);   // timeval.tv_sec
         let usec = buf.readInt32LE(pos + 12); // timeval.tv_usec
         let durationMs = buf.readInt32LE(pos + 16);
@@ -1255,9 +1255,9 @@ export default class Camera extends EventEmitter {
 
         let tagInfo = `| size:${size} when:${sec}.${usec} durationMs:${durationMs}`;
         switch (tag) {
-        case TAG_VIDEO:
+        case TAG_MP4:
           {
-            log.debug(`TAG_VIDEO ${when}`, tagInfo);
+            log.debug(`TAG_MP4 ${when}`, tagInfo);
             this._videoTagReceived = true;
             invariant(now);
             let socketDuration = now - when - durationMs;
@@ -1299,8 +1299,8 @@ export default class Camera extends EventEmitter {
             );
           }
           break;
-        case TAG_MIC:
-          log.debug(`TAG_MIC ${when}`, tagInfo);
+        case TAG_PCM:
+          log.debug(`TAG_PCM ${when}`, tagInfo);
           this._micTagReceived = true;
 
           /**

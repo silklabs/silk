@@ -1,16 +1,16 @@
 #ifndef CAPTUREDATASOCKET_H
 #define CAPTUREDATASOCKET_H
 
-#define CAPTURE_MIC_DATA_SOCKET_NAME "capturemic"
-#define CAPTURE_VID_DATA_SOCKET_NAME "capturevid"
+#define CAPTURE_MP4_DATA_SOCKET_NAME "silk-capture-mp4"
+#define CAPTURE_PCM_DATA_SOCKET_NAME "silk-capture-pcm"
 
 namespace capture {
 namespace datasocket {
 
 enum Tag {
-  TAG_VIDEO = 0, // Sent over CAPTURE_VID_DATA_SOCKET_NAME
-  TAG_FACES,     // Sent over CAPTURE_VID_DATA_SOCKET_NAME
-  TAG_MIC,       // Sent over CAPTURE_MIC_DATA_SOCKET_NAME
+  TAG_MP4 = 0, // Sent over CAPTURE_MP4_DATA_SOCKET_NAME
+  TAG_FACES,   // Sent over CAPTURE_MP4_DATA_SOCKET_NAME
+  TAG_PCM,     // Sent over CAPTURE_PCM_DATA_SOCKET_NAME
   __MAX_TAG
 };
 struct PacketHeader {

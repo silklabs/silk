@@ -40,7 +40,7 @@ public:
 
   void OnData(bool vad, void *data, size_t size) {
     (void) vad;
-    send(TAG_MIC, data, size, free, data);
+    send(TAG_PCM, data, size, free, data);
   }
 protected:
   virtual bool onDataAvailable(SocketClient *c) {

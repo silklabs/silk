@@ -157,13 +157,15 @@ private:
   PutBackWrapper2* putbackWrapper() {
     return static_cast<PutBackWrapper2*>(mSource.get());
   }
-  
+
   bool mFirstIFrameSent;
   int mFrameCount;
 };
 
-status_t VideoSegmenter::read(MediaBuffer **buffer,
-                                     const ReadOptions *options)  {
+status_t VideoSegmenter::read(
+  MediaBuffer **buffer,
+  const ReadOptions *options
+)  {
   status_t err = mSource->read(buffer, options);
   if (err != OK) {
     ALOGE("Unexpected error from h264 encoder: %d", err);
@@ -401,7 +403,7 @@ bool MPEG4SegmenterDASH::threadLoop() {
                                                    videoSource.get()));
     sp<MPEG4SegmentDASHWriter> writer = new MPEG4SegmentDASHWriter();
     writer->init(videoSource, &audioSource, mAudioMute);
-    
+
     sp<MetaData> params = new MetaData();
     params->setInt32(kKeyFileType, OUTPUT_FORMAT_MPEG_4);
 
@@ -431,12 +433,12 @@ bool MPEG4SegmenterDASH::threadLoop() {
       int32_t videoDurationMs = int32_t(videoDurationUs / 1000LL);
       // Write size and .mp4 data
       writer->incStrong(this);
-      
-      mChannel->send(TAG_VIDEO, when, videoDurationMs,
+
+      mChannel->send(TAG_MP4, when, videoDurationMs,
                      writer->data().array(), writer->data().size(),
                      writerDecStrong, writer.get());
     } else {
       ALOGW("MPEG4SegmenterDASH stop failed with %d. No video data sent", err);
-    }  
+    }
   }
 }

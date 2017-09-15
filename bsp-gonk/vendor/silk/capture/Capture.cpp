@@ -63,7 +63,7 @@ using namespace std;
 
 #define CAMERA_NAME "capture"
 #define CAPTURE_COMMAND_NAME "CaptureCommand"
-#define CAPTURE_CTL_SOCKET_NAME "capturectl"
+#define CAPTURE_CTL_SOCKET_NAME "silk-capture-ctl"
 
 //
 // Global variables
@@ -117,8 +117,8 @@ class CaptureCommand: public FrameworkCommand,
                       public OpenCVCameraCapture::PreviewProducerListener {
 public:
   CaptureCommand(CaptureListener* captureListener,
-                 Channel& micChannel,
-                 Channel& vidChannel) :
+                 Channel& pcmChannel,
+                 Channel& mp4Channel) :
       FrameworkCommand(CAPTURE_COMMAND_NAME),
       mCaptureListener(captureListener),
       mHardwareActive(false),
@@ -127,8 +127,8 @@ public:
       mVideoLooper(nullptr),
       mCameraSource(nullptr),
       mAudioMutter(nullptr),
-      mMicChannel(micChannel),
-      mVidChannel(vidChannel),
+      mPcmChannel(pcmChannel),
+      mMp4Channel(mp4Channel),
       mCameraDeviceUser(nullptr) {
   }
 
@@ -174,8 +174,8 @@ private:
   sp<ALooper> mVideoLooper;
   sp<CameraSource> mCameraSource;
   sp<AudioMutter> mAudioMutter;
-  Channel& mMicChannel;
-  Channel& mVidChannel;
+  Channel& mPcmChannel;
+  Channel& mMp4Channel;
   Mutex mPreviewTargetLock;
 
  // Camera2:
@@ -189,10 +189,17 @@ private:
  */
 class CaptureListener: private FrameworkListener1 {
 public:
-  CaptureListener(Channel& micChannel, Channel& vidChannel)
-      : FrameworkListener1(CAPTURE_CTL_SOCKET_NAME) {
+  CaptureListener(
+    Channel& pcmChannel,
+    Channel& mp4Channel
+  ) : FrameworkListener1(CAPTURE_CTL_SOCKET_NAME) {
     FrameworkListener1::registerCmd(
-      new CaptureCommand(this, micChannel, vidChannel));
+      new CaptureCommand(
+        this,
+        pcmChannel,
+        mp4Channel
+      )
+    );
   }
 
   int start() {
@@ -233,9 +240,9 @@ public:
  */
 class CaptureCameraListener: public CameraListener {
  public:
-  CaptureCameraListener(CaptureListener *captureListener, Channel *vidChannel)
+  CaptureCameraListener(CaptureListener *captureListener, Channel *mp4Channel)
       : mCaptureListener(captureListener),
-        mVidChannel(vidChannel),
+        mMp4Channel(mp4Channel),
         focusMoving(false) {
   }
 
@@ -263,7 +270,7 @@ class CaptureCameraListener: public CameraListener {
       void *faceData = malloc(size);
       if (faceData != nullptr) {
         memcpy(faceData, metadata->faces, size);
-        mVidChannel->send(TAG_FACES, faceData, size, free, faceData);
+        mMp4Channel->send(TAG_FACES, faceData, size, free, faceData);
       }
     } else {
       ALOGD("postData: msgType=0x%x", msgType);
@@ -289,7 +296,7 @@ class CaptureCameraListener: public CameraListener {
 #endif
  private:
   CaptureListener *mCaptureListener;
-  Channel *mVidChannel;
+  Channel *mMp4Channel;
   bool focusMoving;
 };
 
@@ -627,7 +634,7 @@ void CaptureCommand::onPreviewProducer() {
   }
 }
 
-sp<MediaSource> prepareVideoEncoder(const sp<ALooper>& looper,
+sp<MediaCodecSource> prepareVideoEncoder(const sp<ALooper>& looper,
                                     const sp<MediaSource>& source) {
   sp<MetaData> meta = source->getFormat();
   int32_t width, height, stride, sliceHeight, colorFormat;
@@ -734,7 +741,7 @@ status_t CaptureCommand::initThreadAudioOnly() {
 
   sp<MediaSource> audioSourceEmitter = new AudioSourceEmitter(
     audioSource,
-    sInitAudio ? &mMicChannel : nullptr,
+    sInitAudio ? &mPcmChannel : nullptr,
     sAudioSampleRate,
     sAudioChannels
   );
@@ -746,7 +753,7 @@ status_t CaptureCommand::initThreadAudioOnly() {
   mHardwareActive = true;
   notifyCameraEvent("initialized");
 
-  // Pull out buffers as fast as they come.  The TAG_MIC data will will sent as
+  // Pull out buffers as fast as they come.  The TAG_PCM data will will sent as
   // a side effect
   if (!audioPuller.loop()) {
     notifyCameraEventError();
@@ -782,7 +789,10 @@ status_t CaptureCommand::initThreadCamera1() {
   }
   ALOGI("Connected to camera service");
 
-  sp<CaptureCameraListener> listener = new CaptureCameraListener(mCaptureListener, &mVidChannel);
+  sp<CaptureCameraListener> listener = new CaptureCameraListener(
+    mCaptureListener,
+    &mMp4Channel
+  );
   mCamera->setListener(listener);
 
   {
@@ -847,7 +857,10 @@ status_t CaptureCommand::initThreadCamera1() {
     mVideoLooper->setName("capture-looper");
     mVideoLooper->start();
 
-    sp<MediaSource> videoEncoder = prepareVideoEncoder(mVideoLooper, mCameraSource);
+    sp<MediaCodecSource> videoEncoder = prepareVideoEncoder(
+      mVideoLooper,
+      mCameraSource
+    );
     LOG_ERROR(videoEncoder == NULL, "Unable to prepareVideoEncoder");
 
     sp<MediaSource> audioSource(
@@ -863,7 +876,7 @@ status_t CaptureCommand::initThreadCamera1() {
 
     sp<MediaSource> audioSourceEmitter = new AudioSourceEmitter(
       audioSource,
-      sInitAudio ? &mMicChannel : nullptr,
+      sInitAudio ? &mPcmChannel : nullptr,
       sAudioSampleRate,
       sAudioChannels
     );
@@ -874,7 +887,7 @@ status_t CaptureCommand::initThreadCamera1() {
     mSegmenter = new MPEG4SegmenterDASH(
       videoEncoder,
       audioEncoder,
-      &mVidChannel,
+      &mMp4Channel,
       sAudioMute
     );
     mSegmenter->run("MPEG4SegmenterDASH");
@@ -1237,21 +1250,24 @@ int main(int argc, char **argv) {
   }
 
   // Start the data sockets
-  Channel micChannel(CAPTURE_MIC_DATA_SOCKET_NAME);
-  err = micChannel.startListener();
+  Channel pcmChannel(CAPTURE_PCM_DATA_SOCKET_NAME);
+  err = pcmChannel.startListener();
   if (err < 0) {
-    ALOGE("Failed to start capture mic socket listener: %d\n", err);
+    ALOGE("Failed to start capture pcm socket listener: %d\n", err);
     return 1;
   }
-  Channel vidChannel(CAPTURE_VID_DATA_SOCKET_NAME);
-  err = vidChannel.startListener();
+  Channel mp4Channel(CAPTURE_MP4_DATA_SOCKET_NAME);
+  err = mp4Channel.startListener();
   if (err < 0) {
-    ALOGE("Failed to start capture vid socket listener: %d\n", err);
+    ALOGE("Failed to start capture mp4 socket listener: %d\n", err);
     return 1;
   }
 
   // Start the control socket and register for commands from camera node module
-  CaptureListener captureListener(micChannel, vidChannel);
+  CaptureListener captureListener(
+    pcmChannel,
+    mp4Channel
+  );
   err = captureListener.start();
   if (err < 0) {
     ALOGE("Failed to start capture ctl socket listener: %d\n", err);

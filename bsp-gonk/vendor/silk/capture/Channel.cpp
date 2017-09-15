@@ -13,9 +13,9 @@
 // |capture| clients should be pulling all packets out of the data socket in
 // well under 1 second.
 static const int MaxPacketQueueByTag[__MAX_TAG] = {
-  10, // TAG_VIDEO: 10 seconds of recorded video
+  10, // TAG_MP4: 10 seconds of recorded video
   30, // TAG_FACES: 30 face events (10 events/second is not uncommon)
-  20, // TAG_MIC: 2 seconds of PCM data for audio analysis (~10 audio tags/second)
+  20, // TAG_PCM: 2 seconds of PCM data for audio analysis (~10 audio tags/second)
 };
 
 

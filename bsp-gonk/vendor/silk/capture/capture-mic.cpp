@@ -18,12 +18,12 @@ int main(int argc, char **argv)
   if (argc > 1) {
     file = argv[1];
   }
-  int socket = socket_local_client(CAPTURE_MIC_DATA_SOCKET_NAME,
+  int socket = socket_local_client(CAPTURE_PCM_DATA_SOCKET_NAME,
                                    ANDROID_SOCKET_NAMESPACE_RESERVED,
                                    SOCK_STREAM);
 
   if (socket < 0) {
-    printf("Error connecting to " CAPTURE_MIC_DATA_SOCKET_NAME " socket: %d\n", errno);
+    printf("Error connecting to " CAPTURE_PCM_DATA_SOCKET_NAME " socket: %d\n", errno);
     return 1;
   }
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
       printf("Incomplete data.  Expected %d bytes, got %d bytes\n", hdr.size, rc);
       return 1;
     }
-    if (hdr.tag == capture::datasocket::TAG_MIC) {
+    if (hdr.tag == capture::datasocket::TAG_PCM) {
       TEMP_FAILURE_RETRY(write(fd, buffer, hdr.size));
     }
     free(buffer);

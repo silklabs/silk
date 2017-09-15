@@ -11,7 +11,7 @@
 // AudioSource is always 16 bit PCM (2 bytes / sample)
 #define BYTES_PER_SAMPLE 2
 
-// 120ms of audio data per TAG_MIC packet
+// 120ms of audio data per TAG_PCM packet
 #define AUDIO_BUFFER_LENGTH_MS 120
 
 using namespace android;

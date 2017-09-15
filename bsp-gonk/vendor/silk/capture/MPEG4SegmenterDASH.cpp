@@ -4,7 +4,6 @@
 
 #include "MPEG4SegmenterDASH.h"
 
-
 #include <cutils/properties.h>
 #include <include/avc_utils.h>
 #include <media/mediarecorder.h>
@@ -22,6 +21,7 @@
 #endif
 
 #include "MPEG4SegmentDASHWriter.h"
+#include "CaptureDataSocket.h"
 
 // Normally "exported" from AACEncoder.h, but we can't include that here.
 enum { kNumSamplesPerFrame = 1024 };
@@ -386,7 +386,7 @@ static void writerDecStrong(void* data) {
 
 MPEG4SegmenterDASH::MPEG4SegmenterDASH(const sp<MediaSource>& videoEncoder,
                                        const sp<MediaSource>& audioEncoder,
-                                       Channel* channel,
+                                       capture::datasocket::Channel* channel,
                                        bool initalMute)
   : mVideoSource(new PutBackWrapper2(videoEncoder))
   , mAudioSource(new PutBackWrapper2(audioEncoder))
@@ -434,9 +434,15 @@ bool MPEG4SegmenterDASH::threadLoop() {
       // Write size and .mp4 data
       writer->incStrong(this);
 
-      mChannel->send(TAG_MP4, when, videoDurationMs,
-                     writer->data().array(), writer->data().size(),
-                     writerDecStrong, writer.get());
+      mChannel->send(
+        capture::datasocket::TAG_MP4,
+        when,
+        videoDurationMs,
+        writer->data().array(),
+        writer->data().size(),
+        writerDecStrong,
+        writer.get()
+      );
     } else {
       ALOGW("MPEG4SegmenterDASH stop failed with %d. No video data sent", err);
     }

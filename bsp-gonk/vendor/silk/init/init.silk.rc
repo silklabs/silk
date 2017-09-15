@@ -80,7 +80,7 @@ service silk-capture /silk/bin/debug-wrapper /silk/bin/capture
     socket silk_capture_ctl stream 0600 root root
     socket silk_capture_mp4 stream 0600 root root
     socket silk_capture_pcm stream 0600 root root
-
+    socket silk_capture_h264 stream 0600 root root
 
 # Tee kernel logs to logcat main
 service silk-kmsg /silk/bin/kmsg

@@ -1,9 +1,8 @@
 //#define LOG_NDEBUG 0
-#define LOG_TAG "silk-Channel"
+#define LOG_TAG "silk-SocketChannel"
 #include <log/log.h>
 
-#include "Channel.h"
-#include <sys/time.h>
+#include "SocketChannel.h"
 #include <utils/Looper.h>
 
 
@@ -16,10 +15,12 @@ static const int MaxPacketQueueByTag[__MAX_TAG] = {
   10, // TAG_MP4: 10 seconds of recorded video
   30, // TAG_FACES: 30 face events (10 events/second is not uncommon)
   20, // TAG_PCM: 2 seconds of PCM data for audio analysis (~10 audio tags/second)
+  1,  // TAG_H264_IDR: only need one h264 idr frame
+  12, // TAG_H264: ~0.5 seconds of h264 delta frames at 24fps
 };
 
 
-Channel::Channel(const char *socketName)
+SocketChannel::SocketChannel(const char *socketName)
   : SocketListener1(socketName, true),
     mPacketQueueByTag() {
 
@@ -27,16 +28,16 @@ Channel::Channel(const char *socketName)
   pthread_create(&mTransmitThread, nullptr, startTransmitThread, this);
 }
 
-Channel::~Channel() {
+SocketChannel::~SocketChannel() {
 }
 
-void *Channel::startTransmitThread(void *arg) {
-  Channel *that = static_cast<Channel *>(arg);
+void *SocketChannel::startTransmitThread(void *arg) {
+  SocketChannel *that = static_cast<SocketChannel *>(arg);
   that->transmitThread();
   return nullptr;
 }
 
-void Channel::transmitThread() {
+void SocketChannel::transmitThread() {
   Looper::setForThread(mTransmitLooper);
 
   QueuedPacket *packet = nullptr;
@@ -81,9 +82,15 @@ void Channel::transmitThread() {
 /**
  *
  */
-void Channel::send(Tag tag, timeval &when, int32_t durationMs,
-                   const void *data, size_t size,
-                   FreeDataFunc freeDataFunc, void *freeData) {
+void SocketChannel::send(
+  Tag tag,
+  timeval &when,
+  int32_t durationMs,
+  const void *data,
+  size_t size,
+  FreeDataFunc freeDataFunc,
+  void *freeData
+) {
   QueuedPacket *packet = new QueuedPacket(tag, when, durationMs, data, size, freeDataFunc, freeData);
   bool drop = true;
 
@@ -108,12 +115,3 @@ void Channel::send(Tag tag, timeval &when, int32_t durationMs,
   }
 }
 
-/**
- *
- */
-void Channel::send(Tag tag, const void *data, size_t size,
-                   FreeDataFunc freeDataFunc, void *freeData) {
-  timeval when;
-  gettimeofday(&when, NULL);
-  send(tag, when, 0, data, size, freeDataFunc, freeData);
-}

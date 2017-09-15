@@ -41,14 +41,14 @@
 #endif
 #include <poll.h>
 
-#include "AudioSourceEmitter.h"
-#include "AudioMutter.h"
 #include "json/json.h"
-
-#include "Channel.h"
+#include "AudioMutter.h"
+#include "AudioSourceEmitter.h"
+#include "SocketChannel.h"
+#include "FrameworkListener1.h"
+#include "H264SourceEmitter.h"
 #include "MPEG4SegmenterDASH.h"
 #include "OpenCVCameraCapture.h"
-#include "FrameworkListener1.h"
 
 // From frameworks/base/core/java/android/hardware/camera2/CameraDevice.java
 #define TEMPLATE_RECORD 3
@@ -107,8 +107,6 @@ bool sStopped = false;
 //
 class CaptureListener;
 
-
-
 /**
  * This class provided a method that is run each time
  * {@code CAPTURE_COMMAND_NAME} is received from node over the socket
@@ -116,19 +114,24 @@ class CaptureListener;
 class CaptureCommand: public FrameworkCommand,
                       public OpenCVCameraCapture::PreviewProducerListener {
 public:
-  CaptureCommand(CaptureListener* captureListener,
-                 Channel& pcmChannel,
-                 Channel& mp4Channel) :
+  CaptureCommand(
+    CaptureListener* captureListener,
+    capture::datasocket::Channel* h264Channel,
+    capture::datasocket::Channel* mp4Channel,
+    capture::datasocket::Channel* pcmChannel
+  ) :
       FrameworkCommand(CAPTURE_COMMAND_NAME),
       mCaptureListener(captureListener),
       mHardwareActive(false),
       mCamera(nullptr),
       mSegmenter(nullptr),
+      mVideoEncoder(nullptr),
       mVideoLooper(nullptr),
       mCameraSource(nullptr),
       mAudioMutter(nullptr),
-      mPcmChannel(pcmChannel),
+      mH264Channel(h264Channel),
       mMp4Channel(mp4Channel),
+      mPcmChannel(pcmChannel),
       mCameraDeviceUser(nullptr) {
   }
 
@@ -171,11 +174,13 @@ private:
   sp<SurfaceControl> mPreviewSurfaceControl;
 
   sp<MPEG4SegmenterDASH> mSegmenter;
+  sp<MediaCodecSource> mVideoEncoder;
   sp<ALooper> mVideoLooper;
   sp<CameraSource> mCameraSource;
   sp<AudioMutter> mAudioMutter;
-  Channel& mPcmChannel;
-  Channel& mMp4Channel;
+  capture::datasocket::Channel* mH264Channel;
+  capture::datasocket::Channel* mMp4Channel;
+  capture::datasocket::Channel* mPcmChannel;
   Mutex mPreviewTargetLock;
 
  // Camera2:
@@ -190,14 +195,16 @@ private:
 class CaptureListener: private FrameworkListener1 {
 public:
   CaptureListener(
-    Channel& pcmChannel,
-    Channel& mp4Channel
+    capture::datasocket::Channel* h264Channel,
+    capture::datasocket::Channel* mp4Channel,
+    capture::datasocket::Channel* pcmChannel
   ) : FrameworkListener1(CAPTURE_CTL_SOCKET_NAME) {
     FrameworkListener1::registerCmd(
       new CaptureCommand(
         this,
-        pcmChannel,
-        mp4Channel
+        h264Channel,
+        mp4Channel,
+        pcmChannel
       )
     );
   }
@@ -240,10 +247,12 @@ public:
  */
 class CaptureCameraListener: public CameraListener {
  public:
-  CaptureCameraListener(CaptureListener *captureListener, Channel *mp4Channel)
-      : mCaptureListener(captureListener),
-        mMp4Channel(mp4Channel),
-        focusMoving(false) {
+  CaptureCameraListener(
+    CaptureListener* captureListener,
+    capture::datasocket::Channel* mp4Channel
+  ) : mCaptureListener(captureListener),
+      mMp4Channel(mp4Channel),
+      focusMoving(false) {
   }
 
   void notify(int32_t msgType, int32_t ext1, int32_t ext2) {
@@ -296,7 +305,7 @@ class CaptureCameraListener: public CameraListener {
 #endif
  private:
   CaptureListener *mCaptureListener;
-  Channel *mMp4Channel;
+  capture::datasocket::Channel* mMp4Channel;
   bool focusMoving;
 };
 
@@ -412,16 +421,36 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
   string cmdName = cmdNameVal.asString();
   if (cmdName == "init") {
     capture_init(cmdJson["cmdData"]);
+
   } else if (cmdName == "update") {
     capture_update(cmdJson["cmdData"]);
+
   } else if (cmdName == "stop") {
     capture_stop();
+
   } else if (cmdName == "setParameter") {
     capture_setParameter(cmdJson["name"], cmdJson["value"]);
+
   } else if (cmdName == "getParameterInt") {
     capture_getParameterInt(cmdJson["name"]);
+
   } else if (cmdName == "getParameterStr") {
     capture_getParameterStr(cmdJson["name"]);
+
+  } else if (cmdName == "h264RequestIdrFrame") {
+    LOG_ERROR(mVideoEncoder == nullptr, "Video encoder inactive");
+    ALOGD("h264 IDR frame requested");
+    mVideoEncoder->requestIDRFrame();
+
+  } else if (cmdName == "h264SetBitrate") {
+    LOG_ERROR(mVideoEncoder == nullptr, "Video encoder inactive");
+    Value cmdBitrate = cmdJson["bitrate"];
+    LOG_ERROR(cmdBitrate.isInt(), "bitrate must be an integer");
+    auto bitrateK = cmdBitrate.asInt();
+    auto newBitrate = (bitrateK < sVideoBitRateInK ? bitrateK : sVideoBitRateInK) * 1024;
+    ALOGD("h264 bitrate: %d", newBitrate);
+    mVideoEncoder->videoBitRate(newBitrate);
+
   } else {
     LOG_ERROR(true, "Invalid command %s", cmdName.c_str());
   }
@@ -556,6 +585,8 @@ int CaptureCommand::capture_update(Value& cmdData) {
     if (mSegmenter != nullptr) {
       mSegmenter->setMute(sAudioMute);
     }
+  } else {
+    ALOGW("Ignoring unknown cmdData: %s", cmdData.asString().c_str());
   }
   return 0;
 }
@@ -741,7 +772,7 @@ status_t CaptureCommand::initThreadAudioOnly() {
 
   sp<MediaSource> audioSourceEmitter = new AudioSourceEmitter(
     audioSource,
-    sInitAudio ? &mPcmChannel : nullptr,
+    sInitAudio ? mPcmChannel : nullptr,
     sAudioSampleRate,
     sAudioChannels
   );
@@ -791,7 +822,7 @@ status_t CaptureCommand::initThreadCamera1() {
 
   sp<CaptureCameraListener> listener = new CaptureCameraListener(
     mCaptureListener,
-    &mMp4Channel
+    mMp4Channel
   );
   mCamera->setListener(listener);
 
@@ -857,11 +888,15 @@ status_t CaptureCommand::initThreadCamera1() {
     mVideoLooper->setName("capture-looper");
     mVideoLooper->start();
 
-    sp<MediaCodecSource> videoEncoder = prepareVideoEncoder(
+    mVideoEncoder = prepareVideoEncoder(
       mVideoLooper,
       mCameraSource
     );
-    LOG_ERROR(videoEncoder == NULL, "Unable to prepareVideoEncoder");
+    LOG_ERROR(mVideoEncoder == nullptr, "Unable to prepareVideoEncoder");
+    sp<MediaSource> h264SourceEmitter = new H264SourceEmitter(
+      mVideoEncoder,
+      mH264Channel
+    );
 
     sp<MediaSource> audioSource(
       new AudioSource(
@@ -876,7 +911,7 @@ status_t CaptureCommand::initThreadCamera1() {
 
     sp<MediaSource> audioSourceEmitter = new AudioSourceEmitter(
       audioSource,
-      sInitAudio ? &mPcmChannel : nullptr,
+      sInitAudio ? mPcmChannel : nullptr,
       sAudioSampleRate,
       sAudioChannels
     );
@@ -885,9 +920,9 @@ status_t CaptureCommand::initThreadCamera1() {
       prepareAudioEncoder(mVideoLooper, mAudioMutter);
 
     mSegmenter = new MPEG4SegmenterDASH(
-      videoEncoder,
+      h264SourceEmitter,
       audioEncoder,
-      &mMp4Channel,
+      mMp4Channel,
       sAudioMute
     );
     mSegmenter->run("MPEG4SegmenterDASH");
@@ -1114,7 +1149,7 @@ int CaptureCommand::capture_stop() {
   }
 
   // Exit rather than trying to deal with restarting, as on a "stopped" event
-  // the process gets resarted anyway.
+  // the process gets restarted anyway.
   ALOGI("Exit");
   exit(0);
   //notifyCameraEvent("stopped");
@@ -1250,23 +1285,30 @@ int main(int argc, char **argv) {
   }
 
   // Start the data sockets
-  Channel pcmChannel(CAPTURE_PCM_DATA_SOCKET_NAME);
+  SocketChannel pcmChannel(CAPTURE_PCM_DATA_SOCKET_NAME);
   err = pcmChannel.startListener();
   if (err < 0) {
-    ALOGE("Failed to start capture pcm socket listener: %d\n", err);
+    ALOGE("Failed to start capture pcm socket listener: %d", err);
     return 1;
   }
-  Channel mp4Channel(CAPTURE_MP4_DATA_SOCKET_NAME);
+  SocketChannel mp4Channel(CAPTURE_MP4_DATA_SOCKET_NAME);
   err = mp4Channel.startListener();
   if (err < 0) {
-    ALOGE("Failed to start capture mp4 socket listener: %d\n", err);
+    ALOGE("Failed to start capture mp4 socket listener: %d", err);
+    return 1;
+  }
+  SocketChannel h264Channel(CAPTURE_H264_DATA_SOCKET_NAME);
+  err = h264Channel.startListener();
+  if (err < 0) {
+    ALOGE("Failed to start capture h264 socket listener: %d", err);
     return 1;
   }
 
   // Start the control socket and register for commands from camera node module
   CaptureListener captureListener(
-    pcmChannel,
-    mp4Channel
+    &h264Channel,
+    &mp4Channel,
+    &pcmChannel
   );
   err = captureListener.start();
   if (err < 0) {

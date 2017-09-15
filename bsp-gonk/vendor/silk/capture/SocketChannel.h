@@ -1,5 +1,4 @@
-#ifndef CHANNEL_H_
-#define CHANNEL_H_
+#pragma once
 
 #include <utils/List.h>
 #include <utils/Mutex.h>
@@ -9,46 +8,40 @@ class Looper;
 }
 
 #include "SocketListener1.h"
-#include "AudioSourceEmitter.h"
 #include "CaptureDataSocket.h"
 
 /**
  * This class implements the data socket listener and sends the data to node
  * module over the {@code CAPTURE_DATA_SOCKET_NAME} socket
  */
+using namespace android;
 using namespace capture::datasocket;
-class Channel: virtual public AudioSourceEmitter::Observer,
-               virtual public SocketListener1 {
-public:
-  struct Header {
-    size_t size; // size of the packet, excluding this header
-    int32_t tag; // of type Tag
-    timeval when;
-    int32_t durationMs;
-  };
+class SocketChannel: public capture::datasocket::Channel, public SocketListener1 {
+ public:
+  SocketChannel(const char *socketName);
+  virtual ~SocketChannel();
 
-  Channel(const char *socketName);
-  ~Channel();
-
-  typedef void (*FreeDataFunc)(void *freeData);
-
-  void send(Tag tag, const void *data, size_t size,
-            FreeDataFunc freeDataFunc, void *freeData);
-  void send(Tag tag, timeval &when, int32_t durationMs,
-            const void *data, size_t size,
-            FreeDataFunc freeDataFunc, void *freeData);
-
-  void OnData(bool vad, void *data, size_t size) {
-    (void) vad;
-    send(TAG_PCM, data, size, free, data);
+  virtual bool connected() override {
+    return isSocketAvailable();
   }
-protected:
+
+  void send(
+    Tag tag,
+    timeval &when,
+    int32_t durationMs,
+    const void *data,
+    size_t size,
+    FreeDataFunc freeDataFunc,
+    void *freeData
+  ) override;
+
+ protected:
   virtual bool onDataAvailable(SocketClient *c) {
     (void) c;
     return true;
   };
 
-private:
+ private:
   struct QueuedPacket {
     Tag tag;
     timeval when;
@@ -84,4 +77,3 @@ private:
   pthread_t mTransmitThread;
 };
 
-#endif

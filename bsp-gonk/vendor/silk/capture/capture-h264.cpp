@@ -1,5 +1,5 @@
 /**
- * Dumps PCM data from the silk-capture data socket to a file
+ * Dumps h264 data from the silk-capture data socket to a file.
  */
 
 #include <stdlib.h>
@@ -14,25 +14,25 @@
 
 int main(int argc, char **argv)
 {
-  const char *file = "/data/capture.pcm";
+  const char *file = "/data/capture.h264";
   if (argc > 1) {
     file = argv[1];
   }
   int socket = socket_local_client(
-    CAPTURE_PCM_DATA_SOCKET_NAME,
+    CAPTURE_H264_DATA_SOCKET_NAME,
     ANDROID_SOCKET_NAMESPACE_RESERVED,
     SOCK_STREAM
   );
 
   if (socket < 0) {
     printf(
-      "Error connecting to " CAPTURE_PCM_DATA_SOCKET_NAME " socket: %d\n",
+      "Error connecting to " CAPTURE_H264_DATA_SOCKET_NAME " socket: %d\n",
       errno
     );
     return 1;
   }
 
-  printf("Writing PCM data to %s\n", file);
+  printf("Writing h264 data to %s\n", file);
   int fd = open(file, O_WRONLY | O_CREAT, 0440);
   if (fd < 0) {
     perror(NULL);
@@ -79,8 +79,14 @@ int main(int argc, char **argv)
       );
       return 1;
     }
-    if (hdr.tag == capture::datasocket::TAG_PCM) {
+    switch (hdr.tag) {
+    case capture::datasocket::TAG_H264_IDR:
+    case capture::datasocket::TAG_H264:
       TEMP_FAILURE_RETRY(write(fd, buffer, hdr.size));
+      break;
+    default:
+      printf("Unsupported tag: %d\n", hdr.tag);
+      return 1;
     }
     free(buffer);
   }

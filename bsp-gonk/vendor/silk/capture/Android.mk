@@ -6,18 +6,19 @@ LOCAL_MODULE_STEM := capture
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
-	../SocketListener/FrameworkListener1.cpp \
-	../SocketListener/SocketListener1.cpp \
-	../jsoncpp/jsoncpp.cpp \
-	AudioLooper.cpp \
-	AudioMutter.cpp \
-	AudioSourceEmitter.cpp \
-	Capture.cpp \
-	Channel.cpp \
-	IOpenCVCameraCapture.cpp \
-	MPEG4SegmentDASHWriter.cpp \
-	MPEG4SegmenterDASH.cpp \
-	OpenCVCameraCapture.cpp \
+  ../SocketListener/FrameworkListener1.cpp \
+  ../SocketListener/SocketListener1.cpp \
+  ../jsoncpp/jsoncpp.cpp \
+  AudioLooper.cpp \
+  AudioMutter.cpp \
+  AudioSourceEmitter.cpp \
+  Capture.cpp \
+  SocketChannel.cpp \
+  H264SourceEmitter.cpp \
+  IOpenCVCameraCapture.cpp \
+  MPEG4SegmentDASHWriter.cpp \
+  MPEG4SegmenterDASH.cpp \
+  OpenCVCameraCapture.cpp \
 
 ifneq ($(TARGET_GE_NOUGAT),)
 LOCAL_SRC_FILES += 7.x/MediaCodecSource.cpp
@@ -155,6 +156,15 @@ LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
 LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
 include $(BUILD_SILK_EXECUTABLE)
 
+include $(CLEAR_VARS)
+LOCAL_MODULE       := silk-capture-h264
+LOCAL_MODULE_STEM  := capture-h264
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := capture-h264.cpp
+LOCAL_CFLAGS += -Wno-multichar -Wextra -Werror -std=c++11
+LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
+include $(BUILD_SILK_EXECUTABLE)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsilkSimpleH264Encoder

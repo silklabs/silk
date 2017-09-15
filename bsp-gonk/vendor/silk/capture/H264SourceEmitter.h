@@ -11,32 +11,24 @@ class Channel;
 }
 }
 
-class AudioSourceEmitter: public MediaSource {
+class H264SourceEmitter: public MediaSource {
  public:
-  AudioSourceEmitter(
+  H264SourceEmitter(
     const sp<MediaSource> &source,
-    capture::datasocket::Channel *channel,
-    int audioSampleRate,
-    int audioChannels,
-    bool vadEnabled = false
+    capture::datasocket::Channel *channel
   );
-  virtual ~AudioSourceEmitter();
+  virtual ~H264SourceEmitter();
   virtual status_t start(MetaData *params = NULL);
   virtual status_t stop();
   virtual sp<MetaData> getFormat();
   virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
 
- private:
+private:
   sp<MediaSource> mSource;
   capture::datasocket::Channel *mChannel;
-  bool mVadEnabled;
-  uint8_t *mAudioBuffer;
-  uint32_t mAudioBufferIdx;
-  uint32_t mAudioBufferLen;
-  bool mAudioBufferVad;
+  uint8_t *mCodecConfig;
+  int mCodecConfigLength;
 
-  bool vadCheck();
-
-  DISALLOW_EVIL_CONSTRUCTORS(AudioSourceEmitter);
+  DISALLOW_EVIL_CONSTRUCTORS(H264SourceEmitter);
 };
 

@@ -1,5 +1,5 @@
 //#define LOG_NDEBUG 0
-#define LOG_TAG "silk-capture"
+#define LOG_TAG "silk-capture-AudioSourceEmitter"
 #include <log/log.h>
 
 #include <media/stagefright/foundation/ADebug.h>
@@ -7,6 +7,7 @@
 #include <media/stagefright/AudioSource.h>
 
 #include "AudioSourceEmitter.h"
+#include "CaptureDataSocket.h"
 
 // AudioSource is always 16 bit PCM (2 bytes / sample)
 #define BYTES_PER_SAMPLE 2
@@ -16,19 +17,20 @@
 
 using namespace android;
 
-AudioSourceEmitter::AudioSourceEmitter(const sp<MediaSource> &source,
-                                       sp<Observer> observer,
-                                       int audioSampleRate,
-                                       int audioChannels,
-                                       bool vadEnabled)
-    : mObserver(observer),
-      mSource(source),
-      mVadEnabled(vadEnabled),
-      mAudioBuffer(nullptr),
-      mAudioBufferIdx(0),
-      mAudioBufferLen((audioSampleRate * BYTES_PER_SAMPLE * audioChannels) *
-                      AUDIO_BUFFER_LENGTH_MS / 1000),
-      mAudioBufferVad(false)
+AudioSourceEmitter::AudioSourceEmitter(
+  const sp<MediaSource> &source,
+  capture::datasocket::Channel *channel,
+  int audioSampleRate,
+  int audioChannels,
+  bool vadEnabled
+) : mSource(source),
+    mChannel(channel),
+    mVadEnabled(vadEnabled),
+    mAudioBuffer(nullptr),
+    mAudioBufferIdx(0),
+    mAudioBufferLen((audioSampleRate * BYTES_PER_SAMPLE * audioChannels) *
+                    AUDIO_BUFFER_LENGTH_MS / 1000),
+    mAudioBufferVad(false)
 {
 }
 
@@ -63,8 +65,10 @@ bool AudioSourceEmitter::vadCheck() {
   return false;
 }
 
-status_t AudioSourceEmitter::read(MediaBuffer **buffer,
-    const ReadOptions *options) {
+status_t AudioSourceEmitter::read(
+  MediaBuffer **buffer,
+  const ReadOptions *options
+) {
   status_t err = mSource->read(buffer, options);
 
   if (err == 0 && (*buffer) && (*buffer)->range_length()) {
@@ -84,8 +88,14 @@ status_t AudioSourceEmitter::read(MediaBuffer **buffer,
         len -= fillLen;
       }
 
-      if (mObserver.get() != nullptr) {
-        mObserver->OnData(mAudioBufferVad, mAudioBuffer, mAudioBufferLen);
+      if (mChannel != nullptr) {
+        mChannel->send(
+          capture::datasocket::TAG_PCM,
+          mAudioBuffer,
+          mAudioBufferLen,
+          free,
+          mAudioBuffer
+        );
         mAudioBuffer = nullptr; // Buffer ownership is transferred to OnData()
       } else {
         free(mAudioBuffer);

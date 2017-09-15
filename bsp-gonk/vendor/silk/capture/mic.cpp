@@ -7,20 +7,30 @@
 #include <unistd.h>
 #include <media/stagefright/AudioSource.h>
 #include "AudioSourceEmitter.h"
+#include "CaptureDataSocket.h"
 
 using namespace android;
 
 static int fd;
 
-class Observer: public AudioSourceEmitter::Observer {
-public:
-  void OnData(bool vad, void *data, size_t size) {
-    if (vad) {
-      ALOGI("Voice activity detected\n");
-    }
+class DataChannel: public capture::datasocket::Channel {
+ public:
+  bool connected() override {
+    return true;
+  }
+
+  void send(
+    capture::datasocket::Tag tag,
+    timeval &when,
+    int32_t durationMs,
+    const void *data,
+    size_t size,
+    capture::datasocket::FreeDataFunc freeDataFunc,
+    void *freeData
+  ) override {
     TEMP_FAILURE_RETRY(write(fd, data, size));
     printf(".\n");
-    free(data);
+    freeDataFunc(freeData);
   }
 };
 
@@ -53,9 +63,13 @@ int main(int argc, char **argv)
     )
   );
 
-  sp<Observer> observer = new Observer();
-  audioSource = new AudioSourceEmitter(audioSource, observer,
-                                       audioSampleRate, audioChannels);
+  DataChannel dataChannel;
+  audioSource = new AudioSourceEmitter(
+    audioSource,
+    &dataChannel,
+    audioSampleRate,
+    audioChannels
+  );
 
   status_t err = audioSource->start();
   if (err != 0) {

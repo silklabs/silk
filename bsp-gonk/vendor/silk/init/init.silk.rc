@@ -77,9 +77,9 @@ service silk-capture /silk/bin/debug-wrapper /silk/bin/capture
     class late_start
     user camera
     group camera
-    socket silk-capture-ctl stream 0600 root root
-    socket silk-capture-mp4 stream 0600 root root
-    socket silk-capture-pcm stream 0600 root root
+    socket silk_capture_ctl stream 0600 root root
+    socket silk_capture_mp4 stream 0600 root root
+    socket silk_capture_pcm stream 0600 root root
 
 
 # Tee kernel logs to logcat main

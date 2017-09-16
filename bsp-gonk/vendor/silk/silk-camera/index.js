@@ -244,9 +244,9 @@ const CAMERA_VIDEO_ENABLED = CAMERA_HW_ENABLED && util.getboolprop('ro.silk.came
 //
 // Constants
 //
-const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/silk-capture-ctl';
-const CAPTURE_PCM_DATA_SOCKET_NAME = '/dev/socket/silk-capture-pcm';
-const CAPTURE_MP4_DATA_SOCKET_NAME = '/dev/socket/silk-capture-mp4';
+const CAPTURE_CTL_SOCKET_NAME = '/dev/socket/silk_capture_ctl';
+const CAPTURE_PCM_DATA_SOCKET_NAME = '/dev/socket/silk_capture_pcm';
+const CAPTURE_MP4_DATA_SOCKET_NAME = '/dev/socket/silk_capture_mp4';
 
 
 // Max amount of time to wait for the capture process to initialize up to the

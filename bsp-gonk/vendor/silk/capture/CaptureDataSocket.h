@@ -1,8 +1,8 @@
 #ifndef CAPTUREDATASOCKET_H
 #define CAPTUREDATASOCKET_H
 
-#define CAPTURE_MP4_DATA_SOCKET_NAME "silk-capture-mp4"
-#define CAPTURE_PCM_DATA_SOCKET_NAME "silk-capture-pcm"
+#define CAPTURE_MP4_DATA_SOCKET_NAME "silk_capture_mp4"
+#define CAPTURE_PCM_DATA_SOCKET_NAME "silk_capture_pcm"
 
 namespace capture {
 namespace datasocket {

@@ -63,7 +63,7 @@ using namespace std;
 
 #define CAMERA_NAME "capture"
 #define CAPTURE_COMMAND_NAME "CaptureCommand"
-#define CAPTURE_CTL_SOCKET_NAME "silk-capture-ctl"
+#define CAPTURE_CTL_SOCKET_NAME "silk_capture_ctl"
 
 //
 // Global variables

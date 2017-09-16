@@ -10,10 +10,12 @@
 using namespace android;
 
 H264SourceEmitter::H264SourceEmitter(
-  const sp<MediaSource> &source,
-  capture::datasocket::Channel *channel
+  const sp<MediaCodecSource> &source,
+  capture::datasocket::Channel *channel,
+  int preferredBitrate
 ) : mSource(source),
     mChannel(channel),
+    mPreferredBitrate(preferredBitrate),
     mCodecConfig(nullptr),
     mCodecConfigLength(0)
 {
@@ -64,11 +66,10 @@ status_t H264SourceEmitter::read(
       mCodecConfigLength = len;
       mCodecConfig = new uint8_t[mCodecConfigLength];
       memcpy(mCodecConfig, data, mCodecConfigLength);
-    } else {
-      if (mChannel != nullptr && mChannel->connected()) {
-        int32_t isSyncFrame = 0;
-        metaData->findInt32(kKeyIsSyncFrame, &isSyncFrame);
-
+    } else if (mChannel) {
+      int32_t isSyncFrame = 0;
+      metaData->findInt32(kKeyIsSyncFrame, &isSyncFrame);
+      if (mChannel->connected()) {
         auto channelDataLength = len;
         if (isSyncFrame) {
           channelDataLength += mCodecConfigLength;
@@ -79,6 +80,7 @@ status_t H264SourceEmitter::read(
           malloc(channelDataLength)
         );
         if (isSyncFrame) {
+          // TODO: Refactor SocketClient::send() to avoid this memcpy()
           if (mCodecConfig != nullptr) {
             memcpy(channelData, mCodecConfig, mCodecConfigLength);
           }
@@ -95,6 +97,28 @@ status_t H264SourceEmitter::read(
           free,
           channelData
         );
+      } else {
+        // Hacky!  Through the silk-capture-ctl control socket somebody could
+        // change the h264 bitrate at any time (see the "h264SetBitrate" command
+        // in Capture.cpp).  This facility is primary intended to lower the
+        // bitrate temporarily due to adverse network conditions.  However that
+        // same somebody could neglect to restore the bitrate when they
+        // disconnect from the capture process (or perhaps they simply crashed).
+        //
+        // Plus there's no notification when a client connects/disconnects
+        // from any capture process socket so there's no nice way to know the
+        // bitrate should be restored to the preferred value.
+        //
+        // As a workaround for all this, the bitrate preferred value is asserted
+        // on every sync frame if there no clients are attached to the
+        // silk-capture-h264 data socket.  This ensures that eventually the
+        // bitrate will return to normal.
+        //
+        // TODO: This needs to be cleaned up as part of a larger refactoring
+        //
+        if (isSyncFrame) {
+          mSource->videoBitRate(mPreferredBitrate);
+        }
       }
     }
   }

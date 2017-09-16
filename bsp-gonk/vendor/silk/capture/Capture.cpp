@@ -71,7 +71,7 @@ using namespace std;
 const char* kMimeTypeAvc = "video/avc";
 int sCameraId = 0; // 0 = back camera, 1 = front camera
 Size sVideoSize(1280, 720);
-int32_t sVideoBitRateInK = 1024;
+int32_t sVideoBitRate = 1024 * 1024;
 int32_t sFPS = 24;
 int32_t sIFrameIntervalS = 1;
 int32_t sAudioBitRate = 32000;
@@ -446,8 +446,8 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     LOG_ERROR(mVideoEncoder == nullptr, "Video encoder inactive");
     Value cmdBitrate = cmdJson["bitrate"];
     LOG_ERROR(cmdBitrate.isInt(), "bitrate must be an integer");
-    auto bitrateK = cmdBitrate.asInt();
-    auto newBitrate = (bitrateK < sVideoBitRateInK ? bitrateK : sVideoBitRateInK) * 1024;
+    auto bitrate = cmdBitrate.asInt();
+    auto newBitrate = (bitrate < sVideoBitRate ? bitrate : sVideoBitRate);
     ALOGD("h264 bitrate: %d", newBitrate);
     mVideoEncoder->videoBitRate(newBitrate);
 
@@ -505,8 +505,8 @@ int CaptureCommand::capture_init(Value& cmdData) {
     ALOGV("sVideoSize.height %d", sVideoSize.height);
   }
   if (!cmdData["vbr"].isNull()) {
-    sVideoBitRateInK = cmdData["vbr"].asInt();
-    ALOGV("sVideoBitRateInK %d", sVideoBitRateInK);
+    sVideoBitRate = cmdData["vbr"].asInt() * 1024;
+    ALOGV("sVideoBitRate %d", sVideoBitRate);
   }
   if (!cmdData["fps"].isNull()) {
     sFPS = cmdData["fps"].asInt();
@@ -685,7 +685,7 @@ sp<MediaCodecSource> prepareVideoEncoder(const sp<ALooper>& looper,
   format->setString("mime", kMimeTypeAvc);
   //format->setInt32("profile", OMX_VIDEO_AVCProfileBaseline);
   //format->setInt32("level", OMX_VIDEO_AVCLevel12);
-  format->setInt32("bitrate", sVideoBitRateInK * 1024);
+  format->setInt32("bitrate", sVideoBitRate);
   format->setInt32("bitrate-mode", OMX_Video_ControlRateVariable);
   format->setFloat("frame-rate", sFPS);
   format->setInt32("i-frame-interval", sIFrameIntervalS);
@@ -895,7 +895,8 @@ status_t CaptureCommand::initThreadCamera1() {
     LOG_ERROR(mVideoEncoder == nullptr, "Unable to prepareVideoEncoder");
     sp<MediaSource> h264SourceEmitter = new H264SourceEmitter(
       mVideoEncoder,
-      mH264Channel
+      mH264Channel,
+      sVideoBitRate
     );
 
     sp<MediaSource> audioSource(

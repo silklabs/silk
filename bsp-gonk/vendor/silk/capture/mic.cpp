@@ -28,6 +28,10 @@ class DataChannel: public capture::datasocket::Channel {
     capture::datasocket::FreeDataFunc freeDataFunc,
     void *freeData
   ) override {
+    (void) tag;
+    (void) when;
+    (void) durationMs;
+
     TEMP_FAILURE_RETRY(write(fd, data, size));
     printf(".\n");
     freeDataFunc(freeData);

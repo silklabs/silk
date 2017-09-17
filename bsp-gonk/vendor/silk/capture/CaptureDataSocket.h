@@ -16,6 +16,7 @@ enum Tag {
   TAG_H264,    // Sent over CAPTURE_H264_DATA_SOCKET_NAME
   __MAX_TAG
 };
+
 struct PacketHeader {
   size_t size; // size of the packet, excluding this header
   int32_t tag; // of type Tag
@@ -27,13 +28,6 @@ typedef void (*FreeDataFunc)(void *freeData);
 
 class Channel {
  public:
-  struct Header {
-    size_t size; // size of the packet, excluding this header
-    int32_t tag; // of type Tag
-    timeval when;
-    int32_t durationMs;
-  };
-
   Channel() {};
   virtual ~Channel() {};
 

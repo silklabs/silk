@@ -61,11 +61,21 @@ void SocketChannel::transmitThread() {
         ALOGE("Unexpected event: %d", event);
       }
     } else {
-      ALOGV("xmit tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
-            packet->tag, packet->size, packet->when.tv_sec, packet->when.tv_usec,
-            packet->durationMs);
+      ALOGV(
+        "xmit tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
+        packet->tag,
+        packet->size,
+        packet->when.tv_sec,
+        packet->when.tv_usec,
+        packet->durationMs
+      );
       if (isSocketAvailable()) {
-        Header header = { packet->size, packet->tag, packet->when, packet->durationMs };
+        PacketHeader header = {
+          packet->size,
+          packet->tag,
+          packet->when,
+          packet->durationMs
+        };
         sendData(&header, sizeof(header));
         if (packet->size > 0) {
           sendData(packet->data, packet->size);
@@ -91,7 +101,15 @@ void SocketChannel::send(
   FreeDataFunc freeDataFunc,
   void *freeData
 ) {
-  QueuedPacket *packet = new QueuedPacket(tag, when, durationMs, data, size, freeDataFunc, freeData);
+  QueuedPacket *packet = new QueuedPacket(
+    tag,
+    when,
+    durationMs,
+    data,
+    size,
+    freeDataFunc,
+    freeData
+  );
   bool drop = true;
 
   {
@@ -104,11 +122,21 @@ void SocketChannel::send(
     }
   }
 
-  ALOGV("queuing tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
-        tag, size, when.tv_sec, when.tv_usec, durationMs);
+  ALOGV(
+    "queuing tag:%d, size: %d, when:%ld.%ld durationMs:%d\n",
+    tag,
+    size,
+    when.tv_sec,
+    when.tv_usec,
+    durationMs
+  );
   if (drop) {
-    ALOGE("Packet queue full for tag: %d (%d/%d), dropping...",
-      tag, mPacketQueueByTag[tag], MaxPacketQueueByTag[tag]);
+    ALOGE(
+      "Packet queue full for tag: %d (%d/%d), dropping...",
+      tag,
+      mPacketQueueByTag[tag],
+      MaxPacketQueueByTag[tag]
+    );
     delete packet;
   } else {
     mTransmitLooper->wake();

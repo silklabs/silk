@@ -39,6 +39,9 @@ typedef enum {
   //
   // Macros: same as Venus NV21
   FRAMEFORMAT_YUV420SP_VENUS,
+
+  // H264-encoded frames
+  FRAMEFORMAT_H264,
 } FrameFormat;
 
 static __inline__ int __VENUS_ALIGN(int value, int align) {

@@ -23,6 +23,8 @@ pip install ninja-syntax
 
 if [[ ! -d PeachPy ]]; then
   git clone https://github.com/Maratyszcza/PeachPy.git
+fi
+if ! pip list --format=legacy | grep -q PeachPy; then
   (
     cd PeachPy
     pip install --upgrade -r requirements.txt

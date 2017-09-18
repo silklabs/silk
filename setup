@@ -1,0 +1,39 @@
+#
+# Prepares the Silk command-line environment.
+#
+# |source| this file.
+#
+
+_SOURCE="${BASH_SOURCE[0]}"
+if [ -z $_SOURCE ]; then
+  # zsh support....
+  _SOURCE=${(%):-%N}
+fi
+
+while [ -h "$_SOURCE" ]; do
+  _DIR="$( cd -P "$( dirname "$_SOURCE" )" && pwd )"
+  _SOURCE="$(readlink "$_SOURCE")"
+  [[ $_SOURCE != /* ]] && _SOURCE="$_DIR/$_SOURCE"
+done
+_SILK_ROOT="$( cd -P "$( dirname "$_SOURCE" )" && pwd )"
+unset _SOURCE _DIR
+
+$_SILK_ROOT/tools/version_checks.sh
+
+# Add some directories to PATH if not already present
+for dir in \
+    $_SILK_ROOT/cli \
+    $_SILK_ROOT/node_modules/.bin \
+  ; do
+
+  case :$PATH: in
+  *:$dir:*)
+    ;;
+  *)
+    echo Adding $dir to PATH
+    export PATH=$dir:$PATH
+    ;;
+  esac
+done
+
+unset _SILK_ROOT

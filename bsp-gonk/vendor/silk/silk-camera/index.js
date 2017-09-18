@@ -214,7 +214,7 @@ type CommandTypes = CommandSetParameterType |
 const log = createLog('camera');
 
 const VIDEO_SEGMENT_DURATION_SECS =
-  Math.max(1, Math.min(util.getintprop('persist.silk.video.duration', 1), 20));
+  Math.max(1, Math.min(util.getintprop('persist.silk.video.duration', 5), 30));
 
 const CAMERA_ID = util.getintprop('ro.silk.camera.id', 0);
 
@@ -260,7 +260,8 @@ const CAPTURE_INIT_TIMEOUT_MS = 30 * 1000;
 
 // If TAG_MP4 or TAG_PCM is not received in this amount of time assume the
 // capture process is wedged and restart it.
-const CAPTURE_TAG_TIMEOUT_MS = 10 * 1000;
+const CAPTURE_TAG_TIMEOUT_MS = 1000 *
+  (10 + CAMERA_VIDEO_ENABLED ? VIDEO_SEGMENT_DURATION_SECS * 1.5 : 0);
 
 // If there is still not a camera frame after this number of attempts assume the
 // capture process is wedged and restart it.

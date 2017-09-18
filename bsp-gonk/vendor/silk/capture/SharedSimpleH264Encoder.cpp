@@ -19,10 +19,12 @@ static std::vector<std::shared_ptr<EncoderPool>> availablePools;
 
 class EncoderPool {
  public:
-  static std::shared_ptr<EncoderPool> Create(int width,
-                                             int height,
-                                             int maxBitrateK,
-                                             int targetFps);
+  static std::shared_ptr<EncoderPool> Create(
+    int width,
+    int height,
+    int maxBitrateK,
+    int targetFps
+  );
   void bitRateChanged(SharedSimpleH264EncoderImpl *who);
   void attach(SharedSimpleH264EncoderImpl *who);
   void detach(SharedSimpleH264EncoderImpl *who);
@@ -34,7 +36,10 @@ class EncoderPool {
   ~EncoderPool() {}
  private:
   EncoderPool(int width, int height, int maxBitrateK, int targetFps)
-    : width(width), height(height), maxBitrateK(maxBitrateK), targetFps(targetFps) {
+    : width(width),
+      height(height),
+      maxBitrateK(maxBitrateK),
+      targetFps(targetFps) {
   }
 
   static void frameOutCallback(SimpleH264Encoder::EncodedFrameInfo& info);
@@ -52,14 +57,15 @@ class EncoderPool {
 
 class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
  public:
-  SharedSimpleH264EncoderImpl(std::shared_ptr<EncoderPool> encoderPool,
-                              int bitrateK,
-                              FrameOutCallback frameOutCallback,
-                              void *frameOutUserData)
-      : bitrateK(bitrateK),
-        frameOutCallback(frameOutCallback),
-        frameOutUserData(frameOutUserData),
-        encoderPool(encoderPool) {
+  SharedSimpleH264EncoderImpl(
+    std::shared_ptr<EncoderPool> encoderPool,
+    int bitrateK,
+    FrameOutCallback frameOutCallback,
+    void *frameOutUserData
+  ) : bitrateK(bitrateK),
+      frameOutCallback(frameOutCallback),
+      frameOutUserData(frameOutUserData),
+      encoderPool(encoderPool) {
 
     encoderPool->attach(this);
   }
@@ -97,8 +103,10 @@ class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
     return encoderPool->encoder->getInputFrame(inputFrame);
   }
 
-  virtual void nextFrame(InputFrame& inputFrame,
-                         InputFrameInfo& inputFrameInfo) {
+  virtual void nextFrame(
+    InputFrame& inputFrame,
+    InputFrameInfo& inputFrameInfo
+  ) {
     if (!encoderPool->isPrimary(this)) {
       ALOGI("Not primary, ignoring nextFrame");
       if (inputFrame.deallocator) {
@@ -118,10 +126,12 @@ class SharedSimpleH264EncoderImpl: public SharedSimpleH264Encoder {
 };
 
 
-std::shared_ptr<EncoderPool> EncoderPool::Create(int width,
-                                                 int height,
-                                                 int maxBitrateK,
-                                                 int targetFps) {
+std::shared_ptr<EncoderPool> EncoderPool::Create(
+  int width,
+  int height,
+  int maxBitrateK,
+  int targetFps
+) {
 
   std::shared_ptr<EncoderPool> encoderPool;
 
@@ -249,21 +259,24 @@ void EncoderPool::dispatchFrameOutCallbacks(SimpleH264Encoder::EncodedFrameInfo&
 }
 
 
-SharedSimpleH264Encoder *
-  SharedSimpleH264Encoder::Create(int width,
-                                  int height,
-                                  int maxBitrateK,
-                                  int targetFps,
-                                  FrameOutCallback frameOutCallback,
-                                  void *frameOutUserData) {
-
-  std::shared_ptr<EncoderPool> encoderPool =
-    EncoderPool::Create(width, height, maxBitrateK, targetFps);
+SharedSimpleH264Encoder *SharedSimpleH264Encoder::Create(
+  int width,
+  int height,
+  int maxBitrateK,
+  int targetFps,
+  FrameOutCallback frameOutCallback,
+  void *frameOutUserData
+) {
+  std::shared_ptr<EncoderPool> encoderPool = EncoderPool::Create(
+    width,
+    height,
+    maxBitrateK,
+    targetFps
+  );
 
   if (encoderPool == nullptr) {
     return nullptr;
   }
-
   return new SharedSimpleH264EncoderImpl(
     encoderPool,
     maxBitrateK,

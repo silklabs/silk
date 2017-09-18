@@ -34,20 +34,24 @@ class SimpleH264Encoder {
   // Callback that receives the next encoded frame.
   // This is not your thread or data. Copy and return.
   typedef void (*FrameOutCallback)(EncodedFrameInfo& info);
-  static SimpleH264Encoder *Create(int width,
-                                   int height,
-                                   int maxBitrateK,
-                                   int targetFps,
-                                   FrameOutCallback frameOutCallback,
-                                   void *frameOutUserData);
+  static SimpleH264Encoder *Create(
+    int width,
+    int height,
+    int maxBitrateK,
+    int targetFps,
+    FrameOutCallback frameOutCallback,
+    void *frameOutUserData
+  );
 
   virtual ~SimpleH264Encoder() {};
   virtual void setBitRate(int bitrateK) = 0;
   virtual void requestKeyFrame() = 0;
 
   virtual bool getInputFrame(InputFrame& inputFrame) = 0;
-  virtual void nextFrame(InputFrame& inputFrame,
-                         InputFrameInfo& inputFrameInfo) = 0;
+  virtual void nextFrame(
+    InputFrame& inputFrame,
+    InputFrameInfo& inputFrameInfo
+  ) = 0;
   virtual void stop() = 0;
   virtual bool error() = 0;
 };

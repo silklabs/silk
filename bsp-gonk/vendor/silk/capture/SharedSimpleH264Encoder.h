@@ -10,12 +10,14 @@ class SharedSimpleH264Encoder : public SimpleH264Encoder {
   // processed
   virtual bool isPrimary() = 0;
 
-  static SharedSimpleH264Encoder *Create(int width,
-                                         int height,
-                                         int maxBitrateK,
-                                         int targetFps,
-                                         FrameOutCallback frameOutCallback,
-                                         void *frameOutUserData);
+  static SharedSimpleH264Encoder *Create(
+    int width,
+    int height,
+    int maxBitrateK,
+    int targetFps,
+    FrameOutCallback frameOutCallback,
+    void *frameOutUserData
+  );
 };
 
 #endif

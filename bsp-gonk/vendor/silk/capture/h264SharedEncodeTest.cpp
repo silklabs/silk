@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
   int width = property_get_int32("ro.silk.camera.width", 1280);
   int height = property_get_int32("ro.silk.camera.height", 720);
-  int vbr = property_get_int32("ro.silk.camera.vbr", 1024);
+  int bitrate = property_get_int32("ro.silk.camera.bitrate", 1024);
   int fps = property_get_int32("ro.silk.camera.fps", 24);
 
   for (int i = 0; i < 1; i++) {
@@ -182,7 +182,10 @@ int main(int argc, char **argv)
     {
       Mutex::Autolock autolock(simpleH264EncoderLock);
       simpleH264Encoder = SharedSimpleH264Encoder::Create(
-        width, height, vbr, fps,
+        width,
+        height,
+        bitrate,
+        fps,
         frameOutCallback,
         nullptr
       );
@@ -191,7 +194,10 @@ int main(int argc, char **argv)
         moreEncoders.push_back(
           std::shared_ptr<SimpleH264Encoder>(
             SharedSimpleH264Encoder::Create(
-              width, height, vbr, fps,
+              width,
+              height,
+              bitrate,
+              fps,
               frameOutCallback,
               (void *) 0xDEADBEEF
             )

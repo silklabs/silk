@@ -504,8 +504,8 @@ int CaptureCommand::capture_init(Value& cmdData) {
     sVideoSize.height = cmdData["height"].asInt();
     ALOGV("sVideoSize.height %d", sVideoSize.height);
   }
-  if (!cmdData["vbr"].isNull()) {
-    sVideoBitRate = cmdData["vbr"].asInt() * 1024;
+  if (!cmdData["bitrateK"].isNull()) {
+    sVideoBitRate = cmdData["bitrateK"].asInt() * 1024;
     ALOGV("sVideoBitRate %d", sVideoBitRate);
   }
   if (!cmdData["fps"].isNull()) {

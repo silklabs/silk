@@ -173,7 +173,7 @@ int main(int argc, char **argv)
   size_t width;
   size_t height;
   libpreviewClient->getSize(width, height);
-  int vbr = property_get_int32("ro.silk.camera.vbr", 1024);
+  int bitrate = property_get_int32("ro.silk.camera.bitrate", 1024);
   int fps = property_get_int32("ro.silk.camera.fps", 24);
 
   outputFrameSize.resize(fps);
@@ -193,7 +193,10 @@ int main(int argc, char **argv)
     {
       Mutex::Autolock autolock(simpleH264EncoderLock);
       simpleH264Encoder = SimpleH264Encoder::Create(
-        width, height, vbr, fps,
+        width,
+        height,
+        bitrate,
+        fps,
         frameOutCallback,
         nullptr
       );

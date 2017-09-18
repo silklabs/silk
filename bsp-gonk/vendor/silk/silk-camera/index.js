@@ -174,7 +174,7 @@ type CommandInitType = {
     width: number;
     height: number;
     fps: number;
-    vbr: number;
+    bitrateK: number;
     audioMute: boolean;
     audioSampleRate: number;
     audioChannels: number;
@@ -219,7 +219,6 @@ const VIDEO_SEGMENT_DURATION_SECS =
 const CAMERA_ID = util.getintprop('ro.silk.camera.id', 0);
 
 const FPS = util.getintprop('ro.silk.camera.fps', 24);
-const VBR = util.getintprop('ro.silk.camera.vbr', 1024);
 
 const FRAME_SCALE_LOW = util.getintprop('ro.silk.camera.scale.low', 5);
 const FRAME_SCALE_DEFAULT = util.getintprop('ro.silk.camera.scale', 4);
@@ -416,6 +415,7 @@ export default class Camera extends EventEmitter {
   FRAME_SIZE: FrameSize;
   width: number;
   height: number;
+  bitrateK: number;
 
   _cameraParameters: {[key: string]: string} = {};
   _pendingCameraParameters: null | {[key: string]: string} = {};
@@ -841,7 +841,7 @@ export default class Camera extends EventEmitter {
         width: this.width,
         height: this.height,
         fps: FPS,
-        vbr: VBR,
+        bitrateK: this.bitrateK,
         audioMute: this._audioMute,
         audioSampleRate: this._config.deviceMic.sampleRate,
         audioChannels: this._config.deviceMic.numChannels,
@@ -1422,6 +1422,20 @@ export default class Camera extends EventEmitter {
 
     if (width === this.width && height === this.height) {
       return false;
+    }
+    this.bitrateK = util.getintprop('ro.silk.camera.bitrate', 0);
+    if (this.bitrateK <= 0) {
+      if (width * height <= 320 * 240) {
+        this.bitrateK = 600;
+      } else if (width * height <= 640 * 480) {
+        this.bitrateK = 1700;
+      } else if (width * height <= 960 * 540) {
+        this.bitrateK = 2000;
+      } else if (width * height <= 1280 * 720) {
+        this.bitrateK = 4000;
+      } else {
+        this.bitrateK = 6000;
+      }
     }
     this.width = width;
     this.height = height;

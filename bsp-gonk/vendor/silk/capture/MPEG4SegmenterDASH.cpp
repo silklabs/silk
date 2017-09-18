@@ -107,7 +107,7 @@ class EncoderProgress {
 public:
   enum ProgressType {
     PROGRESS_NONE,
-    PROGRESS_I_FRAME, PROGRESS_OTHER_FRAME, PROGRESS_END_OF_STREAM
+    PROGRESS_SYNC_FRAME, PROGRESS_DELTA_FRAME, PROGRESS_END_OF_STREAM
   };
 
   virtual ~EncoderProgress() { };
@@ -140,9 +140,14 @@ void EncoderProgress::notifyListeners(int64_t timeUs, ProgressType type) {
 class VideoSegmenter : public MediaSourceWrapper,
                        public EncoderProgress {
 public:
-  VideoSegmenter(const sp<PutBackWrapper2>& source)
+  VideoSegmenter(
+    const sp<PutBackWrapper2>& source,
+    const sp<MediaCodec>& videoMediaCodec,
+    int framesPerVideoSegment
+  )
     : MediaSourceWrapper(source)
-    , mFirstIFrameSent()
+    , mVideoMediaCodec(videoMediaCodec)
+    , mFramesPerVideoSegment(framesPerVideoSegment)
     , mFrameCount()
   { }
 
@@ -158,7 +163,8 @@ private:
     return static_cast<PutBackWrapper2*>(mSource.get());
   }
 
-  bool mFirstIFrameSent;
+  const sp<MediaCodec> mVideoMediaCodec;
+  int mFramesPerVideoSegment;
   int mFrameCount;
 };
 
@@ -201,31 +207,25 @@ status_t VideoSegmenter::read(
   }
 
   mFrameCount++;
-  int32_t isIFrame;
-  if ((*buffer)->meta_data()->findInt32(kKeyIsSyncFrame, &isIFrame)
-      && isIFrame) {
-    if (!mFirstIFrameSent) {
-      mFirstIFrameSent = true;
-      notifyListeners(timeUs, PROGRESS_I_FRAME);
-      return OK;
-    }
-#ifdef IGNORE_UNWANTED_IFRAME_AT_FRAME2
-    // The 8956 encoder sends two iframes at the start of a new segment.  This
-    // seems likely to be an encoder bug perhaps fixed in a later release?
-    // For now just pretend the second iframe is a regular frame.
-    if (mFrameCount == 2) {
-      ALOGW("Masking unexpected i-frame at frame #2");
-      notifyListeners(timeUs, PROGRESS_OTHER_FRAME);
-      return OK;
-    }
-#endif
+  int32_t isSyncFrame = false;
+  (*buffer)->meta_data()->findInt32(kKeyIsSyncFrame, &isSyncFrame);
 
-    // End the stream at this next i-frame
-    putbackWrapper()->putBack(buffer);
-    notifyListeners(timeUs, PROGRESS_END_OF_STREAM);
-    return ERROR_END_OF_STREAM;
+  ALOGV("Frame %d of %d", mFrameCount, mFramesPerVideoSegment);
+  if (isSyncFrame) {
+    notifyListeners(timeUs, PROGRESS_SYNC_FRAME);
+    if (mFrameCount >= mFramesPerVideoSegment) {
+      ALOGD("Ending video segment with %d frames", mFrameCount);
+      putbackWrapper()->putBack(buffer);
+      notifyListeners(timeUs, PROGRESS_END_OF_STREAM);
+      return ERROR_END_OF_STREAM;
+    }
+  } else {
+    if (mFrameCount >= mFramesPerVideoSegment) {
+      ALOGD("Time to end video segment, requesting sync frame");
+      mVideoMediaCodec->requestIDRFrame();
+    }
   }
-  notifyListeners(timeUs, PROGRESS_OTHER_FRAME);
+  notifyListeners(timeUs, PROGRESS_DELTA_FRAME);
   return OK;
 }
 
@@ -384,23 +384,34 @@ static void writerDecStrong(void* data) {
   writer->decStrong(nullptr);
 };
 
-MPEG4SegmenterDASH::MPEG4SegmenterDASH(const sp<MediaSource>& videoEncoder,
-                                       const sp<MediaSource>& audioEncoder,
-                                       capture::datasocket::Channel* channel,
-                                       bool initalMute)
-  : mVideoSource(new PutBackWrapper2(videoEncoder))
-  , mAudioSource(new PutBackWrapper2(audioEncoder))
+MPEG4SegmenterDASH::MPEG4SegmenterDASH(
+  const sp<MediaSource>& videoMediaSource,
+  const sp<MediaCodec>& videoMediaCodec,
+  int framesPerVideoSegment,
+  const sp<MediaSource>& audioMediaSource,
+  capture::datasocket::Channel* channel,
+  bool initalMute
+)
+  : mVideoSource(new PutBackWrapper2(videoMediaSource))
+  , mAudioSource(new PutBackWrapper2(audioMediaSource))
   , mChannel(channel)
   , mAudioMute(initalMute)
+  , mVideoMediaCodec(videoMediaCodec)
+  , mFramesPerVideoSegment(framesPerVideoSegment)
 {}
 
 bool MPEG4SegmenterDASH::threadLoop() {
-  bool firstSegment = true;
-
-  while (true) {
-    sp<VideoSegmenter> videoSource(new VideoSegmenter(mVideoSource));
-    sp<MediaSource> audioSource(new AudioSegmenter(mAudioSource,
-                                                   videoSource.get()));
+  for (;;) {
+    sp<VideoSegmenter> videoSource(
+      new VideoSegmenter(
+        mVideoSource,
+        mVideoMediaCodec,
+        mFramesPerVideoSegment
+      )
+    );
+    sp<MediaSource> audioSource(
+      new AudioSegmenter(mAudioSource, videoSource.get())
+    );
     sp<MPEG4SegmentDASHWriter> writer = new MPEG4SegmentDASHWriter();
     writer->init(videoSource, &audioSource, mAudioMute);
 
@@ -415,13 +426,6 @@ bool MPEG4SegmenterDASH::threadLoop() {
 
     status_t err = writer->stop();
     if (err == OK) {
-      // Always skip the first segment because the audio offset is likely larger
-      // than a frame and that confuses some playback implementations.
-      if (firstSegment) {
-        firstSegment = false;
-        continue;
-      }
-
       // The "key track" is the video track.  The key track starts at
       // time 0 in the segment.  The duration isn't particularly
       // meaningful for DASH playback because segments overlap during

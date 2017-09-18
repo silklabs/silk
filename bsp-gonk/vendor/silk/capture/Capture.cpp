@@ -1,4 +1,4 @@
-//#define LOG_NDEBUG 0
+#define LOG_NDEBUG 0
 #define LOG_TAG "silk-capture-daemon"
 #include <log/log.h>
 
@@ -922,6 +922,8 @@ status_t CaptureCommand::initThreadCamera1() {
 
     mSegmenter = new MPEG4SegmenterDASH(
       h264SourceEmitter,
+      mVideoEncoder->encoder(),
+      sFPS * sIFrameIntervalS,
       audioEncoder,
       mMp4Channel,
       sAudioMute

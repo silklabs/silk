@@ -69,6 +69,9 @@ struct MediaCodecSource : public MediaSource,
 
     status_t requestIDRFrame();
     status_t videoBitRate(uint32_t bitRate);
+    sp<MediaCodec>& encoder() {
+      return mEncoder;
+    }
 
 protected:
     virtual ~MediaCodecSource();

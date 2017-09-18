@@ -551,7 +551,11 @@ status_t Track::start(MetaData *params) {
             startTimeOffsetUs += kExtraAudioDelayTimeUs;
         }
 
-        ALOGI("Start time offset: %" PRId64 " us", startTimeOffsetUs);
+        ALOGD(
+          "Start %s time offset: %" PRId64 " us",
+          mIsAudio ? "audio" : "video",
+          startTimeOffsetUs
+        );
         startTimeUs += startTimeOffsetUs;
     }
 

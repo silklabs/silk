@@ -167,8 +167,8 @@ type CommandInitType = {
   cmdName: 'init';
   cmdData: {
     frames: boolean;
-    video: boolean;
     audio: boolean;
+    video: boolean;
     videoSegmentLength: number;
     cameraId: number;
     width: number;
@@ -392,6 +392,7 @@ export default class Camera extends EventEmitter {
   _config: CameraConfig;
   _ready: boolean = false;
   _recording: boolean = false;
+  _videoSegmentsEnabled: boolean = false;
   _cvVideoCapture: ?VideoCapture = null;
   _cvVideoCaptureBusy: boolean = false;
   _ctlSocket: ?Socket = null;
@@ -810,7 +811,7 @@ export default class Camera extends EventEmitter {
       invariant(this._micDataSocket === null);
       this._micDataSocket = this._connectDataSocket(CAPTURE_PCM_DATA_SOCKET_NAME);
     }
-    if (CAMERA_VIDEO_ENABLED) {
+    if (this._videoSegmentsEnabled) {
       invariant(this._vidDataSocket === null);
       this._vidDataSocket = this._connectDataSocket(CAPTURE_MP4_DATA_SOCKET_NAME);
     }
@@ -834,8 +835,8 @@ export default class Camera extends EventEmitter {
       this._pendingCameraParameters = {};
       const cmdData = {
         frames: CAMERA_HW_ENABLED,
-        video: CAMERA_VIDEO_ENABLED,
         audio: AUDIO_HW_ENABLED,
+        video: CAMERA_VIDEO_ENABLED,
         videoSegmentLength: VIDEO_SEGMENT_DURATION_SECS,
         cameraId: CAMERA_ID,
         width: this.width,
@@ -867,7 +868,7 @@ export default class Camera extends EventEmitter {
    * @private
    */
   _tagMonitor = () => {
-    if ( (this._videoTagReceived || !CAMERA_VIDEO_ENABLED) &&
+    if ( (this._videoTagReceived || !this._videoSegmentsEnabled) &&
          (this._micTagReceived || !AUDIO_HW_ENABLED) ) {
       this._videoTagReceived = this._micTagReceived = null;
       this._tagMonitorTimeout = setTimeout(this._tagMonitor, CAPTURE_TAG_TIMEOUT_MS);
@@ -1506,6 +1507,25 @@ export default class Camera extends EventEmitter {
       }
     }
     this._command({cmdName: 'setParameter', name, value});
+  }
+
+  /**
+   * Enables MPEG4 video segments, which are emitted via the 'video-segment'
+   * event.  This method must be called before calling init().
+   *
+   * @memberof silk-camera
+   * @instance
+   */
+  enableVideoSegments() {
+    if (this._ready) {
+      throw new Error('Enable video segments before initializing');
+    }
+
+    if (CAMERA_VIDEO_ENABLED) {
+      this._videoSegmentsEnabled = true;
+    } else {
+      log.debug('Device does not support enabling video segments');
+    }
   }
 
   /**

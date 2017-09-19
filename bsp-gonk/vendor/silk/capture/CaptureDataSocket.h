@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sys/time.h>
+#define CAPTURE_CTL_SOCKET_NAME "silk_capture_ctl"
 #define CAPTURE_MP4_DATA_SOCKET_NAME "silk_capture_mp4"
 #define CAPTURE_PCM_DATA_SOCKET_NAME "silk_capture_pcm"
 #define CAPTURE_H264_DATA_SOCKET_NAME "silk_capture_h264"

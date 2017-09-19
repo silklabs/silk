@@ -63,7 +63,6 @@ using namespace std;
 
 #define CAMERA_NAME "capture"
 #define CAPTURE_COMMAND_NAME "CaptureCommand"
-#define CAPTURE_CTL_SOCKET_NAME "silk_capture_ctl"
 
 //
 // Global variables
@@ -438,18 +437,36 @@ int CaptureCommand::runCommand(SocketClient *c, int argc, char ** argv) {
     capture_getParameterStr(cmdJson["name"]);
 
   } else if (cmdName == "h264RequestIdrFrame") {
-    LOG_ERROR(mVideoEncoder == nullptr, "Video encoder inactive");
-    ALOGD("h264 IDR frame requested");
-    mVideoEncoder->requestIDRFrame();
-
+    if (mHardwareActive) {
+      if (mVideoEncoder != nullptr) {
+        ALOGI("h264 IDR frame requested");
+        mVideoEncoder->requestIDRFrame();
+      } else {
+        ALOGD("h264 IDR frame requested but no encoder available");
+      }
+    } else {
+      ALOGD("h264 IDR frame requested but camera inactive");
+    }
   } else if (cmdName == "h264SetBitrate") {
-    LOG_ERROR(mVideoEncoder == nullptr, "Video encoder inactive");
-    Value cmdBitrate = cmdJson["bitrate"];
-    LOG_ERROR(cmdBitrate.isInt(), "bitrate must be an integer");
-    auto bitrate = cmdBitrate.asInt();
-    auto newBitrate = (bitrate < sVideoBitRate ? bitrate : sVideoBitRate);
-    ALOGD("h264 bitrate: %d", newBitrate);
-    mVideoEncoder->videoBitRate(newBitrate);
+    if (mHardwareActive) {
+      Value cmdBitrate = cmdJson["bitrate"];
+      LOG_ERROR(
+        cmdBitrate.type() != intValue,
+        "bitrate must be an integer (%d), not a %d",
+        intValue,
+        cmdBitrate.type()
+      );
+      auto bitrate = cmdBitrate.asInt();
+      auto newBitrate = (bitrate > 0 && bitrate < sVideoBitRate ? bitrate : sVideoBitRate);
+      if (mVideoEncoder != nullptr) {
+        ALOGD("h264 bitrate: %d", newBitrate);
+        mVideoEncoder->videoBitRate(newBitrate);
+      } else {
+        ALOGI("Bitrate change ignored no encoder available");
+      }
+    } else {
+      ALOGI("Bitrate change ignored, camera inactive");
+    }
 
   } else {
     LOG_ERROR(true, "Invalid command %s", cmdName.c_str());

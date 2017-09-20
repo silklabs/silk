@@ -9,7 +9,7 @@
   "scripts": {
     "postinstall": "./build",
     "silk-build-gonk": "./build $@",
-    "silk-build": "./build $@",
+    "silk-build": "./build .",
     "test": "./test.sh"
   },
   "license": "MIT",

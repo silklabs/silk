@@ -1,13 +1,14 @@
 #!/system/bin/sh
 
 info() {
+  echo $@
   log -p i -t silk-factoryreset $@
 }
 
-log Stopping framework
+info Stopping framework
 stop
 
-log Clearing /data
+info Clearing /data
 mount -o remount,rw /
 rm -rf \
   /data/core \
@@ -17,14 +18,16 @@ rm -rf \
   /data/tombstones \
   /silk \
 
-log Resetting /silk symlink
+info Resetting /silk symlink
 setprop persist.silk.root system
-ln -sf -T /system/silk /silk
+rm -rf /silk
+ln -sf /system/silk /silk
+ls -l /silk
 
-log Syncing disk
+info Syncing disk
 sync
 
-log Rebooting
+info Rebooting
 exec reboot
 
 exit 1

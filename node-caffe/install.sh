@@ -7,7 +7,7 @@ fi
 
 # Install and build OpenCV from source
 function install_opencv {
-  git clone --branch '3.1.0' git@github.com:Itseez/opencv.git
+  git clone --branch '3.3.0' git@github.com:Itseez/opencv.git
   pushd opencv
   mkdir build && cd build
   cmake -Wno-dev \
@@ -20,7 +20,7 @@ function install_opencv {
     -DBUILD_PERF_TESTS=false \
     -DBUILD_opencv_java=false \
     -DWITH_IPP=ON \
-    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    -DCMAKE_INSTALL_PREFIX=/usr/local/ \
     ..
   make -j4
   popd
@@ -63,12 +63,6 @@ function install_dependencies {
       install_package_osx boost
       install_package_osx webp # OpenCV3 wants libwebp
     )
-
-    # Install OpenCV
-    install_package_osx opencv3
-    cp /usr/local/Cellar/opencv3/3.1.0_*/share/OpenCV/3rdparty/lib/libippicv.a /usr/local/Cellar/opencv3/3.1.0_*/lib/
-    brew link --force --overwrite opencv3
-
   elif [[ "$(uname)" == "Linux" ]]; then
     install_package_linux libsnappy-dev
     install_package_linux libatlas-base-dev
@@ -78,13 +72,14 @@ function install_dependencies {
     install_package_linux protobuf-compiler
     install_package_linux libgoogle-glog-dev
     install_package_linux libhdf5-serial-dev
+  fi
 
-    # Install OpenCV from source as opencv PPA on Linux doesn't seem to have
-    # IPP libraries that caffe needs
-    if [[ ! -d "opencv" ]]; then
-      echo "Building OpenCV"
-      install_opencv
-    fi
+  # Install OpenCV from source as opencv PPA on Linux doesn't seem to have
+  # IPP libraries that caffe needs and on OSX the default headers have issues
+  # with FaceRecognizer class
+  if [[ ! -d "opencv" ]]; then
+    echo "Building OpenCV"
+    install_opencv
   fi
 }
 

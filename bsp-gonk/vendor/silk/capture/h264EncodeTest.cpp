@@ -13,7 +13,7 @@
 using android::Mutex;
 
 libpreview::Client *libpreviewClient;
-SimpleH264Encoder *simpleH264Encoder;
+SimpleH264Encoder *simpleH264Encoder = nullptr;
 Mutex simpleH264EncoderLock;
 int fd;
 std::vector<int> outputFrameSize;
@@ -42,6 +42,12 @@ void libpreview_FrameCallback(void *userData,
   clock_gettime(CLOCK_MONOTONIC, &now);
   inputFrameInfo.captureTimeMs = (int64_t)now.tv_sec * 1e3 + (int64_t)now.tv_nsec / 1e6;
 #endif
+  if (!simpleH264Encoder) {
+    printf("Encoder not available\n");
+    libpreviewClient->releaseFrame(owner);
+    return;
+  }
+
   if (!simpleH264Encoder->getInputFrame(inputFrame)) {
     printf("Unable to get input frame\n");
     return;
@@ -159,6 +165,7 @@ int main(int argc, char **argv)
 {
   (void) argc;
   (void) argv;
+
 #ifdef ANDROID
   android::sp<android::ProcessState> ps = android::ProcessState::self();
   ps->startThreadPool();

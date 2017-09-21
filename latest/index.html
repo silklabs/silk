@@ -70,27 +70,15 @@
                     <li class='h5'><span>Static members</span></li>
                     
                       <li><a
-                        href='#silk-alogwarn'
-                        class='regular pre-open'>
-                        .warn
-                      </a></li>
-                    
-                      <li><a
-                        href='#silk-alogdebug'
-                        class='regular pre-open'>
-                        .debug
-                      </a></li>
-                    
-                      <li><a
-                        href='#silk-alogverbose'
-                        class='regular pre-open'>
-                        .verbose
-                      </a></li>
-                    
-                      <li><a
                         href='#silk-aloginfo'
                         class='regular pre-open'>
                         .info
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-alogwarn'
+                        class='regular pre-open'>
+                        .warn
                       </a></li>
                     
                       <li><a
@@ -103,6 +91,18 @@
                         href='#silk-alogfatal'
                         class='regular pre-open'>
                         .fatal
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-alogdebug'
+                        class='regular pre-open'>
+                        .debug
+                      </a></li>
+                    
+                      <li><a
+                        href='#silk-alogverbose'
+                        class='regular pre-open'>
+                        .verbose
                       </a></li>
                     
                     </ul>
@@ -589,6 +589,68 @@
               
                 
                 <li><a
+                  href='#silk-speaker'
+                  class=" toggle-sibling">
+                  silk-speaker
+                  <span class='icon'>▸</span>
+                </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'><span>Instance members</span></li>
+                      
+                      <li><a
+                        href='#silk-speaker#getFormat'
+                        class='regular pre-open'>
+                        #getFormat
+                      </a></li>
+                      
+                      <li><a
+                        href='#silk-speaker#setVolume'
+                        class='regular pre-open'>
+                        #setVolume
+                      </a></li>
+                      
+                      <li><a
+                        href='#silk-speaker#write'
+                        class='regular pre-open'>
+                        #write
+                      </a></li>
+                      
+                      <li><a
+                        href='#silk-speaker#end'
+                        class='regular pre-open'>
+                        #end
+                      </a></li>
+                      
+                    </ul>
+                  
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'>Events</li>
+                      
+                        <li><a
+                          href='#silk-speaker.event:open'
+                          class='regular pre-open'>
+                          ⓔ open
+                        </a></li>
+                      
+                        <li><a
+                          href='#silk-speaker.event:close'
+                          class='regular pre-open'>
+                          ⓔ close
+                        </a></li>
+                      
+                    </ul>
+                  
+                </div>
+                
+                </li>
+              
+                
+                <li><a
                   href='#silk-wifi'
                   class=" toggle-sibling">
                   silk-wifi
@@ -724,68 +786,6 @@
                           href='#silk-wifi.event:scanResults'
                           class='regular pre-open'>
                           ⓔ scanResults
-                        </a></li>
-                      
-                    </ul>
-                  
-                </div>
-                
-                </li>
-              
-                
-                <li><a
-                  href='#silk-speaker'
-                  class=" toggle-sibling">
-                  silk-speaker
-                  <span class='icon'>▸</span>
-                </a>
-                
-                <div class='toggle-target display-none'>
-                  
-                  
-                    <ul class='list-reset py1-ul pl1'>
-                      <li class='h5'><span>Instance members</span></li>
-                      
-                      <li><a
-                        href='#silk-speaker#getFormat'
-                        class='regular pre-open'>
-                        #getFormat
-                      </a></li>
-                      
-                      <li><a
-                        href='#silk-speaker#setVolume'
-                        class='regular pre-open'>
-                        #setVolume
-                      </a></li>
-                      
-                      <li><a
-                        href='#silk-speaker#write'
-                        class='regular pre-open'>
-                        #write
-                      </a></li>
-                      
-                      <li><a
-                        href='#silk-speaker#end'
-                        class='regular pre-open'>
-                        #end
-                      </a></li>
-                      
-                    </ul>
-                  
-                  
-                    <ul class='list-reset py1-ul pl1'>
-                      <li class='h5'>Events</li>
-                      
-                        <li><a
-                          href='#silk-speaker.event:open'
-                          class='regular pre-open'>
-                          ⓔ open
-                        </a></li>
-                      
-                        <li><a
-                          href='#silk-speaker.event:close'
-                          class='regular pre-open'>
-                          ⓔ close
                         </a></li>
                       
                     </ul>
@@ -939,6 +939,12 @@
                         href='#silk-camera#setParameter'
                         class='regular pre-open'>
                         #setParameter
+                      </a></li>
+                      
+                      <li><a
+                        href='#silk-camera#enableVideoSegments'
+                        class='regular pre-open'>
+                        #enableVideoSegments
                       </a></li>
                       
                       <li><a
@@ -1313,213 +1319,6 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
   
-    <div class='border-bottom' id='silk-alogwarn'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>warn(tag = 'node', message)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Print warn log message</p>
-
-
-  <div class='pre p1 fill-light mt0'>warn(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
-            = <code>&#39;node&#39;</code>)</code>
-	    Source of the log message
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    The message to log
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-alogdebug'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>debug(tag = 'node', message)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Print debug log message</p>
-
-
-  <div class='pre p1 fill-light mt0'>debug(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
-            = <code>&#39;node&#39;</code>)</code>
-	    Source of the log message
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    The message to log
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-alogverbose'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>verbose(tag = 'node', message)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Print verbose log message</p>
-
-
-  <div class='pre p1 fill-light mt0'>verbose(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
-            = <code>&#39;node&#39;</code>)</code>
-	    Source of the log message
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    The message to log
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
     <div class='border-bottom' id='silk-aloginfo'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
@@ -1536,6 +1335,75 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
 
   <div class='pre p1 fill-light mt0'>info(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
+            = <code>&#39;node&#39;</code>)</code>
+	    Source of the log message
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    The message to log
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-alogwarn'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>warn(tag = 'node', message)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Print warn log message</p>
+
+
+  <div class='pre p1 fill-light mt0'>warn(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -1674,6 +1542,144 @@ log.info(<span class="hljs-string">'tag'</span>, <span class="hljs-string">'The 
 
 
   <div class='pre p1 fill-light mt0'>fatal(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
+            = <code>&#39;node&#39;</code>)</code>
+	    Source of the log message
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    The message to log
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-alogdebug'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>debug(tag = 'node', message)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Print debug log message</p>
+
+
+  <div class='pre p1 fill-light mt0'>debug(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>tag</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?
+            = <code>&#39;node&#39;</code>)</code>
+	    Source of the log message
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>message</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    The message to log
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-alogverbose'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>verbose(tag = 'node', message)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Print verbose log message</p>
+
+
+  <div class='pre p1 fill-light mt0'>verbose(tag: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>?, message: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
   
   
 
@@ -5870,6 +5876,407 @@ monitored. Please refer to
   
   <div class='clearfix'>
     
+    <h3 class='fl m0' id='silk-speaker'>
+      silk-speaker
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>This module provides functionality to stream raw PCM data to
+the device speakers.</p>
+
+
+  <div class='pre p1 fill-light mt0'>silk-speaker</div>
+  
+  
+    <p>
+      Extends
+      
+        <a href="https://nodejs.org/api/all.html#all_class_events_eventemitter">events.EventEmitter</a>
+      
+    </p>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Example</div>
+    
+      
+      <pre class='hljs css small'><span class="hljs-meta">'use strict'</span>;
+
+<span class="hljs-keyword">const</span> Speaker = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-speaker'</span>).default;
+<span class="hljs-keyword">const</span> log = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-alog'</span>);
+
+<span class="hljs-keyword">let</span> speaker = <span class="hljs-keyword">new</span> Speaker({
+  <span class="hljs-attr">numChannels</span>: <span class="hljs-number">1</span>,    <span class="hljs-comment">// Default is 2</span>
+  sampleRate: <span class="hljs-number">16000</span>, <span class="hljs-comment">// Default is 44100</span>
+  bytesPerSample: <span class="hljs-number">2</span>,
+  <span class="hljs-attr">encoding</span>: <span class="hljs-string">'signed-integer'</span>
+});
+speaker.setVolume(<span class="hljs-number">1.0</span>);
+speaker.write(pcmBuffer);
+speaker.end();
+speaker.on(<span class="hljs-string">'close'</span>, () =&gt; log.info(<span class="hljs-string">`done`</span>));
+speaker.on(<span class="hljs-string">'error'</span>, (err) =&gt; log.error(err));</pre>
+    
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='silk-speaker#getFormat'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>getFormat()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Returns the audio_format_t as defined in system/core/include/system/audio.h</p>
+
+
+  <div class='pre p1 fill-light mt0'>getFormat(): <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
+        audio format if valid or null otherwise
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-speaker#setVolume'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>setVolume(gain)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Sets the specified output gain value on all channels of this track. Gain
+values are clamped to the closed interval [0.0, 1.0]. A value of 0.0
+results in zero gain (silence), and a value of 1.0 means signal unchanged.
+The default value is 1.0.</p>
+
+
+  <div class='pre p1 fill-light mt0'>setVolume(gain: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>gain</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    output gain for all channels
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-speaker#write'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>write(chunk)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Write PCM buffer to the player's queue to be played.</p>
+
+
+  <div class='pre p1 fill-light mt0'>write(chunk: <a href="https://nodejs.org/api/buffer.html">Buffer</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>chunk</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>)</code>
+	    buffer containing audio data to be played
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-speaker#end'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>end()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Mark the end of audio stream. This API doesn't stop the audio streaming
+but rather tells the speaker to stop when all the buffers in the audio
+queue are done playing.</p>
+
+
+  <div class='pre p1 fill-light mt0'>end()</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Events</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='silk-speaker.event:open'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>open</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is fired when speaker stream is opened and ready to receive
+a stream to play</p>
+
+
+  <div class='pre p1 fill-light mt0'>open</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-speaker.event:close'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>close</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>This event is fired after end() is called on the speaker and speaker
+is done playing the entire audio stream. This speaker instance is
+essentially finished after this point</p>
+
+
+  <div class='pre p1 fill-light mt0'>close</div>
+  
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
     <h3 class='fl m0' id='silk-wifi'>
       silk-wifi
     </h3>
@@ -6948,407 +7355,6 @@ access point</p>
         </div>
       
     </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-</section>
-
-          
-        
-          
-            <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-  <div class='clearfix'>
-    
-    <h3 class='fl m0' id='silk-speaker'>
-      silk-speaker
-    </h3>
-    
-    
-  </div>
-  
-
-  <p>This module provides functionality to stream raw PCM data to
-the device speakers.</p>
-
-
-  <div class='pre p1 fill-light mt0'>silk-speaker</div>
-  
-  
-    <p>
-      Extends
-      
-        <a href="https://nodejs.org/api/all.html#all_class_events_eventemitter">events.EventEmitter</a>
-      
-    </p>
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Example</div>
-    
-      
-      <pre class='hljs css small'><span class="hljs-meta">'use strict'</span>;
-
-<span class="hljs-keyword">const</span> Speaker = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-speaker'</span>).default;
-<span class="hljs-keyword">const</span> log = <span class="hljs-built_in">require</span>(<span class="hljs-string">'silk-alog'</span>);
-
-<span class="hljs-keyword">let</span> speaker = <span class="hljs-keyword">new</span> Speaker({
-  <span class="hljs-attr">numChannels</span>: <span class="hljs-number">1</span>,    <span class="hljs-comment">// Default is 2</span>
-  sampleRate: <span class="hljs-number">16000</span>, <span class="hljs-comment">// Default is 44100</span>
-  bytesPerSample: <span class="hljs-number">2</span>,
-  <span class="hljs-attr">encoding</span>: <span class="hljs-string">'signed-integer'</span>
-});
-speaker.setVolume(<span class="hljs-number">1.0</span>);
-speaker.write(pcmBuffer);
-speaker.end();
-speaker.on(<span class="hljs-string">'close'</span>, () =&gt; log.info(<span class="hljs-string">`done`</span>));
-speaker.on(<span class="hljs-string">'error'</span>, (err) =&gt; log.error(err));</pre>
-    
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='silk-speaker#getFormat'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>getFormat()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Returns the audio_format_t as defined in system/core/include/system/audio.h</p>
-
-
-  <div class='pre p1 fill-light mt0'>getFormat(): <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
-        audio format if valid or null otherwise
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-speaker#setVolume'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>setVolume(gain)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Sets the specified output gain value on all channels of this track. Gain
-values are clamped to the closed interval [0.0, 1.0]. A value of 0.0
-results in zero gain (silence), and a value of 1.0 means signal unchanged.
-The default value is 1.0.</p>
-
-
-  <div class='pre p1 fill-light mt0'>setVolume(gain: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>gain</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    output gain for all channels
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-speaker#write'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>write(chunk)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Write PCM buffer to the player's queue to be played.</p>
-
-
-  <div class='pre p1 fill-light mt0'>write(chunk: <a href="https://nodejs.org/api/buffer.html">Buffer</a>)</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>chunk</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>)</code>
-	    buffer containing audio data to be played
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-speaker#end'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>end()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Mark the end of audio stream. This API doesn't stop the audio streaming
-but rather tells the speaker to stop when all the buffers in the audio
-queue are done playing.</p>
-
-
-  <div class='pre p1 fill-light mt0'>end()</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Events</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='silk-speaker.event:open'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>open</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>This event is fired when speaker stream is opened and ready to receive
-a stream to play</p>
-
-
-  <div class='pre p1 fill-light mt0'>open</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='silk-speaker.event:close'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>close</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>This event is fired after end() is called on the speaker and speaker
-is done playing the entire audio stream. This speaker instance is
-essentially finished after this point</p>
-
-
-  <div class='pre p1 fill-light mt0'>close</div>
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-
   
 
   
@@ -8459,6 +8465,52 @@ returns it's never guaranteed that the camera is STILL online</p>
         </div>
       
     </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='silk-camera#enableVideoSegments'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>enableVideoSegments()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Enables MPEG4 video segments, which are emitted via the 'video-segment'
+event.  This method must be called before calling init().</p>
+
+
+  <div class='pre p1 fill-light mt0'>enableVideoSegments()</div>
+  
+  
+
+  
+  
+  
+  
+  
+
   
 
   

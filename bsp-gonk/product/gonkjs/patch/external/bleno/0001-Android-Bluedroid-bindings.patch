@@ -1,4 +1,4 @@
-From eca2ad409d887df83946d8b74518c81c3a32405a Mon Sep 17 00:00:00 2001
+From 604eb11b09b2a7eb8170ae8807defa843e9f6ac0 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
@@ -32,7 +32,7 @@ index 0000000..d59df9c
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..a598689
+index 0000000..1c2dc4b
 --- /dev/null
 +++ b/lib/android/bindings.js
 @@ -0,0 +1,866 @@
@@ -732,13 +732,13 @@ index 0000000..a598689
 +  assert(this._serviceHandle !== null);
 +  assert(!this._pendingAttributes);
 +
-+  this._pendingSetServices = null;
-+
 +  if (status) {
 +    const error = new Error('Failed to start service, status ' + status);
 +    this._failSetServices(error);
 +    return;
 +  }
++
++  this._pendingSetServices = null;
 +
 +  this.emit('servicesSet');
 +};
@@ -904,7 +904,7 @@ index 0000000..a598689
 +module.exports = new BlenoBindings();
 diff --git a/lib/android/ccc-descriptor.js b/lib/android/ccc-descriptor.js
 new file mode 100644
-index 0000000..e08b66b
+index 0000000..c930361
 --- /dev/null
 +++ b/lib/android/ccc-descriptor.js
 @@ -0,0 +1,203 @@
@@ -1311,5 +1311,5 @@ index c585abc..360e603 100644
      "bplist-parser": "0.0.6",
      "xpc-connection": "~0.1.4"
 -- 
-2.11.0
+2.14.1
 

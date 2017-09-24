@@ -14,10 +14,10 @@ else
 fi
 
 info() {
-  log -p i -t silk-init $@
+  log -p i -t "silk-init[$$]" $@
 }
 warn() {
-  log -p w -t silk-init $@
+  log -p w -t "silk-init[$$]" $@
 }
 
 maybe_enable_static_eth0() {

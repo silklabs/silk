@@ -8,13 +8,16 @@ info() {
 info Stopping framework
 stop
 
+SILK_UPDATE_TMPDIR=$(getprop ro.silk.update.tmpdir /data/silk/update)
+SILK_UPDATE_IMG_FILE=$(getprop ro.silk.update.img.file /data/silk.img)
+
 info Clearing /data
 mount -o remount,rw /
 rm -rf \
   /data/core \
   /data/node_modules \
   /data/silk \
-  /data/silk.img \
+  $SILK_UPDATE_IMG_FILE
   /data/tombstones \
   /silk \
 

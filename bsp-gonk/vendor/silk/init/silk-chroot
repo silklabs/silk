@@ -54,9 +54,10 @@ mount -o remount,rw /
 rm /silk
 
 if [ "$PSR" = "silk.img" ]; then
-  info Using /data/silk.img as silk root
+  SILK_UPDATE_IMG_FILE=$(getprop ro.silk.update.img.file /data/silk.img)
+  info Using $SILK_UPDATE_IMG_FILE as silk root
 
-  test -f /data/silk.img
+  test -f $SILK_UPDATE_IMG_FILE
 
   LOOPDEV=$(busybox losetup -f)
   if [ ! -r $LOOPDEV ]; then
@@ -68,7 +69,7 @@ if [ "$PSR" = "silk.img" ]; then
   ERR=$?
   if [ $ERR = 0 ]; then
     busybox losetup -d $LOOPDEV
-    busybox losetup -r $LOOPDEV /data/silk.img
+    busybox losetup -r $LOOPDEV $SILK_UPDATE_IMG_FILE
     ERR=$?
   fi
 

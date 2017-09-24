@@ -19,13 +19,19 @@ if [ ! -r $UPDATE_ZIP ]; then
   exit 1
 fi
 
-rm -rf /data/silk/update
-mkdir /data/silk/update
-cd /data/silk/update
-if [ "$PWD" != "/data/silk/update" ]; then
-  warn Unable to prepare /data/silk/update
+SILK_UPDATE_TMPDIR=$(getprop ro.silk.update.tmpdir /data/silk/update)
+SILK_UPDATE_IMG_FILE=$(getprop ro.silk.update.img.file /data/silk.img)
+
+UNZIP_DIR=$SILK_UPDATE_TMPDIR/unzip
+info Preparing $UNZIP_DIR
+rm -rf $UNZIP_DIR
+mkdir -p $UNZIP_DIR
+cd $UNZIP_DIR
+if [ "$PWD" != "$UNZIP_DIR" ]; then
+  warn Unable to prepare $UNZIP_DIR
   exit 1
 fi
+
 info Unzipping $UPDATE_ZIP to $PWD
 busybox unzip $UPDATE_ZIP silk.img
 if [ ! -r silk.img ]; then
@@ -33,15 +39,15 @@ if [ ! -r silk.img ]; then
   exit 1
 fi
 
-echo Applying update
+info Applying update: $SILK_UPDATE_IMG_FILE
 # https://youtu.be/-W6as8oVcuM
-mv -f silk.img /data/silk.img
+mv -f silk.img $SILK_UPDATE_IMG_FILE
 setprop persist.silk.root silk.img
 
-echo Syncing disk
+info Syncing disk
 sync
 
-echo Rebooting
+info Rebooting
 exec reboot
 
 exit 1

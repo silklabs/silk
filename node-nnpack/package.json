@@ -1,6 +1,6 @@
 {
   "name": "node-nnpack",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "description": "Node bindings for NNPACK",
   "main": "index.js",
   "scripts": {

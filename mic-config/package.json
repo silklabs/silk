@@ -1,6 +1,6 @@
 {
   "name": "silk-mic-config",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "description": "Microphone configuration parameters",
   "main": "index.json",
   "license": "MIT",

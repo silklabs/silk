@@ -6,7 +6,7 @@ import type {Matrix as OpencvMatrix} from 'opencv';
 
 export type ReadCallback = (err: ?Error) => void;
 export type CloseCallback = () => void;
-export type ImageFormat = 'yvu420sp' | 'rgb';
+export type ImageFormat = 'yvu420sp' | 'rgb' | 'bgr';
 
 declare export class VideoCapture {
   constructor(

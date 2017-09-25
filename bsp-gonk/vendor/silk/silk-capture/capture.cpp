@@ -382,8 +382,12 @@ public:
     }
     if (grabAll) {
       rgb = im.clone();
-      cv::cvtColor(im, gray, CV_RGB2GRAY, 0);
+      gray = im;
+      cv::cvtColor(gray, gray, CV_BGR2GRAY, 0);
+    } else {
+      rgb = im;
     }
+    cv::cvtColor(rgb, rgb, CV_BGR2RGB, 0);
 #endif
 
     if (grabAll) {
@@ -481,12 +485,12 @@ public:
       return;
     }
 
-    if ((format != "yvu420sp") && (format != "rgb")) {
+#ifdef USE_LIBPREVIEW
+    if (format != "yvu420sp" && format != "rgb") {
       SetErrorMessage("unknown custom preview format");
       return;
     }
 
-#ifdef USE_LIBPREVIEW
     if (state->frameBuffer == NULL) {
       SetErrorMessage("no frame yet");
       return;
@@ -566,6 +570,10 @@ public:
     }
     uv_mutex_unlock(&state->frameDataLock);
 #else
+    if (format != "bgr") {
+      SetErrorMessage("only bgr supported for custom preview format");
+      return;
+    }
     if (!state->cap.grab()) {
       SetErrorMessage("grab failed");
       return;

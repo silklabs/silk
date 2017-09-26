@@ -304,14 +304,12 @@ public:
         convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
         if (grabAll) {
           cv::cvtColor(remote, rgb, CV_YUV420sp2RGB, 0);
-
-          cv::Mat remoteGray(
+          gray = cv::Mat(
             state->frameHeight,
             state->frameWidth,
             CV_8UC1,
             frameBuffer
-          );
-          gray = remoteGray.clone();
+          ).clone();
         }
         break;
       }
@@ -320,26 +318,23 @@ public:
       {
         // Setup a Matrix object to store the remote image using the
         // height/width that OpenCV expects for a YVU420 semi-planar format
-        cv::Mat remote(
+        im = cv::Mat(
           state->frameHeight * 3 / 2,
           state->frameWidth,
           CV_8UC1,
           frameBuffer
-        );
+        ).clone();
 
-        im = remote.clone();
         if (grabAll) {
-          // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
-          //                 ^^      ^ ^             ^^      ^ ^
-          cv::cvtColor(remote, rgb, CV_YUV420sp2BGR, 0);
-
-          cv::Mat remoteGray(
+          cv::Mat yuv;
+          convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, im, yuv);
+          cv::cvtColor(yuv, rgb, CV_YUV420sp2RGB, 0);
+          gray = cv::Mat(
             state->frameHeight,
             state->frameWidth,
             CV_8UC1,
             frameBuffer
-          );
-          gray = remoteGray.clone();
+          ).clone();
         }
         break;
       }
@@ -351,7 +346,9 @@ public:
           CV_8UC3,
           frameBuffer
         );
-        im = remote.clone();
+        cv::Mat yuv;
+        cv::cvtColor(remote, yuv, CV_RGB2YUV, 0);
+        convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, yuv, im);
         if (grabAll) {
           rgb = remote.clone();
           cv::cvtColor(rgb, gray, CV_RGB2GRAY, 0);
@@ -371,18 +368,19 @@ public:
       SetErrorMessage("grab failed");
       return;
     }
-    if (!state->cap.retrieve(im)) {
+    cv::Mat remote;
+    if (!state->cap.retrieve(remote)) {
       SetErrorMessage("retrieve failed");
       return;
     }
+    cv::Mat yuv;
+    cv::cvtColor(remote, yuv, CV_RGB2YUV, 0);
+    cv::Size s = yuv.size();
+    convertYUVsptoYVUsp(s.width, s.height, yuv, im);
     if (grabAll) {
-      rgb = im.clone();
-      gray = im;
-      cv::cvtColor(gray, gray, CV_BGR2GRAY, 0);
-    } else {
-      rgb = im;
+      cv::cvtColor(remote, rgb, CV_BGR2RGB, 0);
+      cv::cvtColor(remote, gray, CV_BGR2GRAY, 0);
     }
-    cv::cvtColor(rgb, rgb, CV_BGR2RGB, 0);
 #endif
 
     if (grabAll) {
@@ -480,12 +478,12 @@ public:
       return;
     }
 
-#ifdef USE_LIBPREVIEW
-    if (format != "yvu420sp" && format != "rgb") {
+    if (format != "yvu420sp" && format != "rgb" && format != "bgr") {
       SetErrorMessage("unknown custom preview format");
       return;
     }
 
+#ifdef USE_LIBPREVIEW
     if (state->frameBuffer == NULL) {
       SetErrorMessage("no frame yet");
       return;
@@ -517,6 +515,8 @@ public:
           convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, im);
         } else if (format == "rgb") {
           cv::cvtColor(remote, im, CV_YUV420sp2RGB, 0);
+        } else if (format == "bgr") {
+          cv::cvtColor(remote, im, CV_YUV420sp2BGR, 0);
         }
         break;
       }
@@ -533,27 +533,34 @@ public:
 
         if (format == "yvu420sp") {
           im = remote.clone();
-        } else if (format == "rgb") {
-          // There is no CY_YVU420sp2RGB, so use CY_YUV420sp2BGR to achieve the same
-          //                 ^^      ^ ^             ^^      ^ ^
-          cv::cvtColor(remote, im, CV_YUV420sp2BGR, 0);
+        } else {
+          cv::Mat yuv;
+          convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, remote, yuv);
+          if (format == "rgb") {
+            cv::cvtColor(yuv, im, CV_YUV420sp2RGB, 0);
+          } else if (format == "bgr") {
+            cv::cvtColor(yuv, im, CV_YUV420sp2BGR, 0);
+          }
         }
         break;
       }
     case libpreview::FRAMEFORMAT_RGB:
       {
-        if (format != "rgb") {
-          SetErrorMessage("Only rgb preview format is supported");
-          return;
-        }
-
         cv::Mat remote(
             state->frameHeight,
             state->frameWidth,
             CV_8UC3,
             state->frameBuffer
         );
-        im = remote.clone();
+        if (format == "yvu420sp") {
+          cv::Mat yuv;
+          cv::cvtColor(remote, yuv, CV_RGB2YUV, 0);
+          convertYUVsptoYVUsp(state->frameWidth, state->frameHeight, yuv, im);
+        } else if (format == "rgb") {
+          im = remote.clone();
+        } else if (format == "bgr") {
+          cv::cvtColor(remote, im, CV_RGB2BGR, 0);
+        }
         break;
       }
     default:
@@ -565,17 +572,24 @@ public:
     }
     uv_mutex_unlock(&state->frameDataLock);
 #else
-    if (format != "bgr") {
-      SetErrorMessage("only bgr supported for custom preview format");
-      return;
-    }
     if (!state->cap.grab()) {
       SetErrorMessage("grab failed");
       return;
     }
-    if (!state->cap.retrieve(im)) {
+    cv::Mat remote;
+    if (!state->cap.retrieve(remote)) {
       SetErrorMessage("retrieve failed");
       return;
+    }
+    if (format == "yvu420sp") {
+      cv::Mat yuv;
+      cv::cvtColor(remote, yuv, CV_BGR2YUV, 0);
+      cv::Size s = yuv.size();
+      convertYUVsptoYVUsp(s.width, s.height, yuv, im);
+    } else if (format == "rgb") {
+      cv::cvtColor(remote, im, CV_BGR2RGB, 0);
+    } else if (format == "bgr") {
+      im = remote;
     }
 #endif
     cv::Size s = im.size();

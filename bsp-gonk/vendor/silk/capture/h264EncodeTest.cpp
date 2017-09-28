@@ -18,18 +18,14 @@ Mutex simpleH264EncoderLock;
 int fd;
 std::vector<int> outputFrameSize;
 
-void libpreview_FrameCallback(void *userData,
-                              void *frame,
-                              libpreview::FrameFormat format,
-                              size_t width,
-                              size_t height,
-                              libpreview::FrameOwner owner)
+void libpreview_FrameCallback(libpreview::Frame& frame)
 {
-  (void) userData;
   Mutex::Autolock autolock(simpleH264EncoderLock);
+  auto width = frame.width;
+  auto height = frame.height;
 
   if (simpleH264Encoder == nullptr) {
-    libpreviewClient->releaseFrame(owner);
+    libpreviewClient->releaseFrame(frame.owner);
     return;
   }
 
@@ -44,7 +40,7 @@ void libpreview_FrameCallback(void *userData,
 #endif
   if (!simpleH264Encoder) {
     printf("Encoder not available\n");
-    libpreviewClient->releaseFrame(owner);
+    libpreviewClient->releaseFrame(frame.owner);
     return;
   }
 
@@ -53,11 +49,11 @@ void libpreview_FrameCallback(void *userData,
     return;
   }
 
-  switch (format) {
+  switch (frame.format) {
   case libpreview::FRAMEFORMAT_YVU420SP:
     if (inputFrame.format != libpreview::FRAMEFORMAT_YVU420SP) {
       printf(
-        "Unsupported encoder format: %d = %d\n",
+        "Unsupported encoder format: %d (expected %d)\n",
         inputFrame.format,
         libpreview::FRAMEFORMAT_YVU420SP
       );
@@ -65,11 +61,11 @@ void libpreview_FrameCallback(void *userData,
     }
 
     // Copy Y plane
-    memcpy(inputFrame.data, frame, width * height);
+    memcpy(inputFrame.data, frame.frame, width * height);
 
     // Copy UV plane while converting from YVU420SemiPlaner to YUV420SemiPlaner
     {
-      uint8_t *s = static_cast<uint8_t *>(frame) + width * height;
+      uint8_t *s = static_cast<uint8_t *>(frame.frame) + width * height;
       uint8_t *d = static_cast<uint8_t *>(inputFrame.data) + width * height;
       uint8_t *dEnd = d + width * height / 2;
       for (; d < dEnd; s += 2, d += 2) {
@@ -80,7 +76,7 @@ void libpreview_FrameCallback(void *userData,
     break;
 
   case libpreview::FRAMEFORMAT_YUV420SP:
-    if (inputFrame.format != format) {
+    if (inputFrame.format != frame.format) {
       if (inputFrame.format == libpreview::FRAMEFORMAT_YUV420SP_VENUS &&
           libpreview::VENUS_Y_STRIDE(width) == static_cast<int>(width) &&
           libpreview::VENUS_C_PLANE_OFFSET(width, height) == static_cast<int>(width * height)) {
@@ -89,30 +85,38 @@ void libpreview_FrameCallback(void *userData,
         // don't abort
 
       } else {
-        printf("Unsupported encoder formaT: %d != %d\n", inputFrame.format, format);
+        printf(
+          "Unsupported encoder format: %d (expected %d)\n",
+          inputFrame.format,
+          frame.format
+        );
         return;
       }
     }
-    memcpy(inputFrame.data, frame, inputFrame.size);
+    memcpy(inputFrame.data, frame.frame, inputFrame.size);
     break;
 
   case libpreview::FRAMEFORMAT_YUV420SP_VENUS:
-    if (inputFrame.format != format) {
-      printf("Unsupported encoder format: %d != %d\n", inputFrame.format, format);
+    if (inputFrame.format != frame.format) {
+      printf(
+        "Unsupported encoder format: %d (expected %d)\n",
+        inputFrame.format,
+        frame.format
+      );
       return;
     }
     switch (inputFrame.format) {
     case libpreview::FRAMEFORMAT_YUV420SP_VENUS:
-      memcpy(inputFrame.data, frame, inputFrame.size);
+      memcpy(inputFrame.data, frame.frame, inputFrame.size);
       break;
     case libpreview::FRAMEFORMAT_YUV420SP:
       // Copy Y plane
-      memcpy(inputFrame.data, frame, width * height);
+      memcpy(inputFrame.data, frame.frame, width * height);
 
       // Pack and copy UV plane
       memcpy(
         static_cast<uint8_t *>(inputFrame.data) + width * height,
-        static_cast<uint8_t *>(frame) + libpreview::VENUS_C_PLANE_OFFSET(width, height),
+        static_cast<uint8_t *>(frame.frame) + libpreview::VENUS_C_PLANE_OFFSET(width, height),
         width * height / 2
       );
       break;
@@ -122,12 +126,12 @@ void libpreview_FrameCallback(void *userData,
     break;
 
   default:
-    printf("Unsupported format: %d\n", format);
+    printf("Unsupported format: %d\n", frame.format);
     return;
   }
 
   simpleH264Encoder->nextFrame(inputFrame, inputFrameInfo);
-  libpreviewClient->releaseFrame(owner);
+  libpreviewClient->releaseFrame(frame.owner);
 }
 
 void libpreview_AbandonedCallback(void *userData)

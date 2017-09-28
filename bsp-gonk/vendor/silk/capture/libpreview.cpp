@@ -154,14 +154,22 @@ class ClientImpl : public Client {
     mAbandonedCallback = NULL;
   }
 
-  void frameCallback(void *frame,
+  void frameCallback(void *buffer,
                      FrameFormat format,
                      size_t width,
                      size_t height,
                      FrameOwner owner) {
     Mutex::Autolock autolock(mFrameCallbackMutex);
     if (mFrameCallback != NULL) {
-      mFrameCallback(mUserData, frame, format, width, height, owner);
+      Frame frame = {
+        .userData = mUserData,
+        .frame = buffer,
+        .format = format,
+        .width = width,
+        .height = height,
+        .owner = owner,
+      };
+      mFrameCallback(frame);
     }
   }
 

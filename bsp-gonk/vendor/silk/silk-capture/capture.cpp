@@ -155,12 +155,7 @@ private:
 
 #ifdef USE_LIBPREVIEW
   static void OnAbandonedCallback(void *userData);
-  static void OnFrameCallback(void *userData,
-                              void* buffer,
-                              libpreview::FrameFormat format,
-                              size_t width,
-                              size_t height,
-                              libpreview::FrameOwner frameOwner);
+  static void OnFrameCallback(libpreview::Frame& frame);
 #endif
 };
 
@@ -811,24 +806,19 @@ void State::OnAbandonedCallback(void *userData) {
   uv_mutex_unlock(&state->frameDataLock);
 }
 
-void State::OnFrameCallback(void *userData,
-                            void* buffer,
-                            libpreview::FrameFormat format,
-                            size_t width,
-                            size_t height,
-                            libpreview::FrameOwner frameOwner) {
-  State *state = static_cast<State *>(userData);
+void State::OnFrameCallback(libpreview::Frame& frame) {
+  State *state = static_cast<State *>(frame.userData);
 
   uv_mutex_lock(&state->frameDataLock);
   if (state->client) {
     if (state->frameBuffer != NULL) {
       state->client->releaseFrame(state->frameOwner);
     }
-    state->frameBuffer = buffer;
-    state->frameOwner = frameOwner;
-    state->frameFormat = format;
-    state->frameWidth = width;
-    state->frameHeight = height;
+    state->frameBuffer = frame.frame;
+    state->frameOwner = frame.owner;
+    state->frameFormat = frame.format;
+    state->frameWidth = frame.width;
+    state->frameHeight = frame.height;
   }
   uv_mutex_unlock(&state->frameDataLock);
 }

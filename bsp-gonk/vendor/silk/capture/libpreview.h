@@ -65,6 +65,16 @@ static __inline__ int VENUS_C_STRIDE(int width) {
 
 typedef void *FrameOwner;
 
+struct Frame {
+  void *userData;
+  void *frame;
+  FrameFormat format;
+  size_t width;
+  size_t height;
+  FrameOwner owner;
+};
+
+
 class Client {
  public:
   virtual void addref() = 0;
@@ -76,12 +86,7 @@ class Client {
   virtual ~Client() = 0;
 };
 
-typedef void (*FrameCallback)(void *userData,
-                              void *frame,
-                              FrameFormat format,
-                              size_t width,
-                              size_t height,
-                              FrameOwner owner);
+typedef void (*FrameCallback)(Frame& frame);
 typedef void (*AbandonedCallback)(void *userData);
 
 typedef Client *(*OpenFunc)(FrameCallback frameCallback,

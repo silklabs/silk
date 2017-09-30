@@ -89,32 +89,42 @@ class Client {
 typedef void (*FrameCallback)(Frame& frame);
 typedef void (*AbandonedCallback)(void *userData);
 
-typedef Client *(*OpenFunc)(FrameCallback frameCallback,
-                            AbandonedCallback abandonedCallback,
-                            void *userData);
+typedef Client *(*OpenFunc)(
+  FrameCallback frameCallback,
+  AbandonedCallback abandonedCallback,
+  void *userData
+);
 
-static __inline Client *open(FrameCallback frameCallback,
-                             AbandonedCallback abandonedCallback,
-                             void *userData) {
-  static void *handle = NULL;
+static __inline void* findSymbol(const char* symbol) {
+  static void *handle = nullptr;
 
-  if (handle == NULL) {
+  if (handle == nullptr) {
     handle = dlopen("/silk/lib/libpreview.so", RTLD_NOW);
-    if (handle == NULL) {
+    if (handle == nullptr) {
       printf("libpreview.so open failed: %s\n", dlerror());
-      return NULL;
+      return nullptr;
     }
   }
 
-  OpenFunc libpreview_open = (OpenFunc) dlsym(handle, "libpreview_open");
-  if (libpreview_open == NULL) {
-    printf("libpreview.so dlsym failed: %s\n", dlerror());
+  void* p = dlsym(handle, symbol);
+  if (p == nullptr) {
+    printf("libpreview.so dlsym(%s) failed: %s\n", symbol, dlerror());
     dlclose(handle);
-    handle = NULL;
-    return NULL;
+    handle = nullptr;
   }
-
   // Note: skipping dlclose() since the library is never expected to unload
+  return p;
+}
+
+static __inline Client *open(
+  FrameCallback frameCallback,
+  AbandonedCallback abandonedCallback,
+  void *userData
+) {
+  OpenFunc libpreview_open = (OpenFunc) findSymbol("libpreview_open");
+  if (libpreview_open == nullptr) {
+    return nullptr;
+  }
   return libpreview_open(frameCallback, abandonedCallback, userData);
 }
 

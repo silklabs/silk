@@ -1,7 +1,11 @@
 {
+  "variables": {
+    "library_type%": "loadable_module",
+  },
   "targets": [
     {
       "target_name": "silk-capture",
+      "type": "<(library_type)",
       "sources": [
         "capture.cpp",
         "init.cpp",

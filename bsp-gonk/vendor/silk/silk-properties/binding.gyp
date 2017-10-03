@@ -1,7 +1,11 @@
 {
+  "variables": {
+    "library_type%": "loadable_module",
+  },
   "targets": [
     {
       "target_name": "silk-properties",
+      "type": "<(library_type)",
       "sources": [
         "bindings.cpp",
       ],

@@ -1,7 +1,11 @@
 {
+  "variables": {
+    "library_type%": "loadable_module",
+  },
   "targets": [
     {
       "target_name": "silk-audioplayer",
+      "type": "<(library_type)",
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
       ],

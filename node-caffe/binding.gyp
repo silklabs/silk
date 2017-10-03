@@ -1,7 +1,11 @@
 {
+  'variables': {
+    'library_type%': 'loadable_module',
+  },
   'targets': [
     {
       'target_name': 'caffe',
+      'type': '<(library_type)',
       'sources': [
         'src/caffe.cpp'
       ],

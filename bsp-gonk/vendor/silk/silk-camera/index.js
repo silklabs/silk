@@ -47,7 +47,7 @@ type FrameReplacer = {
  * @property height height of the object rectangle
  * @memberof silk-camera
  */
-type Rect = {
+export type Rect = {
   x: number;
   y: number;
   width: number;
@@ -105,7 +105,7 @@ export type CameraFrameSize = 'low' | 'normal' | 'high' | 'full';
  * The camera frame size
  * @memberof silk-camera
  */
-type SizeType = {
+export type SizeType = {
   width: number;
   height: number;
 };

@@ -2,6 +2,7 @@
   'variables' : {
     'NNPACK_ROOT' : '<!(echo ${NNPACK_ROOT:-$(pwd)/NNPACK})',
     'android_ndk%' : '',
+    'library_type%': 'loadable_module',
   },
   'conditions': [
     [ 'OS=="android" and android_ndk==""', {
@@ -18,6 +19,7 @@
   'targets': [
     {
       'target_name': 'nnpack',
+      'type': '<(library_type)',
       'sources': [
         'src/nnpack.cpp'
       ],

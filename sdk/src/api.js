@@ -11,8 +11,8 @@ import {spawn} from 'child_process';
 import which from 'which';
 import fs from 'mz/fs';
 
-const SILK_MODULE_ROOT = '/system/silk/node_modules';
-const DATA_MODULE_ROOT = '/data/node_modules';
+const SYSTEM_MODULE_ROOT = process.env.SILK_SYSTEM_MODULE_ROOT || '/system/silk/node_modules';
+const DATA_MODULE_ROOT = process.env.SILK_DATA_MODULE_ROOT || '/data/node_modules';
 const ACTIVATE_PROP = 'persist.silk.main';
 const MODULE_PUSH_PROP = 'silk.module.push';
 const WIFI_SETUP_SCRIPT = 'wifi_setup.sh';
@@ -102,7 +102,7 @@ export class SDKApi {
   }
 
   async pushModule(name, directory, system = false) {
-    const dest = path.join(system ? SILK_MODULE_ROOT : DATA_MODULE_ROOT, name);
+    const dest = path.join(system ? SYSTEM_MODULE_ROOT : DATA_MODULE_ROOT, name);
     await this.adb('root');
     await this.adb('wait-for-device');
     if (system) {

@@ -86,6 +86,11 @@ if [ -z $1 ]; then
     fi
   fi
 
+  if [ $NODE_ENV = "development" ] && [ -d /silk/www ]; then
+    killall httpd
+    httpd -u nobody -h /silk/www
+  fi
+
   if [ "$(getprop persist.silk.debugger)" = "true" ]; then
     info Debugger enabled
     NODE_ARGS="$NODE_ARGS --debug"

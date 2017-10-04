@@ -4,12 +4,10 @@
  */
 /*eslint-disable no-console*/
 
-import path from 'path';
-
-import {exec} from 'mz/child_process';
-import {spawn} from 'child_process';
-import which from 'which';
+import {exec, spawn} from 'child_process';
 import fs from 'mz/fs';
+import path from 'path';
+import which from 'which';
 
 const SYSTEM_MODULE_ROOT = process.env.SILK_SYSTEM_MODULE_ROOT || '/system/silk/node_modules';
 const DATA_MODULE_ROOT = process.env.SILK_DATA_MODULE_ROOT || '/data/node_modules';
@@ -32,15 +30,24 @@ async function execWithPaths(
   }
   cmdEnv.PATH = newPath;
 
-  try {
-    return await exec(cmd, {
-      env: cmdEnv,
-      maxBuffer: 1024 * 1024 * 10, // 10MB - |adb push| can be verbose
-      timeout,
-    });
-  } catch (err) {
-    throw new Error(`An error occured while running: ${cmd} ${err.stack}`);
-  }
+  return new Promise((resolve, reject) => {
+    const childProcess = exec(
+      cmd,
+      {
+        env: cmdEnv,
+        maxBuffer: 1024 * 1024 * 10, // 10MB - |adb push| can be verbose
+        timeout,
+      },
+      (err, stdout, stderr) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve([stdout, stderr]);
+        }
+      }
+    );
+    childProcess.stdout.pipe(process.stdout);
+  });
 }
 
 export class SDKApi {

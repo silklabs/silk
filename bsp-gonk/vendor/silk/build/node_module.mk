@@ -34,7 +34,7 @@ var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'u
 console.log('LOCAL_MODULE=$(or $(LOCAL_MODULE),' + pkg.name + ')');
 var main = pkg.main || 'index.js';
 main += (!require('path').extname(main)) ? '.js' : '';
-console.log('LOCAL_NODE_MODULE_MAIN=' + main);
+console.log('LOCAL_NODE_MODULE_MAIN=$(or $(LOCAL_NODE_MODULE_MAIN),' + main + ')');
 endef
 
 define CHECK_FOR_SILK_BUILD

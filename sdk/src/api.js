@@ -6,7 +6,9 @@
 
 import {exec, spawn} from 'child_process';
 import fs from 'mz/fs';
+import os from 'os';
 import path from 'path';
+import readline from 'readline';
 import which from 'which';
 
 const SYSTEM_MODULE_ROOT = process.env.SILK_SYSTEM_MODULE_ROOT || '/system/silk/node_modules';
@@ -39,6 +41,10 @@ async function execWithPaths(
         timeout,
       },
       (err, stdout, stderr) => {
+        if (rl) {
+          process.stdout.write('\n');
+          rl.close();
+        }
         if (err) {
           reject(err);
         } else {
@@ -46,7 +52,32 @@ async function execWithPaths(
         }
       }
     );
-    childProcess.stdout.pipe(process.stdout);
+
+    let lastMatch = null;
+    const rl = readline.createInterface({
+      input: childProcess.stdout,
+    });
+
+    rl.on('line', (data) => {
+      // Read line doesn't split lines with \r between them so split again
+      const lines = data.split(os.EOL);
+      lines.forEach((line) => {
+        const progressRegex = /\[\s*\d+%\]\s*(.*):\s*\d+%/;
+        const match = progressRegex.exec(line);
+        if (match && match.length > 1) {
+          if (lastMatch === match[1]) {
+            // Progress reported for the same file so clear the current line to
+            // show output on the same line
+            readline.clearLine(process.stdout, 0);
+            readline.cursorTo(process.stdout, 0);
+          } else {
+            process.stdout.write('\n');
+          }
+          lastMatch = match[1];
+        }
+        process.stdout.write(line);
+      });
+    });
   });
 }
 

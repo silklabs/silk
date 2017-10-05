@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     }
     if (rc != (int) sizeof(hdr)) {
       printf(
-        "Incomplete header.  Expected %d bytes, got %d bytes\n",
+        "Incomplete header.  Expected %zu bytes, got %d bytes\n",
         sizeof(hdr),
         rc
       );
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
       printf("BAD HEADER: %d (%s)\n", rc, strerror(errno));
       return 1;
     }
-    printf("Header with tag=%d size=%d\n", hdr.tag, hdr.size);
+    printf("Header with tag=%d size=%zu\n", hdr.tag, hdr.size);
 
     char *buffer = (char *) malloc(hdr.size);
     memset(buffer, 0, sizeof(hdr.size));
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     }
     if (rc != (int) hdr.size) {
       printf(
-        "Incomplete data.  Expected %d bytes, got %d bytes\n",
+        "Incomplete data.  Expected %zu bytes, got %d bytes\n",
         hdr.size,
         rc
       );

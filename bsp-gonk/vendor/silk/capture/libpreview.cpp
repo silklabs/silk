@@ -417,7 +417,7 @@ void CaptureFrameGrabber::onFrameAvailable(const BufferItem& item)
           //       YVU frames, maybe by adding a new frameFormat type.
           //       For now just move the VU plane (yuck) to avoid full buffer
           //       copy.
-          ALOGV("YVU frame is not packed! Off by %d bytes", (int) packedDataCr - (int) img.dataCr);
+          ALOGV("YVU frame is not packed! Off by %d bytes", (uintptr_t) packedDataCr - (uintptr_t) img.dataCr);
           memcpy(packedDataCr, img.dataCr, img.width * img.height / 2);
         }
       }

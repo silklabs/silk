@@ -25,6 +25,17 @@ if (target !== 'node' && target !== 'web') {
 }
 const useExternals = process.env.SILK_BUILDJS_EXTERNALS === 'true';
 
+let customWebpack;
+const customWebpackEnv = process.env.SILK_BUILDJS_CUSTOM_CONFIG;
+if (customWebpackEnv) {
+  const customWebpackPath =
+    path.isAbsolute(customWebpackEnv) ?
+      customWebpackEnv :
+      path.resolve(process.cwd(), customWebpackEnv);
+  fs.accessSync(customWebpackPath, fs.constants.R_OK);
+  customWebpack = customWebpackPath;
+}
+
 // Walk up cwd looking for a project-level webpack.config.js
 const projectWebpack = lookup(
   'webpack.config.js',
@@ -262,6 +273,10 @@ function applyWebpackConfig(webpackConfigFile) {
     Object.assign(config, rules);
   }
 }
-[projectWebpack, localWebpack].map(applyWebpackConfig);
+const configs = [projectWebpack, localWebpack];
+if (customWebpack) {
+  configs.push(customWebpack);
+}
+configs.map(applyWebpackConfig);
 
 module.exports = config;

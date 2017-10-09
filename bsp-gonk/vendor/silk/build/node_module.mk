@@ -48,8 +48,6 @@ ifeq (,$(strip $(LOCAL_MODULE_TAGS)))
 LOCAL_MODULE_TAGS := optional
 endif
 
-LOCAL_CLANG := false
-
 ifeq ($(strip $(LOCAL_MODULE_PATH)),)
 # Global node module by default
 LOCAL_MODULE_PATH := $(TARGET_OUT_SILK_NODE_MODULES)
@@ -157,6 +155,7 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_PROJECT_INCLUDES := $(my_target_
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_C_INCLUDES := $(my_target_c_includes)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_CFLAGS := $(my_target_global_cflags)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_CPPFLAGS := $(my_target_global_cppflags)
+$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_LDFLAGS := $(my_target_global_ldflags)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_SHARED_LIBRARIES := $(built_shared_libraries)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_STATIC_LIBRARIES := $(built_static_libraries)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_WHOLE_STATIC_LIBRARIES := $(built_whole_libraries)
@@ -177,7 +176,6 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
     C_FLAGS="\
       $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
           $(PRIVATE_TARGET_GLOBAL_CFLAGS) \
-          $(PRIVATE_ARM_CFLAGS) \
        ) \
       $(PRIVATE_CFLAGS) \
       $(PRIVATE_DEBUG_CFLAGS) \
@@ -186,7 +184,6 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
       $(if $(PRIVATE_NO_DEFAULT_COMPILER_FLAGS),, \
           $(PRIVATE_TARGET_GLOBAL_CFLAGS) \
           $(PRIVATE_TARGET_GLOBAL_CPPFLAGS) \
-          $(PRIVATE_ARM_CFLAGS) \
        ) \
       $(PRIVATE_RTTI_FLAG) \
       $(PRIVATE_CFLAGS) \
@@ -197,7 +194,7 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
       -nostdlib \
       $(PRIVATE_LDFLAGS) \
       $(PRIVATE_LDLIBS) \
-      $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) \
+      $(PRIVATE_TARGET_GLOBAL_LDFLAGS) \
       -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       $(and $(my_ndk_sysroot_lib),-L$(abspath $(my_ndk_sysroot_lib))) \
       $(PRIVATE_TARGET_CRTBEGIN_SO_O) \
@@ -211,9 +208,9 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
     export SILK_GYP_FLAGS='-f make-android -DOS=android -Darch=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH))' && \
     export SILK_NODE_GYP_FLAGS='--arch=$(or $(TARGET_2ND_ARCH),$(TARGET_ARCH))' && \
     export npm_config_nodedir=$(npm_node_dir) && \
-    export CC="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CC)) $$C_INCLUDES $$C_FLAGS" && \
-    export CXX="$(abspath $(my_cc_wrapper) $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$C_INCLUDES $$CPP_FLAGS" && \
-    export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$LD_FLAGS" && \
+    export CC="$(abspath $(my_cc)) $$C_INCLUDES $$C_FLAGS" && \
+    export CXX="$(abspath $(my_cxx)) $$C_INCLUDES $$CPP_FLAGS" && \
+    export LINK="$(abspath $(my_cxx)) $$LD_FLAGS" && \
     export AR="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))" && \
     export RANLIB="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))" && \
     export Android_mk__LIBRARIES="-Wl,--start-group \

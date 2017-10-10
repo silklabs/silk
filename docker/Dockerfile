@@ -82,6 +82,7 @@ RUN addgroup --gid 999 docker && \
         mongodb-org-server \
         mongodb-org-shell \
         mongodb-org-tools \
+        openjdk-7-jre \
         openjdk-7-jdk \
         openssh-server \
         pkg-config \

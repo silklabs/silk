@@ -128,25 +128,32 @@ RUN cabal update && \
     rm -rf shellcheck
 
 # Build/install opencv3
-RUN git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \
-  cd opencv && \
-  mkdir build && \
-  cd build && \
-  cmake -Wno-dev \
-    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    -DBUILD_TESTS=false \
-    -DWITH_TIFF=false \
-    -DWITH_CUDA=false \
-    -DBUILD_ANDROID_EXAMPLES=false \
-    -DWITH_OPENEXR=false \
-    -DBUILD_PERF_TESTS=false \
-    -DBUILD_opencv_java=false \
-    -DWITH_IPP=OFF \
-    -DCMAKE_INSTALL_PREFIX=/usr/ \
-    .. && \
-  make -j$(nproc) install && \
-  cd ../.. && \
-  rm -rf opencv
+RUN wget https://github.com/Itseez/opencv_contrib/archive/3.0.0.zip -O opencv_contrib3.zip && \
+    unzip -q opencv_contrib3.zip && \
+    mv opencv_contrib-3.0.0 opencv_contrib && \
+    git clone --branch '3.1.0' https://github.com/opencv/opencv.git && \
+    cd opencv && \
+    mkdir build && \
+    cd build && \
+    cmake -Wno-dev \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      -DBUILD_TESTS=false \
+      -DWITH_TIFF=false \
+      -DWITH_CUDA=false \
+      -DBUILD_ANDROID_EXAMPLES=false \
+      -DWITH_OPENEXR=false \
+      -DBUILD_PERF_TESTS=false \
+      -DBUILD_opencv_java=false \
+      -DWITH_IPP=OFF \
+      -DCMAKE_INSTALL_PREFIX=/usr/ \
+      -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+      -DBUILD_opencv_optflow=OFF \
+      -DBUILD_opencv_ximgproc=OFF \
+      -DBUILD_opencv_xfeatures2d=OFF \
+      .. && \
+    make -j$(nproc) install && \
+    cd ../.. && \
+    rm -rf opencv
 
 # Install node v6.10.3
 RUN wget -q https://nodejs.org/dist/v6.10.3/node-v6.10.3-linux-x64.tar.gz && \

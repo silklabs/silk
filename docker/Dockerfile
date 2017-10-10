@@ -95,6 +95,8 @@ RUN addgroup --gid 999 docker && \
         texinfo \
         unzip \
         vim \
+        x11-utils \
+        xbase-clients \
         vnc4server \
         wget \
         xmlstarlet \

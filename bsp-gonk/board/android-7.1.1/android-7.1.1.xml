@@ -4,8 +4,9 @@
   <!--
   https://android.googlesource.com/platform/manifest/+/refs/heads/android-7.1.1_r50/default.xml
   -->
-  <remote  name="aosp"
-           fetch="https://android.googlesource.com/" />
+  <remote name="aosp"
+          fetch="https://android.googlesource.com"
+          review="android-review.googlesource.com" />
   <default revision="refs/tags/android-7.1.1_r50"
            remote="aosp"
            sync-j="4" />

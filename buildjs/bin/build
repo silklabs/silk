@@ -210,7 +210,9 @@ if [[ $SILK_BUILDJS_TARGET != web ]]; then
 fi
 
 if $dev_server; then
+  set -x
   exec webpack-dev-server --progress --config $ROOT/../webpack.config.js \
     --host 0.0.0.0 --port 8000 --progress --hot --inline --watch-poll --watch-aggregate-timeout 300
 fi
+set -x
 exec webpack --progress --config $ROOT/../webpack.config.js

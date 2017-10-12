@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const lookup = require('look-up');
 const webpack = require('webpack');
+const webpackFailPlugin = require('webpack-fail-plugin');
 
 const findPackage = require('./src/find_package.js');
 
@@ -224,8 +225,12 @@ const config = {
       },
     ],
   },
-  plugins: ugly ? [new webpack.optimize.UglifyJsPlugin()] : [],
+  plugins: [webpackFailPlugin],
 };
+
+if (ugly) {
+  config.plugins.push(new webpack.optimize.UglifyJsPlugin());
+}
 
 function applyWebpackConfig(webpackConfigFile) {
   if (fs.existsSync(webpackConfigFile)) {

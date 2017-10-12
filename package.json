@@ -1,34 +1,42 @@
 {
-  "main": "silk",
-  "private": true,
-  "description": "Bootstrap node modules folder for silk",
+  "name": "silk-buildjs",
+  "version": "1.17.0",
+  "bin": {
+    "silk-buildjs": "./bin/build"
+  },
+  "scripts": {
+    "prepublish": "cp ../tools/gnu.sh ."
+  },
+  "author": "Silk Labs Inc.",
+  "license": "MIT",
+  "keywords": [
+    "silk"
+  ],
+  "bugs": {
+    "url": "https://github.com/silklabs/silk/issues"
+  },
+  "symlinkDependencies": {
+    "eslint-config-silk": "../eslint-config",
+    "babel-preset-silk-node6": "../babel-preset-silk-node6"
+  },
   "dependencies": {
-    "CBuffer": "1.1.0",
-    "babel-core": "6.24.1",
     "babel-eslint": "7.2.3",
     "babel-loader": "6.2.0",
-    "cli-color": "1.1.0",
+    "babel-preset-react": "6.24.1",
+    "babel-preset-silk-node6": "^1.5.0",
     "copy-webpack-plugin": "2.1.5",
-    "debug": "2.6.8",
     "eslint": "4.4.1",
     "eslint-plugin-flowtype": "2.30.1",
-    "eslint-plugin-react": "6.4.1",
-    "event-to-promise": "0.7.0",
     "json-loader": "0.5.4",
     "look-up": "0.8.3",
-    "mkdirp": "0.5.1",
-    "mkdirp-promise": "1.0.3",
-    "mocha": "2.4.5",
-    "mz": "2.6.0",
-    "nan": "2.4.0",
-    "netmask": "1.0.5",
     "node-gyp": "3.3.1",
-    "nodeunit": "0.9.1",
-    "opencv": "silklabs/node-opencv#silk-v6.0.0-1",
-    "prompt": "0.2.14",
     "resolve": "1.1.7",
-    "uglify-js": "git@github.com:mishoo/UglifyJS2#3ee46e91e802fb8bf20656bce115375c5f624052",
-    "uuid": "2.0.1",
-    "webpack": "1.14.0"
+    "mkdirp": "0.5.1",
+    "uglify-js": "mishoo/UglifyJS2#3ee46e91e802fb8bf20656bce115375c5f624052",
+    "webpack": "1.14.0",
+    "webpack-fail-plugin": "2.0.0"
+  },
+  "optionalDependencies": {
+    "silk-babeldeps": "^1.0.0"
   }
 }

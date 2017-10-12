@@ -2,7 +2,7 @@
 <manifest>
   <remote name="aosp"
           fetch="https://android.googlesource.com"
-          sync-j="4"/>
+          review="android-review.googlesource.com" />
 
   <project path="device/generic/mini-emulator-arm64" name="device/generic/mini-emulator-arm64" groups="pdk" remote="aosp" revision="refs/tags/android-6.0.1_r74" />
   <project path="device/generic/mini-emulator-armv7-a-neon" name="device/generic/mini-emulator-armv7-a-neon" groups="pdk" remote="aosp" revision="refs/tags/android-6.0.1_r74" />

@@ -17,7 +17,7 @@ silkimage: $(SILKIMAGE)
 $(SILKIMAGE): $(MAKE_EXT4FS)
 	@echo "silk.img: $@"
 	$(MAKE_EXT4FS) \
-    -l $$(( ($$(du -sh $(TARGET_OUT_SILK) | cut -dM -f1) + 25) * 1000000 )) \
+    -l $$(( ($$(du -sh $(TARGET_OUT_SILK) | cut -dM -f1) + 50) * 1000000 )) \
     -i 2048 \
     -L silkimage \
     -J \

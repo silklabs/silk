@@ -157,7 +157,6 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_PROJECT_INCLUDES := $(my_target_
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_C_INCLUDES := $(my_target_c_includes)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_CFLAGS := $(my_target_global_cflags)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_CPPFLAGS := $(my_target_global_cppflags)
-$(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_TARGET_GLOBAL_LDFLAGS := $(my_target_global_ldflags)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_SHARED_LIBRARIES := $(built_shared_libraries)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_STATIC_LIBRARIES := $(built_static_libraries)
 $(LOCAL_BUILT_MODULE_MAIN_PATH): PRIVATE_ALL_WHOLE_STATIC_LIBRARIES := $(built_whole_libraries)
@@ -196,7 +195,7 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
       -nostdlib \
       $(PRIVATE_LDFLAGS) \
       $(PRIVATE_LDLIBS) \
-      $(PRIVATE_TARGET_GLOBAL_LDFLAGS) \
+      $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_GLOBAL_LDFLAGS) \
       -B$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OUT_INTERMEDIATE_LIBRARIES)) \
       $(and $(my_ndk_sysroot_lib),-L$(abspath $(my_ndk_sysroot_lib))) \
       $(PRIVATE_TARGET_CRTBEGIN_SO_O) \
@@ -212,7 +211,7 @@ $(LOCAL_BUILT_MODULE_MAIN_PATH):
     export npm_config_nodedir=$(npm_node_dir) && \
     export CC="$(abspath $(my_cc)) $$C_INCLUDES $$C_FLAGS" && \
     export CXX="$(abspath $(my_cxx)) $$C_INCLUDES $$CPP_FLAGS" && \
-    export LINK="$(abspath $(my_cxx)) $$LD_FLAGS" && \
+    export LINK="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_CXX)) $$LD_FLAGS" && \
     export AR="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_AR))" && \
     export RANLIB="$(abspath $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_RANLIB))" && \
     export Android_mk__LIBRARIES="-Wl,--start-group \

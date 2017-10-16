@@ -25,6 +25,52 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+# Traverses a manifest, outputting the name of all included manifests
+find_included_manifests() {
+  local xml=$1
+  echo $xml
+  if [[ ! -r $xml ]]; then
+    echo Error: $xml does not exist >&2
+    return
+  fi
+  # Notice: this "parser" does not support <include> elements spanning multiple
+  # lines
+  local include_xmls=$(grep '<include .*\/>' $xml | grep -o '[^"]*.xml')
+  for i in $include_xmls; do
+    local basename=${i%.xml}
+    if [[ -r board/$basename/$i ]]; then
+      find_included_manifests board/$basename/$i
+    elif [[ -r product/$basename/$i ]]; then
+      find_included_manifests product/$basename/$i
+    elif [[ -r $(dirname $xml)/$i ]]; then
+      true # Ignore local <includes>
+    else
+      echo Error: $xml includes an unknown file: $i >&2
+      return
+    fi
+  done
+}
+
+# Build the list of patch trees used by the board/product. Order matters here.
+# Manifests listed first will take higher precedence, and its patches will
+# replace patches of the same path/name of manifests lower down the list.
+PATCH_TREE=
+MANIFEST_DEPS="board/$SILK_BOARD/$SILK_BOARD.xml product/$SILK_PRODUCT/$SILK_PRODUCT.xml"
+for manifest in $(find_included_manifests board/$SILK_BOARD/$SILK_BOARD.xml) \
+                $(find_included_manifests product/$SILK_PRODUCT/$SILK_PRODUCT.xml); do
+  MANIFEST_DEPS="$MANIFEST_DEPS $manifest"
+
+  _tree="$(dirname $manifest)/patch"
+  if [[ -d $_tree ]] && [[ ! $PATCH_TREE =~ $_tree ]]; then
+    PATCH_TREE+=" $_tree "
+  fi
+done
+
+# Generate manifest dependency file
+echo .repo/lastsync: $MANIFEST_DEPS > .repo/manifest.deps
+
+
 B2G_HASHED_FILES="${BASH_SOURCE[0]}"
 
 # Include .repo_fetchtimes.json in the hash.  The contents of this file changes
@@ -96,8 +142,6 @@ __patch_tree()
    (
       export GIT_COMMITTER_NAME=nobody
       export GIT_COMMITTER_EMAIL=nobody
-
-      cd $(gettop)
 
       if [[ -z ${PATCH_TREE} ]]; then
         return 0

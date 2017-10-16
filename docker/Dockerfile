@@ -10,13 +10,14 @@ RUN addgroup --gid 999 docker && \
       python-software-properties \
       software-properties-common && \
     add-apt-repository -y ppa:amarburg/opencv3 && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
     add-apt-repository -y ppa:george-edison55/cmake-3.x && \
     add-apt-repository -y ppa:git-core/ppa && \
     add-apt-repository -y ppa:kubuntu-ppa/backports && \
+    add-apt-repository -y ppa:mc3man/trusty-media && \
     add-apt-repository -y ppa:phablet-team/tools && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/ppa && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
-    add-apt-repository -y ppa:mc3man/trusty-media && \
     add-apt-repository "deb https://cli-assets.heroku.com/branches/stable/apt ./" && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu trusty stable" && \
     curl -L https://cli-assets.heroku.com/apt/release.key | apt-key add - && \
@@ -91,6 +92,7 @@ RUN addgroup --gid 999 docker && \
         python-dev \
         python-pip \
         python-virtualenv \
+        python3.5 \
         rsync \
         silversearcher-ag \
         texinfo \

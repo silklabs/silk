@@ -16,14 +16,15 @@
             ],
             "cflags" : [
               "-DANDROID",
+              "-DUSE_LIBLOG",
             ],
           },
           'OS == "linux"', {
             'libraries': [
-              '<!(test -z "$BSP_LE" || echo "-llog")',
+              '<!(test -z "$USE_LIBLOG" || echo "-llog")',
             ],
             'cflags': [
-              '<!(test -z "$BSP_LE" || echo "-DANDROID")',
+              '<!(test -z "$USE_LIBLOG" || echo "-DUSE_LIBLOG")',
             ],
           },
         ],

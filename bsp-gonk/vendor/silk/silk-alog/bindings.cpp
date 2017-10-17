@@ -1,5 +1,5 @@
 #include <nan.h>
-#ifdef ANDROID
+#ifdef USE_LIBLOG
 #include <android/log.h>
 #else
 typedef enum android_LogPriority {

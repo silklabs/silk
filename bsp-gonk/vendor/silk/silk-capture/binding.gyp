@@ -34,16 +34,16 @@
           "include_dirs": [
             "<!@(pkg-config --cflags opencv)",
             "<!(node -e \"require('opencv/include_dirs')\")",
-            '<!(test -z "$BSP_LE" || echo "../capture")',
+            '<!(test -z "$USE_LIBPREVIEW" || echo "../capture")',
           ],
           "libraries": [
             "<!@(pkg-config --libs opencv)",
-            '<!(test -z "$BSP_LE" || echo "-llog")',
+            '<!(test -z "$USE_LIBLOG" || echo "-llog")',
           ],
           "cflags": [
             '<!@(pkg-config --cflags "opencv >= 2.3.1" )',
-            '<!(test -z "$BSP_LE" || echo "-DUSE_LIBPREVIEW")',
-            '<!(test -z "$BSP_LE" || echo "-DUSE_ALOG")',
+            '<!(test -z "$USE_LIBPREVIEW" || echo "-DUSE_LIBPREVIEW")',
+            '<!(test -z "$USE_LIBLOG" || echo "-DUSE_LIBLOG")',
             "-Wall",
           ],
         }],

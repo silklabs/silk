@@ -207,7 +207,8 @@ RUN echo 'PATH=$PATH:HOME/bin:$JAVA_HOME/bin' >> /etc/profile && \
     ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key
 
 RUN mkdir -p /opt/conda && \
-    chown silk /opt/conda
+    chown silk:users /opt/conda && \
+    chmod g+w /opt/conda
 
 USER silk
 
@@ -240,6 +241,9 @@ RUN cd ~ && \
       pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.2.0-cp36-cp36m-linux_x86_64.whl; \
       source deactivate tensorflow_cpu\
     "
+
+RUN sudo chown -R silk:users /opt/conda && \
+  sudo chmod -R g+w /opt/conda
 
 RUN ccache -M 10GB && \
     git config --global user.email "silkysmooth@example.com" && \

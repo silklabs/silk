@@ -53,7 +53,15 @@ if (!process.env.BABEL_CACHE || process.env.BABEL_CACHE === '1') {
 
 let main = pkg.main || './index.js';
 if (!path.extname(main)) {
-  main += '.js';
+  const absMain = path.resolve(modulePath, main);
+
+  if (fs.existsSync(`${absMain}.js`)) {
+    // Check if main is a javascript file
+    main += '.js';
+  } else if (fs.existsSync(path.join(absMain, 'index.js'))) {
+    // Check if main is a directory that an has an index.js
+    main = path.join(main, 'index.js');
+  }
 }
 
 if (main.indexOf('./') !== 0) {

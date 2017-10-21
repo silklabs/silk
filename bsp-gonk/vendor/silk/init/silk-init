@@ -88,7 +88,7 @@ if [ -z $1 ]; then
 
   if [ $NODE_ENV = "development" ] && [ -d /silk/www ]; then
     killall httpd
-    httpd -u nobody -h /silk/www
+    httpd -u nobody -h /silk/www -p $(getprop persist.silk.www.port 80)
   fi
 
   if [ "$(getprop persist.silk.debugger)" = "true" ]; then

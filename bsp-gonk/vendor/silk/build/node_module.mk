@@ -29,11 +29,13 @@ node_modules_mk_dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 LOCAL_MODULE_CLASS := NPM
 my_prefix := TARGET_
 
+buildjs_dir := $(abspath $(node_modules_mk_dir)/../../../../buildjs)
+
 define GET_PACKAGE_NAME_MAIN_JS
 var pkg = JSON.parse(require('fs').readFileSync('$(LOCAL_PATH)/package.json', 'utf8'));
 console.log('LOCAL_MODULE=$(or $(LOCAL_MODULE),' + pkg.name + ')');
-var main = pkg.main || 'index.js';
-main += (!require('path').extname(main)) ? '.js' : '';
+var getPackageMain = require('$(buildjs_dir)').getPackageMain;
+var main = getPackageMain(pkg.main, '$(abspath $(LOCAL_PATH))');
 console.log('LOCAL_NODE_MODULE_MAIN=$(or $(LOCAL_NODE_MODULE_MAIN),' + main + ')');
 endef
 
@@ -106,7 +108,6 @@ include $(BUILD_SYSTEM)/binary.mk
 
 
 npm_node_dir = $(abspath external/node)
-buildjs_dir := $(abspath $(node_modules_mk_dir)/../../../../buildjs)
 
 npm_has_silk_build := $(shell node -e "$(CHECK_FOR_SILK_BUILD)")
 ifeq (1,$(npm_has_silk_build))

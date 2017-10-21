@@ -11,6 +11,7 @@ const findPackage = require('./src/find_package.js');
 
 const resolve = require('resolve');
 const mkdirp = require('mkdirp');
+const getPackageMain = require('.').getPackageMain;
 
 // We must place our files in a special folder for integration /w the android
 // build system.
@@ -51,23 +52,7 @@ if (!process.env.BABEL_CACHE || process.env.BABEL_CACHE === '1') {
   babelCache = false;
 }
 
-let main = pkg.main || './index.js';
-if (!path.extname(main)) {
-  const absMain = path.resolve(modulePath, main);
-
-  if (fs.existsSync(`${absMain}.js`)) {
-    // Check if main is a javascript file
-    main += '.js';
-  } else if (fs.existsSync(path.join(absMain, 'index.js'))) {
-    // Check if main is a directory that an has an index.js
-    main = path.join(main, 'index.js');
-  }
-}
-
-if (main.indexOf('./') !== 0) {
-  main = `./${main}`;
-}
-
+let main = getPackageMain(pkg.main, modulePath);
 const absMain = path.resolve(modulePath, main);
 let mainDir;
 

@@ -1,6 +1,7 @@
 {
   "variables": {
     "library_type%": "loadable_module",
+    "liblog%": "false",
   },
   "targets": [
     {
@@ -13,25 +14,20 @@
         "<!(node -e \"require('nan')\")",
       ],
       "conditions": [
-        [
-          "OS == 'android'", {
-            "libraries" : [
-              "<!(echo $Android_mk__LIBRARIES)",
-            ],
-            "cflags" : [
-              "-DANDROID",
-              "-DUSE_LIBLOG",
-            ],
-          },
-          'OS == "linux"', {
-            'libraries': [
-              '<!(test -z "$USE_LIBLOG" || echo "-llog")',
-            ],
-            'cflags': [
-              '<!(test -z "$USE_LIBLOG" || echo "-DUSE_LIBLOG")',
-            ],
-          },
-        ],
+        [ "liblog=='true'", {
+          "defines": [
+            "USE_LIBLOG",
+          ],
+          "libraries": [
+            "-llog",
+          ],
+        }],
+        [ 'OS=="android"', {
+          'libraries': [
+            '<!(echo $Android_mk__LIBRARIES)',
+          ],
+        }],
+
       ],
     }
   ]

@@ -1,6 +1,8 @@
 {
   "variables": {
     "library_type%": "loadable_module",
+    "liblog%": "false",
+    "libpreview%": "false",
   },
   "targets": [
     {
@@ -18,11 +20,26 @@
       ],
 
       "conditions": [
+        [ "liblog=='true'", {
+          "defines": [
+            "USE_LIBLOG",
+          ],
+          "libraries": [
+            "-llog",
+          ],
+        }],
+        [ "libpreview=='true'", {
+          "defines": [
+            'USE_LIBPREVIEW',
+          ],
+          "include_dirs": [
+            "../capture",
+          ],
+        }],
         [ "OS=='android'", {
           "include_dirs": [
             "<!(echo \" -I $ANDROID_BUILD_TOP/external/node-opencv/inc \")",
             "<!(echo $ANDROID_BUILD_TOP/system/core/include)",
-            "../capture",
           ],
           "libraries": [
             '<!(echo $Android_mk__LIBRARIES)',
@@ -30,24 +47,18 @@
           "cflags": [
             "-Wall",
             "-Wstrict-aliasing",
-            "-DUSE_LIBPREVIEW",
-            "-DUSE_ALOG",
           ],
         }],
         [ "OS=='linux'", {
           "include_dirs": [
             "<!@(pkg-config --cflags opencv)",
             "<!(node -e \"require('opencv/include_dirs')\")",
-            '<!(test -z "$USE_LIBPREVIEW" || echo "../capture")',
           ],
           "libraries": [
             "<!@(pkg-config --libs opencv)",
-            '<!(test -z "$USE_LIBLOG" || echo "-llog")',
           ],
           "cflags": [
             '<!@(pkg-config --cflags "opencv >= 2.3.1" )',
-            '<!(test -z "$USE_LIBPREVIEW" || echo "-DUSE_LIBPREVIEW")',
-            '<!(test -z "$USE_LIBLOG" || echo "-DUSE_LIBLOG")',
             "-Wall",
           ],
         }],

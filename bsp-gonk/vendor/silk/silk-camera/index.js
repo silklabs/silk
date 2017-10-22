@@ -240,6 +240,9 @@ const AUDIO_HW_ENABLED = util.getboolprop('ro.silk.audio.hw.enabled', true);
 const CAMERA_HW_ENABLED = util.getboolprop('ro.silk.camera.hw.enabled', true);
 const CAMERA_VIDEO_ENABLED = CAMERA_HW_ENABLED && util.getboolprop('ro.silk.camera.video', true);
 
+// Disable the bsp-gonk capture backend?
+const CAPTURE_DISABLED = !util.getboolprop('ro.silk.camera.gonk.capture', process.platform === 'android');
+
 //
 // Constants
 //
@@ -593,7 +596,7 @@ export default class Camera extends EventEmitter {
       util.timeout(timeoutMs),
     ]);
 
-    if (process.platform !== 'android') {
+    if (CAPTURE_DISABLED) {
       clearTimeout(this._restartTimeout);
       this._restartTimeout = null;
       this._init();
@@ -790,9 +793,9 @@ export default class Camera extends EventEmitter {
       this._frameReplacer.reset();
     }
 
-    if (process.platform !== 'android') {
-      // The capture process is currently gonk only.  For other platforms only initialize
-      // OpenCV video capture.
+    if (CAPTURE_DISABLED) {
+      // Only initialize the preview source if the bsp-gonk capture backend is
+      // not available.
       process.nextTick(() => {
         if (AUDIO_HW_ENABLED) {
           this._startMicCapture();
@@ -1579,7 +1582,7 @@ export default class Camera extends EventEmitter {
     }
 
     if (!this._command({cmdName: 'getParameterInt', name})) {
-      if (process.platform !== 'android') {
+      if (CAPTURE_DISABLED) {
         if (name === 'max-num-detected-faces-hw') {
           return 0;
         }

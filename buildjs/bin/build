@@ -152,7 +152,10 @@ if $native && $ndk; then
   export LINK="$LINK $LDFLAGS"
 
   # Setup node-gyp flags
-  SILK_GYP_FLAGS="-f make-android -DOS=android -Darch=$ARCH -Dandroid_ndk=$ANDROID_NDK"
+  SILK_GYP_FLAGS="\
+    -f make-android -DOS=android -Darch=$ARCH -Dandroid_ndk=$ANDROID_NDK \
+    $SILK_GYP_FLAGS \
+  "
   SILK_NODE_GYP_FLAGS="--arch=$ARCH"
 fi
 

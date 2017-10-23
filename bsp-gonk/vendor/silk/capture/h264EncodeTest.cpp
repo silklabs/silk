@@ -15,7 +15,8 @@ using android::Mutex;
 libpreview::Client *libpreviewClient;
 SimpleH264Encoder *simpleH264Encoder = nullptr;
 Mutex simpleH264EncoderLock;
-int fd;
+int fdVid;
+int fdMap;
 std::vector<int> outputFrameSize;
 
 void libpreview_FrameCallback(libpreview::Frame& frame)
@@ -156,13 +157,31 @@ void frameOutCallback(SimpleH264Encoder::EncodedFrameInfo& info) {
     bitrate
   );
 
+  char frameInfo[64];
+  snprintf(
+    frameInfo,
+    sizeof(frameInfo) - 1,
+    "%1d %08X %08X\n",
+    info.keyFrame,
+    (unsigned) lseek(fdVid, 0, SEEK_CUR),
+    (unsigned) info.encodedFrameLength
+  );
   TEMP_FAILURE_RETRY(
     write(
-      fd,
+      fdMap,
+      frameInfo,
+      strlen(frameInfo)
+    )
+  );
+
+  TEMP_FAILURE_RETRY(
+    write(
+      fdVid,
       info.encodedFrame,
       info.encodedFrameLength
     )
   );
+
 }
 
 int main(int argc, char **argv)
@@ -194,9 +213,15 @@ int main(int argc, char **argv)
 
   for (auto i = 0; i < 1; i++) {
     char filename[32];
+    snprintf(filename, sizeof(filename) - 1, "/data/vid_%d.map", i);
+    fdMap = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0440);
+    if (fdMap < 0) {
+      printf("Unable to open output file: %s\n", filename);
+    }
+
     snprintf(filename, sizeof(filename) - 1, "/data/vid_%d.h264", i);
-    fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0440);
-    if (fd < 0) {
+    fdVid = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0440);
+    if (fdVid < 0) {
       printf("Unable to open output file: %s\n", filename);
     }
 
@@ -232,7 +257,8 @@ int main(int argc, char **argv)
       delete simpleH264Encoder;
       simpleH264Encoder = nullptr;
     }
-    close(fd);
+    close(fdVid);
+    close(fdMap);
     printf("Encoder stopped\n");
     sleep(1); // Take a breath...
   }

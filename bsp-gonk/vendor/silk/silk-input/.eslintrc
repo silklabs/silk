@@ -1,6 +1,0 @@
-{
-  "extends": "eslint-config-silk",
-  "env": {
-    "mocha": true
-  }
-}

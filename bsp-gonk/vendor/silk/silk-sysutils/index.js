@@ -14,9 +14,6 @@
 import {execFile, spawn, spawnSync} from 'child_process';
 import EventEmitter from 'events';
 import {end as trimNewLinesAtEnd} from 'trim-newlines';
-import cv from 'opencv';
-
-import type {Matrix} from 'opencv';
 
 import createLog from 'silk-log';
 
@@ -333,27 +330,4 @@ export function uptime(start?: number): number {
  */
 export function randBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-
-/**
- * Read a given image and return an opencv Matrix
- *
- * @param  {string} fileName Path to the image file to read
- * @return {Matrix} Opecv matrix for the image
- */
-export function readImage(fileName: string): Promise<Matrix> {
-  return new Promise((resolve, reject) => {
-    cv.readImage(fileName, (err, im) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      if (im.width() <= 0 || im.height() <= 0) {
-        reject(new Error('Input image has no size'));
-        return;
-      }
-      resolve(im);
-    });
-  });
 }

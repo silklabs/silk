@@ -110,6 +110,7 @@ const externals = {
     'silk-sensors',
     'silk-speaker',
     'silk-sysutils',
+    'silk-sysutils/extra',
     'silk-vibrator',
     'silk-volume',
     'silk-wifi',

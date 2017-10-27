@@ -77,9 +77,73 @@ if (!main) {
   throw new Error(`package.json must have main in ${process.cwd()}`);
 }
 
+function handleExternal(context, request, callback) {
+  if (target !== 'web' && resolve.isCore(request)) {
+    callback(null, true);
+    return;
+  }
+
+  // For extra fun node will allow resolving .main without a ./ this behavior
+  // makes .main look nicer but is completely different than how requiring
+  // without a specific path is handled elsewhere... To ensure we don't
+  // accidentally resolve a node module to a local file we handle this case
+  // very specifically.
+  if (context === modulePath && pkg.main === request) {
+    const resolvedPath = path.resolve(context, request);
+    if (!fs.existsSync(resolvedPath)) {
+      callback(new Error(`${modulePath} has a .main which is missing ...`));
+      return;
+    }
+  }
+
+  // Handle path rewriting for native modules
+  if (/\.node$/.test(request) || request.indexOf('build/Release') !== -1) {
+    if (target === 'web') {
+      console.log(`\nExcluding native module from web target: ${context} (${request})`);
+      callback(null, `var undefined`);
+      return;
+    }
+
+    if (path.isAbsolute(request)) {
+      callback(null, true);
+      return;
+    }
+
+    const absExternalPath = path.resolve(context, request);
+    let relativeExternalPath = path.relative(mainDir, absExternalPath);
+    if (relativeExternalPath.indexOf('.') !== 0) {
+      relativeExternalPath = `./${relativeExternalPath}`;
+    }
+    callback(null, relativeExternalPath);
+    return;
+  }
+
+  resolve(
+    request,
+    {
+      basedir: context,
+      package: pkg,
+      extensions: ['.js', '.json'],
+    },
+    (err, resolvedPath) => {
+      if (err) {
+        if (target === 'web') {
+          callback(null, false);
+        } else {
+          console.log(`\nMissing module imported from ${context} (${request})`);
+          callback(null, true);
+        }
+        return;
+      }
+      callback(null, false);
+    }
+  );
+}
+
 const externals = {
   web: [
     'silk-alog',
+    handleExternal,
   ],
   node: [
     // TODO: auto generate these ...
@@ -115,61 +179,7 @@ const externals = {
     'silk-volume',
     'silk-wifi',
     'sodium',
-    (context, request, callback) => {
-      if (target !== 'web' && resolve.isCore(request)) {
-        callback(null, true);
-        return;
-      }
-
-      // For extra fun node will allow resolving .main without a ./ this behavior
-      // makes .main look nicer but is completely different than how requiring
-      // without a specific path is handled elsewhere... To ensure we don't
-      // accidentally resolve a node module to a local file we handle this case
-      // very specifically.
-      if (context === modulePath && pkg.main === request) {
-        const resolvedPath = path.resolve(context, request);
-        if (!fs.existsSync(resolvedPath)) {
-          callback(new Error(`${modulePath} has a .main which is missing ...`));
-          return;
-        }
-      }
-
-      // Handle path rewriting for native modules
-      if (
-        /\.node$/.test(request) ||
-        request.indexOf('build/Release') !== -1
-      ) {
-        if (path.isAbsolute(request)) {
-          callback(null, true);
-          return;
-        }
-
-        const absExternalPath = path.resolve(context, request);
-        let relativeExternalPath = path.relative(mainDir, absExternalPath);
-        if (relativeExternalPath.indexOf('.') !== 0) {
-          relativeExternalPath = `./${relativeExternalPath}`;
-        }
-        callback(null, relativeExternalPath);
-        return;
-      }
-
-      resolve(request, {
-        basedir: context,
-        package: pkg,
-        extensions: ['.js', '.json'],
-      }, (err, resolvedPath) => {
-        if (err) {
-          console.log(`\nMissing module imported from ${context} (${request})`);
-          if (target === 'web') {
-            callback(null, `var undefined`);
-          } else {
-            callback(null, true);
-          }
-          return;
-        }
-        callback(null, false);
-      });
-    },
+    handleExternal,
   ],
 };
 

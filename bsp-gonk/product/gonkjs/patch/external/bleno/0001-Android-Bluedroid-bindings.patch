@@ -1,17 +1,17 @@
-From 604eb11b09b2a7eb8170ae8807defa843e9f6ac0 Mon Sep 17 00:00:00 2001
+From fbfb52bb014702952e18e299c6cb61e804ba4cf4 Mon Sep 17 00:00:00 2001
 From: Ben Turner <bent@silklabs.com>
 Date: Thu, 16 Jun 2016 14:29:54 -0700
 Subject: [PATCH] Android Bluedroid bindings
 
 ---
  Android.mk                              |   7 +
- lib/android/bindings.js                 | 866 ++++++++++++++++++++++++++++++++
+ lib/android/bindings.js                 | 889 ++++++++++++++++++++++++++++++++
  lib/android/ccc-descriptor.js           | 203 ++++++++
  lib/android/descriptor-event-emitter.js |  89 ++++
  lib/bleno.js                            |  20 +-
  lib/characteristic.js                   |   2 +
  package.json                            |   6 +-
- 7 files changed, 1182 insertions(+), 11 deletions(-)
+ 7 files changed, 1205 insertions(+), 11 deletions(-)
  create mode 100644 Android.mk
  create mode 100644 lib/android/bindings.js
  create mode 100644 lib/android/ccc-descriptor.js
@@ -32,10 +32,10 @@ index 0000000..d59df9c
 +include $(BUILD_NODE_MODULE)
 diff --git a/lib/android/bindings.js b/lib/android/bindings.js
 new file mode 100644
-index 0000000..1c2dc4b
+index 0000000..fa10f81
 --- /dev/null
 +++ b/lib/android/bindings.js
-@@ -0,0 +1,866 @@
+@@ -0,0 +1,889 @@
 +'use strict';
 +
 +const assert = require('assert');
@@ -211,7 +211,7 @@ index 0000000..1c2dc4b
 +    0x4c,               // Apple identifier (least significant byte)
 +    0x00,               // Apple identifier (most significant byte)
 +    0x02,               // iBeacon tag
-+    data.length         // Size of the iBeacon data
++    data.length,        // Size of the iBeacon data
 +  ]);
 +
 +  const manufacturerData = header.toString('hex') + data.toString('hex');
@@ -657,18 +657,22 @@ index 0000000..1c2dc4b
 +  }
 +
 +  this._serviceHandle = handle;
-+  try {
-+    this._addNextServiceAttribute();
-+  } catch(error) {
-+    this._failSetServices(error);
-+    throw error;
-+  }
++
++  log.debug('Ensuring that service is stopped');
++  this._bledroid.command('stopService ' + handle);
 +};
 +
-+BlenoBindings.prototype._onServiceDeleted = function(status) {
-+  log.debug('_onServiceDeleted', status);
++BlenoBindings.prototype._onServiceDeleted = function(status, handle) {
++  log.debug('_onServiceDeleted', status, handle);
 +
-+  if (status !== 0) {
++  if (!this._pendingSetServices) {
++    log.warn('Adapter reset while deleting service');
++    return;
++  }
++
++  assert(this._serviceHandle === handle);
++
++  if (status) {
 +    const error = new Error('Failed to remove old service, status ' + status);
 +    this._failSetServices(error);
 +    return;
@@ -680,21 +684,23 @@ index 0000000..1c2dc4b
 +
 +  try {
 +    this._processSetServices();
-+  } catch(error) {
++  } catch (error) {
 +    this._failSetServices(error);
 +    throw error;
 +  }
 +};
 +
-+BlenoBindings.prototype._onAttributeAdded = function(status, handle) {
-+  log.debug('_onAttributeAdded', status, handle);
++BlenoBindings.prototype._onAttributeAdded = function(status,
++                                                     serviceHandle,
++                                                     attributeHandle) {
++  log.debug('_onAttributeAdded', status, serviceHandle, attributeHandle);
 +
 +  if (!this._pendingSetServices) {
 +    log.warn('Adapter reset while adding attributes');
 +    return;
 +  }
 +
-+  assert(this._serviceHandle !== null);
++  assert(this._serviceHandle === serviceHandle);
 +  assert(this._pendingAttributes);
 +
 +  if (status) {
@@ -709,27 +715,26 @@ index 0000000..1c2dc4b
 +  const attribute = complete.characteristic || complete.descriptor;
 +  assert(attribute);
 +
-+  this._attributeMap.set(handle, attribute);
-+  this._attributeMap.set(attribute, handle);
++  this._attributeMap.set(attributeHandle, attribute);
++  this._attributeMap.set(attribute, attributeHandle);
 +
 +  try {
 +    this._addNextServiceAttribute();
-+  } catch(error) {
++  } catch (error) {
 +    this._attributeMap.clear();
 +    this._failSetServices(error);
 +    throw error;
 +  }
 +};
 +
-+BlenoBindings.prototype._onServiceStarted = function(status) {
-+  log.debug('_onServiceStarted', status);
++BlenoBindings.prototype._onServiceStarted = function(status, handle) {
++  log.debug('_onServiceStarted', status, handle);
 +
 +  if (!this._pendingSetServices) {
 +    log.warn('Adapter reset while starting service');
 +    return;
 +  }
-+
-+  assert(this._serviceHandle !== null);
++  assert(this._serviceHandle === handle);
 +  assert(!this._pendingAttributes);
 +
 +  if (status) {
@@ -743,8 +748,26 @@ index 0000000..1c2dc4b
 +  this.emit('servicesSet');
 +};
 +
-+BlenoBindings.prototype._onServiceStopped = function(status) {
-+  log.debug('_onServiceStopped', status);
++BlenoBindings.prototype._onServiceStopped = function(status, handle) {
++  log.debug('_onServiceStopped', status, handle);
++
++  if (!this._pendingSetServices) {
++    log.warn('Adapter reset while starting service');
++    return;
++  }
++
++  assert(this._serviceHandle === handle);
++
++  if (status) {
++    log.info('Failed to stop service, status', status);
++  }
++
++  try {
++    this._addNextServiceAttribute();
++  } catch (error) {
++    this._failSetServices(error);
++    throw error;
++  }
 +};
 +
 +BlenoBindings.prototype._onReadAttribute = function(connectionId,

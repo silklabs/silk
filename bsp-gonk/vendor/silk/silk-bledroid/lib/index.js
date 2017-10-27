@@ -438,21 +438,21 @@ Bledroid.prototype.messageMap = [
     emit: 'serviceAdded',
     transform: [ parseInt, parseInt ],
   }, {
-    regex: /^!attributeAdded (\d+) (\d+)$/,
+    regex: /^!attributeAdded (\d+) (\d+) (\d+)$/,
     emit: 'attributeAdded',
+    transform: [ parseInt, parseInt, parseInt ],
+  }, {
+    regex: /^!serviceStarted (\d+) (\d+)$/,
+    emit: 'serviceStarted',
     transform: [ parseInt, parseInt ],
   }, {
-    regex: /^!serviceStarted (\d+)$/,
-    emit: 'serviceStarted',
-    transform: [ parseInt ],
-  }, {
-    regex: /^!serviceStopped (\d+)$/,
+    regex: /^!serviceStopped (\d+) (\d+)$/,
     emit: 'serviceStopped',
-    transform: [ parseInt ],
+    transform: [ parseInt, parseInt ],
   }, {
-    regex: /^!serviceDeleted (\d+)$/,
+    regex: /^!serviceDeleted (\d+) (\d+)$/,
     emit: 'serviceDeleted',
-    transform: [ parseInt ],
+    transform: [ parseInt, parseInt ],
   }, {
     regex: /^!readAttribute (\d+) (\d+) ([\dA-F:]{17}) (\d+) (\d+) (1|0)$/,
     emit: 'readAttribute',

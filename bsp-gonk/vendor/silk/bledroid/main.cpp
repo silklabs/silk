@@ -2444,7 +2444,10 @@ void gatt_server_characteristic_added_callback(int status,
         srvc_handle,
         char_handle);
 
-  bledroid.sendEvent("!attributeAdded %d %d", status, char_handle);
+  bledroid.sendEvent("!attributeAdded %d %d %d",
+                     status,
+                     srvc_handle,
+                     char_handle);
 }
 
 /**
@@ -2465,7 +2468,10 @@ void gatt_server_descriptor_added_callback(int status,
         srvc_handle,
         descr_handle);
 
-  bledroid.sendEvent("!attributeAdded %d %d", status, descr_handle);
+  bledroid.sendEvent("!attributeAdded %d %d %d",
+                     status,
+                     srvc_handle,
+                     descr_handle);
 }
 
 /**
@@ -2483,7 +2489,7 @@ void gatt_server_service_started_callback(int status,
         server_if,
         srvc_handle);
 
-  bledroid.sendEvent("!serviceStarted %d", status);
+  bledroid.sendEvent("!serviceStarted %d %d", status, srvc_handle);
 }
 
 /**
@@ -2501,7 +2507,7 @@ void gatt_server_service_stopped_callback(int status,
         server_if,
         srvc_handle);
 
-  bledroid.sendEvent("!serviceStopped %d", status);
+  bledroid.sendEvent("!serviceStopped %d %d", status, srvc_handle);
 }
 
 /**
@@ -2519,7 +2525,7 @@ void gatt_server_service_deleted_callback(int status,
         server_if,
         srvc_handle);
 
-  bledroid.sendEvent("!serviceDeleted %d", status);
+  bledroid.sendEvent("!serviceDeleted %d %d", status, srvc_handle);
 }
 
 /**

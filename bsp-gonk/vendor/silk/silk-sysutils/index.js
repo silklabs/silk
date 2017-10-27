@@ -202,7 +202,7 @@ export function setprop(prop: string, value: PropTypes): void {
  *
  * @example
  * const util = require('silk-sysutils');
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * util.propWatcher.on('my.system.property', () => log.info('Property changed'));
  */

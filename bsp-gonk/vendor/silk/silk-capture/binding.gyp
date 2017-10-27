@@ -20,12 +20,9 @@
       ],
 
       "conditions": [
-        [ "liblog=='true'", {
-          "defines": [
-            "USE_LIBLOG",
-          ],
-          "libraries": [
-            "-llog",
+        [ "liblog=='false'", {
+          "include_dirs": [
+            "<!(node -p \"require('silk-log/include_dirs')\")",
           ],
         }],
         [ "libpreview=='true'", {

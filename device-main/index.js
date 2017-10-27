@@ -3,7 +3,7 @@
 
 const path = require('path');
 const lights = require('silk-lights').default;
-const log = require('silk-alog');
+const log = require('silk-log')('main');
 const ntp = require('silk-ntp').default;
 const util = require('silk-sysutils');
 const wifi = require('silk-wifi').default;

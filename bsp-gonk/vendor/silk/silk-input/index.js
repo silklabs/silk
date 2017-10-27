@@ -165,7 +165,7 @@ let inputDevices = {};
  * 'use strict';
  *
  * const Input = require('silk-input').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * let input = new Input();
  * input.on('down', e => log.info('Key down event', JSON.stringify(e)));

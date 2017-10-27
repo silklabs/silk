@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "silk-build": "silk-buildjs .",
+    "mocha": "DEBUG=silk-log* mocha --ui tdd --timeout 45000 test/index_test.js",
     "test": "DEBUG=silk-log* mocha --ui tdd --timeout 45000 test/index_test.js"
   },
   "author": "Silk Labs Inc.",
@@ -20,8 +21,5 @@
   },
   "devDependencies": {
     "mocha": "2.4.5"
-  },
-  "optionalDependencies": {
-    "silk-alog": "^1.0.0"
   }
 }

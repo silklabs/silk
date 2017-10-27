@@ -25,7 +25,6 @@ for f in ../sdk/interface/*.js.flow; do
 done
 sed -i.orig 's/declare export/declare/g' build/*
 APIDOC_SOURCE_FILES="$APIDOC_SOURCE_FILES \
-  build/silk-alog.js \
   build/silk-movie.js \
   build/silk-properties.js \
 "

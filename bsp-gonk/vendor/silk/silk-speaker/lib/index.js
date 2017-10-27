@@ -24,7 +24,7 @@ const GAIN_MAX = 1.0;
  * 'use strict';
  *
  * const Speaker = require('silk-speaker').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * let speaker = new Speaker({
  *   numChannels: 1,    // Default is 2

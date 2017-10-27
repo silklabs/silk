@@ -3,14 +3,8 @@
  */
 
 #define LOG_TAG "silk-audioplayer"
-#ifdef ANDROID
 //#define LOG_NDEBUG 0
 #include <log/log.h>
-#else
-#define ALOGV(fmt, args...) fprintf(stderr, LOG_TAG ": " fmt, ##args); fprintf(stderr, "\n");
-#define ALOGE ALOGV
-#define ALOGD ALOGV
-#endif
 
 #include "player.h"
 

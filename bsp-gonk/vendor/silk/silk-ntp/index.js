@@ -18,7 +18,7 @@ const log = createLog('ntp');
  * @module silk-ntp
  * @example
  * const ntp = require('silk-ntp').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * ntp.on('time', () => log.info('NTP time acquired'));
  */

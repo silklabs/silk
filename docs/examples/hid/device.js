@@ -2,7 +2,7 @@
  @noflow
  */
 
-const log = require('silk-alog');
+const log = require('silk-log')('main');
 const Vibrator = require('silk-vibrator').default;
 const wifi = require('silk-wifi').default;
 const Input = require('silk-input').default;

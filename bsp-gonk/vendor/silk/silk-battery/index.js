@@ -27,7 +27,7 @@ const BATTERY_OUT_OF_POWER_LEVEL = 5;
  * 'use strict';
  *
  * const Battery = require('silk-battery').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * let battery = new Battery();
  * battery.init()

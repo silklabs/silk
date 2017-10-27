@@ -7,7 +7,7 @@ The Silk program's code goes like this:
 ```js
 'use strict';
 
-const log = require('silk-alog');
+const log = require('silk-log')('main');
 log.info('hello world');
 
 /////////////////////////////////////////

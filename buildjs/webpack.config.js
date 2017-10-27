@@ -142,7 +142,6 @@ function handleExternal(context, request, callback) {
 
 const externals = {
   web: [
-    'silk-alog',
     handleExternal,
   ],
   node: [
@@ -157,7 +156,6 @@ const externals = {
     'node-nnpack',
     'opencv',
     'segfault-handler',
-    'silk-alog',
     'silk-audioplayer',
     'silk-battery',
     'silk-bledroid',

@@ -19,7 +19,7 @@
     "silk-flow-bin": "../flow-bin",
     "silk-sdk": "../sdk",
     "silk-lights": "../bsp-gonk/vendor/silk/silk-lights",
-    "silk-alog": "../bsp-gonk/vendor/silk/silk-alog",
+    "silk-log": "../log",
     "silk-bledroid": "../bsp-gonk/vendor/silk/silk-bledroid",
     "silk-ntp": "../bsp-gonk/vendor/silk/silk-ntp",
     "silk-sysutils": "../bsp-gonk/vendor/silk/silk-sysutils",

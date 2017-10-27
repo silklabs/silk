@@ -152,7 +152,7 @@ type FileInfo = {
  * Example - 1 - Play an audio file
  *
  * const Player = require('silk-audioplayer').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  * const player = new Player();
  *
  * player.setVolume(1.0);
@@ -178,7 +178,7 @@ type FileInfo = {
  *
  * const Player = require('silk-audioplayer').default;
  * const https = require('https');
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  * const player = new Player();
  *
  * https.get('https://test.mp3', (res) => {
@@ -197,7 +197,7 @@ type FileInfo = {
  * Example - 3 - Play again using the same player instance
  *
  * const Player = require('silk-audioplayer').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  * const player = new Player();
  *
  * player.play('data/media/test1.mp3')

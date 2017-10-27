@@ -15,11 +15,13 @@
       ],
       "conditions": [
         [ "liblog=='true'", {
-          "defines": [
-            "USE_LIBLOG",
-          ],
           "libraries": [
             "-llog",
+          ],
+        }],
+        [ "liblog=='false'", {
+          "include_dirs": [
+            "include",
           ],
         }],
         [ 'OS=="android"', {
@@ -27,7 +29,6 @@
             '<!(echo $Android_mk__LIBRARIES)',
           ],
         }],
-
       ],
     }
   ]

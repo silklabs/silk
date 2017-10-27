@@ -374,7 +374,7 @@ function normalizeFace(face: RawHalFaceType, width: number, height: number): Fac
  * 'use strict';
  *
  * const Camera = require('silk-camera').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * let camera = new Camera();
  * camera.init()

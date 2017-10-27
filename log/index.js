@@ -12,11 +12,11 @@ let alog;
 if (typeof process !== 'undefined') {
   if (os.platform() === 'android') {
     if (process.env.SILKLOG_NOCONSOLE) {
-      alog = require('silk-alog');
+      alog = require('./build/Release/silk-alog.node');
     }
   } else {
     try {
-      alog = require('silk-alog');
+      alog = require('./build/Release/silk-alog.node');
     } catch (err) {
       // Fall back to using console.*
     }

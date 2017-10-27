@@ -1,6 +1,6 @@
 'use strict';
 
-const log = require('silk-alog');
+const log = require('silk-log')('main');
 const Camera = require('silk-camera').default;
 const path = require('path');
 

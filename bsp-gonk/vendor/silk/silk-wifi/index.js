@@ -611,7 +611,7 @@ async function wpaCliGetCurrentNetworkRSSI(): Promise<?number> {
  *
  * @example
  * const wifi = require('silk-wifi').default;
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * wifi.init()
  * .then(() => {

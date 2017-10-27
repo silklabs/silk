@@ -17,7 +17,7 @@ declare export function set(name: string, value: string): void;
  * 'use strict';
  *
  * const props = require('silk-properties');
- * const log = require('silk-alog');
+ * const log = require('silk-log')('main');
  *
  * let value = props.get('persist.silk.main');
  * log.info('Value: ' + value);

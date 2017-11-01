@@ -25,6 +25,11 @@
             "<!(node -p \"require('silk-log/include_dirs')\")",
           ],
         }],
+        [ "liblog == 'true'", {
+          "libraries": [
+            "-llog",
+          ],
+        }],
         [ "libpreview=='true'", {
           "defines": [
             'USE_LIBPREVIEW',

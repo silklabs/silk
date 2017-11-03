@@ -266,6 +266,7 @@ export class SDKApi {
     try {
       await fs.unlink(WIFI_SETUP_SCRIPT);
       await this.adb(`shell rm /data/${WIFI_SETUP_SCRIPT}`);
+      await this.adb(`shell sync`);
     } catch (err) {
       console.log(`Failed to cleanup ${err}`);
     }

@@ -31,9 +31,13 @@ help() {
   exit 1
 }
 
+# Permit environment to override default value for the following
+: ${SILK_BUILDJS_UGLY:=true}
+: ${SILK_BUILDJS_ARCH:=arm}
+: ${SILK_BUILDJS_STL:=gnustl}
+
 SILK_BUILDJS_SOURCE=
 SILK_BUILDJS_DEST=
-: ${SILK_BUILDJS_UGLY:=true} # Permit environment to override default value
 SILK_BUILDJS_TARGET=node
 SILK_BUILDJS_EXTERNALS=true
 native=true
@@ -53,6 +57,21 @@ for arg in "$@"; do
     ;;
   --ndk)
     ndk=true
+    ;;
+  --ARCH=arm)
+    SILK_BUILDJS_ARCH=arm
+    ;;
+  --arch=arm64)
+    SILK_BUILDJS_ARCH=arm64
+    ;;
+  --stl=gnustl)
+    SILK_BUILDJS_STL=gnuctl
+    ;;
+  --stl=libc++)
+    SILK_BUILDJS_STL=libc++
+    ;;
+  --stl=stlport)
+    SILK_BUILDJS_STL=stlport
     ;;
   --no-native)
     native=false
@@ -93,16 +112,7 @@ if $native && $ndk; then
   [[ -n $ANDROID_NDK ]] || help Please set ANDROID_NDK to the NDK root directory
   [[ -d $ANDROID_NDK ]] || help ANDROID_NDK not a directory: $ANDROID_NDK
 
-  # TODO: Add command-line argument to select device architecture
-  ARCH=arm
-  #ARCH=arm64
-
-  # TODO: Add command-line argument to select STL
-  STL=gnustl
-#  STL=libc++
-#  STL=stlport
-
-  case $ARCH in
+  case $SILK_BUILDJS_ARCH in
   arm)
     TRIPLE=arm-linux-androideabi
     CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon -fPIC"
@@ -116,19 +126,19 @@ if $native && $ndk; then
     LDFLAGS=
     ;;
   *)
-    help Unknown arch: $ARCH
+    help Unknown arch: $SILK_BUILDJS_ARCH
     ;;
   esac
 
-  NDK_TOOLCHAIN=$ROOT/ndk-toolchain-$STL
+  NDK_TOOLCHAIN=$ROOT/ndk-toolchain-$SILK_BUILDJS_ARCH-$SILK_BUILDJS_STL
 
   if [[ ! -d $NDK_TOOLCHAIN ]]; then
     echo Creating standalone toolchain at $NDK_TOOLCHAIN
     (
       set -x
       $ANDROID_NDK/build/tools/make-standalone-toolchain.sh \
-        --arch=$ARCH \
-        --stl=$STL \
+        --arch=$SILK_BUILDJS_ARCH \
+        --stl=$SILK_BUILDJS_STL \
         --install-dir=$NDK_TOOLCHAIN \
         --platform=android-21
     )
@@ -153,10 +163,10 @@ if $native && $ndk; then
 
   # Setup node-gyp flags
   SILK_GYP_FLAGS="\
-    -f make-android -DOS=android -Darch=$ARCH -Dandroid_ndk=$ANDROID_NDK \
+    -f make-android -DOS=android -Darch=$SILK_BUILDJS_ARCH -Dandroid_ndk=$ANDROID_NDK \
     $SILK_GYP_FLAGS \
   "
-  SILK_NODE_GYP_FLAGS="--arch=$ARCH"
+  SILK_NODE_GYP_FLAGS="--arch=$SILK_BUILDJS_ARCH"
 fi
 
 if $native && [[ -f $SILK_BUILDJS_SOURCE/binding.gyp ]]; then

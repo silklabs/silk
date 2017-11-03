@@ -47,10 +47,19 @@
             '-lnnpack_ukernels',
             '-lnnpack_reference',
             '-lpthreadpool',
+          ],
+        }],
+        [ 'OS=="android" and android_ndk != "" and arch=="arm"', {
+          'libraries': [
             '-lcpufeatures',
           ],
           'ldflags': [
             '-L<(NNPACK_ROOT)/obj/local/armeabi-v7a',
+          ],
+        }],
+        [ 'OS=="android" and android_ndk != "" and arch=="arm64"', {
+          'ldflags': [
+            '-L<(NNPACK_ROOT)/obj/local/arm64-v8a',
           ],
         }],
         [ 'OS=="linux"', {

@@ -35,10 +35,15 @@ fi
 
 if $USE_NDK; then
   # Select right platform and ABI
+  if [[ "$SILK_BUILDJS_ARCH" = "arm64" ]]; then
+    APP_ABI=arm64-v8a
+  else
+    APP_ABI=armeabi-v7a
+  fi
   cat > jni/Application.mk <<EOF
 APP_PLATFORM := android-21
 APP_PIE := true
-APP_ABI := armeabi-v7a
+APP_ABI := $APP_ABI
 APP_STL := c++_static
 NDK_TOOLCHAIN_VERSION := clang
 EOF

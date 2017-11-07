@@ -16,12 +16,9 @@ declare export class VideoCapture {
     callback: (err?: Error) => mixed,
   ): void;
 
-  read(
-    im: OpencvMatrix,
-    imRGB?: OpencvMatrix,
-    imGray?: OpencvMatrix,
-    imScaledGray?: OpencvMatrix,
-    callback?: ReadCallback,
+  readRgb(
+    imRgb: OpencvMatrix,
+    callback: ReadCallback,
   ): void;
 
   readCustom(

@@ -21,23 +21,6 @@ type CameraConfig = {
   deviceMic: ConfigDeviceMic;
 };
 
-type CameraClipFrameImages = [
-  number,
-  Matrix,
-  Matrix,
-  Matrix,
-];
-
-type FrameReplacer = {
-  reset(): void;
-  maybeReplace(
-    when: number,
-    imRGB: Matrix,
-    imGray: Matrix,
-    imScaledGray: Matrix
-  ): CameraClipFrameImages;
-};
-
 /**
  * Type representing an object rectangle
  *
@@ -69,25 +52,11 @@ export type CameraCallback = (err: ?Error, image: Matrix) => void;
  * The available camera frame formats:
  *
  * <ul>
- * <li>fullgray - full resolution grayscale (CameraFrameSize === 'full')</li>
  * <li>fullrgb - full resolution rgb (CameraFrameSize === 'full')</li>
- * <li>highgray - higher res grayscale (CameraFrameSize === 'high')</li>
- * <li>gray - normal grayscale (CameraFrameSize === 'normal')</li>
- * <li>grayeq - normal grayscale equalized (CameraFrameSize === 'normal')</li>
- * <li>rgb - normal rgb (CameraFrameSize === 'normal')</li>
- * <li>lowgray - lower res grayscale (CameraFrameSize === 'low')</li>
  * </ul>
  * @memberof silk-camera
  */
-export type CameraFrameFormat =
-    'fullgray'
-  | 'fullrgb'
-  | 'highgray'
-  | 'gray'
-  | 'grayeq'
-  | 'rgb'
-  | 'lowgray'
-  ;
+export type CameraFrameFormat = 'fullrgb';
 
 /**
  * The available camera frame sizes:
@@ -226,10 +195,8 @@ const FRAME_SCALE_HIGH = util.getintprop('ro.silk.camera.scale.high', 2);
 
 type FrameSize = {[key: CameraFrameSize]: SizeType};
 
-// Rate that new camera frames are proceeded.  Ideally this would equal
-// 1000/FPS however is usually longer due to limited compute
-const FRAME_DELAY_MS = 250; // 4 FPS
-const FAST_FRAME_DELAY_MS = 83; // 12 FPS
+// Rate that new camera preview frames are proceeded.
+const FRAME_DELAY_MS = 1000; // 1 FPS
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -261,7 +228,7 @@ const CAPTURE_INIT_TIMEOUT_MS = 30 * 1000;
 // If TAG_MP4 or TAG_PCM is not received in this amount of time assume the
 // capture process is wedged and restart it.
 const CAPTURE_TAG_TIMEOUT_MS = 1000 *
-  (10 + CAMERA_VIDEO_ENABLED ? VIDEO_SEGMENT_DURATION_SECS * 1.5 : 0);
+  (10 + CAMERA_VIDEO_ENABLED ? VIDEO_SEGMENT_DURATION_SECS * 2 : 0);
 
 // If there is still not a camera frame after this number of attempts assume the
 // capture process is wedged and restart it.
@@ -400,7 +367,6 @@ export default class Camera extends EventEmitter {
   _previewFrameRequests: Array<PreviewFrameQueueType> = [];
   _customFrameRequests: Array<CustomFrameQueueType> = [];
   _noFrameCount: number = 0;
-  _frameReplacer: ?FrameReplacer = null;
   _imagecache: CBuffer;
   _initTimeout: ?number = null;
   _frameTimeout: ?number = null;
@@ -461,20 +427,12 @@ export default class Camera extends EventEmitter {
     }
   }
 
-  attachFrameReplacer(frameReplacer: FrameReplacer) {
-    this._frameReplacer = frameReplacer;
-  }
-
   get FLASH_MODE(): FlashMode {
     return FLASH_MODE;
   }
 
   get FRAME_DELAY_MS(): number {
     return FRAME_DELAY_MS;
-  }
-
-  get FAST_FRAME_DELAY_MS(): number {
-    return FAST_FRAME_DELAY_MS;
   }
 
   /**
@@ -781,10 +739,6 @@ export default class Camera extends EventEmitter {
       this._restart('failed to initialize in a timely fashion');
     }, CAPTURE_INIT_TIMEOUT_MS);
 
-    if (this._frameReplacer) {
-      this._frameReplacer.reset();
-    }
-
     if (CAPTURE_DISABLED) {
       // Only initialize the preview source if the bsp-gonk capture backend is
       // not available.
@@ -941,40 +895,6 @@ export default class Camera extends EventEmitter {
         switch (format) {
         case 'fullrgb':
           return image.fullrgb;
-        case 'rgb':
-          if (!image.rgb) {
-            let rgb = image.fullrgb.copy();
-            rgb.resize(this.FRAME_SIZE.normal.width, this.FRAME_SIZE.normal.height); // Slow!
-            image.rgb = rgb;
-          }
-          return image.rgb;
-        case 'fullgray':
-          return image.fullgray;
-        case 'highgray':
-          if (!image.highgray) {
-            let highgray = image.fullgray.copy();
-            highgray.resize(this.FRAME_SIZE.high.width, this.FRAME_SIZE.high.height);
-            image.highgray = highgray;
-          }
-          return image.highgray;
-        case 'gray':
-          return image.gray;
-        case 'grayeq':
-          if (!image.grayeq) {
-            let grayImage = image.gray.copy();
-            grayImage.equalizeHist();
-            image.grayeq = grayImage;
-          }
-          return image.grayeq;
-        case 'lowgray':
-          if (!image.lowgray) {
-            // TODO: Resize from fullgray instead?  This will be slower but
-            // likely produce a better image.
-            let lowgray = image.gray.copy();
-            lowgray.resize(this.FRAME_SIZE.low.width, this.FRAME_SIZE.low.height);
-            image.lowgray = lowgray;
-          }
-          return image.lowgray;
         default:
           err = new Error(`unsupported format: ${format}`);
           return null;
@@ -995,25 +915,16 @@ export default class Camera extends EventEmitter {
       return;
     }
 
-    let delayMs;
-    if (this._frameCaptureEnabled) {
-      delayMs = FRAME_DELAY_MS;
-    } else {
+    if (!this._frameCaptureEnabled) {
       return;
     }
 
-    const spilloverMs = Date.now() % delayMs;
+    this._captureFrame();
 
-    // Reduce delayMs by the spillover to get the next frame as close
-    // as possible to +delayMs
-    // (+5 to ensure the timeout doesn't fire early by ~1ms)
-    const requestedDelayMs = delayMs - spilloverMs + 5;
-
-    this._frameTimeout = setTimeout(async () => {
+    this._frameTimeout = setTimeout(() => {
       this._frameTimeout = null;
-      this._captureFrame();
       this._scheduleNextFrameCapture();
-    }, requestedDelayMs);
+    }, FRAME_DELAY_MS);
   }
 
   _incNoFrameCount() {
@@ -1045,16 +956,13 @@ export default class Camera extends EventEmitter {
 
     {
       let im = new cv.Matrix();
-      let imRGB = new cv.Matrix();
-      let imGray = new cv.Matrix();
-      let imScaledGray = new cv.Matrix();
-      cvVideoCapture.read(im, imRGB, imGray, imScaledGray, (err) => {
+      cvVideoCapture.readRgb(im, (err) => {
         if (err) {
           log.warn(`Unable to fetch frame: err=${err.message}`);
           this._incNoFrameCount();
         } else {
           this._noFrameCount = 0;
-          this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
+          this._handleNextPreviewFrame(when, im);
         }
         this._cvVideoCaptureBusy = false;
         this._handleCustomFrameRequest();
@@ -1113,29 +1021,17 @@ export default class Camera extends EventEmitter {
    * Handle the next preview frame
    * @private
    */
-  _handleNextPreviewFrame(
-    when: number,
-    imRGB: Matrix,
-    imGray: Matrix,
-    imScaledGray: Matrix
-  ) {
-    if (this._frameReplacer) {
-      [when, imRGB, imGray, imScaledGray] =
-        this._frameReplacer.maybeReplace(when, imRGB, imGray, imScaledGray);
-    }
-
+  _handleNextPreviewFrame(when: number, imRGB: Matrix) {
     // Cache the camera frame
     this._imagecache.push({
       when,
-      fullgray: imGray,
       fullrgb: imRGB,
-      gray: imScaledGray,
     });
 
     log.debug(`Grab time: ${Date.now() - when}ms`);
 
     /**
-     * This event is emitted when a preview frame (4 FPS) is available.
+     * This event is emitted when a preview frame is available.
      *
      * @event frame
      * @memberof silk-camera

@@ -230,8 +230,6 @@ type FrameSize = {[key: CameraFrameSize]: SizeType};
 // 1000/FPS however is usually longer due to limited compute
 const FRAME_DELAY_MS = 250; // 4 FPS
 const FAST_FRAME_DELAY_MS = 83; // 12 FPS
-// After how many fast frames should we grab a preview frame
-const GRAB_PREVIEW_FRAME_AFTER = FRAME_DELAY_MS / FAST_FRAME_DELAY_MS;
 
 const FLASH_LIGHT_PROP = 'persist.silk.flash.enabled';
 const FLASH_LIGHT_ENABLED = util.getboolprop(FLASH_LIGHT_PROP);
@@ -390,8 +388,6 @@ export default class Camera extends EventEmitter {
   _liveDiag: boolean = false;
   _audioMute: boolean = false;
   _frameCaptureEnabled: boolean = false;
-  _fastFrameCaptureEnabled: boolean = false;
-  _fastFrameCount: number = 0;
   _config: CameraConfig;
   _ready: boolean = false;
   _recording: boolean = false;
@@ -457,14 +453,10 @@ export default class Camera extends EventEmitter {
 
   _onListenerChange = () => {
     const frameCaptureEnabled = this.listenerCount('frame') > 0;
-    const fastFrameCaptureEnabled = this.listenerCount('fast-frame') > 0;
 
     // eslint-disable-next-line eqeqeq
-    if (frameCaptureEnabled != this._frameCaptureEnabled ||
-    // eslint-disable-next-line eqeqeq
-        fastFrameCaptureEnabled != this._fastFrameCaptureEnabled) {
+    if (frameCaptureEnabled != this._frameCaptureEnabled) {
       this._frameCaptureEnabled = frameCaptureEnabled;
-      this._fastFrameCaptureEnabled = fastFrameCaptureEnabled;
       this._scheduleNextFrameCapture();
     }
   }
@@ -996,9 +988,6 @@ export default class Camera extends EventEmitter {
   }
 
   /**
-   * Fast preview frames are scheduled every FAST_FRAME_DELAY_MS and preview
-   * frames are scheduled every GRAB_PREVIEW_FRAME_AFTER many fast frames
-   *
    * @private
    */
   _scheduleNextFrameCapture() {
@@ -1007,9 +996,7 @@ export default class Camera extends EventEmitter {
     }
 
     let delayMs;
-    if (this._fastFrameCaptureEnabled) {
-      delayMs = FAST_FRAME_DELAY_MS;
-    } else if (this._frameCaptureEnabled) {
+    if (this._frameCaptureEnabled) {
       delayMs = FRAME_DELAY_MS;
     } else {
       return;
@@ -1024,17 +1011,7 @@ export default class Camera extends EventEmitter {
 
     this._frameTimeout = setTimeout(async () => {
       this._frameTimeout = null;
-      let isFastFrame = false;
-      if (this._fastFrameCaptureEnabled) {
-        this._fastFrameCount++;
-        // Grab preview frame if it's time to do so
-        if (this._fastFrameCount >= GRAB_PREVIEW_FRAME_AFTER) {
-          this._fastFrameCount = 0;
-        } else {
-          isFastFrame = true;
-        }
-      }
-      this._captureFrame(isFastFrame);
+      this._captureFrame();
       this._scheduleNextFrameCapture();
     }, requestedDelayMs);
   }
@@ -1051,36 +1028,23 @@ export default class Camera extends EventEmitter {
   /**
    * Read the next frame
    *
-   * @param fastFrameOnly : Only emit the fast frame data if true, false for the full * frame data
    * @private
    */
-  _captureFrame(fastFrameOnly: boolean) {
+  _captureFrame() {
     const cvVideoCapture = this._cvVideoCapture;
     if (!cvVideoCapture || !this._recording) {
       return;
     }
     if (this._cvVideoCaptureBusy) {
       log.info(`capture busy`);
-      if (!fastFrameOnly) {
-        this._incNoFrameCount();
-      }
+      this._incNoFrameCount();
       return;
     }
     this._cvVideoCaptureBusy = true;
     let when = Date.now();
 
-    let im = new cv.Matrix();
-    if (fastFrameOnly) {
-      cvVideoCapture.read(im, (err) => {
-        if (err) {
-          log.warn(`Unable to fetch fast frame: err=${err.message}`);
-        } else {
-          this._handleNextFastFrame(when, im);
-        }
-        this._cvVideoCaptureBusy = false;
-        this._handleCustomFrameRequest();
-      });
-    } else {
+    {
+      let im = new cv.Matrix();
       let imRGB = new cv.Matrix();
       let imGray = new cv.Matrix();
       let imScaledGray = new cv.Matrix();
@@ -1090,7 +1054,6 @@ export default class Camera extends EventEmitter {
           this._incNoFrameCount();
         } else {
           this._noFrameCount = 0;
-          this._handleNextFastFrame(when, im);
           this._handleNextPreviewFrame(when, imRGB, imGray, imScaledGray);
         }
         this._cvVideoCaptureBusy = false;
@@ -1193,25 +1156,6 @@ export default class Camera extends EventEmitter {
       }
       this._throwyEmit('faces', when, this.faces);
     }
-  }
-
-  /**
-   * Handle the next fast frame
-   * @private
-   */
-  _handleNextFastFrame(when: number, im: Matrix) {
-    /**
-     * This event is emitted when a fast preview frame (12 FPS) is available.
-     *
-     * @event fast-frame
-     * @memberof silk-camera
-     * @instance
-     * @property {number} when Timestamp of the preview frame in UTC milliseconds
-     *                         since epoch
-     * @property {Matrix} im {@link https://github.com/peterbraden/node-opencv Opencv}
-     *                          matrix representing the image in raw YVU420SP format
-     */
-    this._throwyEmit('fast-frame', when, im);
   }
 
   /**
